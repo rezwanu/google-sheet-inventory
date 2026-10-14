@@ -1,0 +1,1270 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  X, 
+  PackagePlus, 
+  Barcode, 
+  DollarSign, 
+  Layers, 
+  Image as ImageIcon, 
+  PlusCircle, 
+  Tag, 
+  Check,
+  FileText,
+  AlignLeft,
+  ListPlus,
+  Upload,
+  Globe,
+  Loader2,
+  Sparkles,
+  Wand2,
+  TrendingUp,
+  Box,
+  AlertCircle,
+  Eye,
+  CheckCircle2,
+  Coins,
+  Percent,
+  Zap,
+  UploadCloud,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  Trash2
+} from 'lucide-react';
+import RichTextEditor from './RichTextEditor';
+
+// ছবি কম্প্রেস ও অপটিমাইজ ফাংশন (যাতে দ্রুত গুগল ড্রাইভে আপলোড হয়)
+const compressImageForUpload = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL(file.type || 'image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error('ছবি লোড করতে সমস্যা হয়েছে'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('ফাইল পড়তে ব্যর্থ হয়েছে'));
+    reader.readAsDataURL(file);
+  });
+};
+
+// দ্রুত বৈশিষ্ট্য (Quick Feature Presets)
+const QUICK_FEATURE_PRESETS = [
+  '১০০% খাঁটি ও আসল',
+  'প্রিমিয়াম কোয়ালিটি',
+  'দ্রুত ডেলিভারি',
+  'অর্গানিক ও ফ্রেশ',
+  'এক্সক্লুসিভ প্যাক',
+  'কেমিক্যাল মুক্ত'
+];
+
+export default function AddProductModal({
+  isOpen,
+  onClose,
+  currencySymbol = '৳',
+  onSubmitProduct,
+  categories = [],
+  onAddCategory,
+  units = [],
+  onAddUnit
+}) {
+  const [formData, setFormData] = useState({
+    barcode: '',
+    productName: '',
+    category: 'Grocery',
+    subCategory: 'Rice & Grain',
+    costPrice: '',
+    sellingPrice: '',
+    initialStock: '10',
+    minStockAlert: '5',
+    unit: 'Pcs',
+    imageUrl: '',
+    imageCaption: '',
+    shortDescription: '',
+    description: '',
+  });
+
+  // ইমেজ আপলোড মোড ও ড্রাইভ প্রসেসিং স্টেট
+  const [imageUploadMode, setImageUploadMode] = useState('upload'); // 'upload' | 'url'
+  const [localImagePreview, setLocalImagePreview] = useState('');
+  const [imageBase64, setImageBase64] = useState('');
+  const [imageMimeType, setImageMimeType] = useState('image/jpeg');
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+
+  // মাল্টি ফিচার স্টেট
+  const [features, setFeatures] = useState([]);
+  const [featureInput, setFeatureInput] = useState('');
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newSubCategoryName, setNewSubCategoryName] = useState('');
+
+  // নতুন পরিমাপক একক (Unit) তৈরি স্টেট
+  const [isAddingNewUnit, setIsAddingNewUnit] = useState(false);
+  const [newUnitName, setNewUnitName] = useState('');
+  const [newUnitShortName, setNewUnitShortName] = useState('');
+
+  // মোবাইল ভিউতে ট্যাব সুইচ (ফর্ম vs প্রিভিউ)
+  const [mobileTab, setMobileTab] = useState('form'); // 'form' | 'preview'
+
+  // অনন্য পরিমাপক একক (Units) তালিকা বের করা
+  const uniqueUnits = useMemo(() => {
+    const list = new Set();
+    units.forEach((u) => {
+      const name = (u.ShortName || u.UnitName || '').trim();
+      if (name) list.add(name);
+    });
+    // ডিফল্ট মান নিশ্চিত করা
+    ['Pcs', 'Packet', 'Kg', 'gm', 'Ltr', 'ml', 'Box', 'Bottle', 'Dozen', 'Pair', 'Meter', 'Roll'].forEach(d => list.add(d));
+    return Array.from(list);
+  }, [units]);
+
+  // অনন্য প্রধান ক্যাটাগরি তালিকা বের করা
+  const uniqueCategories = useMemo(() => {
+    const list = new Set();
+    categories.forEach((c) => {
+      if (c.CategoryName) list.add(c.CategoryName);
+    });
+    return Array.from(list);
+  }, [categories]);
+
+  // নির্বাচিত ক্যাটাগরির অধীনে থাকা সাব-ক্যাটাগরি তালিকা ফিল্টার করা
+  const availableSubCategories = useMemo(() => {
+    return categories
+      .filter((c) => c.CategoryName === formData.category && c.SubCategoryName)
+      .map((c) => c.SubCategoryName);
+  }, [categories, formData.category]);
+
+  // রিয়েল-টাইম মার্জিন ও মুনাফা হিসাব
+  const cost = parseFloat(formData.costPrice) || 0;
+  const sell = parseFloat(formData.sellingPrice) || 0;
+  const initialStockNum = parseInt(formData.initialStock, 10) || 0;
+  const minStockNum = parseInt(formData.minStockAlert, 10) || 5;
+  const netProfit = sell - cost;
+  const profitMarginPercent = cost > 0 
+    ? ((netProfit / cost) * 100).toFixed(1) 
+    : (sell > 0 ? '100' : '0');
+  const isProfitable = netProfit >= 0;
+  const totalStockInvestment = cost * initialStockNum;
+  const totalPotentialRevenue = sell * initialStockNum;
+  const totalPotentialProfit = netProfit * initialStockNum;
+
+  // সক্রিয় ছবির সোর্স
+  const currentImageSource = imageUploadMode === 'upload' 
+    ? localImagePreview 
+    : (formData.imageUrl ? formData.imageUrl.trim() : '');
+
+  if (!isOpen) return null;
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'category') {
+      const subs = categories.filter((c) => c.CategoryName === value);
+      setFormData((prev) => ({
+        ...prev,
+        category: value,
+        subCategory: subs.length > 0 ? subs[0].SubCategoryName : ''
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // স্বয়ংক্রিয় অনন্য বারকোড / SKU জেনারেটর
+  const handleGenerateRandomBarcode = () => {
+    const randomSuffix = Math.floor(10000000 + Math.random() * 90000000);
+    const generatedBarcode = `890${randomSuffix}`;
+    setFormData((prev) => ({
+      ...prev,
+      barcode: generatedBarcode
+    }));
+  };
+
+  // নতুন ক্যাটাগরি অন-দ্য-ফ্লাই যোগ করার হ্যান্ডলার
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) {
+      alert('অনুগ্রহ করে ক্যাটাগরির নাম লিখুন।');
+      return;
+    }
+
+    try {
+      if (onAddCategory) {
+        await onAddCategory({
+          categoryName: newCategoryName.trim(),
+          subCategoryName: newSubCategoryName.trim(),
+          description: 'ম্যানুয়াল তৈরি'
+        });
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        category: newCategoryName.trim(),
+        subCategory: newSubCategoryName.trim()
+      }));
+
+      setNewCategoryName('');
+      setNewSubCategoryName('');
+      setIsAddingNewCategory(false);
+    } catch (err) {
+      alert(`ক্যাটাগরি যুক্ত করা যায়নি: ${err.message}`);
+    }
+  };
+
+  // নতুন একক অন-দ্য-ফ্লাই যোগ করার হ্যান্ডলার
+  const handleCreateUnit = async (e) => {
+    e.preventDefault();
+    if (!newUnitName.trim()) {
+      alert('অনুগ্রহ করে পরিমাপক এককের নাম লিখুন (যেমন: বস্তা, ডজন, কেজি)।');
+      return;
+    }
+
+    try {
+      const shortName = newUnitShortName.trim() || newUnitName.trim();
+      if (onAddUnit) {
+        await onAddUnit({
+          unitName: newUnitName.trim(),
+          shortName: shortName,
+          description: 'নতুন পরিমাপক একক'
+        });
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        unit: shortName
+      }));
+
+      setNewUnitName('');
+      setNewUnitShortName('');
+      setIsAddingNewUnit(false);
+    } catch (err) {
+      alert(`একক যুক্ত করা যায়নি: ${err.message}`);
+    }
+  };
+
+  // মাল্টি ফিচার যুক্ত ও অপসারণ হ্যান্ডলার
+  const handleAddFeature = (featureToAdd) => {
+    const text = (featureToAdd || featureInput).trim();
+    if (text && !features.includes(text)) {
+      setFeatures([...features, text]);
+      if (!featureToAdd) setFeatureInput('');
+    }
+  };
+
+  const handleRemoveFeature = (indexToRemove) => {
+    setFeatures(features.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handleFeatureKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddFeature();
+    }
+  };
+
+  // ডিভাইস থেকে ছবি নির্বাচন ও অপটিমাইজেশন হ্যান্ডলার
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('অনুগ্রহ করে শুধুমাত্র ছবি ফাইল নির্বাচন করুন (JPG, PNG, WebP)');
+      return;
+    }
+
+    setIsProcessingImage(true);
+    try {
+      const compressedDataUrl = await compressImageForUpload(file, 1200, 1200, 0.8);
+      setLocalImagePreview(compressedDataUrl);
+      setImageBase64(compressedDataUrl);
+      setImageMimeType(file.type || 'image/jpeg');
+
+      if (!formData.imageCaption) {
+        const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        setFormData((prev) => ({
+          ...prev,
+          imageCaption: `${prev.productName || baseName} image`,
+        }));
+      }
+    } catch (err) {
+      alert(`ছবি প্রস্তুত করতে সমস্যা হয়েছে: ${err.message}`);
+    } finally {
+      setIsProcessingImage(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.productName.trim() || !formData.sellingPrice) {
+      alert('পণ্যের নাম এবং বিক্রয়মূল্য দেওয়া আবশ্যক।');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmitProduct({
+        ...formData,
+        costPrice: Number(formData.costPrice) || 0,
+        sellingPrice: Number(formData.sellingPrice) || 0,
+        initialStock: Number(formData.initialStock) || 0,
+        minStockAlert: Number(formData.minStockAlert) || 5,
+        imageUrl: imageUploadMode === 'url' ? formData.imageUrl.trim() : '',
+        imageCaption: formData.imageCaption.trim(),
+        imageBase64: imageUploadMode === 'upload' ? imageBase64 : '',
+        imageMimeType: imageMimeType,
+        shortDescription: formData.shortDescription.trim(),
+        description: formData.description.trim(),
+        features: features,
+      });
+
+      // রিসেট ও ক্লোজ
+      setFormData({
+        barcode: '',
+        productName: '',
+        category: uniqueCategories[0] || 'Grocery',
+        subCategory: '',
+        costPrice: '',
+        sellingPrice: '',
+        initialStock: '10',
+        minStockAlert: '5',
+        unit: uniqueUnits[0] || 'Pcs',
+        imageUrl: '',
+        imageCaption: '',
+        shortDescription: '',
+        description: '',
+      });
+      setImageUploadMode('upload');
+      setLocalImagePreview('');
+      setImageBase64('');
+      setFeatures([]);
+      setFeatureInput('');
+      onClose();
+    } catch (err) {
+      alert(`পণ্য যোগ করতে সমস্যা হয়েছে: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 sm:py-6 animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/80 max-w-6xl w-full overflow-hidden flex flex-col max-h-[94vh] transition-all animate-in zoom-in-95 duration-200">
+        
+        {/* মডাল হেডার (Header Bar) */}
+        <div className="px-5 sm:px-8 py-4 sm:py-5 border-b border-slate-200/80 flex items-center justify-between bg-gradient-to-r from-slate-50 via-emerald-50/20 to-white relative select-none">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20 shrink-0 ring-4 ring-emerald-50">
+              <PackagePlus className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                  নতুন পণ্য ডাটাবেসে যোগ করুন
+                </h3>
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100/80 text-emerald-700 border border-emerald-200">
+                  ইনভেন্টরি ক্যাটালগ
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                গুগল শিট <span className="font-semibold text-emerald-600">Products</span> ডাটাবেসে নতুন পণ্য ও ছবি স্বয়ংক্রিয়ভাবে সেভ হবে
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {/* মোবাইল মোডে ট্যাব সুইচ বাটন */}
+            <div className="flex lg:hidden bg-slate-100 p-1 rounded-xl text-xs font-semibold mr-1">
+              <button
+                type="button"
+                onClick={() => setMobileTab('form')}
+                className={`px-3 py-1 rounded-lg transition-all ${
+                  mobileTab === 'form' 
+                    ? 'bg-white text-emerald-700 shadow-xs' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                ফর্ম
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileTab('preview')}
+                className={`px-3 py-1 rounded-lg flex items-center space-x-1 transition-all ${
+                  mobileTab === 'preview' 
+                    ? 'bg-white text-emerald-700 shadow-xs' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>প্রিভিউ</span>
+              </button>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all active:scale-95"
+              title="বন্ধ করুন"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* প্রধান কনটেন্ট এরিয়া (2-কলাম গ্রিড লেআউট) */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80">
+            
+            {/* বাম কলাম: ফর্ম ইনপুটসমূহ (৭ কলাম) */}
+            <div className={`lg:col-span-7 p-5 sm:p-7 space-y-6 ${mobileTab === 'preview' ? 'hidden lg:block' : 'block'}`}>
+              
+              {/* সেকশন ১: মৌলিক তথ্য */}
+              <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                  <span className="text-xs font-bold text-slate-800 flex items-center space-x-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>১. পণ্যের পরিচিতি ও বারকোড</span>
+                  </span>
+                  <span className="text-[11px] text-slate-400">* চিহ্নিত আবশ্যক</span>
+                </div>
+
+                {/* পণ্যের নাম */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    পণ্যের পূর্ণ নাম *
+                  </label>
+                  <input
+                    type="text"
+                    name="productName"
+                    required
+                    placeholder="যেমন: প্রিমিয়াম চিনিগুঁড়া সুগন্ধি চাল ১ কেজি প্যাকেট"
+                    value={formData.productName}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-2xs"
+                  />
+                </div>
+
+                {/* ক্যাটাগরি ও সাব-ক্যাটাগরি */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+                      <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>ক্যাটাগরি ও সাব-ক্যাটাগরি *</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingNewCategory(!isAddingNewCategory)}
+                      className="text-[11px] font-bold text-emerald-600 hover:text-emerald-800 flex items-center space-x-1 hover:underline transition-colors"
+                    >
+                      <PlusCircle className="w-3.5 h-3.5" />
+                      <span>{isAddingNewCategory ? 'ড্রপডাউনে ফিরে যান' : '+ নতুন ক্যাটাগরি'}</span>
+                    </button>
+                  </div>
+
+                  {/* অন-দ্য-ফ্লাই নতুন ক্যাটাগরি ড্রয়ার */}
+                  {isAddingNewCategory ? (
+                    <div className="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-emerald-900">
+                          নতুন ক্যাটাগরি ডাটাবেসে তৈরি করুন:
+                        </span>
+                        <span className="text-[10px] text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full font-medium">
+                          Categories ট্যাবে সেভ হবে
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          placeholder="প্রধান ক্যাটাগরি (যেমন: Beverages)"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          className="px-3 py-1.5 bg-white border border-emerald-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="সাব-ক্যাটাগরি (যেমন: Juice & Drinks)"
+                          value={newSubCategoryName}
+                          onChange={(e) => setNewSubCategoryName(e.target.value)}
+                          className="px-3 py-1.5 bg-white border border-emerald-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div className="flex space-x-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={handleCreateCategory}
+                          className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all"
+                        >
+                          সংরক্ষণ করুন
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingNewCategory(false)}
+                          className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-lg transition-colors"
+                        >
+                          বাতিল
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                          প্রধান ক্যাটাগরি
+                        </label>
+                        <select
+                          name="category"
+                          value={formData.category}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                        >
+                          {uniqueCategories.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                          {!uniqueCategories.includes(formData.category) && (
+                            <option value={formData.category}>{formData.category}</option>
+                          )}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                          সাব-ক্যাটাগরি
+                        </label>
+                        <select
+                          name="subCategory"
+                          value={formData.subCategory}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                        >
+                          <option value="">-- সাব-ক্যাটাগরি নির্বাচন --</option>
+                          {availableSubCategories.map((sub) => (
+                            <option key={sub} value={sub}>{sub}</option>
+                          ))}
+                          {formData.subCategory && !availableSubCategories.includes(formData.subCategory) && (
+                            <option value={formData.subCategory}>{formData.subCategory}</option>
+                          )}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* বারকোড / SKU এবং স্বয়ংক্রিয় জেনারেটর বাটন */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+                      <Barcode className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>বারকোড / SKU কোড (ঐচ্ছিক)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateRandomBarcode}
+                      className="text-[11px] font-bold text-emerald-600 hover:text-emerald-800 flex items-center space-x-1 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-all shadow-2xs"
+                      title="নতুন র‍্যান্ডম বারকোড তৈরি করুন"
+                    >
+                      <Wand2 className="w-3 h-3 text-emerald-600" />
+                      <span>স্বয়ংক্রিয় কোড তৈরি</span>
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Barcode className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                    <input
+                      type="text"
+                      name="barcode"
+                      placeholder="890123... (স্ক্যান করুন বা খালি রাখুন)"
+                      value={formData.barcode}
+                      onChange={handleChange}
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-mono font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-2xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* সেকশন ২: মূল্য নির্ধারণ ও স্টক লেভেল */}
+              <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                  <span className="text-xs font-bold text-slate-800 flex items-center space-x-2">
+                    <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                    <span>২. মূল্য ও ইনভেন্টরি স্টক</span>
+                  </span>
+                  <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-bold">
+                    রিয়েল-টাইম মার্জিন ক্যালকুলেটর
+                  </span>
+                </div>
+
+                {/* ক্রয়মূল্য ও বিক্রয়মূল্য */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      কেনা দাম / Cost ({currencySymbol})
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">
+                        {currencySymbol}
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="costPrice"
+                        placeholder="100.00"
+                        value={formData.costPrice}
+                        onChange={handleChange}
+                        className="w-full pl-7 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-2xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      বিক্রয়মূল্য / Selling ({currencySymbol}) *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs font-bold text-emerald-600">
+                        {currencySymbol}
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        required
+                        name="sellingPrice"
+                        placeholder="120.00"
+                        value={formData.sellingPrice}
+                        onChange={handleChange}
+                        className="w-full pl-7 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-2xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* লাইভ লাভ ও মার্জিন প্রিভিউ বার */}
+                {(cost > 0 || sell > 0) && (
+                  <div className={`p-3 rounded-xl border flex items-center justify-between text-xs font-semibold transition-all ${
+                    isProfitable 
+                      ? 'bg-emerald-50/80 border-emerald-200/90 text-emerald-900' 
+                      : 'bg-rose-50/80 border-rose-200/90 text-rose-900'
+                  }`}>
+                    <div className="flex items-center space-x-2">
+                      <TrendingUp className={`w-4 h-4 ${isProfitable ? 'text-emerald-600' : 'text-rose-600'}`} />
+                      <span>
+                        একক প্রতি লাভ: <strong className="font-black">{currencySymbol}{netProfit.toFixed(2)}</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1.5">
+                      <span className="text-[11px] text-slate-500">প্রফিট মার্জিন:</span>
+                      <span className={`px-2 py-0.5 rounded-full font-black text-xs ${
+                        isProfitable ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                      }`}>
+                        {isProfitable ? `+${profitMarginPercent}%` : `${profitMarginPercent}%`}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* ওপেনিং স্টক, সতর্কবার্তা লেভেল এবং ইউনিট */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      প্রারম্ভিক মজুদ (Stock)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      name="initialStock"
+                      value={formData.initialStock}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      কম স্টক এলার্ট
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      name="minStockAlert"
+                      value={formData.minStockAlert}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-slate-800">
+                        পরিমাপক একক
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingNewUnit(!isAddingNewUnit)}
+                        className="text-[10px] font-bold text-emerald-600 hover:text-emerald-800"
+                        title="নতুন একক তৈরি করুন"
+                      >
+                        {isAddingNewUnit ? 'তালিকায়' : '+ নতুন'}
+                      </button>
+                    </div>
+
+                    {isAddingNewUnit ? (
+                      <div className="space-y-1.5 bg-emerald-50/80 p-2 rounded-xl border border-emerald-200 animate-in fade-in duration-150">
+                        <input
+                          type="text"
+                          placeholder="একক (যেমন: Bag / বস্তা)"
+                          value={newUnitName}
+                          onChange={(e) => setNewUnitName(e.target.value)}
+                          className="w-full px-2 py-1 bg-white border border-emerald-300 rounded-md text-xs font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        />
+                        <div className="flex space-x-1">
+                          <button
+                            type="button"
+                            onClick={handleCreateUnit}
+                            className="flex-1 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded transition-colors"
+                          >
+                            সেভ
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingNewUnit(false)}
+                            className="px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] rounded transition-colors"
+                          >
+                            বাতিল
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <select
+                        name="unit"
+                        value={formData.unit}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                      >
+                        {uniqueUnits.map((u) => (
+                          <option key={u} value={u}>{u}</option>
+                        ))}
+                        {formData.unit && !uniqueUnits.includes(formData.unit) && (
+                          <option value={formData.unit}>{formData.unit}</option>
+                        )}
+                      </select>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* সেকশন ৩: মিডিয়া ও পণ্যের ছবি */}
+              <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                  <span className="text-xs font-bold text-slate-800 flex items-center space-x-2">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                    <span>৩. পণ্যের ছবি ও মিডিয়া (ড্রাইভ সিঙ্ক)</span>
+                  </span>
+                  
+                  {/* আপলোড মোড সুইচ */}
+                  <div className="flex bg-slate-200/80 p-0.5 rounded-xl text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setImageUploadMode('upload')}
+                      className={`px-2.5 py-1 rounded-lg flex items-center space-x-1.5 transition-all ${
+                        imageUploadMode === 'upload' 
+                          ? 'bg-white text-emerald-800 shadow-2xs' 
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Upload className="w-3 h-3" />
+                      <span>ডিভাইস আপলোড</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageUploadMode('url')}
+                      className={`px-2.5 py-1 rounded-lg flex items-center space-x-1.5 transition-all ${
+                        imageUploadMode === 'url' 
+                          ? 'bg-white text-emerald-800 shadow-2xs' 
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Globe className="w-3 h-3" />
+                      <span>ইমেজ URL</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* ডিভাইস আপলোড ফিল্ড */}
+                {imageUploadMode === 'upload' && (
+                  <div className="space-y-3">
+                    <input
+                      type="file"
+                      id="add-product-file-input"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+
+                    {isProcessingImage ? (
+                      <div className="p-6 border-2 border-dashed border-emerald-300 rounded-2xl flex flex-col items-center justify-center space-y-2 bg-emerald-50/40 text-emerald-700 text-xs font-semibold">
+                        <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+                        <span>ছবি অপটিমাইজ ও কম্প্রেস করা হচ্ছে...</span>
+                      </div>
+                    ) : localImagePreview ? (
+                      <div className="flex items-center space-x-4 p-3.5 bg-white rounded-2xl border border-emerald-200 shadow-2xs">
+                        <div className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shrink-0 shadow-inner">
+                          <img
+                            src={localImagePreview}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-bold text-slate-900 block truncate">
+                            ছবি সফলভাবে সংযুক্ত হয়েছে
+                          </span>
+                          <span className="text-[11px] text-emerald-600 font-medium flex items-center space-x-1 mt-0.5">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>গুগল ড্রাইভ 'products image' ফোল্ডারে সেভ হবে</span>
+                          </span>
+                          <label
+                            htmlFor="add-product-file-input"
+                            className="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer underline inline-block mt-1"
+                          >
+                            ছবি পরিবর্তন করুন
+                          </label>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLocalImagePreview('');
+                            setImageBase64('');
+                          }}
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                          title="ছবি মুছে ফেলুন"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="add-product-file-input"
+                        className="group border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-5 flex flex-col items-center justify-center bg-white hover:bg-emerald-50/20 cursor-pointer transition-all text-center"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-emerald-100 text-slate-500 group-hover:text-emerald-600 flex items-center justify-center mb-2 transition-colors">
+                          <UploadCloud className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800 group-hover:text-emerald-700">
+                          কম্পিউটার বা মোবাইল থেকে ছবি নির্বাচন করুন
+                        </span>
+                        <span className="text-[11px] text-slate-400 mt-0.5">
+                          JPG, PNG, WebP সমর্থিত • অটো কম্প্রেশন সক্রিয়
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                )}
+
+                {/* ইমেজ URL ফিল্ড */}
+                {imageUploadMode === 'url' && (
+                  <div className="flex items-center space-x-3">
+                    <div className="relative flex-1">
+                      <Globe className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                      <input
+                        type="url"
+                        name="imageUrl"
+                        placeholder="https://example.com/product-photo.jpg"
+                        value={formData.imageUrl}
+                        onChange={handleChange}
+                        className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-2xs"
+                      />
+                    </div>
+                    {formData.imageUrl ? (
+                      <div className="w-11 h-11 rounded-xl border border-slate-200 overflow-hidden shrink-0 shadow-2xs">
+                        <img
+                          src={formData.imageUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.src = 'https://via.placeholder.com/60?text=Error'; }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-11 h-11 rounded-xl border border-dashed border-slate-200 flex items-center justify-center shrink-0 text-slate-300">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* SEO ক্যাপশন */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                    <span>ছবির ক্যাপশন / Alt Text (SEO অপটিমাইজেশন)</span>
+                    <span className="text-[10px] text-slate-400 font-normal">গুগল ইমেজ সার্চ সহায়িকা</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="imageCaption"
+                    placeholder="যেমন: চিনিগুঁড়া সুগন্ধি চাল ১ কেজি প্যাকেট - ফ্রন্ট সাইড"
+                    value={formData.imageCaption}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              {/* সেকশন ৪: বিবরণ ও বৈশিষ্ট্য */}
+              <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                  <span className="text-xs font-bold text-slate-800 flex items-center space-x-2">
+                    <span className="w-2 h-2 rounded-full bg-violet-500"></span>
+                    <span>৪. বিবরণ ও মাল্টি-ফিচার বৈশিষ্ট্য</span>
+                  </span>
+                </div>
+
+                {/* সংক্ষিপ্ত বিবরণ */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center space-x-1.5">
+                    <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>সংক্ষিপ্ত বিবরণ (Short Description)</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="shortDescription"
+                    placeholder="যেমন: প্রিমিয়াম কোয়ালিটি লম্বা দানার সুগন্ধি চাল, ১০০% প্রাকৃতিক"
+                    value={formData.shortDescription}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-2xs"
+                  />
+                </div>
+
+                {/* মাল্টি ফিচারসমূহ */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+                      <ListPlus className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>পণ্যের বৈশিষ্ট্যসমূহ (Multi Features)</span>
+                    </label>
+                    <span className="text-[11px] text-slate-400 font-medium">Enter চেপে যুক্ত করুন</span>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      placeholder="নতুন বৈশিষ্ট্য লিখুন (যেমন: অর্গানিক, রাসায়নিক মুক্ত)..."
+                      value={featureInput}
+                      onChange={(e) => setFeatureInput(e.target.value)}
+                      onKeyDown={handleFeatureKeyDown}
+                      className="flex-1 px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAddFeature()}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm shrink-0 active:scale-95"
+                    >
+                      + যোগ
+                    </button>
+                  </div>
+
+                  {/* দ্রুত প্রিসেট বাটন */}
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    <span className="text-[11px] text-slate-400 self-center mr-1">দ্রুত পছন্দ:</span>
+                    {QUICK_FEATURE_PRESETS.map((preset) => {
+                      const isAdded = features.includes(preset);
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => !isAdded && handleAddFeature(preset)}
+                          disabled={isAdded}
+                          className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all ${
+                            isAdded
+                              ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                              : 'bg-white text-slate-600 hover:text-emerald-700 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 shadow-2xs'
+                          }`}
+                        >
+                          + {preset}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* সিলেক্টেড ফিচার চিপস */}
+                  {features.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-1.5">
+                      {features.map((feat, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center px-3 py-1 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-2xs group"
+                        >
+                          <span>{feat}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFeature(idx)}
+                            className="ml-2 text-emerald-400 hover:text-rose-600 transition-colors"
+                            title="মুছে ফেলুন"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* বিস্তারিত বিবরণ (রিচ টেক্সট এডিটর) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center space-x-1.5">
+                    <AlignLeft className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>বিস্তারিত বিবরণ (Rich Text Description)</span>
+                  </label>
+                  <RichTextEditor
+                    value={formData.description}
+                    onChange={(newHtml) => setFormData((prev) => ({ ...prev, description: newHtml }))}
+                    placeholder="পণ্যের পূর্ণ বিবরণ, ব্যবহারবিধি বা সংরক্ষণ নির্দেশিকা লিখুন..."
+                  />
+                </div>
+              </div>
+
+            </div>
+
+            {/* ডান কলাম: লাইভ ক্যাটালগ কার্ড প্রিভিউ ও ফাইন্যান্সিয়াল ইনসাইটস (৫ কলাম) */}
+            <div className={`lg:col-span-5 p-5 sm:p-7 bg-gradient-to-b from-slate-50/60 to-white space-y-6 ${mobileTab === 'form' ? 'hidden lg:block' : 'block'}`}>
+              
+              <div className="sticky top-4 space-y-5">
+                
+                {/* প্রিভিউ হেডার */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <h4 className="text-sm font-black text-slate-900 tracking-tight flex items-center space-x-1.5">
+                      <Sparkles className="w-4 h-4 text-emerald-600" />
+                      <span>লাইভ ক্যাটালগ কার্ড প্রিভিউ</span>
+                    </h4>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-full">
+                    কাস্টমার ভিউ
+                  </span>
+                </div>
+
+                {/* স্টোরফ্রন্ট কার্ড প্রিভিউ (ProductCatalog-এর সাথে হুবহু সামঞ্জস্যপূর্ণ) */}
+                <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/50 p-4 transition-all duration-300 relative overflow-hidden group">
+                  
+                  {/* ফ্লোটিং স্টক ব্যাজ */}
+                  <div className="absolute top-6 left-6 z-10">
+                    {initialStockNum <= 0 ? (
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-xs">
+                        স্টক নেই
+                      </span>
+                    ) : initialStockNum <= minStockNum ? (
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500 text-white shadow-xs">
+                        সীমিত স্টক ({initialStockNum} {formData.unit})
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-600 text-white shadow-xs">
+                        মজুদ আছে ({initialStockNum} {formData.unit})
+                      </span>
+                    )}
+                  </div>
+
+                  {/* কার্ড ইমেজ ফ্রেম */}
+                  <div className="w-full h-44 rounded-2xl bg-gradient-to-tr from-slate-100 to-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center relative mb-3.5">
+                    {currentImageSource ? (
+                      <img
+                        src={currentImageSource}
+                        alt={formData.productName || 'Preview'}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-slate-300 space-y-1.5">
+                        <ImageIcon className="w-10 h-10 stroke-[1.2]" />
+                        <span className="text-[11px] font-medium text-slate-400">ছবি আপলোড করুন</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ক্যাটাগরি ও সাব-ক্যাটাগরি ব্যাজ */}
+                  <div className="flex items-center space-x-1.5 mb-1.5">
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                      {formData.category || 'ক্যাটাগরি'}
+                    </span>
+                    {formData.subCategory && (
+                      <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                        {formData.subCategory}
+                      </span>
+                    )}
+                    {formData.barcode && (
+                      <span className="text-[10px] font-mono text-slate-400 ml-auto">
+                        #{formData.barcode}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* পণ্যের নাম */}
+                  <h5 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2 min-h-[2.5rem]">
+                    {formData.productName.trim() || 'পণ্যের নাম লিখুন...'}
+                  </h5>
+
+                  {/* সংক্ষিপ্ত বিবরণ */}
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-1 min-h-[1.1rem]">
+                    {formData.shortDescription.trim() || 'সংক্ষিপ্ত বৈশিষ্ট্য এখানে দেখা যাবে'}
+                  </p>
+
+                  {/* ফিচার ট্যাগস */}
+                  {features.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {features.slice(0, 3).map((f, i) => (
+                        <span key={i} className="text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                          ✓ {f}
+                        </span>
+                      ))}
+                      {features.length > 3 && (
+                        <span className="text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                          +{features.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* মূল্য ও কার্ট বাটন */}
+                  <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">বিক্রয়মূল্য</span>
+                      <span className="text-lg font-black text-slate-900">
+                        {currencySymbol}{sell > 0 ? sell.toFixed(2) : '০.০০'}
+                      </span>
+                      <span className="text-[11px] text-slate-500 ml-1 font-medium">
+                        /{formData.unit}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled
+                      className="px-4 py-2 bg-emerald-600/90 text-white rounded-xl text-xs font-bold shadow-sm opacity-90 cursor-not-allowed"
+                    >
+                      + কার্টে যোগ
+                    </button>
+                  </div>
+
+                </div>
+
+                {/* আর্থিক লাভ-ক্ষতি ও স্টক ইনভেস্টমেন্ট সারসংক্ষেপ */}
+                <div className="bg-slate-900 text-white rounded-3xl p-5 space-y-4 shadow-xl">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <span className="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
+                      <Coins className="w-4 h-4 text-emerald-400" />
+                      <span>ইনভেন্টরি ফাইন্যান্সিয়াল প্রজেকশন</span>
+                    </span>
+                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold border border-emerald-500/30">
+                      {formData.initialStock} {formData.unit} স্টক
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="bg-slate-800/80 p-3 rounded-2xl border border-slate-700/60">
+                      <span className="text-[10px] text-slate-400 block mb-0.5">মোট ক্রয় বিনিয়োগ</span>
+                      <span className="text-sm font-bold text-slate-100">
+                        {currencySymbol}{totalStockInvestment.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="bg-slate-800/80 p-3 rounded-2xl border border-slate-700/60">
+                      <span className="text-[10px] text-slate-400 block mb-0.5">সম্ভাব্য বিক্রয় মূল্য</span>
+                      <span className="text-sm font-bold text-emerald-400">
+                        {currencySymbol}{totalPotentialRevenue.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-800/50 rounded-2xl border border-slate-700/60 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">সম্ভাব্য মোট প্রফিট (মজুদ শেষ হলে)</span>
+                      <span className={`text-base font-black ${totalPotentialProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {currencySymbol}{totalPotentialProfit.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400 block">মার্জিন</span>
+                      <span className="text-xs font-bold text-slate-200">
+                        {profitMarginPercent}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ডাটাবেস নিরাপত্তা ও সিঙ্ক আশ্বাস বার্তা */}
+                <div className="p-3.5 bg-emerald-50/70 rounded-2xl border border-emerald-200/80 flex items-start space-x-3 text-xs text-emerald-900">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <p className="text-[11px] leading-relaxed text-emerald-800">
+                    সংরক্ষণ বাটনে ক্লিক করার সাথে সাথে পণ্যটি গুগল শিটের <strong>Products</strong> ট্যাবে রিয়েল-টাইম সেভ হবে এবং সংযুক্ত ছবি স্বয়ংক্রিয়ভাবে গুগল ড্রাইভে আপলোড হবে।
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* মডাল ফুটার একশন বার (Sticky Bottom) */}
+          <div className="p-4 sm:px-8 sm:py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+            <div className="text-xs text-slate-500 hidden sm:block">
+              {formData.productName.trim() ? (
+                <span className="text-emerald-700 font-semibold flex items-center space-x-1.5">
+                  <Check className="w-3.5 h-3.5" />
+                  <span>পণ্য প্রস্তুত: <strong>{formData.productName.trim()}</strong></span>
+                </span>
+              ) : (
+                <span>* আবশ্যক ফিল্ডসমূহ পূরণ করুন</span>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-3 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="px-5 py-2.5 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100 transition-all active:scale-95 disabled:opacity-50"
+              >
+                বাতিল করুন
+              </button>
+              
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-7 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-600/25 transition-all flex items-center space-x-2 active:scale-95 disabled:opacity-50 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>ডাটাবেসে সেভ হচ্ছে...</span>
+                  </>
+                ) : (
+                  <>
+                    <PackagePlus className="w-4 h-4" />
+                    <span>ডাটাবেসে পণ্য যোগ করুন</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  );
+}

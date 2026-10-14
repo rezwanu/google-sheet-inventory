@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* গ্লোবাল স্ক্রোলবার কাস্টমাইজেশন */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* হাই-ডেনসিটি POS ইন্টারফেসের জন্য কম্প্যাক্ট স্টাইল */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors shadow-sm;
+  }
+  .btn-emerald {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+}
+
+/* ==========================================================================
+   প্রিন্ট সিএসএস আর্কিটেকচার (@media print) - Thermal 80mm & Standard A4
+   ========================================================================== */
+@media print {
+  /* প্রিন্ট পেজ মার্জিন রুল */
+  @page {
+    margin: 5mm;
+  }
+
+  /* স্ক্রিনের অপ্রয়োজনীয় উপাদান সম্পূর্ণ লুকিয়ে ফেলা */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* প্রিন্ট বাটন এবং ইউজার ইন্টারফেস কন্ট্রোল হাইড করা */
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  /* শুধুমাত্র ইনভয়েস কন্টেইনার এবং P&L অ্যানালিটিক্স কন্টেইনার প্রদর্শন */
+  #printable-invoice-container,
+  #printable-invoice-container *,
+  #printable-analytics-container,
+  #printable-analytics-container * {
+    visibility: visible !important;
+  }
+
+  /* পৃষ্ঠার শীর্ষবামে পজিশন করা */
+  #printable-invoice-container,
+  #printable-analytics-container {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    display: block !important;
+  }
+
+  /* পেজ ব্রেক নিয়ন্ত্রণ (টেবিল রো যেন প্রিন্টে ভেঙ্গে না যায়) */
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     ১. থার্মাল ৮০মিমি রোল স্পেসিফিক রুল (80mm POS Thermal Receipt)
+     ------------------------------------------------------------------------ */
+  body.print-mode-thermal {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 80mm !important;
+  }
+
+  body.print-mode-thermal .invoice-thermal-sheet {
+    width: 74mm !important;
+    max-width: 74mm !important;
+    padding: 2mm !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    font-size: 11px !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     ২. স্ট্যান্ডার্ড এ৪ পেপার স্পেসিফিক রুল (Standard A4 Paper Format)
+     ------------------------------------------------------------------------ */
+  body.print-mode-a4 {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  body.print-mode-a4 .invoice-a4-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    font-size: 12px !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+}
+
+/* ==========================================================================
+   রিচ টেক্সট এডিটর ও বিবরণী রেন্ডারার স্টাইল (বুলেট ও নাম্বারিং ফিক্স)
+   ========================================================================== */
+.rich-text-content ul,
+.rich-editor-content ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.rich-text-content ol,
+.rich-editor-content ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.rich-text-content li,
+.rich-editor-content li {
+  display: list-item !important;
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.rich-text-content a,
+.rich-editor-content a {
+  color: #4f46e5 !important;
+  text-decoration: underline !important;
+  font-weight: 500 !important;
+}
+
+.rich-text-content b,
+.rich-text-content strong,
+.rich-editor-content b,
+.rich-editor-content strong {
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+.rich-text-content i,
+.rich-text-content em,
+.rich-editor-content i,
+.rich-editor-content em {
+  font-style: italic !important;
+}
+
+.rich-text-content img,
+.rich-editor-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 0.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  display: block !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+}

@@ -1,0 +1,888 @@
+/**
+ * ============================================================================
+ * api.js - গুগল অ্যাপস স্ক্রিপ্ট ব্যাকএন্ড API ক্লায়েন্ট
+ * ============================================================================
+ * React ফ্রন্টএন্ড এবং Apps Script ওয়েব অ্যাপের মধ্যে যোগাযোগ তৈরি করে।
+ */
+
+/**
+ * প্রাথমিক ডাটা (Settings, Products, Users) সিঙ্ক করার মেথড
+ * @param {string} apiUrl - Apps Script Web App URL
+ */
+export async function fetchInitialData(apiUrl) {
+  if (!apiUrl || !apiUrl.trim()) {
+    throw new Error('API URL প্রদান করা হয়নি। অনুগ্রহ করে Settings এ গিয়ে URL দিন।');
+  }
+
+  const endpoint = `${apiUrl.trim()}${apiUrl.includes('?') ? '&' : '?'}action=getInitialData`;
+  const response = await fetch(endpoint, {
+    method: 'GET',
+    redirect: 'follow',
+  });
+
+  if (!response.ok) {
+    throw new Error(`সার্ভার এরর: ${response.status} ${response.statusText}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.message || 'ডাটা ফেচ ব্যর্থ হয়েছে।');
+  }
+
+  return result.data;
+}
+
+/**
+ * নতুন স্টক যোগ করার API কল (action: 'addStock')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} stockData - স্টকের বিবরণ
+ */
+export async function postAddStock(apiUrl, stockData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: স্টক শুধুমাত্র লোকাল স্টোরেজে আপডেট হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'addStock',
+    ...stockData,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    // Google Apps Script CORS হ্যান্ডলিংয়ের জন্য text/plain ব্যবহার করলে প্রাক-ফ্লাইট এরর এড়ানো যায়
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  const result = await response.json();
+  return result;
+}
+
+/**
+ * POS সেলস অর্ডার প্রসেস করার API কল (action: 'createSale')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} saleData - বিক্রয় অর্ডারের বিবরণ
+ */
+export async function postCreateSale(apiUrl, saleData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: অর্ডার শুধুমাত্র লোকাল ক্যাশে সফল হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'createSale',
+    ...saleData,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  const result = await response.json();
+  return result;
+}
+
+/**
+ * নতুন পণ্য তৈরি করার API কল (action: 'addProduct')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} productData - পণ্যের তথ্য
+ */
+export async function postAddProduct(apiUrl, productData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: পণ্য শুধুমাত্র লোকাল স্টোরেজে যুক্ত হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'addProduct',
+    ...productData,
+    barcode: productData.barcode || productData.Barcode || '',
+    Barcode: productData.barcode || productData.Barcode || '',
+    productName: productData.productName || productData.ProductName || '',
+    ProductName: productData.productName || productData.ProductName || '',
+    category: productData.category || productData.Category || 'General',
+    Category: productData.category || productData.Category || 'General',
+    subCategory: productData.subCategory || productData.SubCategory || '',
+    SubCategory: productData.subCategory || productData.SubCategory || '',
+    imageUrl: productData.imageUrl || productData.ImageUrl || '',
+    ImageUrl: productData.imageUrl || productData.ImageUrl || '',
+    imageCaption: productData.imageCaption || productData.ImageCaption || '',
+    ImageCaption: productData.imageCaption || productData.ImageCaption || '',
+    imageBase64: productData.imageBase64 || productData.ImageBase64 || '',
+    imageMimeType: productData.imageMimeType || productData.ImageMimeType || '',
+    imageFileName: productData.imageFileName || productData.ImageFileName || '',
+    costPrice: Number(productData.costPrice !== undefined ? productData.costPrice : productData.CostPrice) || 0,
+    CostPrice: Number(productData.costPrice !== undefined ? productData.costPrice : productData.CostPrice) || 0,
+    sellingPrice: Number(productData.sellingPrice !== undefined ? productData.sellingPrice : productData.SellingPrice) || 0,
+    SellingPrice: Number(productData.sellingPrice !== undefined ? productData.sellingPrice : productData.SellingPrice) || 0,
+    initialStock: Number(productData.initialStock !== undefined ? productData.initialStock : (productData.stockQuantity !== undefined ? productData.stockQuantity : productData.StockQuantity)) || 0,
+    stockQuantity: Number(productData.initialStock !== undefined ? productData.initialStock : (productData.stockQuantity !== undefined ? productData.stockQuantity : productData.StockQuantity)) || 0,
+    minStockAlert: Number(productData.minStockAlert !== undefined ? productData.minStockAlert : productData.MinStockAlert) || 5,
+    unit: productData.unit || productData.Unit || 'Pcs',
+    Unit: productData.unit || productData.Unit || 'Pcs',
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  const result = await response.json();
+  return result;
+}
+
+/**
+ * বিদ্যমান পণ্য আপডেট করার API কল (action: 'updateProduct')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} productData - পণ্যের হালনাগাদ তথ্য
+ */
+export async function postUpdateProduct(apiUrl, productData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: পণ্য শুধুমাত্র লোকাল স্টোরেজে আপডেট হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'updateProduct',
+    ...productData,
+    productId: productData.productId || productData.ProductID || '',
+    ProductID: productData.productId || productData.ProductID || '',
+    barcode: productData.barcode || productData.Barcode || '',
+    Barcode: productData.barcode || productData.Barcode || '',
+    productName: productData.productName || productData.ProductName || '',
+    ProductName: productData.productName || productData.ProductName || '',
+    category: productData.category || productData.Category || 'General',
+    Category: productData.category || productData.Category || 'General',
+    subCategory: productData.subCategory !== undefined ? productData.subCategory : (productData.SubCategory || ''),
+    SubCategory: productData.subCategory !== undefined ? productData.subCategory : (productData.SubCategory || ''),
+    imageUrl: productData.imageUrl !== undefined ? productData.imageUrl : (productData.ImageUrl || ''),
+    ImageUrl: productData.imageUrl !== undefined ? productData.imageUrl : (productData.ImageUrl || ''),
+    imageCaption: productData.imageCaption !== undefined ? productData.imageCaption : (productData.ImageCaption || ''),
+    ImageCaption: productData.imageCaption !== undefined ? productData.imageCaption : (productData.ImageCaption || ''),
+    imageBase64: productData.imageBase64 || productData.ImageBase64 || '',
+    imageMimeType: productData.imageMimeType || productData.ImageMimeType || '',
+    imageFileName: productData.imageFileName || productData.ImageFileName || '',
+    costPrice: Number(productData.costPrice !== undefined ? productData.costPrice : productData.CostPrice) || 0,
+    CostPrice: Number(productData.costPrice !== undefined ? productData.costPrice : productData.CostPrice) || 0,
+    sellingPrice: Number(productData.sellingPrice !== undefined ? productData.sellingPrice : productData.SellingPrice) || 0,
+    SellingPrice: Number(productData.sellingPrice !== undefined ? productData.sellingPrice : productData.SellingPrice) || 0,
+    stockQuantity: Number(productData.stockQuantity !== undefined ? productData.stockQuantity : productData.StockQuantity) || 0,
+    StockQuantity: Number(productData.stockQuantity !== undefined ? productData.stockQuantity : productData.StockQuantity) || 0,
+    minStockAlert: Number(productData.minStockAlert !== undefined ? productData.minStockAlert : productData.MinStockAlert) || 5,
+    unit: productData.unit || productData.Unit || 'Pcs',
+    Unit: productData.unit || productData.Unit || 'Pcs',
+    shortDescription: productData.shortDescription !== undefined ? productData.shortDescription : (productData.ShortDescription || ''),
+    description: productData.description !== undefined ? productData.description : (productData.Description || ''),
+    features: productData.features !== undefined ? productData.features : (productData.Features || ''),
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  const result = await response.json();
+  return result;
+}
+
+/**
+ * বিদ্যমান পণ্য মুছে ফেলার API কল (action: 'deleteProduct')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {string} productId - পণ্যের আইডি
+ */
+export async function postDeleteProduct(apiUrl, productId) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: পণ্য শুধুমাত্র লোকাল স্টোরেজ থেকে মুছে ফেলা হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'deleteProduct',
+    productId: productId,
+    ProductID: productId,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  const result = await response.json();
+  return result;
+}
+
+/**
+ * স্টোর সেটিংস আপডেট করার API কল (action: 'updateSettings')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} settingsData - সেটিংস ডাটা
+ */
+export async function postUpdateSettings(apiUrl, settingsData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: সেটিংস লোকাল স্টোরেজে আপডেট হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'updateSettings',
+    ...settingsData,
+    // PascalCase এবং camelCase উভয় সাপোর্ট নিশ্চিত করা
+    StoreName: settingsData.StoreName || settingsData.storeName || '',
+    storeName: settingsData.StoreName || settingsData.storeName || '',
+    LogoUrl: settingsData.LogoUrl || settingsData.logoUrl || '',
+    logoUrl: settingsData.LogoUrl || settingsData.logoUrl || '',
+    CurrencySymbol: settingsData.CurrencySymbol || settingsData.currencySymbol || '৳',
+    currencySymbol: settingsData.CurrencySymbol || settingsData.currencySymbol || '৳',
+    TaxRatePercent: Number(settingsData.TaxRatePercent !== undefined ? settingsData.TaxRatePercent : settingsData.taxRatePercent) || 0,
+    taxRatePercent: Number(settingsData.TaxRatePercent !== undefined ? settingsData.TaxRatePercent : settingsData.taxRatePercent) || 0,
+    Address: settingsData.Address || settingsData.address || '',
+    address: settingsData.Address || settingsData.address || '',
+    Phone: settingsData.Phone || settingsData.phone || '',
+    phone: settingsData.Phone || settingsData.phone || '',
+    Email: settingsData.Email || settingsData.email || '',
+    email: settingsData.Email || settingsData.email || '',
+    ReceiptFooter: settingsData.ReceiptFooter || settingsData.receiptFooter || '',
+    receiptFooter: settingsData.ReceiptFooter || settingsData.receiptFooter || '',
+    ApiUrl: apiUrl.trim() || settingsData.apiUrl || settingsData.ApiUrl || '',
+    apiUrl: apiUrl.trim() || settingsData.apiUrl || settingsData.ApiUrl || '',
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  const result = await response.json();
+  return result;
+}
+
+/**
+ * নতুন ক্যাটাগরি তৈরি করার API কল (action: 'addCategory')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} categoryData - ক্যাটাগরি ডাটা
+ */
+export async function postAddCategory(apiUrl, categoryData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: ক্যাটাগরি শুধুমাত্র লোকাল স্টোরেজে যুক্ত হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'addCategory',
+    ...categoryData,
+    categoryName: categoryData.categoryName || categoryData.CategoryName || '',
+    CategoryName: categoryData.categoryName || categoryData.CategoryName || '',
+    subCategoryName: categoryData.subCategoryName || categoryData.SubCategoryName || '',
+    SubCategoryName: categoryData.subCategoryName || categoryData.SubCategoryName || '',
+    description: categoryData.description || categoryData.Description || '',
+    Description: categoryData.description || categoryData.Description || '',
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  const result = await response.json();
+  return result;
+}
+
+/**
+ * নতুন পরিমাপক একক তৈরি করার API কল (action: 'addUnit')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} unitData - এককের ডাটা
+ */
+export async function postAddUnit(apiUrl, unitData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: পরিমাপক একক শুধুমাত্র লোকাল স্টোরেজে যুক্ত হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'addUnit',
+    ...unitData,
+    unitName: unitData.unitName || unitData.UnitName || '',
+    UnitName: unitData.unitName || unitData.UnitName || '',
+    shortName: unitData.shortName || unitData.ShortName || unitData.unitName || '',
+    ShortName: unitData.shortName || unitData.ShortName || unitData.unitName || '',
+    description: unitData.description || unitData.Description || '',
+    Description: unitData.description || unitData.Description || '',
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  const result = await response.json();
+  return result;
+}
+
+/**
+ * গুগল শিট থেকে সম্পূর্ণ বিক্রয় হিস্ট্রি লোড করার API কল (action: 'getSales')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {number} limit - কতটি রেকর্ড লোড হবে (ডিফল্ট ১০০০)
+ */
+export async function fetchSalesHistory(apiUrl, limit = 1000) {
+  if (!apiUrl || !apiUrl.trim()) return [];
+
+  const endpoint = `${apiUrl.trim()}${apiUrl.includes('?') ? '&' : '?'}action=getSales&limit=${limit}`;
+  const response = await fetch(endpoint, {
+    method: 'GET',
+    redirect: 'follow',
+  });
+
+  if (!response.ok) {
+    throw new Error(`সার্ভার এরর: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (result.success && Array.isArray(result.data)) {
+    return result.data;
+  }
+  return [];
+}
+
+/**
+ * গুগল শিট থেকে সম্পূর্ণ কাস্টমার তালিকা ফেচ করার API কল (action: 'getCustomers')
+ * @param {string} apiUrl - Apps Script Web App URL
+ */
+export async function fetchCustomers(apiUrl) {
+  if (!apiUrl || !apiUrl.trim()) return [];
+
+  const endpoint = `${apiUrl.trim()}${apiUrl.includes('?') ? '&' : '?'}action=getCustomers`;
+  const response = await fetch(endpoint, {
+    method: 'GET',
+    redirect: 'follow',
+  });
+
+  if (!response.ok) {
+    throw new Error(`সার্ভার এরর: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (result.success && Array.isArray(result.data)) {
+    return result.data;
+  }
+  return [];
+}
+
+/**
+ * গুগল শিটে নতুন কাস্টমার যোগ করার API কল (action: 'addCustomer')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} customerData - গ্রাহকের তথ্য
+ */
+export async function postAddCustomer(apiUrl, customerData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: কাস্টমার তথ্য লোকাল স্টোরেজে সেভ হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'addCustomer',
+    ...customerData,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  const result = await response.json();
+  return result;
+}
+
+/**
+ * গুগল শিটে কাস্টমার তথ্য আপডেট করার API কল (action: 'updateCustomer')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} customerData - গ্রাহকের তথ্য
+ */
+export async function postUpdateCustomer(apiUrl, customerData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: গ্রাহকের তথ্য লোকাল স্টোরেজে আপডেট হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'updateCustomer',
+    ...customerData,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  return await response.json();
+}
+
+/**
+ * গুগল শিট থেকে কাস্টমার মুছে ফেলার API কল (action: 'deleteCustomer')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {string} customerId - কাস্টমার আইডি
+ * @param {string} phone - ফোন নম্বর
+ */
+export async function postDeleteCustomer(apiUrl, customerId, phone) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: গ্রাহক লোকাল ডাটাবেস থেকে মুছে ফেলা হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'deleteCustomer',
+    customerId: customerId,
+    phone: phone,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  return await response.json();
+}
+
+/**
+ * ইনভয়েস নম্বর দিয়ে গুগল শিট থেকে বিক্রয়ের তথ্য ফেচ করার API কল (action: 'getSaleByInvoice')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {string} invoiceNo - ইনভয়েস নম্বর বা রেফারেন্স আইডি
+ */
+export async function fetchSaleByInvoice(apiUrl, invoiceNo) {
+  if (!apiUrl || !apiUrl.trim() || !invoiceNo || !invoiceNo.trim()) return null;
+
+  const endpoint = `${apiUrl.trim()}${apiUrl.includes('?') ? '&' : '?'}action=getSaleByInvoice&invoiceNo=${encodeURIComponent(invoiceNo.trim())}`;
+  const response = await fetch(endpoint, {
+    method: 'GET',
+    redirect: 'follow',
+  });
+
+  if (!response.ok) {
+    throw new Error(`সার্ভার এরর: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (result.success && result.data) {
+    return result.data;
+  }
+  return null;
+}
+
+/**
+ * গুগল শিট থেকে কুপনের তালিকা ফেচ করার API কল (action: 'getCoupons')
+ * @param {string} apiUrl - Apps Script Web App URL
+ */
+export async function fetchCoupons(apiUrl) {
+  if (!apiUrl || !apiUrl.trim()) return [];
+
+  const endpoint = `${apiUrl.trim()}${apiUrl.includes('?') ? '&' : '?'}action=getCoupons`;
+  const response = await fetch(endpoint, {
+    method: 'GET',
+    redirect: 'follow',
+  });
+
+  if (!response.ok) {
+    throw new Error(`সার্ভার এরর: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (result.success && Array.isArray(result.data)) {
+    return result.data;
+  }
+  return [];
+}
+
+/**
+ * গুগল শিটে নতুন কুপন যোগ করার API কল (action: 'addCoupon')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} couponData - কুপনের তথ্য
+ */
+export async function postAddCoupon(apiUrl, couponData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: কুপন শুধুমাত্র লোকাল স্টোরেজে তৈরি হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'addCoupon',
+    ...couponData,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  return await response.json();
+}
+
+/**
+ * গুগল শিটে বিদ্যমান কুপন আপডেট করার API কল (action: 'updateCoupon')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} couponData - কুপনের তথ্য
+ */
+export async function postUpdateCoupon(apiUrl, couponData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: কুপন শুধুমাত্র লোকাল স্টোরেজে আপডেট হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'updateCoupon',
+    ...couponData,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  return await response.json();
+}
+
+/**
+ * গুগল শিট থেকে কুপন মুছে ফেলার API কল (action: 'deleteCoupon')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {string} couponId - কুপন আইডি
+ * @param {string} couponCode - কুপন কোড
+ */
+export async function postDeleteCoupon(apiUrl, couponId, couponCode) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: কুপন লোকাল ডাটাবেস থেকে মুছে ফেলা হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'deleteCoupon',
+    couponId: couponId,
+    couponCode: couponCode,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  return await response.json();
+}
+
+/**
+ * ============================================================================
+ * ব্যবহারকারী ও স্টাফ অ্যাকাউন্ট API মেথডসমূহ
+ * ============================================================================
+ */
+
+/**
+ * গুগল শিট থেকে সকল ব্যবহারকারী তালিকা আনার API কল (action: 'getUsers')
+ * @param {string} apiUrl - Apps Script Web App URL
+ */
+export async function fetchUsers(apiUrl) {
+  if (!apiUrl || !apiUrl.trim()) return [];
+
+  const endpoint = `${apiUrl.trim()}${apiUrl.includes('?') ? '&' : '?'}action=getUsers`;
+  const response = await fetch(endpoint, {
+    method: 'GET',
+    redirect: 'follow',
+  });
+
+  if (!response.ok) {
+    throw new Error(`সার্ভার এরর: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (result.success && Array.isArray(result.data)) {
+    return result.data;
+  }
+  return [];
+}
+
+/**
+ * গুগল শিটে নতুন ব্যবহারকারী তৈরি (এডমিন কর্তৃক রোল নির্বাচন সহ) API কল (action: 'addUser')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} userData - ব্যবহারকারীর তথ্য
+ */
+export async function postAddUser(apiUrl, userData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: ব্যবহারকারী লোকাল স্টোরেজে তৈরি হয়েছে।',
+      data: userData,
+    };
+  }
+
+  const payload = {
+    action: 'addUser',
+    ...userData,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  return await response.json();
+}
+
+/**
+ * সাধারণ গ্রাহক সাইনআপ API কল (action: 'registerUser')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} userData - রেজিস্ট্রেশন ফর্ম ডাটা
+ */
+export async function postRegisterUser(apiUrl, userData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: অ্যাকাউন্ট শুধুমাত্র লোকাল ব্রাউজারে সংরক্ষিত হয়েছে।',
+      data: { ...userData, Role: 'Customer' },
+    };
+  }
+
+  const payload = {
+    action: 'registerUser',
+    ...userData,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  return await response.json();
+}
+
+/**
+ * ব্যবহারকারীর প্রোফাইল ও ভূমিকা আপডেট API কল (action: 'updateUser')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} userData - ব্যবহারকারীর আপডেট তথ্য
+ */
+export async function postUpdateUser(apiUrl, userData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: তথ্য লোকাল স্টোরেজে আপডেট হয়েছে।',
+      data: userData,
+    };
+  }
+
+  const payload = {
+    action: 'updateUser',
+    ...userData,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  return await response.json();
+}
+
+/**
+ * ব্যবহারকারী মুছে ফেলার API কল (action: 'deleteUser')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {string} userId - ইউজার আইডি
+ * @param {string} [phone] - ফোন নম্বর
+ * @param {string} [email] - ইমেইল
+ */
+export async function postDeleteUser(apiUrl, userId, phone = '', email = '') {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: ব্যবহারকারী লোকাল স্টোরেজ থেকে মুছে ফেলা হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'deleteUser',
+    userId,
+    phone,
+    email,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  return await response.json();
+}
+
+/**
+ * ব্যবহারকারী লাইভ লগইন ভেরিফিকেশন API কল (action: 'loginUser')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} credentials - { identifier, pin, role }
+ */
+export async function postLoginUser(apiUrl, credentials) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: false,
+      message: 'API URL কনফিগার করা নেই।',
+    };
+  }
+
+  const payload = {
+    action: 'loginUser',
+    ...credentials,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  return await response.json();
+}
+
+/**
+ * ব্যবহারকারীর প্রোফাইল ছবি গুগল ড্রাইভে আপলোড API কল (action: 'uploadUserAvatar')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} uploadData - { userId, userName, imageBase64, imageMimeType, avatarUrl }
+ */
+export async function postUploadUserAvatar(apiUrl, uploadData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: ছবি লোকাল প্রিভিউ হিসেবে সংরক্ষিত হয়েছে।',
+      url: uploadData.avatarUrl || uploadData.imageBase64 || '',
+      avatarUrl: uploadData.avatarUrl || uploadData.imageBase64 || '',
+    };
+  }
+
+  const payload = {
+    action: 'uploadUserAvatar',
+    ...uploadData,
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  return await response.json();
+}
