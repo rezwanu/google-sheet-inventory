@@ -61,7 +61,8 @@ import {
   isDemoProduct,
   clearDemoData,
   sanitizeSettings,
-  extractLogoFromObject
+  extractLogoFromObject,
+  DEFAULT_APPS_SCRIPT_URL
 } from './services/storage';
 
 import {
@@ -385,7 +386,7 @@ export default function App() {
 
   // ৩. গুগল শিট API-এর সাথে ব্যাকগ্রাউন্ড ডাটা সিঙ্ক ফাংশন
   const handleSync = useCallback(async (manual = true, targetApiUrl = null) => {
-    const effectiveApiUrl = (targetApiUrl || settings.apiUrl || '').trim();
+    const effectiveApiUrl = (targetApiUrl || settings.apiUrl || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (!effectiveApiUrl) {
       setSyncStatus('offline');
       if (manual) {
@@ -552,8 +553,9 @@ export default function App() {
     setProducts(cleanReal);
     const cleanCustomers = clearDemoCustomers();
     setCustomers(cleanCustomers);
-    if (settings.apiUrl) {
-      handleSync(false, settings.apiUrl);
+    const targetUrl = (settings.apiUrl || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (targetUrl) {
+      handleSync(false, targetUrl);
     }
   }, [settings.apiUrl]);
 

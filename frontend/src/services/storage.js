@@ -51,10 +51,13 @@ export const DEFAULT_USERS = [
 // প্রাথমিক ডিফল্ট কাস্টমার ডাটাবেস (কোনো ডামি গ্রাহক থাকবে না)
 export const DEFAULT_CUSTOMERS = [];
 
+// গুগল অ্যাপস স্ক্রিপ্ট ব্যাকএন্ড Web App URL (ডিফল্ট ক্লাউড ডাটাবেস)
+export const DEFAULT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbycCBTqIaaQUpAPrJwF1EEEeaZD7CmYamE9AF4u_v0bJFRZaoMRmKZ8wGBGt2MLEwsg/exec';
+
 // পরিবেশ ভেরিয়েবল বা বিল্ট-ইন কনফিগারেশন থেকে ডিফল্ট API URL (Vercel বা .env)
 const ENV_API_URL = (
   (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.VITE_API_URL || import.meta.env.VITE_APPS_SCRIPT_URL)) ||
-  ''
+  DEFAULT_APPS_SCRIPT_URL
 ).trim();
 
 // প্রাথমিক ডিফল্ট সেটিংস (কোনো ডামি বা ফেক তথ্য থাকবে না)
@@ -258,7 +261,8 @@ export function sanitizeSettings(settings) {
   cleaned.logoUrl = formattedLogo;
 
   // ৮. API URL
-  const api = (cleaned.apiUrl || cleaned.ApiUrl || settings.apiUrl || settings.ApiUrl || ENV_API_URL || '').trim();
+  const candidateApi = String(cleaned.apiUrl || cleaned.ApiUrl || settings.apiUrl || settings.ApiUrl || '').trim();
+  const api = candidateApi || ENV_API_URL || DEFAULT_APPS_SCRIPT_URL;
   cleaned.apiUrl = api;
   cleaned.ApiUrl = api;
 
