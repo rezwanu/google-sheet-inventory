@@ -51,6 +51,12 @@ export const DEFAULT_USERS = [
 // প্রাথমিক ডিফল্ট কাস্টমার ডাটাবেস (কোনো ডামি গ্রাহক থাকবে না)
 export const DEFAULT_CUSTOMERS = [];
 
+// পরিবেশ ভেরিয়েবল বা বিল্ট-ইন কনফিগারেশন থেকে ডিফল্ট API URL (Vercel বা .env)
+const ENV_API_URL = (
+  (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.VITE_API_URL || import.meta.env.VITE_APPS_SCRIPT_URL)) ||
+  ''
+).trim();
+
 // প্রাথমিক ডিফল্ট সেটিংস (কোনো ডামি বা ফেক তথ্য থাকবে না)
 export const DEFAULT_SETTINGS = {
   SettingID: 'SETTING-1',
@@ -62,7 +68,7 @@ export const DEFAULT_SETTINGS = {
   Phone: '',
   Email: '',
   ReceiptFooter: '',
-  apiUrl: '', // গুগল অ্যাপস স্ক্রিপ্ট Web App URL
+  apiUrl: ENV_API_URL, // গুগল অ্যাপস স্ক্রিপ্ট Web App URL
 };
 
 // পরিচিত ডামি সেটিংসের মানসমূহ (লোকাল ক্যাশ বা শিট থেকে পরিচ্ছন্ন করার জন্য)
@@ -252,7 +258,7 @@ export function sanitizeSettings(settings) {
   cleaned.logoUrl = formattedLogo;
 
   // ৮. API URL
-  const api = (cleaned.apiUrl || cleaned.ApiUrl || settings.apiUrl || settings.ApiUrl || '').trim();
+  const api = (cleaned.apiUrl || cleaned.ApiUrl || settings.apiUrl || settings.ApiUrl || ENV_API_URL || '').trim();
   cleaned.apiUrl = api;
   cleaned.ApiUrl = api;
 
@@ -263,12 +269,16 @@ export function sanitizeSettings(settings) {
 export function getLocalSettings() {
   try {
     const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    if (!data) return { ...DEFAULT_SETTINGS };
+    if (!data) return { ...DEFAULT_SETTINGS, apiUrl: ENV_API_URL };
     const parsed = JSON.parse(data);
     const sanitized = sanitizeSettings(parsed);
+    if (!sanitized.apiUrl && ENV_API_URL) {
+      sanitized.apiUrl = ENV_API_URL;
+      sanitized.ApiUrl = ENV_API_URL;
+    }
     return sanitized;
   } catch (e) {
-    return { ...DEFAULT_SETTINGS };
+    return { ...DEFAULT_SETTINGS, apiUrl: ENV_API_URL };
   }
 }
 

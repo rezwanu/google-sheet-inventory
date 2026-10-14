@@ -384,8 +384,9 @@ export default function App() {
   };
 
   // ৩. গুগল শিট API-এর সাথে ব্যাকগ্রাউন্ড ডাটা সিঙ্ক ফাংশন
-  const handleSync = useCallback(async (manual = true) => {
-    if (!settings.apiUrl || !settings.apiUrl.trim()) {
+  const handleSync = useCallback(async (manual = true, targetApiUrl = null) => {
+    const effectiveApiUrl = (targetApiUrl || settings.apiUrl || '').trim();
+    if (!effectiveApiUrl) {
       setSyncStatus('offline');
       if (manual) {
         showToast('API URL কনফিগার করা হয়নি। সেটিংস এ গিয়ে URL দিন।', 'warning');
@@ -395,7 +396,7 @@ export default function App() {
 
     setSyncStatus('syncing');
     try {
-      const data = await fetchInitialData(settings.apiUrl);
+      const data = await fetchInitialData(effectiveApiUrl);
       
       // সেটিংস আপডেট (গুগল শিট থেকে আসল সেটিংস সংরক্ষণ ও ডামি ডাটা প্রতিরোধ)
       if (data.settings) {
@@ -404,7 +405,7 @@ export default function App() {
           incoming = incoming.find(s => s && (extractLogoFromObject(s) || s.StoreName)) || incoming[0] || {};
         }
         const cleanIncoming = sanitizeSettings(incoming);
-        const resolvedApiUrl = (cleanIncoming.apiUrl || cleanIncoming.ApiUrl || settings.apiUrl || '').trim();
+        const resolvedApiUrl = (cleanIncoming.apiUrl || cleanIncoming.ApiUrl || effectiveApiUrl || '').trim();
 
         const mergedSettings = {
           ...settings,
@@ -552,9 +553,9 @@ export default function App() {
     const cleanCustomers = clearDemoCustomers();
     setCustomers(cleanCustomers);
     if (settings.apiUrl) {
-      handleSync(false);
+      handleSync(false, settings.apiUrl);
     }
-  }, []);
+  }, [settings.apiUrl]);
 
   // কার্ট পরিবর্তন হলে লোকাল স্টোরেজে সংরক্ষণ
   useEffect(() => {
@@ -1202,7 +1203,7 @@ export default function App() {
       }
 
       // নতুন API URL দিয়ে সরাসরি গুগল শিট Products ডাটাবেস থেকে রিয়েল পণ্য সিঙ্ক করা
-      await handleSync(true);
+      await handleSync(true, newSettings.apiUrl);
     } else {
       showToast('সেটিংস লোকাল স্টোরেজে সংরক্ষিত হয়েছে।', 'success');
     }
