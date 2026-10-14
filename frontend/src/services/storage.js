@@ -273,16 +273,17 @@ export function sanitizeSettings(settings) {
 export function getLocalSettings() {
   try {
     const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    if (!data) return { ...DEFAULT_SETTINGS, apiUrl: ENV_API_URL };
+    if (!data) return { ...DEFAULT_SETTINGS, apiUrl: ENV_API_URL || DEFAULT_APPS_SCRIPT_URL };
     const parsed = JSON.parse(data);
     const sanitized = sanitizeSettings(parsed);
-    if (!sanitized.apiUrl && ENV_API_URL) {
-      sanitized.apiUrl = ENV_API_URL;
-      sanitized.ApiUrl = ENV_API_URL;
+    if (!sanitized.apiUrl || !sanitized.apiUrl.trim()) {
+      sanitized.apiUrl = ENV_API_URL || DEFAULT_APPS_SCRIPT_URL;
+      sanitized.ApiUrl = ENV_API_URL || DEFAULT_APPS_SCRIPT_URL;
+      saveLocalSettings(sanitized);
     }
     return sanitized;
   } catch (e) {
-    return { ...DEFAULT_SETTINGS, apiUrl: ENV_API_URL };
+    return { ...DEFAULT_SETTINGS, apiUrl: ENV_API_URL || DEFAULT_APPS_SCRIPT_URL };
   }
 }
 

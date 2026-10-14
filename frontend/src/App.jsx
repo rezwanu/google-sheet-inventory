@@ -386,27 +386,49 @@ export default function App() {
 
   // ৩. গুগল শিট API-এর সাথে ব্যাকগ্রাউন্ড ডাটা সিঙ্ক ফাংশন
   const handleSync = useCallback(async (manual = true, targetApiUrl = null) => {
-    const effectiveApiUrl = (targetApiUrl || settings.apiUrl || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    let effectiveApiUrl = (targetApiUrl || settings.apiUrl || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (!effectiveApiUrl) {
-      setSyncStatus('offline');
-      if (manual) {
-        showToast('API URL কনফিগার করা হয়নি। সেটিংস এ গিয়ে URL দিন।', 'warning');
-      }
-      return;
+      effectiveApiUrl = DEFAULT_APPS_SCRIPT_URL;
     }
 
     setSyncStatus('syncing');
+    let data = null;
     try {
-      const data = await fetchInitialData(effectiveApiUrl);
-      
+      data = await fetchInitialData(effectiveApiUrl);
+    } catch (err) {
+      console.warn('Initial sync failed with URL:', effectiveApiUrl, err);
+      // যদি সংরক্ষিত বা কাস্টম URL কোনো কারণে ফেইল করে, কিন্তু DEFAULT_APPS_SCRIPT_URL ভিন্ন হয়,
+      // তাহলে স্বয়ংক্রিয়ভাবে ডিফল্ট অফিসিয়াল লাইভ ব্যাকএন্ড দিয়ে রিকভারি করার চেষ্টা করুন
+      if (effectiveApiUrl !== DEFAULT_APPS_SCRIPT_URL && DEFAULT_APPS_SCRIPT_URL) {
+        try {
+          console.info('Attempting fallback to DEFAULT_APPS_SCRIPT_URL...');
+          data = await fetchInitialData(DEFAULT_APPS_SCRIPT_URL);
+          effectiveApiUrl = DEFAULT_APPS_SCRIPT_URL;
+        } catch (fallbackErr) {
+          setSyncStatus('offline');
+          if (manual) {
+            showToast(`সিঙ্ক ব্যর্থ: ${err.message}`, 'error');
+          }
+          return;
+        }
+      } else {
+        setSyncStatus('offline');
+        if (manual) {
+          showToast(`সিঙ্ক ব্যর্থ: ${err.message}`, 'error');
+        }
+        return;
+      }
+    }
+
+    try {
       // সেটিংস আপডেট (গুগল শিট থেকে আসল সেটিংস সংরক্ষণ ও ডামি ডাটা প্রতিরোধ)
-      if (data.settings) {
+      if (data && data.settings) {
         let incoming = data.settings;
         if (Array.isArray(incoming)) {
           incoming = incoming.find(s => s && (extractLogoFromObject(s) || s.StoreName)) || incoming[0] || {};
         }
         const cleanIncoming = sanitizeSettings(incoming);
-        const resolvedApiUrl = (cleanIncoming.apiUrl || cleanIncoming.ApiUrl || effectiveApiUrl || '').trim();
+        const resolvedApiUrl = (cleanIncoming.apiUrl || cleanIncoming.ApiUrl || effectiveApiUrl || DEFAULT_APPS_SCRIPT_URL || '').trim();
 
         const mergedSettings = {
           ...settings,
@@ -434,7 +456,7 @@ export default function App() {
       }
 
       // প্রোডাক্টস আপডেট (শুধুমাত্র আসল শিট পণ্য লোড হবে, ডেমো পণ্য বর্জিত)
-      if (data.products && Array.isArray(data.products)) {
+      if (data && data.products && Array.isArray(data.products)) {
         const cleanList = data.products
           .filter(p => !isDemoProduct(p))
           .map(normalizeProduct)
@@ -444,38 +466,38 @@ export default function App() {
       }
 
       // ক্যাটাগরি আপডেট
-      if (data.categories && Array.isArray(data.categories) && data.categories.length > 0) {
+      if (data && data.categories && Array.isArray(data.categories) && data.categories.length > 0) {
         setCategories(data.categories);
         saveLocalCategories(data.categories);
       }
 
       // পরিমাপক একক (Units) আপডেট
-      if (data.units && Array.isArray(data.units) && data.units.length > 0) {
+      if (data && data.units && Array.isArray(data.units) && data.units.length > 0) {
         setUnits(data.units);
         saveLocalUnits(data.units);
       }
 
       // সেলস হিস্ট্রি আপডেট (গুগল শিট থেকে ক্লাউড ডাটা)
-      if (data.sales && Array.isArray(data.sales) && data.sales.length > 0) {
+      if (data && data.sales && Array.isArray(data.sales) && data.sales.length > 0) {
         setSalesHistory(data.sales);
         saveLocalSalesHistory(data.sales);
       }
 
       // কাস্টমার ডাটাবেস আপডেট (গুগল শিট থেকে আসল ক্লাউড ডাটা, ডামি গ্রাহক বাদ দিয়ে)
-      if (data.customers && Array.isArray(data.customers)) {
+      if (data && data.customers && Array.isArray(data.customers)) {
         const realCusts = data.customers.filter((c) => !isDummyCustomer(c));
         setCustomers(realCusts);
         saveLocalCustomers(realCusts);
       }
 
       // কুপন ডাটাবেস আপডেট (গুগল শিট থেকে আসল ক্লাউড ডাটা)
-      if (data.coupons && Array.isArray(data.coupons)) {
+      if (data && data.coupons && Array.isArray(data.coupons)) {
         setCoupons(data.coupons);
         saveLocalCoupons(data.coupons);
       }
 
       // ব্যবহারকারী ডাটাবেস আপডেট (গুগল শিট Users ট্যাব থেকে ক্লাউড ডাটা)
-      if (data.users && Array.isArray(data.users) && data.users.length > 0) {
+      if (data && data.users && Array.isArray(data.users) && data.users.length > 0) {
         setUsers(data.users);
         saveLocalUsers(data.users);
       }
@@ -484,11 +506,9 @@ export default function App() {
       if (manual) {
         showToast('গুগল শিট ডাটাবেসের সাথে সফলভাবে সিঙ্ক সম্পন্ন হয়েছে!', 'success');
       }
-    } catch (err) {
-      setSyncStatus('offline');
-      if (manual) {
-        showToast(`সিঙ্ক ব্যর্থ: ${err.message}`, 'error');
-      }
+    } catch (parseErr) {
+      console.error('Error processing synced data:', parseErr);
+      setSyncStatus('online');
     }
   }, [settings]);
 

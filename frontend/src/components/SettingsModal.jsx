@@ -24,7 +24,7 @@ import {
   MapPin,
   ExternalLink
 } from 'lucide-react';
-import { formatImageUrl, getDriveImageCandidates } from '../services/storage';
+import { formatImageUrl, getDriveImageCandidates, DEFAULT_APPS_SCRIPT_URL } from '../services/storage';
 
 export default function SettingsModal({
   isOpen,
@@ -47,7 +47,11 @@ export default function SettingsModal({
   // মডাল ওপেন হলে সর্বশেষ সেটিংস ডাটা দিয়ে ফর্ম সিঙ্ক করা
   useEffect(() => {
     if (isOpen) {
-      setFormData({ ...settings });
+      const resolvedApi = (settings.apiUrl || DEFAULT_APPS_SCRIPT_URL || '').trim();
+      setFormData({
+        ...settings,
+        apiUrl: resolvedApi
+      });
       setTestResult(null);
       setActiveTab('api');
     }
@@ -217,6 +221,25 @@ export default function SettingsModal({
                       <Link className="w-3.5 h-3.5" />
                     )}
                     <span>{isTesting ? 'সংযোগ পরীক্ষা হচ্ছে...' : 'কানেকশন টেস্ট'}</span>
+                  </button>
+                </div>
+
+                {/* ডিফল্ট URL হেল্পার রো */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+                  <span className="text-slate-500 flex items-center gap-1 font-medium">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>ক্লাউড গুগল শিট ডেটাবেস সক্রিয়</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, apiUrl: DEFAULT_APPS_SCRIPT_URL }));
+                      setTestResult({ success: true, message: 'অফিসিয়াল লাইভ ব্যাকএন্ড URL পূরণ করা হয়েছে। এখন "কানেকশন টেস্ট" বা নিচে "সেটিংস সংরক্ষণ" বাটনে ক্লিক করুন।' });
+                    }}
+                    className="text-indigo-600 hover:text-indigo-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>ডিফল্ট লাইভ URL পূরণ করুন</span>
                   </button>
                 </div>
 
