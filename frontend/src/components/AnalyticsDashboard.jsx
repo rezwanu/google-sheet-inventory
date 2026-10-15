@@ -28,13 +28,17 @@ import {
   AlertCircle,
   HelpCircle,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Store,
+  Globe,
+  Truck
 } from 'lucide-react';
 
 export default function AnalyticsDashboard({
   isOpen,
   onClose,
   salesHistory = [],
+  orders = [],
   products = [],
   categories = [],
   currencySymbol = '৳',
@@ -45,6 +49,9 @@ export default function AnalyticsDashboard({
   const [filterRange, setFilterRange] = useState('month'); // 'today' | 'yesterday' | '7days' | 'month' | 'lastMonth' | 'year' | 'all' | 'custom'
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+
+  // চ্যানেল ফিল্টার স্টেট: 'all' | 'offline' | 'online'
+  const [channelFilter, setChannelFilter] = useState('all');
 
   // অ্যাক্টিভ ভিউ ট্যাব: 'overview' | 'statement' | 'products' | 'categories' | 'transactions'
   const [activeTab, setActiveTab] = useState('overview');
@@ -60,64 +67,208 @@ export default function AnalyticsDashboard({
   // চার্ট টুলটিপ ইন্টারঅ্যাকশন স্টেট
   const [hoveredTrendItem, setHoveredTrendItem] = useState(null);
 
-  // ১. নির্বাচিত তারিখ অনুযায়ী সেলস ডাটা ফিল্টার করা
-  const filteredSales = useMemo(() => {
-    const list = Array.isArray(salesHistory) ? salesHistory : [];
+  // ০. ওমনিচ্যানেল ইউনিফাইড ট্রানজেকশন তালিকা (Offline POS Sales + Online Delivered Orders)
+  const allTransactions = useMemo(() => {
+    const list = [];
+    const seenInvoiceNos = new Set();
+
+    // ১. সেলস হিস্ট্রি থেকে কাউন্টার/ইন-স্টোর পিওএস রেকর্ডসমূহ
+    if (Array.isArray(salesHistory)) {
+      salesHistory.forEach((sale, idx) => {
+        const invNo = String(sale.invoiceNo || sale.invoiceNumber || sale.InvoiceNumber || sale.id || `POS-${idx + 1}`).trim();
+        seenInvoiceNos.add(invNo.toLowerCase());
+
+        list.push({
+          id: sale.saleId || sale.id || invNo,
+          invoiceNo: invNo,
+          timestamp: sale.timestamp || sale.Timestamp || sale.Date || sale.CreatedAt,
+          customerName: sale.customerName || sale.CustomerName || 'কাউন্টার কাস্টমার',
+          customerPhone: sale.customerPhone || sale.CustomerPhone || '',
+          customerAddress: sale.customerAddress || 'ইন-স্টোর কাউন্টার',
+          items: sale.items || sale.Items || [],
+          grandTotal: Number(sale.grandTotal ?? sale.GrandTotal ?? sale.totalAmount) || 0,
+          subTotal: Number(sale.subTotal ?? sale.SubTotal) || 0,
+          discountAmount: Number(sale.discountAmount ?? sale.DiscountAmount) || 0,
+          taxAmount: Number(sale.taxAmount ?? sale.TaxAmount) || 0,
+          deliveryCharge: 0,
+          paymentMethod: sale.paymentMethod || sale.PaymentMethod || 'Cash',
+          channel: 'offline',
+          orderSource: 'In-Store / POS',
+          status: 'Delivered',
+          courierName: 'Counter Pickup',
+          isOrder: false
+        });
+      });
+    }
+
+    // ২. অর্ডার ম্যানেজমেন্ট থেকে অনলাইন ডেলিভারি এবং অনন্য অর্ডারসমূহ
+    if (Array.isArray(orders)) {
+      orders.forEach((order) => {
+        const orderId = String(order.OrderID || order.orderId || '').trim();
+        if (orderId && seenInvoiceNos.has(orderId.toLowerCase())) {
+          return; // ইতিমধ্যে salesHistory-তে অন্তর্ভুক্ত থাকায় ডুপ্লিকেশন প্রতিরোধ
+        }
+
+        const isDelivered = order.Status === 'Delivered';
+        const isOfflineSource = order.OrderSource === 'In-Store / POS' || order.OrderSource === 'Walk-in' || order.CourierName === 'Counter Pickup';
+        const channelType = isOfflineSource ? 'offline' : 'online';
+
+        // শুধুমাত্র ডেলিভার্ড বা পেইড অর্ডার লাভ-ক্ষতির আর্থিক হিসাবে আসবে (বাতিল বা ফেরতকৃত অর্ডার বাদ)
+        if (isDelivered || order.PaymentStatus === 'Paid') {
+          list.push({
+            id: orderId,
+            invoiceNo: orderId,
+            timestamp: order.CreatedAt || order.OrderDate,
+            customerName: order.CustomerName || 'অনলাইন গ্রাহক',
+            customerPhone: order.CustomerPhone || '',
+            customerAddress: order.CustomerAddress || '',
+            items: order.Items || [],
+            grandTotal: Number(order.TotalAmount || 0),
+            subTotal: Number(order.SubTotal || 0),
+            discountAmount: Number(order.DiscountAmount || 0),
+            taxAmount: 0,
+            deliveryCharge: Number(order.DeliveryCharge || 0),
+            paymentMethod: order.PaymentMethod || 'COD',
+            channel: channelType,
+            orderSource: order.OrderSource || (isOfflineSource ? 'In-Store / POS' : 'Online'),
+            status: order.Status,
+            courierName: order.CourierName || (isOfflineSource ? 'Counter Pickup' : 'Courier'),
+            isOrder: true
+          });
+        }
+      });
+    }
+
+    // তারিখ অনুযায়ী ডিসেন্ডিং সর্ট (নতুন লেনদেন সবার আগে)
+    return list.sort((a, b) => {
+      const timeA = new Date(a.timestamp || 0).getTime();
+      const timeB = new Date(b.timestamp || 0).getTime();
+      return timeB - timeA;
+    });
+  }, [salesHistory, orders]);
+
+  // ১. নির্বাচিত তারিখ অনুযায়ী ডাটা ফিল্টার করা
+  const dateFilteredTransactions = useMemo(() => {
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
 
-    // গতকালের তারিখ
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    // বিগত ৭ দিন
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setDate(now.getDate() - 7);
 
-    // গত মাস
     const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
     const lastMonthIdx = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
 
-    return list.filter((sale) => {
-      const timeVal = sale.timestamp || sale.Timestamp || sale.Date || sale.CreatedAt;
+    return allTransactions.filter((tx) => {
+      const timeVal = tx.timestamp;
       if (!timeVal) return true;
 
-      const saleDate = new Date(timeVal);
-      if (isNaN(saleDate.getTime())) return true;
+      const txDate = new Date(timeVal);
+      if (isNaN(txDate.getTime())) return true;
 
-      const saleDateStr = saleDate.toISOString().split('T')[0];
+      const txDateStr = txDate.toISOString().split('T')[0];
 
-      if (filterRange === 'today') {
-        return saleDateStr === todayStr;
-      }
-      if (filterRange === 'yesterday') {
-        return saleDateStr === yesterdayStr;
-      }
-      if (filterRange === '7days') {
-        return saleDate >= sevenDaysAgo && saleDate <= now;
-      }
-      if (filterRange === 'month') {
-        return saleDate.getFullYear() === now.getFullYear() && saleDate.getMonth() === now.getMonth();
-      }
-      if (filterRange === 'lastMonth') {
-        return saleDate.getFullYear() === lastMonthYear && saleDate.getMonth() === lastMonthIdx;
-      }
-      if (filterRange === 'year') {
-        return saleDate.getFullYear() === now.getFullYear();
-      }
-      if (filterRange === 'all') {
-        return true;
-      }
+      if (filterRange === 'today') return txDateStr === todayStr;
+      if (filterRange === 'yesterday') return txDateStr === yesterdayStr;
+      if (filterRange === '7days') return txDate >= sevenDaysAgo && txDate <= now;
+      if (filterRange === 'month') return txDate.getFullYear() === now.getFullYear() && txDate.getMonth() === now.getMonth();
+      if (filterRange === 'lastMonth') return txDate.getFullYear() === lastMonthYear && txDate.getMonth() === lastMonthIdx;
+      if (filterRange === 'year') return txDate.getFullYear() === now.getFullYear();
+      if (filterRange === 'all') return true;
       if (filterRange === 'custom') {
         if (!customStartDate && !customEndDate) return true;
         const start = customStartDate ? new Date(customStartDate) : new Date('2000-01-01');
         const end = customEndDate ? new Date(customEndDate + 'T23:59:59') : new Date('2099-12-31');
-        return saleDate >= start && saleDate <= end;
+        return txDate >= start && txDate <= end;
       }
       return true;
     });
-  }, [salesHistory, filterRange, customStartDate, customEndDate]);
+  }, [allTransactions, filterRange, customStartDate, customEndDate]);
+
+  // চ্যানেল ফিল্টার প্রয়োগ
+  const filteredSales = useMemo(() => {
+    if (channelFilter === 'offline') {
+      return dateFilteredTransactions.filter((t) => t.channel === 'offline');
+    }
+    if (channelFilter === 'online') {
+      return dateFilteredTransactions.filter((t) => t.channel === 'online');
+    }
+    return dateFilteredTransactions;
+  }, [dateFilteredTransactions, channelFilter]);
+
+  // ওমনিচ্যানেল কর্মক্ষমতা সারাংশ (In-Store vs Online)
+  const channelBreakdown = useMemo(() => {
+    let offlineRevenue = 0;
+    let offlineProfit = 0;
+    let offlineOrders = 0;
+    let offlineUnits = 0;
+
+    let onlineRevenue = 0;
+    let onlineProfit = 0;
+    let onlineOrders = 0;
+    let onlineUnits = 0;
+
+    dateFilteredTransactions.forEach((tx) => {
+      let txCogs = 0;
+      let txUnits = 0;
+
+      let itemsList = [];
+      if (Array.isArray(tx.items)) itemsList = tx.items;
+      else if (typeof tx.items === 'string') {
+        try { itemsList = JSON.parse(tx.items); } catch { itemsList = []; }
+      }
+
+      itemsList.forEach((item) => {
+        const qty = Number(item.quantity || item.Quantity || item.qty) || 0;
+        let cPrice = Number(item.costPrice ?? item.CostPrice) || 0;
+        if (cPrice === 0) {
+          const pId = item.productId || item.ProductID;
+          const matched = (products || []).find((p) => p.ProductID === pId);
+          if (matched) cPrice = Number(matched.CostPrice || matched.costPrice) || 0;
+        }
+        txCogs += (cPrice * qty);
+        txUnits += qty;
+      });
+
+      const txRev = Number(tx.grandTotal || 0);
+      const txProfit = txRev - txCogs;
+
+      if (tx.channel === 'offline') {
+        offlineRevenue += txRev;
+        offlineProfit += txProfit;
+        offlineOrders += 1;
+        offlineUnits += txUnits;
+      } else {
+        onlineRevenue += txRev;
+        onlineProfit += txProfit;
+        onlineOrders += 1;
+        onlineUnits += txUnits;
+      }
+    });
+
+    const totalRev = offlineRevenue + onlineRevenue;
+    const offlineShare = totalRev > 0 ? parseFloat(((offlineRevenue / totalRev) * 100).toFixed(1)) : 0;
+    const onlineShare = totalRev > 0 ? parseFloat(((onlineRevenue / totalRev) * 100).toFixed(1)) : 0;
+
+    return {
+      offlineRevenue,
+      offlineProfit,
+      offlineOrders,
+      offlineUnits,
+      offlineMargin: offlineRevenue > 0 ? parseFloat(((offlineProfit / offlineRevenue) * 100).toFixed(1)) : 0,
+      offlineShare,
+      onlineRevenue,
+      onlineProfit,
+      onlineOrders,
+      onlineUnits,
+      onlineMargin: onlineRevenue > 0 ? parseFloat(((onlineProfit / onlineRevenue) * 100).toFixed(1)) : 0,
+      onlineShare,
+      totalRev
+    };
+  }, [dateFilteredTransactions, products]);
 
   // ২. পূর্ণাঙ্গ P&L মেট্রিক্স, আইটেম-ওয়াইজ ও ক্যাটাগরি-ওয়াইজ বিশ্লেষণ
   const analyticsKPI = useMemo(() => {
@@ -130,7 +281,7 @@ export default function AnalyticsDashboard({
 
     const productSalesMap = {};
     const categorySalesMap = {};
-    const paymentMap = { Cash: 0, Card: 0, bKash: 0, Nagad: 0, Bank: 0, Other: 0 };
+    const paymentMap = { Cash: 0, COD: 0, Card: 0, bKash: 0, Nagad: 0, Rocket: 0, Bank: 0, Other: 0 };
     const dateTrendMap = {}; // দিনভিত্তিক বা সময়ভিত্তিক বিক্রয় ও লাভ
 
     filteredSales.forEach((sale) => {
@@ -252,6 +403,8 @@ export default function AnalyticsDashboard({
 
       dateTrendMap[saleDateStr].cogs += orderItemCostSum;
       dateTrendMap[saleDateStr].profit += (gTotal - orderItemCostSum);
+      sale.cogs = orderItemCostSum;
+      sale.profit = gTotal - orderItemCostSum;
     });
 
     // ট্যাক্স ছাড়া প্রকৃত নেট বিক্রয় (Net Sales)
@@ -372,10 +525,17 @@ export default function AnalyticsDashboard({
       csvContent += `PROFIT & LOSS (P&L) FINANCIAL REPORT\n`;
       csvContent += `প্রতিষ্ঠানের নাম,${storeSettings.StoreName || 'Super Shop POS'}\n`;
       csvContent += `প্রতিবেদনের সময়কাল,${filterRange} (${customStartDate || 'Start'} to ${customEndDate || 'End'})\n`;
+      csvContent += `নির্বাচিত বিক্রয় চ্যানেল,${channelFilter === 'all' ? 'সকল চ্যানেল (All Omnichannel)' : channelFilter === 'offline' ? 'ইন-স্টোর পিওএস (In-Store POS)' : 'অনলাইন ডেলিভারি (Online Delivery)'}\n`;
       csvContent += `রিপোর্ট তৈরির তারিখ,${new Date().toLocaleString('bn-BD')}\n\n`;
 
+      // ওমনিচ্যানেল সামারি
+      csvContent += `১. ওমনিচ্যানেল চ্যানেল তুলনা (OMNICHANNEL CHANNEL COMPARISON)\n`;
+      csvContent += `চ্যানেল,মোট অর্ডার,মোট রাজস্ব,ক্রয় খরচ (COGS),নিট লাভ,মার্জিন %,রাজস্ব শেয়ার %\n`;
+      csvContent += `ইন-স্টোর পিওএস (POS),${channelBreakdown.offlineOrders},${channelBreakdown.offlineRevenue.toFixed(2)},${(channelBreakdown.offlineRevenue - channelBreakdown.offlineProfit).toFixed(2)},${channelBreakdown.offlineProfit.toFixed(2)},${channelBreakdown.offlineMargin}%,${channelBreakdown.offlineShare}%\n`;
+      csvContent += `অনলাইন ডেলিভারি,${channelBreakdown.onlineOrders},${channelBreakdown.onlineRevenue.toFixed(2)},${(channelBreakdown.onlineRevenue - channelBreakdown.onlineProfit).toFixed(2)},${channelBreakdown.onlineProfit.toFixed(2)},${channelBreakdown.onlineMargin}%,${channelBreakdown.onlineShare}%\n\n`;
+
       // এক্সিকিউটিভ সামারি
-      csvContent += `১. আর্থিক সারসংক্ষেপ (EXECUTIVE FINANCIAL SUMMARY)\n`;
+      csvContent += `২. আর্থিক সারসংক্ষেপ (EXECUTIVE FINANCIAL SUMMARY)\n`;
       csvContent += `মেট্রিক,পরিমাণ (${currencySymbol})\n`;
       csvContent += `মোট বিক্রয় (Gross Revenue),${analyticsKPI.totalGrossRevenue.toFixed(2)}\n`;
       csvContent += `প্রদত্ত ছাড় (Total Discounts),${analyticsKPI.totalDiscount.toFixed(2)}\n`;
@@ -389,7 +549,7 @@ export default function AnalyticsDashboard({
       csvContent += `গড় অর্ডার মূল্য (AOV),${analyticsKPI.averageOrderValue.toFixed(2)}\n\n`;
 
       // পণ্যভিত্তিক লাভ-ক্ষতি তালিকা
-      csvContent += `২. পণ্যভিত্তিক লাভ-ক্ষতি বিবরণী (PRODUCT-WISE P&L BREAKDOWN)\n`;
+      csvContent += `৩. পণ্যভিত্তিক লাভ-ক্ষতি বিবরণী (PRODUCT-WISE P&L BREAKDOWN)\n`;
       csvContent += `Product ID,পণ্য,ক্যাটাগরি,বিক্রিত পরিমাণ,গড় বিক্রয়মূল্য,গড় কেনা দাম,মোট রাজস্ব,মোট ক্রয় খরচ,নিট লাভ,মার্জিন %\n`;
       analyticsKPI.allProductList.forEach((p) => {
         csvContent += `"${p.productId}","${p.productName.replace(/"/g, '""')}","${p.category}",${p.unitsSold},${p.avgSellingPrice},${p.avgCostPrice},${p.revenue.toFixed(2)},${p.cogs.toFixed(2)},${p.profit.toFixed(2)},${p.marginPercent}%\n`;
@@ -397,10 +557,26 @@ export default function AnalyticsDashboard({
       csvContent += `\n`;
 
       // ক্যাটাগরিভিত্তিক বিবরণী
-      csvContent += `৩. ক্যাটাগরিভিত্তিক লাভ-ক্ষতি (CATEGORY-WISE P&L)\n`;
+      csvContent += `৪. ক্যাটাগরিভিত্তিক লাভ-ক্ষতি (CATEGORY-WISE P&L)\n`;
       csvContent += `ক্যাটাগরি,বিক্রিত আইটেম,মোট রাজস্ব,মোট খরচ,মোট লাভ,মার্জিন %,লাভে অবদান %\n`;
       analyticsKPI.allCategoryList.forEach((c) => {
         csvContent += `"${c.categoryName}",${c.unitsSold},${c.revenue.toFixed(2)},${c.cogs.toFixed(2)},${c.profit.toFixed(2)},${c.marginPercent}%,${c.contributionPercent}%\n`;
+      });
+      csvContent += `\n`;
+
+      // লেনদেন বিবরণী
+      csvContent += `৫. ইনভয়েস ও অর্ডার লেনদেন তালিকা (TRANSACTIONS BREAKDOWN)\n`;
+      csvContent += `তারিখ,ইনভয়েস/অর্ডার নম্বর,চ্যানেল,কুরিয়ার/পিকআপ,গ্রাহক,পেমেন্ট মেথড,মোট টাকা,নিট লাভ\n`;
+      filteredSales.forEach((t) => {
+        const timeVal = t.timestamp ? new Date(t.timestamp).toLocaleDateString('bn-BD') : 'N/A';
+        const inv = t.invoiceNo || t.id;
+        const ch = t.channel === 'offline' ? 'In-Store POS' : `Online (${t.orderSource || 'Courier'})`;
+        const cr = t.courierName || (t.channel === 'offline' ? 'Counter Pickup' : 'Courier');
+        const cust = String(t.customerName || 'Customer').replace(/"/g, '""');
+        const pm = t.paymentMethod || 'Cash';
+        const tot = Number(t.grandTotal || 0).toFixed(2);
+        const prf = Number(t.profit || 0).toFixed(2);
+        csvContent += `"${timeVal}","${inv}","${ch}","${cr}","${cust}","${pm}",${tot},${prf}\n`;
       });
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -504,30 +680,53 @@ export default function AnalyticsDashboard({
         {/* ফিল্টার ও সময়সীমা কন্ট্রোল বার */}
         <div className="shrink-0 px-5 sm:px-8 py-2.5 bg-slate-50 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-2.5">
           
-          {/* দ্রুত সময় ফিল্টার বাটন */}
-          <div className="flex flex-wrap items-center gap-1 bg-white p-0.5 rounded-xl border border-slate-200 shadow-2xs text-xs">
-            {[
-              { id: 'today', label: 'আজ' },
-              { id: 'yesterday', label: 'গতকাল' },
-              { id: '7days', label: 'বিগত ৭ দিন' },
-              { id: 'month', label: 'চলতি মাস' },
-              { id: 'lastMonth', label: 'গত মাস' },
-              { id: 'year', label: 'চলতি বছর' },
-              { id: 'all', label: 'সকল সময়' },
-              { id: 'custom', label: 'কাস্টম' },
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFilterRange(f.id)}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all text-xs ${
-                  filterRange === f.id
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* ওমনিচ্যানেল চ্যানেল ফিল্টার সুইচ */}
+            <div className="flex items-center p-0.5 bg-white rounded-xl border border-slate-200 shadow-2xs text-xs">
+              {[
+                { id: 'all', label: 'সকল চ্যানেল' },
+                { id: 'offline', label: '🏪 ইন-স্টোর (POS)' },
+                { id: 'online', label: '🌐 অনলাইন ডেলিভারি' },
+              ].map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setChannelFilter(c.id)}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all text-xs cursor-pointer ${
+                    channelFilter === c.id
+                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
+            {/* দ্রুত সময় ফিল্টার বাটন */}
+            <div className="flex flex-wrap items-center gap-1 bg-white p-0.5 rounded-xl border border-slate-200 shadow-2xs text-xs">
+              {[
+                { id: 'today', label: 'আজ' },
+                { id: 'yesterday', label: 'গতকাল' },
+                { id: '7days', label: 'বিগত ৭ দিন' },
+                { id: 'month', label: 'চলতি মাস' },
+                { id: 'lastMonth', label: 'গত মাস' },
+                { id: 'year', label: 'চলতি বছর' },
+                { id: 'all', label: 'সকল সময়' },
+                { id: 'custom', label: 'কাস্টম' },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setFilterRange(f.id)}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all text-xs cursor-pointer ${
+                    filterRange === f.id
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* কাস্টম তারিখ নির্বাচন বার */}
@@ -551,13 +750,21 @@ export default function AnalyticsDashboard({
           )}
 
           {/* রেকর্ড কাউন্টার ব্যাজ */}
-          <div className="flex items-center space-x-2.5 text-xs text-slate-500 font-medium">
+          <div className="flex items-center space-x-2 text-xs text-slate-500 font-medium flex-wrap">
             <span>
               অর্ডার: <strong className="text-slate-800 font-bold">{analyticsKPI.totalOrders}</strong> টি
             </span>
             <span>•</span>
+            <span className="text-emerald-700 font-bold">
+              🏪 ইন-স্টোর: {channelBreakdown.offlineOrders}
+            </span>
+            <span>•</span>
+            <span className="text-indigo-700 font-bold">
+              🌐 অনলাইন: {channelBreakdown.onlineOrders}
+            </span>
+            <span>•</span>
             <span>
-              বিক্রিত পণ্য: <strong className="text-slate-800 font-bold">{analyticsKPI.totalUnitsSold}</strong> টি
+              পণ্য: <strong className="text-slate-800 font-bold">{analyticsKPI.totalUnitsSold}</strong> টি
             </span>
           </div>
 
@@ -714,6 +921,157 @@ export default function AnalyticsDashboard({
           {activeTab === 'overview' && (
             <div className="space-y-5">
               
+              {/* ওমনিচ্যানেল চ্যানেল তুলনা কার্ড (Omnichannel Performance Breakdown) */}
+              <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-xs">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900">
+                        ওমনিচ্যানেল আর্থিক তুলনা (In-Store POS vs Online Delivery)
+                      </h3>
+                      <p className="text-[11px] text-slate-400">কাউন্টার সেলস ও অনলাইন ডেলিভারির রাজস্ব, মুনাফা ও মার্জিন বিশ্লেষণ</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 text-xs font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      ইন-স্টোর: {channelBreakdown.offlineShare}%
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                      অনলাইন: {channelBreakdown.onlineShare}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* তুলনামূলক গ্রিড */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* ১. ইন-স্টোর / কাউন্টার পিওএস */}
+                  <div className={`p-4 rounded-2xl border transition-all ${
+                    channelFilter === 'offline'
+                      ? 'bg-emerald-50/50 border-emerald-400 ring-2 ring-emerald-500/20'
+                      : 'bg-slate-50/70 border-slate-200 hover:border-emerald-300'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                          🏪
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900">ইন-স্টোর কাউন্টার সেলস (POS)</h4>
+                          <span className="text-[10px] text-slate-400">সরাসরি দোকান থেকে বিক্রয়</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setChannelFilter(channelFilter === 'offline' ? 'all' : 'offline')}
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                          channelFilter === 'offline'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {channelFilter === 'offline' ? 'ফিল্টার চালু ✓' : 'ফিল্টার করুন'}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200/60">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-medium block">মোট রাজস্ব</span>
+                        <span className="text-sm font-black text-slate-900 font-mono">
+                          {currencySymbol}{channelBreakdown.offlineRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-medium block">নিট লাভ</span>
+                        <span className="text-sm font-black text-emerald-700 font-mono">
+                          {currencySymbol}{channelBreakdown.offlineProfit.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-medium block">মার্জিন ও অর্ডার</span>
+                        <span className="text-xs font-bold text-slate-700">
+                          {channelBreakdown.offlineMargin}% • {channelBreakdown.offlineOrders}টি
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ২. অনলাইন ডেলিভারি */}
+                  <div className={`p-4 rounded-2xl border transition-all ${
+                    channelFilter === 'online'
+                      ? 'bg-indigo-50/50 border-indigo-400 ring-2 ring-indigo-500/20'
+                      : 'bg-slate-50/70 border-slate-200 hover:border-indigo-300'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold text-xs">
+                          🌐
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900">অনলাইন ও কুরিয়ার ডেলিভারি</h4>
+                          <span className="text-[10px] text-slate-400">Facebook, WhatsApp, Website</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setChannelFilter(channelFilter === 'online' ? 'all' : 'online')}
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                          channelFilter === 'online'
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {channelFilter === 'online' ? 'ফিল্টার চালু ✓' : 'ফিল্টার করুন'}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200/60">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-medium block">মোট রাজস্ব</span>
+                        <span className="text-sm font-black text-slate-900 font-mono">
+                          {currencySymbol}{channelBreakdown.onlineRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-medium block">নিট লাভ</span>
+                        <span className="text-sm font-black text-indigo-700 font-mono">
+                          {currencySymbol}{channelBreakdown.onlineProfit.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-medium block">মার্জিন ও অর্ডার</span>
+                        <span className="text-xs font-bold text-slate-700">
+                          {channelBreakdown.onlineMargin}% • {channelBreakdown.onlineOrders}টি
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* রাজস্ব ভাগ প্রগ্রেস বার */}
+                {channelBreakdown.totalRev > 0 && (
+                  <div className="space-y-1 pt-1">
+                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
+                      <div
+                        style={{ width: `${channelBreakdown.offlineShare}%` }}
+                        className="bg-emerald-500 h-full transition-all"
+                        title={`ইন-স্টোর: ${channelBreakdown.offlineShare}%`}
+                      />
+                      <div
+                        style={{ width: `${channelBreakdown.onlineShare}%` }}
+                        className="bg-indigo-500 h-full transition-all"
+                        title={`অনলাইন: ${channelBreakdown.onlineShare}%`}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold px-1">
+                      <span>ইন-স্টোর কাউন্টার ({channelBreakdown.offlineShare}%)</span>
+                      <span>অনলাইন ডেলিভারি ({channelBreakdown.onlineShare}%)</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* দিনভিত্তিক বিক্রয় ও মুনাফা ভিজ্যুয়াল চার্ট */}
               <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
@@ -1299,22 +1657,27 @@ export default function AnalyticsDashboard({
                     <thead>
                       <tr className="text-slate-500 font-bold border-b border-slate-100 bg-slate-50/70">
                         <th className="py-3 px-3">তারিখ ও সময়</th>
-                        <th className="py-3 px-2">ইনভয়েস নম্বর</th>
+                        <th className="py-3 px-2">ইনভয়েস / অর্ডার নম্বর</th>
+                        <th className="py-3 px-2 text-center">চ্যানেল</th>
+                        <th className="py-3 px-2">কুরিয়ার / পিকআপ</th>
                         <th className="py-3 px-2">কাস্টমার</th>
                         <th className="py-3 px-2 text-center">পেমেন্ট মেথড</th>
                         <th className="py-3 px-2 text-right">আইটেম সংখ্যা</th>
-                        <th className="py-3 px-2 text-right">মোট মূল্য</th>
+                        <th className="py-3 px-2 text-right">মোট রাজস্ব</th>
+                        <th className="py-3 px-3 text-right">নিট লাভ</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {filteredSales.map((sale, i) => {
                         const timeVal = sale.timestamp || sale.Timestamp || sale.Date || sale.CreatedAt;
                         const dateFormatted = timeVal ? new Date(timeVal).toLocaleString('bn-BD') : 'N/A';
-                        const invNo = sale.invoiceNumber || sale.InvoiceNumber || sale.id || `INV-${i + 1}`;
+                        const invNo = sale.invoiceNo || sale.invoiceNumber || sale.InvoiceNumber || sale.id || `INV-${i + 1}`;
                         const custName = sale.customerName || sale.CustomerName || 'Walk-in Customer';
                         const pMethod = sale.paymentMethod || sale.PaymentMethod || 'Cash';
                         const total = Number(sale.grandTotal || sale.GrandTotal || sale.totalAmount) || 0;
+                        const profit = Number(sale.profit || 0);
                         const itemCount = Array.isArray(sale.items) ? sale.items.length : 1;
+                        const isOffline = sale.channel === 'offline' || sale.orderSource === 'In-Store / POS';
 
                         return (
                           <tr key={i} className="hover:bg-slate-50/80 transition-colors">
@@ -1323,6 +1686,20 @@ export default function AnalyticsDashboard({
                             </td>
                             <td className="py-3 px-2 font-mono font-bold text-indigo-600">
                               {invNo}
+                            </td>
+                            <td className="py-3 px-2 text-center">
+                              {isOffline ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                  🏪 ইন-স্টোর
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-800 border border-indigo-200">
+                                  🌐 {sale.orderSource || 'অনলাইন'}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-2 text-slate-600 font-medium">
+                              {sale.courierName || (isOffline ? 'কাউন্টার পিকআপ' : 'কুরিয়ার')}
                             </td>
                             <td className="py-3 px-2 text-slate-800 font-semibold">
                               {custName}
@@ -1337,6 +1714,9 @@ export default function AnalyticsDashboard({
                             </td>
                             <td className="py-3 px-2 text-right font-black text-slate-900">
                               {currencySymbol}{total.toFixed(2)}
+                            </td>
+                            <td className={`py-3 px-3 text-right font-black ${profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {profit >= 0 ? '+' : ''}{currencySymbol}{profit.toFixed(2)}
                             </td>
                           </tr>
                         );

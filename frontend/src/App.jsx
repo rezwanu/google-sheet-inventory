@@ -173,6 +173,68 @@ export default function App() {
     } catch {}
   }, []);
 
+  // ওমনিচ্যানেল সেলস ও অর্ডার ডাটাবেস অটো-সিঙ্ক (Sync historical POS sales into orders if missing)
+  useEffect(() => {
+    try {
+      const currentOrders = getLocalOrders();
+      const existingOrderIds = new Set(currentOrders.map((o) => String(o.OrderID || '').trim().toLowerCase()));
+      let hasNewOrder = false;
+
+      (salesHistory || []).forEach((sale) => {
+        const invNo = String(sale.invoiceNo || sale.invoiceNumber || sale.id || '').trim();
+        if (invNo && !existingOrderIds.has(invNo.toLowerCase())) {
+          const pastOrder = {
+            OrderID: invNo,
+            OrderNumber: invNo,
+            OrderDate: sale.timestamp || sale.CreatedAt || new Date().toISOString(),
+            CustomerName: sale.customerName || sale.CustomerName || 'কাউন্টার কাস্টমার',
+            CustomerPhone: sale.customerPhone || sale.CustomerPhone || '',
+            CustomerAddress: sale.customerAddress || 'ইন-স্টোর কাউন্টার',
+            OrderSource: 'In-Store / POS',
+            Items: (sale.items || []).map((i) => ({
+              productId: i.productId || i.ProductID,
+              productName: i.productName || i.ProductName || 'পণ্য',
+              quantity: Number(i.quantity || i.Quantity) || 1,
+              sellingPrice: Number(i.sellingPrice || i.SellingPrice) || 0,
+              costPrice: Number(i.costPrice || i.CostPrice) || 0,
+              category: i.category || 'General',
+              barcode: i.barcode || ''
+            })),
+            SubTotal: Number(sale.subTotal || sale.SubTotal || sale.grandTotal) || 0,
+            DiscountAmount: Number(sale.discountAmount || sale.DiscountAmount) || 0,
+            DeliveryCharge: 0,
+            TotalAmount: Number(sale.grandTotal || sale.GrandTotal || sale.totalAmount) || 0,
+            AdvancePaid: Number(sale.grandTotal || sale.GrandTotal || sale.totalAmount) || 0,
+            DueAmount: 0,
+            CourierName: 'Counter Pickup',
+            Status: 'Delivered',
+            PaymentStatus: 'Paid',
+            PaymentMethod: sale.paymentMethod || sale.PaymentMethod || 'Cash',
+            RiskLevel: 'Low',
+            StockReserved: true,
+            CreatedBy: sale.cashierEmail || 'POS Cashier',
+            ActivityLog: [
+              {
+                timestamp: sale.timestamp || new Date().toISOString(),
+                action: 'কাউন্টার পিওএস (POS) থেকে বিক্রয় সম্পন্ন',
+                actor: sale.cashierEmail || 'POS Cashier'
+              }
+            ]
+          };
+          saveOrUpdateOrderLocally(pastOrder);
+          existingOrderIds.add(invNo.toLowerCase());
+          hasNewOrder = true;
+        }
+      });
+
+      if (hasNewOrder) {
+        setOrders(getLocalOrders());
+      }
+    } catch (e) {
+      console.warn('Omnichannel order backfill notice:', e);
+    }
+  }, [salesHistory]);
+
   // সাইডবার মেনু প্যানেল স্টেট (Sidebar Panel State)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     try {
@@ -795,6 +857,48 @@ export default function App() {
       saveSaleLocally(completedSaleRecord);
       setSalesHistory([completedSaleRecord, ...salesHistory]);
 
+      // ২.১ ওমনিচ্যানেল ইউনিফাইড অর্ডার সিস্টেমে ইন-স্টোর (POS) অর্ডার তৈরি ও সেভ করা
+      const posOrderRecord = {
+        OrderID: localInvoiceNo,
+        OrderNumber: localInvoiceNo,
+        OrderDate: completedSaleRecord.timestamp,
+        CustomerName: saleOrder.customerName || 'কাউন্টার কাস্টমার',
+        CustomerPhone: saleOrder.customerPhone || '',
+        CustomerAddress: saleOrder.customerAddress || 'ইন-স্টোর কাউন্টার',
+        OrderSource: 'In-Store / POS',
+        Items: (saleOrder.items || []).map((i) => ({
+          productId: i.productId,
+          productName: i.productName,
+          quantity: Number(i.quantity) || 1,
+          sellingPrice: Number(i.sellingPrice) || 0,
+          costPrice: Number(i.costPrice) || 0,
+          category: i.category || 'General',
+          barcode: i.barcode || ''
+        })),
+        SubTotal: Number(saleOrder.subTotal) || 0,
+        DiscountAmount: Number(saleOrder.discountAmount) || 0,
+        DeliveryCharge: 0,
+        TotalAmount: Number(saleOrder.grandTotal) || 0,
+        AdvancePaid: Number(saleOrder.grandTotal) || 0,
+        DueAmount: 0,
+        CourierName: 'Counter Pickup',
+        Status: 'Delivered',
+        PaymentStatus: 'Paid',
+        PaymentMethod: saleOrder.paymentMethod || 'Cash',
+        RiskLevel: 'Low',
+        StockReserved: true,
+        CreatedBy: activeUser?.FullName || activeUser?.Email || 'POS Cashier',
+        ActivityLog: [
+          {
+            timestamp: new Date().toISOString(),
+            action: 'ইন-স্টোর পিওএস (POS) কাউন্টার থেকে সরাসরি বিক্রয় ও ক্যাশ মেমো সম্পন্ন',
+            actor: activeUser?.FullName || 'POS Cashier'
+          }
+        ]
+      };
+      saveOrUpdateOrderLocally(posOrderRecord);
+      setOrders(getLocalOrders());
+
       // ৩. কার্ট খালি করা এবং ভিউ রিসেট করা
       setCart([]);
       setDiscountAmount(0);
@@ -846,13 +950,21 @@ export default function App() {
           });
 
           if (response.success && response.data) {
-            completedSaleRecord.invoiceNo = response.data.invoiceNo;
+            const serverInvoiceNo = response.data.invoiceNo;
+            completedSaleRecord.invoiceNo = serverInvoiceNo;
             saveSaleLocally(completedSaleRecord);
             setSalesHistory(getLocalSalesHistory());
+
+            // ক্লাউড ইনভয়েস নম্বরে লোকাল অর্ডারও আপডেট
+            posOrderRecord.OrderID = serverInvoiceNo;
+            posOrderRecord.OrderNumber = serverInvoiceNo;
+            saveOrUpdateOrderLocally(posOrderRecord);
+            setOrders(getLocalOrders());
+
             if (saleOrder.shouldPrint) {
               setActiveInvoiceData({ ...completedSaleRecord });
             }
-            showToast(`অর্ডার সম্পন্ন! ইনভয়েস: ${response.data.invoiceNo}`, 'success');
+            showToast(`অর্ডার সম্পন্ন! ইনভয়েস: ${serverInvoiceNo}`, 'success');
           } else {
             showToast('অর্ডার লোকালভাবে সফল হয়েছে, শিট সিঙ্ক অপেক্ষমান।', 'warning');
           }
@@ -1723,6 +1835,7 @@ export default function App() {
         isOpen={isAnalyticsModalOpen}
         onClose={() => setIsAnalyticsModalOpen(false)}
         salesHistory={salesHistory}
+        orders={orders}
         products={products}
         categories={categories}
         currencySymbol={settings.CurrencySymbol || '৳'}

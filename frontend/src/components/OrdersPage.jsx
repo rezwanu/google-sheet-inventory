@@ -234,6 +234,12 @@ function getCourierBadge(courierName) {
         dot: 'bg-emerald-500',
         name: 'নিজস্ব'
       };
+    case 'Counter Pickup':
+      return {
+        bg: 'bg-teal-50 text-teal-800 border-teal-200/80',
+        dot: 'bg-teal-500',
+        name: 'কাউন্টার পিকআপ'
+      };
     default:
       return {
         bg: 'bg-slate-100 text-slate-800 border-slate-200',
@@ -244,6 +250,7 @@ function getCourierBadge(courierName) {
 }
 
 const COURIER_LIST = [
+  { id: 'Counter Pickup', name: 'কাউন্টার পিকআপ (ইন-স্টোর)', defaultInside: 0, defaultOutside: 0 },
   { id: 'Steadfast', name: 'Steadfast Courier', defaultInside: 70, defaultOutside: 130 },
   { id: 'Pathao', name: 'Pathao Courier', defaultInside: 60, defaultOutside: 120 },
   { id: 'RedX', name: 'RedX Delivery', defaultInside: 80, defaultOutside: 140 },
@@ -258,6 +265,7 @@ const ORDER_SOURCES = [
   { id: 'WhatsApp', label: 'WhatsApp' },
   { id: 'Phone', label: 'সরাসরি ফোন কল' },
   { id: 'Website', label: 'অনলাইন ওয়েবসাইট' },
+  { id: 'In-Store / POS', label: 'কাউন্টার পিওএস (POS সেল)' },
   { id: 'Walk-in', label: 'কাউন্টার / শোরুম' },
   { id: 'Other', label: 'অন্যান্য সোর্স' }
 ];
@@ -287,6 +295,7 @@ export default function OrdersPage({
   currencySymbol = '৳'
 }) {
   const [activeTab, setActiveTab] = useState('all');
+  const [channelFilter, setChannelFilter] = useState('all'); // 'all' | 'online' | 'offline'
   const [searchQuery, setSearchQuery] = useState('');
   const [courierFilter, setCourierFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
@@ -313,6 +322,11 @@ export default function OrdersPage({
   // ফিল্টার করা অর্ডার তালিকা
   const filteredOrders = useMemo(() => {
     return (orders || []).filter((order) => {
+      // ০. ওমনিচ্যানেল ফিল্টার (Online Delivery vs In-Store POS)
+      const isOfflineOrder = order.OrderSource === 'In-Store / POS' || order.OrderSource === 'Walk-in' || order.CourierName === 'Counter Pickup';
+      if (channelFilter === 'online' && isOfflineOrder) return false;
+      if (channelFilter === 'offline' && !isOfflineOrder) return false;
+
       // ১. ট্যাব ফিল্টার
       if (activeTab === 'PreOrder') {
         if (!order.IsPreOrder) return false;
@@ -351,7 +365,7 @@ export default function OrdersPage({
       }
       return true;
     });
-  }, [orders, activeTab, courierFilter, sourceFilter, dateFilter, searchQuery]);
+  }, [orders, activeTab, channelFilter, courierFilter, sourceFilter, dateFilter, searchQuery]);
 
   // বাল্ক সিলেকশন হেল্পার
   const isAllSelected = useMemo(() => {
@@ -389,8 +403,14 @@ export default function OrdersPage({
     let preOrders = 0;
     let rmaPending = 0;
     let totalDueCod = 0;
+    let offlineCount = 0;
+    let onlineCount = 0;
 
     orders.forEach((o) => {
+      const isOff = o.OrderSource === 'In-Store / POS' || o.OrderSource === 'Walk-in' || o.CourierName === 'Counter Pickup';
+      if (isOff) offlineCount++;
+      else onlineCount++;
+
       if (o.Status === 'Pending') pending++;
       else if (o.Status === 'Confirmed' || o.Status === 'Packaging') confirmed++;
       else if (o.Status === 'Shipped') shipped++;
@@ -407,7 +427,7 @@ export default function OrdersPage({
 
     const successRate = total > 0 ? Math.round((delivered / total) * 100) : 100;
 
-    return { total, pending, confirmed, shipped, delivered, returned, preOrders, rmaPending, totalDueCod, successRate };
+    return { total, pending, confirmed, shipped, delivered, returned, preOrders, rmaPending, totalDueCod, successRate, offlineCount, onlineCount };
   }, [orders]);
 
   const handleCopyId = (id) => {
@@ -601,6 +621,47 @@ export default function OrdersPage({
 
       {/* ৩. ট্যাব বার ও ফিল্টার কন্ট্রোল (Tabs & Filter Controls) */}
       <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
+        {/* ওমনিচ্যানেল চ্যানেল ফিল্টার কন্ট্রোল (All vs Online vs In-Store POS) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center space-x-1.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600" />
+              <span>বিক্রয় চ্যানেল:</span>
+            </span>
+            <div className="flex items-center p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
+              {[
+                { id: 'all', label: 'সকল চ্যানেল (All)', count: metrics.total },
+                { id: 'online', label: '🌐 অনলাইন ডেলিভারি', count: metrics.onlineCount },
+                { id: 'offline', label: '🏪 ইন-স্টোর / কাউন্টার (POS)', count: metrics.offlineCount },
+              ].map((c) => {
+                const isActive = channelFilter === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => setChannelFilter(c.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                      isActive
+                        ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>{c.label}</span>
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                      isActive ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                      {c.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="text-xs text-slate-500 font-medium">
+            ফিল্টারকৃত: <strong className="text-slate-800 font-bold">{filteredOrders.length}</strong> টি অর্ডার
+          </div>
+        </div>
+
         {/* ৩.১ স্ট্যাটাস ট্যাবসমূহ */}
         <div className="flex items-center space-x-1.5 sm:space-x-2 overflow-x-auto pb-1.5 scrollbar-none border-b border-slate-100">
           {[
@@ -843,11 +904,17 @@ export default function OrdersPage({
                             </button>
                           </div>
 
-                          <div className="flex items-center space-x-1.5 mt-1">
+                          <div className="flex items-center space-x-1.5 mt-1 flex-wrap gap-y-1">
                             <span className="text-[10px] text-slate-400">{formattedDate}</span>
-                            <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded-md text-[9px] font-bold">
-                              {order.OrderSource || 'Direct'}
-                            </span>
+                            {order.OrderSource === 'In-Store / POS' || order.OrderSource === 'Walk-in' || order.CourierName === 'Counter Pickup' ? (
+                              <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md text-[9px] font-black">
+                                🏪 ইন-স্টোর (POS)
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.2 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[9px] font-black">
+                                🌐 {order.OrderSource || 'অনলাইন'}
+                              </span>
+                            )}
                           </div>
 
                           {order.IsPreOrder && (
@@ -1174,9 +1241,18 @@ export default function OrdersPage({
                             )}
                           </button>
                         </div>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">
-                          {formattedDate} • {order.OrderSource || 'Direct'}
-                        </span>
+                        <div className="flex items-center space-x-1.5 mt-0.5 flex-wrap gap-y-0.5">
+                          <span className="text-[10px] text-slate-400">{formattedDate}</span>
+                          {order.OrderSource === 'In-Store / POS' || order.OrderSource === 'Walk-in' || order.CourierName === 'Counter Pickup' ? (
+                            <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded text-[9px] font-black">
+                              🏪 ইন-স্টোর (POS)
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.2 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded text-[9px] font-black">
+                              🌐 {order.OrderSource || 'অনলাইন'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -1586,6 +1662,19 @@ function CreateOrderModal({
     }
   };
 
+  // অর্ডার সোর্স পরিবর্তন হ্যান্ডলার (কাউন্টার সেল হলে স্বয়ংক্রিয় কাউন্টার পিকআপ ও ডেলিভারি ফি ০)
+  const handleOrderSourceChange = (e) => {
+    const src = e.target.value;
+    setOrderSource(src);
+    if (src === 'In-Store / POS' || src === 'Walk-in') {
+      setCourierName('Counter Pickup');
+      setDeliveryCharge(0);
+      if (!customerAddress || customerAddress.trim() === '') {
+        setCustomerAddress('কাউন্টার / শোরুম পিকআপ');
+      }
+    }
+  };
+
   const handleDistrictChange = (e) => {
     const dist = e.target.value;
     setDistrict(dist);
@@ -1688,7 +1777,11 @@ function CreateOrderModal({
       TotalAmount: totalAmount,
       AdvancePaid: Number(advancePaid) || 0,
       DueAmount: dueAmount,
-      Status: initialOrder ? initialOrder.Status : 'Pending',
+      Status: initialOrder
+        ? initialOrder.Status
+        : (orderSource === 'In-Store / POS' || orderSource === 'Walk-in' || courierName === 'Counter Pickup')
+        ? 'Delivered'
+        : 'Pending',
       PaymentStatus: Number(advancePaid) >= totalAmount ? 'Paid' : Number(advancePaid) > 0 ? 'Partial' : 'Unpaid',
       PaymentMethod: paymentMethod,
       TransactionID: transactionId.trim(),
@@ -1830,7 +1923,7 @@ function CreateOrderModal({
                 <label className="block text-xs font-bold text-slate-700 mb-1">অর্ডার সোর্স</label>
                 <select
                   value={orderSource}
-                  onChange={(e) => setOrderSource(e.target.value)}
+                  onChange={handleOrderSourceChange}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 font-medium cursor-pointer"
                 >
                   {ORDER_SOURCES.map((s) => (
