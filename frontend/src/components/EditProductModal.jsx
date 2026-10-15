@@ -182,6 +182,18 @@ export default function EditProductModal({
       .map((c) => c.SubCategoryName);
   }, [categories, formData.category]);
 
+  // বারকোড কনফ্লিক্ট বা ডুপ্লিকেট শনাক্তকরণ (বর্তমান এডিট করা পণ্য ব্যতীত)
+  const barcodeConflictProduct = useMemo(() => {
+    if (!formData.barcode || !formData.barcode.trim()) return null;
+    const clean = formData.barcode.trim().toLowerCase();
+    return products.find(
+      (p) => 
+        p.ProductID !== formData.productId &&
+        p.Barcode && 
+        String(p.Barcode).trim().toLowerCase() === clean
+    );
+  }, [formData.barcode, formData.productId, products]);
+
   if (!isOpen || !product) return null;
 
   const handleChange = (e) => {
@@ -311,18 +323,6 @@ export default function EditProductModal({
       setIsProcessingImage(false);
     }
   };
-
-  // বারকোড কনফ্লিক্ট বা ডুপ্লিকেট শনাক্তকরণ (বর্তমান এডিট করা পণ্য ব্যতীত)
-  const barcodeConflictProduct = useMemo(() => {
-    if (!formData.barcode || !formData.barcode.trim()) return null;
-    const clean = formData.barcode.trim().toLowerCase();
-    return products.find(
-      (p) => 
-        p.ProductID !== formData.productId &&
-        p.Barcode && 
-        String(p.Barcode).trim().toLowerCase() === clean
-    );
-  }, [formData.barcode, formData.productId, products]);
 
   // স্বয়ংক্রিয় অনন্য বারকোড / SKU জেনারেটর (১০০% কনফ্লিক্ট-মুক্ত)
   const handleGenerateRandomBarcode = () => {

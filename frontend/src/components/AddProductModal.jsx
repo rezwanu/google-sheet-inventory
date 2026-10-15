@@ -172,6 +172,15 @@ export default function AddProductModal({
       .map((c) => c.SubCategoryName);
   }, [categories, formData.category]);
 
+  // বারকোড কনফ্লিক্ট বা ডুপ্লিকেট শনাক্তকরণ
+  const barcodeConflictProduct = useMemo(() => {
+    if (!formData.barcode || !formData.barcode.trim()) return null;
+    const clean = formData.barcode.trim().toLowerCase();
+    return products.find(
+      (p) => p.Barcode && String(p.Barcode).trim().toLowerCase() === clean
+    );
+  }, [formData.barcode, products]);
+
   // রিয়েল-টাইম মার্জিন ও মুনাফা হিসাব
   const cost = parseFloat(formData.costPrice) || 0;
   const sell = parseFloat(formData.sellingPrice) || 0;
@@ -206,15 +215,6 @@ export default function AddProductModal({
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
-
-  // বারকোড কনফ্লিক্ট বা ডুপ্লিকেট শনাক্তকরণ
-  const barcodeConflictProduct = useMemo(() => {
-    if (!formData.barcode || !formData.barcode.trim()) return null;
-    const clean = formData.barcode.trim().toLowerCase();
-    return products.find(
-      (p) => p.Barcode && String(p.Barcode).trim().toLowerCase() === clean
-    );
-  }, [formData.barcode, products]);
 
   // স্বয়ংক্রিয় অনন্য বারকোড / SKU জেনারেটর (১০০% কনফ্লিক্ট-মুক্ত গ্যারান্টি)
   const handleGenerateRandomBarcode = () => {
