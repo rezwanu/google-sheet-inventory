@@ -2192,11 +2192,26 @@ function doGet(e) {
   try {
     const action = (e && e.parameter && e.parameter.action) ? e.parameter.action : 'getInitialData';
 
-    // ১. সম্পূর্ণ প্রাথমিক ডাটা (Master Sync) লোড করা
+    // ১. সম্পূর্ণ প্রাথমিক ডাটা (Master Sync) লোড করা (High-Speed Cached)
     if (action === 'getInitialData') {
+      const cache = CacheService.getScriptCache();
+      const isForce = (e && e.parameter && (e.parameter.nocache === 'true' || e.parameter.force === 'true'));
+      
+      // হাই-স্পিড গুগল মেমোরি ক্যাশ (১০০-২০০ মিলিসেকেন্ড রেসপন্স)
+      if (!isForce) {
+        try {
+          const cached = cache.get('initialData');
+          if (cached) {
+            return ContentService.createTextOutput(cached).setMimeType(ContentService.MimeType.JSON);
+          }
+        } catch (cErr) {}
+      }
+
       const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-      // স্বয়ংক্রিয় স্কিমা পরীক্ষা ও মাইগ্রেশন (Categories, Units শিট ও Products কলাম নিশ্চিতকরণ)
-      ensureDatabaseSchema(spreadsheet);
+      // ভারী স্কিমা চেক শুধুমাত্র সেটআপ বা ম্যানুয়াল রিকোয়েস্টে চলবে (প্রতিটি রিড কলে নয়)
+      if (e && e.parameter && e.parameter.forceSchema === 'true') {
+        ensureDatabaseSchema(spreadsheet);
+      }
 
       const settings = getSheetRowsAsObjects(SHEETS.SETTINGS);
       const products = getSheetRowsAsObjects(SHEETS.PRODUCTS);
@@ -2230,7 +2245,7 @@ function doGet(e) {
       }
       if (!activeSetting && settings.length > 0) activeSetting = settings[0];
 
-      return createJsonResponse({
+      const responsePayload = JSON.stringify({
         success: true,
         data: {
           settings: activeSetting,
@@ -2243,6 +2258,13 @@ function doGet(e) {
           users: users
         }
       });
+
+      // ১২০ সেকেন্ডের জন্য গুগল স্ক্রিপ্ট ক্যাশে সংরক্ষণ
+      try {
+        cache.put('initialData', responsePayload, 120);
+      } catch (cacheErr) {}
+
+      return ContentService.createTextOutput(responsePayload).setMimeType(ContentService.MimeType.JSON);
     }
 
     // ১.১ শুধুমাত্র পরিমাপক একক (Units) তালিকা আনা
@@ -2524,6 +2546,10 @@ function doPost(e) {
       message: err.toString()
     });
   } finally {
+    // যেকোনো ডাটা মিউটেশনের পর স্ক্রিপ্ট ক্যাশ স্বয়ংক্রিয়ভাবে বাতিল করা
+    try {
+      CacheService.getScriptCache().remove('initialData');
+    } catch (cErr) {}
     // যেকোনো পরিস্থিতিতে কাজ শেষে লক মুক্ত করে দেওয়া
     lock.releaseLock();
   }

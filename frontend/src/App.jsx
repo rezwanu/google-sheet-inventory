@@ -112,8 +112,15 @@ export default function App() {
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
 
-  // ২. সিস্টেম স্ট্যাটাস ও মডাল স্টেট
-  const [syncStatus, setSyncStatus] = useState('offline'); // 'online' | 'offline' | 'syncing'
+  // ২. সিস্টেম স্ট্যাটাস ও মডাল স্টেট (জিরো-ডিলে রেডি স্ট্যাটাস)
+  const [syncStatus, setSyncStatus] = useState(() => {
+    try {
+      const p = getLocalProducts();
+      return (p && p.length > 0) ? 'online' : 'syncing';
+    } catch {
+      return 'online';
+    }
+  });
   const [isProcessingSale, setIsProcessingSale] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -384,17 +391,21 @@ export default function App() {
     showToast('গ্রাহক স্টোর ভিউ মোডে প্রবেশ করা হয়েছে।', 'info');
   };
 
-  // ৩. গুগল শিট API-এর সাথে ব্যাকগ্রাউন্ড ডাটা সিঙ্ক ফাংশন
+  // ৩. গুগল শিট API-এর সাথে ব্যাকগ্রাউন্ড ডাটা সিঙ্ক ফাংশন (Non-Blocking SWR Pattern)
   const handleSync = useCallback(async (manual = true, targetApiUrl = null) => {
     let effectiveApiUrl = (targetApiUrl || settings.apiUrl || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (!effectiveApiUrl) {
       effectiveApiUrl = DEFAULT_APPS_SCRIPT_URL;
     }
 
-    setSyncStatus('syncing');
+    // শুধুমাত্র ম্যানুয়াল সিঙ্কে স্পিনার দেখান, ব্যাকগ্রাউন্ড অটো-সিঙ্কে ইউজার ইন্টারফেস স্বাভাবিক থাকবে
+    if (manual) {
+      setSyncStatus('syncing');
+    }
+
     let data = null;
     try {
-      data = await fetchInitialData(effectiveApiUrl);
+      data = await fetchInitialData(effectiveApiUrl, manual);
     } catch (err) {
       console.warn('Initial sync failed with URL:', effectiveApiUrl, err);
       // যদি সংরক্ষিত বা কাস্টম URL কোনো কারণে ফেইল করে, কিন্তু DEFAULT_APPS_SCRIPT_URL ভিন্ন হয়,
@@ -402,18 +413,18 @@ export default function App() {
       if (effectiveApiUrl !== DEFAULT_APPS_SCRIPT_URL && DEFAULT_APPS_SCRIPT_URL) {
         try {
           console.info('Attempting fallback to DEFAULT_APPS_SCRIPT_URL...');
-          data = await fetchInitialData(DEFAULT_APPS_SCRIPT_URL);
+          data = await fetchInitialData(DEFAULT_APPS_SCRIPT_URL, manual);
           effectiveApiUrl = DEFAULT_APPS_SCRIPT_URL;
         } catch (fallbackErr) {
-          setSyncStatus('offline');
           if (manual) {
+            setSyncStatus('offline');
             showToast(`সিঙ্ক ব্যর্থ: ${err.message}`, 'error');
           }
           return;
         }
       } else {
-        setSyncStatus('offline');
         if (manual) {
+          setSyncStatus('offline');
           showToast(`সিঙ্ক ব্যর্থ: ${err.message}`, 'error');
         }
         return;

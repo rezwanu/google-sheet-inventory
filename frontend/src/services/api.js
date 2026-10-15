@@ -5,31 +5,70 @@
  * React ফ্রন্টএন্ড এবং Apps Script ওয়েব অ্যাপের মধ্যে যোগাযোগ তৈরি করে।
  */
 
+// ইন-মেমোরি স্মার্ট ক্যাশ ও ইন-ফ্লাইট প্রমিজ ডিডুপ্লিকেশন (Zero-Redundancy Network Calls)
+let cachedInitialData = null;
+let lastInitialDataFetchTime = 0;
+let inFlightInitialDataPromise = null;
+const INITIAL_DATA_CACHE_TTL_MS = 60 * 1000; // ৬০ সেকেন্ড মেমোরি ক্যাশ
+
+/**
+ * এপিআই ক্যাশ বাতিল করার ফাংশন (যেকোনো মিউটেশন বা সেলস সম্পন্ন হলে স্বয়ংক্রিয়ভাবে ক্যাশ ক্লিয়ার হয়)
+ */
+export function invalidateApiCache() {
+  cachedInitialData = null;
+  lastInitialDataFetchTime = 0;
+  inFlightInitialDataPromise = null;
+}
+
 /**
  * প্রাথমিক ডাটা (Settings, Products, Users) সিঙ্ক করার মেথড
  * @param {string} apiUrl - Apps Script Web App URL
+ * @param {boolean} force - ক্যাশ উপেক্ষা করে জোরপূর্বক লাইভ কল (ম্যানুয়াল সিঙ্ক)
  */
-export async function fetchInitialData(apiUrl) {
+export async function fetchInitialData(apiUrl, force = false) {
   if (!apiUrl || !apiUrl.trim()) {
     throw new Error('API URL প্রদান করা হয়নি। অনুগ্রহ করে Settings এ গিয়ে URL দিন।');
   }
 
-  const endpoint = `${apiUrl.trim()}${apiUrl.includes('?') ? '&' : '?'}action=getInitialData`;
-  const response = await fetch(endpoint, {
-    method: 'GET',
-    redirect: 'follow',
-  });
+  const cleanUrl = apiUrl.trim();
 
-  if (!response.ok) {
-    throw new Error(`সার্ভার এরর: ${response.status} ${response.statusText}`);
+  // ১. মেমোরি ক্যাশ চেক (যদি ৬০ সেকেন্ডের মধ্যে ডাটা আনা হয়ে থাকে এবং force=false হয়)
+  if (!force && cachedInitialData && (Date.now() - lastInitialDataFetchTime < INITIAL_DATA_CACHE_TTL_MS)) {
+    return cachedInitialData;
   }
 
-  const result = await response.json();
-  if (!result.success) {
-    throw new Error(result.message || 'ডাটা ফেচ ব্যর্থ হয়েছে।');
+  // ২. চলমান নেটওয়ার্ক রিকোয়েস্ট ডিডুপ্লিকেশন (একই সাথে একাধিক কল হলে একই প্রমিজ শেয়ার করবে)
+  if (!force && inFlightInitialDataPromise) {
+    return inFlightInitialDataPromise;
   }
 
-  return result.data;
+  const endpoint = `${cleanUrl}${cleanUrl.includes('?') ? '&' : '?'}action=getInitialData`;
+
+  inFlightInitialDataPromise = (async () => {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        redirect: 'follow',
+      });
+
+      if (!response.ok) {
+        throw new Error(`সার্ভার এরর: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || 'ডাটা ফেচ ব্যর্থ হয়েছে।');
+      }
+
+      cachedInitialData = result.data;
+      lastInitialDataFetchTime = Date.now();
+      return result.data;
+    } finally {
+      inFlightInitialDataPromise = null;
+    }
+  })();
+
+  return inFlightInitialDataPromise;
 }
 
 /**

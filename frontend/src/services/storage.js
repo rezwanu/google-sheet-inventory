@@ -20,36 +20,35 @@ const STORAGE_KEYS = {
   USERS: 'pos_users',
 };
 
-// প্রাথমিক ডিফল্ট সিস্টেম ইউজার ও গ্রাহক অ্যাকাউন্ট তালিকা
-export const DEFAULT_USERS = [
+import {
+  BASELINE_SETTINGS,
+  BASELINE_PRODUCTS,
+  BASELINE_CATEGORIES,
+  BASELINE_UNITS,
+  BASELINE_USERS,
+  BASELINE_CUSTOMERS,
+  BASELINE_COUPONS,
+  BASELINE_SALES
+} from './baselineData';
+
+// প্রাথমিক ডিফল্ট সিস্টেম ইউজার ও অ্যাকাউন্ট তালিকা (লাইভ বেসলাইন থেকে ইনস্ট্যান্ট লোড)
+export const DEFAULT_USERS = BASELINE_USERS && BASELINE_USERS.length > 0 ? BASELINE_USERS : [
   {
     UserID: 'USER-ADMIN-01',
-    FullName: 'এডমিন মোহাম্মদ করিম',
+    FullName: 'Rezwanur Rahman',
     Email: 'admin@pos.local',
-    Phone: '01700000000',
-    Role: 'Admin', // 'Admin' | 'Cashier' | 'Customer'
+    Phone: '01675934919',
+    Role: 'Admin',
     PIN: '1234',
-    Address: 'হেড অফিস, গুলশান, ঢাকা',
+    Address: 'Bosila, Mohammadpur, Dhaka',
     AvatarUrl: '',
     Status: 'Active',
     CreatedAt: '2026-01-01T00:00:00.000Z',
-  },
-  {
-    UserID: 'USER-CASHIER-01',
-    FullName: 'প্রধান ক্যাশিয়ার রফিক',
-    Email: 'cashier@pos.local',
-    Phone: '01711111111',
-    Role: 'Cashier',
-    PIN: '1122',
-    Address: 'কাউন্টার ১, ঢাকা',
-    AvatarUrl: '',
-    Status: 'Active',
-    CreatedAt: '2026-01-05T00:00:00.000Z',
-  },
+  }
 ];
 
-// প্রাথমিক ডিফল্ট কাস্টমার ডাটাবেস (কোনো ডামি গ্রাহক থাকবে না)
-export const DEFAULT_CUSTOMERS = [];
+// প্রাথমিক ডিফল্ট কাস্টমার ডাটাবেস
+export const DEFAULT_CUSTOMERS = BASELINE_CUSTOMERS || [];
 
 // গুগল অ্যাপস স্ক্রিপ্ট ব্যাকএন্ড Web App URL (ডিফল্ট ক্লাউড ডাটাবেস)
 export const DEFAULT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbycCBTqIaaQUpAPrJwF1EEEeaZD7CmYamE9AF4u_v0bJFRZaoMRmKZ8wGBGt2MLEwsg/exec';
@@ -57,21 +56,22 @@ export const DEFAULT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfyc
 // পরিবেশ ভেরিয়েবল বা বিল্ট-ইন কনফিগারেশন থেকে ডিফল্ট API URL (Vercel বা .env)
 const ENV_API_URL = (
   (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.VITE_API_URL || import.meta.env.VITE_APPS_SCRIPT_URL)) ||
+  BASELINE_SETTINGS?.apiUrl ||
   DEFAULT_APPS_SCRIPT_URL
 ).trim();
 
-// প্রাথমিক ডিফল্ট সেটিংস (কোনো ডামি বা ফেক তথ্য থাকবে না)
+// প্রাথমিক ডিফল্ট সেটিংস (জিরো-লেটেন্সি পাবনা বস্ত্রালয় প্রোফাইল)
 export const DEFAULT_SETTINGS = {
-  SettingID: 'SETTING-1',
-  StoreName: '',
-  LogoUrl: '',
-  CurrencySymbol: '৳',
-  TaxRatePercent: 0,
-  Address: '',
-  Phone: '',
-  Email: '',
-  ReceiptFooter: '',
-  apiUrl: ENV_API_URL, // গুগল অ্যাপস স্ক্রিপ্ট Web App URL
+  SettingID: BASELINE_SETTINGS?.SettingID || 'SETTING-1',
+  StoreName: BASELINE_SETTINGS?.StoreName || 'Pabna Bostraloy',
+  LogoUrl: BASELINE_SETTINGS?.LogoUrl || '',
+  CurrencySymbol: BASELINE_SETTINGS?.CurrencySymbol || '৳',
+  TaxRatePercent: Number(BASELINE_SETTINGS?.TaxRatePercent) || 0,
+  Address: BASELINE_SETTINGS?.Address || 'Bosila, Mohammadpur -Plot -7, Block -C, 40 Fit Main Road, Dhaka 1208',
+  Phone: String(BASELINE_SETTINGS?.Phone || '01675934919'),
+  Email: BASELINE_SETTINGS?.Email || 'rezwanureee@gmail.com',
+  ReceiptFooter: BASELINE_SETTINGS?.ReceiptFooter || '',
+  apiUrl: ENV_API_URL || DEFAULT_APPS_SCRIPT_URL,
 };
 
 // পরিচিত ডামি সেটিংসের মানসমূহ (লোকাল ক্যাশ বা শিট থেকে পরিচ্ছন্ন করার জন্য)
@@ -276,11 +276,25 @@ export function getLocalSettings() {
     if (!data) return { ...DEFAULT_SETTINGS, apiUrl: ENV_API_URL || DEFAULT_APPS_SCRIPT_URL };
     const parsed = JSON.parse(data);
     const sanitized = sanitizeSettings(parsed);
+
+    // বেসলাইন ডিফল্ট দিয়ে স্টোর প্রোফাইল ফিল্ড স্বয়ংক্রিয় পুনরুদ্ধার (ইনস্ট্যান্ট ফার্স্ট পেইন্ট)
+    if (!sanitized.StoreName && DEFAULT_SETTINGS.StoreName) {
+      sanitized.StoreName = DEFAULT_SETTINGS.StoreName;
+    }
+    if (!sanitized.Address && DEFAULT_SETTINGS.Address) {
+      sanitized.Address = DEFAULT_SETTINGS.Address;
+    }
+    if (!sanitized.Phone && DEFAULT_SETTINGS.Phone) {
+      sanitized.Phone = DEFAULT_SETTINGS.Phone;
+    }
+    if (!sanitized.Email && DEFAULT_SETTINGS.Email) {
+      sanitized.Email = DEFAULT_SETTINGS.Email;
+    }
     if (!sanitized.apiUrl || !sanitized.apiUrl.trim()) {
       sanitized.apiUrl = ENV_API_URL || DEFAULT_APPS_SCRIPT_URL;
       sanitized.ApiUrl = ENV_API_URL || DEFAULT_APPS_SCRIPT_URL;
-      saveLocalSettings(sanitized);
     }
+    saveLocalSettings(sanitized);
     return sanitized;
   } catch (e) {
     return { ...DEFAULT_SETTINGS, apiUrl: ENV_API_URL || DEFAULT_APPS_SCRIPT_URL };
@@ -292,36 +306,22 @@ export function saveLocalSettings(settings) {
   localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(sanitized));
 }
 
-// প্রাথমিক পরিমাপক একক (Units) তালিকা
-export const DEFAULT_UNITS = [
+// প্রাথমিক পরিমাপক একক (Units) তালিকা (লাইভ বেসলাইন থেকে লোড)
+export const DEFAULT_UNITS = BASELINE_UNITS && BASELINE_UNITS.length > 0 ? BASELINE_UNITS : [
   { UnitID: 'UNIT-101', UnitName: 'Piece (পিস)', ShortName: 'Pcs', Description: 'একক পিস পণ্য', Status: 'Active' },
   { UnitID: 'UNIT-102', UnitName: 'Packet (প্যাকেট)', ShortName: 'Packet', Description: 'প্যাকেটজাত পণ্য', Status: 'Active' },
-  { UnitID: 'UNIT-103', UnitName: 'Kilogram (কেজি)', ShortName: 'Kg', Description: 'ওজন পরিমাপক কেজি', Status: 'Active' },
-  { UnitID: 'UNIT-104', UnitName: 'Gram (গ্রাম)', ShortName: 'gm', Description: 'ক্ষুদ্র ওজন একক', Status: 'Active' },
-  { UnitID: 'UNIT-105', UnitName: 'Litre (লিটার)', ShortName: 'Ltr', Description: 'তরল পরিমাপক লিটার', Status: 'Active' },
-  { UnitID: 'UNIT-106', UnitName: 'Millilitre (মিলি)', ShortName: 'ml', Description: 'ক্ষুদ্র তরল একক', Status: 'Active' },
   { UnitID: 'UNIT-107', UnitName: 'Box (বক্স/কার্টন)', ShortName: 'Box', Description: 'কার্টন বা বক্স', Status: 'Active' },
-  { UnitID: 'UNIT-108', UnitName: 'Bottle (বোতল)', ShortName: 'Bottle', Description: 'বোতলজাত পণ্য', Status: 'Active' },
-  { UnitID: 'UNIT-109', UnitName: 'Dozen (ডজন)', ShortName: 'Dozen', Description: '১২ পিস বা ডজন', Status: 'Active' },
-  { UnitID: 'UNIT-110', UnitName: 'Pair (জোড়া)', ShortName: 'Pair', Description: 'জুতো বা জোড়া আইটেম', Status: 'Active' },
-  { UnitID: 'UNIT-111', UnitName: 'Meter (মিটার)', ShortName: 'Meter', Description: 'দৈর্ঘ্য বা কাপড়', Status: 'Active' },
-  { UnitID: 'UNIT-112', UnitName: 'Roll (রোল)', ShortName: 'Roll', Description: 'রোল বা ফিতা জাতীয়', Status: 'Active' },
 ];
 
-// প্রাথমিক ক্যাটাগরি ও সাব-ক্যাটাগরি হায়ারার্কি
-export const DEFAULT_CATEGORIES = [
-  { CategoryID: 'CAT-101', CategoryName: 'Grocery', SubCategoryName: 'Rice & Grain', Status: 'Active' },
-  { CategoryID: 'CAT-102', CategoryName: 'Grocery', SubCategoryName: 'Edible Oil', Status: 'Active' },
-  { CategoryID: 'CAT-103', CategoryName: 'Grocery', SubCategoryName: 'Sugar & Salt', Status: 'Active' },
-  { CategoryID: 'CAT-104', CategoryName: 'Beverage', SubCategoryName: 'Tea & Coffee', Status: 'Active' },
-  { CategoryID: 'CAT-105', CategoryName: 'Beverage', SubCategoryName: 'Juice & Drinks', Status: 'Active' },
-  { CategoryID: 'CAT-106', CategoryName: 'Dairy', SubCategoryName: 'Milk & Dairy', Status: 'Active' },
-  { CategoryID: 'CAT-107', CategoryName: 'Bakery', SubCategoryName: 'Biscuits & Cookies', Status: 'Active' },
+// প্রাথমিক ক্যাটাগরি ও সাব-ক্যাটাগরি হায়ারার্কি (লাইভ বেসলাইন থেকে লোড)
+export const DEFAULT_CATEGORIES = BASELINE_CATEGORIES && BASELINE_CATEGORIES.length > 0 ? BASELINE_CATEGORIES : [
+  { CategoryID: 'CAT-1791746174333-636', CategoryName: 'Men', SubCategoryName: 'shoe', Description: 'জুতা ও স্যান্ডেল', Status: 'Active' },
+  { CategoryID: 'CAT-1791746232496-853', CategoryName: 'Women', SubCategoryName: 'Shoe', Description: 'নারী জুতা', Status: 'Active' },
+  { CategoryID: 'CAT-1791780868138-384', CategoryName: 'Home & Kitchen', SubCategoryName: 'Kitchen & Dining', Description: 'হোমওয়্যার', Status: 'Active' },
 ];
 
-// প্রাথমিক নমুনা পণ্য তালিকা - ডেমো পণ্য সম্পূর্ণরূপে বাদ দিয়ে খালি অ্যারে করা হয়েছে।
-// সকল পণ্য সরাসরি গুগল শিট 'Products' ডাটাবেস থেকে লোড হবে।
-export const DEFAULT_PRODUCTS = [];
+// প্রাথমিক পণ্য তালিকা (লাইভ গুগল শিট থেকে ইনস্ট্যান্ট জিরো-ডিলে বেসলাইন)
+export const DEFAULT_PRODUCTS = BASELINE_PRODUCTS || [];
 
 // পরিচিত ডেমো/নমুনা পণ্যের আইডি ও নামসমূহ (লোকাল ক্যাশ বা পূর্ববর্তী টেস্ট থেকে মুছে ফেলার জন্য)
 export const DEMO_PRODUCT_IDS = new Set([
@@ -363,7 +363,12 @@ export function getLocalCategories() {
       saveLocalCategories(DEFAULT_CATEGORIES);
       return DEFAULT_CATEGORIES;
     }
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      saveLocalCategories(DEFAULT_CATEGORIES);
+      return DEFAULT_CATEGORIES;
+    }
+    return parsed;
   } catch (e) {
     return DEFAULT_CATEGORIES;
   }
@@ -381,7 +386,12 @@ export function getLocalUnits() {
       saveLocalUnits(DEFAULT_UNITS);
       return DEFAULT_UNITS;
     }
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      saveLocalUnits(DEFAULT_UNITS);
+      return DEFAULT_UNITS;
+    }
+    return parsed;
   } catch (e) {
     return DEFAULT_UNITS;
   }
@@ -525,13 +535,19 @@ export function getLocalProducts() {
   try {
     const data = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
     if (!data) {
-      saveLocalProducts([]);
-      return [];
+      const initial = (DEFAULT_PRODUCTS || []).map(normalizeProduct).filter(Boolean);
+      if (initial.length > 0) {
+        saveLocalProducts(initial);
+      }
+      return initial;
     }
     const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed)) {
-      saveLocalProducts([]);
-      return [];
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      const initial = (DEFAULT_PRODUCTS || []).map(normalizeProduct).filter(Boolean);
+      if (initial.length > 0) {
+        saveLocalProducts(initial);
+      }
+      return initial;
     }
 
     // পুরোনো ডেমো পণ্যগুলো চিহ্নিত করে লোকাল স্টোরেজ থেকে স্বয়ংক্রিয়ভাবে মুছে ফেলা
@@ -540,13 +556,19 @@ export function getLocalProducts() {
       .map(normalizeProduct)
       .filter(Boolean);
 
-    // যদি ডেমো পণ্য পাওয়া যায় এবং তালিকা পরিবর্তিত হয়, তবে লোকাল স্টোরেজ আপডেট করা
+    // যদি ক্লিন করার পর তালিকা ফাঁকা হয়ে যায়, তবে আসল বেসলাইন পণ্য দিয়ে রিকভার করুন
+    if (cleanList.length === 0 && DEFAULT_PRODUCTS && DEFAULT_PRODUCTS.length > 0) {
+      const fallback = DEFAULT_PRODUCTS.map(normalizeProduct).filter(Boolean);
+      saveLocalProducts(fallback);
+      return fallback;
+    }
+
     if (cleanList.length !== parsed.length) {
       saveLocalProducts(cleanList);
     }
     return cleanList;
   } catch (e) {
-    return [];
+    return (DEFAULT_PRODUCTS || []).map(normalizeProduct).filter(Boolean);
   }
 }
 
@@ -566,6 +588,11 @@ export function saveLocalProducts(products) {
 export function clearDemoData() {
   const current = getLocalProducts();
   const strictlyReal = current.filter((p) => !isDemoProduct(p));
+  if (strictlyReal.length === 0 && DEFAULT_PRODUCTS && DEFAULT_PRODUCTS.length > 0) {
+    const fallback = DEFAULT_PRODUCTS.map(normalizeProduct).filter(Boolean);
+    saveLocalProducts(fallback);
+    return fallback;
+  }
   saveLocalProducts(strictlyReal);
   return strictlyReal;
 }
