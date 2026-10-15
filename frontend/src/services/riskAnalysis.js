@@ -124,3 +124,4 @@ export function calculateOrderRisk(order, allOrders = []) {
     recommendation
   };
 }
+
