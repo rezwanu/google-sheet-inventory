@@ -31,6 +31,12 @@ import {
   BASELINE_SALES
 } from './baselineData';
 
+import {
+  getSecureStorageItem,
+  setSecureStorageItem,
+  removeSecureStorageItem
+} from './secureStorage';
+
 // প্রাথমিক ডিফল্ট সিস্টেম ইউজার ও অ্যাকাউন্ট তালিকা (লাইভ বেসলাইন থেকে ইনস্ট্যান্ট লোড)
 export const DEFAULT_USERS = BASELINE_USERS && BASELINE_USERS.length > 0 ? BASELINE_USERS : [
   {
@@ -269,13 +275,12 @@ export function sanitizeSettings(settings) {
   return cleaned;
 }
 
-// সেটিংস সংক্রান্ত মেথড
+// সেটিংস সংক্রান্ত মেথড (এনক্রিপ্টেড)
 export function getLocalSettings() {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    const data = getSecureStorageItem(STORAGE_KEYS.SETTINGS);
     if (!data) return { ...DEFAULT_SETTINGS, apiUrl: ENV_API_URL || DEFAULT_APPS_SCRIPT_URL };
-    const parsed = JSON.parse(data);
-    const sanitized = sanitizeSettings(parsed);
+    const sanitized = sanitizeSettings(data);
 
     // বেসলাইন ডিফল্ট দিয়ে স্টোর প্রোফাইল ফিল্ড স্বয়ংক্রিয় পুনরুদ্ধার (ইনস্ট্যান্ট ফার্স্ট পেইন্ট)
     if (!sanitized.StoreName && DEFAULT_SETTINGS.StoreName) {
@@ -303,7 +308,7 @@ export function getLocalSettings() {
 
 export function saveLocalSettings(settings) {
   const sanitized = sanitizeSettings(settings);
-  localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(sanitized));
+  setSecureStorageItem(STORAGE_KEYS.SETTINGS, sanitized);
 }
 
 // প্রাথমিক পরিমাপক একক (Units) তালিকা (লাইভ বেসলাইন থেকে লোড)
@@ -355,50 +360,40 @@ export function isDemoProduct(product) {
 }
 
 
-// ক্যাটাগরি সংক্রান্ত মেথড
+// ক্যাটাগরি সংক্রান্ত মেথড (এনক্রিপ্টেড)
 export function getLocalCategories() {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
-    if (!data) {
+    const data = getSecureStorageItem(STORAGE_KEYS.CATEGORIES);
+    if (!data || !Array.isArray(data) || data.length === 0) {
       saveLocalCategories(DEFAULT_CATEGORIES);
       return DEFAULT_CATEGORIES;
     }
-    const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      saveLocalCategories(DEFAULT_CATEGORIES);
-      return DEFAULT_CATEGORIES;
-    }
-    return parsed;
+    return data;
   } catch (e) {
     return DEFAULT_CATEGORIES;
   }
 }
 
 export function saveLocalCategories(categories) {
-  localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
+  setSecureStorageItem(STORAGE_KEYS.CATEGORIES, categories);
 }
 
-// পরিমাপক একক (Units) সংক্রান্ত মেথড
+// পরিমাপক একক (Units) সংক্রান্ত মেথড (এনক্রিপ্টেড)
 export function getLocalUnits() {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.UNITS);
-    if (!data) {
+    const data = getSecureStorageItem(STORAGE_KEYS.UNITS);
+    if (!data || !Array.isArray(data) || data.length === 0) {
       saveLocalUnits(DEFAULT_UNITS);
       return DEFAULT_UNITS;
     }
-    const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      saveLocalUnits(DEFAULT_UNITS);
-      return DEFAULT_UNITS;
-    }
-    return parsed;
+    return data;
   } catch (e) {
     return DEFAULT_UNITS;
   }
 }
 
 export function saveLocalUnits(units) {
-  localStorage.setItem(STORAGE_KEYS.UNITS, JSON.stringify(units));
+  setSecureStorageItem(STORAGE_KEYS.UNITS, units);
 }
 
 // প্রোডাক্ট অবজেক্টের বিভিন্ন ফিল্ড ভ্যারিয়েশন (যেমন: StockQuantit vs StockQuantity) নর্মালাইজ করা
@@ -533,16 +528,8 @@ export function normalizeProduct(p) {
 // লোকাল প্রোডাক্ট সংক্রান্ত মেথড - কোনো ডেমো পণ্য থাকবে না
 export function getLocalProducts() {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
-    if (!data) {
-      const initial = (DEFAULT_PRODUCTS || []).map(normalizeProduct).filter(Boolean);
-      if (initial.length > 0) {
-        saveLocalProducts(initial);
-      }
-      return initial;
-    }
-    const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
+    const parsed = getSecureStorageItem(STORAGE_KEYS.PRODUCTS);
+    if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
       const initial = (DEFAULT_PRODUCTS || []).map(normalizeProduct).filter(Boolean);
       if (initial.length > 0) {
         saveLocalProducts(initial);
@@ -579,7 +566,7 @@ export function saveLocalProducts(products) {
         .map(normalizeProduct)
         .filter(Boolean)
     : [];
-  localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(normalized));
+  setSecureStorageItem(STORAGE_KEYS.PRODUCTS, normalized);
 }
 
 /**
@@ -616,9 +603,7 @@ export function updateProductStockLocally(productId, newStock, newCost = null) {
 // কার্ট মেথড
 export function getLocalCart() {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.CART);
-    if (!data) return [];
-    const parsed = JSON.parse(data);
+    const parsed = getSecureStorageItem(STORAGE_KEYS.CART);
     return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
     return [];
@@ -626,14 +611,14 @@ export function getLocalCart() {
 }
 
 export function saveLocalCart(cart) {
-  localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(cart));
+  setSecureStorageItem(STORAGE_KEYS.CART, Array.isArray(cart) ? cart : []);
 }
 
 // সেলস হিস্ট্রি মেথড
 export function getLocalSalesHistory() {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.SALES_HISTORY);
-    return data ? JSON.parse(data) : [];
+    const data = getSecureStorageItem(STORAGE_KEYS.SALES_HISTORY);
+    return Array.isArray(data) ? data : [];
   } catch (e) {
     return [];
   }
@@ -931,20 +916,20 @@ export function saveSaleLocally(sale) {
   const normalized = normalizeSale(sale);
   history.unshift(normalized); // সাম্প্রতিক বিক্রয় সবার উপরে রাখা
   // সর্বোচ্চ ১০০০টি সাম্প্রতিক সেলস হিস্ট্রি সংরক্ষণ
-  localStorage.setItem(STORAGE_KEYS.SALES_HISTORY, JSON.stringify(history.slice(0, 1000)));
+  setSecureStorageItem(STORAGE_KEYS.SALES_HISTORY, history.slice(0, 1000));
 }
 
 export function saveLocalSalesHistory(history) {
   if (!Array.isArray(history)) return;
   const normalized = history.map(normalizeSale).filter(Boolean);
-  localStorage.setItem(STORAGE_KEYS.SALES_HISTORY, JSON.stringify(normalized.slice(0, 1000)));
+  setSecureStorageItem(STORAGE_KEYS.SALES_HISTORY, normalized.slice(0, 1000));
 }
 
 // অফলাইন কিউ মেথড (নেটওয়ার্ক না থাকলে জমা রাখার জন্য)
 export function getOfflineQueue() {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.OFFLINE_QUEUE);
-    return data ? JSON.parse(data) : [];
+    const data = getSecureStorageItem(STORAGE_KEYS.OFFLINE_QUEUE);
+    return Array.isArray(data) ? data : [];
   } catch (e) {
     return [];
   }
@@ -953,11 +938,11 @@ export function getOfflineQueue() {
 export function addToOfflineQueue(item) {
   const queue = getOfflineQueue();
   queue.push(item);
-  localStorage.setItem(STORAGE_KEYS.OFFLINE_QUEUE, JSON.stringify(queue));
+  setSecureStorageItem(STORAGE_KEYS.OFFLINE_QUEUE, queue);
 }
 
 export function clearOfflineQueue() {
-  localStorage.removeItem(STORAGE_KEYS.OFFLINE_QUEUE);
+  removeSecureStorageItem(STORAGE_KEYS.OFFLINE_QUEUE);
 }
 
 // ==========================================
@@ -966,13 +951,12 @@ export function clearOfflineQueue() {
 
 export function getLocalUsers() {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.USERS);
-    if (!data) {
+    const parsed = getSecureStorageItem(STORAGE_KEYS.USERS);
+    if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
       saveLocalUsers(DEFAULT_USERS);
       return DEFAULT_USERS;
     }
-    const parsed = JSON.parse(data);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_USERS;
+    return parsed;
   } catch (e) {
     return DEFAULT_USERS;
   }
@@ -980,15 +964,14 @@ export function getLocalUsers() {
 
 export function saveLocalUsers(users) {
   if (!Array.isArray(users)) return;
-  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  setSecureStorageItem(STORAGE_KEYS.USERS, users);
 }
 
 // বর্তমান সক্রিয় ইউজার (লগইন করা অ্যাকাউন্ট, লগআউট থাকলে null)
 export function getActiveUser() {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.ACTIVE_USER);
-    if (!data) return null;
-    const parsed = JSON.parse(data);
+    const parsed = getSecureStorageItem(STORAGE_KEYS.ACTIVE_USER);
+    if (!parsed) return null;
     if (parsed && parsed.Role && parsed.UserID !== 'USER-GUEST') return parsed;
     return null;
   } catch (e) {
@@ -998,9 +981,9 @@ export function getActiveUser() {
 
 export function saveActiveUser(user) {
   if (!user || user.UserID === 'USER-GUEST') {
-    localStorage.removeItem(STORAGE_KEYS.ACTIVE_USER);
+    removeSecureStorageItem(STORAGE_KEYS.ACTIVE_USER);
   } else {
-    localStorage.setItem(STORAGE_KEYS.ACTIVE_USER, JSON.stringify(user));
+    setSecureStorageItem(STORAGE_KEYS.ACTIVE_USER, user);
   }
 }
 
@@ -1197,7 +1180,7 @@ export function deleteUserLocally(userId) {
  * লগআউট - সক্রিয় সেশন সম্পূর্ণ মুছে ফেলা
  */
 export function logoutUser() {
-  localStorage.removeItem(STORAGE_KEYS.ACTIVE_USER);
+  removeSecureStorageItem(STORAGE_KEYS.ACTIVE_USER);
   return null;
 }
 
@@ -1258,10 +1241,8 @@ export function isDummyCustomer(c) {
 
 export function getLocalCustomers() {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.CUSTOMERS);
-    if (!data) return [];
-    const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed)) return [];
+    const parsed = getSecureStorageItem(STORAGE_KEYS.CUSTOMERS);
+    if (!parsed || !Array.isArray(parsed)) return [];
     const cleaned = parsed.filter(c => !isDummyCustomer(c));
     if (cleaned.length !== parsed.length) {
       saveLocalCustomers(cleaned);
@@ -1275,7 +1256,7 @@ export function getLocalCustomers() {
 export function saveLocalCustomers(customers) {
   if (!Array.isArray(customers)) return;
   const cleaned = customers.filter(c => !isDummyCustomer(c));
-  localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(cleaned));
+  setSecureStorageItem(STORAGE_KEYS.CUSTOMERS, cleaned);
 }
 
 /**
@@ -1387,10 +1368,8 @@ export function normalizeCoupon(coupon) {
 
 export function getLocalCoupons() {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.COUPONS);
-    if (!data) return [];
-    const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed)) return [];
+    const parsed = getSecureStorageItem(STORAGE_KEYS.COUPONS);
+    if (!parsed || !Array.isArray(parsed)) return [];
     return parsed.map(normalizeCoupon).filter(Boolean);
   } catch (e) {
     return [];
@@ -1400,7 +1379,7 @@ export function getLocalCoupons() {
 export function saveLocalCoupons(coupons) {
   if (!Array.isArray(coupons)) return;
   const normalized = coupons.map(normalizeCoupon).filter(Boolean);
-  localStorage.setItem(STORAGE_KEYS.COUPONS, JSON.stringify(normalized));
+  setSecureStorageItem(STORAGE_KEYS.COUPONS, normalized);
 }
 
 export function saveOrUpdateCouponLocally(couponData) {
