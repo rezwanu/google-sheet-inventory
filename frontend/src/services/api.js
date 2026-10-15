@@ -925,3 +925,84 @@ export async function postUploadUserAvatar(apiUrl, uploadData) {
 
   return await response.json();
 }
+
+/**
+ * নতুন অর্ডার তৈরি করার API কল (action: 'createOrder')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} orderData - অর্ডারের বিস্তারিত তথ্য
+ */
+export async function postCreateOrder(apiUrl, orderData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: অর্ডার সফলভাবে লোকাল স্টোরেজে তৈরি হয়েছে।',
+      data: orderData,
+    };
+  }
+
+  const payload = {
+    action: 'createOrder',
+    ...orderData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: true,
+      offline: true,
+      message: 'নেটওয়ার্ক সমস্যা: অর্ডার লোকাল স্টোরেজে সংরক্ষিত হয়েছে (অফলাইন)।',
+      data: orderData,
+    };
+  }
+}
+
+/**
+ * অর্ডারের স্ট্যাটাস বা ট্র্যাকিং কোড আপডেট করার API কল (action: 'updateOrderStatus')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} updateData - { orderId, status, trackingId, courierName, notes }
+ */
+export async function postUpdateOrderStatus(apiUrl, updateData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: অর্ডারের স্ট্যাটাস লোকাল স্টোরেজে আপডেট হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'updateOrderStatus',
+    ...updateData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: true,
+      offline: true,
+      message: 'নেটওয়ার্ক সমস্যা: স্ট্যাটাস লোকালভাবে আপডেট হয়েছে।',
+    };
+  }
+}
+

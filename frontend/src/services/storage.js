@@ -18,6 +18,7 @@ const STORAGE_KEYS = {
   OFFLINE_QUEUE: 'pos_offline_queue',
   ACTIVE_USER: 'pos_active_user',
   USERS: 'pos_users',
+  ORDERS: 'pos_orders',
 };
 
 import {
@@ -1421,6 +1422,136 @@ export function deleteCouponLocally(couponId, couponCode) {
     return true;
   });
   saveLocalCoupons(filtered);
+  return filtered;
+}
+
+// ==========================================
+// অর্ডার ম্যানেজমেন্ট মেথডসমূহ (Order Management)
+// ==========================================
+
+export function normalizeOrder(order) {
+  if (!order) return null;
+  const now = new Date().toISOString();
+
+  let items = [];
+  if (Array.isArray(order.Items)) {
+    items = order.Items;
+  } else if (Array.isArray(order.items)) {
+    items = order.items;
+  } else if (typeof order.ItemsJSON === 'string' && order.ItemsJSON.trim()) {
+    try { items = JSON.parse(order.ItemsJSON); } catch {}
+  } else if (typeof order.itemsJSON === 'string' && order.itemsJSON.trim()) {
+    try { items = JSON.parse(order.itemsJSON); } catch {}
+  }
+
+  const subTotal = Number(order.SubTotal ?? order.subTotal ?? order.subtotal) ||
+    items.reduce((sum, item) => sum + (Number(item.sellingPrice || item.SellingPrice || item.price || 0) * Number(item.quantity || item.Quantity || 1)), 0);
+  const discountAmount = Number(order.DiscountAmount ?? order.discountAmount) || 0;
+  const deliveryCharge = Number(order.DeliveryCharge ?? order.deliveryCharge) || 0;
+  const totalAmount = Number(order.TotalAmount ?? order.totalAmount) || Math.max(0, subTotal - discountAmount + deliveryCharge);
+  const advancePaid = Number(order.AdvancePaid ?? order.advancePaid) || 0;
+  const dueAmount = Number(order.DueAmount ?? order.dueAmount ?? order.CodAmount ?? order.codAmount) || Math.max(0, totalAmount - advancePaid);
+
+  return {
+    OrderID: String(order.OrderID || order.orderId || order.id || `ORD-${Date.now()}`).trim(),
+    OrderNumber: String(order.OrderNumber || order.orderNumber || '').trim(),
+    OrderDate: String(order.OrderDate || order.orderDate || order.CreatedAt || order.createdAt || now).trim(),
+    CustomerName: String(order.CustomerName || order.customerName || 'নামহীন গ্রাহক').trim(),
+    CustomerPhone: String(order.CustomerPhone || order.customerPhone || order.phone || '').trim(),
+    AltPhone: String(order.AltPhone || order.altPhone || '').trim(),
+    CustomerAddress: String(order.CustomerAddress || order.customerAddress || order.address || '').trim(),
+    Division: String(order.Division || order.division || '').trim(),
+    District: String(order.District || order.district || '').trim(),
+    Thana: String(order.Thana || order.thana || '').trim(),
+    OrderSource: String(order.OrderSource || order.orderSource || 'Phone').trim(),
+    Items: items,
+    SubTotal: subTotal,
+    DiscountAmount: discountAmount,
+    DeliveryCharge: deliveryCharge,
+    TotalAmount: totalAmount,
+    AdvancePaid: advancePaid,
+    DueAmount: dueAmount,
+    CourierName: String(order.CourierName || order.courierName || 'Steadfast').trim(),
+    TrackingID: String(order.TrackingID || order.trackingId || order.trackingCode || '').trim(),
+    Status: String(order.Status || order.status || 'Pending').trim(),
+    PaymentStatus: String(order.PaymentStatus || order.paymentStatus || (advancePaid >= totalAmount ? 'Paid' : advancePaid > 0 ? 'Partial' : 'Unpaid')).trim(),
+    PaymentMethod: String(order.PaymentMethod || order.paymentMethod || 'COD').trim(),
+    RiskLevel: String(order.RiskLevel || order.riskLevel || 'Low').trim(),
+    Notes: String(order.Notes || order.notes || '').trim(),
+    StockReserved: Boolean(order.StockReserved !== undefined ? order.StockReserved : true),
+    CreatedAt: order.CreatedAt || order.createdAt || now,
+    UpdatedAt: order.UpdatedAt || order.updatedAt || now,
+    CreatedBy: String(order.CreatedBy || order.createdBy || 'Admin').trim(),
+  };
+}
+
+export function getLocalOrders() {
+  try {
+    const parsed = getSecureStorageItem(STORAGE_KEYS.ORDERS);
+    if (!parsed || !Array.isArray(parsed)) return [];
+    return parsed.map(normalizeOrder).filter(Boolean);
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalOrders(orders) {
+  if (!Array.isArray(orders)) return;
+  const normalized = orders.map(normalizeOrder).filter(Boolean);
+  setSecureStorageItem(STORAGE_KEYS.ORDERS, normalized);
+}
+
+export function saveOrUpdateOrderLocally(orderData) {
+  if (!orderData) return getLocalOrders();
+  const normalized = normalizeOrder(orderData);
+  if (!normalized || !normalized.OrderID) return getLocalOrders();
+
+  const orders = getLocalOrders();
+  const existingIndex = orders.findIndex(o => o.OrderID === normalized.OrderID);
+
+  const now = new Date().toISOString();
+
+  if (existingIndex !== -1) {
+    orders[existingIndex] = {
+      ...orders[existingIndex],
+      ...normalized,
+      UpdatedAt: now,
+    };
+  } else {
+    normalized.CreatedAt = normalized.CreatedAt || now;
+    normalized.UpdatedAt = now;
+    orders.unshift(normalized);
+  }
+
+  saveLocalOrders(orders);
+  return orders;
+}
+
+export function updateOrderStatusLocally(orderId, newStatus, trackingId = null, courierName = null) {
+  if (!orderId || !newStatus) return getLocalOrders();
+  const orders = getLocalOrders();
+  const index = orders.findIndex(o => o.OrderID === orderId);
+
+  if (index !== -1) {
+    orders[index].Status = newStatus;
+    if (trackingId !== null) {
+      orders[index].TrackingID = trackingId;
+    }
+    if (courierName !== null) {
+      orders[index].CourierName = courierName;
+    }
+    orders[index].UpdatedAt = new Date().toISOString();
+    saveLocalOrders(orders);
+  }
+
+  return orders;
+}
+
+export function deleteOrderLocally(orderId) {
+  if (!orderId) return getLocalOrders();
+  const orders = getLocalOrders();
+  const filtered = orders.filter(o => o.OrderID !== orderId);
+  saveLocalOrders(filtered);
   return filtered;
 }
 

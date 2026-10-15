@@ -20,6 +20,7 @@ import CustomerOrdersModal from './components/CustomerOrdersModal';
 import CouponModal from './components/CouponModal';
 import UsersModal from './components/UsersModal';
 import Sidebar from './components/Sidebar';
+import OrdersPage from './components/OrdersPage';
 
 import {
   getLocalSettings,
@@ -27,6 +28,11 @@ import {
   getLocalProducts,
   saveLocalProducts,
   normalizeProduct,
+  getLocalOrders,
+  saveLocalOrders,
+  saveOrUpdateOrderLocally,
+  updateOrderStatusLocally,
+  deleteOrderLocally,
   getLocalCategories,
   saveLocalCategories,
   getLocalUnits,
@@ -89,7 +95,9 @@ import {
   postDeleteProduct,
   postAddCategory,
   postAddUnit,
-  postUpdateSettings
+  postUpdateSettings,
+  postCreateOrder,
+  postUpdateOrderStatus
 } from './services/api';
 
 export default function App() {
@@ -100,6 +108,7 @@ export default function App() {
   const [units, setUnits] = useState(getLocalUnits);
   const [cart, setCart] = useState(getLocalCart);
   const [salesHistory, setSalesHistory] = useState(getLocalSalesHistory);
+  const [orders, setOrders] = useState(getLocalOrders);
   const [customers, setCustomers] = useState(getLocalCustomers);
   const [coupons, setCoupons] = useState(getLocalCoupons);
   const [activeUser, setActiveUser] = useState(getActiveUser);
@@ -193,6 +202,11 @@ export default function App() {
       return stock <= minAlert;
     }).length;
   }, [products]);
+
+  // অপেক্ষমান অর্ডারের সংখ্যা (Badge Count)
+  const pendingOrdersCount = useMemo(() => {
+    return (orders || []).filter((o) => o.Status === 'Pending').length;
+  }, [orders]);
 
   // দ্রুত স্টক ইনপুট ওপেন হ্যান্ডলার
   const handleQuickRestock = (product) => {
@@ -839,6 +853,141 @@ export default function App() {
     }
   };
 
+  // ৬.৪ অর্ডার ম্যানেজমেন্ট হ্যান্ডলারসমূহ (Order Management Handlers)
+  const handleSaveOrder = async (orderData) => {
+    try {
+      // ১. যদি স্টক রিজার্ভ অন থাকে, তাৎক্ষণিকভাবে পণ্যগুলোর স্টক কর্তন (জিরো-লেটেন্সি)
+      if (orderData.StockReserved && Array.isArray(orderData.Items)) {
+        const updatedProducts = products.map((p) => {
+          const item = orderData.Items.find((i) => (i.productId || i.ProductID) === p.ProductID);
+          if (item) {
+            const currentStock = Number(p.StockQuantity) || 0;
+            return {
+              ...p,
+              StockQuantity: Math.max(0, currentStock - Number(item.quantity)),
+              UpdatedAt: new Date().toISOString(),
+            };
+          }
+          return p;
+        });
+        setProducts(updatedProducts);
+        saveLocalProducts(updatedProducts);
+      }
+
+      // ২. কাস্টমার ডাটাবেস আপডেট (Customer Database Persistence)
+      if (orderData.CustomerName && orderData.CustomerPhone) {
+        const updatedCustList = saveOrUpdateCustomerLocally({
+          CustomerName: orderData.CustomerName,
+          Phone: orderData.CustomerPhone,
+          Address: orderData.CustomerAddress,
+          CustomerType: 'Regular',
+        }, orderData.TotalAmount);
+        setCustomers(updatedCustList);
+      }
+
+      // ৩. লোকাল অর্ডারে সেভ
+      const updatedOrders = saveOrUpdateOrderLocally(orderData);
+      setOrders(updatedOrders);
+      showToast(`অর্ডার ${orderData.OrderID} সফলভাবে তৈরি হয়েছে!`, 'success');
+
+      // ৪. গুগল শিট ব্যাকএন্ডে সিঙ্ক
+      if (settings.apiUrl) {
+        try {
+          await postCreateOrder(settings.apiUrl, orderData);
+        } catch (apiErr) {
+          console.warn('Order cloud sync delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`অর্ডার তৈরি করতে সমস্যা: ${err.message}`, 'error');
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId, newStatus, trackingId = null, courierName = null) => {
+    try {
+      const targetOrder = orders.find((o) => o.OrderID === orderId);
+      if (!targetOrder) return;
+
+      const prevStatus = targetOrder.Status;
+
+      // ১. অটোমেটিক রিস্টক (Restock on Return or Cancellation)
+      if (
+        (newStatus === 'Returned' || newStatus === 'Cancelled') &&
+        prevStatus !== 'Returned' &&
+        prevStatus !== 'Cancelled' &&
+        targetOrder.StockReserved &&
+        Array.isArray(targetOrder.Items)
+      ) {
+        const restockedProducts = products.map((p) => {
+          const item = targetOrder.Items.find((i) => (i.productId || i.ProductID) === p.ProductID);
+          if (item) {
+            const currentStock = Number(p.StockQuantity) || 0;
+            return {
+              ...p,
+              StockQuantity: currentStock + Number(item.quantity),
+              UpdatedAt: new Date().toISOString(),
+            };
+          }
+          return p;
+        });
+        setProducts(restockedProducts);
+        saveLocalProducts(restockedProducts);
+        showToast('রিটার্ন/বাতিলকৃত পণ্যের স্টক মূল ইনভেন্টরিতে ফেরত যোগ করা হয়েছে!', 'info');
+      }
+
+      // বিপরীতভাবে: যদি পূর্বে রিটার্ন/ক্যানসেল ছিল এবং এখন আবার কনফার্ম বা ডেলিভারি করা হয়
+      if (
+        (prevStatus === 'Returned' || prevStatus === 'Cancelled') &&
+        newStatus !== 'Returned' &&
+        newStatus !== 'Cancelled' &&
+        targetOrder.StockReserved &&
+        Array.isArray(targetOrder.Items)
+      ) {
+        const deductedProducts = products.map((p) => {
+          const item = targetOrder.Items.find((i) => (i.productId || i.ProductID) === p.ProductID);
+          if (item) {
+            const currentStock = Number(p.StockQuantity) || 0;
+            return {
+              ...p,
+              StockQuantity: Math.max(0, currentStock - Number(item.quantity)),
+              UpdatedAt: new Date().toISOString(),
+            };
+          }
+          return p;
+        });
+        setProducts(deductedProducts);
+        saveLocalProducts(deductedProducts);
+      }
+
+      // ২. লোকাল স্টোরেজে স্ট্যাটাস আপডেট
+      const updatedOrders = updateOrderStatusLocally(orderId, newStatus, trackingId, courierName);
+      setOrders(updatedOrders);
+      showToast(`অর্ডার ${orderId} স্ট্যাটাস '${newStatus}'-এ পরিবর্তিত হয়েছে।`, 'success');
+
+      // ৩. ক্লাউড সিঙ্ক
+      if (settings.apiUrl) {
+        try {
+          await postUpdateOrderStatus(settings.apiUrl, {
+            orderId,
+            status: newStatus,
+            trackingId: trackingId !== null ? trackingId : targetOrder.TrackingID,
+            courierName: courierName !== null ? courierName : targetOrder.CourierName,
+          });
+        } catch (apiErr) {
+          console.warn('Update order status cloud sync delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`স্ট্যাটাস পরিবর্তন ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
+  const handleDeleteOrder = (orderId) => {
+    const updated = deleteOrderLocally(orderId);
+    setOrders(updated);
+    showToast(`অর্ডার ${orderId} মুছে ফেলা হয়েছে।`, 'info');
+  };
+
   // ৬.৫ নতুন গ্রাহক ম্যানুয়ালি যোগ করার হ্যান্ডলার
   const handleAddCustomer = async (newCustomerData) => {
     const updatedList = saveOrUpdateCustomerLocally(newCustomerData, 0);
@@ -1306,6 +1455,7 @@ export default function App() {
             cartTotal={Array.isArray(cart) ? cart.reduce((a, b) => a + (Number(b.sellingPrice) || 0) * (Number(b.quantity) || 0), 0) : 0}
             currencySymbol={settings.CurrencySymbol || '৳'}
             lowStockCount={lowStockCount}
+            pendingOrdersCount={pendingOrdersCount}
             onOpenStockModal={() => {
               setQuickRestockProductId('');
               setIsStockModalOpen(true);
@@ -1325,7 +1475,7 @@ export default function App() {
           />
         )}
 
-        {/* প্রধান লেআউট ভিউ: ক্যাটালগ | কার্ট পেজ | চেকআউট পেজ */}
+        {/* প্রধান লেআউট ভিউ: ক্যাটালগ | কার্ট পেজ | চেকআউট পেজ | অর্ডার পেজ */}
         <main className={`flex-1 min-w-0 p-3 sm:p-4 lg:p-6 flex flex-col ${!isAdmin ? 'max-w-7xl mx-auto w-full' : ''}`}>
           {currentView === 'pos' && (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-6.5rem)]">
@@ -1377,6 +1527,21 @@ export default function App() {
               isProcessing={isProcessingSale}
               activeUser={activeUser}
               onOpenAuthModal={() => setIsAuthModalOpen(true)}
+            />
+          )}
+
+          {currentView === 'orders' && (
+            <OrdersPage
+              orders={orders}
+              setOrders={setOrders}
+              products={products}
+              settings={settings}
+              activeUser={activeUser}
+              onSaveOrder={handleSaveOrder}
+              onUpdateStatus={handleUpdateOrderStatus}
+              onDeleteOrder={handleDeleteOrder}
+              showToast={showToast}
+              currencySymbol={settings.CurrencySymbol || '৳'}
             />
           )}
         </main>

@@ -15,7 +15,8 @@ const SHEETS = {
   STOCK_LOGS: 'StockLogs',
   USERS: 'Users',
   CUSTOMERS: 'Customers',
-  COUPONS: 'Coupons'
+  COUPONS: 'Coupons',
+  ORDERS: 'Orders'
 };
 
 /**
@@ -2220,6 +2221,7 @@ function doGet(e) {
       const customers = getSheetRowsAsObjects(SHEETS.CUSTOMERS);
       const coupons = getSheetRowsAsObjects(SHEETS.COUPONS);
       const sales = getSheetRowsAsObjects(SHEETS.SALES);
+      const orders = getSheetRowsAsObjects(SHEETS.ORDERS);
       const users = getSheetRowsAsObjects(SHEETS.USERS).map(user => {
         return {
           UserID: user.UserID,
@@ -2255,6 +2257,7 @@ function doGet(e) {
           customers: customers,
           coupons: coupons,
           sales: sales,
+          orders: orders,
           users: users
         }
       });
@@ -2529,6 +2532,14 @@ function doPost(e) {
           message: avatarRes.success ? 'প্রোফাইল ছবি সফলভাবে গুগল ড্রাইভে আপলোড হয়েছে।' : (avatarRes.error || 'ছবি আপলোড করতে সমস্যা হয়েছে।'),
           data: { avatarUrl: avatarRes.url, userId: uId }
         };
+        break;
+
+      case 'createOrder':
+        result = handleCreateOrder(spreadsheet, payload);
+        break;
+
+      case 'updateOrderStatus':
+        result = handleUpdateOrderStatus(spreadsheet, payload);
         break;
 
       default:
@@ -3344,5 +3355,200 @@ function handleLoginUser(spreadsheet, payload) {
     }
   };
 }
+
+/**
+ * ============================================================================
+ * অর্ডার ম্যানেজমেন্ট সার্ভিস মেথডসমূহ (Order Management Backend Handlers)
+ * ============================================================================
+ */
+
+function ensureOrdersSheet(spreadsheet) {
+  let ordersSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.ORDERS);
+  if (!ordersSheet) {
+    ordersSheet = spreadsheet.insertSheet(SHEETS.ORDERS);
+  }
+
+  if (ordersSheet.getLastRow() === 0) {
+    ordersSheet.appendRow([
+      'OrderID', 'OrderNumber', 'OrderDate', 'CustomerName', 'CustomerPhone', 'AltPhone',
+      'CustomerAddress', 'District', 'OrderSource', 'ItemsJSON', 'SubTotal', 'DiscountAmount',
+      'DeliveryCharge', 'TotalAmount', 'AdvancePaid', 'DueAmount', 'CourierName', 'TrackingID',
+      'Status', 'PaymentStatus', 'PaymentMethod', 'RiskLevel', 'Notes', 'StockReserved',
+      'CreatedAt', 'UpdatedAt', 'CreatedBy'
+    ]);
+  }
+
+  return ordersSheet;
+}
+
+function handleCreateOrder(spreadsheet, payload) {
+  const ordersSheet = ensureOrdersSheet(spreadsheet);
+  const now = new Date();
+  const orderId = payload.OrderID || payload.orderId || `ORD-${now.getTime().toString().slice(-6)}`;
+  const orderDate = payload.OrderDate || payload.orderDate || Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  const items = Array.isArray(payload.Items) ? payload.Items : (Array.isArray(payload.items) ? payload.items : []);
+  const itemsJson = JSON.stringify(items);
+
+  const subTotal = Number(payload.SubTotal || payload.subTotal || 0);
+  const discountAmount = Number(payload.DiscountAmount || payload.discountAmount || 0);
+  const deliveryCharge = Number(payload.DeliveryCharge || payload.deliveryCharge || 0);
+  const totalAmount = Number(payload.TotalAmount || payload.totalAmount || 0);
+  const advancePaid = Number(payload.AdvancePaid || payload.advancePaid || 0);
+  const dueAmount = Number(payload.DueAmount || payload.dueAmount || 0);
+
+  // স্টক কর্তন (যদি StockReserved অন থাকে)
+  if (payload.StockReserved && items.length > 0) {
+    try {
+      const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
+      if (productsSheet && productsSheet.getLastRow() > 1) {
+        const pData = productsSheet.getDataRange().getValues();
+        const pHeaders = pData[0];
+        const idCol = findCol(pHeaders, 'ProductID', 'ID');
+        const stockCol = findCol(pHeaders, 'StockQuantity', 'Stock');
+        if (idCol !== -1 && stockCol !== -1) {
+          for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const pId = String(item.productId || item.ProductID || '').trim();
+            const qty = Number(item.quantity || item.Quantity || 0);
+            if (pId && qty > 0) {
+              for (let r = 1; r < pData.length; r++) {
+                if (String(pData[r][idCol]).trim() === pId) {
+                  const currentStock = Number(pData[r][stockCol]) || 0;
+                  const newStock = Math.max(0, currentStock - qty);
+                  productsSheet.getRange(r + 1, stockCol + 1).setValue(newStock);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      Logger.log('Order stock deduction error: ' + e);
+    }
+  }
+
+  ordersSheet.appendRow([
+    orderId,
+    payload.OrderNumber || '',
+    orderDate,
+    payload.CustomerName || '',
+    payload.CustomerPhone || '',
+    payload.AltPhone || '',
+    payload.CustomerAddress || '',
+    payload.District || '',
+    payload.OrderSource || 'Direct',
+    itemsJson,
+    subTotal,
+    discountAmount,
+    deliveryCharge,
+    totalAmount,
+    advancePaid,
+    dueAmount,
+    payload.CourierName || 'Steadfast',
+    payload.TrackingID || '',
+    payload.Status || 'Pending',
+    payload.PaymentStatus || 'Unpaid',
+    payload.PaymentMethod || 'COD',
+    payload.RiskLevel || 'Low',
+    payload.Notes || '',
+    payload.StockReserved ? true : false,
+    now,
+    now,
+    payload.CreatedBy || 'Admin'
+  ]);
+
+  return {
+    success: true,
+    message: 'অর্ডার সফলভাবে তৈরি ও সংরক্ষিত হয়েছে!',
+    data: { orderId: orderId }
+  };
+}
+
+function handleUpdateOrderStatus(spreadsheet, payload) {
+  const ordersSheet = ensureOrdersSheet(spreadsheet);
+  const targetId = String(payload.orderId || payload.OrderID || '').trim();
+  const newStatus = String(payload.status || payload.Status || '').trim();
+  if (!targetId || !newStatus) {
+    return { success: false, message: 'অর্ডার আইডি বা স্ট্যাটাস পাওয়া যায়নি।' };
+  }
+
+  const data = ordersSheet.getDataRange().getValues();
+  if (data.length <= 1) {
+    return { success: false, message: 'অর্ডার তালিকায় কোনো রেকর্ড নেই।' };
+  }
+
+  const headers = data[0];
+  const idCol = findCol(headers, 'OrderID', 'ID');
+  const statusCol = findCol(headers, 'Status');
+  const trackingCol = findCol(headers, 'TrackingID', 'TrackingCode');
+  const courierCol = findCol(headers, 'CourierName', 'Courier');
+  const updatedCol = findCol(headers, 'UpdatedAt');
+  const itemsCol = findCol(headers, 'ItemsJSON', 'Items');
+  const reservedCol = findCol(headers, 'StockReserved');
+
+  if (idCol === -1 || statusCol === -1) {
+    return { success: false, message: 'প্রয়োজনীয় কলাম পাওয়া যায়নি।' };
+  }
+
+  for (let r = 1; r < data.length; r++) {
+    if (String(data[r][idCol]).trim() === targetId) {
+      const prevStatus = String(data[r][statusCol]).trim();
+      const isReserved = reservedCol !== -1 ? Boolean(data[r][reservedCol]) : true;
+
+      // রিটার্ন বা ক্যান্সেল হলে অটো রিস্টক (Restock on Return)
+      if ((newStatus === 'Returned' || newStatus === 'Cancelled') && prevStatus !== 'Returned' && prevStatus !== 'Cancelled' && isReserved && itemsCol !== -1) {
+        try {
+          const rawItems = data[r][itemsCol];
+          const items = typeof rawItems === 'string' ? JSON.parse(rawItems) : rawItems;
+          if (Array.isArray(items)) {
+            const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
+            if (productsSheet) {
+              const pData = productsSheet.getDataRange().getValues();
+              const pHeaders = pData[0];
+              const pIdCol = findCol(pHeaders, 'ProductID', 'ID');
+              const pStockCol = findCol(pHeaders, 'StockQuantity', 'Stock');
+              if (pIdCol !== -1 && pStockCol !== -1) {
+                for (let k = 0; k < items.length; k++) {
+                  const it = items[k];
+                  const pId = String(it.productId || it.ProductID || '').trim();
+                  const qty = Number(it.quantity || it.Quantity || 0);
+                  if (pId && qty > 0) {
+                    for (let pr = 1; pr < pData.length; pr++) {
+                      if (String(pData[pr][pIdCol]).trim() === pId) {
+                        const curStock = Number(pData[pr][pStockCol]) || 0;
+                        productsSheet.getRange(pr + 1, pStockCol + 1).setValue(curStock + qty);
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          Logger.log('Restock error: ' + e);
+        }
+      }
+
+      ordersSheet.getRange(r + 1, statusCol + 1).setValue(newStatus);
+      if (payload.trackingId !== undefined && trackingCol !== -1) {
+        ordersSheet.getRange(r + 1, trackingCol + 1).setValue(payload.trackingId);
+      }
+      if (payload.courierName !== undefined && courierCol !== -1) {
+        ordersSheet.getRange(r + 1, courierCol + 1).setValue(payload.courierName);
+      }
+      if (updatedCol !== -1) {
+        ordersSheet.getRange(r + 1, updatedCol + 1).setValue(new Date());
+      }
+
+      return { success: true, message: 'অর্ডার স্ট্যাটাস সফলভাবে আপডেট হয়েছে।' };
+    }
+  }
+
+  return { success: false, message: 'অর্ডার পাওয়া যায়নি।' };
+}
+
 
 

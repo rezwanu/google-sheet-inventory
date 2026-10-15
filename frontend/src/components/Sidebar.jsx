@@ -16,7 +16,8 @@ import {
   LogIn,
   LogOut,
   Ticket,
-  UserCog
+  UserCog,
+  Truck
 } from 'lucide-react';
 
 /**
@@ -35,6 +36,7 @@ export default function Sidebar({
   onNavigate,
   cartCount = 0,
   cartTotal = 0,
+  pendingOrdersCount = 0,
   currencySymbol = '৳',
   lowStockCount = 0,
   onOpenStockModal,
@@ -154,6 +156,49 @@ export default function Sidebar({
                   }`}
                 >
                   {cartCount}
+                </span>
+              )}
+            </button>
+
+            {/* অর্ডার ম্যানেজমেন্ট পেজ */}
+            <button
+              type="button"
+              onClick={() => handleAction(() => onNavigate && onNavigate('orders'))}
+              title={`অর্ডার ম্যানেজমেন্ট (${pendingOrdersCount > 0 ? `${pendingOrdersCount}টি অপেক্ষমান` : 'সকল অর্ডার'})`}
+              className={`w-full flex items-center rounded-2xl text-xs font-bold transition-all cursor-pointer relative ${
+                isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+              } ${
+                currentView === 'orders'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25'
+                  : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    currentView === 'orders'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-amber-50 text-amber-600'
+                  }`}
+                >
+                  <Truck className="w-4 h-4" />
+                </div>
+                {!isCollapsed && <span>অর্ডার ম্যানেজমেন্ট</span>}
+              </div>
+
+              {pendingOrdersCount > 0 && (
+                <span
+                  className={`${
+                    isCollapsed
+                      ? 'absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-500 text-white border-2 border-white'
+                      : 'px-2 py-0.5 rounded-full text-[10px] font-black'
+                  } ${
+                    !isCollapsed && currentView === 'orders'
+                      ? 'bg-amber-400 text-slate-900'
+                      : 'bg-amber-500 text-white shadow-xs'
+                  }`}
+                >
+                  {pendingOrdersCount}
                 </span>
               )}
             </button>
