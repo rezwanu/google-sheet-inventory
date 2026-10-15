@@ -1807,6 +1807,7 @@ export default function App() {
         onEditProduct={handleOpenEditProduct}
         onDeleteProduct={handleDeleteProduct}
         activeUser={activeUser}
+        settings={settings}
         cartQuantity={
           (activeProductForDetails || selectedProductForDetails)
             ? (cart.find((c) => c.productId === (activeProductForDetails || selectedProductForDetails).ProductID)?.quantity || 0)
@@ -1828,6 +1829,8 @@ export default function App() {
         onAddCategory={handleAddCategory}
         units={units}
         onAddUnit={handleAddUnit}
+        products={products}
+        settings={settings}
       />
 
       {/* P&L লাভ-ক্ষতি অ্যানালিটিক্স ড্যাশবোর্ড মডাল */}
@@ -1874,6 +1877,7 @@ export default function App() {
         activeUser={activeUser}
         onSubmitStock={handleSubmitStock}
         initialProductId={quickRestockProductId}
+        settings={settings}
       />
 
       <AddProductModal
@@ -1885,6 +1889,8 @@ export default function App() {
         onAddCategory={handleAddCategory}
         units={units}
         onAddUnit={handleAddUnit}
+        products={products}
+        settings={settings}
       />
 
       <SettingsModal

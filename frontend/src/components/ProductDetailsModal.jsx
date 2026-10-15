@@ -17,8 +17,11 @@ import {
   AlignLeft,
   Sparkles,
   Edit3,
-  Trash2
+  Trash2,
+  Printer,
+  Tag
 } from 'lucide-react';
+import BarcodeStickerModal from './BarcodeStickerModal';
 
 export default function ProductDetailsModal({
   isOpen,
@@ -31,11 +34,13 @@ export default function ProductDetailsModal({
   onEditProduct,
   onDeleteProduct,
   activeUser,
+  settings = {},
 }) {
   const isAdmin = Boolean(activeUser && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier'));
   const [quantity, setQuantity] = useState(1);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isStickerModalOpen, setIsStickerModalOpen] = useState(false);
 
   // মডাল ওপেন হলে পরিমাণ ১ এ রিসেট
   React.useEffect(() => {
@@ -268,14 +273,25 @@ export default function ProductDetailsModal({
               </div>
 
               {/* বারকোড কার্ড */}
-              <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-slate-600">
                   <Barcode className="w-4 h-4 text-slate-400" />
                   <span className="text-xs font-medium">বারকোড / SKU:</span>
+                  <span className="font-mono text-xs font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    {product.Barcode ? product.Barcode : 'নির্ধারিত নেই'}
+                  </span>
                 </div>
-                <span className="font-mono text-xs font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">
-                  {product.Barcode ? product.Barcode : 'নির্ধারিত নেই'}
-                </span>
+                {product.Barcode && (
+                  <button
+                    type="button"
+                    onClick={() => setIsStickerModalOpen(true)}
+                    className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 transition-all flex items-center space-x-1 cursor-pointer"
+                    title="এই পণ্যের বারকোড স্টিকার প্রিন্ট করুন"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>স্টিকার প্রিন্ট</span>
+                  </button>
+                )}
               </div>
 
               {/* বিক্রয়মূল্য ও মজুত হাইলাইট */}
@@ -482,6 +498,18 @@ export default function ProductDetailsModal({
             </div>
           </div>
         </div>
+      )}
+
+      {/* বারকোড স্টিকার প্রিন্ট ও প্রিভিউ মডাল */}
+      {isStickerModalOpen && (
+        <BarcodeStickerModal
+          isOpen={isStickerModalOpen}
+          onClose={() => setIsStickerModalOpen(false)}
+          product={product}
+          initialQuantity={Number(product.StockQuantity) || 10}
+          currencySymbol={currencySymbol}
+          storeName={settings?.StoreName || 'Pabna Bostraloy'}
+        />
       )}
 
     </div>

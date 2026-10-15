@@ -22,8 +22,10 @@ import {
   TrendingUp,
   ShoppingBag,
   Zap,
-  CheckCircle2
+  CheckCircle2,
+  Camera
 } from 'lucide-react';
+import BarcodeScannerModal from './BarcodeScannerModal';
 
 export default function ProductCatalog({ 
   products = [], 
@@ -46,6 +48,7 @@ export default function ProductCatalog({
   const [sortBy, setSortBy] = useState('default'); // 'default' | 'name-asc' | 'price-asc' | 'price-desc' | 'stock-desc' | 'stock-asc'
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [showPromoBanner, setShowPromoBanner] = useState(true);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
   const searchInputRef = useRef(null);
 
   const safeProducts = Array.isArray(products) ? products : [];
@@ -196,6 +199,22 @@ export default function ProductCatalog({
     }
   };
 
+  // ক্যামেরা স্ক্যানারের মাধ্যমে পণ্য খোঁজা ও সিলেক্ট করা
+  const handleCameraScanSuccess = (code) => {
+    const clean = String(code).trim().toLowerCase();
+    setSearchQuery(clean);
+
+    const match = safeProducts.find(
+      (p) =>
+        (p.Barcode && String(p.Barcode).trim().toLowerCase() === clean) ||
+        (p.ProductID && p.ProductID.trim().toLowerCase() === clean)
+    );
+
+    if (match && onOpenProductDetails) {
+      onOpenProductDetails(match);
+    }
+  };
+
   // কার্টে কোনো পণ্যের বর্তমান পরিমাণ
   const getItemCartQuantity = (productId) => {
     const item = cartItems.find((ci) => ci.productId === productId);
@@ -243,10 +262,15 @@ export default function ProductCatalog({
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
-              <div className="flex items-center space-x-1 text-slate-400 pl-1 border-l border-slate-200 pointer-events-none">
-                <Barcode className="w-4 h-4" />
-                <span className="text-[10px] font-mono hidden sm:inline uppercase">Scan</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsCameraScannerOpen(true)}
+                className="flex items-center space-x-1 text-slate-500 hover:text-indigo-600 pl-1.5 border-l border-slate-200 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                title="মোবাইল বা ওয়েবক্যাম দিয়ে বারকোড স্ক্যান করুন"
+              >
+                <Camera className="w-4 h-4 text-indigo-600" />
+                <span className="text-[10px] font-mono font-bold hidden sm:inline uppercase">Scan</span>
+              </button>
             </div>
           </div>
 
@@ -734,6 +758,14 @@ export default function ProductCatalog({
           </div>
         )}
       </div>
+
+      {/* মোবাইল ক্যামেরা বারকোড স্ক্যানার মডাল */}
+      <BarcodeScannerModal
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onScan={handleCameraScanSuccess}
+        title="পণ্য অনুসন্ধান স্ক্যানার"
+      />
 
     </div>
   );

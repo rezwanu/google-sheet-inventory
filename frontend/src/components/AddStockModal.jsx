@@ -21,8 +21,13 @@ import {
   Check,
   RotateCcw,
   Clock,
-  Box
+  Box,
+  Camera,
+  Printer,
+  Tag
 } from 'lucide-react';
+import BarcodeScannerModal from './BarcodeScannerModal';
+import BarcodeStickerModal from './BarcodeStickerModal';
 
 // দ্রুত পরিমাণের প্রিসেট (Quick Quantity Presets)
 const QUANTITY_PRESETS = [5, 10, 25, 50, 100];
@@ -40,7 +45,8 @@ export default function AddStockModal({
   currencySymbol = '৳',
   activeUser,
   onSubmitStock,
-  initialProductId = ''
+  initialProductId = '',
+  settings = {}
 }) {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [barcodeSearchQuery, setBarcodeSearchQuery] = useState('');
@@ -51,6 +57,12 @@ export default function AddStockModal({
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mobileTab, setMobileTab] = useState('form'); // 'form' | 'analytics'
+
+  // ক্যামেরা স্ক্যান ও স্টিকার স্টেট
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
+  const [isStickerModalOpen, setIsStickerModalOpen] = useState(false);
+  const [autoPrintStickersOnRestock, setAutoPrintStickersOnRestock] = useState(false);
+  const [pendingPrintProduct, setPendingPrintProduct] = useState(null);
 
   const barcodeInputRef = useRef(null);
   const incomingQtyInputRef = useRef(null);
@@ -157,6 +169,26 @@ export default function AddStockModal({
     }
   };
 
+  // মোবাইল ক্যামেরা স্ক্যানার দিয়ে পণ্য নির্বাচন
+  const handleCameraScanSuccess = (query) => {
+    const clean = String(query).trim().toLowerCase();
+    const exactMatch = products.find(
+      (p) =>
+        (p.Barcode && String(p.Barcode).trim().toLowerCase() === clean) ||
+        (p.ProductID && p.ProductID.trim().toLowerCase() === clean)
+    );
+
+    if (exactMatch) {
+      handleProductSelect(exactMatch.ProductID);
+      setBarcodeSearchQuery('');
+      setTimeout(() => {
+        incomingQtyInputRef.current?.focus();
+      }, 80);
+    } else {
+      alert(`'${query}' বারকোডের কোনো পণ্য পাওয়া যায়নি!`);
+    }
+  };
+
   // দ্রুত পরিমাণ বৃদ্ধি হ্যান্ডলার
   const handleAddPresetQty = (amount) => {
     const current = parseInt(incomingQty, 10) || 0;
@@ -228,6 +260,14 @@ export default function AddStockModal({
         notes: notes.trim() || 'ম্যানুয়াল স্টক এন্ট্রি',
       });
 
+      const restockedProd = {
+        ProductName: selectedProduct.ProductName,
+        Barcode: selectedProduct.Barcode,
+        SellingPrice: Number(selectedProduct.SellingPrice) || 0,
+        Unit: selectedProduct.Unit,
+        StockQuantity: qtyNumber
+      };
+
       // রিসেট ও ক্লোজ
       setSelectedProductId('');
       setBarcodeSearchQuery('');
@@ -235,7 +275,13 @@ export default function AddStockModal({
       setUnitCost('');
       setSupplierName('');
       setNotes('');
-      onClose();
+
+      if (autoPrintStickersOnRestock && restockedProd.Barcode) {
+        setPendingPrintProduct(restockedProd);
+        setIsStickerModalOpen(true);
+      } else {
+        onClose();
+      }
     } catch (err) {
       alert(`স্টক আপডেট ব্যর্থ হয়েছে: ${err.message}`);
     } finally {
@@ -332,9 +378,20 @@ export default function AddStockModal({
                       <Barcode className="w-4 h-4 text-teal-600" />
                       <span>বারকোড স্ক্যান করুন বা নাম লিখুন</span>
                     </label>
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      Enter চাপলে স্বয়ংক্রিয় সিলেক্ট হবে
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsCameraScannerOpen(true)}
+                        className="text-[11px] font-bold text-teal-700 hover:text-teal-900 flex items-center space-x-1 bg-teal-50 px-2 py-0.5 rounded-lg border border-teal-200 hover:bg-teal-100 transition-all shadow-2xs cursor-pointer"
+                        title="মোবাইল বা ওয়েবক্যাম দিয়ে পণ্যের বারকোড স্ক্যান করুন"
+                      >
+                        <Camera className="w-3.5 h-3.5 text-teal-600" />
+                        <span>ক্যামেরা স্ক্যান</span>
+                      </button>
+                      <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
+                        Enter চাপলে সিলেক্ট
+                      </span>
+                    </div>
                   </div>
                   <div className="relative">
                     <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 pointer-events-none" />
@@ -466,6 +523,63 @@ export default function AddStockModal({
                     </p>
                   </div>
                 </div>
+
+                {/* রিস্টক বারকোড স্টিকার প্রিন্ট কার্ড */}
+                {selectedProduct && (
+                  <div className="mt-3 p-3.5 bg-gradient-to-r from-indigo-50/80 to-teal-50/50 border border-indigo-200/80 rounded-2xl space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Tag className="w-4 h-4 text-indigo-600" />
+                        <span className="text-xs font-bold text-slate-800">
+                          রিস্টক বারকোড স্টিকার প্রিন্ট:
+                        </span>
+                        <span className="text-[11px] font-mono font-bold text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-200">
+                          {selectedProduct.Barcode || 'বারকোড নেই'}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!selectedProduct.Barcode) {
+                            alert('এই পণ্যের কোনো বারকোড নম্বর নির্ধারণ করা নেই।');
+                            return;
+                          }
+                          setPendingPrintProduct({
+                            ProductName: selectedProduct.ProductName,
+                            Barcode: selectedProduct.Barcode,
+                            SellingPrice: Number(selectedProduct.SellingPrice) || 0,
+                            Unit: selectedProduct.Unit,
+                            StockQuantity: Number(incomingQty) || Number(selectedProduct.StockQuantity) || 10
+                          });
+                          setIsStickerModalOpen(true);
+                        }}
+                        disabled={!selectedProduct.Barcode}
+                        className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 px-3 py-1.5 rounded-xl flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        <span>{incomingQty ? `${incomingQty}টি স্টিকার প্রিন্ট` : 'স্টিকার প্রিন্ট করুন'}</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-indigo-100/70 text-xs text-slate-600">
+                      <span className="text-[11px] text-slate-500">
+                        নতুন আসা লটের পণ্যে লাগানোর জন্য লেবেল প্রিন্ট করুন
+                      </span>
+                      <label className="flex items-center space-x-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={autoPrintStickersOnRestock}
+                          onChange={(e) => setAutoPrintStickersOnRestock(e.target.checked)}
+                          className="rounded text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
+                        />
+                        <span className="text-[11px] font-bold text-indigo-900">
+                          রিস্টক শেষে স্বয়ংক্রিয় প্রিন্ট
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* সেকশন ৩: সরবরাহকারী, হ্যান্ডলার এবং চালান নোট */}
@@ -792,6 +906,33 @@ export default function AddStockModal({
         </form>
 
       </div>
+
+      {/* মোবাইল/ওয়েবক্যাম ক্যামেরা বারকোড স্ক্যানার মডাল */}
+      <BarcodeScannerModal
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onScan={handleCameraScanSuccess}
+        title="রিস্টক বারকোড স্ক্যানার"
+      />
+
+      {/* বারকোড স্টিকার প্রিন্ট ও প্রিভিউ মডাল */}
+      {isStickerModalOpen && (
+        <BarcodeStickerModal
+          isOpen={isStickerModalOpen}
+          onClose={() => {
+            setIsStickerModalOpen(false);
+            setPendingPrintProduct(null);
+            if (pendingPrintProduct) {
+              onClose();
+            }
+          }}
+          product={pendingPrintProduct || selectedProduct}
+          initialQuantity={Number(incomingQty) || 10}
+          currencySymbol={currencySymbol}
+          storeName={settings?.StoreName || 'Pabna Bostraloy'}
+        />
+      )}
+
     </div>
   );
 }

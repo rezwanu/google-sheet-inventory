@@ -29,9 +29,15 @@ import {
   ChevronDown,
   ChevronUp,
   ShieldCheck,
-  Trash2
+  Trash2,
+  Camera,
+  Printer,
+  ScanLine,
+  QrCode
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
+import BarcodeScannerModal from './BarcodeScannerModal';
+import BarcodeStickerModal from './BarcodeStickerModal';
 
 // ছবি কম্প্রেস ও অপটিমাইজ ফাংশন (যাতে দ্রুত গুগল ড্রাইভে আপলোড হয়)
 const compressImageForUpload = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
@@ -85,7 +91,9 @@ export default function AddProductModal({
   categories = [],
   onAddCategory,
   units = [],
-  onAddUnit
+  onAddUnit,
+  products = [],
+  settings = {}
 }) {
   const [formData, setFormData] = useState({
     barcode: '',
@@ -102,6 +110,15 @@ export default function AddProductModal({
     shortDescription: '',
     description: '',
   });
+
+  // বারকোড স্ক্যানার, স্টিকার ও জেনারেটর স্টেট
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
+  const [isStickerModalOpen, setIsStickerModalOpen] = useState(false);
+  const [barcodePrefix, setBarcodePrefix] = useState(settings?.StorePrefix || 'PB-');
+  const [autoPrintStickersOnSave, setAutoPrintStickersOnSave] = useState(false);
+  const [stickerPrintQuantity, setStickerPrintQuantity] = useState(10);
+  const [scannedNotification, setScannedNotification] = useState('');
+  const [pendingPrintProduct, setPendingPrintProduct] = useState(null);
 
   // ইমেজ আপলোড মোড ও ড্রাইভ প্রসেসিং স্টেট
   const [imageUploadMode, setImageUploadMode] = useState('upload'); // 'upload' | 'url'
@@ -190,14 +207,64 @@ export default function AddProductModal({
     }
   };
 
-  // স্বয়ংক্রিয় অনন্য বারকোড / SKU জেনারেটর
+  // বারকোড কনফ্লিক্ট বা ডুপ্লিকেট শনাক্তকরণ
+  const barcodeConflictProduct = useMemo(() => {
+    if (!formData.barcode || !formData.barcode.trim()) return null;
+    const clean = formData.barcode.trim().toLowerCase();
+    return products.find(
+      (p) => p.Barcode && String(p.Barcode).trim().toLowerCase() === clean
+    );
+  }, [formData.barcode, products]);
+
+  // স্বয়ংক্রিয় অনন্য বারকোড / SKU জেনারেটর (১০০% কনফ্লিক্ট-মুক্ত গ্যারান্টি)
   const handleGenerateRandomBarcode = () => {
-    const randomSuffix = Math.floor(10000000 + Math.random() * 90000000);
-    const generatedBarcode = `890${randomSuffix}`;
+    const existingBarcodes = new Set(
+      products
+        .map((p) => p.Barcode && String(p.Barcode).trim().toLowerCase())
+        .filter(Boolean)
+    );
+
+    const prefix = barcodePrefix.trim() || 'PB-';
+    let uniqueBarcode = '';
+    let attempts = 0;
+
+    while (attempts < 2000) {
+      attempts++;
+      const randomSuffix = Math.floor(10000000 + Math.random() * 90000000);
+      const candidate = `${prefix}${randomSuffix}`;
+      if (!existingBarcodes.has(candidate.toLowerCase())) {
+        uniqueBarcode = candidate;
+        break;
+      }
+    }
+
+    if (uniqueBarcode) {
+      setFormData((prev) => ({
+        ...prev,
+        barcode: uniqueBarcode
+      }));
+      setScannedNotification('✓ কনফ্লিক্ট-মুক্ত অনন্য বারকোড তৈরি হয়েছে!');
+      setTimeout(() => setScannedNotification(''), 3000);
+    }
+  };
+
+  // ক্যামেরা স্ক্যানারের মাধ্যমে বারকোড পাওয়া
+  const handleCameraScanSuccess = (scannedCode) => {
     setFormData((prev) => ({
       ...prev,
-      barcode: generatedBarcode
+      barcode: scannedCode
     }));
+    setScannedNotification(`✓ ক্যামেরা থেকে কোড স্ক্যান সম্পন্ন: ${scannedCode}`);
+    setTimeout(() => setScannedNotification(''), 3000);
+  };
+
+  // হ্যান্ডহেল্ড বারকোড স্ক্যানার Enter চাপলে ফর্ম সাবমিট প্রতিরোধ
+  const handleBarcodeKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      setScannedNotification('✓ বারকোড স্ক্যানার ইনপুট গৃহীত হয়েছে!');
+      setTimeout(() => setScannedNotification(''), 2500);
+    }
   };
 
   // নতুন ক্যাটাগরি অন-দ্য-ফ্লাই যোগ করার হ্যান্ডলার
@@ -320,6 +387,19 @@ export default function AddProductModal({
       return;
     }
 
+    if (barcodeConflictProduct) {
+      alert(`সতর্কতা: এই বারকোডটি (${formData.barcode}) ইতিমধ্যে "${barcodeConflictProduct.ProductName}" পণ্যে ব্যবহৃত হয়েছে! দয়া করে অনন্য বারকোড দিন বা স্বয়ংক্রিয়ভাবে তৈরি করুন।`);
+      return;
+    }
+
+    const savedProdData = {
+      ProductName: formData.productName.trim(),
+      Barcode: formData.barcode.trim(),
+      SellingPrice: Number(formData.sellingPrice) || 0,
+      Unit: formData.unit,
+      StockQuantity: Number(formData.initialStock) || 0
+    };
+
     setIsSubmitting(true);
     try {
       await onSubmitProduct({
@@ -358,7 +438,14 @@ export default function AddProductModal({
       setImageBase64('');
       setFeatures([]);
       setFeatureInput('');
-      onClose();
+
+      // যদি সেভ হওয়ার পর স্বয়ংক্রিয় স্টিকার প্রিন্ট সক্রিয় থাকে
+      if (autoPrintStickersOnSave && savedProdData.Barcode) {
+        setPendingPrintProduct(savedProdData);
+        setIsStickerModalOpen(true);
+      } else {
+        onClose();
+      }
     } catch (err) {
       alert(`পণ্য যোগ করতে সমস্যা হয়েছে: ${err.message}`);
     } finally {
@@ -567,33 +654,204 @@ export default function AddProductModal({
                   )}
                 </div>
 
-                {/* বারকোড / SKU এবং স্বয়ংক্রিয় জেনারেটর বাটন */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
+                {/* বারকোড / SKU এবং বহুবিধ ইনপুট মেথড (হ্যান্ডহেল্ড স্ক্যানার, ক্যামেরা, প্রিফিক্স ও অটো-জেনারেটর) */}
+                <div className="space-y-3 pt-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
                       <Barcode className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>বারকোড / SKU কোড (ঐচ্ছিক)</span>
+                      <span>বারকোড / SKU কোড</span>
+                      <span className="text-[10px] text-slate-400 font-normal">(স্ক্যানার • ক্যামেরা • অটো কোড)</span>
                     </label>
-                    <button
-                      type="button"
-                      onClick={handleGenerateRandomBarcode}
-                      className="text-[11px] font-bold text-emerald-600 hover:text-emerald-800 flex items-center space-x-1 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-all shadow-2xs"
-                      title="নতুন র‍্যান্ডম বারকোড তৈরি করুন"
-                    >
-                      <Wand2 className="w-3 h-3 text-emerald-600" />
-                      <span>স্বয়ংক্রিয় কোড তৈরি</span>
-                    </button>
+
+                    {/* অ্যাকশন বাটনসমূহ */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {/* প্রিফিক্স ইনপুট */}
+                      <div className="flex items-center space-x-1 bg-white border border-slate-300 rounded-lg px-2 py-0.5 text-[11px] shadow-2xs">
+                        <span className="text-slate-400 font-semibold">প্রিফিক্স:</span>
+                        <input
+                          type="text"
+                          value={barcodePrefix}
+                          onChange={(e) => setBarcodePrefix(e.target.value)}
+                          placeholder="PB-"
+                          className="w-12 font-mono font-bold text-indigo-700 uppercase focus:outline-none"
+                          title="বারকোডের শুরুতে যে প্রিফিক্স থাকবে (যেমন: PB-, PRD-, 890)"
+                        />
+                      </div>
+
+                      {/* স্বয়ংক্রিয় কোড তৈরি বাটন */}
+                      <button
+                        type="button"
+                        onClick={handleGenerateRandomBarcode}
+                        className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 flex items-center space-x-1 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all shadow-2xs cursor-pointer"
+                        title="ডাটাবেস চেক করে সম্পূর্ণ অনন্য ও কনফ্লিক্ট-মুক্ত কোড তৈরি করুন"
+                      >
+                        <Wand2 className="w-3 h-3 text-indigo-600" />
+                        <span>অটো জেনারেট</span>
+                      </button>
+
+                      {/* মোবাইল ক্যামেরা দিয়ে স্ক্যান বাটন */}
+                      <button
+                        type="button"
+                        onClick={() => setIsCameraScannerOpen(true)}
+                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center space-x-1 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-all shadow-2xs cursor-pointer"
+                        title="মোবাইল বা ল্যাপটপের ক্যামেরা দিয়ে বারকোড স্ক্যান করুন"
+                      >
+                        <Camera className="w-3 h-3 text-emerald-600" />
+                        <span>ক্যামেরা স্ক্যান</span>
+                      </button>
+                    </div>
                   </div>
+
+                  {/* বারকোড ইনপুট ফিল্ড (হ্যান্ডহেল্ড বারকোড স্ক্যানার সাপোর্টেড) */}
                   <div className="relative">
                     <Barcode className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                     <input
                       type="text"
                       name="barcode"
-                      placeholder="890123... (স্ক্যান করুন বা খালি রাখুন)"
+                      placeholder="বারকোড স্ক্যানার দিয়ে স্ক্যান করুন অথবা লিখুন (যেমন: PB-12345678)..."
                       value={formData.barcode}
                       onChange={handleChange}
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-mono font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-2xs"
+                      onKeyDown={handleBarcodeKeyDown}
+                      className={`w-full pl-9 pr-9 py-2.5 bg-white border rounded-xl text-xs font-mono font-bold placeholder-slate-400 focus:outline-none focus:ring-4 transition-all shadow-2xs ${
+                        barcodeConflictProduct
+                          ? 'border-rose-400 text-rose-900 focus:ring-rose-500/10 focus:border-rose-500 bg-rose-50/20'
+                          : formData.barcode.trim()
+                          ? 'border-emerald-400 text-emerald-900 focus:ring-emerald-500/10 focus:border-emerald-500 bg-emerald-50/20'
+                          : 'border-slate-300 text-slate-800 focus:ring-emerald-500/10 focus:border-emerald-500'
+                      }`}
                     />
+                    {formData.barcode && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, barcode: '' }))}
+                        className="absolute right-2.5 top-2.5 p-0.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+                        title="মুছে ফেলুন"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* নোটিফিকেশন মেসেজ */}
+                  {scannedNotification && (
+                    <div className="p-2 bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-1.5 animate-in fade-in duration-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>{scannedNotification}</span>
+                    </div>
+                  )}
+
+                  {/* বারকোড কনফ্লিক্ট সতর্কতা ব্যানার */}
+                  {barcodeConflictProduct && (
+                    <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl flex items-start space-x-2 text-rose-900 text-xs animate-in shake duration-200">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="block font-bold">কনফ্লিক্ট সতর্কতা: বারকোড ডুপ্লিকেট!</strong>
+                        <span>
+                          এই বারকোডটি ইতিমধ্যে <strong>"{barcodeConflictProduct.ProductName}"</strong> পণ্যে ব্যবহৃত হয়েছে। অন্য কোড দিন বা 'অটো জেনারেট' চাপুন।
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* কনফ্লিক্ট মুক্ত ও সঠিক বারকোড ভেরিফিকেশন ব্যাজ */}
+                  {!barcodeConflictProduct && formData.barcode.trim() && (
+                    <div className="p-2 bg-emerald-50/80 border border-emerald-200/90 rounded-xl flex items-center justify-between text-xs text-emerald-900">
+                      <span className="flex items-center space-x-1.5 font-bold">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>অনন্য বারকোড (ডাটাবেসের কারো সাথে মিল নেই)</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md font-bold">
+                        100% Unique
+                      </span>
+                    </div>
+                  )}
+
+                  {/* বারকোড স্টিকার প্রিন্ট অপশন বক্স */}
+                  <div className="p-3 bg-gradient-to-r from-indigo-50/70 to-slate-50 border border-indigo-100 rounded-2xl space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-indigo-950 flex items-center space-x-1.5">
+                        <Tag className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>বারকোড স্টিকার প্রিন্ট সেটিংস:</span>
+                      </span>
+
+                      {/* প্রিভিউ ও সরাসরি প্রিন্ট বাটন */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!formData.barcode.trim()) {
+                            alert('স্টিকার প্রিন্ট করার পূর্বে একটি বারকোড নির্ধারণ করুন বা অটো জেনারেট চাপুন।');
+                            return;
+                          }
+                          setPendingPrintProduct({
+                            ProductName: formData.productName || 'নতুন পণ্য',
+                            Barcode: formData.barcode,
+                            SellingPrice: Number(formData.sellingPrice) || 0,
+                            Unit: formData.unit,
+                            StockQuantity: Number(formData.initialStock) || 0
+                          });
+                          setIsStickerModalOpen(true);
+                        }}
+                        disabled={!formData.barcode.trim()}
+                        className="text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 px-3 py-1 rounded-lg flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        <span>স্টিকার প্রিভিউ ও প্রিন্ট</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-indigo-100/70">
+                      {/* প্রিন্ট সংখ্যা ইনপুট */}
+                      <div className="flex items-center space-x-2 text-xs">
+                        <span className="text-slate-600 font-semibold">প্রিন্ট সংখ্যা:</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="500"
+                          value={stickerPrintQuantity}
+                          onChange={(e) => setStickerPrintQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                          className="w-16 px-2 py-1 bg-white border border-slate-300 rounded-lg text-center font-bold text-indigo-900 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                        <span className="text-slate-500 text-[11px]">টি</span>
+
+                        {/* দ্রুত কোয়ান্টিটি বাটন */}
+                        <div className="hidden sm:flex items-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => setStickerPrintQuantity((q) => q + 5)}
+                            className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50 text-[10px] font-bold rounded"
+                          >
+                            +৫
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStickerPrintQuantity((q) => q + 10)}
+                            className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50 text-[10px] font-bold rounded"
+                          >
+                            +১০
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStickerPrintQuantity(Math.max(1, Number(formData.initialStock) || 10))}
+                            className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50 text-[10px] font-bold rounded"
+                          >
+                            স্টক সমান
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* সেভ হলে স্বয়ংক্রিয় প্রিন্ট চেকবক্স */}
+                      <label className="flex items-center space-x-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={autoPrintStickersOnSave}
+                          onChange={(e) => setAutoPrintStickersOnSave(e.target.checked)}
+                          className="rounded text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
+                        />
+                        <span className="text-[11px] font-bold text-slate-700">
+                          সেভ হলে স্বয়ংক্রিয় স্টিকার প্রিন্ট
+                        </span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1265,6 +1523,40 @@ export default function AddProductModal({
         </form>
 
       </div>
+
+      {/* মোবাইল/ওয়েবক্যাম ক্যামেরা বারকোড স্ক্যানার মডাল */}
+      <BarcodeScannerModal
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onScan={handleCameraScanSuccess}
+        title="পণ্যের বারকোড স্ক্যানার"
+      />
+
+      {/* বারকোড স্টিকার প্রিন্ট ও প্রিভিউ মডাল */}
+      {isStickerModalOpen && (
+        <BarcodeStickerModal
+          isOpen={isStickerModalOpen}
+          onClose={() => {
+            setIsStickerModalOpen(false);
+            setPendingPrintProduct(null);
+            // যদি সেভ প্রসেসের অংশ হিসেবে স্টিকার প্রিন্ট হয়ে থাকে, তবে মূল মডালও বন্ধ করা
+            if (pendingPrintProduct) {
+              onClose();
+            }
+          }}
+          product={pendingPrintProduct || {
+            ProductName: formData.productName || 'নতুন পণ্য',
+            Barcode: formData.barcode,
+            SellingPrice: Number(formData.sellingPrice) || 0,
+            Unit: formData.unit,
+            StockQuantity: Number(formData.initialStock) || 0
+          }}
+          initialQuantity={stickerPrintQuantity}
+          currencySymbol={currencySymbol}
+          storeName={settings?.StoreName || 'Pabna Bostraloy'}
+        />
+      )}
+
     </div>
   );
 }
