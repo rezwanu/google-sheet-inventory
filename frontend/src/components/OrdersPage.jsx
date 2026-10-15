@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Search,
   Filter,
@@ -10,6 +10,7 @@ import {
   Clock,
   XCircle,
   AlertCircle,
+  AlertTriangle,
   RefreshCw,
   Phone,
   MapPin,
@@ -25,8 +26,18 @@ import {
   CreditCard,
   ShoppingBag,
   Share2,
-  FileText
+  FileText,
+  ShieldAlert,
+  ShieldCheck,
+  History,
+  Send,
+  Sparkles,
+  ExternalLink,
+  MessageSquare,
+  Bookmark
 } from 'lucide-react';
+import { calculateOrderRisk, isValidBdPhone } from '../services/riskAnalysis';
+import CustomerOrderTrackingModal from './CustomerOrderTrackingModal';
 
 const COURIER_LIST = [
   { id: 'Steadfast', name: 'Steadfast Courier', defaultInside: 70, defaultOutside: 130 },
@@ -65,6 +76,7 @@ export default function OrdersPage({
   activeUser = null,
   onSaveOrder,
   onUpdateStatus,
+  onResolveRma,
   onDeleteOrder,
   showToast,
   currencySymbol = '৳'
@@ -79,26 +91,34 @@ export default function OrdersPage({
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [labelPrintOrder, setLabelPrintOrder] = useState(null);
   const [challanPrintOrder, setChallanPrintOrder] = useState(null);
+  const [customerTrackingOrderId, setCustomerTrackingOrderId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
-  // কুইক স্ট্যাটাস চেঞ্জার
+  // কুইক স্ট্যাটাস ড্রপডাউন
   const [statusDropdownOrderId, setStatusDropdownOrderId] = useState(null);
 
   // ফিল্টার করা অর্ডার তালিকা
   const filteredOrders = useMemo(() => {
     return (orders || []).filter((order) => {
       // ১. ট্যাব ফিল্টার
-      if (activeTab !== 'all' && order.Status !== activeTab) {
+      if (activeTab === 'PreOrder') {
+        if (!order.IsPreOrder) return false;
+      } else if (activeTab === 'RMA') {
+        if (!order.RmaRequest || order.RmaRequest.status !== 'Pending') return false;
+      } else if (activeTab !== 'all' && order.Status !== activeTab) {
         return false;
       }
+
       // ২. কুরিয়ার ফিল্টার
       if (courierFilter !== 'all' && order.CourierName !== courierFilter) {
         return false;
       }
+
       // ৩. সোর্স ফিল্টার
       if (sourceFilter !== 'all' && order.OrderSource !== sourceFilter) {
         return false;
       }
+
       // ৪. সার্চ কুয়েরি (আইডি, নাম, ফোন, ট্র্যাকিং কোড)
       if (searchQuery.trim()) {
         const query = searchQuery.trim().toLowerCase();
@@ -123,6 +143,8 @@ export default function OrdersPage({
     let shipped = 0;
     let delivered = 0;
     let returned = 0;
+    let preOrders = 0;
+    let rmaPending = 0;
     let totalDueCod = 0;
 
     orders.forEach((o) => {
@@ -132,12 +154,15 @@ export default function OrdersPage({
       else if (o.Status === 'Delivered') delivered++;
       else if (o.Status === 'Returned' || o.Status === 'Cancelled') returned++;
 
+      if (o.IsPreOrder) preOrders++;
+      if (o.RmaRequest && o.RmaRequest.status === 'Pending') rmaPending++;
+
       if (o.Status !== 'Delivered' && o.Status !== 'Cancelled' && o.Status !== 'Returned') {
         totalDueCod += Number(o.DueAmount || 0);
       }
     });
 
-    return { total, pending, confirmed, shipped, delivered, returned, totalDueCod };
+    return { total, pending, confirmed, shipped, delivered, returned, preOrders, rmaPending, totalDueCod };
   }, [orders]);
 
   const handleCopyId = (id) => {
@@ -146,10 +171,18 @@ export default function OrdersPage({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const handleCopyTrackingLink = (orderId) => {
+    const url = `${window.location.origin}${window.location.pathname}?track=${orderId}`;
+    navigator.clipboard.writeText(url);
+    if (showToast) {
+      showToast(`অর্ডার ${orderId}-এর কাস্টমার ট্র্যাকিং লিংক কপি হয়েছে!`, 'success');
+    }
+  };
+
   const handleQuickStatusChange = (order, newStatus) => {
     setStatusDropdownOrderId(null);
     if (onUpdateStatus) {
-      onUpdateStatus(order.OrderID, newStatus);
+      onUpdateStatus(order.OrderID, newStatus, null, null, activeUser?.FullName || 'Admin');
     }
   };
 
@@ -163,17 +196,31 @@ export default function OrdersPage({
               <Truck className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-800">
-                অর্ডার ও ডেলিভারি ম্যানেজমেন্ট
-              </h1>
+              <div className="flex items-center space-x-2">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-800">
+                  অর্ডার ও ডেলিভারি ম্যানেজমেন্ট
+                </h1>
+                <span className="px-2 py-0.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-wider shadow-xs flex items-center space-x-1">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  <span>AI Powered</span>
+                </span>
+              </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                অনলাইন, সোশ্যাল মিডিয়া ও কুরিয়ার পার্সেল ট্র্যাকিং হাব
+                স্মার্ট ফ্রড ডিটেকশন, কুরিয়ার ট্র্যাকিং, প্রি-অর্ডার ও আরএমএ পোর্টাল
               </p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center space-x-3 shrink-0">
+          <button
+            onClick={() => setCustomerTrackingOrderId('ANY')}
+            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold rounded-2xl transition-all flex items-center space-x-2 cursor-pointer"
+          >
+            <ExternalLink className="w-4 h-4 text-slate-500" />
+            <span>গ্রাহক ট্র্যাকিং পোর্টাল</span>
+          </button>
+
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-xs sm:text-sm font-black rounded-2xl shadow-lg shadow-indigo-600/30 active:scale-95 transition-all flex items-center space-x-2 cursor-pointer"
@@ -199,20 +246,20 @@ export default function OrdersPage({
           <span className="text-2xl font-black text-amber-900 mt-1 block">{metrics.pending}</span>
         </div>
 
-        <div className="bg-blue-50/70 p-4 rounded-2xl border border-blue-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">প্রস্তুত / প্যাকড</span>
-            <Package className="w-3.5 h-3.5 text-blue-600" />
-          </div>
-          <span className="text-2xl font-black text-blue-900 mt-1 block">{metrics.confirmed}</span>
-        </div>
-
         <div className="bg-purple-50/70 p-4 rounded-2xl border border-purple-200 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider">কুরিয়ারে আছে</span>
             <Truck className="w-3.5 h-3.5 text-purple-600" />
           </div>
           <span className="text-2xl font-black text-purple-900 mt-1 block">{metrics.shipped}</span>
+        </div>
+
+        <div className="bg-violet-50/70 p-4 rounded-2xl border border-violet-200 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-violet-700 uppercase tracking-wider">প্রি-অর্ডার</span>
+            <Bookmark className="w-3.5 h-3.5 text-violet-600" />
+          </div>
+          <span className="text-2xl font-black text-violet-900 mt-1 block">{metrics.preOrders}</span>
         </div>
 
         <div className="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-200 shadow-xs">
@@ -245,6 +292,8 @@ export default function OrdersPage({
             { id: 'Packaging', label: 'প্যাকিং', count: orders.filter(o => o.Status === 'Packaging').length },
             { id: 'Shipped', label: 'কুরিয়ারে আছে', count: metrics.shipped },
             { id: 'Delivered', label: 'ডেলিভার্ড', count: metrics.delivered },
+            { id: 'PreOrder', label: 'প্রি-অর্ডার', count: metrics.preOrders, badgeColor: 'bg-violet-600 text-white' },
+            { id: 'RMA', label: 'রিটার্ন আবেদন', count: metrics.rmaPending, badgeColor: 'bg-orange-600 text-white animate-pulse' },
             { id: 'Returned', label: 'রিটার্ন', count: orders.filter(o => o.Status === 'Returned').length },
             { id: 'Cancelled', label: 'বাতিল', count: orders.filter(o => o.Status === 'Cancelled').length },
           ].map((tab) => (
@@ -260,7 +309,11 @@ export default function OrdersPage({
               <span>{tab.label}</span>
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  activeTab === tab.id ? 'bg-white/25 text-white' : 'bg-slate-200/80 text-slate-700'
+                  tab.badgeColor
+                    ? tab.badgeColor
+                    : activeTab === tab.id
+                    ? 'bg-white/25 text-white'
+                    : 'bg-slate-200/80 text-slate-700'
                 }`}
               >
                 {tab.count}
@@ -338,7 +391,7 @@ export default function OrdersPage({
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                   <th className="p-4 pl-6">অর্ডার আইডি ও তারিখ</th>
-                  <th className="p-4">গ্রাহকের তথ্য</th>
+                  <th className="p-4">গ্রাহক ও রিস্ক অ্যানালাইসিস</th>
                   <th className="p-4">পণ্যসমূহ</th>
                   <th className="p-4">কুরিয়ার ও ট্র্যাকিং</th>
                   <th className="p-4 text-right">টাকার হিসাব (COD)</th>
@@ -354,6 +407,9 @@ export default function OrdersPage({
                     month: 'short',
                     year: 'numeric'
                   });
+
+                  // এআই ফ্রড ও রিটার্ন রিস্ক বিশ্লেষণ
+                  const risk = calculateOrderRisk(order, orders);
 
                   return (
                     <tr key={order.OrderID} className="hover:bg-slate-50/80 transition-colors">
@@ -375,27 +431,81 @@ export default function OrdersPage({
                             )}
                           </button>
                         </div>
-                        <div className="flex items-center space-x-2 mt-1">
+
+                        <div className="flex items-center space-x-1.5 mt-1">
                           <span className="text-[10px] text-slate-400">{formattedDate}</span>
                           <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded-md text-[9px] font-bold">
                             {order.OrderSource || 'Direct'}
                           </span>
                         </div>
+
+                        {order.IsPreOrder && (
+                          <span className="inline-block mt-1 px-1.5 py-0.2 rounded-md text-[9px] font-black bg-violet-100 text-violet-700 border border-violet-200">
+                            ★ প্রি-অর্ডার
+                          </span>
+                        )}
                       </td>
 
-                      {/* কাস্টমার তথ্য */}
+                      {/* কাস্টমার তথ্য ও এআই রিস্ক স্কোর */}
                       <td className="p-4 align-top">
-                        <span className="font-bold text-slate-800 text-xs block">
-                          {order.CustomerName}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold text-slate-800 text-xs block">
+                            {order.CustomerName}
+                          </span>
+
+                          {/* রিস্ক ব্যাজ */}
+                          <span
+                            className={`px-1.5 py-0.2 rounded-md text-[9px] font-black border flex items-center space-x-0.5 cursor-help ${
+                              risk.level === 'High'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : risk.level === 'Medium'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            }`}
+                            title={risk.flags.length > 0 ? risk.flags.join(' • ') : risk.recommendation}
+                          >
+                            {risk.level === 'High' ? (
+                              <>
+                                <AlertTriangle className="w-2.5 h-2.5" />
+                                <span>উচ্চ ঝুঁকি</span>
+                              </>
+                            ) : risk.level === 'Medium' ? (
+                              <>
+                                <Clock className="w-2.5 h-2.5" />
+                                <span>সতর্কতা</span>
+                              </>
+                            ) : (
+                              <>
+                                <ShieldCheck className="w-2.5 h-2.5" />
+                                <span>নিরাপদ</span>
+                              </>
+                            )}
+                          </span>
+                        </div>
+
                         <div className="flex items-center space-x-1 text-slate-500 text-[11px] mt-0.5 font-mono">
                           <Phone className="w-3 h-3 text-slate-400 shrink-0" />
                           <span>{order.CustomerPhone}</span>
                         </div>
+
                         {order.CustomerAddress && (
                           <div className="flex items-start space-x-1 text-slate-400 text-[10px] mt-0.5 max-w-[200px] truncate" title={order.CustomerAddress}>
                             <MapPin className="w-3 h-3 text-slate-400 shrink-0 mt-0.5" />
                             <span className="truncate">{order.CustomerAddress}</span>
+                          </div>
+                        )}
+
+                        {order.RmaRequest && (
+                          <div className="mt-1">
+                            <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black border ${
+                              order.RmaRequest.status === 'Approved'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : order.RmaRequest.status === 'Rejected'
+                                ? 'bg-slate-100 text-slate-600 border-slate-200'
+                                : 'bg-orange-50 text-orange-700 border-orange-200 animate-pulse'
+                            }`}>
+                              {order.RmaRequest.status === 'Approved' ? 'রিটার্ন সম্পন্ন' : order.RmaRequest.status === 'Rejected' ? 'রিটার্ন বাতিল' : 'রিটার্ন আবেদন এসেছে'}
+                            </span>
                           </div>
                         )}
                       </td>
@@ -459,7 +569,6 @@ export default function OrdersPage({
                             <ChevronDown className="w-3 h-3 ml-0.5" />
                           </button>
 
-                          {/* ড্রপডাউন অপশন */}
                           {statusDropdownOrderId === order.OrderID && (
                             <div className="absolute left-1/2 -translate-x-1/2 mt-1 w-36 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-30 animate-in fade-in zoom-in-95">
                               {ORDER_STATUSES.map((st) => (
@@ -481,14 +590,32 @@ export default function OrdersPage({
 
                       {/* অ্যাকশন বাটনসমূহ */}
                       <td className="p-4 pr-6 align-top text-center">
-                        <div className="flex items-center justify-center space-x-1.5">
-                          {/* বিস্তারিত */}
+                        <div className="flex items-center justify-center space-x-1">
+                          {/* বিস্তারিত ও অডিট লগ */}
                           <button
                             onClick={() => setSelectedOrderDetails(order)}
-                            title="অর্ডারের পূর্ণ বিবরণ দেখুন"
+                            title="অর্ডারের বিবরণ ও টাইমলাইন অডিট লগ"
                             className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* গ্রাহক ট্র্যাকিং পেজ দেখুন */}
+                          <button
+                            onClick={() => setCustomerTrackingOrderId(order.OrderID)}
+                            title="গ্রাহকের লাইভ ট্র্যাকিং পেজ দেখুন"
+                            className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Truck className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* ট্র্যাকিং লিংক কপি */}
+                          <button
+                            onClick={() => handleCopyTrackingLink(order.OrderID)}
+                            title="গ্রাহককে পাঠানোর জন্য ট্র্যাকিং লিংক কপি করুন"
+                            className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
                           </button>
 
                           {/* শিপিং স্টিকার লেবেল প্রিন্ট */}
@@ -541,18 +668,25 @@ export default function OrdersPage({
           onClose={() => setIsCreateModalOpen(false)}
           products={products}
           settings={settings}
+          allOrders={orders}
           onSaveOrder={onSaveOrder}
           showToast={showToast}
           currencySymbol={currencySymbol}
         />
       )}
 
-      {/* ৬. অর্ডারের বিস্তারিত বিবরণ মডাল (Order Details Modal) */}
+      {/* ৬. অর্ডারের বিস্তারিত বিবরণ ও টাইমলাইন অডিট লগ মডাল (Order Details Modal) */}
       {selectedOrderDetails && (
         <OrderDetailsModal
           order={selectedOrderDetails}
+          allOrders={orders}
           onClose={() => setSelectedOrderDetails(null)}
           onUpdateStatus={onUpdateStatus}
+          onResolveRma={onResolveRma}
+          onOpenCustomerTracking={() => {
+            setCustomerTrackingOrderId(selectedOrderDetails.OrderID);
+            setSelectedOrderDetails(null);
+          }}
           onPrintLabel={() => {
             setLabelPrintOrder(selectedOrderDetails);
             setSelectedOrderDetails(null);
@@ -584,6 +718,23 @@ export default function OrdersPage({
           currencySymbol={currencySymbol}
         />
       )}
+
+      {/* ৯. গ্রাহক লাইভ ট্র্যাকিং ও আরএমএ পোর্টাল মডাল */}
+      {customerTrackingOrderId && (
+        <CustomerOrderTrackingModal
+          isOpen={Boolean(customerTrackingOrderId)}
+          onClose={() => setCustomerTrackingOrderId(null)}
+          orders={orders}
+          initialOrderId={customerTrackingOrderId === 'ANY' ? '' : customerTrackingOrderId}
+          settings={settings}
+          onSubmitRma={(orderId, rmaData) => {
+            if (onResolveRma) {
+              onResolveRma(orderId, 'Submitted', rmaData);
+            }
+          }}
+          currencySymbol={currencySymbol}
+        />
+      )}
     </div>
   );
 }
@@ -598,6 +749,7 @@ function CreateOrderModal({
   onClose,
   products = [],
   settings = {},
+  allOrders = [],
   onSaveOrder,
   showToast,
   currencySymbol = '৳'
@@ -616,6 +768,7 @@ function CreateOrderModal({
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [notes, setNotes] = useState('');
   const [reserveStock, setReserveStock] = useState(true);
+  const [isPreOrder, setIsPreOrder] = useState(false);
 
   // পণ্য কার্ট স্টেট
   const [selectedItems, setSelectedItems] = useState([]);
@@ -688,6 +841,18 @@ function CreateOrderModal({
   const totalAmount = Math.max(0, subTotal - Number(discountAmount || 0) + Number(deliveryCharge || 0));
   const dueAmount = Math.max(0, totalAmount - Number(advancePaid || 0));
 
+  // লাইভ এআই রিস্ক টেস্ট (গ্রাহকের নম্বর টাইপ করার সময়)
+  const simulatedOrder = {
+    CustomerPhone: customerPhone,
+    CustomerAddress: customerAddress,
+    TotalAmount: totalAmount,
+    AdvancePaid: advancePaid,
+    DueAmount: dueAmount
+  };
+  const liveRisk = useMemo(() => {
+    return calculateOrderRisk(simulatedOrder, allOrders);
+  }, [customerPhone, customerAddress, totalAmount, advancePaid, dueAmount, allOrders]);
+
   // ফর্ম সাবমিশন
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -724,8 +889,10 @@ function CreateOrderModal({
       Status: 'Pending',
       PaymentStatus: Number(advancePaid) >= totalAmount ? 'Paid' : Number(advancePaid) > 0 ? 'Partial' : 'Unpaid',
       PaymentMethod: paymentMethod,
+      RiskLevel: liveRisk.level,
       Notes: notes.trim(),
-      StockReserved: reserveStock,
+      StockReserved: isPreOrder ? false : reserveStock,
+      IsPreOrder: isPreOrder,
       CreatedAt: new Date().toISOString()
     };
 
@@ -771,6 +938,28 @@ function CreateOrderModal({
 
         {/* ফর্ম কন্টেন্ট */}
         <form onSubmit={handleSubmit} className="p-5 space-y-6">
+          {/* লাইভ এআই রিস্ক সতর্কতা ব্যানার (যদি নম্বর বা অর্ডারে সমস্যা থাকে) */}
+          {customerPhone.length >= 5 && liveRisk.level !== 'Low' && (
+            <div className={`p-4 rounded-2xl border text-xs space-y-1.5 animate-in fade-in ${
+              liveRisk.level === 'High'
+                ? 'bg-rose-50 border-rose-200 text-rose-900'
+                : 'bg-amber-50 border-amber-200 text-amber-900'
+            }`}>
+              <div className="flex items-center space-x-2 font-black">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>AI Risk Alert: {liveRisk.level === 'High' ? 'উচ্চ ঝুঁকি চিহ্নিত হয়েছে!' : 'সতর্কতা'}</span>
+              </div>
+              <ul className="list-disc list-inside space-y-0.5 text-[11px] font-medium opacity-90">
+                {liveRisk.flags.map((flag, idx) => (
+                  <li key={idx}>{flag}</li>
+                ))}
+              </ul>
+              <p className="text-[11px] font-bold mt-1 text-slate-700">
+                পরামর্শ: {liveRisk.recommendation}
+              </p>
+            </div>
+          )}
+
           {/* ১. কাস্টমার তথ্য */}
           <div className="space-y-3">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">১. গ্রাহকের তথ্য</h3>
@@ -839,7 +1028,20 @@ function CreateOrderModal({
 
           {/* ২. পণ্য নির্বাচন ও কার্ট */}
           <div className="space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">২. অর্ডারকৃত পণ্যসমূহ</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">২. অর্ডারকৃত পণ্যসমূহ</h3>
+              <label className="flex items-center space-x-2 cursor-pointer bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-200">
+                <input
+                  type="checkbox"
+                  checked={isPreOrder}
+                  onChange={(e) => setIsPreOrder(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded text-violet-600 focus:ring-violet-500"
+                />
+                <span className="text-[11px] font-black text-violet-900">
+                  ★ প্রি-অর্ডার (Pre-Order) হিসেবে বুকিং করুন
+                </span>
+              </label>
+            </div>
             
             {/* পণ্য অনুসন্ধান ও নির্বাচন */}
             <div className="relative">
@@ -863,7 +1065,9 @@ function CreateOrderModal({
                     >
                       <div>
                         <span className="font-bold text-slate-800 block">{p.ProductName}</span>
-                        <span className="text-[10px] text-slate-400">স্টক: {p.StockQuantity || 0} {p.Unit || 'Pcs'}</span>
+                        <span className={`text-[10px] ${Number(p.StockQuantity) <= 0 ? 'text-rose-600 font-bold' : 'text-slate-400'}`}>
+                          {Number(p.StockQuantity) <= 0 ? 'স্টক শেষ (প্রি-অর্ডার সম্ভব)' : `স্টক: ${p.StockQuantity || 0} ${p.Unit || 'Pcs'}`}
+                        </span>
                       </div>
                       <span className="font-bold text-indigo-600 font-mono">
                         {currencySymbol}{p.SellingPrice}
@@ -1038,17 +1242,19 @@ function CreateOrderModal({
               />
             </div>
 
-            <label className="flex items-center space-x-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={reserveStock}
-                onChange={(e) => setReserveStock(e.target.checked)}
-                className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-              />
-              <span className="text-xs font-bold text-slate-700">
-                অর্ডার সেভ করার সাথে সাথে মূল ইনভেন্টরি থেকে স্টক স্বয়ংক্রিয়ভাবে মাইনাস (রিজার্ভ) করুন
-              </span>
-            </label>
+            {!isPreOrder && (
+              <label className="flex items-center space-x-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={reserveStock}
+                  onChange={(e) => setReserveStock(e.target.checked)}
+                  className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                />
+                <span className="text-xs font-bold text-slate-700">
+                  অর্ডার সেভ করার সাথে সাথে মূল ইনভেন্টরি থেকে স্টক স্বয়ংক্রিয়ভাবে মাইনাস (রিজার্ভ) করুন
+                </span>
+              </label>
+            )}
           </div>
 
           {/* ফুটার অ্যাকশন বাটন */}
@@ -1075,13 +1281,16 @@ function CreateOrderModal({
 
 /**
  * ============================================================================
- * সাব-কম্পোনেন্ট ২: অর্ডারের পূর্ণ বিবরণ মডাল (OrderDetailsModal)
+ * সাব-কম্পোনেন্ট ২: অর্ডারের পূর্ণ বিবরণ, এআই রিস্ক ও টাইমলাইন অডিট লগ মডাল
  * ============================================================================
  */
 function OrderDetailsModal({
   order,
+  allOrders = [],
   onClose,
   onUpdateStatus,
+  onResolveRma,
+  onOpenCustomerTracking,
   onPrintLabel,
   onPrintChallan,
   currencySymbol = '৳'
@@ -1090,9 +1299,29 @@ function OrderDetailsModal({
   const [trackingId, setTrackingId] = useState(order.TrackingID || '');
   const [courierName, setCourierName] = useState(order.CourierName || 'Steadfast');
 
+  // এআই রিস্ক অ্যানালাইসিস
+  const risk = useMemo(() => {
+    return calculateOrderRisk(order, allOrders);
+  }, [order, allOrders]);
+
   const handleSaveStatus = () => {
     if (onUpdateStatus) {
-      onUpdateStatus(order.OrderID, currentStatus, trackingId, courierName);
+      onUpdateStatus(order.OrderID, currentStatus, trackingId, courierName, 'Admin');
+    }
+    onClose();
+  };
+
+  const handleApproveRma = () => {
+    if (onResolveRma) {
+      onResolveRma(order.OrderID, 'Approved', 'রিটার্ন আবেদন এডমিন কর্তৃক অনুমোদিত হয়েছে।');
+    }
+    onClose();
+  };
+
+  const handleRejectRma = () => {
+    const reason = prompt('প্রত্যাখ্যান করার কারণ লিখুন:', 'যথাযথ প্রমাণ বা কারণ পাওয়া যায়নি');
+    if (reason && onResolveRma) {
+      onResolveRma(order.OrderID, 'Rejected', reason);
     }
     onClose();
   };
@@ -1111,6 +1340,11 @@ function OrderDetailsModal({
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${statusObj.color}`}>
               {statusObj.label}
             </span>
+            {order.IsPreOrder && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-violet-100 text-violet-800 border border-violet-200">
+                ★ প্রি-অর্ডার
+              </span>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -1121,6 +1355,77 @@ function OrderDetailsModal({
         </div>
 
         <div className="p-5 space-y-6">
+          {/* এআই ফ্রড ও রিস্ক কার্ড (AI Risk Card) */}
+          <div className={`p-4 rounded-2xl border text-xs space-y-2 ${
+            risk.level === 'High'
+              ? 'bg-rose-50 border-rose-200 text-rose-900'
+              : risk.level === 'Medium'
+              ? 'bg-amber-50 border-amber-200 text-amber-900'
+              : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+          }`}>
+            <div className="flex items-center justify-between font-black">
+              <div className="flex items-center space-x-2">
+                {risk.level === 'High' ? (
+                  <AlertTriangle className="w-4 h-4 text-rose-600" />
+                ) : risk.level === 'Medium' ? (
+                  <Clock className="w-4 h-4 text-amber-600" />
+                ) : (
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                )}
+                <span>AI Risk Assessment: {risk.level === 'High' ? 'উচ্চ ঝুঁকি (High Risk)' : risk.level === 'Medium' ? 'মাঝারি সতর্কতা (Medium Risk)' : 'নিরাপদ অর্ডার (Low Risk)'}</span>
+              </div>
+              <span className="font-mono text-xs">স্কোর: {risk.score}/100</span>
+            </div>
+
+            {risk.flags.length > 0 && (
+              <ul className="list-disc list-inside space-y-0.5 text-[11px] font-medium opacity-90">
+                {risk.flags.map((flag, idx) => (
+                  <li key={idx}>{flag}</li>
+                ))}
+              </ul>
+            )}
+
+            <p className="text-[11px] font-bold text-slate-700 pt-1 border-t border-slate-200/60">
+              💡 সুপারিশ: {risk.recommendation}
+            </p>
+          </div>
+
+          {/* আরএমএ রিটার্ন আবেদন ব্যানার (যদি গ্রাহক আবেদন করে থাকে) */}
+          {order.RmaRequest && (
+            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-200 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-black text-orange-900 flex items-center space-x-1.5">
+                  <RotateCcw className="w-4 h-4" />
+                  <span>গ্রাহক কর্তৃক {order.RmaRequest.type === 'Exchange' ? 'এক্সচেঞ্জ' : 'রিটার্ন'} আবেদন</span>
+                </span>
+                <span className="font-bold px-2 py-0.5 bg-orange-200 text-orange-900 rounded-md text-[10px]">
+                  স্ট্যাটাস: {order.RmaRequest.status}
+                </span>
+              </div>
+              <p className="text-slate-700">কারণ: <strong>{order.RmaRequest.reason}</strong></p>
+              {order.RmaRequest.details && (
+                <p className="text-slate-600 italic">"{order.RmaRequest.details}"</p>
+              )}
+
+              {order.RmaRequest.status === 'Pending' && (
+                <div className="flex items-center space-x-2 pt-2 border-t border-orange-200">
+                  <button
+                    onClick={handleApproveRma}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold cursor-pointer"
+                  >
+                    রিটার্ন অনুমোদন ও রিস্টক করুন
+                  </button>
+                  <button
+                    onClick={handleRejectRma}
+                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold cursor-pointer"
+                  >
+                    আবেদন প্রত্যাখ্যান করুন
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* গ্রাহক ও শিপিং তথ্য */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80 text-xs">
             <div>
@@ -1253,22 +1558,53 @@ function OrderDetailsModal({
             </div>
           </div>
 
-          {/* প্রিন্ট অপশনসমূহ */}
-          <div className="flex items-center space-x-3 pt-2">
+          {/* টাইমলাইন অডিট লগ (Audit Activity History) */}
+          <div className="space-y-3">
+            <span className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+              <History className="w-4 h-4 text-slate-500" />
+              <span>অর্ডার অ্যাক্টিভিটি টাইমলাইন (Audit Trail)</span>
+            </span>
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+              {(order.ActivityLog || [
+                { timestamp: order.CreatedAt, action: 'অর্ডার তৈরি হয়েছে', actor: order.CreatedBy || 'Admin' }
+              ]).map((log, idx) => (
+                <div key={idx} className="flex items-start space-x-2.5 text-xs">
+                  <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 shrink-0" />
+                  <div className="flex-1">
+                    <span className="font-medium text-slate-800 block">{log.action}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {new Date(log.timestamp).toLocaleString('bn-BD')} • ইউজার: {log.actor || 'Admin'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* প্রিন্ট ও ট্র্যাকিং প্রিভিউ অপশনসমূহ */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+            <button
+              onClick={onOpenCustomerTracking}
+              className="py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+            >
+              <Truck className="w-4 h-4" />
+              <span>লাইভ ট্র্যাকিং পেজ</span>
+            </button>
+
             <button
               onClick={onPrintLabel}
-              className="flex-1 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs flex items-center justify-center space-x-2 transition-colors cursor-pointer"
+              className="py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             >
               <Tag className="w-4 h-4" />
-              <span>কুরিয়ার স্টিকার প্রিন্ট</span>
+              <span>কুরিয়ার স্টিকার</span>
             </button>
 
             <button
               onClick={onPrintChallan}
-              className="flex-1 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl text-xs flex items-center justify-center space-x-2 transition-colors cursor-pointer"
+              className="py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             >
               <Printer className="w-4 h-4" />
-              <span>ডেলিভারি চালান প্রিন্ট</span>
+              <span>ডেলিভারি চালান</span>
             </button>
           </div>
         </div>
@@ -1280,7 +1616,6 @@ function OrderDetailsModal({
 /**
  * ============================================================================
  * সাব-কম্পোনেন্ট ৩: কুরিয়ার পার্সেল স্টিকার লেবেল (ShippingLabelModal)
- * ৩×৪ ইঞ্চি বা থার্মাল লেবেল স্টাইলের কমপ্যাক্ট প্রিন্ট প্রিভিউ
  * ============================================================================
  */
 function ShippingLabelModal({ order, settings = {}, onClose, currencySymbol = '৳' }) {

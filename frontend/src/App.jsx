@@ -21,6 +21,7 @@ import CouponModal from './components/CouponModal';
 import UsersModal from './components/UsersModal';
 import Sidebar from './components/Sidebar';
 import OrdersPage from './components/OrdersPage';
+import CustomerOrderTrackingModal from './components/CustomerOrderTrackingModal';
 
 import {
   getLocalSettings,
@@ -33,6 +34,8 @@ import {
   saveOrUpdateOrderLocally,
   updateOrderStatusLocally,
   deleteOrderLocally,
+  submitOrderRmaLocally,
+  resolveOrderRmaLocally,
   getLocalCategories,
   saveLocalCategories,
   getLocalUnits,
@@ -154,6 +157,21 @@ export default function App() {
   // অথেনটিকেশন ও কাস্টমার পোর্টাল মডাল স্টেট
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCustomerOrdersOpen, setIsCustomerOrdersOpen] = useState(false);
+
+  // কাস্টমার সরাসরি ট্র্যাকিং পোর্টাল স্টেট (?track=ORD-XXXXX)
+  const [directTrackingOrderId, setDirectTrackingOrderId] = useState('');
+  const [isCustomerTrackingModalOpen, setIsCustomerTrackingModalOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const trackId = urlParams.get('track') || urlParams.get('order');
+      if (trackId) {
+        setDirectTrackingOrderId(trackId);
+        setIsCustomerTrackingModalOpen(true);
+      }
+    } catch {}
+  }, []);
 
   // সাইডবার মেনু প্যানেল স্টেট (Sidebar Panel State)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -988,6 +1006,63 @@ export default function App() {
     showToast(`অর্ডার ${orderId} মুছে ফেলা হয়েছে।`, 'info');
   };
 
+  const handleResolveRma = async (orderId, resolution, notesOrData) => {
+    try {
+      if (resolution === 'Submitted') {
+        const updatedOrder = submitOrderRmaLocally(orderId, notesOrData);
+        if (updatedOrder) {
+          setOrders(getLocalOrders());
+          showToast(`অর্ডার ${orderId}-এর রিটার্ন/এক্সচেঞ্জ আবেদন সফলভাবে জমা হয়েছে।`, 'success');
+        }
+        return;
+      }
+
+      const targetOrder = orders.find((o) => o.OrderID === orderId);
+      if (!targetOrder) return;
+
+      if (resolution === 'Approved') {
+        // ১. অটোমেটিক রিস্টক (যদি স্টক রিজার্ভ থাকে)
+        if (targetOrder.StockReserved && Array.isArray(targetOrder.Items)) {
+          const restockedProducts = products.map((p) => {
+            const item = targetOrder.Items.find((i) => (i.productId || i.ProductID) === p.ProductID);
+            if (item) {
+              const currentStock = Number(p.StockQuantity) || 0;
+              return {
+                ...p,
+                StockQuantity: currentStock + Number(item.quantity),
+                UpdatedAt: new Date().toISOString(),
+              };
+            }
+            return p;
+          });
+          setProducts(restockedProducts);
+          saveLocalProducts(restockedProducts);
+          showToast('রিটার্ন অনুমোদন করায় পণ্যগুলো মূল ইনভেন্টরি স্টকে ফেরত যোগ হয়েছে!', 'info');
+        }
+      }
+
+      const updated = resolveOrderRmaLocally(orderId, resolution, typeof notesOrData === 'string' ? notesOrData : '', activeUser?.FullName || 'Admin');
+      setOrders(updated);
+      showToast(`আবেদন ${resolution === 'Approved' ? 'অনুমোদিত' : 'প্রত্যাখ্যাত'} হয়েছে।`, 'success');
+
+      // ক্লাউড সিঙ্ক
+      if (resolution === 'Approved' && settings.apiUrl) {
+        try {
+          await postUpdateOrderStatus(settings.apiUrl, {
+            orderId,
+            status: 'Returned',
+            trackingId: targetOrder.TrackingID || '',
+            courierName: targetOrder.CourierName || '',
+          });
+        } catch (apiErr) {
+          console.warn('RMA status cloud sync delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`RMA আপডেট ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
   // ৬.৫ নতুন গ্রাহক ম্যানুয়ালি যোগ করার হ্যান্ডলার
   const handleAddCustomer = async (newCustomerData) => {
     const updatedList = saveOrUpdateCustomerLocally(newCustomerData, 0);
@@ -1539,6 +1614,7 @@ export default function App() {
               activeUser={activeUser}
               onSaveOrder={handleSaveOrder}
               onUpdateStatus={handleUpdateOrderStatus}
+              onResolveRma={handleResolveRma}
               onDeleteOrder={handleDeleteOrder}
               showToast={showToast}
               currencySymbol={settings.CurrencySymbol || '৳'}
@@ -1766,6 +1842,22 @@ export default function App() {
           setCurrentView('pos');
         }}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+      />
+
+      {/* কাস্টমার ব্র্যান্ডেড লাইভ ট্র্যাকিং ও সেলফ-সার্ভিস RMA পোর্টাল মডাল */}
+      <CustomerOrderTrackingModal
+        isOpen={isCustomerTrackingModalOpen}
+        onClose={() => {
+          setIsCustomerTrackingModalOpen(false);
+          setDirectTrackingOrderId('');
+        }}
+        orders={orders}
+        initialOrderId={directTrackingOrderId}
+        settings={settings}
+        onSubmitRma={(orderId, rmaData) => {
+          handleResolveRma(orderId, 'Submitted', rmaData);
+        }}
+        currencySymbol={settings.CurrencySymbol || '৳'}
       />
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}

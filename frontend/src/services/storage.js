@@ -1479,6 +1479,13 @@ export function normalizeOrder(order) {
     RiskLevel: String(order.RiskLevel || order.riskLevel || 'Low').trim(),
     Notes: String(order.Notes || order.notes || '').trim(),
     StockReserved: Boolean(order.StockReserved !== undefined ? order.StockReserved : true),
+    IsPreOrder: Boolean(order.IsPreOrder ?? order.isPreOrder ?? false),
+    ActivityLog: Array.isArray(order.ActivityLog)
+      ? order.ActivityLog
+      : (Array.isArray(order.activityLog)
+          ? order.activityLog
+          : [{ timestamp: order.CreatedAt || now, action: 'অর্ডার সিস্টেমে তৈরি হয়েছে', actor: String(order.CreatedBy || order.createdBy || 'Admin') }]),
+    RmaRequest: order.RmaRequest || order.rmaRequest || null,
     CreatedAt: order.CreatedAt || order.createdAt || now,
     UpdatedAt: order.UpdatedAt || order.updatedAt || now,
     CreatedBy: String(order.CreatedBy || order.createdBy || 'Admin').trim(),
@@ -1527,12 +1534,13 @@ export function saveOrUpdateOrderLocally(orderData) {
   return orders;
 }
 
-export function updateOrderStatusLocally(orderId, newStatus, trackingId = null, courierName = null) {
+export function updateOrderStatusLocally(orderId, newStatus, trackingId = null, courierName = null, actor = 'Admin') {
   if (!orderId || !newStatus) return getLocalOrders();
   const orders = getLocalOrders();
   const index = orders.findIndex(o => o.OrderID === orderId);
 
   if (index !== -1) {
+    const prevStatus = orders[index].Status;
     orders[index].Status = newStatus;
     if (trackingId !== null) {
       orders[index].TrackingID = trackingId;
@@ -1541,9 +1549,87 @@ export function updateOrderStatusLocally(orderId, newStatus, trackingId = null, 
       orders[index].CourierName = courierName;
     }
     orders[index].UpdatedAt = new Date().toISOString();
+
+    // অ্যাক্টিভিটি টাইমলাইনে যুক্ত করা
+    if (!Array.isArray(orders[index].ActivityLog)) {
+      orders[index].ActivityLog = [];
+    }
+    orders[index].ActivityLog.push({
+      timestamp: new Date().toISOString(),
+      action: `স্ট্যাটাস পরিবর্তন: ${prevStatus} ➔ ${newStatus}${trackingId ? ` (ট্র্যাকিং: ${trackingId})` : ''}`,
+      actor: actor
+    });
+
     saveLocalOrders(orders);
   }
 
+  return orders;
+}
+
+/**
+ * গ্রাহকের রিটার্ন বা এক্সচেঞ্জ আবেদন (RMA Request) সাবমিট করা
+ */
+export function submitOrderRmaLocally(orderId, { type = 'Return', reason = '', details = '' }) {
+  if (!orderId) return null;
+  const orders = getLocalOrders();
+  const index = orders.findIndex(o => o.OrderID === orderId);
+
+  if (index !== -1) {
+    const now = new Date().toISOString();
+    orders[index].RmaRequest = {
+      type: type || 'Return',
+      reason: reason || 'পছন্দ হয়নি বা সাইজ মিলছে না',
+      details: details || '',
+      status: 'Pending',
+      requestedAt: now
+    };
+
+    if (!Array.isArray(orders[index].ActivityLog)) {
+      orders[index].ActivityLog = [];
+    }
+    orders[index].ActivityLog.push({
+      timestamp: now,
+      action: `গ্রাহক ${type === 'Exchange' ? 'এক্সচেঞ্জ' : 'রিটার্ন'} আবেদন জমা দিয়েছেন (কারণ: ${reason})`,
+      actor: 'Customer'
+    });
+
+    orders[index].UpdatedAt = now;
+    saveLocalOrders(orders);
+    return orders[index];
+  }
+  return null;
+}
+
+/**
+ * এডমিন কর্তৃক রিটার্ন/এক্সচেঞ্জ আবেদন নিষ্পত্তি করা (Approve / Reject)
+ */
+export function resolveOrderRmaLocally(orderId, resolution = 'Approved', notes = '', actor = 'Admin') {
+  if (!orderId) return getLocalOrders();
+  const orders = getLocalOrders();
+  const index = orders.findIndex(o => o.OrderID === orderId);
+
+  if (index !== -1 && orders[index].RmaRequest) {
+    const now = new Date().toISOString();
+    orders[index].RmaRequest.status = resolution;
+    orders[index].RmaRequest.resolvedAt = now;
+    orders[index].RmaRequest.resolutionNotes = notes;
+
+    if (resolution === 'Approved') {
+      orders[index].Status = 'Returned';
+    }
+
+    if (!Array.isArray(orders[index].ActivityLog)) {
+      orders[index].ActivityLog = [];
+    }
+    orders[index].ActivityLog.push({
+      timestamp: now,
+      action: `রিটার্ন আবেদন ${resolution === 'Approved' ? 'অনুমোদিত' : 'প্রত্যাখ্যাত'} হয়েছে${notes ? ` (নোট: ${notes})` : ''}`,
+      actor: actor
+    });
+
+    orders[index].UpdatedAt = now;
+    saveLocalOrders(orders);
+  }
   return orders;
 }
 
