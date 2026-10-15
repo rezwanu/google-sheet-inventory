@@ -1000,6 +1000,39 @@ export default function App() {
     }
   };
 
+  // বাল্ক অর্ডার স্ট্যাটাস আপডেট হ্যান্ডলার (Bulk Order Status Updater)
+  const handleBulkUpdateStatus = async (orderIds, newStatus) => {
+    if (!orderIds || orderIds.length === 0) return;
+    try {
+      let latestOrders = getLocalOrders();
+      for (const id of orderIds) {
+        latestOrders = updateOrderStatusLocally(id, newStatus, null, null, activeUser?.FullName || 'Admin');
+      }
+      setOrders(latestOrders);
+      showToast(`${orderIds.length}টি অর্ডারের স্ট্যাটাস সফলভাবে '${newStatus}'-এ আপডেট হয়েছে!`, 'success');
+
+      if (settings.apiUrl) {
+        for (const id of orderIds) {
+          const ord = latestOrders.find(o => o.OrderID === id);
+          if (ord) {
+            try {
+              await postUpdateOrderStatus(settings.apiUrl, {
+                orderId: id,
+                status: newStatus,
+                trackingId: ord.TrackingID || '',
+                courierName: ord.CourierName || '',
+              });
+            } catch (err) {
+              console.warn(`Bulk sync delayed for ${id}:`, err);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      showToast(`বাল্ক আপডেট ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
   const handleDeleteOrder = (orderId) => {
     const updated = deleteOrderLocally(orderId);
     setOrders(updated);
@@ -1614,6 +1647,7 @@ export default function App() {
               activeUser={activeUser}
               onSaveOrder={handleSaveOrder}
               onUpdateStatus={handleUpdateOrderStatus}
+              onBulkUpdateStatus={handleBulkUpdateStatus}
               onResolveRma={handleResolveRma}
               onDeleteOrder={handleDeleteOrder}
               showToast={showToast}

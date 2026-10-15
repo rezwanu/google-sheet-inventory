@@ -43,10 +43,130 @@ import {
   User,
   ChevronRight,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  Edit3,
+  MessageCircle,
+  Download,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { calculateOrderRisk, isValidBdPhone } from '../services/riskAnalysis';
 import CustomerOrderTrackingModal from './CustomerOrderTrackingModal';
+
+/**
+ * তারিখ অনুযায়ী ফিল্টার যাচাইকারী হেল্পার
+ */
+function isDateInFilter(dateStr, filter) {
+  if (!filter || filter === 'all') return true;
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const orderDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  if (filter === 'today') {
+    return orderDate.getTime() === today.getTime();
+  }
+  if (filter === 'yesterday') {
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return orderDate.getTime() === yesterday.getTime();
+  }
+  if (filter === 'last7') {
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return orderDate >= sevenDaysAgo;
+  }
+  if (filter === 'thisMonth') {
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }
+  return true;
+}
+
+/**
+ * কুরিয়ার বাল্ক বুকিং এক্সপোর্ট (Steadfast / Pathao সামঞ্জস্যপূর্ণ UTF-8 CSV)
+ */
+function exportCourierBulkCsv(orders, courierName = 'All') {
+  if (!orders || orders.length === 0) return;
+  const headers = [
+    'Invoice ID',
+    'Customer Name',
+    'Customer Phone',
+    'Customer Address',
+    'District',
+    'COD Amount',
+    'Courier',
+    'Order Date',
+    'Special Note'
+  ];
+
+  const rows = orders.map((o) => {
+    const cleanAddress = (o.CustomerAddress || '').replace(/"/g, '""').replace(/\r?\n/g, ' ');
+    const cleanNote = (o.Notes || '').replace(/"/g, '""').replace(/\r?\n/g, ' ');
+    const cleanName = (o.CustomerName || '').replace(/"/g, '""');
+    return [
+      `"${o.OrderID}"`,
+      `"${cleanName}"`,
+      `"${o.CustomerPhone}"`,
+      `"${cleanAddress}"`,
+      `"${o.District || 'ঢাকা'}"`,
+      `"${Number(o.DueAmount || 0)}"`,
+      `"${o.CourierName || courierName}"`,
+      `"${new Date(o.CreatedAt || o.OrderDate || Date.now()).toLocaleDateString('en-GB')}"`,
+      `"${cleanNote}"`
+    ].join(',');
+  });
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  const nowStr = new Date().toISOString().slice(0, 10);
+  link.setAttribute('download', `Courier_Bulk_Orders_${courierName}_${nowStr}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * সরাসরি ১-ক্লিক হোয়াটসঅ্যাপ মেসেজ হেল্পার
+ */
+function openOrderWhatsApp(order, storeName = 'Pabna Bostraloy', currencySymbol = '৳') {
+  if (!order || !order.CustomerPhone) return;
+  let phone = String(order.CustomerPhone).replace(/\D/g, '');
+  if (phone.startsWith('01')) {
+    phone = '88' + phone;
+  } else if (!phone.startsWith('8801') && phone.length === 11) {
+    phone = '88' + phone;
+  }
+
+  const trackUrl = `${window.location.origin}${window.location.pathname}?track=${order.OrderID}`;
+  const itemsText = (order.Items || [])
+    .map((item) => `• ${item.productName || item.ProductName} x${item.quantity || item.Quantity}`)
+    .join('\n');
+
+  const message = `আসসালামু আলাইকুম ${order.CustomerName || 'সম্মানিত গ্রাহক'},
+${storeName || 'Pabna Bostraloy'}-এ আপনার অর্ডারটি (${order.OrderID}) গ্রহণ করা হয়েছে। 
+
+📦 পণ্যের বিবরণ:
+${itemsText}
+
+💰 মোট বিল: ${currencySymbol}${order.TotalAmount || 0}
+${order.AdvancePaid > 0 ? `💳 অগ্রিম পরিশোধ: ${currencySymbol}${order.AdvancePaid}\n` : ''}💵 ক্যাশ অন ডেলিভারি (বাকি): ${currencySymbol}${order.DueAmount || 0}
+🚚 কুরিয়ার: ${order.CourierName || 'Steadfast'}
+
+🌐 আপনার পার্সেল লাইভ ট্র্যাক করুন:
+${trackUrl}
+
+যেকোনো প্রয়োজনে আমাদের কল করতে পারেন। ধন্যবাদ!`;
+
+  const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  window.open(waUrl, '_blank');
+}
 
 const AVATAR_GRADIENTS = [
   'from-indigo-500 to-violet-600',
@@ -160,6 +280,7 @@ export default function OrdersPage({
   activeUser = null,
   onSaveOrder,
   onUpdateStatus,
+  onBulkUpdateStatus,
   onResolveRma,
   onDeleteOrder,
   showToast,
@@ -169,10 +290,17 @@ export default function OrdersPage({
   const [searchQuery, setSearchQuery] = useState('');
   const [courierFilter, setCourierFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all'); // 'all' | 'today' | 'yesterday' | 'last7' | 'thisMonth'
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
 
-  // মডাল স্টেট
+  // বাল্ক অপারেশন ও সিলেকশন স্টেট
+  const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+  const [isBulkLabelModalOpen, setIsBulkLabelModalOpen] = useState(false);
+  const [bulkStatusDropdownOpen, setBulkStatusDropdownOpen] = useState(false);
+
+  // মডাল ও এডিটিং স্টেট
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [labelPrintOrder, setLabelPrintOrder] = useState(null);
   const [challanPrintOrder, setChallanPrintOrder] = useState(null);
@@ -204,7 +332,12 @@ export default function OrdersPage({
         return false;
       }
 
-      // ৪. সার্চ কুয়েরি (আইডি, নাম, ফোন, ট্র্যাকিং কোড)
+      // ৪. তারিখ ফিল্টার
+      if (!isDateInFilter(order.CreatedAt || order.OrderDate, dateFilter)) {
+        return false;
+      }
+
+      // ৫. সার্চ কুয়েরি (আইডি, নাম, ফোন, ট্র্যাকিং কোড)
       if (searchQuery.trim()) {
         const query = searchQuery.trim().toLowerCase();
         const idMatch = String(order.OrderID || '').toLowerCase().includes(query);
@@ -218,7 +351,32 @@ export default function OrdersPage({
       }
       return true;
     });
-  }, [orders, activeTab, courierFilter, sourceFilter, searchQuery]);
+  }, [orders, activeTab, courierFilter, sourceFilter, dateFilter, searchQuery]);
+
+  // বাল্ক সিলেকশন হেল্পার
+  const isAllSelected = useMemo(() => {
+    if (filteredOrders.length === 0) return false;
+    return filteredOrders.every((o) => selectedOrderIds.includes(o.OrderID));
+  }, [filteredOrders, selectedOrderIds]);
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(filteredOrders.map((o) => o.OrderID));
+    }
+  };
+
+  const toggleSelectOrder = (orderId, e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    setSelectedOrderIds((prev) =>
+      prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId]
+    );
+  };
+
+  const selectedOrdersList = useMemo(() => {
+    return orders.filter((o) => selectedOrderIds.includes(o.OrderID));
+  }, [orders, selectedOrderIds]);
 
   // সারাংশ পরিসংখ্যান (Metrics)
   const metrics = useMemo(() => {
@@ -321,7 +479,10 @@ export default function OrdersPage({
 
             {/* নতুন অর্ডার তৈরি বাটন */}
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                setEditingOrder(null);
+                setIsCreateModalOpen(true);
+              }}
               className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white text-xs sm:text-sm font-black rounded-2xl shadow-xl shadow-indigo-500/30 active:scale-95 transition-all flex items-center space-x-2 cursor-pointer border border-indigo-400/30"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
@@ -488,13 +649,13 @@ export default function OrdersPage({
 
         {/* ৩.২ সার্চ বার, ড্রপডাউন ও ভিউ মোড সুইচার */}
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-          <div className="sm:col-span-5 relative">
+          <div className="sm:col-span-4 relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="অর্ডার আইডি, গ্রাহকের নাম, মোবাইল বা ট্র্যাকিং কোড দিয়ে খুঁজুন..."
+              placeholder="অর্ডার আইডি, নাম, মোবাইল বা ট্র্যাকিং কোড দিয়ে খুঁজুন..."
               className="w-full pl-10 pr-12 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-medium"
             />
             {searchQuery ? (
@@ -511,11 +672,11 @@ export default function OrdersPage({
             )}
           </div>
 
-          <div className="sm:col-span-3">
+          <div className="sm:col-span-2">
             <select
               value={courierFilter}
               onChange={(e) => setCourierFilter(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-700 font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-700 font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
             >
               <option value="all">🚚 সকল কুরিয়ার</option>
               {COURIER_LIST.map((c) => (
@@ -528,12 +689,26 @@ export default function OrdersPage({
             <select
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-700 font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-700 font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
             >
               <option value="all">🌐 সকল সোর্স</option>
               {ORDER_SOURCES.map((s) => (
                 <option key={s.id} value={s.id}>{s.label}</option>
               ))}
+            </select>
+          </div>
+
+          <div className="sm:col-span-2">
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-700 font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+            >
+              <option value="all">📅 সব সময়</option>
+              <option value="today">☀️ আজকের অর্ডার</option>
+              <option value="yesterday">⌛ গতকাল</option>
+              <option value="last7">📆 বিগত ৭ দিন</option>
+              <option value="thisMonth">🗓️ এই চলতি মাস</option>
             </select>
           </div>
 
@@ -576,18 +751,19 @@ export default function OrdersPage({
           <div>
             <h3 className="text-base font-black text-slate-800">কোনো অর্ডার পাওয়া যায়নি</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-              {searchQuery || activeTab !== 'all' || courierFilter !== 'all'
+              {searchQuery || activeTab !== 'all' || courierFilter !== 'all' || sourceFilter !== 'all' || dateFilter !== 'all'
                 ? 'আপনার সার্চ বা নির্বাচিত ফিল্টারের সাথে মিল রয়েছে এমন কোনো অর্ডার পাওয়া যায়নি।'
                 : 'এখনো কোনো ডেলিভারি অর্ডার এন্ট্রি করা হয়নি। নতুন অর্ডার নিতে উপরের বাটনে চাপুন।'}
             </p>
           </div>
-          {(searchQuery || activeTab !== 'all' || courierFilter !== 'all') && (
+          {(searchQuery || activeTab !== 'all' || courierFilter !== 'all' || sourceFilter !== 'all' || dateFilter !== 'all') && (
             <button
               onClick={() => {
                 setActiveTab('all');
                 setSearchQuery('');
                 setCourierFilter('all');
                 setSourceFilter('all');
+                setDateFilter('all');
               }}
               className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
             >
@@ -603,7 +779,16 @@ export default function OrdersPage({
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-50/90 border-b border-slate-200/90 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="p-4 pl-6">অর্ডার আইডি ও তারিখ</th>
+                    <th className="p-4 pl-4 w-10 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
+                        title="সব অর্ডার সিলেক্ট করুন"
+                      />
+                    </th>
+                    <th className="p-4 pl-2">অর্ডার আইডি ও তারিখ</th>
                     <th className="p-4">গ্রাহক ও এআই রিস্ক স্কোর</th>
                     <th className="p-4">অর্ডারকৃত পণ্যসমূহ</th>
                     <th className="p-4">কুরিয়ার ও ট্র্যাকিং</th>
@@ -629,8 +814,18 @@ export default function OrdersPage({
 
                     return (
                       <tr key={order.OrderID} className="hover:bg-indigo-50/25 transition-colors group">
+                        {/* সিলেকশন চেকবক্স */}
+                        <td className="p-4 pl-4 align-top text-center w-10" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedOrderIds.includes(order.OrderID)}
+                            onChange={(e) => toggleSelectOrder(order.OrderID, e)}
+                            className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600 mt-0.5"
+                          />
+                        </td>
+
                         {/* অর্ডার আইডি ও সোর্স */}
-                        <td className="p-4 pl-6 align-top">
+                        <td className="p-4 pl-2 align-top">
                           <div className="flex items-center space-x-1.5">
                             <span className="font-mono font-black text-indigo-700 text-xs tracking-tight">
                               {order.OrderID}
@@ -853,6 +1048,27 @@ export default function OrdersPage({
                               <Eye className="w-3.5 h-3.5" />
                             </button>
 
+                            {/* অর্ডার এডিট করুন */}
+                            <button
+                              onClick={() => {
+                                setEditingOrder(order);
+                                setIsCreateModalOpen(true);
+                              }}
+                              title="অর্ডারের তথ্য, আইটেম ও পেমেন্ট এডিট করুন"
+                              className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* সরাসরি হোয়াটসঅ্যাপ বার্তা */}
+                            <button
+                              onClick={() => openOrderWhatsApp(order, settings.StoreName, currencySymbol)}
+                              title="গ্রাহককে সরাসরি হোয়াটসঅ্যাপে বিস্তারিত মেসেজ ও ট্র্যাকিং পাঠান"
+                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5" />
+                            </button>
+
                             {/* গ্রাহক ট্র্যাকিং পেজ দেখুন */}
                             <button
                               onClick={() => setCustomerTrackingOrderId(order.OrderID)}
@@ -934,25 +1150,34 @@ export default function OrdersPage({
                 >
                   {/* কার্ড হেডার */}
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div>
-                      <div className="flex items-center space-x-1.5">
-                        <span className="font-mono font-black text-indigo-700 text-sm tracking-tight">
-                          {order.OrderID}
+                    <div className="flex items-center space-x-2.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedOrderIds.includes(order.OrderID)}
+                        onChange={(e) => toggleSelectOrder(order.OrderID, e)}
+                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
+                        title="অর্ডার নির্বাচন করুন"
+                      />
+                      <div>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="font-mono font-black text-indigo-700 text-sm tracking-tight">
+                            {order.OrderID}
+                          </span>
+                          <button
+                            onClick={() => handleCopyId(order.OrderID)}
+                            className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                          >
+                            {copiedId === order.OrderID ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">
+                          {formattedDate} • {order.OrderSource || 'Direct'}
                         </span>
-                        <button
-                          onClick={() => handleCopyId(order.OrderID)}
-                          className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
-                        >
-                          {copiedId === order.OrderID ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
                       </div>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">
-                        {formattedDate} • {order.OrderSource || 'Direct'}
-                      </span>
                     </div>
 
                     <div className="flex items-center space-x-1.5">
@@ -1054,41 +1279,62 @@ export default function OrdersPage({
                   </div>
 
                   {/* অ্যাকশন বাটনসমূহ */}
-                  <div className="grid grid-cols-4 gap-1.5 pt-1">
+                  <div className="grid grid-cols-6 gap-1 pt-1">
                     <button
                       onClick={() => setSelectedOrderDetails(order)}
                       className="py-2 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
-                      title="বিস্তারিত"
+                      title="বিস্তারিত ও অডিট লগ"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span className="text-[11px]">ভিউ</span>
+                      <span className="hidden sm:inline text-[10px]">ভিউ</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setEditingOrder(order);
+                        setIsCreateModalOpen(true);
+                      }}
+                      className="py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                      title="অর্ডার এডিট করুন"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline text-[10px]">এডিট</span>
+                    </button>
+
+                    <button
+                      onClick={() => openOrderWhatsApp(order, settings.StoreName, currencySymbol)}
+                      className="py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                      title="হোয়াটসঅ্যাপে পাঠান"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline text-[10px]">WA</span>
                     </button>
 
                     <button
                       onClick={() => setCustomerTrackingOrderId(order.OrderID)}
                       className="py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
-                      title="ট্র্যাক"
+                      title="লাইভ ট্র্যাক"
                     >
                       <Truck className="w-3.5 h-3.5" />
-                      <span className="text-[11px]">ট্র্যাক</span>
+                      <span className="hidden sm:inline text-[10px]">ট্র্যাক</span>
                     </button>
 
                     <button
                       onClick={() => setLabelPrintOrder(order)}
                       className="py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
-                      title="স্টিকার"
+                      title="শিপিং স্টিকার"
                     >
                       <Tag className="w-3.5 h-3.5" />
-                      <span className="text-[11px]">লেবেল</span>
+                      <span className="hidden sm:inline text-[10px]">লেবেল</span>
                     </button>
 
                     <button
                       onClick={() => setChallanPrintOrder(order)}
-                      className="py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
-                      title="চালান"
+                      className="py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                      title="চালান প্রিন্ট"
                     >
                       <FileText className="w-3.5 h-3.5" />
-                      <span className="text-[11px]">চালান</span>
+                      <span className="hidden sm:inline text-[10px]">চালান</span>
                     </button>
                   </div>
                 </div>
@@ -1098,11 +1344,100 @@ export default function OrdersPage({
         </>
       )}
 
-      {/* ৫. নতুন অর্ডার তৈরি করার মডাল (Create Order Modal) */}
+      {/* ফ্লোটিং বাল্ক অ্যাকশন বার (Floating Bulk Operations Bar) */}
+      {selectedOrderIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border border-white/20 flex flex-wrap items-center justify-between gap-4 max-w-4xl w-[92vw] animate-in fade-in slide-in-from-bottom-5">
+          <div className="flex items-center space-x-3">
+            <span className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 text-white font-black text-xs flex items-center justify-center shadow-md shadow-indigo-500/30">
+              {selectedOrderIds.length}
+            </span>
+            <div className="leading-tight">
+              <span className="text-xs font-black block">
+                {selectedOrderIds.length}টি অর্ডার সিলেক্ট করা হয়েছে
+              </span>
+              <button
+                onClick={() => setSelectedOrderIds([])}
+                className="text-[10px] text-indigo-300 hover:text-white underline cursor-pointer"
+              >
+                সিলেকশন ক্লিয়ার করুন
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center flex-wrap gap-2">
+            {/* বাল্ক স্ট্যাটাস পরিবর্তন মেনু */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setBulkStatusDropdownOpen(!bulkStatusDropdownOpen)}
+                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all shadow-sm active:scale-95"
+              >
+                <span>স্ট্যাটাস পরিবর্তন</span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+
+              {bulkStatusDropdownOpen && (
+                <div className="absolute right-0 bottom-full mb-2 w-48 bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 py-1.5 z-50 animate-in fade-in zoom-in-95">
+                  <span className="text-[10px] font-bold text-slate-400 px-3 py-1 block uppercase">
+                    একসাথে স্ট্যাটাস বদলান:
+                  </span>
+                  {ORDER_STATUSES.filter(s => ['Confirmed', 'Packaging', 'Shipped', 'Delivered', 'Cancelled'].includes(s.id)).map((st) => (
+                    <button
+                      key={st.id}
+                      onClick={() => {
+                        setBulkStatusDropdownOpen(false);
+                        if (onBulkUpdateStatus) {
+                          onBulkUpdateStatus(selectedOrderIds, st.id);
+                        } else if (onUpdateStatus) {
+                          selectedOrderIds.forEach(id => onUpdateStatus(id, st.id));
+                        }
+                        setSelectedOrderIds([]);
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-indigo-50 hover:text-indigo-600 flex items-center space-x-2 cursor-pointer"
+                    >
+                      <span className={`w-2 h-2 rounded-full ${st.id === 'Delivered' ? 'bg-emerald-500' : st.id === 'Shipped' ? 'bg-purple-500' : 'bg-indigo-500'}`} />
+                      <span>{st.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* বাল্ক শিপিং লেবেল প্রিন্ট */}
+            <button
+              onClick={() => setIsBulkLabelModalOpen(true)}
+              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all border border-white/10 active:scale-95"
+              title="নির্বাচিত সব পার্সেলের স্টিকার লেবেল একসাথে প্রিন্ট করুন"
+            >
+              <Printer className="w-3.5 h-3.5 text-indigo-300" />
+              <span>লেবেল প্রিন্ট</span>
+            </button>
+
+            {/* কুরিয়ার CSV এক্সপোর্ট */}
+            <button
+              onClick={() => {
+                exportCourierBulkCsv(selectedOrdersList, courierFilter === 'all' ? 'All' : courierFilter);
+                if (showToast) showToast(`${selectedOrdersList.length}টি অর্ডারের কুরিয়ার CSV ফাইল ডাউনলোড হয়েছে!`, 'success');
+              }}
+              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all shadow-sm active:scale-95"
+              title="Steadfast / Pathao বাল্ক আপলোডের জন্য CSV ডাউনলোড করুন"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>কুরিয়ার CSV</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ৫. নতুন অর্ডার তৈরি ও সম্পাদনা মডাল (Create/Edit Order Modal) */}
       {isCreateModalOpen && (
         <CreateOrderModal
           isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
+          initialOrder={editingOrder}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setEditingOrder(null);
+          }}
           products={products}
           settings={settings}
           allOrders={orders}
@@ -1118,6 +1453,11 @@ export default function OrdersPage({
           order={selectedOrderDetails}
           allOrders={orders}
           onClose={() => setSelectedOrderDetails(null)}
+          onEditOrder={() => {
+            setEditingOrder(selectedOrderDetails);
+            setSelectedOrderDetails(null);
+            setIsCreateModalOpen(true);
+          }}
           onUpdateStatus={onUpdateStatus}
           onResolveRma={onResolveRma}
           onOpenCustomerTracking={() => {
@@ -1132,6 +1472,17 @@ export default function OrdersPage({
             setChallanPrintOrder(selectedOrderDetails);
             setSelectedOrderDetails(null);
           }}
+          currencySymbol={currencySymbol}
+        />
+      )}
+
+      {/* বাল্ক শিপিং স্টিকার লেবেল প্রিন্ট মডাল */}
+      {isBulkLabelModalOpen && (
+        <BulkShippingLabelsModal
+          isOpen={isBulkLabelModalOpen}
+          orders={selectedOrdersList}
+          settings={settings}
+          onClose={() => setIsBulkLabelModalOpen(false)}
           currencySymbol={currencySymbol}
         />
       )}
@@ -1183,6 +1534,7 @@ export default function OrdersPage({
  */
 function CreateOrderModal({
   isOpen,
+  initialOrder = null,
   onClose,
   products = [],
   settings = {},
@@ -1191,24 +1543,37 @@ function CreateOrderModal({
   showToast,
   currencySymbol = '৳'
 }) {
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [altPhone, setAltPhone] = useState('');
-  const [customerAddress, setCustomerAddress] = useState('');
-  const [district, setDistrict] = useState('ঢাকা');
-  const [orderSource, setOrderSource] = useState('Facebook');
-  const [courierName, setCourierName] = useState('Steadfast');
-  const [trackingId, setTrackingId] = useState('');
-  const [deliveryCharge, setDeliveryCharge] = useState(70);
-  const [discountAmount, setDiscountAmount] = useState(0);
-  const [advancePaid, setAdvancePaid] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState('COD');
-  const [notes, setNotes] = useState('');
-  const [reserveStock, setReserveStock] = useState(true);
-  const [isPreOrder, setIsPreOrder] = useState(false);
+  const isEditMode = Boolean(initialOrder);
+  const [customerName, setCustomerName] = useState(initialOrder?.CustomerName || '');
+  const [customerPhone, setCustomerPhone] = useState(initialOrder?.CustomerPhone || '');
+  const [altPhone, setAltPhone] = useState(initialOrder?.AltPhone || '');
+  const [customerAddress, setCustomerAddress] = useState(initialOrder?.CustomerAddress || '');
+  const [district, setDistrict] = useState(initialOrder?.District || 'ঢাকা');
+  const [orderSource, setOrderSource] = useState(initialOrder?.OrderSource || 'Facebook');
+  const [courierName, setCourierName] = useState(initialOrder?.CourierName || 'Steadfast');
+  const [trackingId, setTrackingId] = useState(initialOrder?.TrackingID || '');
+  const [deliveryCharge, setDeliveryCharge] = useState(initialOrder?.DeliveryCharge ?? 70);
+  const [discountAmount, setDiscountAmount] = useState(initialOrder?.DiscountAmount || 0);
+  const [advancePaid, setAdvancePaid] = useState(initialOrder?.AdvancePaid || 0);
+  const [paymentMethod, setPaymentMethod] = useState(initialOrder?.PaymentMethod || 'COD');
+  const [transactionId, setTransactionId] = useState(initialOrder?.TransactionID || '');
+  const [notes, setNotes] = useState(initialOrder?.Notes || '');
+  const [reserveStock, setReserveStock] = useState(initialOrder?.StockReserved ?? true);
+  const [isPreOrder, setIsPreOrder] = useState(initialOrder?.IsPreOrder ?? false);
 
   // পণ্য কার্ট স্টেট
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [selectedItems, setSelectedItems] = useState(
+    initialOrder?.Items && Array.isArray(initialOrder.Items)
+      ? initialOrder.Items.map((item) => ({
+          productId: item.productId || item.ProductID,
+          productName: item.productName || item.ProductName,
+          sellingPrice: Number(item.sellingPrice || item.SellingPrice) || 0,
+          costPrice: Number(item.costPrice || item.CostPrice) || 0,
+          quantity: Number(item.quantity || item.Quantity) || 1,
+          unit: item.unit || item.Unit || 'Pcs'
+        }))
+      : []
+  );
   const [productSearch, setProductSearch] = useState('');
 
   // কুরিয়ার পরিবর্তনের সাথে সাথে ডেলিভারি ফি আপডেট
@@ -1306,8 +1671,8 @@ function CreateOrderModal({
       return;
     }
 
-    const newOrder = {
-      OrderID: `ORD-${Date.now().toString().slice(-6)}`,
+    const orderData = {
+      OrderID: initialOrder ? initialOrder.OrderID : `ORD-${Date.now().toString().slice(-6)}`,
       CustomerName: customerName.trim(),
       CustomerPhone: customerPhone.trim(),
       AltPhone: altPhone.trim(),
@@ -1323,17 +1688,38 @@ function CreateOrderModal({
       TotalAmount: totalAmount,
       AdvancePaid: Number(advancePaid) || 0,
       DueAmount: dueAmount,
-      Status: 'Pending',
+      Status: initialOrder ? initialOrder.Status : 'Pending',
       PaymentStatus: Number(advancePaid) >= totalAmount ? 'Paid' : Number(advancePaid) > 0 ? 'Partial' : 'Unpaid',
       PaymentMethod: paymentMethod,
+      TransactionID: transactionId.trim(),
       RiskLevel: liveRisk.level,
       Notes: notes.trim(),
       StockReserved: isPreOrder ? false : reserveStock,
       IsPreOrder: isPreOrder,
-      CreatedAt: new Date().toISOString()
+      CreatedAt: initialOrder ? initialOrder.CreatedAt : new Date().toISOString(),
+      UpdatedAt: new Date().toISOString(),
+      ActivityLog: initialOrder
+        ? [
+            ...(initialOrder.ActivityLog || []),
+            {
+              timestamp: new Date().toISOString(),
+              action: 'অর্ডারের বিবরণ, আইটেম ও পেমেন্ট আপডেট করা হয়েছে (সম্পাদনা)',
+              actor: 'Admin'
+            }
+          ]
+        : [
+            {
+              timestamp: new Date().toISOString(),
+              action: 'নতুন ডেলিভারি অর্ডার তৈরি হয়েছে',
+              actor: 'Admin'
+            }
+          ]
     };
 
-    onSaveOrder(newOrder);
+    onSaveOrder(orderData);
+    if (showToast) {
+      showToast(isEditMode ? `অর্ডার ${orderData.OrderID} সফলভাবে আপডেট হয়েছে!` : `নতুন অর্ডার ${orderData.OrderID} নিশ্চিত করা হয়েছে!`, 'success');
+    }
     onClose();
   };
 
@@ -1357,12 +1743,16 @@ function CreateOrderModal({
         {/* মডাল হেডার */}
         <div className="p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-10">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <Plus className="w-5 h-5 stroke-[2.5]" />
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isEditMode ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
+              {isEditMode ? <Edit3 className="w-5 h-5 stroke-[2.5]" /> : <Plus className="w-5 h-5 stroke-[2.5]" />}
             </div>
             <div>
-              <h2 className="text-base font-black text-slate-800">নতুন ডেলিভারি অর্ডার এন্ট্রি</h2>
-              <p className="text-xs text-slate-500">অনলাইন বা ফোন কল অর্ডারের বিস্তারিত তথ্য দিন</p>
+              <h2 className="text-base font-black text-slate-800">
+                {isEditMode ? `অর্ডার সম্পাদনা: ${initialOrder.OrderID}` : 'নতুন ডেলিভারি অর্ডার এন্ট্রি'}
+              </h2>
+              <p className="text-xs text-slate-500">
+                {isEditMode ? 'গ্রাহকের তথ্য, অর্ডারকৃত পণ্য বা পেমেন্ট আপডেট করুন' : 'অনলাইন বা ফোন কল অর্ডারের বিস্তারিত তথ্য দিন'}
+              </p>
             </div>
           </div>
           <button
@@ -1672,6 +2062,33 @@ function CreateOrderModal({
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-emerald-700 font-mono font-bold"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">পেমেন্ট মেথড</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-bold cursor-pointer"
+                >
+                  <option value="COD">💵 ক্যাশ অন ডেলিভারি (COD)</option>
+                  <option value="bKash">📱 বিকাশ (bKash)</option>
+                  <option value="Nagad">🟠 নগদ (Nagad)</option>
+                  <option value="Rocket">🟣 রকেট (Rocket)</option>
+                  <option value="Bank">🏦 ব্যাংক ট্রান্সফার</option>
+                  <option value="Cash">💰 ক্যাশ পেমেন্ট</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">ট্রানজেকশন আইডি (TrxID) / রেফারেন্স</label>
+                <input
+                  type="text"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  placeholder="যেমন: 9J37A2KLM (যদি থাকে)"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-mono"
+                />
+              </div>
             </div>
 
             {/* সংক্ষিপ্ত রসিদ কার্ড */}
@@ -1730,7 +2147,7 @@ function CreateOrderModal({
               type="submit"
               className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black rounded-xl shadow-md shadow-indigo-600/30 active:scale-95 transition-all cursor-pointer"
             >
-              অর্ডার নিশ্চিত করুন
+              {isEditMode ? 'পরিবর্তন সংরক্ষণ করুন' : 'অর্ডার নিশ্চিত করুন'}
             </button>
           </div>
         </form>
@@ -1748,6 +2165,7 @@ function OrderDetailsModal({
   order,
   allOrders = [],
   onClose,
+  onEditOrder,
   onUpdateStatus,
   onResolveRma,
   onOpenCustomerTracking,
@@ -1891,9 +2309,26 @@ function OrderDetailsModal({
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">গ্রাহকের বিবরণ</span>
               <span className="text-sm font-bold text-slate-800 mt-1 block">{order.CustomerName}</span>
-              <span className="text-slate-600 font-mono mt-0.5 block">{order.CustomerPhone}</span>
+              <div className="flex items-center space-x-2 mt-1">
+                <a
+                  href={`tel:${order.CustomerPhone}`}
+                  className="text-slate-600 hover:text-indigo-600 font-mono text-xs flex items-center space-x-1"
+                >
+                  <Phone className="w-3 h-3 text-slate-400" />
+                  <span>{order.CustomerPhone}</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => openOrderWhatsApp(order, 'Pabna Bostraloy', currencySymbol)}
+                  className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-bold flex items-center space-x-1 cursor-pointer transition-colors"
+                  title="হোয়াটসঅ্যাপে সরাসরি মেসেজ পাঠান"
+                >
+                  <MessageCircle className="w-3 h-3" />
+                  <span>WhatsApp</span>
+                </button>
+              </div>
               {order.AltPhone && (
-                <span className="text-slate-500 font-mono text-[11px] block">বিকল্প: {order.AltPhone}</span>
+                <span className="text-slate-500 font-mono text-[11px] block mt-0.5">বিকল্প: {order.AltPhone}</span>
               )}
             </div>
 
@@ -2016,6 +2451,16 @@ function OrderDetailsModal({
               <span>ক্যাশ অন ডেলিভারি (বাকি):</span>
               <span className="font-mono">{currencySymbol}{order.DueAmount}</span>
             </div>
+            <div className="flex justify-between text-slate-500 pt-1 border-t border-slate-200 text-[11px]">
+              <span>পেমেন্ট মাধ্যম:</span>
+              <span className="font-bold text-slate-800">{order.PaymentMethod || 'COD'}</span>
+            </div>
+            {order.TransactionID && (
+              <div className="flex justify-between text-slate-500 text-[11px]">
+                <span>ট্রানজেকশন আইডি (TrxID):</span>
+                <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">{order.TransactionID}</span>
+              </div>
+            )}
           </div>
 
           {/* টাইমলাইন অডিট লগ (Audit Activity History) */}
@@ -2055,13 +2500,23 @@ function OrderDetailsModal({
           </div>
 
           {/* প্রিন্ট ও ট্র্যাকিং প্রিভিউ অপশনসমূহ */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+            {onEditOrder && (
+              <button
+                onClick={onEditOrder}
+                className="py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>এডিট করুন</span>
+              </button>
+            )}
+
             <button
               onClick={onOpenCustomerTracking}
               className="py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             >
               <Truck className="w-4 h-4" />
-              <span>লাইভ ট্র্যাকিং পেজ</span>
+              <span>লাইভ ট্র্যাক</span>
             </button>
 
             <button
@@ -2318,6 +2773,149 @@ function DeliveryChallanModal({ order, settings = {}, onClose, currencySymbol = 
           <button
             onClick={handlePrint}
             className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl shadow-md flex items-center space-x-2 cursor-pointer"
+          >
+            <Printer className="w-4 h-4" />
+            <span>প্রিন্ট করুন</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ============================================================================
+ * সাব-কম্পোনেন্ট ৫: বাল্ক শিপিং লেবেল প্রিন্ট মডাল (BulkShippingLabelsModal)
+ * ============================================================================
+ */
+function BulkShippingLabelsModal({
+  isOpen,
+  orders = [],
+  settings = {},
+  onClose,
+  currencySymbol = '৳'
+}) {
+  if (!isOpen) return null;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 flex flex-col">
+        {/* হেডার */}
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between no-print sticky top-0 bg-white z-10">
+          <div>
+            <h3 className="text-sm font-black text-slate-800">
+              বাল্ক শিপিং লেবেল প্রিন্ট ({orders.length}টি পার্সেল)
+            </h3>
+            <p className="text-xs text-slate-500">
+              স্টিকার পেপারে প্রিন্ট করার উপযোগী ২-কলাম গ্রিড লেআউট
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl shadow-md flex items-center space-x-1.5 cursor-pointer active:scale-95"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>একসাথে প্রিন্ট করুন</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* প্রিন্ট এলাকা: ২-কলাম স্টিকার শিট */}
+        <div className="p-6 overflow-y-auto flex-1 bg-slate-50/50" id="bulk-shipping-labels-printable">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {orders.map((order) => {
+              const formattedDate = new Date(order.CreatedAt || order.OrderDate || Date.now()).toLocaleDateString('bn-BD', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+              });
+
+              return (
+                <div
+                  key={order.OrderID}
+                  className="bg-white border-2 border-slate-900 rounded-2xl p-4 text-slate-900 shadow-xs space-y-3 print:break-inside-avoid print:mb-4"
+                >
+                  {/* প্রেরক ও কুরিয়ার */}
+                  <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2">
+                    <div>
+                      <span className="text-[9px] font-bold text-slate-500 uppercase block tracking-wider">প্রেরক / FROM:</span>
+                      <strong className="text-xs font-black block">{settings.StoreName || 'Pabna Bostraloy'}</strong>
+                      <span className="text-[10px] text-slate-600 block">{settings.Phone || '01712345678'}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="inline-block px-2.5 py-0.5 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase">
+                        {order.CourierName || 'Steadfast'}
+                      </span>
+                      <span className="text-[9px] font-mono block text-slate-500 mt-0.5">{formattedDate}</span>
+                    </div>
+                  </div>
+
+                  {/* প্রাপক / গ্রাহক */}
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">প্রাপক / TO (CUSTOMER):</span>
+                    <strong className="text-sm font-black text-slate-900 block leading-tight">{order.CustomerName}</strong>
+                    <span className="font-mono text-xs font-black text-slate-800 block">{order.CustomerPhone}</span>
+                    {order.AltPhone && (
+                      <span className="font-mono text-[10px] text-slate-500 block">বিকল্প: {order.AltPhone}</span>
+                    )}
+                    <p className="text-xs text-slate-700 leading-snug pt-0.5">{order.CustomerAddress}</p>
+                    <span className="text-[10px] font-bold text-indigo-700 block">জেলা: {order.District || 'ঢাকা'}</span>
+                  </div>
+
+                  {/* COD সংগ্রহযোগ্য টাকা */}
+                  <div className="bg-slate-100 rounded-xl p-2.5 text-center border border-slate-300">
+                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-wider block">
+                      ক্যাশ অন ডেলিভারি (সংগ্রহযোগ্য টাকা)
+                    </span>
+                    <span className="text-xl font-black block mt-0.5 font-mono text-rose-600">
+                      {currencySymbol} {Number(order.DueAmount || 0).toLocaleString('en-US')}
+                    </span>
+                  </div>
+
+                  {/* প্যাকেজ ও ট্র্যাকিং কোড */}
+                  <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px]">
+                    <div>
+                      <span className="text-slate-500 font-bold block">পণ্য: {(order.Items || []).length}টি আইটেম</span>
+                      {order.Notes && (
+                        <span className="text-slate-600 text-[9px] italic block truncate max-w-[160px]">
+                          নোট: {order.Notes}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono font-bold text-slate-900 text-[11px] block">
+                        {order.TrackingID || order.OrderID}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ফুটার */}
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3 no-print">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-xl cursor-pointer"
+          >
+            বন্ধ করুন
+          </button>
+          <button
+            onClick={handlePrint}
+            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl shadow-md flex items-center space-x-2 cursor-pointer active:scale-95"
           >
             <Printer className="w-4 h-4" />
             <span>প্রিন্ট করুন</span>
