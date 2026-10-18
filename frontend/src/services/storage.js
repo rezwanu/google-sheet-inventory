@@ -1534,7 +1534,7 @@ export function saveOrUpdateOrderLocally(orderData) {
   return orders;
 }
 
-export function updateOrderStatusLocally(orderId, newStatus, trackingId = null, courierName = null, actor = 'Admin') {
+export function updateOrderStatusLocally(orderId, newStatus, trackingId = null, courierName = null, actor = 'Admin', consignmentId = null, smsStatus = null) {
   if (!orderId || !newStatus) return getLocalOrders();
   const orders = getLocalOrders();
   const index = orders.findIndex(o => o.OrderID === orderId);
@@ -1548,6 +1548,13 @@ export function updateOrderStatusLocally(orderId, newStatus, trackingId = null, 
     if (courierName !== null) {
       orders[index].CourierName = courierName;
     }
+    if (consignmentId !== null) {
+      orders[index].ConsignmentID = consignmentId;
+    }
+    if (smsStatus !== null) {
+      orders[index].SmsStatus = smsStatus;
+      orders[index].SmsSentAt = new Date().toISOString();
+    }
     orders[index].UpdatedAt = new Date().toISOString();
 
     // অ্যাক্টিভিটি টাইমলাইনে যুক্ত করা
@@ -1556,7 +1563,7 @@ export function updateOrderStatusLocally(orderId, newStatus, trackingId = null, 
     }
     orders[index].ActivityLog.push({
       timestamp: new Date().toISOString(),
-      action: `স্ট্যাটাস পরিবর্তন: ${prevStatus} ➔ ${newStatus}${trackingId ? ` (ট্র্যাকিং: ${trackingId})` : ''}`,
+      action: `স্ট্যাটাস পরিবর্তন: ${prevStatus} ➔ ${newStatus}${trackingId ? ` (ট্র্যাকিং: ${trackingId})` : ''}${consignmentId ? ` (CID: ${consignmentId})` : ''}`,
       actor: actor
     });
 

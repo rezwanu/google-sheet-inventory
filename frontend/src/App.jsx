@@ -100,7 +100,11 @@ import {
   postAddUnit,
   postUpdateSettings,
   postCreateOrder,
-  postUpdateOrderStatus
+  postUpdateOrderStatus,
+  postBulkUpdateOrderStatus,
+  postSteadfastBulkDispatch,
+  postSteadfastCheckStatus,
+  postSendSmsNotification
 } from './services/api';
 
 export default function App() {
@@ -1124,24 +1128,109 @@ export default function App() {
       showToast(`${orderIds.length}টি অর্ডারের স্ট্যাটাস সফলভাবে '${newStatus}'-এ আপডেট হয়েছে!`, 'success');
 
       if (settings.apiUrl) {
-        for (const id of orderIds) {
-          const ord = latestOrders.find(o => o.OrderID === id);
-          if (ord) {
-            try {
-              await postUpdateOrderStatus(settings.apiUrl, {
-                orderId: id,
-                status: newStatus,
-                trackingId: ord.TrackingID || '',
-                courierName: ord.CourierName || '',
-              });
-            } catch (err) {
-              console.warn(`Bulk sync delayed for ${id}:`, err);
-            }
-          }
-        }
+        await postBulkUpdateOrderStatus(settings.apiUrl, {
+          orderIds: orderIds,
+          status: newStatus
+        });
       }
     } catch (err) {
       showToast(`বাল্ক আপডেট ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
+  // Steadfast Courier ১-ক্লিক বাল্ক বুকিং হ্যান্ডলার
+  const handleSteadfastBulkDispatch = async (selectedOrders) => {
+    if (!selectedOrders || selectedOrders.length === 0) {
+      return { success: false, message: 'বুকিংয়ের জন্য কোনো অর্ডার পাওয়া যায়নি।' };
+    }
+    if (!settings.apiUrl) {
+      showToast('গুগল শিট API URL পাওয়া যায়নি। Settings চেক করুন।', 'error');
+      return { success: false, message: 'API URL অনুপস্থিত' };
+    }
+
+    try {
+      const res = await postSteadfastBulkDispatch(settings.apiUrl, {
+        orders: selectedOrders,
+        apiKey: settings.SteadfastApiKey,
+        secretKey: settings.SteadfastSecretKey
+      });
+
+      if (res.success) {
+        let latestOrders = getLocalOrders();
+        selectedOrders.forEach(ord => {
+          const inv = String(ord.OrderNumber || ord.orderNumber || ord.OrderID || ord.orderId || '').trim();
+          const trk = (res.data?.trackingMap && res.data.trackingMap[inv]) || '';
+          const cid = (res.data?.consignmentMap && res.data.consignmentMap[inv]) || '';
+          latestOrders = updateOrderStatusLocally(
+            ord.OrderID || ord.orderId,
+            'In Transit',
+            trk || null,
+            'Steadfast',
+            activeUser?.FullName || 'Admin',
+            cid || null
+          );
+        });
+        setOrders(latestOrders);
+        showToast(res.message || `${selectedOrders.length}টি অর্ডার Steadfast-এ সফলভাবে বুকিং হয়েছে!`, 'success');
+      } else {
+        showToast(`Steadfast বুকিং ব্যর্থ: ${res.message}`, 'error');
+      }
+      return res;
+    } catch (err) {
+      showToast(`Steadfast সার্ভার ত্রুটি: ${err.message}`, 'error');
+      return { success: false, message: err.message };
+    }
+  };
+
+  // Steadfast লাইভ ট্র্যাকিং স্ট্যাটাস চেক
+  const handleSteadfastCheckStatus = async (order) => {
+    if (!settings.apiUrl) {
+      showToast('গুগল শিট API URL পাওয়া যায়নি।', 'error');
+      return null;
+    }
+    try {
+      const res = await postSteadfastCheckStatus(settings.apiUrl, {
+        consignmentId: order.ConsignmentID,
+        trackingCode: order.TrackingID,
+        invoice: order.OrderNumber || order.OrderID,
+        apiKey: settings.SteadfastApiKey,
+        secretKey: settings.SteadfastSecretKey
+      });
+      return res;
+    } catch (err) {
+      showToast(`ট্র্যাকিং তথ্য আনতে সমস্যা: ${err.message}`, 'error');
+      return null;
+    }
+  };
+
+  // কাস্টমারকে স্বয়ংক্রিয় SMS নোটিফিকেশন পাঠানো
+  const handleSendSmsNotification = async ({ orderId, phone, message }) => {
+    if (!settings.apiUrl) {
+      showToast('গুগল শিট API URL পাওয়া যায়নি।', 'error');
+      return { success: false, message: 'API URL অনুপস্থিত' };
+    }
+    try {
+      const res = await postSendSmsNotification(settings.apiUrl, {
+        orderId,
+        phone,
+        message,
+        provider: settings.SmsProvider,
+        apiKey: settings.SmsApiKey,
+        senderId: settings.SmsSenderId
+      });
+      if (res.success) {
+        if (orderId) {
+          const updated = updateOrderStatusLocally(orderId, null, null, null, activeUser?.FullName || 'Admin', null, 'Sent');
+          setOrders(updated);
+        }
+        showToast('SMS সফলভাবে পাঠানো হয়েছে!', 'success');
+      } else {
+        showToast(`SMS ব্যর্থ: ${res.message}`, 'error');
+      }
+      return res;
+    } catch (err) {
+      showToast(`SMS ত্রুটি: ${err.message}`, 'error');
+      return { success: false, message: err.message };
     }
   };
 
@@ -1760,6 +1849,9 @@ export default function App() {
               onSaveOrder={handleSaveOrder}
               onUpdateStatus={handleUpdateOrderStatus}
               onBulkUpdateStatus={handleBulkUpdateStatus}
+              onSteadfastBulkDispatch={handleSteadfastBulkDispatch}
+              onSteadfastCheckStatus={handleSteadfastCheckStatus}
+              onSendSmsNotification={handleSendSmsNotification}
               onResolveRma={handleResolveRma}
               onDeleteOrder={handleDeleteOrder}
               showToast={showToast}

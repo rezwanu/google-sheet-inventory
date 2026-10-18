@@ -22,7 +22,12 @@ import {
   Phone,
   Mail,
   MapPin,
-  ExternalLink
+  ExternalLink,
+  Truck,
+  MessageSquare,
+  Send,
+  Smartphone,
+  Key
 } from 'lucide-react';
 import { formatImageUrl, getDriveImageCandidates, DEFAULT_APPS_SCRIPT_URL } from '../services/storage';
 
@@ -148,8 +153,10 @@ export default function SettingsModal({
           <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar">
             {[
               { id: 'api', label: 'ক্লাউড ও API সংযোগ', icon: <Globe className="w-4 h-4" /> },
-              { id: 'branding', label: 'স্টোর প্রোফাইল ও ব্র্যান্ডিং', icon: <Building className="w-4 h-4" /> },
-              { id: 'billing', label: 'মুদ্রা, কর ও রিসিট মেমো', icon: <Receipt className="w-4 h-4" /> },
+              { id: 'branding', label: 'স্টোর ব্র্যান্ডিং', icon: <Building className="w-4 h-4" /> },
+              { id: 'billing', label: 'মুদ্রা ও কর', icon: <Receipt className="w-4 h-4" /> },
+              { id: 'courier', label: 'কুরিয়ার ইন্টিগ্রেশন (Steadfast)', icon: <Truck className="w-4 h-4" /> },
+              { id: 'sms', label: 'SMS ও WhatsApp নোটিফিকেশন', icon: <MessageSquare className="w-4 h-4" /> },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -544,6 +551,249 @@ export default function SettingsModal({
                   <p className="text-[10px] font-sans font-bold text-slate-500 pt-0.5">
                     {formData.ReceiptFooter || 'ধন্যবাদ! আবার আসবেন।'}
                   </p>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ---------------- ট্যাব ৪: কুরিয়ার API কনফিগারেশন ---------------- */}
+          {activeTab === 'courier' && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              
+              {/* কুরিয়ার হেডার ব্যানার */}
+              <div className="p-4 bg-gradient-to-br from-emerald-50 via-white to-teal-50 border border-emerald-200 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
+                    <Truck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-emerald-950">Steadfast Courier অটোমেশন</h3>
+                    <p className="text-xs text-emerald-700">১-ক্লিকে বাল্ক পার্সেল বুকিং এবং স্বয়ংক্রিয় ট্র্যাকিং কোড সিঙ্ক</p>
+                  </div>
+                </div>
+                <a
+                  href="https://portal.steadfast.com.bd"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-800 text-xs font-bold rounded-xl flex items-center gap-1 shadow-2xs"
+                >
+                  <span>Steadfast পোর্টাল</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+
+              {/* Steadfast API Key ও Secret Key ইনপুট */}
+              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-2xl space-y-3.5">
+                <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                  <Key className="w-4 h-4 text-emerald-600" />
+                  Steadfast API ক্রেডেনশিয়ালস
+                </span>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Steadfast API Key <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    name="SteadfastApiKey"
+                    placeholder="আপনার Steadfast একাউন্টের API Key পেস্ট করুন"
+                    value={formData.SteadfastApiKey || ''}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Steadfast Secret Key <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    name="SteadfastSecretKey"
+                    placeholder="আপনার Steadfast Secret Key পেস্ট করুন"
+                    value={formData.SteadfastSecretKey || ''}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    💡 Steadfast পোর্টাল থেকে <span className="font-bold">Settings &gt; API Information</span> এ গিয়ে আপনার Key ও Secret কপি করে এখানে দিন।
+                  </p>
+                </div>
+              </div>
+
+              {/* ডিফল্ট ডেলিভারি চার্জ */}
+              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-2xl space-y-3">
+                <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                  <Truck className="w-4 h-4 text-indigo-600" />
+                  ডিফল্ট ডেলিভারি চার্জ কনফিগারেশন
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      ঢাকার ভিতরে ডেলিভারি চার্জ ({formData.CurrencySymbol || '৳'})
+                    </label>
+                    <input
+                      type="number"
+                      name="InsideDhakaDelivery"
+                      placeholder="70"
+                      value={formData.InsideDhakaDelivery !== undefined ? formData.InsideDhakaDelivery : '70'}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2 text-xs bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      ঢাকার বাইরে ডেলিভারি চার্জ ({formData.CurrencySymbol || '৳'})
+                    </label>
+                    <input
+                      type="number"
+                      name="OutsideDhakaDelivery"
+                      placeholder="130"
+                      value={formData.OutsideDhakaDelivery !== undefined ? formData.OutsideDhakaDelivery : '130'}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2 text-xs bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ---------------- ট্যাব ৫: SMS ও WhatsApp নোটিফিকেশন ---------------- */}
+          {activeTab === 'sms' && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              
+              {/* এসএমএস হেডার ব্যানার */}
+              <div className="p-4 bg-gradient-to-br from-violet-50 via-white to-purple-50 border border-violet-200 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-md shadow-violet-600/20">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-violet-950">স্বয়ংক্রিয় SMS ও WhatsApp ইঞ্জিন</h3>
+                    <p className="text-xs text-violet-700">অর্ডার কনফার্মেশন, কুরিয়ার বুকিং ও ট্র্যাকিং মেসেজ অটোমেশন</p>
+                  </div>
+                </div>
+                <div className="px-2.5 py-1 bg-violet-100 text-violet-800 text-[11px] font-black rounded-lg">
+                  বাংলা সাপোর্টেড
+                </div>
+              </div>
+
+              {/* গেটওয়ে কনফিগারেশন */}
+              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-2xl space-y-3.5">
+                <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                  <Send className="w-4 h-4 text-violet-600" />
+                  SMS গেটওয়ে প্রোভাইডার সেটিংস
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      SMS প্রোভাইডার নির্বাচন করুন
+                    </label>
+                    <select
+                      name="SmsProvider"
+                      value={formData.SmsProvider || 'Greenweb'}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    >
+                      <option value="Greenweb">Greenweb SMS Gateway (বাংলাদেশ)</option>
+                      <option value="BulkSMSBD">BulkSMSBD.net (বাংলাদেশ)</option>
+                      <option value="Elitbuzz">Elitbuzz Technologies</option>
+                      <option value="Custom">Custom REST SMS Gateway</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Sender ID / মাস্কিং নাম (ঐচ্ছিক)
+                    </label>
+                    <input
+                      type="text"
+                      name="SmsSenderId"
+                      placeholder="যেমন: PabnaBostra বা অনুমোদিত আইডি"
+                      value={formData.SmsSenderId || ''}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    SMS Gateway API Key / Token <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    name="SmsApiKey"
+                    placeholder="আপনার SMS প্রোভাইডারের API Token বা Key দিন"
+                    value={formData.SmsApiKey || ''}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+              </div>
+
+              {/* WhatsApp সক্রিয়করণ টগল */}
+              <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
+                    <Smartphone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-emerald-950">১-ক্লিক WhatsApp মেসেজ সক্রিয় রাখুন</h4>
+                    <p className="text-[11px] text-emerald-700">অর্ডার লিস্ট থেকে সরাসরি কাস্টমারের হোয়াটসঅ্যাপে ট্র্যাকিং মেসেজ পাঠানো যাবে</p>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  name="WhatsappEnabled"
+                  checked={formData.WhatsappEnabled !== false}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, WhatsappEnabled: e.target.checked }))}
+                  className="w-5 h-5 text-emerald-600 rounded-md focus:ring-emerald-500 cursor-pointer"
+                />
+              </div>
+
+              {/* কাস্টমাইজড মেসেজ টেমপ্লেট */}
+              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-800">
+                    মেসেজ টেমপ্লেট ও ভেরিয়েবলসমূহ
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    ট্যাগস: {'{customerName}'}, {'{orderNumber}'}, {'{courierName}'}, {'{trackingId}'}, {'{dueAmount}'}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    ১. অর্ডার কনফার্মেশন বার্তা (Order Confirmation SMS)
+                  </label>
+                  <textarea
+                    rows={2}
+                    name="SmsTemplateOrder"
+                    placeholder="প্রিয় {customerName}, আপনার অর্ডার #{orderNumber} সফলভাবে গ্রহণ করা হয়েছে। মোট বিল: {totalAmount}। ধন্যবাদ, {storeName}।"
+                    value={formData.SmsTemplateOrder || ''}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2 text-xs bg-white border border-slate-300 rounded-xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 leading-relaxed"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    ২. কুরিয়ার বুকিং ও ট্র্যাকিং বার্তা (Courier Dispatch SMS)
+                  </label>
+                  <textarea
+                    rows={2}
+                    name="SmsTemplateCourier"
+                    placeholder="প্রিয় {customerName}, আপনার পার্সেলটি {courierName}-এ পাঠানো হয়েছে। ট্র্যাকিং কোড: {trackingId}। বকেয়া টাকা: {dueAmount}। সাথে থাকুন, {storeName}।"
+                    value={formData.SmsTemplateCourier || ''}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2 text-xs bg-white border border-slate-300 rounded-xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 leading-relaxed"
+                  />
                 </div>
               </div>
 

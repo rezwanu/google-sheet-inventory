@@ -52,6 +52,9 @@ import {
 } from 'lucide-react';
 import { calculateOrderRisk, isValidBdPhone } from '../services/riskAnalysis';
 import CustomerOrderTrackingModal from './CustomerOrderTrackingModal';
+import BulkCourierDispatchModal from './BulkCourierDispatchModal';
+import BulkSmsDispatchModal from './BulkSmsDispatchModal';
+import SteadfastLiveTrackingModal from './SteadfastLiveTrackingModal';
 
 /**
  * তারিখ অনুযায়ী ফিল্টার যাচাইকারী হেল্পার
@@ -289,6 +292,9 @@ export default function OrdersPage({
   onSaveOrder,
   onUpdateStatus,
   onBulkUpdateStatus,
+  onSteadfastBulkDispatch,
+  onSteadfastCheckStatus,
+  onSendSmsNotification,
   onResolveRma,
   onDeleteOrder,
   showToast,
@@ -305,6 +311,8 @@ export default function OrdersPage({
   // বাল্ক অপারেশন ও সিলেকশন স্টেট
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
   const [isBulkLabelModalOpen, setIsBulkLabelModalOpen] = useState(false);
+  const [isBulkCourierModalOpen, setIsBulkCourierModalOpen] = useState(false);
+  const [isBulkSmsModalOpen, setIsBulkSmsModalOpen] = useState(false);
   const [bulkStatusDropdownOpen, setBulkStatusDropdownOpen] = useState(false);
 
   // মডাল ও এডিটিং স্টেট
@@ -314,6 +322,8 @@ export default function OrdersPage({
   const [labelPrintOrder, setLabelPrintOrder] = useState(null);
   const [challanPrintOrder, setChallanPrintOrder] = useState(null);
   const [customerTrackingOrderId, setCustomerTrackingOrderId] = useState(null);
+  const [trackingModalOrder, setTrackingModalOrder] = useState(null);
+  const [singleSmsModalOrder, setSingleSmsModalOrder] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
   // কুইক স্ট্যাটাস ড্রপডাউন
@@ -1055,6 +1065,21 @@ export default function OrdersPage({
                                 ট্র্যাকিং নেই
                               </span>
                             )}
+
+                            {order.ConsignmentID && (
+                              <div className="text-[9px] text-slate-500 font-mono">
+                                CID: <span className="font-bold text-slate-700">{order.ConsignmentID}</span>
+                              </div>
+                            )}
+
+                            {order.SmsStatus && (
+                              <div className="pt-0.5">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-violet-50 text-violet-700 rounded text-[9px] font-bold border border-violet-200">
+                                  <MessageSquare className="w-2.5 h-2.5" />
+                                  <span>SMS: {order.SmsStatus}</span>
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </td>
 
@@ -1136,13 +1161,33 @@ export default function OrdersPage({
                               <MessageCircle className="w-3.5 h-3.5" />
                             </button>
 
+                            {/* Steadfast লাইভ ট্র্যাকিং চেক */}
+                            {(order.TrackingID || order.ConsignmentID) && (
+                              <button
+                                onClick={() => setTrackingModalOrder(order)}
+                                title="Steadfast লাইভ ট্র্যাকিং স্ট্যাটাস দেখুন"
+                                className="p-1.5 bg-emerald-100/90 hover:bg-emerald-200 text-emerald-800 rounded-lg transition-colors cursor-pointer"
+                              >
+                                <Truck className="w-3.5 h-3.5 text-emerald-700" />
+                              </button>
+                            )}
+
+                            {/* SMS নোটিফিকেশন পাঠান */}
+                            <button
+                              onClick={() => setSingleSmsModalOrder(order)}
+                              title="গ্রাহককে সরাসরি SMS বা WhatsApp বার্তা পাঠান"
+                              className="p-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                            </button>
+
                             {/* গ্রাহক ট্র্যাকিং পেজ দেখুন */}
                             <button
                               onClick={() => setCustomerTrackingOrderId(order.OrderID)}
                               title="গ্রাহকের লাইভ ট্র্যাকিং পেজ দেখুন"
                               className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors cursor-pointer"
                             >
-                              <Truck className="w-3.5 h-3.5" />
+                              <ExternalLink className="w-3.5 h-3.5" />
                             </button>
 
                             {/* ট্র্যাকিং লিংক কপি */}
@@ -1386,12 +1431,32 @@ export default function OrdersPage({
                       <span className="hidden sm:inline text-[10px]">WA</span>
                     </button>
 
+                    {(order.TrackingID || order.ConsignmentID) && (
+                      <button
+                        onClick={() => setTrackingModalOrder(order)}
+                        className="py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                        title="Steadfast লাইভ ট্র্যাকিং"
+                      >
+                        <Truck className="w-3.5 h-3.5 text-emerald-700" />
+                        <span className="hidden sm:inline text-[10px]">Steadfast</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => setSingleSmsModalOrder(order)}
+                      className="py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                      title="গ্রাহককে SMS পাঠান"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline text-[10px]">SMS</span>
+                    </button>
+
                     <button
                       onClick={() => setCustomerTrackingOrderId(order.OrderID)}
                       className="py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
                       title="লাইভ ট্র্যাক"
                     >
-                      <Truck className="w-3.5 h-3.5" />
+                      <ExternalLink className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline text-[10px]">ট্র্যাক</span>
                     </button>
 
@@ -1479,6 +1544,26 @@ export default function OrdersPage({
               )}
             </div>
 
+            {/* ১-ক্লিক Steadfast API বাল্ক বুকিং */}
+            <button
+              onClick={() => setIsBulkCourierModalOpen(true)}
+              className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all shadow-md shadow-emerald-600/30 active:scale-95"
+              title="Steadfast API-তে ১-ক্লিকে সরাসরি বুকিং দিন ও ট্র্যাকিং আইডি সংগ্রহ করুন"
+            >
+              <Truck className="w-3.5 h-3.5 text-emerald-200" />
+              <span>Steadfast বুকিং</span>
+            </button>
+
+            {/* বাল্ক SMS ও WhatsApp নোটিফিকেশন */}
+            <button
+              onClick={() => setIsBulkSmsModalOpen(true)}
+              className="px-3.5 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white text-xs font-black rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all shadow-md shadow-violet-600/30 active:scale-95"
+              title="নির্বাচিত সব কাস্টমারকে একসাথে SMS বা WhatsApp বার্তা পাঠান"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-violet-200" />
+              <span>বাল্ক SMS / WA</span>
+            </button>
+
             {/* বাল্ক শিপিং লেবেল প্রিন্ট */}
             <button
               onClick={() => setIsBulkLabelModalOpen(true)}
@@ -1495,7 +1580,7 @@ export default function OrdersPage({
                 exportCourierBulkCsv(selectedOrdersList, courierFilter === 'all' ? 'All' : courierFilter);
                 if (showToast) showToast(`${selectedOrdersList.length}টি অর্ডারের কুরিয়ার CSV ফাইল ডাউনলোড হয়েছে!`, 'success');
               }}
-              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all shadow-sm active:scale-95"
+              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all border border-white/15 active:scale-95"
               title="Steadfast / Pathao বাল্ক আপলোডের জন্য CSV ডাউনলোড করুন"
             >
               <Download className="w-3.5 h-3.5" />
@@ -1596,6 +1681,48 @@ export default function OrdersPage({
               onResolveRma(orderId, 'Submitted', rmaData);
             }
           }}
+          currencySymbol={currencySymbol}
+        />
+      )}
+
+      {/* ১০. Steadfast ১-ক্লিক বাল্ক কুরিয়ার বুকিং মডাল */}
+      {isBulkCourierModalOpen && (
+        <BulkCourierDispatchModal
+          isOpen={isBulkCourierModalOpen}
+          onClose={() => setIsBulkCourierModalOpen(false)}
+          selectedOrders={selectedOrdersList}
+          settings={settings}
+          onSteadfastBulkDispatch={onSteadfastBulkDispatch}
+          onOpenBulkLabels={() => {
+            setIsBulkCourierModalOpen(false);
+            setIsBulkLabelModalOpen(true);
+          }}
+          currencySymbol={currencySymbol}
+        />
+      )}
+
+      {/* ১১. বাল্ক ও একক SMS / WhatsApp মেসেজিং মডাল */}
+      {(isBulkSmsModalOpen || singleSmsModalOrder) && (
+        <BulkSmsDispatchModal
+          isOpen={Boolean(isBulkSmsModalOpen || singleSmsModalOrder)}
+          onClose={() => {
+            setIsBulkSmsModalOpen(false);
+            setSingleSmsModalOrder(null);
+          }}
+          selectedOrders={singleSmsModalOrder ? [singleSmsModalOrder] : selectedOrdersList}
+          settings={settings}
+          onSendSmsNotification={onSendSmsNotification}
+          currencySymbol={currencySymbol}
+        />
+      )}
+
+      {/* ১২. Steadfast লাইভ কুরিয়ার পার্সেল ট্র্যাকিং মডাল */}
+      {trackingModalOrder && (
+        <SteadfastLiveTrackingModal
+          isOpen={Boolean(trackingModalOrder)}
+          onClose={() => setTrackingModalOrder(null)}
+          order={trackingModalOrder}
+          onSteadfastCheckStatus={onSteadfastCheckStatus}
           currencySymbol={currencySymbol}
         />
       )}

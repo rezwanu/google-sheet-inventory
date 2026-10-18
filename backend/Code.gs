@@ -310,7 +310,10 @@ function ensureSettingsSheet(spreadsheet) {
 
   const defaultHeaders = [
     'SettingID', 'StoreName', 'LogoUrl', 'CurrencySymbol', 
-    'TaxRatePercent', 'Address', 'Phone', 'Email', 'ReceiptFooter', 'ApiUrl', 'UpdatedAt'
+    'TaxRatePercent', 'Address', 'Phone', 'Email', 'ReceiptFooter', 'ApiUrl', 'UpdatedAt',
+    'SteadfastApiKey', 'SteadfastSecretKey', 'PathaoClientId', 'PathaoClientSecret', 'PathaoStoreId',
+    'SmsProvider', 'SmsApiKey', 'SmsSenderId', 'SmsTemplateOrder', 'SmsTemplateCourier', 'SmsTemplateDelivered',
+    'WhatsappEnabled'
   ];
 
   if (settingsSheet.getLastRow() === 0) {
@@ -318,13 +321,15 @@ function ensureSettingsSheet(spreadsheet) {
     return settingsSheet;
   }
 
-  // হেডার কলাম পরীক্ষা করা এবং ApiUrl কলাম অনুপস্থিত থাকলে স্বয়ংক্রিয়ভাবে কলামটি যোগ করা
+  // হেডার কলাম পরীক্ষা করা এবং নতুন কলাম অনুপস্থিত থাকলে স্বয়ংক্রিয়ভাবে ডানপাশে যোগ করা
   const lastCol = settingsSheet.getLastColumn();
   if (lastCol > 0) {
     const headers = settingsSheet.getRange(1, 1, 1, lastCol).getValues()[0];
-    const apiColIdx = findCol(headers, 'ApiUrl', 'apiUrl', 'ApiURL', 'URL', 'WebappUrl');
-    if (apiColIdx === -1) {
-      settingsSheet.getRange(1, lastCol + 1).setValue('ApiUrl');
+    const missingHeaders = defaultHeaders.filter(h => findCol(headers, h) === -1);
+    if (missingHeaders.length > 0) {
+      for (let m = 0; m < missingHeaders.length; m++) {
+        settingsSheet.getRange(1, lastCol + 1 + m).setValue(missingHeaders[m]);
+      }
     }
   }
 
@@ -1982,6 +1987,20 @@ function handleUpdateSettings(spreadsheet, payload) {
   const email = payload.Email || payload.email || '';
   const receiptFooter = payload.ReceiptFooter || payload.receiptFooter || '';
   const apiUrl = (payload.apiUrl || payload.ApiUrl || payload.api_url || '').trim();
+  
+  // কুরিয়ার ও এসএমএস ইন্টিগ্রেশন সেটিংস
+  const steadfastApiKey = payload.SteadfastApiKey || payload.steadfastApiKey || '';
+  const steadfastSecretKey = payload.SteadfastSecretKey || payload.steadfastSecretKey || '';
+  const pathaoClientId = payload.PathaoClientId || payload.pathaoClientId || '';
+  const pathaoClientSecret = payload.PathaoClientSecret || payload.pathaoClientSecret || '';
+  const pathaoStoreId = payload.PathaoStoreId || payload.pathaoStoreId || '';
+  const smsProvider = payload.SmsProvider || payload.smsProvider || 'Greenweb';
+  const smsApiKey = payload.SmsApiKey || payload.smsApiKey || '';
+  const smsSenderId = payload.SmsSenderId || payload.smsSenderId || '';
+  const smsTemplateOrder = payload.SmsTemplateOrder || payload.smsTemplateOrder || '';
+  const smsTemplateCourier = payload.SmsTemplateCourier || payload.smsTemplateCourier || '';
+  const smsTemplateDelivered = payload.SmsTemplateDelivered || payload.smsTemplateDelivered || '';
+  const whatsappEnabled = payload.WhatsappEnabled !== undefined ? payload.WhatsappEnabled : true;
   const timestamp = new Date();
 
   const lastCol = settingsSheet.getLastColumn();
@@ -1998,7 +2017,19 @@ function handleUpdateSettings(spreadsheet, payload) {
     Email: findCol(headers, 'Email', 'Mail'),
     ReceiptFooter: findCol(headers, 'ReceiptFooter', 'Footer', 'FooterText'),
     ApiUrl: findCol(headers, 'ApiUrl', 'apiUrl', 'ApiURL', 'URL', 'WebappUrl'),
-    UpdatedAt: findCol(headers, 'UpdatedAt', 'Updated')
+    UpdatedAt: findCol(headers, 'UpdatedAt', 'Updated'),
+    SteadfastApiKey: findCol(headers, 'SteadfastApiKey', 'SteadfastKey'),
+    SteadfastSecretKey: findCol(headers, 'SteadfastSecretKey', 'SteadfastSecret'),
+    PathaoClientId: findCol(headers, 'PathaoClientId'),
+    PathaoClientSecret: findCol(headers, 'PathaoClientSecret'),
+    PathaoStoreId: findCol(headers, 'PathaoStoreId'),
+    SmsProvider: findCol(headers, 'SmsProvider'),
+    SmsApiKey: findCol(headers, 'SmsApiKey', 'SmsKey'),
+    SmsSenderId: findCol(headers, 'SmsSenderId', 'SenderId'),
+    SmsTemplateOrder: findCol(headers, 'SmsTemplateOrder'),
+    SmsTemplateCourier: findCol(headers, 'SmsTemplateCourier'),
+    SmsTemplateDelivered: findCol(headers, 'SmsTemplateDelivered'),
+    WhatsappEnabled: findCol(headers, 'WhatsappEnabled')
   };
 
   // যদি ২য় সারি না থাকে, নতুন রেকর্ড তৈরি করা
@@ -2015,6 +2046,18 @@ function handleUpdateSettings(spreadsheet, payload) {
     if (colMap.ReceiptFooter !== -1) newRow[colMap.ReceiptFooter] = receiptFooter;
     if (colMap.ApiUrl !== -1) newRow[colMap.ApiUrl] = apiUrl;
     if (colMap.UpdatedAt !== -1) newRow[colMap.UpdatedAt] = timestamp;
+    if (colMap.SteadfastApiKey !== -1) newRow[colMap.SteadfastApiKey] = steadfastApiKey;
+    if (colMap.SteadfastSecretKey !== -1) newRow[colMap.SteadfastSecretKey] = steadfastSecretKey;
+    if (colMap.PathaoClientId !== -1) newRow[colMap.PathaoClientId] = pathaoClientId;
+    if (colMap.PathaoClientSecret !== -1) newRow[colMap.PathaoClientSecret] = pathaoClientSecret;
+    if (colMap.PathaoStoreId !== -1) newRow[colMap.PathaoStoreId] = pathaoStoreId;
+    if (colMap.SmsProvider !== -1) newRow[colMap.SmsProvider] = smsProvider;
+    if (colMap.SmsApiKey !== -1) newRow[colMap.SmsApiKey] = smsApiKey;
+    if (colMap.SmsSenderId !== -1) newRow[colMap.SmsSenderId] = smsSenderId;
+    if (colMap.SmsTemplateOrder !== -1) newRow[colMap.SmsTemplateOrder] = smsTemplateOrder;
+    if (colMap.SmsTemplateCourier !== -1) newRow[colMap.SmsTemplateCourier] = smsTemplateCourier;
+    if (colMap.SmsTemplateDelivered !== -1) newRow[colMap.SmsTemplateDelivered] = smsTemplateDelivered;
+    if (colMap.WhatsappEnabled !== -1) newRow[colMap.WhatsappEnabled] = whatsappEnabled;
     settingsSheet.appendRow(newRow);
   } else {
     // বিদ্যমান ২য় সারির সংশ্লিষ্ট কলামগুলো ডাইনামিক্যালি আপডেট করা
@@ -2031,6 +2074,18 @@ function handleUpdateSettings(spreadsheet, payload) {
     if (colMap.ReceiptFooter !== -1) settingsSheet.getRange(2, colMap.ReceiptFooter + 1).setValue(receiptFooter);
     if (colMap.ApiUrl !== -1) settingsSheet.getRange(2, colMap.ApiUrl + 1).setValue(apiUrl);
     if (colMap.UpdatedAt !== -1) settingsSheet.getRange(2, colMap.UpdatedAt + 1).setValue(timestamp);
+    if (colMap.SteadfastApiKey !== -1) settingsSheet.getRange(2, colMap.SteadfastApiKey + 1).setValue(steadfastApiKey);
+    if (colMap.SteadfastSecretKey !== -1) settingsSheet.getRange(2, colMap.SteadfastSecretKey + 1).setValue(steadfastSecretKey);
+    if (colMap.PathaoClientId !== -1) settingsSheet.getRange(2, colMap.PathaoClientId + 1).setValue(pathaoClientId);
+    if (colMap.PathaoClientSecret !== -1) settingsSheet.getRange(2, colMap.PathaoClientSecret + 1).setValue(pathaoClientSecret);
+    if (colMap.PathaoStoreId !== -1) settingsSheet.getRange(2, colMap.PathaoStoreId + 1).setValue(pathaoStoreId);
+    if (colMap.SmsProvider !== -1) settingsSheet.getRange(2, colMap.SmsProvider + 1).setValue(smsProvider);
+    if (colMap.SmsApiKey !== -1) settingsSheet.getRange(2, colMap.SmsApiKey + 1).setValue(smsApiKey);
+    if (colMap.SmsSenderId !== -1) settingsSheet.getRange(2, colMap.SmsSenderId + 1).setValue(smsSenderId);
+    if (colMap.SmsTemplateOrder !== -1) settingsSheet.getRange(2, colMap.SmsTemplateOrder + 1).setValue(smsTemplateOrder);
+    if (colMap.SmsTemplateCourier !== -1) settingsSheet.getRange(2, colMap.SmsTemplateCourier + 1).setValue(smsTemplateCourier);
+    if (colMap.SmsTemplateDelivered !== -1) settingsSheet.getRange(2, colMap.SmsTemplateDelivered + 1).setValue(smsTemplateDelivered);
+    if (colMap.WhatsappEnabled !== -1) settingsSheet.getRange(2, colMap.WhatsappEnabled + 1).setValue(whatsappEnabled);
   }
 
   SpreadsheetApp.flush();
@@ -2048,7 +2103,19 @@ function handleUpdateSettings(spreadsheet, payload) {
       Email: email,
       ReceiptFooter: receiptFooter,
       ApiUrl: apiUrl,
-      apiUrl: apiUrl
+      apiUrl: apiUrl,
+      SteadfastApiKey: steadfastApiKey,
+      SteadfastSecretKey: steadfastSecretKey,
+      PathaoClientId: pathaoClientId,
+      PathaoClientSecret: pathaoClientSecret,
+      PathaoStoreId: pathaoStoreId,
+      SmsProvider: smsProvider,
+      SmsApiKey: smsApiKey,
+      SmsSenderId: smsSenderId,
+      SmsTemplateOrder: smsTemplateOrder,
+      SmsTemplateCourier: smsTemplateCourier,
+      SmsTemplateDelivered: smsTemplateDelivered,
+      WhatsappEnabled: whatsappEnabled
     }
   };
 }
@@ -2540,6 +2607,22 @@ function doPost(e) {
 
       case 'updateOrderStatus':
         result = handleUpdateOrderStatus(spreadsheet, payload);
+        break;
+
+      case 'bulkUpdateOrderStatus':
+        result = handleBulkUpdateOrderStatus(spreadsheet, payload);
+        break;
+
+      case 'steadfastBulkDispatch':
+        result = handleSteadfastBulkDispatch(spreadsheet, payload);
+        break;
+
+      case 'steadfastCheckStatus':
+        result = handleSteadfastCheckStatus(spreadsheet, payload);
+        break;
+
+      case 'sendSmsNotification':
+        result = handleSendSmsNotification(spreadsheet, payload);
         break;
 
       default:
@@ -3368,14 +3451,29 @@ function ensureOrdersSheet(spreadsheet) {
     ordersSheet = spreadsheet.insertSheet(SHEETS.ORDERS);
   }
 
+  const defaultHeaders = [
+    'OrderID', 'OrderNumber', 'OrderDate', 'CustomerName', 'CustomerPhone', 'AltPhone',
+    'CustomerAddress', 'District', 'OrderSource', 'ItemsJSON', 'SubTotal', 'DiscountAmount',
+    'DeliveryCharge', 'TotalAmount', 'AdvancePaid', 'DueAmount', 'CourierName', 'TrackingID',
+    'Status', 'PaymentStatus', 'PaymentMethod', 'RiskLevel', 'Notes', 'StockReserved',
+    'CreatedAt', 'UpdatedAt', 'CreatedBy', 'ConsignmentID', 'SmsStatus', 'SmsSentAt'
+  ];
+
   if (ordersSheet.getLastRow() === 0) {
-    ordersSheet.appendRow([
-      'OrderID', 'OrderNumber', 'OrderDate', 'CustomerName', 'CustomerPhone', 'AltPhone',
-      'CustomerAddress', 'District', 'OrderSource', 'ItemsJSON', 'SubTotal', 'DiscountAmount',
-      'DeliveryCharge', 'TotalAmount', 'AdvancePaid', 'DueAmount', 'CourierName', 'TrackingID',
-      'Status', 'PaymentStatus', 'PaymentMethod', 'RiskLevel', 'Notes', 'StockReserved',
-      'CreatedAt', 'UpdatedAt', 'CreatedBy'
-    ]);
+    ordersSheet.appendRow(defaultHeaders);
+    return ordersSheet;
+  }
+
+  // বিদ্যমান শিটে অনুপস্থিত কলাম (ConsignmentID, SmsStatus, SmsSentAt) স্বয়ংক্রিয়ভাবে ডানপাশে যোগ করা
+  const lastCol = ordersSheet.getLastColumn();
+  if (lastCol > 0) {
+    const headers = ordersSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    const missing = ['ConsignmentID', 'SmsStatus', 'SmsSentAt'].filter(h => findCol(headers, h) === -1);
+    if (missing.length > 0) {
+      for (let m = 0; m < missing.length; m++) {
+        ordersSheet.getRange(1, lastCol + 1 + m).setValue(missing[m]);
+      }
+    }
   }
 
   return ordersSheet;
@@ -3539,6 +3637,18 @@ function handleUpdateOrderStatus(spreadsheet, payload) {
       if (payload.courierName !== undefined && courierCol !== -1) {
         ordersSheet.getRange(r + 1, courierCol + 1).setValue(payload.courierName);
       }
+      const consignmentCol = findCol(headers, 'ConsignmentID', 'ConsignmentId', 'CID');
+      if (payload.consignmentId !== undefined && consignmentCol !== -1) {
+        ordersSheet.getRange(r + 1, consignmentCol + 1).setValue(payload.consignmentId);
+      }
+      const smsStatusCol = findCol(headers, 'SmsStatus', 'SMSStatus');
+      const smsSentAtCol = findCol(headers, 'SmsSentAt', 'SMSSentAt');
+      if (payload.smsStatus !== undefined && smsStatusCol !== -1) {
+        ordersSheet.getRange(r + 1, smsStatusCol + 1).setValue(payload.smsStatus);
+        if (smsSentAtCol !== -1) {
+          ordersSheet.getRange(r + 1, smsSentAtCol + 1).setValue(new Date());
+        }
+      }
       if (updatedCol !== -1) {
         ordersSheet.getRange(r + 1, updatedCol + 1).setValue(new Date());
       }
@@ -3548,6 +3658,308 @@ function handleUpdateOrderStatus(spreadsheet, payload) {
   }
 
   return { success: false, message: 'অর্ডার পাওয়া যায়নি।' };
+}
+
+/**
+ * একাধিক অর্ডারের স্ট্যাটাস, কুরিয়ার ও ট্র্যাকিং তথ্য বাল্ক আপডেট করার হ্যান্ডলার
+ */
+function handleBulkUpdateOrderStatus(spreadsheet, payload) {
+  const ordersSheet = ensureOrdersSheet(spreadsheet);
+  const orderIds = Array.isArray(payload.orderIds) ? payload.orderIds : [];
+  if (orderIds.length === 0) {
+    return { success: false, message: 'কোনো অর্ডার আইডি প্রদান করা হয়নি।' };
+  }
+
+  const targetStatus = payload.status ? String(payload.status).trim() : '';
+  const targetCourier = payload.courierName ? String(payload.courierName).trim() : '';
+  const trackingMap = payload.trackingMap || {};
+  const consignmentMap = payload.consignmentMap || {};
+  const smsStatusMap = payload.smsStatusMap || {};
+
+  const data = ordersSheet.getDataRange().getValues();
+  if (data.length <= 1) {
+    return { success: false, message: 'অর্ডার শিটে কোনো রেকর্ড নেই।' };
+  }
+
+  const headers = data[0];
+  const idCol = findCol(headers, 'OrderID', 'ID');
+  const statusCol = findCol(headers, 'Status');
+  const trackingCol = findCol(headers, 'TrackingID', 'TrackingCode');
+  const courierCol = findCol(headers, 'CourierName', 'Courier');
+  const consignmentCol = findCol(headers, 'ConsignmentID', 'ConsignmentId', 'CID');
+  const smsStatusCol = findCol(headers, 'SmsStatus', 'SMSStatus');
+  const smsSentAtCol = findCol(headers, 'SmsSentAt', 'SMSSentAt');
+  const updatedCol = findCol(headers, 'UpdatedAt');
+
+  if (idCol === -1) {
+    return { success: false, message: 'OrderID কলাম খুঁজে পাওয়া যায়নি।' };
+  }
+
+  const idSet = new Set(orderIds.map(id => String(id).trim().toLowerCase()));
+  let updatedCount = 0;
+  const now = new Date();
+
+  for (let r = 1; r < data.length; r++) {
+    const rowId = String(data[r][idCol]).trim();
+    if (idSet.has(rowId.toLowerCase())) {
+      if (targetStatus && statusCol !== -1) {
+        ordersSheet.getRange(r + 1, statusCol + 1).setValue(targetStatus);
+      }
+      if (targetCourier && courierCol !== -1) {
+        ordersSheet.getRange(r + 1, courierCol + 1).setValue(targetCourier);
+      }
+      if (trackingMap[rowId] && trackingCol !== -1) {
+        ordersSheet.getRange(r + 1, trackingCol + 1).setValue(trackingMap[rowId]);
+      }
+      if (consignmentMap[rowId] && consignmentCol !== -1) {
+        ordersSheet.getRange(r + 1, consignmentCol + 1).setValue(consignmentMap[rowId]);
+      }
+      if (smsStatusMap[rowId] && smsStatusCol !== -1) {
+        ordersSheet.getRange(r + 1, smsStatusCol + 1).setValue(smsStatusMap[rowId]);
+        if (smsSentAtCol !== -1) {
+          ordersSheet.getRange(r + 1, smsSentAtCol + 1).setValue(now);
+        }
+      }
+      if (updatedCol !== -1) {
+        ordersSheet.getRange(r + 1, updatedCol + 1).setValue(now);
+      }
+      updatedCount++;
+    }
+  }
+
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: `${updatedCount} টি অর্ডারের তথ্য সফলভাবে বাল্ক আপডেট হয়েছে।`,
+    data: { updatedCount: updatedCount }
+  };
+}
+
+/**
+ * Steadfast Courier API-তে এক ক্লিকে বাল্ক বুকিং হ্যান্ডলার
+ */
+function handleSteadfastBulkDispatch(spreadsheet, payload) {
+  const settingsSheet = ensureSettingsSheet(spreadsheet);
+  const sData = settingsSheet.getDataRange().getValues();
+  const sHeaders = sData[0];
+  const apiKeyCol = findCol(sHeaders, 'SteadfastApiKey', 'SteadfastKey');
+  const secretKeyCol = findCol(sHeaders, 'SteadfastSecretKey', 'SteadfastSecret');
+
+  let apiKey = (apiKeyCol !== -1 && sData.length > 1) ? String(sData[1][apiKeyCol] || '').trim() : '';
+  let secretKey = (secretKeyCol !== -1 && sData.length > 1) ? String(sData[1][secretKeyCol] || '').trim() : '';
+
+  if (payload.apiKey) apiKey = String(payload.apiKey).trim();
+  if (payload.secretKey) secretKey = String(payload.secretKey).trim();
+
+  if (!apiKey || !secretKey) {
+    return {
+      success: false,
+      message: 'Steadfast API Key অথবা Secret Key কনফিগার করা নেই। অনুগ্রহ করে Settings থেকে কুরিয়ার সেটিংস পূরণ করুন।'
+    };
+  }
+
+  const orders = Array.isArray(payload.orders) ? payload.orders : [];
+  if (orders.length === 0) {
+    return { success: false, message: 'বুকিংয়ের জন্য কোনো অর্ডার পাওয়া যায়নি।' };
+  }
+
+  const bulkData = orders.map(ord => {
+    const codAmount = Number(ord.dueAmount !== undefined ? ord.dueAmount : (ord.DueAmount !== undefined ? ord.DueAmount : (ord.TotalAmount || 0)));
+    return {
+      invoice: String(ord.orderNumber || ord.OrderNumber || ord.orderId || ord.OrderID || '').trim(),
+      recipient_name: String(ord.customerName || ord.CustomerName || 'Customer').trim(),
+      recipient_phone: String(ord.customerPhone || ord.CustomerPhone || '').trim(),
+      recipient_address: String(ord.customerAddress || ord.CustomerAddress || 'Bangladesh').trim(),
+      cod_amount: codAmount,
+      note: String(ord.notes || ord.Notes || 'Handle with care').trim()
+    };
+  });
+
+  try {
+    const url = 'https://portal.steadfast.com.bd/api/v1/create_order/bulk-order';
+    const options = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: {
+        'Api-Key': apiKey,
+        'Secret-Key': secretKey
+      },
+      payload: JSON.stringify({ data: bulkData }),
+      muteHttpExceptions: true
+    };
+
+    const response = UrlFetchApp.fetch(url, options);
+    const respCode = response.getResponseCode();
+    const respText = response.getContentText();
+    const resultJson = JSON.parse(respText);
+
+    if (respCode === 200 && (resultJson.status === 200 || Array.isArray(resultJson.data))) {
+      const results = Array.isArray(resultJson.data) ? resultJson.data : (Array.isArray(resultJson.consignment) ? resultJson.consignment : []);
+      const trackingMap = {};
+      const consignmentMap = {};
+
+      results.forEach(item => {
+        const inv = String(item.invoice || '').trim();
+        if (inv) {
+          trackingMap[inv] = item.tracking_code || '';
+          consignmentMap[inv] = item.consignment_id || '';
+        }
+      });
+
+      const orderIds = orders.map(o => o.orderId || o.OrderID || o.orderNumber || o.OrderNumber);
+      handleBulkUpdateOrderStatus(spreadsheet, {
+        orderIds: orderIds,
+        status: 'In Transit',
+        courierName: 'Steadfast',
+        trackingMap: trackingMap,
+        consignmentMap: consignmentMap
+      });
+
+      return {
+        success: true,
+        message: `${results.length} টি অর্ডার সফলভাবে Steadfast-এ বুকিং সম্পন্ন হয়েছে এবং ট্র্যাকিং আইডি যুক্ত হয়েছে।`,
+        data: {
+          consignments: results,
+          trackingMap: trackingMap,
+          consignmentMap: consignmentMap
+        }
+      };
+    } else {
+      return {
+        success: false,
+        message: resultJson.message || `Steadfast ত্রুটি (Code ${respCode}): ${respText}`,
+        rawResponse: resultJson
+      };
+    }
+  } catch (err) {
+    return {
+      success: false,
+      message: `Steadfast এপিআই সার্ভারে রিকোয়েস্ট পাঠাতে ব্যর্থ: ${err.message}`
+    };
+  }
+}
+
+/**
+ * Steadfast লাইভ ট্র্যাকিং স্ট্যাটাস পাওয়ার হ্যান্ডলার
+ */
+function handleSteadfastCheckStatus(spreadsheet, payload) {
+  const settingsSheet = ensureSettingsSheet(spreadsheet);
+  const sData = settingsSheet.getDataRange().getValues();
+  const sHeaders = sData[0];
+  const apiKeyCol = findCol(sHeaders, 'SteadfastApiKey', 'SteadfastKey');
+  const secretKeyCol = findCol(sHeaders, 'SteadfastSecretKey', 'SteadfastSecret');
+
+  let apiKey = (apiKeyCol !== -1 && sData.length > 1) ? String(sData[1][apiKeyCol] || '').trim() : '';
+  let secretKey = (secretKeyCol !== -1 && sData.length > 1) ? String(sData[1][secretKeyCol] || '').trim() : '';
+  if (payload.apiKey) apiKey = String(payload.apiKey).trim();
+  if (payload.secretKey) secretKey = String(payload.secretKey).trim();
+
+  if (!apiKey || !secretKey) {
+    return { success: false, message: 'Steadfast API Key কনফিগার করা নেই।' };
+  }
+
+  const cid = payload.consignmentId || payload.ConsignmentID;
+  const trackingCode = payload.trackingCode || payload.TrackingCode || payload.trackingId;
+  const invoice = payload.invoice || payload.InvoiceNo || payload.orderNumber;
+
+  let url = '';
+  if (cid) {
+    url = `https://portal.steadfast.com.bd/api/v1/status_by_cid/${encodeURIComponent(cid)}`;
+  } else if (trackingCode) {
+    url = `https://portal.steadfast.com.bd/api/v1/status_by_trackingcode/${encodeURIComponent(trackingCode)}`;
+  } else if (invoice) {
+    url = `https://portal.steadfast.com.bd/api/v1/status_by_invoice/${encodeURIComponent(invoice)}`;
+  } else {
+    return { success: false, message: 'Consignment ID অথবা Tracking Code প্রদান করুন।' };
+  }
+
+  try {
+    const options = {
+      method: 'get',
+      headers: {
+        'Api-Key': apiKey,
+        'Secret-Key': secretKey
+      },
+      muteHttpExceptions: true
+    };
+    const response = UrlFetchApp.fetch(url, options);
+    const respText = response.getContentText();
+    const result = JSON.parse(respText);
+
+    return {
+      success: response.getResponseCode() === 200,
+      data: result.delivery_status || result.status || result
+    };
+  } catch (err) {
+    return { success: false, message: `ট্র্যাকিং তথ্য আনতে ব্যর্থ: ${err.message}` };
+  }
+}
+
+/**
+ * স্বয়ংক্রিয় SMS নোটিফিকেশন পাঠানোর হ্যান্ডলার
+ */
+function handleSendSmsNotification(spreadsheet, payload) {
+  const settingsSheet = ensureSettingsSheet(spreadsheet);
+  const sData = settingsSheet.getDataRange().getValues();
+  const sHeaders = sData[0];
+  const providerCol = findCol(sHeaders, 'SmsProvider');
+  const apiKeyCol = findCol(sHeaders, 'SmsApiKey', 'SmsKey');
+  const senderIdCol = findCol(sHeaders, 'SmsSenderId', 'SenderId');
+
+  let provider = (providerCol !== -1 && sData.length > 1) ? String(sData[1][providerCol] || '').trim() : 'Greenweb';
+  let apiKey = (apiKeyCol !== -1 && sData.length > 1) ? String(sData[1][apiKeyCol] || '').trim() : '';
+  let senderId = (senderIdCol !== -1 && sData.length > 1) ? String(sData[1][senderIdCol] || '').trim() : '';
+
+  if (payload.apiKey) apiKey = String(payload.apiKey).trim();
+  if (payload.senderId) senderId = String(payload.senderId).trim();
+  if (payload.provider) provider = String(payload.provider).trim();
+
+  const phone = String(payload.phone || payload.CustomerPhone || '').replace(/[^0-9]/g, '');
+  const message = String(payload.message || '').trim();
+  const orderId = payload.orderId || payload.OrderID || '';
+
+  if (!phone || !message) {
+    return { success: false, message: 'ফোন নম্বর এবং মেসেজ টেক্সট আবশ্যক।' };
+  }
+
+  if (!apiKey) {
+    return { success: false, message: 'SMS API Key কনফিগার করা নেই। অনুগ্রহ করে Settings থেকে SMS গেটওয়ে সেটআপ করুন।' };
+  }
+
+  try {
+    let url = '';
+    let options = { method: 'get', muteHttpExceptions: true };
+
+    if (provider.toLowerCase() === 'greenweb') {
+      url = `https://api.greenweb.com.bd/api.php?token=${encodeURIComponent(apiKey)}&to=${encodeURIComponent(phone)}&message=${encodeURIComponent(message)}`;
+    } else if (provider.toLowerCase() === 'bulksmsbd') {
+      url = `http://bulksmsbd.net/api/smsapi?api_key=${encodeURIComponent(apiKey)}&type=text&number=${encodeURIComponent(phone)}&senderid=${encodeURIComponent(senderId)}&message=${encodeURIComponent(message)}`;
+    } else {
+      url = `https://api.greenweb.com.bd/api.php?token=${encodeURIComponent(apiKey)}&to=${encodeURIComponent(phone)}&message=${encodeURIComponent(message)}`;
+    }
+
+    const response = UrlFetchApp.fetch(url, options);
+    const respText = response.getContentText();
+
+    if (orderId) {
+      handleBulkUpdateOrderStatus(spreadsheet, {
+        orderIds: [orderId],
+        smsStatusMap: { [orderId]: 'Sent' }
+      });
+    }
+
+    return {
+      success: true,
+      message: 'SMS সফলভাবে পাঠানো হয়েছে!',
+      response: respText
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: `SMS পাঠাতে ব্যর্থ: ${err.message}`
+    };
+  }
 }
 
 

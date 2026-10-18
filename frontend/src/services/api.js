@@ -1006,3 +1006,143 @@ export async function postUpdateOrderStatus(apiUrl, updateData) {
   }
 }
 
+/**
+ * একাধিক অর্ডারের স্ট্যাটাস বাল্ক আপডেট করার API কল (action: 'bulkUpdateOrderStatus')
+ */
+export async function postBulkUpdateOrderStatus(apiUrl, payloadData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: বাল্ক স্ট্যাটাস লোকালভাবে আপডেট হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'bulkUpdateOrderStatus',
+    ...payloadData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `নেটওয়ার্ক সংযোগ ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * Steadfast Courier API-তে এক ক্লিকে বাল্ক পার্সেল বুকিং (action: 'steadfastBulkDispatch')
+ */
+export async function postSteadfastBulkDispatch(apiUrl, payloadData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: false,
+      message: 'গুগল শিট API URL পাওয়া যায়নি। Settings চেক করুন।',
+    };
+  }
+
+  const payload = {
+    action: 'steadfastBulkDispatch',
+    ...payloadData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `Steadfast সার্ভার সংযোগ ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * Steadfast লাইভ ডেলিভারি ট্র্যাকিং স্ট্যাটাস চেক (action: 'steadfastCheckStatus')
+ */
+export async function postSteadfastCheckStatus(apiUrl, payloadData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: false,
+      message: 'গুগল শিট API URL পাওয়া যায়নি।',
+    };
+  }
+
+  const payload = {
+    action: 'steadfastCheckStatus',
+    ...payloadData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `ট্র্যাকিং তথ্য আনতে সমস্যা: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * কাস্টমারকে স্বয়ংক্রিয় SMS নোটিফিকেশন প্রেরণ (action: 'sendSmsNotification')
+ */
+export async function postSendSmsNotification(apiUrl, payloadData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: false,
+      message: 'গুগল শিট API URL পাওয়া যায়নি।',
+    };
+  }
+
+  const payload = {
+    action: 'sendSmsNotification',
+    ...payloadData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `SMS পাঠাতে সমস্যা হয়েছে: ${err.message}`,
+    };
+  }
+}
