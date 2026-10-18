@@ -41,6 +41,8 @@ export default function AnalyticsDashboard({
   orders = [],
   products = [],
   categories = [],
+  customers = [],
+  customerLedger = [],
   currencySymbol = '৳',
   storeSettings = {},
   onRefreshSales
@@ -78,6 +80,23 @@ export default function AnalyticsDashboard({
         const invNo = String(sale.invoiceNo || sale.invoiceNumber || sale.InvoiceNumber || sale.id || `POS-${idx + 1}`).trim();
         seenInvoiceNos.add(invNo.toLowerCase());
 
+        const gTotal = Number(sale.grandTotal ?? sale.GrandTotal ?? sale.totalAmount) || 0;
+        let sPaid = 0;
+        let sDue = 0;
+        if (sale.paidAmount !== undefined && sale.paidAmount !== null) {
+          sPaid = Number(sale.paidAmount);
+          sDue = sale.dueAmount !== undefined ? Number(sale.dueAmount) : Math.max(0, gTotal - sPaid);
+        } else if (sale.dueAmount !== undefined && sale.dueAmount !== null) {
+          sDue = Number(sale.dueAmount);
+          sPaid = Math.max(0, gTotal - sDue);
+        } else if (sale.paymentMethod === 'Due') {
+          sDue = gTotal;
+          sPaid = 0;
+        } else {
+          sPaid = gTotal;
+          sDue = 0;
+        }
+
         list.push({
           id: sale.saleId || sale.id || invNo,
           invoiceNo: invNo,
@@ -86,7 +105,9 @@ export default function AnalyticsDashboard({
           customerPhone: sale.customerPhone || sale.CustomerPhone || '',
           customerAddress: sale.customerAddress || 'ইন-স্টোর কাউন্টার',
           items: sale.items || sale.Items || [],
-          grandTotal: Number(sale.grandTotal ?? sale.GrandTotal ?? sale.totalAmount) || 0,
+          grandTotal: gTotal,
+          paidAmount: sPaid,
+          dueAmount: sDue,
           subTotal: Number(sale.subTotal ?? sale.SubTotal) || 0,
           discountAmount: Number(sale.discountAmount ?? sale.DiscountAmount) || 0,
           taxAmount: Number(sale.taxAmount ?? sale.TaxAmount) || 0,
@@ -115,6 +136,20 @@ export default function AnalyticsDashboard({
 
         // শুধুমাত্র ডেলিভার্ড বা পেইড অর্ডার লাভ-ক্ষতির আর্থিক হিসাবে আসবে (বাতিল বা ফেরতকৃত অর্ডার বাদ)
         if (isDelivered || order.PaymentStatus === 'Paid') {
+          const ordTotal = Number(order.TotalAmount || 0);
+          let oPaid = 0;
+          let oDue = 0;
+          if (order.PaymentStatus === 'Paid') {
+            oPaid = ordTotal;
+            oDue = 0;
+          } else if (order.AdvancePaid !== undefined || order.PaidAmount !== undefined) {
+            oPaid = Number(order.AdvancePaid ?? order.PaidAmount ?? 0);
+            oDue = Number(order.DueAmount ?? Math.max(0, ordTotal - oPaid));
+          } else {
+            oPaid = 0;
+            oDue = ordTotal;
+          }
+
           list.push({
             id: orderId,
             invoiceNo: orderId,
@@ -123,7 +158,9 @@ export default function AnalyticsDashboard({
             customerPhone: order.CustomerPhone || '',
             customerAddress: order.CustomerAddress || '',
             items: order.Items || [],
-            grandTotal: Number(order.TotalAmount || 0),
+            grandTotal: ordTotal,
+            paidAmount: oPaid,
+            dueAmount: oDue,
             subTotal: Number(order.SubTotal || 0),
             discountAmount: Number(order.DiscountAmount || 0),
             taxAmount: 0,
@@ -198,6 +235,49 @@ export default function AnalyticsDashboard({
     }
     return dateFilteredTransactions;
   }, [dateFilteredTransactions, channelFilter]);
+
+  // নির্বাচিত তারিখ অনুসারে বাকির খাতা থেকে আদায়কৃত লেনদেন ফিল্টার (Ledger Due Collections)
+  const dateFilteredLedgerPayments = useMemo(() => {
+    if (!Array.isArray(customerLedger)) return [];
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
+
+    const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const lastMonthIdx = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+
+    return customerLedger.filter((entry) => {
+      const credit = Number(entry.Credit || entry.credit || entry.Amount || 0);
+      if (credit <= 0 && entry.EntryType !== 'Payment') return false;
+
+      const timeVal = entry.Timestamp || entry.Date || entry.CreatedAt;
+      if (!timeVal) return true;
+      const entryDate = new Date(timeVal);
+      if (isNaN(entryDate.getTime())) return true;
+      const entryDateStr = entryDate.toISOString().split('T')[0];
+
+      if (filterRange === 'today') return entryDateStr === todayStr;
+      if (filterRange === 'yesterday') return entryDateStr === yesterdayStr;
+      if (filterRange === '7days') return entryDate >= sevenDaysAgo && entryDate <= now;
+      if (filterRange === 'month') return entryDate.getFullYear() === now.getFullYear() && entryDate.getMonth() === now.getMonth();
+      if (filterRange === 'lastMonth') return entryDate.getFullYear() === lastMonthYear && entryDate.getMonth() === lastMonthIdx;
+      if (filterRange === 'year') return entryDate.getFullYear() === now.getFullYear();
+      if (filterRange === 'all') return true;
+      if (filterRange === 'custom') {
+        if (!customStartDate && !customEndDate) return true;
+        const start = customStartDate ? new Date(customStartDate) : new Date('2000-01-01');
+        const end = customEndDate ? new Date(customEndDate + 'T23:59:59') : new Date('2099-12-31');
+        return entryDate >= start && entryDate <= end;
+      }
+      return true;
+    });
+  }, [customerLedger, filterRange, customStartDate, customEndDate]);
 
   // ওমনিচ্যানেল কর্মক্ষমতা সারাংশ (In-Store vs Online)
   const channelBreakdown = useMemo(() => {
@@ -278,6 +358,8 @@ export default function AnalyticsDashboard({
     let totalUnitsSold = 0;
     let totalTax = 0;
     let totalDiscount = 0;
+    let totalSalesPaidCash = 0; // বিক্রয়কালে সরাসরি প্রাপ্ত ক্যাশ / পেমেন্ট
+    let totalSalesDueCreated = 0; // বিক্রয়কালে বাকি রাখা পরিমাণ
 
     const productSalesMap = {};
     const categorySalesMap = {};
@@ -291,9 +373,14 @@ export default function AnalyticsDashboard({
       const timeVal = sale.timestamp || sale.Timestamp || sale.Date || sale.CreatedAt;
       const saleDateStr = timeVal ? new Date(timeVal).toISOString().split('T')[0] : 'Unknown';
 
+      const sPaid = Number(sale.paidAmount !== undefined ? sale.paidAmount : (sale.dueAmount ? gTotal - Number(sale.dueAmount) : (sale.paymentMethod === 'Due' ? 0 : gTotal)));
+      const sDue = Number(sale.dueAmount !== undefined ? sale.dueAmount : Math.max(0, gTotal - sPaid));
+
       totalCollectedRevenue += gTotal;
       totalDiscount += sDiscount;
       totalTax += sTax;
+      totalSalesPaidCash += sPaid;
+      totalSalesDueCreated += sDue;
 
       // পেমেন্ট মেথড
       const pMethod = sale.paymentMethod || sale.PaymentMethod || 'Cash';
@@ -410,12 +497,33 @@ export default function AnalyticsDashboard({
     // ট্যাক্স ছাড়া প্রকৃত নেট বিক্রয় (Net Sales)
     const netSales = Math.max(0, totalCollectedRevenue - totalTax);
     
-    // নিট মুনাফা (Net Profit = Net Sales - COGS)
-    const netProfit = netSales - totalCOGS;
+    // ১. খাতা-কলমে হিসাবকৃত মোট লাভ (Booked Profit / Accrual Gross Profit)
+    const bookedProfit = netSales - totalCOGS;
+
+    // ২. বাকির খাতা থেকে এই সময়কালে আদায়কৃত মোট ক্যাশ
+    const periodCollectedDues = (dateFilteredLedgerPayments || []).reduce((sum, e) => sum + (Number(e.Credit || e.credit || e.Amount || 0)), 0);
+
+    // ৩. এই সময়কালে মোট নগদ ক্যাশ সংগ্রহ (বিক্রয়কালে নগদ + বাকির খাতার আদায়)
+    const totalCashInflow = totalSalesPaidCash + periodCollectedDues;
+
+    // ৪. হাতে আসা আসল নগদ লাভ (Realized Cash Profit)
+    const realizedCashProfit = totalCashInflow - totalCOGS;
+
+    // ৫. মার্কেটে বকেয়া মুনাফা / ক্রেডিট ঝুঁকি (Unrealized Due / Credit Risk)
+    const unrealizedDueProfit = Math.max(0, totalSalesDueCreated - periodCollectedDues);
+
+    // ৬. প্রফিট রিয়ালাইজেশন রেট (%):
+    const realizationRate = bookedProfit > 0 
+      ? Math.min(100, Math.max(0, parseFloat(((realizedCashProfit / bookedProfit) * 100).toFixed(1))))
+      : (realizedCashProfit >= 0 ? 100 : 0);
+
+    // ৭. সার্বিক কাস্টমার বকেয়া (Total Market Due across all customers):
+    const totalMarketDue = (customers || []).reduce((sum, c) => sum + (Number(c.CurrentDue) || 0), 0);
+    const dueCustomersCount = (customers || []).filter(c => (Number(c.CurrentDue) || 0) > 0).length;
 
     // নিট মার্জিন শতকরা হার
     const profitMarginPercent = netSales > 0 
-      ? parseFloat(((netProfit / netSales) * 100).toFixed(1)) 
+      ? parseFloat(((bookedProfit / netSales) * 100).toFixed(1)) 
       : 0;
 
     // গড় অর্ডার মান (AOV)
@@ -437,7 +545,7 @@ export default function AnalyticsDashboard({
     // ক্যাটাগরি লিস্ট অ্যারে
     const allCategoryList = Object.values(categorySalesMap).map((c) => {
       const margin = c.revenue > 0 ? parseFloat(((c.profit / c.revenue) * 100).toFixed(1)) : 0;
-      const contribution = netProfit > 0 ? parseFloat(((c.profit / netProfit) * 100).toFixed(1)) : 0;
+      const contribution = bookedProfit > 0 ? parseFloat(((c.profit / bookedProfit) * 100).toFixed(1)) : 0;
       return {
         ...c,
         marginPercent: margin,
@@ -457,11 +565,21 @@ export default function AnalyticsDashboard({
       totalOrders: filteredSales.length,
       totalGrossRevenue,
       totalCollectedRevenue,
+      totalSalesPaidCash,
+      totalSalesDueCreated,
+      periodCollectedDues,
+      totalCashInflow,
       netSales,
       totalCOGS,
       totalTax,
       totalDiscount,
-      netProfit,
+      netProfit: bookedProfit, // backward-compatibility
+      bookedProfit,
+      realizedCashProfit,
+      unrealizedDueProfit,
+      realizationRate,
+      totalMarketDue,
+      dueCustomersCount,
       profitMarginPercent,
       totalUnitsSold,
       averageOrderValue,
@@ -471,7 +589,7 @@ export default function AnalyticsDashboard({
       paymentMap,
       dailyTrendList
     };
-  }, [filteredSales, products]);
+  }, [filteredSales, products, customers, dateFilteredLedgerPayments]);
 
   // ফিল্টার ও সর্ট করা প্রোডাক্ট তালিকা
   const processedProductsList = useMemo(() => {
@@ -535,14 +653,22 @@ export default function AnalyticsDashboard({
       csvContent += `অনলাইন ডেলিভারি,${channelBreakdown.onlineOrders},${channelBreakdown.onlineRevenue.toFixed(2)},${(channelBreakdown.onlineRevenue - channelBreakdown.onlineProfit).toFixed(2)},${channelBreakdown.onlineProfit.toFixed(2)},${channelBreakdown.onlineMargin}%,${channelBreakdown.onlineShare}%\n\n`;
 
       // এক্সিকিউটিভ সামারি
-      csvContent += `২. আর্থিক সারসংক্ষেপ (EXECUTIVE FINANCIAL SUMMARY)\n`;
+      csvContent += `২. আর্থিক সারসংক্ষেপ ও মুনাফা রিয়ালাইজেশন (EXECUTIVE FINANCIAL & PROFIT REALIZATION SUMMARY)\n`;
       csvContent += `মেট্রিক,পরিমাণ (${currencySymbol})\n`;
       csvContent += `মোট বিক্রয় (Gross Revenue),${analyticsKPI.totalGrossRevenue.toFixed(2)}\n`;
       csvContent += `প্রদত্ত ছাড় (Total Discounts),${analyticsKPI.totalDiscount.toFixed(2)}\n`;
       csvContent += `সংগৃহীত কর/ভ্যাট (Taxes),${analyticsKPI.totalTax.toFixed(2)}\n`;
       csvContent += `প্রকৃত বিক্রয় (Net Sales),${analyticsKPI.netSales.toFixed(2)}\n`;
       csvContent += `বিক্রিত পণ্যের ক্রয়মূল্য (COGS),${analyticsKPI.totalCOGS.toFixed(2)}\n`;
-      csvContent += `নিট লাভ/ক্ষতি (Net Profit),${analyticsKPI.netProfit.toFixed(2)}\n`;
+      csvContent += `খাতা-কলমে মোট লাভ (Booked Profit),${analyticsKPI.bookedProfit.toFixed(2)}\n`;
+      csvContent += `বিক্রয়কালে নগদ ক্যাশ (Sales Cash Paid),${analyticsKPI.totalSalesPaidCash.toFixed(2)}\n`;
+      csvContent += `বিক্রয়কালে বকেয়া (Sales Due Created),${analyticsKPI.totalSalesDueCreated.toFixed(2)}\n`;
+      csvContent += `বাকির খাতা থেকে আদায়কৃত টাকা (Collected Dues via Ledger),${analyticsKPI.periodCollectedDues.toFixed(2)}\n`;
+      csvContent += `মোট সংগৃহীত নগদ ক্যাশ (Total Cash Inflow),${analyticsKPI.totalCashInflow.toFixed(2)}\n`;
+      csvContent += `হাতে আসা আসল নগদ লাভ (Realized Cash Profit),${analyticsKPI.realizedCashProfit.toFixed(2)}\n`;
+      csvContent += `মার্কেটে বকেয়া মুনাফা / ঝুঁকি (Unrealized Due Profit),${analyticsKPI.unrealizedDueProfit.toFixed(2)}\n`;
+      csvContent += `মুনাফা রিয়ালাইজেশন হার (Profit Realization Rate %),${analyticsKPI.realizationRate}%\n`;
+      csvContent += `সার্বিক কাস্টমার বকেয়া (Total Market Due),${analyticsKPI.totalMarketDue.toFixed(2)}\n`;
       csvContent += `মুনাফার মার্জিন হার (Profit Margin %),${analyticsKPI.profitMarginPercent}%\n`;
       csvContent += `মোট সম্পন্ন অর্ডার,${analyticsKPI.totalOrders}\n`;
       csvContent += `মোট বিক্রিত ইউনিট,${analyticsKPI.totalUnitsSold}\n`;
@@ -921,6 +1047,118 @@ export default function AnalyticsDashboard({
           {activeTab === 'overview' && (
             <div className="space-y-5">
               
+              {/* মুনাফা আদায় ও রিয়েলাইজেশন বিশ্লেষণ (Booked vs Realized Cash Profit & Due Risk) */}
+              <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-5 sm:p-6 rounded-3xl shadow-xl border border-indigo-900/40 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-indigo-800/40">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 flex items-center justify-center font-black shadow-md">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <h3 className="text-sm sm:text-base font-black text-white tracking-tight">
+                          মুনাফা আদায় ও রিয়েলাইজেশন ইঞ্জিন (Profit Realization Engine)
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          বকেয়া ও ক্যাশ সমন্বয়
+                        </span>
+                      </div>
+                      <p className="text-xs text-indigo-200/80 mt-0.5">
+                        খাতা-কলমে হিসাবকৃত লাভ বনাম ড্রয়ারে আসা আসল নগদ টাকা এবং বাকির ঝুঁকি
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* সার্বিক কাস্টমার বকেয়া সারাংশ */}
+                  <div className="flex items-center space-x-2 bg-indigo-950/80 px-3.5 py-1.5 rounded-2xl border border-indigo-700/50 text-xs">
+                    <span className="text-indigo-300">সার্বিক মার্কেট বকেয়া:</span>
+                    <span className="font-black text-amber-400 font-mono">
+                      {currencySymbol}{analyticsKPI.totalMarketDue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                    </span>
+                    <span className="text-[10px] text-indigo-400">({analyticsKPI.dueCustomersCount} জন গ্রাহক)</span>
+                  </div>
+                </div>
+
+                {/* ৩টি প্রধান রিয়েলাইজেশন মেট্রিক কার্ড */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
+                  
+                  {/* কার্ড ১: খাতা-কলমে মোট লাভ (Booked Accrual Profit) */}
+                  <div className="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60 backdrop-blur-xs flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs text-slate-300 font-bold">
+                      <span>১. খাতা-কলমে মোট লাভ</span>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        Booked Profit
+                      </span>
+                    </div>
+                    <div className="my-2 text-xl font-black text-white font-mono tracking-tight">
+                      {analyticsKPI.bookedProfit >= 0 ? '+' : ''}{currencySymbol}{analyticsKPI.bookedProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-snug">
+                      মোট বিক্রয় {currencySymbol}{analyticsKPI.netSales.toFixed(0)} - কেনা খরচ {currencySymbol}{analyticsKPI.totalCOGS.toFixed(0)}
+                    </div>
+                  </div>
+
+                  {/* কার্ড ২: হাতে আসা আসল নগদ লাভ (Realized Cash Profit) */}
+                  <div className="bg-emerald-950/40 p-4 rounded-2xl border border-emerald-500/40 backdrop-blur-xs ring-1 ring-emerald-500/20 flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs text-emerald-300 font-bold">
+                      <span>২. হাতে আসা আসল নগদ লাভ</span>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        Realized Cash
+                      </span>
+                    </div>
+                    <div className={`my-2 text-xl font-black font-mono tracking-tight ${analyticsKPI.realizedCashProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {analyticsKPI.realizedCashProfit >= 0 ? '+' : ''}{currencySymbol}{analyticsKPI.realizedCashProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                    </div>
+                    <div className="text-[11px] text-emerald-200/80 leading-snug">
+                      আদায়কৃত ক্যাশ {currencySymbol}{analyticsKPI.totalCashInflow.toFixed(0)} - কেনা খরচ {currencySymbol}{analyticsKPI.totalCOGS.toFixed(0)}
+                    </div>
+                  </div>
+
+                  {/* কার্ড ৩: বকেয়া মুনাফা ও ঝুঁকি (Unrealized Due Profit) */}
+                  <div className="bg-amber-950/30 p-4 rounded-2xl border border-amber-500/40 backdrop-blur-xs flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs text-amber-300 font-bold">
+                      <span>৩. বকেয়া মুনাফা / ঝুঁকি</span>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        Unrealized Due
+                      </span>
+                    </div>
+                    <div className="my-2 text-xl font-black text-amber-400 font-mono tracking-tight">
+                      {currencySymbol}{analyticsKPI.unrealizedDueProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                    </div>
+                    <div className="text-[11px] text-amber-200/80 leading-snug">
+                      গ্রাহকের কাছে বকেয়া (আদায় হলে ক্যাশ লাভে যোগ হবে)
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* প্রগ্রেস বার: কত শতাংশ মুনাফা ক্যাশে কনভার্ট হয়েছে */}
+                <div className="pt-2 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+                    <span className="flex items-center space-x-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>
+                      <span>নগদ লাভ রিয়ালাইজেশন হার:</span>
+                      <strong className="text-emerald-400">{analyticsKPI.realizationRate}%</strong>
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      সময়কালে বাকির খাতা থেকে আদায়: <strong className="text-emerald-300">{currencySymbol}{analyticsKPI.periodCollectedDues.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</strong>
+                    </span>
+                  </div>
+                  <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden flex border border-slate-700/60">
+                    <div
+                      style={{ width: `${Math.min(100, Math.max(0, analyticsKPI.realizationRate))}%` }}
+                      className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-500"
+                      title={`নগদে অর্জিত: ${analyticsKPI.realizationRate}%`}
+                    />
+                    <div
+                      style={{ width: `${Math.max(0, 100 - Math.min(100, Math.max(0, analyticsKPI.realizationRate)))}%` }}
+                      className="bg-amber-500/60 h-full transition-all duration-500"
+                      title={`মার্কেটে বকেয়া বাকি: ${Math.max(0, (100 - analyticsKPI.realizationRate).toFixed(1))}%`}
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* ওমনিচ্যানেল চ্যানেল তুলনা কার্ড (Omnichannel Performance Breakdown) */}
               <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
@@ -1369,7 +1607,7 @@ export default function AnalyticsDashboard({
                   </div>
                 </div>
 
-                {/* চূড়ান্ত নিট মুনাফা (Net Profit) */}
+                {/* চূড়ান্ত নিট মুনাফা (Net Profit) */}
                 <div className={`flex justify-between font-black text-base p-4 rounded-2xl border font-sans ${
                   analyticsKPI.netProfit >= 0
                     ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
@@ -1384,6 +1622,31 @@ export default function AnalyticsDashboard({
                   <span className="text-xl">
                     {analyticsKPI.netProfit >= 0 ? '+' : ''}{currencySymbol}{analyticsKPI.netProfit.toFixed(2)}
                   </span>
+                </div>
+
+                {/* ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় */}
+                <div className="space-y-2 pt-2 pb-1">
+                  <div className="font-sans font-bold text-slate-900 text-sm">৫. ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় (Cash Realization & Ledger)</div>
+                  <div className="flex justify-between pl-4 text-slate-700">
+                    <span>হিসাবকৃত মোট মুনাফা (Booked Accrual Profit)</span>
+                    <span className="font-bold">{currencySymbol}{analyticsKPI.bookedProfit.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between pl-4 text-amber-600">
+                    <span>বাদ: বাকি বিক্রির পরিমাণ (Credit Sales in Period)</span>
+                    <span>- {currencySymbol}{analyticsKPI.totalSalesDueCreated.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between pl-4 text-emerald-600">
+                    <span>যোগ: বাকির খাতা থেকে আদায়কৃত ক্যাশ (Collected Dues)</span>
+                    <span>+ {currencySymbol}{analyticsKPI.periodCollectedDues.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between pl-4 font-bold text-emerald-900 bg-emerald-50 py-2 px-3 rounded-xl font-sans border border-emerald-200">
+                    <span>হাতে আসা আসল নগদ লাভ (Realized Cash Profit)</span>
+                    <span className="text-sm font-black">{analyticsKPI.realizedCashProfit >= 0 ? '+' : ''}{currencySymbol}{analyticsKPI.realizedCashProfit.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between pl-4 text-slate-500 text-[11px] pt-1">
+                    <span>মার্কেটে বকেয়া মুনাফা / ঝুঁকি: <strong className="text-amber-700">{currencySymbol}{analyticsKPI.unrealizedDueProfit.toFixed(2)}</strong></span>
+                    <span>সার্বিক কাস্টমার বকেয়া: <strong className="text-slate-800">{currencySymbol}{analyticsKPI.totalMarketDue.toFixed(2)}</strong></span>
+                  </div>
                 </div>
 
               </div>
@@ -1708,6 +1971,11 @@ export default function AnalyticsDashboard({
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
                                 {pMethod}
                               </span>
+                              {Number(sale.dueAmount || 0) > 0 && (
+                                <span className="block text-[9px] text-amber-600 font-bold mt-0.5 whitespace-nowrap">
+                                  বাকি: {currencySymbol}{Number(sale.dueAmount).toFixed(0)}
+                                </span>
+                              )}
                             </td>
                             <td className="py-3 px-2 text-right text-slate-700 font-bold">
                               {itemCount}

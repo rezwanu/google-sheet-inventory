@@ -16,7 +16,8 @@ const SHEETS = {
   USERS: 'Users',
   CUSTOMERS: 'Customers',
   COUPONS: 'Coupons',
-  ORDERS: 'Orders'
+  ORDERS: 'Orders',
+  CUSTOMER_LEDGER: 'CustomerLedger'
 };
 
 /**
@@ -410,14 +411,65 @@ function ensureCustomersSheet(spreadsheet) {
 
   if (customersSheet.getLastRow() === 0) {
     customersSheet.appendRow([
-      'CustomerID', 'CustomerName', 'Phone', 'Email', 'Address', 'CustomerType', 'TotalOrders', 'TotalSpent', 'Status', 'CreatedAt', 'UpdatedAt'
+      'CustomerID', 'CustomerName', 'Phone', 'Email', 'Address', 'CustomerType',
+      'TotalOrders', 'TotalSpent', 'CreditLimit', 'TotalPurchases', 'TotalPaid', 'CurrentDue', 'LastPaymentDate',
+      'Status', 'CreatedAt', 'UpdatedAt'
     ]);
   } else {
     // পূর্বে থাকা ডামি কাস্টমার ডাটা স্বয়ংক্রিয়ভাবে ক্লিন করা
     cleanDummyCustomersFromSheet(customersSheet);
+
+    // মিসিং ক্রেডিট ও বাকির কলাম স্বয়ংক্রিয়ভাবে ডানপাশে অ্যাপেন্ড করা (কোনো ডাটা ক্ষতিগ্রস্ত হবে না)
+    const lastCol = customersSheet.getLastColumn();
+    if (lastCol > 0) {
+      const headers = customersSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      const requiredDueCols = ['CreditLimit', 'TotalPurchases', 'TotalPaid', 'CurrentDue', 'LastPaymentDate'];
+      requiredDueCols.forEach(col => {
+        if (findCol(headers, col) === -1) {
+          customersSheet.getRange(1, customersSheet.getLastColumn() + 1).setValue(col);
+        }
+      });
+    }
   }
 
   return customersSheet;
+}
+
+/**
+ * CustomerLedger (বাকির খাতা ও পেমেন্ট ট্রানজেকশন অডিট) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} CustomerLedger শিট অবজেক্ট
+ */
+function ensureCustomerLedgerSheet(spreadsheet) {
+  let ledgerSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.CUSTOMER_LEDGER);
+  if (!ledgerSheet) {
+    ledgerSheet = spreadsheet.insertSheet(SHEETS.CUSTOMER_LEDGER);
+  }
+
+  if (ledgerSheet.getLastRow() === 0) {
+    ledgerSheet.appendRow([
+      'LedgerID', 'Timestamp', 'CustomerID', 'CustomerName', 'CustomerPhone',
+      'OrderID', 'InvoiceNo', 'EntryType', 'Debit', 'Credit', 'Balance',
+      'PaymentMethod', 'TrxID', 'CollectedBy', 'Notes'
+    ]);
+  } else {
+    const lastCol = ledgerSheet.getLastColumn();
+    if (lastCol > 0) {
+      const headers = ledgerSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      const requiredLedgerCols = [
+        'LedgerID', 'Timestamp', 'CustomerID', 'CustomerName', 'CustomerPhone',
+        'OrderID', 'InvoiceNo', 'EntryType', 'Debit', 'Credit', 'Balance',
+        'PaymentMethod', 'TrxID', 'CollectedBy', 'Notes'
+      ];
+      requiredLedgerCols.forEach(col => {
+        if (findCol(headers, col) === -1) {
+          ledgerSheet.getRange(1, ledgerSheet.getLastColumn() + 1).setValue(col);
+        }
+      });
+    }
+  }
+
+  return ledgerSheet;
 }
 
 /**
@@ -745,6 +797,9 @@ function ensureDatabaseSchema(spreadsheet) {
 
   // ২.৩ Users (ব্যবহারকারী ও স্টাফ ডাটাবেস) শিট নিশ্চিত করা
   ensureUsersSheet(spreadsheet);
+
+  // ২.৪ CustomerLedger (বাকির খাতা ও লেনদেন) শিট নিশ্চিত করা
+  ensureCustomerLedgerSheet(spreadsheet);
 
 
   // ৩. Products শিটের সকল কলাম (SellingPrice সহ) নিশ্চিত করা
@@ -2289,6 +2344,7 @@ function doGet(e) {
       const coupons = getSheetRowsAsObjects(SHEETS.COUPONS);
       const sales = getSheetRowsAsObjects(SHEETS.SALES);
       const orders = getSheetRowsAsObjects(SHEETS.ORDERS);
+      const customerLedger = getSheetRowsAsObjects(SHEETS.CUSTOMER_LEDGER);
       const users = getSheetRowsAsObjects(SHEETS.USERS).map(user => {
         return {
           UserID: user.UserID,
@@ -2322,6 +2378,7 @@ function doGet(e) {
           categories: categories,
           units: units,
           customers: customers,
+          customerLedger: customerLedger,
           coupons: coupons,
           sales: sales,
           orders: orders,
@@ -2625,6 +2682,14 @@ function doPost(e) {
         result = handleSendSmsNotification(spreadsheet, payload);
         break;
 
+      case 'recordCustomerPayment':
+        result = handleRecordCustomerPayment(spreadsheet, payload);
+        break;
+
+      case 'updateCustomerCreditLimit':
+        result = handleUpdateCustomerCreditLimit(spreadsheet, payload);
+        break;
+
       default:
         result = {
           success: false,
@@ -2825,6 +2890,191 @@ function handleDeleteCustomer(spreadsheet, payload) {
   return {
     success: true,
     message: 'গ্রাহক সফলভাবে ডাটাবেস থেকে মুছে ফেলা হয়েছে।'
+  };
+}
+
+/**
+ * ============================================================================
+ * Phase 2: বাকির খাতা ও কাস্টমার লেজার পেমেন্ট হ্যান্ডলারসমূহ
+ * ============================================================================
+ */
+
+/**
+ * কাস্টমারের বকেয়া পরিশোধ (Due Collection) রেকর্ড করার হ্যান্ডলার
+ * @param {Spreadsheet} spreadsheet - স্প্রেডশিট
+ * @param {Object} payload - { customerId, customerName, customerPhone, amount, paymentMethod, trxId, notes, collectedBy, orderId, invoiceNo }
+ * @return {Object} ফলাফল
+ */
+function handleRecordCustomerPayment(spreadsheet, payload) {
+  const amount = Number(payload.amount || payload.Amount || 0);
+  if (isNaN(amount) || amount <= 0) {
+    return { success: false, message: 'সঠিক পেমেন্টের টাকার পরিমাণ প্রদান করুন।' };
+  }
+
+  const customerId = String(payload.customerId || payload.CustomerID || '').trim();
+  const phone = String(payload.customerPhone || payload.phone || payload.Phone || '').trim();
+  const name = String(payload.customerName || payload.name || payload.CustomerName || '').trim();
+  const orderId = String(payload.orderId || payload.OrderID || '').trim();
+  const invoiceNo = String(payload.invoiceNo || payload.InvoiceNo || '').trim();
+  const paymentMethod = String(payload.paymentMethod || payload.PaymentMethod || 'Cash').trim();
+  const trxId = String(payload.trxId || payload.TrxID || payload.transactionId || '').trim();
+  const notes = String(payload.notes || payload.Notes || '').trim();
+  const collectedBy = String(payload.collectedBy || payload.CollectedBy || 'Admin').trim();
+
+  const customersSheet = ensureCustomersSheet(spreadsheet);
+  const ledgerSheet = ensureCustomerLedgerSheet(spreadsheet);
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  // ১. গ্রাহক রেকর্ড অনুসন্ধান
+  const custData = getSheetRowsAsObjects(SHEETS.CUSTOMERS);
+  const targetCust = custData.find(c => 
+    (customerId && String(c.CustomerID || '').trim() === customerId) ||
+    (phone && String(c.Phone || '').trim() === phone) ||
+    (name && String(c.CustomerName || '').trim().toLowerCase() === name.toLowerCase())
+  );
+
+  let finalCustId = customerId || (targetCust ? targetCust.CustomerID : generateUniqueId('CUST'));
+  let finalCustName = name || (targetCust ? targetCust.CustomerName : 'Customer');
+  let finalCustPhone = phone || (targetCust ? targetCust.Phone : '');
+  let currentDue = targetCust ? (Number(targetCust.CurrentDue) || 0) : 0;
+  let totalPaid = targetCust ? (Number(targetCust.TotalPaid) || 0) : 0;
+
+  // নতুন বকেয়া ও পেইড হিসাব
+  const newDue = Math.max(0, currentDue - amount);
+  const newTotalPaid = totalPaid + amount;
+
+  // গ্রাহক শিটে আপডেট
+  if (targetCust && targetCust._rowIndex) {
+    const custHeaders = customersSheet.getRange(1, 1, 1, customersSheet.getLastColumn()).getValues()[0];
+    const dueCol = findCol(custHeaders, 'CurrentDue', 'Due');
+    const paidCol = findCol(custHeaders, 'TotalPaid', 'Paid');
+    const lastPayCol = findCol(custHeaders, 'LastPaymentDate');
+    const updatedCol = findCol(custHeaders, 'UpdatedAt', 'Updated');
+
+    if (dueCol !== -1) customersSheet.getRange(targetCust._rowIndex, dueCol + 1).setValue(newDue);
+    if (paidCol !== -1) customersSheet.getRange(targetCust._rowIndex, paidCol + 1).setValue(newTotalPaid);
+    if (lastPayCol !== -1) customersSheet.getRange(targetCust._rowIndex, lastPayCol + 1).setValue(timestampStr);
+    if (updatedCol !== -1) customersSheet.getRange(targetCust._rowIndex, updatedCol + 1).setValue(timestampStr);
+  }
+
+  // ২. CustomerLedger শিটে এন্ট্রি যুক্ত করা
+  const ledgerId = generateUniqueId('LEDGER');
+  ledgerSheet.appendRow([
+    ledgerId,
+    timestampStr,
+    finalCustId,
+    finalCustName,
+    finalCustPhone,
+    orderId,
+    invoiceNo,
+    'Payment',
+    0, // Debit (কেনাকাটা)
+    amount, // Credit (পরিশোধ)
+    newDue, // Balance (চলতি বাকি)
+    paymentMethod,
+    trxId,
+    collectedBy,
+    notes || 'বকেয়া পরিশোধ আদায়'
+  ]);
+
+  // ৩. যদি কোনো নির্দিষ্ট OrderID বা InvoiceNo দেওয়া থাকে, সেই অর্ডারের DueAmount ও AdvancePaid সমন্বয় করা
+  if (orderId) {
+    try {
+      const ordersSheet = ensureOrdersSheet(spreadsheet);
+      const oData = ordersSheet.getDataRange().getValues();
+      if (oData.length > 1) {
+        const oHeaders = oData[0];
+        const ordIdCol = findCol(oHeaders, 'OrderID', 'OrderNumber');
+        const dueCol = findCol(oHeaders, 'DueAmount', 'Due');
+        const advCol = findCol(oHeaders, 'AdvancePaid', 'Paid');
+        const payStatusCol = findCol(oHeaders, 'PaymentStatus', 'Payment');
+        const updatedCol = findCol(oHeaders, 'UpdatedAt', 'Updated');
+
+        if (ordIdCol !== -1) {
+          for (let r = 1; r < oData.length; r++) {
+            if (String(oData[r][ordIdCol] || '').trim() === orderId) {
+              const currentOrdDue = dueCol !== -1 ? (Number(oData[r][dueCol]) || 0) : 0;
+              const currentOrdAdv = advCol !== -1 ? (Number(oData[r][advCol]) || 0) : 0;
+              const remainingOrdDue = Math.max(0, currentOrdDue - amount);
+              const updatedOrdAdv = currentOrdAdv + amount;
+
+              if (dueCol !== -1) ordersSheet.getRange(r + 1, dueCol + 1).setValue(remainingOrdDue);
+              if (advCol !== -1) ordersSheet.getRange(r + 1, advCol + 1).setValue(updatedOrdAdv);
+              if (payStatusCol !== -1 && remainingOrdDue === 0) ordersSheet.getRange(r + 1, payStatusCol + 1).setValue('Paid');
+              if (updatedCol !== -1) ordersSheet.getRange(r + 1, updatedCol + 1).setValue(timestampStr);
+              break;
+            }
+          }
+        }
+      }
+    } catch (ordErr) {
+      Logger.log('Soft error updating order due: ' + ordErr);
+    }
+  }
+
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: `৳${amount} বকেয়া পরিশোধ সফলভাবে এন্ট্রি হয়েছে। বর্তমান বকেয়া: ৳${newDue}`,
+    data: {
+      ledgerId: ledgerId,
+      customerId: finalCustId,
+      customerName: finalCustName,
+      customerPhone: finalCustPhone,
+      amount: amount,
+      previousDue: currentDue,
+      currentDue: newDue,
+      totalPaid: newTotalPaid,
+      paymentMethod: paymentMethod,
+      trxId: trxId,
+      timestamp: timestampStr,
+      notes: notes
+    }
+  };
+}
+
+/**
+ * কাস্টমারের ক্রেডিট লিমিট আপডেট হ্যান্ডলার
+ */
+function handleUpdateCustomerCreditLimit(spreadsheet, payload) {
+  const customerId = String(payload.customerId || payload.CustomerID || '').trim();
+  const phone = String(payload.customerPhone || payload.Phone || '').trim();
+  const creditLimit = Math.max(0, Number(payload.creditLimit || payload.CreditLimit || 0));
+
+  if (!customerId && !phone) {
+    return { success: false, message: 'গ্রাহক আইডি অথবা ফোন নম্বর প্রয়োজন।' };
+  }
+
+  const customersSheet = ensureCustomersSheet(spreadsheet);
+  const custData = getSheetRowsAsObjects(SHEETS.CUSTOMERS);
+  const target = custData.find(c => 
+    (customerId && String(c.CustomerID || '').trim() === customerId) ||
+    (phone && String(c.Phone || '').trim() === phone)
+  );
+
+  if (!target || !target._rowIndex) {
+    return { success: false, message: 'গ্রাহককে খুঁজে পাওয়া যায়নি।' };
+  }
+
+  const custHeaders = customersSheet.getRange(1, 1, 1, customersSheet.getLastColumn()).getValues()[0];
+  const limitCol = findCol(custHeaders, 'CreditLimit', 'Limit');
+  const updatedCol = findCol(custHeaders, 'UpdatedAt', 'Updated');
+
+  if (limitCol !== -1) {
+    customersSheet.getRange(target._rowIndex, limitCol + 1).setValue(creditLimit);
+  }
+  if (updatedCol !== -1) {
+    customersSheet.getRange(target._rowIndex, updatedCol + 1).setValue(new Date());
+  }
+
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: `গ্রাহকের ক্রেডিট লিমিট ৳${creditLimit} হিসেবে সফলভাবে হালনাগাদ করা হয়েছে।`,
+    data: { customerId: target.CustomerID, creditLimit: creditLimit }
   };
 }
 

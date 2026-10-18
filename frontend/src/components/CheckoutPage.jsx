@@ -22,7 +22,8 @@ import {
   Sparkles,
   X,
   Package,
-  LogIn
+  LogIn,
+  Layers
 } from 'lucide-react';
 import { formatImageUrl } from '../services/storage';
 import StoreLogo from './StoreLogo';
@@ -74,6 +75,33 @@ export default function CheckoutPage({
   const [receivedCash, setReceivedCash] = useState('');
   const [transactionRef, setTransactionRef] = useState('');
 
+  // স্প্লিট পেমেন্ট স্টেট (Split Payments)
+  const [splitPayments, setSplitPayments] = useState({
+    cash: '',
+    bkash: '',
+    nagad: '',
+    card: '',
+    due: ''
+  });
+  const [splitTrxRefs, setSplitTrxRefs] = useState({
+    bkash: '',
+    nagad: '',
+    card: ''
+  });
+
+  // নির্বাচিত কাস্টমার অবজেক্ট এবং বকেয়া ও ক্রেডিট লিমিট
+  const selectedCustomerObj = useMemo(() => {
+    if (!customers || customers.length === 0) return null;
+    return customers.find(c => 
+      (selectedCustomerId && c.CustomerID === selectedCustomerId) ||
+      (customerPhone && String(c.Phone).trim() === customerPhone.trim()) ||
+      (customerName && c.CustomerName?.trim().toLowerCase() === customerName.trim().toLowerCase())
+    );
+  }, [customers, selectedCustomerId, customerPhone, customerName]);
+
+  const customerCurrentDue = Number(selectedCustomerObj?.CurrentDue || 0);
+  const customerCreditLimit = Number(selectedCustomerObj?.CreditLimit || 0);
+
   // মোট আইটেম সংখ্যা এবং ইউনিট হিসাব
   const totalItemsCount = cartItems.length;
   const totalUnits = cartItems.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
@@ -94,6 +122,12 @@ export default function CheckoutPage({
   const cashGiven = Number(receivedCash) || 0;
   const changeDue = Math.max(0, parseFloat((cashGiven - grandTotal).toFixed(2)));
   const shortAmount = Math.max(0, parseFloat((grandTotal - cashGiven).toFixed(2)));
+
+  // স্প্লিট পেমেন্ট হিসাব
+  const splitTotalPaid = (Number(splitPayments.cash) || 0) + (Number(splitPayments.bkash) || 0) + (Number(splitPayments.nagad) || 0) + (Number(splitPayments.card) || 0);
+  const splitDue = Number(splitPayments.due) || 0;
+  const splitSum = splitTotalPaid + splitDue;
+  const splitRemaining = Math.max(0, parseFloat((grandTotal - splitSum).toFixed(2)));
 
   // ফিল্টারকৃত কাস্টমার তালিকা (ডাটাবেস সার্চ)
   const filteredCustomers = useMemo(() => {
@@ -147,6 +181,33 @@ export default function CheckoutPage({
 
     const finalCustomerName = customerName.trim() || 'Walk-in Customer';
 
+    let finalPaidAmount = grandTotal;
+    let finalDueAmount = 0;
+
+    if (paymentMethod === 'Due') {
+      finalPaidAmount = 0;
+      finalDueAmount = grandTotal;
+    } else if (paymentMethod === 'Split') {
+      finalPaidAmount = splitTotalPaid;
+      finalDueAmount = splitDue;
+      if (Math.abs(splitSum - grandTotal) > 0.05) {
+        alert(`স্প্লিট পেমেন্টের হিসাব মেলেনি!\nমোট পরিশোধ: ৳${splitTotalPaid}\nমোট বাকি: ৳${splitDue}\nযোগফল: ৳${splitSum}\nমোট বিল: ৳${grandTotal}\n\nঅনুগ্রহ করে যোগফল বিলের সাথে সমান করুন।`);
+        return;
+      }
+    }
+
+    // বাকী থাকলে কাস্টমার নাম ও মোবাইল নম্বর যাচাই
+    if (finalDueAmount > 0 && !customerPhone.trim() && (!customerName.trim() || customerName.trim().toLowerCase() === 'walk-in customer')) {
+      alert('সতর্কতা: বাকী বা আংশিক বাকীতে বিক্রয় সম্পন্ন করতে গ্রাহকের নাম এবং মোবাইল নম্বর প্রদান করা আবশ্যক।');
+      return;
+    }
+
+    // ক্রেডিট লিমিট গার্ড (Credit Limit Guard)
+    if (finalDueAmount > 0 && customerCreditLimit > 0 && (customerCurrentDue + finalDueAmount > customerCreditLimit)) {
+      const proceed = window.confirm(`সতর্কতা: এই গ্রাহকের বর্তমান বাকি ৳${customerCurrentDue} + নতুন বাকি ৳${finalDueAmount} = মোট ৳${customerCurrentDue + finalDueAmount}, যা নির্ধারিত ক্রেডিট লিমিট (৳${customerCreditLimit}) ছাড়িয়ে গেছে!\n\nআপনি কি তবুও এই বিক্রয়টি অনুমোদন করতে চান?`);
+      if (!proceed) return;
+    }
+
     onCompleteSale({
       items: cartItems,
       customerName: finalCustomerName,
@@ -154,7 +215,7 @@ export default function CheckoutPage({
       customerEmail: customerEmail.trim(),
       customerAddress: customerAddress.trim(),
       customerType: customerType,
-      customerId: selectedCustomerId,
+      customerId: selectedCustomerId || selectedCustomerObj?.CustomerID || '',
       orderNotes: orderNotes.trim(),
       discountAmount: discount,
       taxPercent: Number(taxRatePercent) || 0,
@@ -162,9 +223,20 @@ export default function CheckoutPage({
       subTotal: subTotal,
       grandTotal: grandTotal,
       paymentMethod: paymentMethod,
-      receivedCash: paymentMethod === 'Cash' ? cashGiven : grandTotal,
+      receivedCash: paymentMethod === 'Cash' ? cashGiven : (paymentMethod === 'Split' ? (Number(splitPayments.cash) || 0) : grandTotal),
       changeDue: paymentMethod === 'Cash' ? changeDue : 0,
       transactionRef: transactionRef.trim(),
+      paidAmount: finalPaidAmount,
+      dueAmount: finalDueAmount,
+      splitDetails: paymentMethod === 'Split' ? {
+        cash: Number(splitPayments.cash) || 0,
+        bkash: Number(splitPayments.bkash) || 0,
+        nagad: Number(splitPayments.nagad) || 0,
+        card: Number(splitPayments.card) || 0,
+        due: Number(splitPayments.due) || 0,
+        trxRefs: splitTrxRefs
+      } : null,
+      creditLimit: customerCreditLimit,
       shouldPrint: shouldPrint,
     });
   };
@@ -370,6 +442,36 @@ export default function CheckoutPage({
             </div>
           )}
 
+          {/* গ্রাহক বাকির তথ্য ও ক্রেডিট লিমিট কার্ড (Customer Due & Credit Limit Pill) */}
+          {selectedCustomerObj && (Number(selectedCustomerObj.CurrentDue) > 0 || Number(selectedCustomerObj.CreditLimit) > 0) && (
+            <div className="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50/60 border border-amber-200/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in duration-200">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold text-slate-500 block">গ্রাহকের পূর্বের বকেয়া হিসাব:</span>
+                  <span className="text-sm font-black text-rose-600 font-mono">
+                    {currencySymbol}{Number(selectedCustomerObj.CurrentDue || 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 text-xs">
+                {Number(selectedCustomerObj.CreditLimit) > 0 ? (
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase">নির্ধারিত ক্রেডিট লিমিট</span>
+                    <span className="font-bold text-slate-800 font-mono">
+                      {currencySymbol}{Number(selectedCustomerObj.CreditLimit).toLocaleString()}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[10px] text-slate-400 italic">ক্রেডিট লিমিট সেট করা নেই</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* গ্রাহক তথ্য ফরম ফিল্ডস */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               
@@ -501,6 +603,7 @@ export default function CheckoutPage({
                 { id: 'Rocket', label: 'রকেট (Rocket)', icon: Smartphone, color: 'text-purple-600', activeBg: 'bg-purple-50/80 border-purple-500 ring-2 ring-purple-500/20' },
                 { id: 'Card', label: 'কার্ড / POS (Card)', icon: CreditCard, color: 'text-indigo-600', activeBg: 'bg-indigo-50/80 border-indigo-500 ring-2 ring-indigo-500/20' },
                 { id: 'Due', label: 'বাকী / ক্রেডিট (Due)', icon: AlertTriangle, color: 'text-rose-600', activeBg: 'bg-rose-50/80 border-rose-500 ring-2 ring-rose-500/20' },
+                { id: 'Split', label: 'স্প্লিট পেমেন্ট (Split)', icon: Layers, color: 'text-violet-600', activeBg: 'bg-violet-50/80 border-violet-500 ring-2 ring-violet-500/20' },
               ].map((pm) => {
                 const Icon = pm.icon;
                 const isSelected = paymentMethod === pm.id;
@@ -617,6 +720,219 @@ export default function CheckoutPage({
                   onChange={(e) => setTransactionRef(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                 />
+              </div>
+            )}
+
+            {/* স্প্লিট পেমেন্ট (Split Payment Mode) ইন্টারফেস */}
+            {paymentMethod === 'Split' && (
+              <div className="p-4 sm:p-5 rounded-3xl bg-slate-50 border border-slate-200/90 space-y-4 animate-in fade-in duration-150">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-violet-600" />
+                      <span>বহুবিধ মাধ্যমে পেমেন্ট ভাগ করুন (Split Payment)</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      মোট বিল: <strong className="text-slate-800 font-bold">{currencySymbol}{grandTotal}</strong>
+                    </p>
+                  </div>
+
+                  <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const paidOthers = (Number(splitPayments.bkash) || 0) + (Number(splitPayments.nagad) || 0) + (Number(splitPayments.card) || 0) + (Number(splitPayments.due) || 0);
+                        const rem = Math.max(0, parseFloat((grandTotal - paidOthers).toFixed(2)));
+                        setSplitPayments(prev => ({ ...prev, cash: rem > 0 ? rem.toString() : '' }));
+                      }}
+                      className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 transition-all cursor-pointer shadow-2xs"
+                    >
+                      অবশিষ্ট নগদে দিন
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const rem = Math.max(0, parseFloat((grandTotal - splitTotalPaid).toFixed(2)));
+                        setSplitPayments(prev => ({ ...prev, due: rem > 0 ? rem.toString() : '' }));
+                      }}
+                      className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg text-[10px] font-bold text-rose-700 transition-all cursor-pointer shadow-2xs"
+                    >
+                      অবশিষ্ট বাকীতে লিখুন
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* ১. নগদ (Cash) */}
+                  <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+                    <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Banknote className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>নগদ পরিশোধ (Cash):</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">{currencySymbol}</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="0.00"
+                      value={splitPayments.cash}
+                      onChange={(e) => setSplitPayments(prev => ({ ...prev, cash: e.target.value }))}
+                      className="w-full px-3 py-2 text-sm font-black bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                    />
+                  </div>
+
+                  {/* ২. বিকাশ (bKash) */}
+                  <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+                    <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Smartphone className="w-3.5 h-3.5 text-pink-600" />
+                        <span>বিকাশ (bKash):</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">{currencySymbol}</span>
+                    </label>
+                    <div className="space-y-1.5">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="0.00"
+                        value={splitPayments.bkash}
+                        onChange={(e) => setSplitPayments(prev => ({ ...prev, bkash: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm font-black bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono"
+                      />
+                      {Number(splitPayments.bkash) > 0 && (
+                        <input
+                          type="text"
+                          placeholder="bKash TrxID (যেমন: TRXB9828731)"
+                          value={splitTrxRefs.bkash}
+                          onChange={(e) => setSplitTrxRefs(prev => ({ ...prev, bkash: e.target.value }))}
+                          className="w-full px-2.5 py-1 text-[11px] bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-pink-500"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ৩. নগদ (Nagad) */}
+                  <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+                    <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Smartphone className="w-3.5 h-3.5 text-amber-600" />
+                        <span>নগদ (Nagad MFS):</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">{currencySymbol}</span>
+                    </label>
+                    <div className="space-y-1.5">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="0.00"
+                        value={splitPayments.nagad}
+                        onChange={(e) => setSplitPayments(prev => ({ ...prev, nagad: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm font-black bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+                      />
+                      {Number(splitPayments.nagad) > 0 && (
+                        <input
+                          type="text"
+                          placeholder="Nagad TrxID (ঐচ্ছিক)"
+                          value={splitTrxRefs.nagad}
+                          onChange={(e) => setSplitTrxRefs(prev => ({ ...prev, nagad: e.target.value }))}
+                          className="w-full px-2.5 py-1 text-[11px] bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ৪. কার্ড / POS (Card) */}
+                  <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+                    <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>কার্ড / POS (Card):</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">{currencySymbol}</span>
+                    </label>
+                    <div className="space-y-1.5">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="0.00"
+                        value={splitPayments.card}
+                        onChange={(e) => setSplitPayments(prev => ({ ...prev, card: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm font-black bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                      />
+                      {Number(splitPayments.card) > 0 && (
+                        <input
+                          type="text"
+                          placeholder="কার্ড স্লিপ / Auth Ref (ঐচ্ছিক)"
+                          value={splitTrxRefs.card}
+                          onChange={(e) => setSplitTrxRefs(prev => ({ ...prev, card: e.target.value }))}
+                          className="w-full px-2.5 py-1 text-[11px] bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ৫. বাকী / ক্রেডিট (Due) */}
+                  <div className="sm:col-span-2 bg-rose-50/70 p-3.5 rounded-2xl border border-rose-200 shadow-2xs">
+                    <label className="block text-xs font-bold text-rose-800 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                        <span>বাকী / বকেয়া রাখা হবে (Due / Credit):</span>
+                      </span>
+                      <span className="text-[10px] text-rose-600 font-mono font-bold">{currencySymbol}</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="0.00"
+                      value={splitPayments.due}
+                      onChange={(e) => setSplitPayments(prev => ({ ...prev, due: e.target.value }))}
+                      className="w-full px-3.5 py-2 text-base font-black bg-white border border-rose-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono text-rose-700"
+                    />
+                    {Number(splitPayments.due) > 0 && (
+                      <p className="text-[10px] text-rose-600 font-bold mt-1">
+                        * এই পরিমাণ টাকা কাস্টমারের বাকির খাতা ও লেজারে স্বয়ংক্রিয়ভাবে বকেয়া হিসেবে যোগ হবে।
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* স্প্লিট ব্যালেন্স স্ট্যাটাস বার */}
+                <div className={`p-3 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-bold ${
+                  Math.abs(splitSum - grandTotal) < 0.05
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                    : 'bg-amber-50 text-amber-900 border-amber-300'
+                }`}>
+                  <div className="flex items-center space-x-3 flex-wrap">
+                    <span>পরিশোধ: <strong className="text-emerald-700 font-mono font-black">{currencySymbol}{splitTotalPaid}</strong></span>
+                    <span>•</span>
+                    <span>বাকী: <strong className="text-rose-600 font-mono font-black">{currencySymbol}{splitDue}</strong></span>
+                    <span>•</span>
+                    <span>মোট: <strong className="font-mono">{currencySymbol}{splitSum}</strong></span>
+                  </div>
+
+                  <div>
+                    {Math.abs(splitSum - grandTotal) < 0.05 ? (
+                      <span className="flex items-center gap-1 text-emerald-700 font-bold">
+                        <CheckCircle className="w-4 h-4 text-emerald-600" />
+                        <span>মোট বিলের সাথে শতভাগ মিলেছে</span>
+                      </span>
+                    ) : splitSum < grandTotal ? (
+                      <span className="text-rose-600 font-bold">
+                        আরও {currencySymbol}{(grandTotal - splitSum).toFixed(2)} টাকা মেলানো বাকি
+                      </span>
+                    ) : (
+                      <span className="text-amber-700 font-bold">
+                        বিল থেকে {currencySymbol}{(splitSum - grandTotal).toFixed(2)} টাকা অতিরিক্ত ইনপুট হয়েছে
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 

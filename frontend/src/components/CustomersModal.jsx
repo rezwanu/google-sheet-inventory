@@ -30,7 +30,8 @@ import {
   Landmark,
   User,
   ShieldCheck,
-  ExternalLink
+  ExternalLink,
+  BookOpen
 } from 'lucide-react';
 
 export default function CustomersModal({
@@ -41,6 +42,7 @@ export default function CustomersModal({
   onAddCustomer,
   onDeleteCustomer,
   onRefreshCustomers,
+  onOpenCustomerLedgerModal,
 }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,6 +74,8 @@ export default function CustomersModal({
     const totalRevenue = list.reduce((sum, c) => sum + (Number(c.TotalSpent) || 0), 0);
     const totalOrders = list.reduce((sum, c) => sum + (Number(c.TotalOrders) || 0), 0);
     const avgSpent = totalCount > 0 ? totalRevenue / totalCount : 0;
+    const totalDue = list.reduce((sum, c) => sum + (Number(c.CurrentDue) || 0), 0);
+    const dueCount = list.filter((c) => (Number(c.CurrentDue) || 0) > 0).length;
 
     return {
       totalCount,
@@ -82,6 +86,8 @@ export default function CustomersModal({
       totalRevenue,
       totalOrders,
       avgSpent,
+      totalDue,
+      dueCount,
     };
   }, [customers]);
 
@@ -290,9 +296,9 @@ export default function CustomersModal({
           </div>
         </div>
 
-        {/* ================= টপ এক্সিকিউটিভ CRM স্ট্রিপ (৪টি মেট্রিক কার্ড) ================= */}
+        {/* ================= টপ এক্সিকিউটিভ CRM স্ট্রিপ (৫টি মেট্রিক কার্ড) ================= */}
         <div className="p-3 sm:p-4 bg-slate-50/70 border-b border-slate-200 shrink-0">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
             {/* ১. মোট গ্রাহক */}
             <div
               onClick={() => setFilterType('ALL')}
@@ -367,6 +373,34 @@ export default function CustomersModal({
                   <span className="text-sm sm:text-base font-black text-emerald-700 truncate">
                     {formatCurrency(stats.totalRevenue)}
                   </span>
+                </div>
+              </div>
+            </div>
+
+            {/* ৫. সার্বিক গ্রাহক বকেয়া */}
+            <div
+              onClick={() => onOpenCustomerLedgerModal && onOpenCustomerLedgerModal()}
+              title="কাস্টমারদের কাছে মোট পাওনা বকেয়া - বাকির খাতা দেখতে ক্লিক করুন"
+              className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center space-x-3 ${
+                stats.totalDue > 0
+                  ? 'bg-amber-50/70 border-amber-300 hover:bg-amber-100 hover:border-amber-400 shadow-xs'
+                  : 'bg-white/80 border-slate-200/80 hover:bg-white shadow-xs'
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                stats.totalDue > 0 ? 'bg-amber-500 text-white shadow-xs' : 'bg-slate-100 text-slate-500'
+              }`}>
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[11px] font-bold text-amber-800 block truncate">মোট বকেয়া পাওনা</span>
+                <div className="flex items-baseline space-x-1">
+                  <span className={`text-sm sm:text-base font-black truncate ${stats.totalDue > 0 ? 'text-amber-700' : 'text-slate-700'}`}>
+                    {formatCurrency(stats.totalDue)}
+                  </span>
+                  {stats.dueCount > 0 && (
+                    <span className="text-[10px] text-amber-600 font-bold shrink-0">({stats.dueCount} জন)</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -794,7 +828,7 @@ export default function CustomersModal({
                       </div>
                     </div>
 
-                    {/* নিচের আর্থিক মেট্রিক্স রিবন ও অ্যাকশন */}
+                      {/* নিচের আর্থিক মেট্রিক্স রিবন ও অ্যাকশন */}
                     <div className="pt-3 flex items-center justify-between gap-2">
                       <div className="flex items-center space-x-3 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70">
                         <div>
@@ -814,10 +848,34 @@ export default function CustomersModal({
                             {formatCurrency(spentAmount)}
                           </span>
                         </div>
+                        {Number(cust.CurrentDue || 0) > 0 && (
+                          <>
+                            <div className="h-6 w-px bg-amber-200" />
+                            <div>
+                              <span className="text-[9px] uppercase tracking-wider font-bold text-amber-700 block">
+                                বকেয়া পাওনা
+                              </span>
+                              <span className="text-xs font-black text-amber-600">
+                                {formatCurrency(cust.CurrentDue)}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       {/* অ্যাকশন বাটনস */}
                       <div className="flex items-center space-x-1.5">
+                        {onOpenCustomerLedgerModal && (
+                          <button
+                            type="button"
+                            onClick={() => onOpenCustomerLedgerModal(cust)}
+                            title="বাকির খাতা ও লেজার খুলুন"
+                            className="p-2 text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 rounded-xl transition-all border border-amber-200 cursor-pointer"
+                          >
+                            <BookOpen className="w-4 h-4" />
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           onClick={() => setSelectedCustomerForView(cust)}
@@ -855,6 +913,7 @@ export default function CustomersModal({
                       <th className="py-3 px-3">যোগাযোগ</th>
                       <th className="py-3 px-3 text-right">মোট অর্ডার</th>
                       <th className="py-3 px-3 text-right">সর্বমোট ব্যয়</th>
+                      <th className="py-3 px-3 text-right">বকেয়া পাওনা</th>
                       <th className="py-3 px-4 text-center">অ্যাকশন</th>
                     </tr>
                   </thead>
@@ -908,8 +967,29 @@ export default function CustomersModal({
                             {formatCurrency(cust.TotalSpent)}
                           </td>
 
+                          <td className="py-3 px-3 text-right">
+                            {Number(cust.CurrentDue || 0) > 0 ? (
+                              <span className="font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 text-xs">
+                                {formatCurrency(cust.CurrentDue)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 font-normal">০.০০</span>
+                            )}
+                          </td>
+
                           <td className="py-3 px-4 text-center">
                             <div className="flex items-center justify-center space-x-1.5">
+                              {onOpenCustomerLedgerModal && (
+                                <button
+                                  type="button"
+                                  onClick={() => onOpenCustomerLedgerModal(cust)}
+                                  title="বাকির খাতা ও লেজার খুলুন"
+                                  className="p-1.5 text-amber-700 hover:text-amber-900 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  <BookOpen className="w-4 h-4" />
+                                </button>
+                              )}
+
                               <button
                                 type="button"
                                 onClick={() => setSelectedCustomerForView(cust)}

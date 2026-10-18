@@ -22,6 +22,7 @@ import UsersModal from './components/UsersModal';
 import Sidebar from './components/Sidebar';
 import OrdersPage from './components/OrdersPage';
 import CustomerOrderTrackingModal from './components/CustomerOrderTrackingModal';
+import CustomerLedgerModal from './components/CustomerLedgerModal';
 
 import {
   getLocalSettings,
@@ -52,6 +53,11 @@ import {
   deleteCustomerLocally,
   clearDemoCustomers,
   isDummyCustomer,
+  getLocalCustomerLedger,
+  saveLocalCustomerLedger,
+  recordCustomerLedgerEntryLocally,
+  recordCustomerPaymentLocally,
+  updateCustomerCreditLimitLocally,
   getLocalCoupons,
   saveLocalCoupons,
   saveOrUpdateCouponLocally,
@@ -104,7 +110,9 @@ import {
   postBulkUpdateOrderStatus,
   postSteadfastBulkDispatch,
   postSteadfastCheckStatus,
-  postSendSmsNotification
+  postSendSmsNotification,
+  postRecordCustomerPayment,
+  postUpdateCustomerCreditLimit
 } from './services/api';
 
 export default function App() {
@@ -117,6 +125,7 @@ export default function App() {
   const [salesHistory, setSalesHistory] = useState(getLocalSalesHistory);
   const [orders, setOrders] = useState(getLocalOrders);
   const [customers, setCustomers] = useState(getLocalCustomers);
+  const [customerLedger, setCustomerLedger] = useState(getLocalCustomerLedger);
   const [coupons, setCoupons] = useState(getLocalCoupons);
   const [activeUser, setActiveUser] = useState(getActiveUser);
   const [users, setUsers] = useState(getLocalUsers);
@@ -125,6 +134,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState('pos');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [isCustomersModalOpen, setIsCustomersModalOpen] = useState(false);
+  const [isCustomerLedgerModalOpen, setIsCustomerLedgerModalOpen] = useState(false);
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
 
@@ -611,6 +621,12 @@ export default function App() {
         saveLocalUsers(data.users);
       }
 
+      // কাস্টমার লেজার ডাটাবেস আপডেট (গুগল শিট CustomerLedger ট্যাব থেকে ক্লাউড ডাটা)
+      if (data && data.customerLedger && Array.isArray(data.customerLedger)) {
+        setCustomerLedger(data.customerLedger);
+        saveLocalCustomerLedger(data.customerLedger);
+      }
+
       setSyncStatus('online');
       if (manual) {
         showToast('গুগল শিট ডাটাবেসের সাথে সফলভাবে সিঙ্ক সম্পন্ন হয়েছে!', 'success');
@@ -842,10 +858,14 @@ export default function App() {
 
       // ২. লোকাল সেলস রেকর্ড তৈরি
       const localInvoiceNo = `INV-${new Date().getTime().toString().slice(-6)}`;
+      const salePaid = Number(saleOrder.paidAmount !== undefined ? saleOrder.paidAmount : (saleOrder.paymentMethod === 'Due' ? 0 : saleOrder.grandTotal));
+      const saleDue = Number(saleOrder.dueAmount !== undefined ? saleOrder.dueAmount : (saleOrder.paymentMethod === 'Due' ? saleOrder.grandTotal : 0));
+
       const completedSaleRecord = {
         saleId: `SALE-${new Date().getTime()}`,
         invoiceNo: localInvoiceNo,
         timestamp: new Date().toISOString(),
+        customerId: saleOrder.customerId,
         customerName: saleOrder.customerName,
         customerPhone: saleOrder.customerPhone,
         items: saleOrder.items,
@@ -854,6 +874,9 @@ export default function App() {
         taxAmount: saleOrder.taxAmount,
         discountAmount: saleOrder.discountAmount,
         grandTotal: saleOrder.grandTotal,
+        paidAmount: salePaid,
+        dueAmount: saleDue,
+        splitPayments: saleOrder.splitPayments || null,
         paymentMethod: saleOrder.paymentMethod,
         cashierEmail: activeUser?.Email || 'guest@store.local',
       };
@@ -883,11 +906,11 @@ export default function App() {
         DiscountAmount: Number(saleOrder.discountAmount) || 0,
         DeliveryCharge: 0,
         TotalAmount: Number(saleOrder.grandTotal) || 0,
-        AdvancePaid: Number(saleOrder.grandTotal) || 0,
-        DueAmount: 0,
+        AdvancePaid: salePaid,
+        DueAmount: saleDue,
         CourierName: 'Counter Pickup',
         Status: 'Delivered',
-        PaymentStatus: 'Paid',
+        PaymentStatus: saleDue > 0 ? (salePaid > 0 ? 'Partial' : 'Unpaid') : 'Paid',
         PaymentMethod: saleOrder.paymentMethod || 'Cash',
         RiskLevel: 'Low',
         StockReserved: true,
@@ -908,7 +931,7 @@ export default function App() {
       setDiscountAmount(0);
       setCurrentView('pos');
 
-      // ৩.১ গ্রাহক ডাটাবেস আপডেট (Customer Database Persistence)
+      // ৩.১ গ্রাহক ডাটাবেস ও বাকির খাতা আপডেট (Customer Database & Ledger Persistence)
       if (saleOrder.customerName || saleOrder.customerPhone) {
         const updatedCustList = saveOrUpdateCustomerLocally({
           CustomerName: saleOrder.customerName,
@@ -917,8 +940,28 @@ export default function App() {
           Address: saleOrder.customerAddress,
           CustomerType: saleOrder.customerType,
           CustomerID: saleOrder.customerId,
-        }, saleOrder.grandTotal);
+        }, saleOrder.grandTotal, saleDue, salePaid);
         setCustomers(updatedCustList);
+
+        // যদি বিক্রয়ে বকেয়া (Due) থাকে, তবে কাস্টমার লেজারে ডেবিট (Sale on Credit) এন্ট্রি সংরক্ষণ
+        if (saleDue > 0) {
+          const custId = saleOrder.customerId || updatedCustList.find(c => c.Phone === saleOrder.customerPhone)?.CustomerID || `CUST-${saleOrder.customerPhone}`;
+          recordCustomerLedgerEntryLocally({
+            CustomerID: custId,
+            CustomerName: saleOrder.customerName,
+            CustomerPhone: saleOrder.customerPhone,
+            OrderID: localInvoiceNo,
+            InvoiceNo: localInvoiceNo,
+            EntryType: 'Sale',
+            Debit: saleDue,
+            Credit: 0,
+            PaymentMethod: saleOrder.paymentMethod,
+            TrxID: saleOrder.transactionRef || '',
+            CollectedBy: activeUser?.FullName || activeUser?.Email || 'POS Cashier',
+            Notes: saleOrder.paymentMethod === 'Split' ? 'মাল্টি-পেমেন্ট স্প্লিট বাকি' : 'ইনভয়েস বিক্রয়ের বাকি'
+          });
+          setCustomerLedger(getLocalCustomerLedger());
+        }
       }
 
       // ৪. যদি ইউজার 'বিক্রয় ও প্রিন্ট করুন' চেপে থাকেন, তবে ইনভয়েস ডায়ালগ চালু
@@ -950,6 +993,9 @@ export default function App() {
             receivedCash: saleOrder.receivedCash,
             changeDue: saleOrder.changeDue,
             transactionRef: saleOrder.transactionRef,
+            paidAmount: salePaid,
+            dueAmount: saleDue,
+            splitPayments: saleOrder.splitPayments || null,
             cashierEmail: activeUser?.Email || 'guest@store.local',
           });
 
@@ -984,6 +1030,53 @@ export default function App() {
       showToast(`অর্ডার সম্পন্ন করতে সমস্যা: ${error.message}`, 'error');
     } finally {
       setIsProcessingSale(false);
+    }
+  };
+
+  // ৬.১ কাস্টমার বকেয়া আদায় হ্যান্ডলার (Customer Payment / Due Collection)
+  const handleRecordCustomerPayment = async (paymentData) => {
+    try {
+      const result = recordCustomerPaymentLocally({
+        ...paymentData,
+        CollectedBy: activeUser?.FullName || activeUser?.Email || 'POS Cashier'
+      });
+      setCustomerLedger(getLocalCustomerLedger());
+      setCustomers(getLocalCustomers());
+      showToast(`৳${paymentData.amount} বকেয়া আদায় সফলভাবে লিপিবদ্ধ হয়েছে!`, 'success');
+
+      if (settings.apiUrl) {
+        try {
+          await postRecordCustomerPayment(settings.apiUrl, {
+            ...paymentData,
+            CollectedBy: activeUser?.FullName || activeUser?.Email || 'POS Cashier'
+          });
+        } catch (cloudErr) {
+          console.warn('Customer payment cloud sync delayed:', cloudErr);
+        }
+      }
+      return result;
+    } catch (err) {
+      showToast(`বকেয়া আদায় এন্ট্রি ব্যর্থ: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
+  // ৬.২ কাস্টমার ক্রেডিট লিমিট আপডেট হ্যান্ডলার
+  const handleUpdateCustomerCreditLimit = async (customerId, creditLimit, customerPhone) => {
+    try {
+      const updatedCustList = updateCustomerCreditLimitLocally(customerId, creditLimit, customerPhone);
+      setCustomers(updatedCustList);
+      showToast(`ক্রেডিট লিমিট আপডেট হয়েছে: ৳${Number(creditLimit).toLocaleString('en-IN')}`, 'success');
+
+      if (settings.apiUrl) {
+        try {
+          await postUpdateCustomerCreditLimit(settings.apiUrl, customerId, creditLimit, customerPhone);
+        } catch (cloudErr) {
+          console.warn('Credit limit cloud sync delayed:', cloudErr);
+        }
+      }
+    } catch (err) {
+      showToast(`ক্রেডিট লিমিট আপডেট ব্যর্থ: ${err.message}`, 'error');
     }
   };
 
@@ -1773,6 +1866,8 @@ export default function App() {
             onOpenAnalyticsModal={() => setIsAnalyticsModalOpen(true)}
             onOpenLowStockModal={() => setIsLowStockModalOpen(true)}
             onOpenCustomersModal={() => setIsCustomersModalOpen(true)}
+            onOpenCustomerLedgerModal={() => setIsCustomerLedgerModalOpen(true)}
+            customers={customers}
             onOpenUsersModal={() => setIsUsersModalOpen(true)}
             onOpenCouponModal={() => setIsCouponModalOpen(true)}
             onOpenInvoiceLookupModal={handleOpenInvoiceLookup}
@@ -1933,6 +2028,8 @@ export default function App() {
         orders={orders}
         products={products}
         categories={categories}
+        customers={customers}
+        customerLedger={customerLedger}
         currencySymbol={settings.CurrencySymbol || '৳'}
         storeSettings={settings}
         onRefreshSales={handleRefreshSales}
@@ -2032,6 +2129,26 @@ export default function App() {
         onAddCustomer={handleAddCustomer}
         onDeleteCustomer={handleDeleteCustomer}
         onRefreshCustomers={handleRefreshCustomers}
+        onOpenCustomerLedgerModal={() => {
+          setIsCustomersModalOpen(false);
+          setIsCustomerLedgerModalOpen(true);
+        }}
+      />
+
+      {/* বাকির খাতা ও কাস্টমার ক্রেডিট লেজার মডাল */}
+      <CustomerLedgerModal
+        isOpen={isCustomerLedgerModalOpen}
+        onClose={() => setIsCustomerLedgerModalOpen(false)}
+        customers={customers}
+        customerLedger={customerLedger}
+        orders={orders}
+        settings={settings}
+        activeUser={activeUser}
+        onRecordPayment={handleRecordCustomerPayment}
+        onUpdateCreditLimit={handleUpdateCustomerCreditLimit}
+        onSendSms={handleSendSmsNotification}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        showToast={showToast}
       />
 
       {/* কুপন তৈরি ও অফার ব্যবস্থাপনা মডাল */}

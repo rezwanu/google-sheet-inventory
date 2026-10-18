@@ -14,6 +14,7 @@ const STORAGE_KEYS = {
   CART: 'pos_cart',
   SALES_HISTORY: 'pos_sales_history',
   CUSTOMERS: 'pos_customers',
+  CUSTOMER_LEDGER: 'pos_customer_ledger',
   COUPONS: 'pos_coupons',
   OFFLINE_QUEUE: 'pos_offline_queue',
   ACTIVE_USER: 'pos_active_user',
@@ -1272,7 +1273,7 @@ export function clearDemoCustomers() {
 /**
  * বিক্রয় সম্পন্ন করার পর বা সরাসরি নতুন গ্রাহক তৈরি হলে কাস্টমার ডাটাবেস আপডেট করা
  */
-export function saveOrUpdateCustomerLocally(customerData, saleAmount = 0) {
+export function saveOrUpdateCustomerLocally(customerData, saleAmount = 0, dueAmount = 0, paidAmount = 0) {
   if (!customerData) return getLocalCustomers();
   const phone = String(customerData.Phone || customerData.customerPhone || '').trim();
   const name = String(customerData.CustomerName || customerData.customerName || '').trim();
@@ -1295,6 +1296,8 @@ export function saveOrUpdateCustomerLocally(customerData, saleAmount = 0) {
     const existing = customers[existingIndex];
     const prevOrders = Number(existing.TotalOrders) || 0;
     const prevSpent = Number(existing.TotalSpent) || 0;
+    const prevDue = Number(existing.CurrentDue) || 0;
+    const prevPaid = Number(existing.TotalPaid) || 0;
 
     customers[existingIndex] = {
       ...existing,
@@ -1303,8 +1306,13 @@ export function saveOrUpdateCustomerLocally(customerData, saleAmount = 0) {
       Email: customerData.Email || customerData.customerEmail || existing.Email || '',
       Address: customerData.Address || customerData.customerAddress || existing.Address || '',
       CustomerType: customerData.CustomerType || customerData.customerType || existing.CustomerType || 'Regular',
+      CreditLimit: customerData.CreditLimit !== undefined ? Number(customerData.CreditLimit) : (Number(existing.CreditLimit) || 0),
       TotalOrders: prevOrders + (saleAmount > 0 ? 1 : 0),
       TotalSpent: prevSpent + Number(saleAmount || 0),
+      TotalPurchases: (Number(existing.TotalPurchases) || prevSpent) + Number(saleAmount || 0),
+      TotalPaid: prevPaid + Number(paidAmount || (saleAmount - dueAmount) || 0),
+      CurrentDue: Math.max(0, prevDue + Number(dueAmount || 0) - (paidAmount > 0 && saleAmount === 0 ? paidAmount : 0)),
+      LastPaymentDate: paidAmount > 0 ? now : (existing.LastPaymentDate || ''),
       UpdatedAt: now,
     };
   } else {
@@ -1315,8 +1323,13 @@ export function saveOrUpdateCustomerLocally(customerData, saleAmount = 0) {
       Email: customerData.Email || customerData.customerEmail || '',
       Address: customerData.Address || customerData.customerAddress || '',
       CustomerType: customerData.CustomerType || customerData.customerType || 'Regular',
+      CreditLimit: Number(customerData.CreditLimit) || 0,
       TotalOrders: saleAmount > 0 ? 1 : 0,
       TotalSpent: Number(saleAmount || 0),
+      TotalPurchases: Number(saleAmount || 0),
+      TotalPaid: Number(paidAmount || (saleAmount - dueAmount) || 0),
+      CurrentDue: Math.max(0, Number(dueAmount || 0)),
+      LastPaymentDate: paidAmount > 0 ? now : '',
       Status: 'Active',
       CreatedAt: now,
       UpdatedAt: now,
@@ -1340,6 +1353,135 @@ export function deleteCustomerLocally(customerId, phone) {
   });
   saveLocalCustomers(filtered);
   return filtered;
+}
+
+// ==========================================
+// Phase 2: বাকির খাতা ও কাস্টমার লেজার স্টোরেজ
+// ==========================================
+
+export function getLocalCustomerLedger() {
+  try {
+    const parsed = getSecureStorageItem(STORAGE_KEYS.CUSTOMER_LEDGER);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalCustomerLedger(ledger) {
+  if (!Array.isArray(ledger)) return;
+  setSecureStorageItem(STORAGE_KEYS.CUSTOMER_LEDGER, ledger);
+}
+
+/**
+ * লেজারে নতুন এন্ট্রি সংরক্ষণ (বিক্রয় বা পেমেন্ট)
+ */
+export function recordCustomerLedgerEntryLocally(entry) {
+  if (!entry) return getLocalCustomerLedger();
+  const ledger = getLocalCustomerLedger();
+  const newEntry = {
+    LedgerID: entry.LedgerID || `LEDGER-${Date.now()}`,
+    Timestamp: entry.Timestamp || new Date().toISOString(),
+    CustomerID: entry.CustomerID || '',
+    CustomerName: entry.CustomerName || '',
+    CustomerPhone: entry.CustomerPhone || '',
+    OrderID: entry.OrderID || '',
+    InvoiceNo: entry.InvoiceNo || '',
+    EntryType: entry.EntryType || 'Payment', // 'Sale' | 'Payment' | 'Adjustment'
+    Debit: Number(entry.Debit || 0), // ক্রয়/বিল
+    Credit: Number(entry.Credit || 0), // পরিশোধ
+    Balance: Number(entry.Balance || 0),
+    PaymentMethod: entry.PaymentMethod || 'Cash',
+    TrxID: entry.TrxID || '',
+    CollectedBy: entry.CollectedBy || 'Admin',
+    Notes: entry.Notes || ''
+  };
+  ledger.unshift(newEntry);
+  saveLocalCustomerLedger(ledger);
+  return ledger;
+}
+
+/**
+ * কাস্টমারের বকেয়া পরিশোধ লোকাল স্টোরেজে এন্ট্রি
+ */
+export function recordCustomerPaymentLocally(paymentData) {
+  const amount = Number(paymentData.amount || paymentData.Amount || 0);
+  if (amount <= 0) return { success: false, message: 'সঠিক টাকার পরিমাণ দিন।' };
+
+  const customerId = paymentData.customerId || paymentData.CustomerID;
+  const phone = paymentData.customerPhone || paymentData.phone;
+  const name = paymentData.customerName || paymentData.name;
+
+  const customers = getLocalCustomers();
+  const custIndex = customers.findIndex(c => 
+    (customerId && c.CustomerID === customerId) ||
+    (phone && c.Phone === phone) ||
+    (name && c.CustomerName?.toLowerCase() === name?.toLowerCase())
+  );
+
+  let newDue = 0;
+  let targetCust = null;
+
+  if (custIndex !== -1) {
+    targetCust = customers[custIndex];
+    const currentDue = Number(targetCust.CurrentDue || 0);
+    const totalPaid = Number(targetCust.TotalPaid || 0);
+    newDue = Math.max(0, currentDue - amount);
+
+    customers[custIndex] = {
+      ...targetCust,
+      CurrentDue: newDue,
+      TotalPaid: totalPaid + amount,
+      LastPaymentDate: new Date().toISOString(),
+      UpdatedAt: new Date().toISOString()
+    };
+    saveLocalCustomers(customers);
+  }
+
+  // লেজারে এন্ট্রি যুক্ত করা
+  const ledgerEntry = {
+    LedgerID: `LEDGER-${Date.now()}`,
+    Timestamp: new Date().toISOString(),
+    CustomerID: targetCust?.CustomerID || customerId || '',
+    CustomerName: targetCust?.CustomerName || name || 'Customer',
+    CustomerPhone: targetCust?.Phone || phone || '',
+    OrderID: paymentData.orderId || '',
+    InvoiceNo: paymentData.invoiceNo || '',
+    EntryType: 'Payment',
+    Debit: 0,
+    Credit: amount,
+    Balance: newDue,
+    PaymentMethod: paymentData.paymentMethod || 'Cash',
+    TrxID: paymentData.trxId || '',
+    CollectedBy: paymentData.collectedBy || 'Admin',
+    Notes: paymentData.notes || 'বকেয়া পরিশোধ আদায়'
+  };
+
+  recordCustomerLedgerEntryLocally(ledgerEntry);
+
+  return {
+    success: true,
+    data: {
+      ...ledgerEntry,
+      previousDue: targetCust ? Number(targetCust.CurrentDue || 0) : 0,
+      currentDue: newDue
+    }
+  };
+}
+
+/**
+ * গ্রাহকের ক্রেডিট লিমিট লোকাল স্টোরেজে আপডেট করা
+ */
+export function updateCustomerCreditLimitLocally(customerId, limit) {
+  const customers = getLocalCustomers();
+  const custIndex = customers.findIndex(c => c.CustomerID === customerId);
+  if (custIndex !== -1) {
+    customers[custIndex].CreditLimit = Math.max(0, Number(limit) || 0);
+    customers[custIndex].UpdatedAt = new Date().toISOString();
+    saveLocalCustomers(customers);
+    return customers[custIndex];
+  }
+  return null;
 }
 
 // ==========================================

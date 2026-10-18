@@ -1146,3 +1146,81 @@ export async function postSendSmsNotification(apiUrl, payloadData) {
     };
   }
 }
+
+/**
+ * ============================================================================
+ * Phase 2: কাস্টমার বকেয়া পরিশোধ (Due Collection) ও ক্রেডিট লিমিট API
+ * ============================================================================
+ */
+
+/**
+ * কাস্টমারের বকেয়া পরিশোধ রেকর্ড করা (action: 'recordCustomerPayment')
+ */
+export async function postRecordCustomerPayment(apiUrl, paymentData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: false,
+      message: 'গুগল শিট API URL পাওয়া যায়নি।',
+    };
+  }
+
+  const payload = {
+    action: 'recordCustomerPayment',
+    ...paymentData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `বকেয়া পরিশোধ সার্ভারে পাঠাতে সমস্যা হয়েছে: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * কাস্টমারের ক্রেডিট লিমিট আপডেট করা (action: 'updateCustomerCreditLimit')
+ */
+export async function postUpdateCustomerCreditLimit(apiUrl, customerId, creditLimit, customerPhone = '') {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: false,
+      message: 'গুগল শিট API URL পাওয়া যায়নি।',
+    };
+  }
+
+  const payload = {
+    action: 'updateCustomerCreditLimit',
+    customerId: customerId,
+    customerPhone: customerPhone,
+    creditLimit: creditLimit,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `ক্রেডিট লিমিট আপডেট করতে সমস্যা হয়েছে: ${err.message}`,
+    };
+  }
+}
