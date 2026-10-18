@@ -22,6 +22,11 @@ class ErrorBoundary extends React.Component {
   handleReset = () => {
     try {
       localStorage.removeItem('pos_cart');
+      localStorage.removeItem('pos_customer_ledger');
+      const cust = localStorage.getItem('pos_customers');
+      if (cust && !cust.trim().startsWith('[')) {
+        localStorage.removeItem('pos_customers');
+      }
     } catch (e) {}
     window.location.reload();
   };

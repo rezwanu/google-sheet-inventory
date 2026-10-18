@@ -91,11 +91,14 @@ export default function CheckoutPage({
 
   // নির্বাচিত কাস্টমার অবজেক্ট এবং বকেয়া ও ক্রেডিট লিমিট
   const selectedCustomerObj = useMemo(() => {
-    if (!customers || customers.length === 0) return null;
-    return customers.find(c => 
-      (selectedCustomerId && c.CustomerID === selectedCustomerId) ||
-      (customerPhone && String(c.Phone).trim() === customerPhone.trim()) ||
-      (customerName && c.CustomerName?.trim().toLowerCase() === customerName.trim().toLowerCase())
+    const list = Array.isArray(customers) ? customers : [];
+    if (list.length === 0) return null;
+    return list.find(c => 
+      c && (
+        (selectedCustomerId && c.CustomerID === selectedCustomerId) ||
+        (customerPhone && String(c.Phone).trim() === customerPhone.trim()) ||
+        (customerName && c.CustomerName?.trim().toLowerCase() === customerName.trim().toLowerCase())
+      )
     );
   }, [customers, selectedCustomerId, customerPhone, customerName]);
 
@@ -131,13 +134,16 @@ export default function CheckoutPage({
 
   // ফিল্টারকৃত কাস্টমার তালিকা (ডাটাবেস সার্চ)
   const filteredCustomers = useMemo(() => {
-    if (!customerSearchQuery.trim()) return customers.slice(0, 6);
+    const list = Array.isArray(customers) ? customers : [];
+    if (!customerSearchQuery.trim()) return list.slice(0, 6);
     const q = customerSearchQuery.trim().toLowerCase();
-    return customers.filter(
+    return list.filter(
       (c) =>
-        (c.CustomerName && String(c.CustomerName).toLowerCase().includes(q)) ||
-        (c.Phone && String(c.Phone).includes(q)) ||
-        (c.Email && String(c.Email).toLowerCase().includes(q))
+        c && (
+          (c.CustomerName && String(c.CustomerName).toLowerCase().includes(q)) ||
+          (c.Phone && String(c.Phone).includes(q)) ||
+          (c.Email && String(c.Email).toLowerCase().includes(q))
+        )
     ).slice(0, 10);
   }, [customers, customerSearchQuery]);
 

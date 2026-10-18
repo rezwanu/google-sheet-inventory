@@ -65,17 +65,17 @@ export default function CustomersModal({
 
   // এক্সিকিউটিভ CRM পরিসংখ্যান হিসাব
   const stats = useMemo(() => {
-    const list = customers || [];
+    const list = Array.isArray(customers) ? customers : [];
     const totalCount = list.length;
-    const vipCount = list.filter((c) => c.CustomerType === 'VIP').length;
-    const wholesaleCount = list.filter((c) => c.CustomerType === 'Wholesale').length;
-    const corporateCount = list.filter((c) => c.CustomerType === 'Corporate').length;
-    const regularCount = list.filter((c) => !c.CustomerType || c.CustomerType === 'Regular').length;
-    const totalRevenue = list.reduce((sum, c) => sum + (Number(c.TotalSpent) || 0), 0);
-    const totalOrders = list.reduce((sum, c) => sum + (Number(c.TotalOrders) || 0), 0);
+    const vipCount = list.filter((c) => c?.CustomerType === 'VIP').length;
+    const wholesaleCount = list.filter((c) => c?.CustomerType === 'Wholesale').length;
+    const corporateCount = list.filter((c) => c?.CustomerType === 'Corporate').length;
+    const regularCount = list.filter((c) => !c?.CustomerType || c?.CustomerType === 'Regular').length;
+    const totalRevenue = list.reduce((sum, c) => sum + (Number(c?.TotalSpent) || 0), 0);
+    const totalOrders = list.reduce((sum, c) => sum + (Number(c?.TotalOrders) || 0), 0);
     const avgSpent = totalCount > 0 ? totalRevenue / totalCount : 0;
-    const totalDue = list.reduce((sum, c) => sum + (Number(c.CurrentDue) || 0), 0);
-    const dueCount = list.filter((c) => (Number(c.CurrentDue) || 0) > 0).length;
+    const totalDue = list.reduce((sum, c) => sum + (Number(c?.CurrentDue) || 0), 0);
+    const dueCount = list.filter((c) => (Number(c?.CurrentDue) || 0) > 0).length;
 
     return {
       totalCount,
@@ -93,7 +93,7 @@ export default function CustomersModal({
 
   // ফিল্টার ও সাজানো (Filter & Sorting)
   const filteredCustomers = useMemo(() => {
-    let list = customers || [];
+    let list = Array.isArray(customers) ? customers : [];
 
     // ক্যাটাগরি ফিল্টার
     if (filterType !== 'ALL') {

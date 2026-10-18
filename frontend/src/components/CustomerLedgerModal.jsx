@@ -47,8 +47,6 @@ export default function CustomerLedgerModal({
   currencySymbol = '৳',
   showToast
 }) {
-  if (!isOpen) return null;
-
   const [activeTab, setActiveTab] = useState('due'); // 'due' | 'all' | 'transactions'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomerForPayment, setSelectedCustomerForPayment] = useState(null);
@@ -73,7 +71,9 @@ export default function CustomerLedgerModal({
     let dueCustomersCount = 0;
     let limitExceededCount = 0;
 
-    customers.forEach(c => {
+    const safeCustomers = Array.isArray(customers) ? customers : [];
+    safeCustomers.forEach(c => {
+      if (!c) return;
       const due = Number(c.CurrentDue || 0);
       const limit = Number(c.CreditLimit || 0);
       if (due > 0) {
@@ -91,8 +91,9 @@ export default function CustomerLedgerModal({
     const currentYear = now.getFullYear();
     let monthCollected = 0;
 
-    (customerLedger || []).forEach(tx => {
-      if (tx.EntryType === 'Payment' && tx.Credit > 0) {
+    const safeLedger = Array.isArray(customerLedger) ? customerLedger : [];
+    safeLedger.forEach(tx => {
+      if (tx && tx.EntryType === 'Payment' && Number(tx.Credit || 0) > 0) {
         const txDate = new Date(tx.Timestamp);
         if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
           monthCollected += Number(tx.Credit || 0);
@@ -110,31 +111,35 @@ export default function CustomerLedgerModal({
 
   // ২. ফিল্টারকৃত কাস্টমার তালিকা
   const filteredCustomers = useMemo(() => {
-    return (customers || []).filter(c => {
+    const safeCustomers = Array.isArray(customers) ? customers : [];
+    return safeCustomers.filter(c => {
+      if (!c) return false;
       const due = Number(c.CurrentDue || 0);
       if (activeTab === 'due' && due <= 0) return false;
 
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase().trim();
       return (
-        (c.CustomerName && c.CustomerName.toLowerCase().includes(q)) ||
+        (c.CustomerName && String(c.CustomerName).toLowerCase().includes(q)) ||
         (c.Phone && String(c.Phone).includes(q)) ||
-        (c.Address && c.Address.toLowerCase().includes(q)) ||
-        (c.CustomerID && c.CustomerID.toLowerCase().includes(q))
+        (c.Address && String(c.Address).toLowerCase().includes(q)) ||
+        (c.CustomerID && String(c.CustomerID).toLowerCase().includes(q))
       );
-    }).sort((a, b) => Number(b.CurrentDue || 0) - Number(a.CurrentDue || 0));
+    }).sort((a, b) => Number(b?.CurrentDue || 0) - Number(a?.CurrentDue || 0));
   }, [customers, activeTab, searchQuery]);
 
   // ৩. ফিল্টারকৃত লেজার ট্রানজেকশন তালিকা
   const filteredTransactions = useMemo(() => {
-    return (customerLedger || []).filter(tx => {
+    const safeLedger = Array.isArray(customerLedger) ? customerLedger : [];
+    return safeLedger.filter(tx => {
+      if (!tx) return false;
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase().trim();
       return (
-        (tx.CustomerName && tx.CustomerName.toLowerCase().includes(q)) ||
+        (tx.CustomerName && String(tx.CustomerName).toLowerCase().includes(q)) ||
         (tx.CustomerPhone && String(tx.CustomerPhone).includes(q)) ||
-        (tx.OrderID && tx.OrderID.toLowerCase().includes(q)) ||
-        (tx.TrxID && tx.TrxID.toLowerCase().includes(q))
+        (tx.OrderID && String(tx.OrderID).toLowerCase().includes(q)) ||
+        (tx.TrxID && String(tx.TrxID).toLowerCase().includes(q))
       );
     });
   }, [customerLedger, searchQuery]);
@@ -274,6 +279,8 @@ ${storeName}`;
       alert('SMS পাঠানোর গেটওয়ে সক্রিয় নেই। অনুগ্রহ করে Settings থেকে SMS গেটওয়ে চালু করুন।');
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
@@ -861,10 +868,12 @@ ${storeName}`;
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                  {customerLedger
+                  {(Array.isArray(customerLedger) ? customerLedger : [])
                     .filter(tx => 
-                      (tx.CustomerID && tx.CustomerID === selectedCustomerForStatement.CustomerID) ||
-                      (tx.CustomerPhone && String(tx.CustomerPhone).trim() === String(selectedCustomerForStatement.Phone).trim())
+                      tx && (
+                        (tx.CustomerID && selectedCustomerForStatement?.CustomerID && String(tx.CustomerID) === String(selectedCustomerForStatement.CustomerID)) ||
+                        (tx.CustomerPhone && selectedCustomerForStatement?.Phone && String(tx.CustomerPhone).trim() === String(selectedCustomerForStatement.Phone).trim())
+                      )
                     )
                     .map((tx) => (
                       <tr key={tx.LedgerID} className="hover:bg-slate-50">
@@ -986,3 +995,4 @@ ${storeName}`;
     </div>
   );
 }
+

@@ -61,8 +61,9 @@ export default function Sidebar({
   const isAdmin = isLoggedIn && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier');
 
   // গ্রাহক বকেয়া সারাংশ হিসাব
-  const totalDueAmount = (customers || []).reduce((sum, c) => sum + (Number(c.CurrentDue) || 0), 0);
-  const dueCustomersCount = (customers || []).filter((c) => (Number(c.CurrentDue) || 0) > 0).length;
+  const safeCustomers = Array.isArray(customers) ? customers : [];
+  const totalDueAmount = safeCustomers.reduce((sum, c) => sum + (Number(c?.CurrentDue) || 0), 0);
+  const dueCustomersCount = safeCustomers.filter((c) => (Number(c?.CurrentDue) || 0) > 0).length;
 
   // সাইডবার মেনু প্যানেল শুধুমাত্র এডমিন লগইন থাকলে দৃশ্যমান হবে (গ্রাহকের জন্য প্রযোজ্য নয়)
   if (!isAdmin) {

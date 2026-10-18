@@ -291,22 +291,28 @@ export default function AnalyticsDashboard({
     let onlineOrders = 0;
     let onlineUnits = 0;
 
-    dateFilteredTransactions.forEach((tx) => {
+    (Array.isArray(dateFilteredTransactions) ? dateFilteredTransactions : []).forEach((tx) => {
       let txCogs = 0;
       let txUnits = 0;
 
       let itemsList = [];
-      if (Array.isArray(tx.items)) itemsList = tx.items;
-      else if (typeof tx.items === 'string') {
-        try { itemsList = JSON.parse(tx.items); } catch { itemsList = []; }
+      if (Array.isArray(tx.items)) {
+        itemsList = tx.items;
+      } else if (typeof tx.items === 'string') {
+        try { 
+          const parsed = JSON.parse(tx.items);
+          itemsList = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === 'object' ? Object.values(parsed) : []);
+        } catch { itemsList = []; }
       }
+      if (!Array.isArray(itemsList)) itemsList = [];
 
       itemsList.forEach((item) => {
+        if (!item) return;
         const qty = Number(item.quantity || item.Quantity || item.qty) || 0;
         let cPrice = Number(item.costPrice ?? item.CostPrice) || 0;
         if (cPrice === 0) {
           const pId = item.productId || item.ProductID;
-          const matched = (products || []).find((p) => p.ProductID === pId);
+          const matched = (Array.isArray(products) ? products : []).find((p) => p && p.ProductID === pId);
           if (matched) cPrice = Number(matched.CostPrice || matched.costPrice) || 0;
         }
         txCogs += (cPrice * qty);
@@ -366,7 +372,8 @@ export default function AnalyticsDashboard({
     const paymentMap = { Cash: 0, COD: 0, Card: 0, bKash: 0, Nagad: 0, Rocket: 0, Bank: 0, Other: 0 };
     const dateTrendMap = {}; // দিনভিত্তিক বা সময়ভিত্তিক বিক্রয় ও লাভ
 
-    filteredSales.forEach((sale) => {
+    (Array.isArray(filteredSales) ? filteredSales : []).forEach((sale) => {
+      if (!sale) return;
       const gTotal = Number(sale.grandTotal || sale.GrandTotal || sale.totalAmount) || 0;
       const sDiscount = Number(sale.discountAmount || sale.DiscountAmount) || 0;
       const sTax = Number(sale.taxAmount || sale.TaxAmount) || 0;
@@ -408,16 +415,24 @@ export default function AnalyticsDashboard({
       if (Array.isArray(sale.items)) {
         itemsList = sale.items;
       } else if (typeof sale.items === 'string') {
-        try { itemsList = JSON.parse(sale.items); } catch (e) { itemsList = []; }
+        try { 
+          const parsed = JSON.parse(sale.items);
+          itemsList = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === 'object' ? Object.values(parsed) : []);
+        } catch (e) { itemsList = []; }
       } else if (typeof sale.ItemsJSON === 'string') {
-        try { itemsList = JSON.parse(sale.ItemsJSON); } catch (e) { itemsList = []; }
+        try { 
+          const parsed = JSON.parse(sale.ItemsJSON);
+          itemsList = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === 'object' ? Object.values(parsed) : []);
+        } catch (e) { itemsList = []; }
       } else if (Array.isArray(sale.Items)) {
         itemsList = sale.Items;
       }
+      if (!Array.isArray(itemsList)) itemsList = [];
 
       let orderItemCostSum = 0;
 
       itemsList.forEach((item) => {
+        if (!item) return;
         const qty = Number(item.quantity || item.Quantity || item.qty) || 0;
         const sPrice = Number(item.sellingPrice || item.SellingPrice || item.price) || 0;
         
@@ -677,15 +692,15 @@ export default function AnalyticsDashboard({
       // পণ্যভিত্তিক লাভ-ক্ষতি তালিকা
       csvContent += `৩. পণ্যভিত্তিক লাভ-ক্ষতি বিবরণী (PRODUCT-WISE P&L BREAKDOWN)\n`;
       csvContent += `Product ID,পণ্য,ক্যাটাগরি,বিক্রিত পরিমাণ,গড় বিক্রয়মূল্য,গড় কেনা দাম,মোট রাজস্ব,মোট ক্রয় খরচ,নিট লাভ,মার্জিন %\n`;
-      analyticsKPI.allProductList.forEach((p) => {
-        csvContent += `"${p.productId}","${p.productName.replace(/"/g, '""')}","${p.category}",${p.unitsSold},${p.avgSellingPrice},${p.avgCostPrice},${p.revenue.toFixed(2)},${p.cogs.toFixed(2)},${p.profit.toFixed(2)},${p.marginPercent}%\n`;
+      (Array.isArray(analyticsKPI.allProductList) ? analyticsKPI.allProductList : []).forEach((p) => {
+        csvContent += `"${p.productId}","${(p.productName || '').replace(/"/g, '""')}","${p.category}",${p.unitsSold},${p.avgSellingPrice},${p.avgCostPrice},${p.revenue.toFixed(2)},${p.cogs.toFixed(2)},${p.profit.toFixed(2)},${p.marginPercent}%\n`;
       });
       csvContent += `\n`;
 
       // ক্যাটাগরিভিত্তিক বিবরণী
       csvContent += `৪. ক্যাটাগরিভিত্তিক লাভ-ক্ষতি (CATEGORY-WISE P&L)\n`;
       csvContent += `ক্যাটাগরি,বিক্রিত আইটেম,মোট রাজস্ব,মোট খরচ,মোট লাভ,মার্জিন %,লাভে অবদান %\n`;
-      analyticsKPI.allCategoryList.forEach((c) => {
+      (Array.isArray(analyticsKPI.allCategoryList) ? analyticsKPI.allCategoryList : []).forEach((c) => {
         csvContent += `"${c.categoryName}",${c.unitsSold},${c.revenue.toFixed(2)},${c.cogs.toFixed(2)},${c.profit.toFixed(2)},${c.marginPercent}%,${c.contributionPercent}%\n`;
       });
       csvContent += `\n`;
@@ -693,7 +708,7 @@ export default function AnalyticsDashboard({
       // লেনদেন বিবরণী
       csvContent += `৫. ইনভয়েস ও অর্ডার লেনদেন তালিকা (TRANSACTIONS BREAKDOWN)\n`;
       csvContent += `তারিখ,ইনভয়েস/অর্ডার নম্বর,চ্যানেল,কুরিয়ার/পিকআপ,গ্রাহক,পেমেন্ট মেথড,মোট টাকা,নিট লাভ\n`;
-      filteredSales.forEach((t) => {
+      (Array.isArray(filteredSales) ? filteredSales : []).forEach((t) => {
         const timeVal = t.timestamp ? new Date(t.timestamp).toLocaleDateString('bn-BD') : 'N/A';
         const inv = t.invoiceNo || t.id;
         const ch = t.channel === 'offline' ? 'In-Store POS' : `Online (${t.orderSource || 'Courier'})`;

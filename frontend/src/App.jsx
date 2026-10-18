@@ -124,8 +124,22 @@ export default function App() {
   const [cart, setCart] = useState(getLocalCart);
   const [salesHistory, setSalesHistory] = useState(getLocalSalesHistory);
   const [orders, setOrders] = useState(getLocalOrders);
-  const [customers, setCustomers] = useState(getLocalCustomers);
-  const [customerLedger, setCustomerLedger] = useState(getLocalCustomerLedger);
+  const [customers, setCustomers] = useState(() => {
+    try {
+      const c = getLocalCustomers();
+      return Array.isArray(c) ? c : [];
+    } catch {
+      return [];
+    }
+  });
+  const [customerLedger, setCustomerLedger] = useState(() => {
+    try {
+      const l = getLocalCustomerLedger();
+      return Array.isArray(l) ? l : [];
+    } catch {
+      return [];
+    }
+  });
   const [coupons, setCoupons] = useState(getLocalCoupons);
   const [activeUser, setActiveUser] = useState(getActiveUser);
   const [users, setUsers] = useState(getLocalUsers);
@@ -697,7 +711,7 @@ export default function App() {
     const cleanReal = clearDemoData();
     setProducts(cleanReal);
     const cleanCustomers = clearDemoCustomers();
-    setCustomers(cleanCustomers);
+    setCustomers(Array.isArray(cleanCustomers) ? cleanCustomers : []);
     const targetUrl = (settings.apiUrl || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (targetUrl) {
       handleSync(false, targetUrl);
