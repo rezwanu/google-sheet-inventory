@@ -23,9 +23,11 @@ import {
   ShoppingBag,
   Zap,
   CheckCircle2,
-  Camera
+  Camera,
+  CalendarClock
 } from 'lucide-react';
 import BarcodeScannerModal from './BarcodeScannerModal';
+import { calculateExpiryStatus } from '../services/storage';
 
 export default function ProductCatalog({ 
   products = [], 
@@ -39,6 +41,7 @@ export default function ProductCatalog({
   onOpenSettings,
   onSync,
   coupons = [],
+  onOpenVariantSelector,
 }) {
   const isAdmin = Boolean(activeUser && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier'));
   const isCustomer = !isAdmin;
@@ -184,6 +187,40 @@ export default function ProductCatalog({
         }
       }
 
+      // ভ্যারিয়েন্ট বারকোড চেক
+      let variantMatchedProduct = null;
+      let matchedVariantObj = null;
+
+      for (const prod of safeProducts) {
+        if (prod.HasVariants && Array.isArray(prod.Variants)) {
+          const v = prod.Variants.find(varItem => varItem.Barcode && String(varItem.Barcode).toLowerCase() === cleanCode);
+          if (v) {
+            variantMatchedProduct = prod;
+            matchedVariantObj = v;
+            break;
+          }
+        }
+      }
+
+      if (variantMatchedProduct && matchedVariantObj) {
+        const attrText = matchedVariantObj.Attributes
+          ? Object.entries(matchedVariantObj.Attributes).map(([k, v]) => `${k}: ${v}`).join(', ')
+          : '';
+        const itemToAdd = {
+          ...variantMatchedProduct,
+          SellingPrice: Number(matchedVariantObj.SellingPrice || variantMatchedProduct.SellingPrice || 0),
+          CostPrice: Number(matchedVariantObj.CostPrice || variantMatchedProduct.CostPrice || 0),
+          Barcode: matchedVariantObj.Barcode,
+          variantId: matchedVariantObj.VariantID,
+          variantName: attrText || matchedVariantObj.VariantID,
+          variantAttributes: matchedVariantObj.Attributes || {},
+          _selectedVariant: matchedVariantObj
+        };
+        onAddToCart(itemToAdd);
+        setSearchQuery('');
+        return;
+      }
+
       const exactMatch = safeProducts.find(
         (p) =>
           (p.Barcode && String(p.Barcode).toLowerCase() === cleanCode) ||
@@ -191,7 +228,10 @@ export default function ProductCatalog({
       );
 
       if (exactMatch) {
-        if (Number(exactMatch.StockQuantity) > 0) {
+        if (exactMatch.HasVariants && Array.isArray(exactMatch.Variants) && exactMatch.Variants.length > 0 && onOpenVariantSelector) {
+          onOpenVariantSelector(exactMatch);
+          setSearchQuery('');
+        } else if (Number(exactMatch.StockQuantity) > 0) {
           onAddToCart(exactMatch);
           setSearchQuery('');
         }
@@ -204,14 +244,51 @@ export default function ProductCatalog({
     const clean = String(code).trim().toLowerCase();
     setSearchQuery(clean);
 
+    // ভ্যারিয়েন্ট বারকোড চেক
+    let variantMatchedProduct = null;
+    let matchedVariantObj = null;
+
+    for (const prod of safeProducts) {
+      if (prod.HasVariants && Array.isArray(prod.Variants)) {
+        const v = prod.Variants.find(varItem => varItem.Barcode && String(varItem.Barcode).trim().toLowerCase() === clean);
+        if (v) {
+          variantMatchedProduct = prod;
+          matchedVariantObj = v;
+          break;
+        }
+      }
+    }
+
+    if (variantMatchedProduct && matchedVariantObj && onAddToCart) {
+      const attrText = matchedVariantObj.Attributes
+        ? Object.entries(matchedVariantObj.Attributes).map(([k, v]) => `${k}: ${v}`).join(', ')
+        : '';
+      const itemToAdd = {
+        ...variantMatchedProduct,
+        SellingPrice: Number(matchedVariantObj.SellingPrice || variantMatchedProduct.SellingPrice || 0),
+        CostPrice: Number(matchedVariantObj.CostPrice || variantMatchedProduct.CostPrice || 0),
+        Barcode: matchedVariantObj.Barcode,
+        variantId: matchedVariantObj.VariantID,
+        variantName: attrText || matchedVariantObj.VariantID,
+        variantAttributes: matchedVariantObj.Attributes || {},
+        _selectedVariant: matchedVariantObj
+      };
+      onAddToCart(itemToAdd);
+      return;
+    }
+
     const match = safeProducts.find(
       (p) =>
         (p.Barcode && String(p.Barcode).trim().toLowerCase() === clean) ||
         (p.ProductID && p.ProductID.trim().toLowerCase() === clean)
     );
 
-    if (match && onOpenProductDetails) {
-      onOpenProductDetails(match);
+    if (match) {
+      if (match.HasVariants && onOpenVariantSelector) {
+        onOpenVariantSelector(match);
+      } else if (onOpenProductDetails) {
+        onOpenProductDetails(match);
+      }
     }
   };
 
@@ -515,6 +592,7 @@ export default function ProductCatalog({
               const isOutOfStock = !inStock;
               const cartQty = getItemCartQuantity(product.ProductID);
               const hasCoupon = hasProductCoupon(product);
+              const expiryInfo = calculateExpiryStatus(product.ExpiryDate);
 
               return (
                 <div
@@ -555,11 +633,39 @@ export default function ProductCatalog({
                         </div>
                       )}
 
-                      {/* কুপন ছাড় অফার ব্যাজ (টপ-লেফট) */}
-                      {hasCoupon && (
-                        <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-xs backdrop-blur-md">
-                          <Tag className="w-2.5 h-2.5" />
-                          <span>কুপন ছাড়</span>
+                      {/* ব্যাজ গ্রুপ (টপ-লেফট): কুপন, ভ্যারিয়েন্ট, কম্বো */}
+                      <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 items-start">
+                        {hasCoupon && (
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-xs backdrop-blur-md">
+                            <Tag className="w-2.5 h-2.5" />
+                            <span>কুপন</span>
+                          </div>
+                        )}
+                        {product.HasVariants && (
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-indigo-600/95 text-white shadow-xs backdrop-blur-md">
+                            <Layers className="w-2.5 h-2.5" />
+                            <span>{product.Variants?.length || 0} অপশন</span>
+                          </div>
+                        )}
+                        {product.IsBundle && (
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-xs backdrop-blur-md">
+                            <Sparkles className="w-2.5 h-2.5" />
+                            <span>কম্বো</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* এক্সপায়ারি ব্যাজ (টপ-রাইট) */}
+                      {expiryInfo && expiryInfo.status !== 'GOOD' && expiryInfo.status !== 'NO_EXPIRY' && (
+                        <div className={`absolute top-2 right-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black shadow-xs backdrop-blur-md border ${
+                          expiryInfo.status === 'EXPIRED'
+                            ? 'bg-rose-600 text-white border-rose-700 animate-pulse'
+                            : expiryInfo.status === 'CRITICAL'
+                            ? 'bg-amber-500 text-white border-amber-600'
+                            : 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                        }`}>
+                          <CalendarClock className="w-2.5 h-2.5" />
+                          <span>{expiryInfo.label}</span>
                         </div>
                       )}
 
@@ -580,8 +686,8 @@ export default function ProductCatalog({
                         )}
                       </div>
 
-                      {/* বারকোড কোড পিল (টপ-রাইট যদি কার্ট ব্যাজ না থাকে) */}
-                      {cartQty === 0 && product.Barcode && (
+                      {/* বারকোড কোড পিল (টপ-রাইট যদি এক্সপায়ারি ও কার্ট ব্যাজ না থাকে) */}
+                      {cartQty === 0 && (!expiryInfo || expiryInfo.status === 'GOOD' || expiryInfo.status === 'NO_EXPIRY') && product.Barcode && (
                         <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded-md bg-white/80 backdrop-blur-xs text-[9px] font-mono font-bold text-slate-600 border border-white/40 shadow-2xs">
                           #{String(product.Barcode).slice(-4)}
                         </div>
@@ -616,24 +722,43 @@ export default function ProductCatalog({
                       </span>
                     </div>
 
-                    {/* দ্রুত কার্ট বাটন */}
+                    {/* দ্রুত কার্ট বাটন অথবা ভ্যারিয়েন্ট বাছাই বাটন */}
                     {inStock ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAddToCart(product);
-                        }}
-                        title="কার্টে যোগ করুন"
-                        className={`px-3 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-bold active:scale-95 shadow-2xs cursor-pointer ${
-                          cartQty > 0
-                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-600/20'
-                            : 'bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border-indigo-200/80'
-                        }`}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">যোগ</span>
-                      </button>
+                      product.HasVariants && product.Variants && product.Variants.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onOpenVariantSelector) {
+                              onOpenVariantSelector(product);
+                            } else {
+                              onAddToCart(product);
+                            }
+                          }}
+                          title="ভ্যারিয়েন্ট বাছাই করুন"
+                          className="px-2.5 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-bold active:scale-95 shadow-2xs cursor-pointer bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white border-purple-200"
+                        >
+                          <Layers className="w-3.5 h-3.5" />
+                          <span>বাছাই</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAddToCart(product);
+                          }}
+                          title="কার্টে যোগ করুন"
+                          className={`px-3 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-bold active:scale-95 shadow-2xs cursor-pointer ${
+                            cartQty > 0
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-600/20'
+                              : 'bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border-indigo-200/80'
+                          }`}
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">যোগ</span>
+                        </button>
+                      )
                     ) : (
                       <span className="text-[11px] font-bold text-slate-400 px-2 py-1 bg-slate-100 rounded-lg">
                         অনুপলব্ধ
@@ -688,10 +813,27 @@ export default function ProductCatalog({
                               )}
                             </div>
                             <div className="min-w-0">
-                              <span className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors block truncate max-w-xs">
-                                {product.ProductName}
-                              </span>
-                              <span className="text-[10px] font-mono text-slate-400">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate max-w-xs">
+                                  {product.ProductName}
+                                </span>
+                                {product.HasVariants && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    ভ্যারিয়েন্ট ({product.Variants?.length || 0})
+                                  </span>
+                                )}
+                                {product.IsBundle && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                    কম্বো
+                                  </span>
+                                )}
+                                {calculateExpiryStatus(product.ExpiryDate)?.status === 'EXPIRED' && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                    মেয়াদোত্তীর্ণ
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] font-mono text-slate-400 block mt-0.5">
                                 {product.ProductID}
                               </span>
                             </div>
@@ -729,21 +871,39 @@ export default function ProductCatalog({
                         <td className="py-3 px-4 text-center">
                           <div className="flex items-center justify-center space-x-2">
                             {inStock ? (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onAddToCart(product);
-                                }}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border flex items-center space-x-1 cursor-pointer ${
-                                  cartQty > 0
-                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                                    : 'bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border-indigo-200'
-                                }`}
-                              >
-                                <Plus className="w-3 h-3" />
-                                <span>{cartQty > 0 ? `${cartQty} যোগ` : 'যোগ'}</span>
-                              </button>
+                              product.HasVariants && product.Variants && product.Variants.length > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onOpenVariantSelector) {
+                                      onOpenVariantSelector(product);
+                                    } else {
+                                      onAddToCart(product);
+                                    }
+                                  }}
+                                  className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all border flex items-center space-x-1 cursor-pointer bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white border-purple-200"
+                                >
+                                  <Layers className="w-3 h-3" />
+                                  <span>বাছাই</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAddToCart(product);
+                                  }}
+                                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border flex items-center space-x-1 cursor-pointer ${
+                                    cartQty > 0
+                                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                                      : 'bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border-indigo-200'
+                                  }`}
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  <span>{cartQty > 0 ? `${cartQty} যোগ` : 'যোগ'}</span>
+                                </button>
+                              )
                             ) : (
                               <span className="text-[10px] font-bold text-slate-400">অনুপলব্ধ</span>
                             )}

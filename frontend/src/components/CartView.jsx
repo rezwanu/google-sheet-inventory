@@ -99,18 +99,29 @@ export default function CartView({
           </div>
         ) : (
           cartItems.map((item) => {
+            const itemKey = item.cartItemId || (item.variantId ? `${item.productId}__${item.variantId}` : item.productId);
             const itemTotal = item.sellingPrice * item.quantity;
             const isAtMaxStock = item.quantity >= item.stockQuantity;
 
             return (
               <div
-                key={item.productId}
+                key={itemKey}
                 className="p-2.5 bg-slate-50 hover:bg-slate-100/70 rounded-xl border border-slate-200 flex items-center justify-between transition-colors"
               >
                 {/* পণ্যের নাম ও রেট */}
                 <div className="flex-1 min-w-0 pr-2">
                   <h4 className="text-xs font-semibold text-slate-800 truncate">
                     {item.productName}
+                    {item.variantName && (
+                      <span className="ml-1.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                        {item.variantName}
+                      </span>
+                    )}
+                    {item.isBundle && (
+                      <span className="ml-1 text-[9px] font-bold text-purple-700 bg-purple-50 px-1 py-0.5 rounded border border-purple-200">
+                        কম্বো
+                      </span>
+                    )}
                   </h4>
                   <div className="flex items-center space-x-2 text-[11px] text-slate-500 mt-0.5">
                     <span>
@@ -127,7 +138,7 @@ export default function CartView({
                 {/* কোয়ান্টিটি কন্ট্রোল */}
                 <div className="flex items-center space-x-1.5">
                   <button
-                    onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
+                    onClick={() => onUpdateQuantity(itemKey, item.quantity - 1)}
                     className="w-6 h-6 flex items-center justify-center rounded-md bg-white border border-slate-300 text-slate-600 hover:bg-slate-200 active:scale-95 transition-transform"
                   >
                     <Minus className="w-3 h-3" />
@@ -136,7 +147,7 @@ export default function CartView({
                     {item.quantity}
                   </span>
                   <button
-                    onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
+                    onClick={() => onUpdateQuantity(itemKey, item.quantity + 1)}
                     disabled={isAtMaxStock}
                     className="w-6 h-6 flex items-center justify-center rounded-md bg-white border border-slate-300 text-slate-600 hover:bg-slate-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-transform"
                   >
@@ -150,7 +161,7 @@ export default function CartView({
                     {currencySymbol}{itemTotal.toFixed(2)}
                   </span>
                   <button
-                    onClick={() => onRemoveItem(item.productId)}
+                    onClick={() => onRemoveItem(itemKey)}
                     className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

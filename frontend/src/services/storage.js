@@ -532,6 +532,67 @@ export function normalizeProduct(p) {
     features = [];
   }
 
+  // Phase 6: ভ্যারিয়েন্ট, ব্যাচ, মেয়াদ ও কম্বো বান্ডেল ডাটা পার্সিং
+  const hasVariants = Boolean(
+    p.HasVariants === true || 
+    p.HasVariants === 'TRUE' || 
+    p.hasVariants === true || 
+    p.hasVariants === 'true'
+  );
+
+  let variants = [];
+  const rawVariants = p.Variants !== undefined ? p.Variants : (p.VariantsJSON !== undefined ? p.VariantsJSON : (p.variants || p.variantsJSON));
+  if (Array.isArray(rawVariants)) {
+    variants = rawVariants;
+  } else if (typeof rawVariants === 'string' && rawVariants.trim()) {
+    try {
+      const parsed = JSON.parse(rawVariants);
+      if (Array.isArray(parsed)) variants = parsed;
+    } catch (e) {
+      variants = [];
+    }
+  }
+
+  // প্রতিটি ভ্যারিয়েন্টের প্রোপার্টি স্ট্যান্ডার্ডাইজেশন
+  variants = variants.map((v, idx) => ({
+    VariantID: String(v.VariantID || v.variantId || `VAR-${idx + 1}`),
+    Attributes: v.Attributes || v.attributes || (v.Size || v.Color ? { Size: v.Size, Color: v.Color } : {}),
+    Barcode: String(v.Barcode || v.barcode || ''),
+    CostPrice: Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice || cost)),
+    SellingPrice: Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice || price)),
+    StockQuantity: Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)),
+  }));
+
+  const batchNumber = String(p.BatchNumber || p.batchNumber || p.Batch || p.batch || '').trim();
+  const expiryDate = String(p.ExpiryDate || p.expiryDate || p.ExpDate || p.expDate || '').trim();
+  const mfgDate = String(p.MfgDate || p.mfgDate || p.ManufactureDate || p.mfgDate || '').trim();
+  const isBundle = Boolean(
+    p.IsBundle === true || 
+    p.IsBundle === 'TRUE' || 
+    p.isBundle === true || 
+    p.isBundle === 'true'
+  );
+
+  let bundleItems = [];
+  const rawBundle = p.BundleItems !== undefined ? p.BundleItems : (p.BundleItemsJSON !== undefined ? p.BundleItemsJSON : (p.bundleItems || p.bundleItemsJSON));
+  if (Array.isArray(rawBundle)) {
+    bundleItems = rawBundle;
+  } else if (typeof rawBundle === 'string' && rawBundle.trim()) {
+    try {
+      const parsed = JSON.parse(rawBundle);
+      if (Array.isArray(parsed)) bundleItems = parsed;
+    } catch (e) {
+      bundleItems = [];
+    }
+  }
+
+  bundleItems = bundleItems.map((bi) => ({
+    ProductID: String(bi.ProductID || bi.productId || ''),
+    ProductName: String(bi.ProductName || bi.productName || ''),
+    Quantity: Number(bi.Quantity || bi.quantity || 1),
+    SellingPrice: Number(bi.SellingPrice || bi.sellingPrice || 0),
+  }));
+
   // সম্পূর্ণ খালি সারি বর্জন
   if (!name && !id && !barcode) {
     return null;
@@ -556,6 +617,132 @@ export function normalizeProduct(p) {
     ShortDescription: String(shortDesc),
     Description: String(desc),
     Features: features,
+    HasVariants: hasVariants,
+    Variants: variants,
+    BatchNumber: batchNumber,
+    ExpiryDate: expiryDate,
+    MfgDate: mfgDate,
+    IsBundle: isBundle,
+    BundleItems: bundleItems,
+  };
+}
+
+/**
+ * পণ্যের মেয়াদোত্তীর্ণের অবস্থা এবং অবশিষ্ট দিন হিসাব করে
+ * @param {string} expiryDate - YYYY-MM-DD ফরম্যাটের তারিখ
+ * @returns {Object} { status, daysLeft, label, colorClass }
+ */
+export function calculateExpiryStatus(expiryDate) {
+  if (!expiryDate || typeof expiryDate !== 'string' || !expiryDate.trim()) {
+    return {
+      status: 'NO_EXPIRY',
+      daysLeft: null,
+      label: 'মেয়াদ প্রযোজ্য নয়',
+      colorClass: 'text-slate-400 bg-slate-50 border-slate-200',
+    };
+  }
+
+  const expTime = new Date(expiryDate).setHours(0, 0, 0, 0);
+  if (isNaN(expTime)) {
+    return {
+      status: 'INVALID',
+      daysLeft: null,
+      label: 'অকার্যকর তারিখ',
+      colorClass: 'text-slate-400 bg-slate-50 border-slate-200',
+    };
+  }
+
+  const todayTime = new Date().setHours(0, 0, 0, 0);
+  const diffTime = expTime - todayTime;
+  const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (daysLeft < 0) {
+    return {
+      status: 'EXPIRED',
+      daysLeft,
+      label: `মেয়াদ শেষ (${Math.abs(daysLeft)} দিন আগে)`,
+      badgeText: 'মেয়াদ শেষ!',
+      colorClass: 'text-rose-700 bg-rose-50 border-rose-200',
+      pillClass: 'bg-rose-600 text-white',
+    };
+  }
+
+  if (daysLeft <= 7) {
+    return {
+      status: 'CRITICAL',
+      daysLeft,
+      label: `${daysLeft} দিন বাকি (জরুরি)`,
+      badgeText: `${daysLeft} দিন বাকি`,
+      colorClass: 'text-red-700 bg-red-50 border-red-200',
+      pillClass: 'bg-red-500 text-white',
+    };
+  }
+
+  if (daysLeft <= 15) {
+    return {
+      status: 'WARNING',
+      daysLeft,
+      label: `${daysLeft} দিন বাকি`,
+      badgeText: `${daysLeft} দিন বাকি`,
+      colorClass: 'text-amber-800 bg-amber-50 border-amber-200',
+      pillClass: 'bg-amber-500 text-white',
+    };
+  }
+
+  if (daysLeft <= 30) {
+    return {
+      status: 'UPCOMING',
+      daysLeft,
+      label: `${daysLeft} দিন বাকি`,
+      badgeText: `${daysLeft} দিন বাকি`,
+      colorClass: 'text-yellow-800 bg-yellow-50 border-yellow-200',
+      pillClass: 'bg-yellow-500 text-slate-900',
+    };
+  }
+
+  return {
+    status: 'GOOD',
+    daysLeft,
+    label: `${daysLeft} দিন অবশিষ্ট`,
+    badgeText: `${daysLeft} দিন`,
+    colorClass: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+    pillClass: 'bg-emerald-600 text-white',
+  };
+}
+
+/**
+ * সকল পণ্যের মধ্যে মেয়াদোত্তীর্ণ ও আসন্ন মেয়াদ শেষের তালিকা ও সামারি তৈরি করে
+ * @param {Array} products - পণ্য তালিকা
+ * @param {number} thresholdDays - সতর্কতার দিনসীমা (ডিফল্ট ৩০ দিন)
+ * @returns {Object}
+ */
+export function getExpiringProductsSummary(products = [], thresholdDays = 30) {
+  const safeList = Array.isArray(products) ? products : [];
+  const expired = [];
+  const expiringSoon = [];
+  let potentialLoss = 0;
+
+  safeList.forEach((p) => {
+    if (!p.ExpiryDate) return;
+    const info = calculateExpiryStatus(p.ExpiryDate);
+    const stock = Number(p.StockQuantity) || 0;
+    const cost = Number(p.CostPrice) || 0;
+
+    if (info.status === 'EXPIRED') {
+      expired.push({ ...p, expiryInfo: info });
+      if (stock > 0) {
+        potentialLoss += stock * cost;
+      }
+    } else if (info.daysLeft !== null && info.daysLeft >= 0 && info.daysLeft <= thresholdDays) {
+      expiringSoon.push({ ...p, expiryInfo: info });
+    }
+  });
+
+  return {
+    expired,
+    expiringSoon,
+    totalAlerts: expired.length + expiringSoon.length,
+    potentialLoss,
   };
 }
 
@@ -619,13 +806,21 @@ export function clearDemoData() {
 }
 
 // লোকাল প্রোডাক্ট স্টক আপডেট মেথড
-export function updateProductStockLocally(productId, newStock, newCost = null) {
+export function updateProductStockLocally(productId, newStock, newCost = null, variantId = null) {
   const products = getLocalProducts();
   const index = products.findIndex((p) => p.ProductID === productId || p.Barcode === productId);
   if (index !== -1) {
     products[index].StockQuantity = Number(newStock);
     if (newCost !== null) {
       products[index].CostPrice = Number(newCost);
+    }
+    if (variantId && Array.isArray(products[index].Variants)) {
+      products[index].Variants = products[index].Variants.map((v) => {
+        if (v.VariantID === variantId) {
+          return { ...v, StockQuantity: Number(newStock) };
+        }
+        return v;
+      });
     }
     products[index].UpdatedAt = new Date().toISOString();
     saveLocalProducts(products);

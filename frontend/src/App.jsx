@@ -30,6 +30,8 @@ import BarcodePrintModal from './components/BarcodePrintModal';
 import ExpensesModal from './components/ExpensesModal';
 import CashRegisterModal from './components/CashRegisterModal';
 import AuditLogsModal from './components/AuditLogsModal';
+import ExpiryAlertModal from './components/ExpiryAlertModal';
+import ProductVariantSelectModal from './components/ProductVariantSelectModal';
 
 import {
   getLocalSettings,
@@ -114,7 +116,8 @@ import {
   closeCashRegisterLocally,
   getLocalAuditLogs,
   saveLocalAuditLogs,
-  logAuditEventLocally
+  logAuditEventLocally,
+  getExpiringProductsSummary
 } from './services/storage';
 
 import {
@@ -269,6 +272,15 @@ export default function App() {
   const [isExpensesModalOpen, setIsExpensesModalOpen] = useState(false);
   const [isCashRegisterModalOpen, setIsCashRegisterModalOpen] = useState(false);
   const [isAuditLogsModalOpen, setIsAuditLogsModalOpen] = useState(false);
+
+  // ফেজ ৬: মেয়াদ সতর্কতা ও ভ্যারিয়েন্ট সিলেক্টর মডাল স্টেট
+  const [isExpiryAlertModalOpen, setIsExpiryAlertModalOpen] = useState(false);
+  const [variantSelectModalProduct, setVariantSelectModalProduct] = useState(null);
+
+  // মেয়াদোত্তীর্ণ ও সন্নিকটে থাকা পণ্যের মোট সংখ্যা হিসাব
+  const expiringProductsSummary = useMemo(() => {
+    return getExpiringProductsSummary(products);
+  }, [products]);
 
   // পেন্ডিং অসম্পূর্ণ কার্ট গণনা
   const pendingAbandonedCartsCount = useMemo(() => {
@@ -893,68 +905,88 @@ export default function App() {
     saveLocalCart(cart);
   }, [cart]);
 
-  // ৪. কার্ট অপারেশনসমূহ
+  // ৪. কার্ট অপারেশনসমূহ (সাপোর্টস সিম্পল পণ্য, সাইজ/রং ভ্যারিয়েন্ট এবং কম্বো বান্ডেল)
   const handleAddToCart = (product, qtyToAdd = 1) => {
-    const existingIndex = cart.findIndex((item) => item.productId === product.ProductID);
+    const isVariant = Boolean(product.variantId || product.VariantID || product._selectedVariant);
+    const variantId = product.variantId || product.VariantID || product._selectedVariant?.VariantID || null;
+    const variantName = product.variantName || (product._selectedVariant ? [product._selectedVariant.Size, product._selectedVariant.Color, product._selectedVariant.Weight, product._selectedVariant.Title].filter(Boolean).join(' / ') : '');
+    const cartItemId = variantId ? `${product.ProductID}__${variantId}` : product.ProductID;
+
+    const existingIndex = cart.findIndex((item) => {
+      const itemId = item.cartItemId || (item.variantId ? `${item.productId}__${item.variantId}` : item.productId);
+      return itemId === cartItemId;
+    });
+
     const availableStock = Number(product.StockQuantity) || 0;
     const addQty = Math.max(1, Number(qtyToAdd) || 1);
+    const displayName = `${product.ProductName}${variantName ? ` (${variantName})` : ''}`;
 
     if (existingIndex !== -1) {
       const currentQty = cart[existingIndex].quantity;
       if (currentQty + addQty > availableStock) {
-        showToast(`'${product.ProductName}' এর পর্যাপ্ত স্টক নেই! (সর্বোচ্চ: ${availableStock})`, 'warning');
+        showToast(`'${displayName}' এর পর্যাপ্ত স্টক নেই! (সর্বোচ্চ: ${availableStock})`, 'warning');
         return;
       }
       const updatedCart = [...cart];
       updatedCart[existingIndex].quantity += addQty;
       setCart(updatedCart);
-      showToast(`'${product.ProductName}' কার্টে যোগ হয়েছে (+${addQty})`, 'success');
+      showToast(`'${displayName}' কার্টে যোগ হয়েছে (+${addQty})`, 'success');
     } else {
       if (availableStock <= 0) {
-        showToast(`'${product.ProductName}' স্টক শেষ!`, 'error');
+        showToast(`'${displayName}' স্টক শেষ!`, 'error');
         return;
       }
       if (addQty > availableStock) {
-        showToast(`'${product.ProductName}' এর পর্যাপ্ত স্টক নেই! (সর্বোচ্চ: ${availableStock})`, 'warning');
+        showToast(`'${displayName}' এর পর্যাপ্ত স্টক নেই! (সর্বোচ্চ: ${availableStock})`, 'warning');
         return;
       }
       const newItem = {
+        cartItemId: cartItemId,
         productId: product.ProductID,
-        barcode: product.Barcode,
+        variantId: variantId,
+        variantName: variantName,
+        barcode: product.Barcode || '',
         productName: product.ProductName,
         sellingPrice: Number(product.SellingPrice),
         costPrice: Number(product.CostPrice) || 0,
         stockQuantity: availableStock,
         unit: product.Unit || 'Pcs',
         quantity: addQty,
+        imageUrl: product.ImageUrl || '',
+        isBundle: Boolean(product.IsBundle),
+        bundleItems: product.BundleItems || product.bundleItems || []
       };
       setCart([...cart, newItem]);
-      showToast(`'${product.ProductName}' কার্টে যোগ হয়েছে (+${addQty})`, 'success');
+      showToast(`'${displayName}' কার্টে যোগ হয়েছে (+${addQty})`, 'success');
     }
   };
 
-  const handleUpdateQuantity = (productId, newQty) => {
+  const handleUpdateQuantity = (itemIdentifier, newQty) => {
     if (newQty <= 0) {
-      handleRemoveItem(productId);
+      handleRemoveItem(itemIdentifier);
       return;
     }
 
-    const product = products.find((p) => p.ProductID === productId);
-    const availableStock = product ? Number(product.StockQuantity) : 9999;
-
-    if (newQty > availableStock) {
-      showToast(`সর্বোচ্চ স্টক সীমা অতিক্রম করেছে (${availableStock})`, 'warning');
-      newQty = availableStock;
-    }
-
-    const updatedCart = cart.map((item) =>
-      item.productId === productId ? { ...item, quantity: newQty } : item
-    );
+    const updatedCart = cart.map((item) => {
+      const currentId = item.cartItemId || (item.variantId ? `${item.productId}__${item.variantId}` : item.productId);
+      if (currentId === itemIdentifier || item.productId === itemIdentifier) {
+        const availableStock = item.stockQuantity !== undefined ? Number(item.stockQuantity) : 9999;
+        const validQty = Math.min(newQty, availableStock);
+        if (newQty > availableStock) {
+          showToast(`সর্বোচ্চ স্টক সীমা অতিক্রম করেছে (${availableStock})`, 'warning');
+        }
+        return { ...item, quantity: validQty };
+      }
+      return item;
+    });
     setCart(updatedCart);
   };
 
-  const handleRemoveItem = (productId) => {
-    setCart(cart.filter((item) => item.productId !== productId));
+  const handleRemoveItem = (itemIdentifier) => {
+    setCart(cart.filter((item) => {
+      const currentId = item.cartItemId || (item.variantId ? `${item.productId}__${item.variantId}` : item.productId);
+      return currentId !== itemIdentifier && item.productId !== itemIdentifier;
+    }));
   };
 
   const handleClearCart = () => {
@@ -1023,18 +1055,65 @@ export default function App() {
     setIsProcessingSale(true);
 
     try {
-      // ১. স্থানীয়ভাবে তাৎক্ষণিক স্টক কর্তন (জিরো-লেটেন্সি)
-      const updatedProducts = products.map((p) => {
-        const soldItem = saleOrder.items.find((item) => item.productId === p.ProductID);
-        if (soldItem) {
-          const currentStock = Number(p.StockQuantity) || 0;
-          return {
-            ...p,
-            StockQuantity: Math.max(0, currentStock - Number(soldItem.quantity)),
-            UpdatedAt: new Date().toISOString(),
-          };
+      // ১. স্থানীয়ভাবে তাৎক্ষণিক স্টক কর্তন (জিরো-লেটেন্সি) - সাপোর্টস সিম্পল, ভ্যারিয়েন্ট এবং কম্বো বান্ডেল
+      let updatedProducts = [...products];
+
+      (saleOrder.items || []).forEach((soldItem) => {
+        const itemQty = Number(soldItem.quantity) || 1;
+        const targetPid = String(soldItem.productId || '').trim();
+        const targetVariantId = soldItem.variantId || soldItem.VariantID || null;
+
+        // মূল পণ্য বা ভ্যারিয়েন্ট স্টক কর্তন
+        updatedProducts = updatedProducts.map((p) => {
+          if (String(p.ProductID || '').trim() === targetPid) {
+            const currentStock = Number(p.StockQuantity) || 0;
+            const newStock = Math.max(0, currentStock - itemQty);
+
+            let updatedVariants = p.Variants;
+            if (targetVariantId && Array.isArray(p.Variants)) {
+              updatedVariants = p.Variants.map((v) => {
+                if (String(v.VariantID || v.variantId || '').trim() === String(targetVariantId).trim()) {
+                  const vStock = Number(v.StockQuantity) || 0;
+                  return {
+                    ...v,
+                    StockQuantity: Math.max(0, vStock - itemQty)
+                  };
+                }
+                return v;
+              });
+            }
+
+            return {
+              ...p,
+              StockQuantity: newStock,
+              Variants: updatedVariants,
+              UpdatedAt: new Date().toISOString()
+            };
+          }
+          return p;
+        });
+
+        // যদি কম্বো/বান্ডেল পণ্য হয়, তবে এর কম্পোনেন্ট সাব-আইটেমগুলোর স্টক কর্তন
+        const bundleComponents = soldItem.bundleItems || soldItem.BundleItems || [];
+        if (Array.isArray(bundleComponents) && bundleComponents.length > 0) {
+          bundleComponents.forEach((bSub) => {
+            const subPid = String(bSub.productId || bSub.ProductID || '').trim();
+            const subMultiplier = Number(bSub.quantity || bSub.Quantity || 1);
+            const totalSubDeduct = subMultiplier * itemQty;
+
+            updatedProducts = updatedProducts.map((p) => {
+              if (String(p.ProductID || '').trim() === subPid) {
+                const subStock = Number(p.StockQuantity) || 0;
+                return {
+                  ...p,
+                  StockQuantity: Math.max(0, subStock - totalSubDeduct),
+                  UpdatedAt: new Date().toISOString()
+                };
+              }
+              return p;
+            });
+          });
         }
-        return p;
       });
 
       setProducts(updatedProducts);
@@ -2083,6 +2162,13 @@ export default function App() {
       ShortDescription: productData.shortDescription || '',
       Description: productData.description || '',
       Features: Array.isArray(productData.features) ? productData.features : [],
+      HasVariants: Boolean(productData.hasVariants),
+      Variants: Array.isArray(productData.variants) ? productData.variants : [],
+      BatchNumber: productData.batchNumber || '',
+      ExpiryDate: productData.expiryDate || '',
+      MfgDate: productData.mfgDate || '',
+      IsBundle: Boolean(productData.isBundle),
+      BundleItems: Array.isArray(productData.bundleItems) ? productData.bundleItems : [],
       CreatedAt: new Date().toISOString(),
     };
 
@@ -2232,6 +2318,13 @@ export default function App() {
           ShortDescription: productData.shortDescription || '',
           Description: productData.description || '',
           Features: Array.isArray(productData.features) ? productData.features : [],
+          HasVariants: Boolean(productData.hasVariants !== undefined ? productData.hasVariants : p.HasVariants),
+          Variants: Array.isArray(productData.variants) ? productData.variants : (p.Variants || []),
+          BatchNumber: productData.batchNumber !== undefined ? productData.batchNumber : (p.BatchNumber || ''),
+          ExpiryDate: productData.expiryDate !== undefined ? productData.expiryDate : (p.ExpiryDate || ''),
+          MfgDate: productData.mfgDate !== undefined ? productData.mfgDate : (p.MfgDate || ''),
+          IsBundle: Boolean(productData.isBundle !== undefined ? productData.isBundle : p.IsBundle),
+          BundleItems: Array.isArray(productData.bundleItems) ? productData.bundleItems : (p.BundleItems || []),
           UpdatedAt: new Date().toISOString(),
         };
       }
@@ -2428,6 +2521,8 @@ export default function App() {
             onOpenProductModal={() => setIsProductModalOpen(true)}
             onOpenAnalyticsModal={() => setIsAnalyticsModalOpen(true)}
             onOpenLowStockModal={() => setIsLowStockModalOpen(true)}
+            onOpenExpiryAlertModal={() => setIsExpiryAlertModalOpen(true)}
+            expiringProductsCount={expiringProductsSummary.totalAlerts}
             onOpenCustomersModal={() => setIsCustomersModalOpen(true)}
             onOpenCustomerLedgerModal={() => setIsCustomerLedgerModalOpen(true)}
             customers={customers}
@@ -2479,6 +2574,7 @@ export default function App() {
                 onOpenSettings={() => setIsSettingsModalOpen(true)}
                 onSync={() => handleSync(true)}
                 coupons={coupons}
+                onOpenVariantSelector={(prod) => setVariantSelectModalProduct(prod)}
               />
             </div>
           )}
@@ -2897,6 +2993,29 @@ export default function App() {
         isOpen={isAuditLogsModalOpen}
         onClose={() => setIsAuditLogsModalOpen(false)}
         auditLogs={auditLogs}
+      />
+
+      {/* ফেজ ৬: মেয়াদ সতর্কতা ও ব্যাচ ট্র্যাকিং মডাল */}
+      <ExpiryAlertModal
+        isOpen={isExpiryAlertModalOpen}
+        onClose={() => setIsExpiryAlertModalOpen(false)}
+        products={products}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        onAddToCart={handleAddToCart}
+        onEditProduct={(prod) => {
+          setIsExpiryAlertModalOpen(false);
+          handleOpenEditProduct(prod);
+        }}
+        settings={settings}
+      />
+
+      {/* ফেজ ৬: সাইজ/রং ভ্যারিয়েন্ট বাছাইকারী মডাল */}
+      <ProductVariantSelectModal
+        isOpen={Boolean(variantSelectModalProduct)}
+        onClose={() => setVariantSelectModalProduct(null)}
+        product={variantSelectModalProduct}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        onAddToCart={handleAddToCart}
       />
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}

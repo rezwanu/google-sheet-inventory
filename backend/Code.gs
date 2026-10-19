@@ -835,7 +835,8 @@ function ensureProductsHeaders(productsSheet) {
       'ProductID', 'Barcode', 'ProductName', 'Category', 'SubCategory',
       'CostPrice', 'SellingPrice', 'StockQuantity', 'MinStockAlert', 
       'Unit', 'ImageUrl', 'ImageCaption', 'ShortDescription', 'Description', 'Features', 
-      'CreatedAt', 'UpdatedAt'
+      'CreatedAt', 'UpdatedAt',
+      'HasVariants', 'VariantsJSON', 'BatchNumber', 'ExpiryDate', 'MfgDate', 'IsBundle', 'BundleItemsJSON'
     ];
     productsSheet.appendRow(defaultHeaders);
     return defaultHeaders;
@@ -969,6 +970,48 @@ function ensureProductsHeaders(productsSheet) {
   // ১২. UpdatedAt কলাম যুক্ত করা (যদি না থাকে)
   if (findCol(headers, 'UpdatedAt', 'Updated') === -1) {
     productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('UpdatedAt');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৩. HasVariants কলাম যুক্ত করা (যদি না থাকে - ভ্যারিয়েন্ট ট্র্যাকিং)
+  if (findCol(headers, 'HasVariants', 'HasVariant') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('HasVariants');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৪. VariantsJSON কলাম যুক্ত করা (যদি না থাকে - সাইজ, রঙ, ওজন ভ্যারিয়েন্ট বিস্তারিত)
+  if (findCol(headers, 'VariantsJSON', 'Variants') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('VariantsJSON');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৫. BatchNumber কলাম যুক্ত করা (যদি না থাকে - ব্যাচ ট্র্যাকিং)
+  if (findCol(headers, 'BatchNumber', 'BatchNo', 'Batch') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('BatchNumber');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৬. ExpiryDate কলাম যুক্ত করা (যদি না থাকে - মেয়াদোত্তীর্ণ সতর্কতা)
+  if (findCol(headers, 'ExpiryDate', 'ExpDate', 'Expiry') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('ExpiryDate');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৭. MfgDate কলাম যুক্ত করা (যদি না থাকে - উৎপাদন তারিখ)
+  if (findCol(headers, 'MfgDate', 'ManufactureDate', 'Mfg') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('MfgDate');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৮. IsBundle কলাম যুক্ত করা (যদি না থাকে - কম্বো ও বান্ডেল অফার)
+  if (findCol(headers, 'IsBundle', 'Bundle', 'IsCombo') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('IsBundle');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৯. BundleItemsJSON কলাম যুক্ত করা (যদি না থাকে - কম্বো প্যাকেজের সাব-আইটেম তালিকা)
+  if (findCol(headers, 'BundleItemsJSON', 'BundleItems', 'ComboItems') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('BundleItemsJSON');
     headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
   }
 
@@ -1545,7 +1588,10 @@ function handleCreateSale(spreadsheet, payload) {
       quantity: requestedQty,
       sellingPrice: itemSellingPrice,
       costPrice: itemCostPrice,
-      total: itemTotal
+      total: itemTotal,
+      variantId: item.variantId || '',
+      variantName: item.variantName || '',
+      isBundle: Boolean(item.isBundle || String(product.IsBundle || '').toLowerCase() === 'true')
     });
   }
 
@@ -1585,6 +1631,70 @@ function handleCreateSale(spreadsheet, payload) {
       productsSheet.getRange(rowIndex, updatedColIdx + 1).setValue(timestamp);
     }
 
+    // ৪. ভ্যারিয়েন্ট স্টক কর্তন (যদি নির্দিষ্ট ভ্যারিয়েন্ট বিক্রি হয়)
+    const variantsColIdx = findCol(prodHeaders, 'VariantsJSON', 'Variants');
+    if (variantsColIdx !== -1 && vItem.variantId) {
+      try {
+        const rawVariants = productsSheet.getRange(rowIndex, variantsColIdx + 1).getValue();
+        if (rawVariants) {
+          const parsed = typeof rawVariants === 'string' ? JSON.parse(rawVariants) : rawVariants;
+          if (Array.isArray(parsed)) {
+            const vIndex = parsed.findIndex(v => String(v.VariantID || v.variantId || '').trim() === String(vItem.variantId).trim());
+            if (vIndex !== -1) {
+              const prevVStock = Number(parsed[vIndex].StockQuantity) || 0;
+              parsed[vIndex].StockQuantity = Math.max(0, prevVStock - vItem.quantity);
+              productsSheet.getRange(rowIndex, variantsColIdx + 1).setValue(JSON.stringify(parsed));
+            }
+          }
+        }
+      } catch (vErr) {
+        Logger.log('Variant stock update soft error: ' + vErr.toString());
+      }
+    }
+
+    // ৫. কম্বো বান্ডেল সাব-আইটেম স্টক কর্তন
+    const isBundleVal = vItem.isBundle || String(vItem.productObj.IsBundle || '').toLowerCase() === 'true';
+    const bundleItemsColIdx = findCol(prodHeaders, 'BundleItemsJSON', 'BundleItems', 'ComboItems');
+    if (isBundleVal && bundleItemsColIdx !== -1) {
+      try {
+        const rawBundleItems = productsSheet.getRange(rowIndex, bundleItemsColIdx + 1).getValue();
+        if (rawBundleItems) {
+          const parsedBundle = typeof rawBundleItems === 'string' ? JSON.parse(rawBundleItems) : rawBundleItems;
+          if (Array.isArray(parsedBundle)) {
+            parsedBundle.forEach(subItem => {
+              const subProd = products.find(p => p.ProductID == subItem.ProductID || p.ProductID == subItem.productId);
+              if (subProd && subProd._rowIndex) {
+                const subPrevStock = Number(subProd.StockQuantity) || 0;
+                const subDeductQty = (Number(subItem.Quantity) || 1) * vItem.quantity;
+                const subNewStock = Math.max(0, subPrevStock - subDeductQty);
+                if (stockColIdx !== -1) {
+                  productsSheet.getRange(subProd._rowIndex, stockColIdx + 1).setValue(subNewStock);
+                }
+                const bLogId = generateUniqueId('STKLOG');
+                stockLogsSheet.appendRow([
+                  bLogId,
+                  timestamp,
+                  subProd.ProductID,
+                  subProd.ProductName,
+                  'STOCK_OUT_BUNDLE',
+                  subPrevStock,
+                  -subDeductQty,
+                  subNewStock,
+                  Number(subProd.CostPrice) || 0,
+                  `Bundle Component (${vItem.productName})`,
+                  cashierEmail || 'POS Cashier',
+                  invoiceNo,
+                  `কম্বো প্যাকেজ বিক্রয়: ${vItem.productName}`
+                ]);
+              }
+            });
+          }
+        }
+      } catch (bErr) {
+        Logger.log('Bundle sub-item deduction soft error: ' + bErr.toString());
+      }
+    }
+
     // StockLogs শিটে স্টক আউট ট্রানজেকশন যোগ করা
     const logId = generateUniqueId('STKLOG');
     stockLogsSheet.appendRow([
@@ -1613,14 +1723,17 @@ function handleCreateSale(spreadsheet, payload) {
   }
 
   // ৪. Sales শিটে অর্ডারের মাস্টার রেকর্ড এন্ট্রি
-  const itemsSummaryText = validatedItems.map(i => `${i.productName} (x${i.quantity})`).join(', ');
+  const itemsSummaryText = validatedItems.map(i => `${i.productName}${i.variantName ? ' (' + i.variantName + ')' : ''} (x${i.quantity})`).join(', ');
   const itemsJsonString = JSON.stringify(validatedItems.map(i => ({
     productId: i.productId,
     productName: i.productName,
     quantity: i.quantity,
     sellingPrice: i.sellingPrice,
     costPrice: i.costPrice,
-    total: i.total
+    total: i.total,
+    variantId: i.variantId || '',
+    variantName: i.variantName || '',
+    isBundle: Boolean(i.isBundle)
   })));
 
   salesSheet.appendRow([
@@ -1935,6 +2048,21 @@ function handleAddProduct(spreadsheet, payload) {
       features = String(features || '');
     }
 
+    // Phase 6: ভ্যারিয়েন্ট, ব্যাচ, মেয়াদ ও কম্বো বান্ডেল ডাটা সংগ্রহ
+    const hasVariants = payload.hasVariants === true || payload.HasVariants === true || String(payload.hasVariants || '').toLowerCase() === 'true';
+    let variantsJSON = payload.variantsJSON || payload.VariantsJSON || payload.variants || payload.Variants || '';
+    if (typeof variantsJSON === 'object') {
+      try { variantsJSON = JSON.stringify(variantsJSON); } catch (e) { variantsJSON = ''; }
+    }
+    const batchNumber = String(payload.batchNumber || payload.BatchNumber || '').trim();
+    const expiryDate = String(payload.expiryDate || payload.ExpiryDate || '').trim();
+    const mfgDate = String(payload.mfgDate || payload.MfgDate || '').trim();
+    const isBundle = payload.isBundle === true || payload.IsBundle === true || String(payload.isBundle || '').toLowerCase() === 'true';
+    let bundleItemsJSON = payload.bundleItemsJSON || payload.BundleItemsJSON || payload.bundleItems || payload.BundleItems || '';
+    if (typeof bundleItemsJSON === 'object') {
+      try { bundleItemsJSON = JSON.stringify(bundleItemsJSON); } catch (e) { bundleItemsJSON = ''; }
+    }
+
     if (!productName || sellingPrice === undefined) {
       return {
         success: false,
@@ -2018,6 +2146,15 @@ function handleAddProduct(spreadsheet, payload) {
     setAt(findCol(headers, 'Features', 'Feature', 'KeyFeatures'), features);
     setAt(findCol(headers, 'CreatedAt', 'Created', 'Date'), timestamp);
     setAt(findCol(headers, 'UpdatedAt', 'Updated'), timestamp);
+
+    // Phase 6 নতুন কলাম সংরক্ষণ
+    setAt(findCol(headers, 'HasVariants', 'HasVariant'), hasVariants ? 'TRUE' : 'FALSE');
+    setAt(findCol(headers, 'VariantsJSON', 'Variants'), variantsJSON || '');
+    setAt(findCol(headers, 'BatchNumber', 'BatchNo', 'Batch'), batchNumber || '');
+    setAt(findCol(headers, 'ExpiryDate', 'ExpDate', 'Expiry'), expiryDate || '');
+    setAt(findCol(headers, 'MfgDate', 'ManufactureDate', 'Mfg'), mfgDate || '');
+    setAt(findCol(headers, 'IsBundle', 'Bundle', 'IsCombo'), isBundle ? 'TRUE' : 'FALSE');
+    setAt(findCol(headers, 'BundleItemsJSON', 'BundleItems', 'ComboItems'), bundleItemsJSON || '');
 
     productsSheet.appendRow(newRow);
 
@@ -2126,6 +2263,21 @@ function handleUpdateProduct(spreadsheet, payload) {
     features = String(features || '');
   }
 
+  // Phase 6: ভ্যারিয়েন্ট, ব্যাচ, মেয়াদ ও কম্বো বান্ডেল আপডেট
+  const hasVariants = payload.hasVariants !== undefined ? (payload.hasVariants === true || String(payload.hasVariants).toLowerCase() === 'true' ? 'TRUE' : 'FALSE') : (payload.HasVariants !== undefined ? (payload.HasVariants === true || String(payload.HasVariants).toLowerCase() === 'true' ? 'TRUE' : 'FALSE') : undefined);
+  let variantsJSON = payload.variantsJSON !== undefined ? payload.variantsJSON : (payload.VariantsJSON !== undefined ? payload.VariantsJSON : (payload.variants !== undefined ? payload.variants : payload.Variants));
+  if (variantsJSON !== undefined && typeof variantsJSON === 'object') {
+    try { variantsJSON = JSON.stringify(variantsJSON); } catch (e) { variantsJSON = ''; }
+  }
+  const batchNumber = payload.batchNumber !== undefined ? String(payload.batchNumber).trim() : (payload.BatchNumber !== undefined ? String(payload.BatchNumber).trim() : undefined);
+  const expiryDate = payload.expiryDate !== undefined ? String(payload.expiryDate).trim() : (payload.ExpiryDate !== undefined ? String(payload.ExpiryDate).trim() : undefined);
+  const mfgDate = payload.mfgDate !== undefined ? String(payload.mfgDate).trim() : (payload.MfgDate !== undefined ? String(payload.MfgDate).trim() : undefined);
+  const isBundle = payload.isBundle !== undefined ? (payload.isBundle === true || String(payload.isBundle).toLowerCase() === 'true' ? 'TRUE' : 'FALSE') : (payload.IsBundle !== undefined ? (payload.IsBundle === true || String(payload.IsBundle).toLowerCase() === 'true' ? 'TRUE' : 'FALSE') : undefined);
+  let bundleItemsJSON = payload.bundleItemsJSON !== undefined ? payload.bundleItemsJSON : (payload.BundleItemsJSON !== undefined ? payload.BundleItemsJSON : (payload.bundleItems !== undefined ? payload.bundleItems : payload.BundleItems));
+  if (bundleItemsJSON !== undefined && typeof bundleItemsJSON === 'object') {
+    try { bundleItemsJSON = JSON.stringify(bundleItemsJSON); } catch (e) { bundleItemsJSON = ''; }
+  }
+
   let imageUploadError = null;
 
   // যদি এডিটের সময় নতুন ছবি আপলোড করা হয় (Base64 পাঠানো হয়)
@@ -2177,6 +2329,15 @@ function handleUpdateProduct(spreadsheet, payload) {
   const descColIdx = findCol(headers, 'Description', 'Desc', 'Details');
   const featColIdx = findCol(headers, 'Features', 'Feature', 'KeyFeatures');
   const updatedColIdx = findCol(headers, 'UpdatedAt', 'Updated');
+
+  // Phase 6 কলাম ইনডেক্স
+  const hasVariantsColIdx = findCol(headers, 'HasVariants', 'HasVariant');
+  const variantsColIdx = findCol(headers, 'VariantsJSON', 'Variants');
+  const batchColIdx = findCol(headers, 'BatchNumber', 'BatchNo', 'Batch');
+  const expColIdx = findCol(headers, 'ExpiryDate', 'ExpDate', 'Expiry');
+  const mfgColIdx = findCol(headers, 'MfgDate', 'ManufactureDate', 'Mfg');
+  const isBundleColIdx = findCol(headers, 'IsBundle', 'Bundle', 'IsCombo');
+  const bundleItemsColIdx = findCol(headers, 'BundleItemsJSON', 'BundleItems', 'ComboItems');
 
   if (idColIdx === -1) {
     return {
@@ -2234,6 +2395,15 @@ function handleUpdateProduct(spreadsheet, payload) {
   updateIfDefined(descColIdx, description);
   updateIfDefined(featColIdx, features);
   updateIfDefined(updatedColIdx, new Date());
+
+  // Phase 6 মান আপডেট
+  updateIfDefined(hasVariantsColIdx, hasVariants);
+  updateIfDefined(variantsColIdx, variantsJSON);
+  updateIfDefined(batchColIdx, batchNumber);
+  updateIfDefined(expColIdx, expiryDate);
+  updateIfDefined(mfgColIdx, mfgDate);
+  updateIfDefined(isBundleColIdx, isBundle);
+  updateIfDefined(bundleItemsColIdx, bundleItemsJSON);
 
   SpreadsheetApp.flush();
 

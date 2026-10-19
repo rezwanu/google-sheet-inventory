@@ -370,12 +370,13 @@ export default function CartPage({
             {/* প্রতিটি পণ্যের কার্ড */}
             <div className="space-y-3">
               {cartItems.map((item) => {
+                const itemKey = item.cartItemId || (item.variantId ? `${item.productId}__${item.variantId}` : item.productId);
                 const itemTotal = (Number(item.sellingPrice) || 0) * (Number(item.quantity) || 0);
                 const isAtMaxStock = item.quantity >= (Number(item.stockQuantity) || 9999);
 
                 return (
                   <div
-                    key={item.productId}
+                    key={itemKey}
                     className="group bg-white border border-slate-200/80 hover:border-indigo-300 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden"
                   >
                     {/* থাম্বনেইল ও পণ্যের পরিচয় */}
@@ -401,8 +402,18 @@ export default function CartPage({
                           <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/80">
                             {item.productId}
                           </span>
+                          {item.variantName && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              ভ্যারিয়েন্ট: {item.variantName}
+                            </span>
+                          )}
+                          {item.isBundle && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                              কম্বো প্যাক
+                            </span>
+                          )}
                           {item.unit && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200">
                               একক: {item.unit}
                             </span>
                           )}
@@ -410,6 +421,11 @@ export default function CartPage({
 
                         <h4 className="text-xs sm:text-sm font-bold text-slate-900 mt-1 truncate group-hover:text-indigo-600 transition-colors" title={item.productName}>
                           {item.productName}
+                          {item.variantName && (
+                            <span className="ml-2 text-xs font-semibold text-indigo-600">
+                              ({item.variantName})
+                            </span>
+                          )}
                         </h4>
 
                         <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
@@ -439,7 +455,7 @@ export default function CartPage({
                       <div className="flex items-center bg-slate-100/80 border border-slate-200/80 rounded-xl p-1 shadow-2xs">
                         <button
                           type="button"
-                          onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
+                          onClick={() => onUpdateQuantity(itemKey, item.quantity - 1)}
                           className="w-8 h-8 flex items-center justify-center rounded-lg bg-white hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors active:scale-95 shadow-2xs cursor-pointer"
                           title="পরিমাণ কমান"
                         >
@@ -454,7 +470,7 @@ export default function CartPage({
                           onChange={(e) => {
                             const val = parseInt(e.target.value, 10);
                             if (!isNaN(val)) {
-                              onUpdateQuantity(item.productId, val);
+                              onUpdateQuantity(itemKey, val);
                             }
                           }}
                           className="w-12 text-center bg-transparent text-xs sm:text-sm font-black text-slate-900 focus:outline-none"
@@ -462,7 +478,7 @@ export default function CartPage({
 
                         <button
                           type="button"
-                          onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
+                          onClick={() => onUpdateQuantity(itemKey, item.quantity + 1)}
                           disabled={isAtMaxStock}
                           className="w-8 h-8 flex items-center justify-center rounded-lg bg-white hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs cursor-pointer"
                           title="পরিমাণ বাড়ান"
@@ -482,7 +498,7 @@ export default function CartPage({
                       {/* আইটেম রিমুভ বাটন */}
                       <button
                         type="button"
-                        onClick={() => onRemoveItem(item.productId)}
+                        onClick={() => onRemoveItem(itemKey)}
                         className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-200 transition-all cursor-pointer"
                         title="কার্ট থেকে পণ্যটি বাদ দিন"
                       >

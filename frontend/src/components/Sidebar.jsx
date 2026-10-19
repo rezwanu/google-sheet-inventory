@@ -22,7 +22,8 @@ import {
   Barcode as BarcodeIcon,
   Building2,
   Coins,
-  ShieldAlert
+  ShieldAlert,
+  CalendarClock
 } from 'lucide-react';
 
 /**
@@ -62,6 +63,8 @@ export default function Sidebar({
   onOpenProductModal,
   onOpenAnalyticsModal,
   onOpenLowStockModal,
+  onOpenExpiryAlertModal,
+  expiringProductsCount = 0,
   onOpenCustomersModal,
   onOpenUsersModal,
   onOpenCouponModal,
@@ -334,6 +337,42 @@ export default function Sidebar({
                     }`}
                   >
                     {lowStockCount}টি
+                  </span>
+                )}
+              </button>
+
+              {/* মেয়াদ সতর্কতা ও ব্যাচ ট্র্যাকিং */}
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenExpiryAlertModal)}
+                title={expiringProductsCount > 0 ? `${expiringProductsCount}টি পণ্যের মেয়াদ শেষ বা সন্নিকটে!` : 'পণ্য মেয়াদ ও ব্যাচ ট্র্যাকিং'}
+                className={`w-full flex items-center rounded-2xl text-xs font-bold transition-all cursor-pointer group relative ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+                } ${
+                  expiringProductsCount > 0
+                    ? 'bg-rose-50/80 text-rose-950 border border-rose-200/80 hover:bg-rose-100'
+                    : 'text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                      expiringProductsCount > 0 ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    <CalendarClock className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && <span>মেয়াদ সতর্কতা</span>}
+                </div>
+                {expiringProductsCount > 0 && (
+                  <span
+                    className={`${
+                      isCollapsed
+                        ? 'absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-600 text-white border-2 border-white'
+                        : 'px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black shadow-2xs shrink-0 animate-pulse'
+                    }`}
+                  >
+                    {expiringProductsCount}টি
                   </span>
                 )}
               </button>

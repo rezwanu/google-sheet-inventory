@@ -20,7 +20,11 @@ import {
   Printer,
   Wand2,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  CalendarClock,
+  Box,
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';
@@ -115,6 +119,147 @@ export default function EditProductModal({
   const [newUnitName, setNewUnitName] = useState('');
   const [newUnitShortName, setNewUnitShortName] = useState('');
 
+  // Phase 6: পণ্য ধরন, ভ্যারিয়েন্ট, ব্যাচ ও কম্বো বান্ডেল স্টেট
+  const [productType, setProductType] = useState('simple'); // 'simple' | 'variable' | 'bundle'
+  const [batchNumber, setBatchNumber] = useState('');
+  const [mfgDate, setMfgDate] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+
+  // ভ্যারিয়েন্ট স্টেট
+  const [variants, setVariants] = useState([]);
+  const [attributeSizes, setAttributeSizes] = useState('');
+  const [attributeColors, setAttributeColors] = useState('');
+
+  // কম্বো বান্ডেল স্টেট
+  const [bundleItems, setBundleItems] = useState([]);
+  const [selectedBundleProduct, setSelectedBundleProduct] = useState('');
+  const [bundleItemQty, setBundleItemQty] = useState(1);
+
+  // ভ্যারিয়েন্ট জেনারেটর ও হ্যান্ডলারসমূহ
+  const handleAutoGenerateVariants = () => {
+    const sizes = attributeSizes.split(',').map((s) => s.trim()).filter(Boolean);
+    const colors = attributeColors.split(',').map((c) => c.trim()).filter(Boolean);
+
+    const generated = [];
+    const baseCost = Number(formData.costPrice) || 0;
+    const baseSell = Number(formData.sellingPrice) || 0;
+
+    if (sizes.length > 0 && colors.length > 0) {
+      sizes.forEach((size) => {
+        colors.forEach((color) => {
+          const varId = `VAR-${size.toUpperCase()}-${color.toUpperCase()}`;
+          generated.push({
+            VariantID: varId,
+            Attributes: { Size: size, Color: color },
+            Barcode: `${formData.barcode || 'VAR'}-${size}-${color}`.toLowerCase(),
+            CostPrice: baseCost,
+            SellingPrice: baseSell,
+            StockQuantity: 10
+          });
+        });
+      });
+    } else if (sizes.length > 0) {
+      sizes.forEach((size) => {
+        generated.push({
+          VariantID: `VAR-${size.toUpperCase()}`,
+          Attributes: { Size: size },
+          Barcode: `${formData.barcode || 'VAR'}-${size}`.toLowerCase(),
+          CostPrice: baseCost,
+          SellingPrice: baseSell,
+          StockQuantity: 10
+        });
+      });
+    } else if (colors.length > 0) {
+      colors.forEach((color) => {
+        generated.push({
+          VariantID: `VAR-${color.toUpperCase()}`,
+          Attributes: { Color: color },
+          Barcode: `${formData.barcode || 'VAR'}-${color}`.toLowerCase(),
+          CostPrice: baseCost,
+          SellingPrice: baseSell,
+          StockQuantity: 10
+        });
+      });
+    }
+
+    if (generated.length > 0) {
+      setVariants(generated);
+      const sumStock = generated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+      setFormData((prev) => ({ ...prev, stockQuantity: String(sumStock) }));
+    }
+  };
+
+  const handleAddManualVariant = () => {
+    const nextIdx = variants.length + 1;
+    const newV = {
+      VariantID: `VAR-${nextIdx}`,
+      Attributes: { Option: `অপশন ${nextIdx}` },
+      Barcode: `${formData.barcode || 'VAR'}-${nextIdx}`.toLowerCase(),
+      CostPrice: Number(formData.costPrice) || 0,
+      SellingPrice: Number(formData.sellingPrice) || 0,
+      StockQuantity: 10
+    };
+    const updated = [...variants, newV];
+    setVariants(updated);
+    const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+    setFormData((prev) => ({ ...prev, stockQuantity: String(sumStock) }));
+  };
+
+  const handleUpdateVariantField = (idx, field, value) => {
+    const updated = [...variants];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setVariants(updated);
+    if (field === 'StockQuantity') {
+      const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+      setFormData((prev) => ({ ...prev, stockQuantity: String(sumStock) }));
+    }
+  };
+
+  const handleRemoveVariant = (idx) => {
+    const updated = variants.filter((_, i) => i !== idx);
+    setVariants(updated);
+    const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+    setFormData((prev) => ({ ...prev, stockQuantity: String(sumStock) }));
+  };
+
+  const handleAddBundleItem = () => {
+    if (!selectedBundleProduct) return;
+    const p = products.find((prod) => prod.ProductID === selectedBundleProduct);
+    if (!p) return;
+    if (bundleItems.some((bi) => bi.ProductID === p.ProductID)) {
+      alert('এই পণ্যটি ইতিমধ্যে বান্ডেলে যুক্ত করা হয়েছে!');
+      return;
+    }
+
+    const newItem = {
+      ProductID: p.ProductID,
+      ProductName: p.ProductName,
+      Quantity: Math.max(1, Number(bundleItemQty) || 1),
+      SellingPrice: Number(p.SellingPrice) || 0
+    };
+
+    const newBundle = [...bundleItems, newItem];
+    setBundleItems(newBundle);
+    setSelectedBundleProduct('');
+    setBundleItemQty(1);
+
+    const totalBundleCost = newBundle.reduce((sum, item) => {
+      const orig = products.find((x) => x.ProductID === item.ProductID);
+      return sum + ((Number(orig?.CostPrice) || 0) * item.Quantity);
+    }, 0);
+    const totalBundleValue = newBundle.reduce((sum, item) => sum + (item.SellingPrice * item.Quantity), 0);
+
+    setFormData((prev) => ({
+      ...prev,
+      costPrice: prev.costPrice || String(totalBundleCost),
+      sellingPrice: prev.sellingPrice || String(totalBundleValue)
+    }));
+  };
+
+  const handleRemoveBundleItem = (productId) => {
+    setBundleItems(bundleItems.filter((bi) => bi.ProductID !== productId));
+  };
+
   // প্রপস থেকে প্রোডাক্ট ডাটা স্টেট-এ লোড করা
   useEffect(() => {
     if (product) {
@@ -134,6 +279,22 @@ export default function EditProductModal({
         shortDescription: product.ShortDescription || '',
         description: product.Description || '',
       });
+
+      // Phase 6 ডাটা লোড
+      if (product.HasVariants && Array.isArray(product.Variants) && product.Variants.length > 0) {
+        setProductType('variable');
+        setVariants(product.Variants);
+      } else if (product.IsBundle && Array.isArray(product.BundleItems) && product.BundleItems.length > 0) {
+        setProductType('bundle');
+        setBundleItems(product.BundleItems);
+      } else {
+        setProductType('simple');
+        setVariants([]);
+        setBundleItems([]);
+      }
+      setBatchNumber(product.BatchNumber || '');
+      setMfgDate(product.MfgDate || '');
+      setExpiryDate(product.ExpiryDate || '');
 
       // ইমেজ মোড ও প্রিভিউ রিসেট
       setLocalImagePreview('');
@@ -404,6 +565,16 @@ export default function EditProductModal({
         shortDescription: formData.shortDescription.trim(),
         description: formData.description.trim(),
         features: features,
+        // Phase 6
+        hasVariants: productType === 'variable',
+        variants: productType === 'variable' ? variants : [],
+        variantsJSON: productType === 'variable' ? JSON.stringify(variants) : '',
+        batchNumber: batchNumber.trim(),
+        expiryDate: expiryDate.trim(),
+        mfgDate: mfgDate.trim(),
+        isBundle: productType === 'bundle',
+        bundleItems: productType === 'bundle' ? bundleItems : [],
+        bundleItemsJSON: productType === 'bundle' ? JSON.stringify(bundleItems) : ''
       });
 
       onClose();
@@ -442,6 +613,48 @@ export default function EditProductModal({
         {/* ফর্ম কন্টেন্ট স্ক্রোলেবল এরিয়া */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
           
+          {/* পণ্য ধরন নির্বাচন (সাধারণ পণ্য vs ভ্যারিয়েন্ট vs কম্বো বান্ডেল) */}
+          <div className="bg-slate-100/90 p-1.5 rounded-2xl flex items-center space-x-1.5 border border-slate-200 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setProductType('simple')}
+              className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                productType === 'simple'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-white'
+              }`}
+            >
+              <Box className="w-3.5 h-3.5" />
+              <span>সাধারণ পণ্য</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setProductType('variable')}
+              className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                productType === 'variable'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-white'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>ভ্যারিয়েন্ট</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setProductType('bundle')}
+              className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                productType === 'bundle'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-white'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>কম্বো বান্ডেল</span>
+            </button>
+          </div>
+
           {/* ১. পণ্যের নাম */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -775,6 +988,268 @@ export default function EditProductModal({
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Phase 6: ভ্যারিয়েন্ট কনফিগারেশন (Variable Product) */}
+          {productType === 'variable' && (
+            <div className="bg-indigo-50/50 border border-indigo-200/90 rounded-2xl p-4 space-y-3.5 shadow-2xs">
+              <div className="flex items-center justify-between pb-2 border-b border-indigo-100">
+                <span className="text-xs font-bold text-indigo-950 flex items-center space-x-2">
+                  <Layers className="w-4 h-4 text-indigo-600" />
+                  <span>ভ্যারিয়েন্ট ম্যানেজার (সাইজ, রঙ, ওজন)</span>
+                </span>
+                <span className="text-[11px] text-indigo-700 bg-indigo-100/70 px-2 py-0.5 rounded-full font-bold">
+                  {variants.length}টি ভ্যারিয়েন্ট
+                </span>
+              </div>
+
+              {/* স্বয়ংক্রিয় ভ্যারিয়েন্ট জেনারেটর ফর্ম */}
+              <div className="p-3 bg-white rounded-xl border border-indigo-100 space-y-2">
+                <div className="text-[11px] font-bold text-slate-700">
+                  অটো জেনারেটর (কমা দিয়ে একাধিক মান লিখুন):
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    placeholder="সাইজ / ওজন (যেমন: S, M, L, XL অথবা 500g, 1kg)"
+                    value={attributeSizes}
+                    onChange={(e) => setAttributeSizes(e.target.value)}
+                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="রঙ / কালার (যেমন: Black, Navy, White)"
+                    value={attributeColors}
+                    onChange={(e) => setAttributeColors(e.target.value)}
+                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={handleAutoGenerateVariants}
+                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>স্বয়ংক্রিয় তৈরি করুন</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddManualVariant}
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  >
+                    + ম্যানুয়াল রো যোগ
+                  </button>
+                </div>
+              </div>
+
+              {/* ভ্যারিয়েন্ট তালিকা টেবিল */}
+              {variants.length > 0 && (
+                <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-2xs">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                      <tr>
+                        <th className="p-2 pl-3">বৈশিষ্ট্য</th>
+                        <th className="p-2">বারকোড</th>
+                        <th className="p-2 w-16">কেনা</th>
+                        <th className="p-2 w-16">বিক্রি</th>
+                        <th className="p-2 w-16">স্টক</th>
+                        <th className="p-2 pr-3 text-center">মুছুন</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {variants.map((v, idx) => (
+                        <tr key={v.VariantID || idx} className="hover:bg-slate-50/60">
+                          <td className="p-2 pl-3">
+                            <span className="font-bold text-slate-800">
+                              {v.Attributes ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ') : v.VariantID}
+                            </span>
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              value={v.Barcode || ''}
+                              onChange={(e) => handleUpdateVariantField(idx, 'Barcode', e.target.value)}
+                              className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-mono"
+                              placeholder="বারকোড"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="number"
+                              value={v.CostPrice}
+                              onChange={(e) => handleUpdateVariantField(idx, 'CostPrice', Number(e.target.value) || 0)}
+                              className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-bold"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="number"
+                              value={v.SellingPrice}
+                              onChange={(e) => handleUpdateVariantField(idx, 'SellingPrice', Number(e.target.value) || 0)}
+                              className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-bold text-indigo-700"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="number"
+                              value={v.StockQuantity}
+                              onChange={(e) => handleUpdateVariantField(idx, 'StockQuantity', Number(e.target.value) || 0)}
+                              className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-black text-emerald-700"
+                            />
+                          </td>
+                          <td className="p-2 pr-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveVariant(idx)}
+                              className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
+                              title="মুছুন"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Phase 6: কম্বো বান্ডেল কনফিগারেশন (Bundle Package) */}
+          {productType === 'bundle' && (
+            <div className="bg-amber-50/50 border border-amber-200/90 rounded-2xl p-4 space-y-3.5 shadow-2xs">
+              <div className="flex items-center justify-between pb-2 border-b border-amber-100">
+                <span className="text-xs font-bold text-amber-950 flex items-center space-x-2">
+                  <Sparkles className="w-4 h-4 text-amber-600" />
+                  <span>কম্বো বান্ডেল আইটেম নির্বাচন</span>
+                </span>
+                <span className="text-[11px] text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full font-bold">
+                  {bundleItems.length}টি সাব-আইটেম
+                </span>
+              </div>
+
+              {/* সাব-আইটেম অ্যাড ড্রপডাউন */}
+              <div className="p-3 bg-white rounded-xl border border-amber-100 space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                  <div className="sm:col-span-8">
+                    <select
+                      value={selectedBundleProduct}
+                      onChange={(e) => setSelectedBundleProduct(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    >
+                      <option value="">-- অন্তর্ভুক্ত পণ্য বাছাই করুন --</option>
+                      {products.map((p) => (
+                        <option key={p.ProductID} value={p.ProductID}>
+                          {p.ProductName} ({currencySymbol}{p.SellingPrice} • স্টক: {p.StockQuantity})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <input
+                      type="number"
+                      min="1"
+                      value={bundleItemQty}
+                      onChange={(e) => setBundleItemQty(e.target.value)}
+                      placeholder="পরিমাণ"
+                      className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-center"
+                      title="কতটি অন্তর্ভুক্ত থাকবে"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <button
+                      type="button"
+                      onClick={handleAddBundleItem}
+                      className="w-full py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-1 cursor-pointer"
+                    >
+                      <span>+ যোগ</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* বান্ডেল তালিকা */}
+              {bundleItems.length > 0 && (
+                <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs divide-y divide-slate-100">
+                  {bundleItems.map((bi) => (
+                    <div key={bi.ProductID} className="p-2.5 px-3 flex items-center justify-between text-xs">
+                      <div>
+                        <span className="font-bold text-slate-800">{bi.ProductName}</span>
+                        <span className="text-[11px] text-slate-500 ml-2">x {bi.Quantity} পিস</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <span className="font-bold text-amber-700">
+                          {currencySymbol}{(bi.SellingPrice * bi.Quantity).toLocaleString('en-IN')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveBundleItem(bi.ProductID)}
+                          className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Phase 6: ব্যাচ নম্বর ও মেয়াদ ট্র্যাকিং (সকল পণ্যের জন্য প্রযোজ্য) */}
+          <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 space-y-3.5 shadow-2xs">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+              <span className="text-xs font-bold text-slate-800 flex items-center space-x-2">
+                <CalendarClock className="w-4 h-4 text-rose-600" />
+                <span>ব্যাচ নম্বর ও মেয়াদ ট্র্যাকিং (অপশনাল)</span>
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">
+                অটো মেয়াদ সতর্কতা
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  ব্যাচ নম্বর (Batch No.)
+                </label>
+                <input
+                  type="text"
+                  placeholder="যেমন: BATCH-2026-A1"
+                  value={batchNumber}
+                  onChange={(e) => setBatchNumber(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  উৎপাদনের তারিখ (Mfg Date)
+                </label>
+                <input
+                  type="date"
+                  value={mfgDate}
+                  onChange={(e) => setMfgDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  মেয়াদোত্তীর্ণের তারিখ (Expiry Date)
+                </label>
+                <input
+                  type="date"
+                  value={expiryDate}
+                  onChange={(e) => setExpiryDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+                />
+              </div>
             </div>
           </div>
 

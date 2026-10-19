@@ -318,6 +318,76 @@ export default function ProductDetailsModal({
 
           </div>
 
+          {/* ব্যাচ নম্বর ও মেয়াদোত্তীর্ণ তথ্য (Phase 6) */}
+          {(product.BatchNumber || product.ExpiryDate || product.MfgDate) && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+              {product.BatchNumber && (
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase">ব্যাচ নম্বর</span>
+                  <span className="font-mono font-bold text-slate-800">{product.BatchNumber}</span>
+                </div>
+              )}
+              {product.MfgDate && (
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase">উৎপাদন তারিখ</span>
+                  <span className="font-semibold text-slate-700">{product.MfgDate}</span>
+                </div>
+              )}
+              {product.ExpiryDate && (
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase">মেয়াদোত্তীর্ণ তারিখ</span>
+                  <span className="font-bold text-rose-600">{product.ExpiryDate}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ভ্যারিয়েন্ট তালিকা (Phase 6) */}
+          {product.HasVariants && Array.isArray(product.Variants) && product.Variants.length > 0 && (
+            <div className="p-3.5 bg-indigo-50/40 rounded-xl border border-indigo-100 space-y-2">
+              <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                <span>সাইজ ও কালার ভ্যারিয়েন্ট তালিকা ({product.Variants.length} টি অপশন)</span>
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {product.Variants.map((v, idx) => (
+                  <div key={idx} className="p-2.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between text-xs shadow-2xs">
+                    <div>
+                      <span className="font-bold text-slate-900 block">
+                        {[v.Size, v.Color, v.Weight, v.Title].filter(Boolean).join(' / ') || `ভ্যারিয়েন্ট #${idx + 1}`}
+                      </span>
+                      {v.Barcode && <span className="font-mono text-[10px] text-slate-400">#{v.Barcode}</span>}
+                    </div>
+                    <div className="text-right">
+                      <span className="font-black text-slate-900 block">{currencySymbol}{Number(v.SellingPrice || product.SellingPrice).toFixed(2)}</span>
+                      <span className="text-[10px] text-slate-500 font-medium">মজুদ: {v.StockQuantity || 0}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* কম্বো প্যাকেজ কম্পোনেন্ট তালিকা (Phase 6) */}
+          {product.IsBundle && Array.isArray(product.BundleItems) && product.BundleItems.length > 0 && (
+            <div className="p-3.5 bg-purple-50/40 rounded-xl border border-purple-100 space-y-2">
+              <span className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                <span>প্যাকেজ উপাদান ({product.BundleItems.length} টি পণ্য অন্তর্ভুক্ত)</span>
+              </span>
+              <div className="space-y-1.5">
+                {product.BundleItems.map((bi, idx) => (
+                  <div key={idx} className="p-2 bg-white rounded-lg border border-purple-100 flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-800">{bi.productName || bi.ProductName || bi.productId}</span>
+                    <span className="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                      x{bi.quantity || bi.Quantity || 1}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* সংক্ষিপ্ত বিবরণ (Short Description) */}
           {product.ShortDescription && (
             <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/60">

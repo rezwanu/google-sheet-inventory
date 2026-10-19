@@ -187,7 +187,12 @@ export default function InvoiceModal({
                       {items.map((item, index) => (
                         <tr key={index} className="align-top py-1">
                           <td className="text-left py-1 pr-1 font-sans text-[11px] leading-tight">
-                            {item.productName}
+                            <span>{item.productName}</span>
+                            {item.variantName && (
+                              <span className="block text-[9px] text-slate-500 font-normal">
+                                ({item.variantName})
+                              </span>
+                            )}
                           </td>
                           <td className="text-center py-1 whitespace-nowrap">
                             x{item.quantity}

@@ -1045,19 +1045,34 @@ export default function CheckoutPage({
 
             {/* কার্ট আইটেমস প্রিভিউ */}
             <div className="space-y-2.5 max-h-52 overflow-y-auto pr-1 divide-y divide-slate-100">
-              {cartItems.map((item) => (
-                <div key={item.productId} className="pt-2 first:pt-0 flex items-center justify-between text-xs">
-                  <div className="min-w-0 flex-1 pr-2">
-                    <p className="font-bold text-slate-900 truncate">{item.productName}</p>
-                    <p className="text-[11px] text-slate-400 font-medium">
-                      {item.quantity} × {currencySymbol}{Number(item.sellingPrice).toFixed(2)}
-                    </p>
+              {cartItems.map((item) => {
+                const itemKey = item.cartItemId || (item.variantId ? `${item.productId}__${item.variantId}` : item.productId);
+                return (
+                  <div key={itemKey} className="pt-2 first:pt-0 flex items-center justify-between text-xs">
+                    <div className="min-w-0 flex-1 pr-2">
+                      <p className="font-bold text-slate-900 truncate">
+                        {item.productName}
+                        {item.variantName && (
+                          <span className="ml-1.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">
+                            {item.variantName}
+                          </span>
+                        )}
+                        {item.isBundle && (
+                          <span className="ml-1 text-[9px] font-bold text-purple-700 bg-purple-50 px-1 py-0.5 rounded border border-purple-100">
+                            কম্বো
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-medium">
+                        {item.quantity} × {currencySymbol}{Number(item.sellingPrice).toFixed(2)}
+                      </p>
+                    </div>
+                    <span className="font-black text-slate-900">
+                      {currencySymbol}{((Number(item.sellingPrice) || 0) * (Number(item.quantity) || 0)).toFixed(2)}
+                    </span>
                   </div>
-                  <span className="font-black text-slate-900">
-                    {currencySymbol}{((Number(item.sellingPrice) || 0) * (Number(item.quantity) || 0)).toFixed(2)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* লয়ালটি পয়েন্ট রিওয়ার্ড কার্ড */}

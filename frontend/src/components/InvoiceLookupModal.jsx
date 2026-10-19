@@ -628,7 +628,14 @@ ${itemsText}
                             <tr key={item.productId || idx} className="hover:bg-slate-50/70 transition-colors">
                               <td className="p-3 text-slate-400 font-mono text-[11px]">{idx + 1}</td>
                               <td className="p-3">
-                                <span className="font-bold text-slate-900 block">{item.productName || 'আইটেম'}</span>
+                                <span className="font-bold text-slate-900 block">
+                                  {item.productName || 'আইটেম'}
+                                  {item.variantName && (
+                                    <span className="ml-1.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">
+                                      {item.variantName}
+                                    </span>
+                                  )}
+                                </span>
                                 {item.barcode && (
                                   <span className="font-mono text-[10px] text-slate-400">#{item.barcode}</span>
                                 )}
