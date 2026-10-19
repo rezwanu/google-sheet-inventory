@@ -783,3 +783,4 @@ export default function SuppliersModal({
     </div>
   );
 }
+
