@@ -24,6 +24,9 @@ import OrdersPage from './components/OrdersPage';
 import CustomerOrderTrackingModal from './components/CustomerOrderTrackingModal';
 import CustomerLedgerModal from './components/CustomerLedgerModal';
 import AbandonedCartModal from './components/AbandonedCartModal';
+import SuppliersModal from './components/SuppliersModal';
+import PurchaseOrdersModal from './components/PurchaseOrdersModal';
+import BarcodePrintModal from './components/BarcodePrintModal';
 
 import {
   getLocalSettings,
@@ -83,7 +86,19 @@ import {
   clearDemoData,
   sanitizeSettings,
   extractLogoFromObject,
-  DEFAULT_APPS_SCRIPT_URL
+  DEFAULT_APPS_SCRIPT_URL,
+  getLocalSuppliers,
+  saveLocalSuppliers,
+  saveOrUpdateSupplierLocally,
+  deleteSupplierLocally,
+  recordSupplierPaymentLocally,
+  getLocalPurchaseOrders,
+  saveLocalPurchaseOrders,
+  saveOrUpdatePurchaseOrderLocally,
+  updatePurchaseOrderStatusLocally,
+  getLocalSupplierLedger,
+  saveLocalSupplierLedger,
+  recordSupplierLedgerEntryLocally
 } from './services/storage';
 
 import {
@@ -121,7 +136,12 @@ import {
   postUpdateCustomerCreditLimit,
   postSaveAbandonedCart,
   postUpdateAbandonedCartStatus,
-  postUpdateCustomerLoyalty
+  postUpdateCustomerLoyalty,
+  postSaveSupplier,
+  postDeleteSupplier,
+  postCreatePurchaseOrder,
+  postUpdatePOStatus,
+  postRecordSupplierPayment
 } from './services/api';
 
 export default function App() {
@@ -161,6 +181,32 @@ export default function App() {
     }
   });
 
+  // ফেজ ৪: সাপ্লায়ার ও ভেন্ডর, পারচেজ অর্ডার এবং লেজার স্টেট
+  const [suppliers, setSuppliers] = useState(() => {
+    try {
+      const s = getLocalSuppliers();
+      return Array.isArray(s) ? s : [];
+    } catch {
+      return [];
+    }
+  });
+  const [purchaseOrders, setPurchaseOrders] = useState(() => {
+    try {
+      const po = getLocalPurchaseOrders();
+      return Array.isArray(po) ? po : [];
+    } catch {
+      return [];
+    }
+  });
+  const [supplierLedger, setSupplierLedger] = useState(() => {
+    try {
+      const sl = getLocalSupplierLedger();
+      return Array.isArray(sl) ? sl : [];
+    } catch {
+      return [];
+    }
+  });
+
   // ভিউ নেভিগেশন স্টেট ('pos' | 'cart' | 'checkout')
   const [currentView, setCurrentView] = useState('pos');
   const [discountAmount, setDiscountAmount] = useState(0);
@@ -169,6 +215,9 @@ export default function App() {
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
   const [isAbandonedCartModalOpen, setIsAbandonedCartModalOpen] = useState(false);
+  const [isSuppliersModalOpen, setIsSuppliersModalOpen] = useState(false);
+  const [isPurchaseOrdersModalOpen, setIsPurchaseOrdersModalOpen] = useState(false);
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
 
   // পেন্ডিং অসম্পূর্ণ কার্ট গণনা
   const pendingAbandonedCartsCount = useMemo(() => {
@@ -670,6 +719,24 @@ export default function App() {
       if (data && data.abandonedCarts && Array.isArray(data.abandonedCarts)) {
         setAbandonedCarts(data.abandonedCarts);
         saveLocalAbandonedCarts(data.abandonedCarts);
+      }
+
+      // ফেজ ৪: সাপ্লায়ার ও ভেন্ডর ডাটাবেস আপডেট (গুগল শিট Suppliers ট্যাব)
+      if (data && data.suppliers && Array.isArray(data.suppliers)) {
+        setSuppliers(data.suppliers);
+        saveLocalSuppliers(data.suppliers);
+      }
+
+      // ফেজ ৪: পারচেজ অর্ডার ডাটাবেস আপডেট (গুগল শিট PurchaseOrders ট্যাব)
+      if (data && data.purchaseOrders && Array.isArray(data.purchaseOrders)) {
+        setPurchaseOrders(data.purchaseOrders);
+        saveLocalPurchaseOrders(data.purchaseOrders);
+      }
+
+      // ফেজ ৪: সাপ্লায়ার লেজার ডাটাবেস আপডেট (গুগল শিট SupplierLedger ট্যাব)
+      if (data && data.supplierLedger && Array.isArray(data.supplierLedger)) {
+        setSupplierLedger(data.supplierLedger);
+        saveLocalSupplierLedger(data.supplierLedger);
       }
 
       setSyncStatus('online');
@@ -1611,6 +1678,171 @@ export default function App() {
     }
   };
 
+  // ==========================================
+  // ফেজ ৪: সাপ্লায়ার, ভেন্ডর ও পারচেজ অর্ডার হ্যান্ডলারসমূহ
+  // ==========================================
+  const handleSaveSupplier = async (supplierData) => {
+    try {
+      const updatedList = saveOrUpdateSupplierLocally(supplierData);
+      setSuppliers(updatedList);
+      showToast('সাপ্লায়ারের তথ্য সফলভাবে সংরক্ষিত হয়েছে!', 'success');
+
+      if (settings.apiUrl) {
+        try {
+          const res = await postSaveSupplier(settings.apiUrl, supplierData);
+          if (res && res.data) {
+            const syncedList = saveOrUpdateSupplierLocally(res.data);
+            setSuppliers(syncedList);
+          }
+        } catch (apiErr) {
+          console.warn('Supplier remote sync delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`সাপ্লায়ার সংরক্ষণে সমস্যা: ${err.message}`, 'error');
+    }
+  };
+
+  const handleDeleteSupplier = async (supplierId) => {
+    try {
+      const updatedList = deleteSupplierLocally(supplierId);
+      setSuppliers(updatedList);
+      showToast('সাপ্লায়ার সফলভাবে মুছে ফেলা হয়েছে!', 'info');
+
+      if (settings.apiUrl) {
+        try {
+          await postDeleteSupplier(settings.apiUrl, supplierId);
+        } catch (apiErr) {
+          console.warn('Supplier remote delete delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`সাপ্লায়ার মুছতে সমস্যা: ${err.message}`, 'error');
+    }
+  };
+
+  const handleRecordSupplierPayment = async (paymentData) => {
+    try {
+      const updatedSuppliers = recordSupplierPaymentLocally(paymentData);
+      setSuppliers(updatedSuppliers);
+      setSupplierLedger(getLocalSupplierLedger());
+      showToast(`৳${paymentData.amount || paymentData.Amount} সাপ্লায়ার পেমেন্ট সফলভাবে সংরক্ষিত হয়েছে!`, 'success');
+
+      if (settings.apiUrl) {
+        try {
+          await postRecordSupplierPayment(settings.apiUrl, paymentData);
+        } catch (apiErr) {
+          console.warn('Supplier payment remote sync delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`পেমেন্ট সংরক্ষণে সমস্যা: ${err.message}`, 'error');
+    }
+  };
+
+  const handleCreatePurchaseOrder = async (poData, receiveImmediately = false) => {
+    try {
+      const updatedPOs = saveOrUpdatePurchaseOrderLocally(poData);
+      setPurchaseOrders(updatedPOs);
+
+      // যদি এখনই সরাসরি স্টক গ্রহণ করা হয় (receiveImmediately / Status === 'Received')
+      if (receiveImmediately || poData.Status === 'Received') {
+        const items = Array.isArray(poData.Items) ? poData.Items : [];
+        if (items.length > 0) {
+          let currentProds = getLocalProducts();
+          items.forEach(item => {
+            const prodIdx = currentProds.findIndex(p => p.ProductID === item.ProductID || p.Barcode === item.Barcode);
+            if (prodIdx !== -1) {
+              const oldStock = Number(currentProds[prodIdx].StockQuantity) || 0;
+              const incomingQty = Number(item.Quantity) || 0;
+              const newStock = oldStock + incomingQty;
+              const oldCost = Number(currentProds[prodIdx].CostPrice) || 0;
+              const incomingCost = Number(item.UnitCost) || oldCost;
+              const newCost = newStock > 0 ? ((oldStock * oldCost) + (incomingQty * incomingCost)) / newStock : incomingCost;
+              
+              currentProds[prodIdx].StockQuantity = newStock;
+              currentProds[prodIdx].CostPrice = Math.round(newCost * 100) / 100;
+              currentProds[prodIdx].UpdatedAt = new Date().toISOString();
+            }
+          });
+          saveLocalProducts(currentProds);
+          setProducts(currentProds);
+        }
+      }
+
+      setSuppliers(getLocalSuppliers());
+      setSupplierLedger(getLocalSupplierLedger());
+      showToast(`পারচেজ অর্ডার ${poData.PONumber} সফলভাবে তৈরি হয়েছে!`, 'success');
+
+      if (settings.apiUrl) {
+        try {
+          const res = await postCreatePurchaseOrder(settings.apiUrl, poData);
+          if (res && res.data) {
+            const syncedPOs = saveOrUpdatePurchaseOrderLocally(res.data);
+            setPurchaseOrders(syncedPOs);
+          }
+        } catch (apiErr) {
+          console.warn('Purchase order remote sync delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`পারচেজ অর্ডার তৈরি ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
+  const handleUpdatePOStatus = async (poNumber, newStatus) => {
+    try {
+      const currentPO = purchaseOrders.find(p => p.PONumber === poNumber);
+      const prevStatus = currentPO?.Status;
+
+      const updatedPOs = updatePurchaseOrderStatusLocally(poNumber, newStatus);
+      setPurchaseOrders(updatedPOs);
+
+      // যদি পূর্বে রিসিভ না হয়ে থাকে এবং এখন 'Received' স্ট্যাটাস হয় -> স্বয়ংক্রিয় স্টক বৃদ্ধি
+      if (newStatus === 'Received' && prevStatus !== 'Received' && currentPO) {
+        let items = currentPO.Items;
+        if (typeof items === 'string') {
+          try { items = JSON.parse(items); } catch { items = []; }
+        }
+        if (Array.isArray(items) && items.length > 0) {
+          let currentProds = getLocalProducts();
+          items.forEach(item => {
+            const prodIdx = currentProds.findIndex(p => p.ProductID === item.ProductID || p.Barcode === item.Barcode);
+            if (prodIdx !== -1) {
+              const oldStock = Number(currentProds[prodIdx].StockQuantity) || 0;
+              const incomingQty = Number(item.Quantity) || 0;
+              const newStock = oldStock + incomingQty;
+              const oldCost = Number(currentProds[prodIdx].CostPrice) || 0;
+              const incomingCost = Number(item.UnitCost) || oldCost;
+              const newCost = newStock > 0 ? ((oldStock * oldCost) + (incomingQty * incomingCost)) / newStock : incomingCost;
+              
+              currentProds[prodIdx].StockQuantity = newStock;
+              currentProds[prodIdx].CostPrice = Math.round(newCost * 100) / 100;
+              currentProds[prodIdx].UpdatedAt = new Date().toISOString();
+            }
+          });
+          saveLocalProducts(currentProds);
+          setProducts(currentProds);
+          showToast(`মালামাল গ্রহণ সম্পন্ন! পণ্যের স্টক ইনভেন্টরিতে বৃদ্ধি করা হয়েছে।`, 'info');
+        }
+      }
+
+      setSuppliers(getLocalSuppliers());
+      setSupplierLedger(getLocalSupplierLedger());
+      showToast(`অর্ডার স্ট্যাটাস "${newStatus}" এ পরিবর্তন করা হয়েছে!`, 'success');
+
+      if (settings.apiUrl) {
+        try {
+          await postUpdatePOStatus(settings.apiUrl, poNumber, newStatus);
+        } catch (apiErr) {
+          console.warn('PO status remote sync delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`স্ট্যাটাস পরিবর্তন ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
   // ৭. অতীত ইনভয়েস রি-প্রিন্ট ওপেন করা
   const handleOpenReprintInvoice = (sale) => {
     setActiveInvoiceData(sale);
@@ -1993,6 +2225,11 @@ export default function App() {
             onOpenCustomersModal={() => setIsCustomersModalOpen(true)}
             onOpenCustomerLedgerModal={() => setIsCustomerLedgerModalOpen(true)}
             customers={customers}
+            suppliersCount={suppliers.length}
+            pendingPOCount={purchaseOrders.filter(po => po.Status === 'Ordered').length}
+            onOpenSuppliersModal={() => setIsSuppliersModalOpen(true)}
+            onOpenPurchaseOrdersModal={() => setIsPurchaseOrdersModalOpen(true)}
+            onOpenBarcodeModal={() => setIsBarcodeModalOpen(true)}
             abandonedCartsCount={pendingAbandonedCartsCount}
             onOpenAbandonedCartModal={() => setIsAbandonedCartModalOpen(true)}
             onOpenUsersModal={() => setIsUsersModalOpen(true)}
@@ -2368,6 +2605,51 @@ export default function App() {
         onDeleteCart={handleDeleteAbandonedCart}
         onConvertToOrder={handleConvertToOrderFromAbandoned}
         currencySymbol={settings.CurrencySymbol || '৳'}
+      />
+
+      {/* ফেজ ৪: সাপ্লায়ার ও ভেন্ডর প্রোফাইল এবং দেনা খাতা মডাল */}
+      <SuppliersModal
+        isOpen={isSuppliersModalOpen}
+        onClose={() => setIsSuppliersModalOpen(false)}
+        suppliers={suppliers}
+        supplierLedger={supplierLedger}
+        purchaseOrders={purchaseOrders}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        storeName={settings.StoreName || 'Pabna Bostraloy'}
+        onSaveSupplier={handleSaveSupplier}
+        onDeleteSupplier={handleDeleteSupplier}
+        onRecordPayment={handleRecordSupplierPayment}
+        onOpenCreatePO={() => {
+          setIsSuppliersModalOpen(false);
+          setIsPurchaseOrdersModalOpen(true);
+        }}
+      />
+
+      {/* ফেজ ৪: পারচেজ অর্ডার ও স্টক প্রকিউরমেন্ট রিস্টক মডাল */}
+      <PurchaseOrdersModal
+        isOpen={isPurchaseOrdersModalOpen}
+        onClose={() => setIsPurchaseOrdersModalOpen(false)}
+        purchaseOrders={purchaseOrders}
+        suppliers={suppliers}
+        products={products}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        storeName={settings.StoreName || 'Pabna Bostraloy'}
+        storeSettings={settings}
+        onCreatePO={handleCreatePurchaseOrder}
+        onUpdatePOStatus={handleUpdatePOStatus}
+        onOpenSuppliersModal={() => {
+          setIsPurchaseOrdersModalOpen(false);
+          setIsSuppliersModalOpen(true);
+        }}
+      />
+
+      {/* ফেজ ৪: থার্মাল বারকোড লেবেল ও প্রাইস ট্যাগ জেনারেটর মডাল */}
+      <BarcodePrintModal
+        isOpen={isBarcodeModalOpen}
+        onClose={() => setIsBarcodeModalOpen(false)}
+        products={products}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        storeName={settings.StoreName || 'Pabna Bostraloy'}
       />
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}

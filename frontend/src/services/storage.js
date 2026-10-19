@@ -21,6 +21,9 @@ const STORAGE_KEYS = {
   USERS: 'pos_users',
   ORDERS: 'pos_orders',
   ABANDONED_CARTS: 'pos_abandoned_carts',
+  SUPPLIERS: 'pos_suppliers',
+  PURCHASE_ORDERS: 'pos_purchase_orders',
+  SUPPLIER_LEDGER: 'pos_supplier_ledger',
 };
 
 import {
@@ -2001,6 +2004,270 @@ export function deleteAbandonedCartLocally(cartId) {
   const filtered = carts.filter(c => String(c.CartID || '').trim() !== String(cartId).trim());
   saveLocalAbandonedCarts(filtered);
   return filtered;
+}
+
+// ============================================================================
+// Phase 4: সাপ্লায়ার, পারচেজ অর্ডার ও সাপ্লায়ার লেজার পারসিস্টেন্স
+// ============================================================================
+
+export function getLocalSuppliers() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.SUPPLIERS);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalSuppliers(suppliers) {
+  setSecureStorageItem(STORAGE_KEYS.SUPPLIERS, Array.isArray(suppliers) ? suppliers : []);
+}
+
+export function saveOrUpdateSupplierLocally(supplierData) {
+  if (!supplierData) return getLocalSuppliers();
+  const list = getLocalSuppliers();
+  const id = String(supplierData.SupplierID || supplierData.supplierId || '').trim();
+  const phone = String(supplierData.Phone || supplierData.phone || '').trim();
+  const company = String(supplierData.CompanyName || supplierData.companyName || '').trim();
+
+  const now = new Date().toISOString();
+  const existingIdx = list.findIndex(s => {
+    if (id && s.SupplierID && String(s.SupplierID).trim() === id) return true;
+    if (phone && s.Phone && String(s.Phone).trim() === phone) return true;
+    return false;
+  });
+
+  if (existingIdx !== -1) {
+    list[existingIdx] = {
+      ...list[existingIdx],
+      CompanyName: company || list[existingIdx].CompanyName,
+      ContactPerson: supplierData.ContactPerson || supplierData.contactPerson || list[existingIdx].ContactPerson || '',
+      Phone: phone || list[existingIdx].Phone,
+      Email: supplierData.Email || supplierData.email || list[existingIdx].Email || '',
+      Address: supplierData.Address || supplierData.address || list[existingIdx].Address || '',
+      Notes: supplierData.Notes !== undefined ? supplierData.Notes : list[existingIdx].Notes,
+      UpdatedAt: now
+    };
+  } else {
+    const newSupplier = {
+      SupplierID: id || `SUP-${Date.now().toString().slice(-6)}`,
+      CompanyName: company || supplierData.ContactPerson || 'সাপ্লায়ার',
+      ContactPerson: supplierData.ContactPerson || supplierData.contactPerson || '',
+      Phone: phone,
+      Email: supplierData.Email || supplierData.email || '',
+      Address: supplierData.Address || supplierData.address || '',
+      TotalPurchased: Number(supplierData.TotalPurchased || supplierData.totalPurchased || 0),
+      TotalPaid: Number(supplierData.TotalPaid || supplierData.totalPaid || 0),
+      CurrentPayable: Number(supplierData.CurrentPayable || supplierData.currentPayable || 0),
+      Notes: supplierData.Notes || supplierData.notes || '',
+      CreatedAt: now,
+      UpdatedAt: now
+    };
+    list.unshift(newSupplier);
+  }
+
+  saveLocalSuppliers(list);
+  return list;
+}
+
+export function deleteSupplierLocally(supplierId) {
+  if (!supplierId) return getLocalSuppliers();
+  const list = getLocalSuppliers();
+  const filtered = list.filter(s => String(s.SupplierID || '').trim() !== String(supplierId).trim());
+  saveLocalSuppliers(filtered);
+  return filtered;
+}
+
+export function recordSupplierPaymentLocally(paymentData) {
+  const list = getLocalSuppliers();
+  const targetId = String(paymentData.supplierId || paymentData.SupplierID || '').trim();
+  const amount = Number(paymentData.amount || paymentData.Amount || 0);
+
+  const idx = list.findIndex(s => String(s.SupplierID || '').trim() === targetId);
+  let newDue = 0;
+  if (idx !== -1) {
+    const prevPaid = Number(list[idx].TotalPaid || 0);
+    const prevDue = Number(list[idx].CurrentPayable || 0);
+    list[idx].TotalPaid = prevPaid + amount;
+    list[idx].CurrentPayable = Math.max(0, prevDue - amount);
+    list[idx].UpdatedAt = new Date().toISOString();
+    newDue = list[idx].CurrentPayable;
+    saveLocalSuppliers(list);
+  }
+
+  // লেজার এন্ট্রি
+  recordSupplierLedgerEntryLocally({
+    SupplierID: targetId,
+    SupplierName: idx !== -1 ? (list[idx].CompanyName || list[idx].ContactPerson) : '',
+    SupplierPhone: idx !== -1 ? list[idx].Phone : '',
+    PO_ID: paymentData.poId || '',
+    EntryType: 'Payment',
+    Debit: amount,
+    Credit: 0,
+    Balance: newDue,
+    PaymentMethod: paymentMethodNorm(paymentData.paymentMethod),
+    TrxID: paymentData.trxId || paymentData.transactionRef || '',
+    CollectedBy: paymentData.collectedBy || 'Admin',
+    Notes: paymentData.notes || 'সাপ্লায়ারের বকেয়া পরিশোধ'
+  });
+
+  return list;
+}
+
+function paymentMethodNorm(method) {
+  return method || 'Cash';
+}
+
+export function getLocalPurchaseOrders() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.PURCHASE_ORDERS);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalPurchaseOrders(orders) {
+  setSecureStorageItem(STORAGE_KEYS.PURCHASE_ORDERS, Array.isArray(orders) ? orders : []);
+}
+
+export function saveOrUpdatePurchaseOrderLocally(poData) {
+  if (!poData) return getLocalPurchaseOrders();
+  const list = getLocalPurchaseOrders();
+  const poId = String(poData.PO_ID || poData.poId || '').trim();
+  const now = new Date().toISOString();
+
+  const rawItems = poData.Items || poData.items || poData.ItemsJSON || [];
+  const itemsList = Array.isArray(rawItems) ? rawItems : (typeof rawItems === 'string' ? JSON.parse(rawItems || '[]') : []);
+
+  const totalAmount = Number(poData.TotalAmount !== undefined ? poData.TotalAmount : (poData.totalAmount !== undefined ? poData.totalAmount : 0));
+  const paidAmount = Number(poData.PaidAmount !== undefined ? poData.PaidAmount : (poData.paidAmount !== undefined ? poData.paidAmount : 0));
+  const dueAmount = Number(poData.DueAmount !== undefined ? poData.DueAmount : (totalAmount - paidAmount));
+  const status = poData.Status || poData.status || 'Ordered';
+
+  const existingIdx = list.findIndex(p => String(p.PO_ID || '').trim() === poId);
+
+  const poRecord = {
+    PO_ID: poId || `PO-${Date.now().toString().slice(-6)}`,
+    Timestamp: poData.Timestamp || poData.timestamp || now,
+    SupplierID: poData.SupplierID || poData.supplierId || '',
+    SupplierName: poData.SupplierName || poData.supplierName || 'সাপ্লায়ার',
+    SupplierPhone: poData.SupplierPhone || poData.supplierPhone || '',
+    ItemsJSON: JSON.stringify(itemsList),
+    Items: itemsList,
+    TotalAmount: totalAmount,
+    PaidAmount: paidAmount,
+    DueAmount: dueAmount,
+    PaymentMethod: poData.PaymentMethod || poData.paymentMethod || 'Cash',
+    Status: status,
+    ReceivedBy: status === 'Received' ? (poData.ReceivedBy || poData.receivedBy || 'Admin') : '',
+    ReceivedAt: status === 'Received' ? (poData.ReceivedAt || now) : '',
+    Notes: poData.Notes || poData.notes || '',
+    CreatedAt: poData.CreatedAt || now,
+    UpdatedAt: now
+  };
+
+  if (existingIdx !== -1) {
+    list[existingIdx] = { ...list[existingIdx], ...poRecord };
+  } else {
+    list.unshift(poRecord);
+  }
+
+  saveLocalPurchaseOrders(list);
+
+  // সাপ্লায়ার ব্যালেন্স আপডেট
+  if (poRecord.SupplierID || poRecord.SupplierName) {
+    const suppliers = getLocalSuppliers();
+    const supIdx = suppliers.findIndex(s => 
+      (poRecord.SupplierID && String(s.SupplierID).trim() === poRecord.SupplierID) ||
+      (poRecord.SupplierName && String(s.CompanyName || s.ContactPerson).trim().toLowerCase() === poRecord.SupplierName.toLowerCase())
+    );
+
+    let currentDue = 0;
+    if (supIdx !== -1) {
+      suppliers[supIdx].TotalPurchased = (Number(suppliers[supIdx].TotalPurchased) || 0) + totalAmount;
+      suppliers[supIdx].TotalPaid = (Number(suppliers[supIdx].TotalPaid) || 0) + paidAmount;
+      suppliers[supIdx].CurrentPayable = Math.max(0, (Number(suppliers[supIdx].CurrentPayable) || 0) + dueAmount);
+      suppliers[supIdx].UpdatedAt = now;
+      currentDue = suppliers[supIdx].CurrentPayable;
+      saveLocalSuppliers(suppliers);
+    }
+
+    // লেজার এন্ট্রি
+    recordSupplierLedgerEntryLocally({
+      SupplierID: poRecord.SupplierID || (supIdx !== -1 ? suppliers[supIdx].SupplierID : ''),
+      SupplierName: poRecord.SupplierName,
+      SupplierPhone: poRecord.SupplierPhone,
+      PO_ID: poRecord.PO_ID,
+      EntryType: 'Purchase',
+      Debit: paidAmount,
+      Credit: totalAmount,
+      Balance: currentDue,
+      PaymentMethod: poRecord.PaymentMethod,
+      TrxID: poData.transactionRef || '',
+      CollectedBy: poRecord.ReceivedBy || 'Admin',
+      Notes: poRecord.Notes || `পারচেজ অর্ডার ${poRecord.PO_ID}`
+    });
+  }
+
+  return list;
+}
+
+export function updatePurchaseOrderStatusLocally(poId, newStatus = 'Received', receivedBy = 'Admin') {
+  if (!poId) return getLocalPurchaseOrders();
+  const list = getLocalPurchaseOrders();
+  const idx = list.findIndex(p => String(p.PO_ID || '').trim() === String(poId).trim());
+  if (idx !== -1) {
+    const now = new Date().toISOString();
+    list[idx].Status = newStatus;
+    list[idx].UpdatedAt = now;
+    if (newStatus === 'Received') {
+      list[idx].ReceivedBy = receivedBy;
+      list[idx].ReceivedAt = now;
+    }
+    saveLocalPurchaseOrders(list);
+  }
+  return list;
+}
+
+export function getLocalSupplierLedger() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.SUPPLIER_LEDGER);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalSupplierLedger(entries) {
+  setSecureStorageItem(STORAGE_KEYS.SUPPLIER_LEDGER, Array.isArray(entries) ? entries : []);
+}
+
+export function recordSupplierLedgerEntryLocally(entryData) {
+  if (!entryData) return getLocalSupplierLedger();
+  const ledger = getLocalSupplierLedger();
+  const now = new Date().toISOString();
+
+  const newEntry = {
+    LedgerID: entryData.LedgerID || `SUP-LED-${Date.now().toString().slice(-6)}`,
+    Timestamp: entryData.Timestamp || now,
+    SupplierID: entryData.SupplierID || '',
+    SupplierName: entryData.SupplierName || '',
+    SupplierPhone: entryData.SupplierPhone || '',
+    PO_ID: entryData.PO_ID || '',
+    EntryType: entryData.EntryType || 'Purchase',
+    Debit: Number(entryData.Debit) || 0,
+    Credit: Number(entryData.Credit) || 0,
+    Balance: Number(entryData.Balance) || 0,
+    PaymentMethod: entryData.PaymentMethod || 'Cash',
+    TrxID: entryData.TrxID || '',
+    CollectedBy: entryData.CollectedBy || 'Admin',
+    Notes: entryData.Notes || ''
+  };
+
+  ledger.unshift(newEntry);
+  saveLocalSupplierLedger(ledger);
+  return ledger;
 }
 
 

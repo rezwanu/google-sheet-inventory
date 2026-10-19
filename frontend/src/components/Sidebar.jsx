@@ -18,7 +18,9 @@ import {
   Ticket,
   UserCog,
   Truck,
-  BookOpen
+  BookOpen,
+  Barcode as BarcodeIcon,
+  Building2
 } from 'lucide-react';
 
 /**
@@ -41,9 +43,14 @@ export default function Sidebar({
   currencySymbol = '৳',
   lowStockCount = 0,
   customers = [],
+  suppliersCount = 0,
+  pendingPOCount = 0,
   abandonedCartsCount = 0,
   onOpenAbandonedCartModal,
   onOpenCustomerLedgerModal,
+  onOpenSuppliersModal,
+  onOpenPurchaseOrdersModal,
+  onOpenBarcodeModal,
   onOpenStockModal,
   onOpenProductModal,
   onOpenAnalyticsModal,
@@ -390,6 +397,79 @@ export default function Sidebar({
                     {dueCustomersCount} জন
                   </span>
                 )}
+              </button>
+
+              {/* পারচেজ অর্ডার ও মালামাল রিস্টক (PO) */}
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenPurchaseOrdersModal)}
+                title={pendingPOCount > 0 ? `${pendingPOCount}টি পারচেজ অর্ডার পেন্ডিং আছে` : 'পারচেজ অর্ডার ও স্টক প্রকিউরমেন্ট'}
+                className={`w-full flex items-center rounded-2xl text-xs font-bold transition-all cursor-pointer group relative ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+                } ${
+                  pendingPOCount > 0
+                    ? 'bg-amber-50/70 text-amber-950 border border-amber-200/80 hover:bg-amber-100'
+                    : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-900'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
+                    pendingPOCount > 0 ? 'bg-amber-500 text-white shadow-xs' : 'bg-indigo-100 text-indigo-700'
+                  }`}>
+                    <PackageCheck className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && <span>পারচেজ অর্ডার (PO)</span>}
+                </div>
+                {pendingPOCount > 0 && (
+                  <span
+                    className={`${
+                      isCollapsed
+                        ? 'absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-600 text-white border-2 border-white'
+                        : 'px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-black shadow-2xs shrink-0'
+                    }`}
+                  >
+                    {pendingPOCount}টি
+                  </span>
+                )}
+              </button>
+
+              {/* সাপ্লায়ার ও ভেন্ডর খাতা */}
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenSuppliersModal)}
+                title="সাপ্লায়ার ও ভেন্ডর তালিকা এবং বকেয়া দেনা খাতা"
+                className={`w-full flex items-center rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all cursor-pointer group ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Truck className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && <span>সাপ্লায়ার ও ভেন্ডর</span>}
+                </div>
+                {!isCollapsed && suppliersCount > 0 && (
+                  <span className="text-[10px] text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded-full">
+                    {suppliersCount}
+                  </span>
+                )}
+              </button>
+
+              {/* থার্মাল বারকোড ও প্রাইস ট্যাগ প্রিন্টার */}
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenBarcodeModal)}
+                title="থার্মাল বারকোড স্টিকার ও প্রাইস ট্যাগ জেনারেটর"
+                className={`w-full flex items-center rounded-2xl text-xs font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-900 transition-all cursor-pointer group ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <BarcodeIcon className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && <span>বারকোড স্টিকার</span>}
+                </div>
               </button>
 
               {/* অসম্পূর্ণ কার্ট ও ড্রপ-অফ রিকভারি */}

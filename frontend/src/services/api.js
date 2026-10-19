@@ -1344,3 +1344,183 @@ export async function postUpdateCustomerLoyalty(apiUrl, { customerId, phone, poi
     };
   }
 }
+
+/**
+ * ============================================================================
+ * Phase 4: সাপ্লায়ার ও পারচেজ অর্ডার API কলসমূহ
+ * ============================================================================
+ */
+
+/**
+ * গুগল শিটে সাপ্লায়ার তথ্য সংরক্ষণ বা আপডেট (action: 'saveSupplier')
+ */
+export async function postSaveSupplier(apiUrl, supplierData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: সাপ্লায়ার তথ্য লোকাল স্টোরেজে সেভ হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'saveSupplier',
+    ...supplierData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `সাপ্লায়ার সিঙ্ক ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * গুগল শিট থেকে সাপ্লায়ার মুছে ফেলা (action: 'deleteSupplier')
+ */
+export async function postDeleteSupplier(apiUrl, supplierId) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return { success: true, offline: true };
+  }
+
+  const payload = {
+    action: 'deleteSupplier',
+    supplierId: supplierId,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `সাপ্লায়ার মুছতে সমস্যা: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * নতুন পারচেজ অর্ডার (PO) তৈরি করা (action: 'createPurchaseOrder')
+ */
+export async function postCreatePurchaseOrder(apiUrl, poData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: পারচেজ অর্ডার লোকাল ক্যাশে তৈরি হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'createPurchaseOrder',
+    ...poData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `পারচেজ অর্ডার তৈরি ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * পারচেজ অর্ডার স্ট্যাটাস আপডেট ও স্টক রিসিভ (action: 'updatePOStatus')
+ */
+export async function postUpdatePOStatus(apiUrl, { poId, status, receivedBy = 'Admin' }) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return { success: true, offline: true };
+  }
+
+  const payload = {
+    action: 'updatePOStatus',
+    poId: poId,
+    status: status,
+    receivedBy: receivedBy,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `PO স্ট্যাটাস আপডেট ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * সাপ্লায়ারের বকেয়া পাওনা পরিশোধ রেকর্ড (action: 'recordSupplierPayment')
+ */
+export async function postRecordSupplierPayment(apiUrl, paymentData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: সাপ্লায়ার পেমেন্ট রেকর্ড হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'recordSupplierPayment',
+    ...paymentData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `সাপ্লায়ার পেমেন্ট সিঙ্ক ব্যর্থ: ${err.message}`,
+    };
+  }
+}

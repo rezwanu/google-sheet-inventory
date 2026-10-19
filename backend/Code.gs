@@ -18,7 +18,10 @@ const SHEETS = {
   COUPONS: 'Coupons',
   ORDERS: 'Orders',
   CUSTOMER_LEDGER: 'CustomerLedger',
-  ABANDONED_CARTS: 'AbandonedCarts'
+  ABANDONED_CARTS: 'AbandonedCarts',
+  SUPPLIERS: 'Suppliers',
+  PURCHASE_ORDERS: 'PurchaseOrders',
+  SUPPLIER_LEDGER: 'SupplierLedger'
 };
 
 /**
@@ -514,6 +517,107 @@ function ensureAbandonedCartsSheet(spreadsheet) {
 }
 
 /**
+ * Suppliers (সাপ্লায়ার ও ভেন্ডর ডাটাবেস) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} Suppliers শিট অবজেক্ট
+ */
+function ensureSuppliersSheet(spreadsheet) {
+  let suppliersSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.SUPPLIERS);
+  if (!suppliersSheet) {
+    suppliersSheet = spreadsheet.insertSheet(SHEETS.SUPPLIERS);
+  }
+
+  const defaultHeaders = [
+    'SupplierID', 'CompanyName', 'ContactPerson', 'Phone', 'Email',
+    'Address', 'TotalPurchased', 'TotalPaid', 'CurrentPayable', 'Notes', 'CreatedAt', 'UpdatedAt'
+  ];
+
+  if (suppliersSheet.getLastRow() === 0) {
+    suppliersSheet.appendRow(defaultHeaders);
+  } else {
+    const lastCol = suppliersSheet.getLastColumn();
+    if (lastCol > 0) {
+      const headers = suppliersSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      defaultHeaders.forEach(col => {
+        if (findCol(headers, col) === -1) {
+          suppliersSheet.getRange(1, suppliersSheet.getLastColumn() + 1).setValue(col);
+        }
+      });
+    }
+  }
+
+  return suppliersSheet;
+}
+
+/**
+ * PurchaseOrders (পারচেজ অর্ডার ও ইনবাউন্ড প্রকিউরমেন্ট ডাটাবেস) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} PurchaseOrders শিট অবজেক্ট
+ */
+function ensurePurchaseOrdersSheet(spreadsheet) {
+  let poSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PURCHASE_ORDERS);
+  if (!poSheet) {
+    poSheet = spreadsheet.insertSheet(SHEETS.PURCHASE_ORDERS);
+  }
+
+  const defaultHeaders = [
+    'PO_ID', 'Timestamp', 'SupplierID', 'SupplierName', 'SupplierPhone',
+    'ItemsJSON', 'TotalAmount', 'PaidAmount', 'DueAmount', 'PaymentMethod',
+    'Status', 'ReceivedBy', 'ReceivedAt', 'Notes', 'CreatedAt', 'UpdatedAt'
+  ];
+
+  if (poSheet.getLastRow() === 0) {
+    poSheet.appendRow(defaultHeaders);
+  } else {
+    const lastCol = poSheet.getLastColumn();
+    if (lastCol > 0) {
+      const headers = poSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      defaultHeaders.forEach(col => {
+        if (findCol(headers, col) === -1) {
+          poSheet.getRange(1, poSheet.getLastColumn() + 1).setValue(col);
+        }
+      });
+    }
+  }
+
+  return poSheet;
+}
+
+/**
+ * SupplierLedger (সাপ্লায়ার দেনার খাতা ও লেনদেন অডিট) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} SupplierLedger শিট অবজেক্ট
+ */
+function ensureSupplierLedgerSheet(spreadsheet) {
+  let ledgerSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.SUPPLIER_LEDGER);
+  if (!ledgerSheet) {
+    ledgerSheet = spreadsheet.insertSheet(SHEETS.SUPPLIER_LEDGER);
+  }
+
+  const defaultHeaders = [
+    'LedgerID', 'Timestamp', 'SupplierID', 'SupplierName', 'SupplierPhone',
+    'PO_ID', 'EntryType', 'Debit', 'Credit', 'Balance', 'PaymentMethod',
+    'TrxID', 'CollectedBy', 'Notes'
+  ];
+
+  if (ledgerSheet.getLastRow() === 0) {
+    ledgerSheet.appendRow(defaultHeaders);
+  } else {
+    const lastCol = ledgerSheet.getLastColumn();
+    if (lastCol > 0) {
+      const headers = ledgerSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      defaultHeaders.forEach(col => {
+        if (findCol(headers, col) === -1) {
+          ledgerSheet.getRange(1, ledgerSheet.getLastColumn() + 1).setValue(col);
+        }
+      });
+    }
+  }
+
+  return ledgerSheet;
+}
+
+/**
  * Coupons (কুপন ডাটাবেস) শিট নিশ্চিত করা (না থাকলে তৈরি এবং প্রয়োজনীয় কলাম হেডার যুক্ত করা)
  * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
  * @return {Sheet} Coupons শিট অবজেক্ট
@@ -845,6 +949,14 @@ function ensureDatabaseSchema(spreadsheet) {
   // ২.৫ AbandonedCarts (অসম্পূর্ণ কার্ট ও ড্রপ-অফ ডাটাবেস) শিট নিশ্চিত করা
   ensureAbandonedCartsSheet(spreadsheet);
 
+  // ২.৬ Suppliers (সাপ্লায়ার ও ভেন্ডর ডাটাবেস) শিট নিশ্চিত করা
+  ensureSuppliersSheet(spreadsheet);
+
+  // ২.৭ PurchaseOrders (পারচেজ অর্ডার ও ইনবাউন্ড প্রকিউরমেন্ট) শিট নিশ্চিত করা
+  ensurePurchaseOrdersSheet(spreadsheet);
+
+  // ২.৮ SupplierLedger (সাপ্লায়ার দেনার খাতা ও লেজার) শিট নিশ্চিত করা
+  ensureSupplierLedgerSheet(spreadsheet);
 
   // ৩. Products শিটের সকল কলাম (SellingPrice সহ) নিশ্চিত করা
   const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
@@ -2477,6 +2589,9 @@ function doGet(e) {
       const orders = getSheetRowsAsObjects(SHEETS.ORDERS);
       const customerLedger = getSheetRowsAsObjects(SHEETS.CUSTOMER_LEDGER);
       const abandonedCarts = getSheetRowsAsObjects(SHEETS.ABANDONED_CARTS);
+      const suppliers = getSheetRowsAsObjects(SHEETS.SUPPLIERS);
+      const purchaseOrders = getSheetRowsAsObjects(SHEETS.PURCHASE_ORDERS);
+      const supplierLedger = getSheetRowsAsObjects(SHEETS.SUPPLIER_LEDGER);
       const users = getSheetRowsAsObjects(SHEETS.USERS).map(user => {
         return {
           UserID: user.UserID,
@@ -2512,6 +2627,9 @@ function doGet(e) {
           customers: customers,
           customerLedger: customerLedger,
           abandonedCarts: abandonedCarts,
+          suppliers: suppliers,
+          purchaseOrders: purchaseOrders,
+          supplierLedger: supplierLedger,
           coupons: coupons,
           sales: sales,
           orders: orders,
@@ -2833,6 +2951,26 @@ function doPost(e) {
 
       case 'updateCustomerLoyalty':
         result = handleUpdateCustomerLoyalty(spreadsheet, payload);
+        break;
+
+      case 'saveSupplier':
+        result = handleSaveSupplier(spreadsheet, payload);
+        break;
+
+      case 'deleteSupplier':
+        result = handleDeleteSupplier(spreadsheet, payload);
+        break;
+
+      case 'createPurchaseOrder':
+        result = handleCreatePurchaseOrder(spreadsheet, payload);
+        break;
+
+      case 'updatePOStatus':
+        result = handleUpdatePOStatus(spreadsheet, payload);
+        break;
+
+      case 'recordSupplierPayment':
+        result = handleRecordSupplierPayment(spreadsheet, payload);
         break;
 
       default:
@@ -4546,6 +4684,511 @@ function handleSendSmsNotification(spreadsheet, payload) {
       message: `SMS পাঠাতে ব্যর্থ: ${err.message}`
     };
   }
+}
+
+/**
+ * ============================================================================
+ * Phase 4: সাপ্লায়ার ও পারচেজ অর্ডার (PO) হ্যান্ডলারসমূহ
+ * ============================================================================
+ */
+
+/**
+ * সাপ্লায়ার তৈরি বা আপডেট করার হ্যান্ডলার
+ */
+function handleSaveSupplier(spreadsheet, payload) {
+  const suppliersSheet = ensureSuppliersSheet(spreadsheet);
+  const companyName = String(payload.companyName || payload.CompanyName || '').trim();
+  const contactPerson = String(payload.contactPerson || payload.ContactPerson || '').trim();
+  const phone = String(payload.phone || payload.Phone || '').trim();
+  const email = String(payload.email || payload.Email || '').trim();
+  const address = String(payload.address || payload.Address || '').trim();
+  const notes = String(payload.notes || payload.Notes || '').trim();
+  let supplierId = String(payload.supplierId || payload.SupplierID || '').trim();
+
+  if (!companyName && !contactPerson) {
+    return { success: false, message: 'প্রতিষ্ঠানের নাম অথবা যোগাযোগের ব্যক্তির নাম আবশ্যক।' };
+  }
+
+  const existingSuppliers = getSheetRowsAsObjects(SHEETS.SUPPLIERS);
+  const existing = existingSuppliers.find(s => 
+    (supplierId && String(s.SupplierID || '').trim() === supplierId) ||
+    (phone && String(s.Phone || '').trim() === phone)
+  );
+
+  const lastCol = suppliersSheet.getLastColumn();
+  const headers = suppliersSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+
+  const colMap = {
+    SupplierID: findCol(headers, 'SupplierID', 'ID'),
+    CompanyName: findCol(headers, 'CompanyName', 'Company'),
+    ContactPerson: findCol(headers, 'ContactPerson', 'Person', 'Name'),
+    Phone: findCol(headers, 'Phone', 'Mobile'),
+    Email: findCol(headers, 'Email'),
+    Address: findCol(headers, 'Address'),
+    TotalPurchased: findCol(headers, 'TotalPurchased'),
+    TotalPaid: findCol(headers, 'TotalPaid'),
+    CurrentPayable: findCol(headers, 'CurrentPayable', 'Payable', 'Due'),
+    Notes: findCol(headers, 'Notes'),
+    CreatedAt: findCol(headers, 'CreatedAt'),
+    UpdatedAt: findCol(headers, 'UpdatedAt')
+  };
+
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  if (existing && existing._rowIndex) {
+    if (companyName && colMap.CompanyName !== -1) suppliersSheet.getRange(existing._rowIndex, colMap.CompanyName + 1).setValue(companyName);
+    if (contactPerson && colMap.ContactPerson !== -1) suppliersSheet.getRange(existing._rowIndex, colMap.ContactPerson + 1).setValue(contactPerson);
+    if (phone && colMap.Phone !== -1) suppliersSheet.getRange(existing._rowIndex, colMap.Phone + 1).setValue(phone);
+    if (email && colMap.Email !== -1) suppliersSheet.getRange(existing._rowIndex, colMap.Email + 1).setValue(email);
+    if (address && colMap.Address !== -1) suppliersSheet.getRange(existing._rowIndex, colMap.Address + 1).setValue(address);
+    if (notes && colMap.Notes !== -1) suppliersSheet.getRange(existing._rowIndex, colMap.Notes + 1).setValue(notes);
+    if (colMap.UpdatedAt !== -1) suppliersSheet.getRange(existing._rowIndex, colMap.UpdatedAt + 1).setValue(timestampStr);
+
+    SpreadsheetApp.flush();
+    return {
+      success: true,
+      message: `'${companyName || contactPerson}' সাপ্লায়ার তথ্য সফলভাবে আপডেট হয়েছে।`,
+      data: {
+        ...existing,
+        CompanyName: companyName || existing.CompanyName,
+        ContactPerson: contactPerson || existing.ContactPerson,
+        Phone: phone || existing.Phone,
+        Email: email || existing.Email,
+        Address: address || existing.Address,
+        Notes: notes || existing.Notes,
+        UpdatedAt: timestampStr
+      }
+    };
+  }
+
+  if (!supplierId) {
+    supplierId = generateUniqueId('SUP');
+  }
+
+  const newRow = new Array(headers.length).fill('');
+  if (colMap.SupplierID !== -1) newRow[colMap.SupplierID] = supplierId;
+  if (colMap.CompanyName !== -1) newRow[colMap.CompanyName] = companyName;
+  if (colMap.ContactPerson !== -1) newRow[colMap.ContactPerson] = contactPerson;
+  if (colMap.Phone !== -1) newRow[colMap.Phone] = phone;
+  if (colMap.Email !== -1) newRow[colMap.Email] = email;
+  if (colMap.Address !== -1) newRow[colMap.Address] = address;
+  if (colMap.TotalPurchased !== -1) newRow[colMap.TotalPurchased] = Number(payload.totalPurchased || 0);
+  if (colMap.TotalPaid !== -1) newRow[colMap.TotalPaid] = Number(payload.totalPaid || 0);
+  if (colMap.CurrentPayable !== -1) newRow[colMap.CurrentPayable] = Number(payload.currentPayable || 0);
+  if (colMap.Notes !== -1) newRow[colMap.Notes] = notes;
+  if (colMap.CreatedAt !== -1) newRow[colMap.CreatedAt] = timestampStr;
+  if (colMap.UpdatedAt !== -1) newRow[colMap.UpdatedAt] = timestampStr;
+
+  suppliersSheet.appendRow(newRow);
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: `'${companyName || contactPerson}' নতুন সাপ্লায়ার হিসেবে সফলভাবে নিবন্ধিত হয়েছে।`,
+    data: {
+      SupplierID: supplierId,
+      CompanyName: companyName,
+      ContactPerson: contactPerson,
+      Phone: phone,
+      Email: email,
+      Address: address,
+      TotalPurchased: Number(payload.totalPurchased || 0),
+      TotalPaid: Number(payload.totalPaid || 0),
+      CurrentPayable: Number(payload.currentPayable || 0),
+      Notes: notes,
+      CreatedAt: timestampStr,
+      UpdatedAt: timestampStr
+    }
+  };
+}
+
+/**
+ * সাপ্লায়ার মুছে ফেলার হ্যান্ডলার
+ */
+function handleDeleteSupplier(spreadsheet, payload) {
+  const suppliersSheet = ensureSuppliersSheet(spreadsheet);
+  const supplierId = String(payload.supplierId || payload.SupplierID || '').trim();
+
+  if (!supplierId) {
+    return { success: false, message: 'সাপ্লায়ার আইডি দেওয়া আবশ্যক।' };
+  }
+
+  const suppliers = getSheetRowsAsObjects(SHEETS.SUPPLIERS);
+  const target = suppliers.find(s => String(s.SupplierID || '').trim() === supplierId);
+
+  if (!target || !target._rowIndex) {
+    return { success: false, message: 'সাপ্লায়ার ডাটাবেসে পাওয়া যায়নি।' };
+  }
+
+  suppliersSheet.deleteRow(target._rowIndex);
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: 'সাপ্লায়ার সফলভাবে মুছে ফেলা হয়েছে।'
+  };
+}
+
+/**
+ * পারচেজ অর্ডার (PO) তৈরি করার হ্যান্ডলার
+ * (যদি Status === 'Received' হয় তবে সাথে সাথেই Products শিটে স্টক যোগ করা এবং StockLogs এ অডিট এন্ট্রি সংরক্ষণ)
+ */
+function handleCreatePurchaseOrder(spreadsheet, payload) {
+  const poSheet = ensurePurchaseOrdersSheet(spreadsheet);
+  const suppliersSheet = ensureSuppliersSheet(spreadsheet);
+  const ledgerSheet = ensureSupplierLedgerSheet(spreadsheet);
+  const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
+  const stockLogsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.STOCK_LOGS);
+
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+  const poId = String(payload.poId || payload.PO_ID || `PO-${now.getTime().toString().slice(-6)}`).trim();
+  const supplierId = String(payload.supplierId || payload.SupplierID || '').trim();
+  const supplierName = String(payload.supplierName || payload.SupplierName || '').trim();
+  const supplierPhone = String(payload.supplierPhone || payload.SupplierPhone || '').trim();
+  const paymentMethod = String(payload.paymentMethod || payload.PaymentMethod || 'Cash').trim();
+  const status = String(payload.status || payload.Status || 'Ordered').trim();
+  const receivedBy = String(payload.receivedBy || payload.ReceivedBy || 'Admin').trim();
+  const notes = String(payload.notes || payload.Notes || '').trim();
+
+  const items = Array.isArray(payload.items) ? payload.items : (Array.isArray(payload.Items) ? payload.Items : []);
+  const itemsJson = JSON.stringify(items);
+
+  const totalAmount = Number(payload.totalAmount !== undefined ? payload.totalAmount : payload.TotalAmount) || 0;
+  const paidAmount = Number(payload.paidAmount !== undefined ? payload.paidAmount : payload.PaidAmount) || 0;
+  const dueAmount = Number(payload.dueAmount !== undefined ? payload.dueAmount : (totalAmount - paidAmount)) || 0;
+
+  // ১. PurchaseOrders শিটে নতুন রেকর্ড সেভ
+  poSheet.appendRow([
+    poId,
+    timestampStr,
+    supplierId,
+    supplierName,
+    supplierPhone,
+    itemsJson,
+    totalAmount,
+    paidAmount,
+    dueAmount,
+    paymentMethod,
+    status,
+    status === 'Received' ? receivedBy : '',
+    status === 'Received' ? timestampStr : '',
+    notes,
+    timestampStr,
+    timestampStr
+  ]);
+
+  // ২. যদি পারচেজ অর্ডারটি রিসিভড (Received) অবস্থায় তৈরি হয়, তবে তাৎক্ষণিক পণ্য স্টক বৃদ্ধি (Auto-Restock)
+  if (status === 'Received' && items.length > 0 && productsSheet) {
+    try {
+      const pData = productsSheet.getDataRange().getValues();
+      const pHeaders = pData[0];
+      const pIdCol = findCol(pHeaders, 'ProductID', 'ID');
+      const pCostCol = findCol(pHeaders, 'CostPrice', 'Cost', 'BuyPrice');
+      const pStockCol = findCol(pHeaders, 'StockQuantity', 'Stock', 'Quantity', 'Qty');
+      const pUpdatedCol = findCol(pHeaders, 'UpdatedAt');
+
+      items.forEach(item => {
+        const prodId = String(item.productId || item.ProductID || '').trim();
+        const incomingQty = Number(item.quantity || item.Quantity || 0);
+        const unitCost = Number(item.costPrice !== undefined ? item.costPrice : (item.CostPrice !== undefined ? item.CostPrice : item.unitCost)) || 0;
+
+        if (prodId && incomingQty > 0) {
+          for (let r = 1; r < pData.length; r++) {
+            if (String(pData[r][pIdCol]).trim() === prodId) {
+              const currentStock = Number(pData[r][pStockCol]) || 0;
+              const currentCost = Number(pData[r][pCostCol]) || 0;
+              const newStock = currentStock + incomingQty;
+
+              // ওয়েইটেড এভারেজ কস্ট
+              let newCost = currentCost;
+              if (unitCost > 0 && newStock > 0) {
+                newCost = parseFloat((((currentStock * currentCost) + (incomingQty * unitCost)) / newStock).toFixed(2));
+              }
+
+              if (pStockCol !== -1) productsSheet.getRange(r + 1, pStockCol + 1).setValue(newStock);
+              if (pCostCol !== -1 && unitCost > 0) productsSheet.getRange(r + 1, pCostCol + 1).setValue(newCost);
+              if (pUpdatedCol !== -1) productsSheet.getRange(r + 1, pUpdatedCol + 1).setValue(now);
+
+              // StockLogs শিটে ইনভেন্টরি ট্র্যাকিং
+              if (stockLogsSheet) {
+                stockLogsSheet.appendRow([
+                  generateUniqueId('STKLOG'),
+                  now,
+                  prodId,
+                  item.productName || item.ProductName || '',
+                  'PO Purchase / Restock',
+                  currentStock,
+                  incomingQty,
+                  newStock,
+                  unitCost || newCost,
+                  supplierName || 'Vendor',
+                  receivedBy,
+                  poId,
+                  `PO ${poId} ক্রয়ের মাধ্যমে স্বয়ংক্রিয় স্টক বৃদ্ধি`
+                ]);
+              }
+              break;
+            }
+          }
+        }
+      });
+    } catch (restockErr) {
+      Logger.log('PO auto restock warning: ' + restockErr.message);
+    }
+  }
+
+  // ৩. সাপ্লায়ার ব্যালেন্স ও লেজার আপডেট (Supplier Ledger & Balance Persistence)
+  if (supplierId || supplierName) {
+    const suppliers = getSheetRowsAsObjects(SHEETS.SUPPLIERS);
+    const targetSup = suppliers.find(s => 
+      (supplierId && String(s.SupplierID || '').trim() === supplierId) ||
+      (supplierName && String(s.CompanyName || s.ContactPerson || '').trim().toLowerCase() === supplierName.toLowerCase())
+    );
+
+    let currentPayable = 0;
+    if (targetSup && targetSup._rowIndex) {
+      const sHeaders = suppliersSheet.getRange(1, 1, 1, suppliersSheet.getLastColumn()).getValues()[0];
+      const purCol = findCol(sHeaders, 'TotalPurchased');
+      const paidCol = findCol(sHeaders, 'TotalPaid');
+      const dueCol = findCol(sHeaders, 'CurrentPayable', 'Payable', 'Due');
+      const updatedCol = findCol(sHeaders, 'UpdatedAt');
+
+      const prevPurchased = Number(targetSup.TotalPurchased || 0);
+      const prevPaid = Number(targetSup.TotalPaid || 0);
+      const prevDue = Number(targetSup.CurrentPayable || 0);
+
+      const newPurchased = prevPurchased + totalAmount;
+      const newPaid = prevPaid + paidAmount;
+      currentPayable = Math.max(0, prevDue + dueAmount);
+
+      if (purCol !== -1) suppliersSheet.getRange(targetSup._rowIndex, purCol + 1).setValue(newPurchased);
+      if (paidCol !== -1) suppliersSheet.getRange(targetSup._rowIndex, paidCol + 1).setValue(newPaid);
+      if (dueCol !== -1) suppliersSheet.getRange(targetSup._rowIndex, dueCol + 1).setValue(currentPayable);
+      if (updatedCol !== -1) suppliersSheet.getRange(targetSup._rowIndex, updatedCol + 1).setValue(timestampStr);
+    }
+
+    // ৪. SupplierLedger শিটে এন্ট্রি যুক্ত করা
+    ledgerSheet.appendRow([
+      generateUniqueId('SUP-LED'),
+      timestampStr,
+      supplierId || (targetSup ? targetSup.SupplierID : ''),
+      supplierName || (targetSup ? (targetSup.CompanyName || targetSup.ContactPerson) : ''),
+      supplierPhone,
+      poId,
+      'Purchase',
+      paidAmount, // Debit: পরিশোধিত টাকা
+      totalAmount, // Credit: বিলের মোট টাকা
+      currentPayable, // Balance: বর্তমান নেট দেনা
+      paymentMethod,
+      payload.transactionRef || payload.TrxID || '',
+      receivedBy,
+      notes || `পারচেজ অর্ডার ${poId}`
+    ]);
+  }
+
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: `পারচেজ অর্ডার ${poId} সফলভাবে সম্পন্ন হয়েছে!`,
+    data: {
+      poId: poId,
+      status: status
+    }
+  };
+}
+
+/**
+ * পারচেজ অর্ডার স্ট্যাটাস আপডেট (যেমন: Ordered -> Received এ নেওয়া ও স্টক অটো-ইনপুট)
+ */
+function handleUpdatePOStatus(spreadsheet, payload) {
+  const poSheet = ensurePurchaseOrdersSheet(spreadsheet);
+  const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
+  const stockLogsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.STOCK_LOGS);
+
+  const poId = String(payload.poId || payload.PO_ID || '').trim();
+  const newStatus = String(payload.status || payload.Status || '').trim();
+  const receivedBy = String(payload.receivedBy || payload.ReceivedBy || 'Admin').trim();
+
+  if (!poId || !newStatus) {
+    return { success: false, message: 'PO ID এবং নতুন স্ট্যাটাস আবশ্যক।' };
+  }
+
+  const poData = getSheetRowsAsObjects(SHEETS.PURCHASE_ORDERS);
+  const targetPO = poData.find(p => String(p.PO_ID || '').trim() === poId);
+
+  if (!targetPO || !targetPO._rowIndex) {
+    return { success: false, message: 'পারচেজ অর্ডার পাওয়া যায়নি।' };
+  }
+
+  const prevStatus = String(targetPO.Status || '').trim();
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  const headers = poSheet.getRange(1, 1, 1, poSheet.getLastColumn()).getValues()[0];
+  const statusCol = findCol(headers, 'Status');
+  const receivedByCol = findCol(headers, 'ReceivedBy');
+  const receivedAtCol = findCol(headers, 'ReceivedAt');
+  const updatedCol = findCol(headers, 'UpdatedAt');
+
+  if (statusCol !== -1) poSheet.getRange(targetPO._rowIndex, statusCol + 1).setValue(newStatus);
+  if (newStatus === 'Received') {
+    if (receivedByCol !== -1) poSheet.getRange(targetPO._rowIndex, receivedByCol + 1).setValue(receivedBy);
+    if (receivedAtCol !== -1) poSheet.getRange(targetPO._rowIndex, receivedAtCol + 1).setValue(timestampStr);
+
+    // যদি পূর্বে Received না হয়ে থাকে, তবে এখন স্টক বৃদ্ধি করা (Auto-Restock)
+    if (prevStatus !== 'Received' && productsSheet) {
+      try {
+        let items = [];
+        if (typeof targetPO.ItemsJSON === 'string') {
+          items = JSON.parse(targetPO.ItemsJSON);
+        } else if (Array.isArray(targetPO.ItemsJSON)) {
+          items = targetPO.ItemsJSON;
+        }
+
+        if (Array.isArray(items) && items.length > 0) {
+          const pData = productsSheet.getDataRange().getValues();
+          const pHeaders = pData[0];
+          const pIdCol = findCol(pHeaders, 'ProductID', 'ID');
+          const pCostCol = findCol(pHeaders, 'CostPrice', 'Cost', 'BuyPrice');
+          const pStockCol = findCol(pHeaders, 'StockQuantity', 'Stock');
+          const pUpdatedCol = findCol(pHeaders, 'UpdatedAt');
+
+          items.forEach(item => {
+            const prodId = String(item.productId || item.ProductID || '').trim();
+            const incomingQty = Number(item.quantity || item.Quantity || 0);
+            const unitCost = Number(item.costPrice !== undefined ? item.costPrice : (item.CostPrice !== undefined ? item.CostPrice : item.unitCost)) || 0;
+
+            if (prodId && incomingQty > 0) {
+              for (let r = 1; r < pData.length; r++) {
+                if (String(pData[r][pIdCol]).trim() === prodId) {
+                  const currentStock = Number(pData[r][pStockCol]) || 0;
+                  const currentCost = Number(pData[r][pCostCol]) || 0;
+                  const newStock = currentStock + incomingQty;
+
+                  let newCost = currentCost;
+                  if (unitCost > 0 && newStock > 0) {
+                    newCost = parseFloat((((currentStock * currentCost) + (incomingQty * unitCost)) / newStock).toFixed(2));
+                  }
+
+                  if (pStockCol !== -1) productsSheet.getRange(r + 1, pStockCol + 1).setValue(newStock);
+                  if (pCostCol !== -1 && unitCost > 0) productsSheet.getRange(r + 1, pCostCol + 1).setValue(newCost);
+                  if (pUpdatedCol !== -1) productsSheet.getRange(r + 1, pUpdatedCol + 1).setValue(now);
+
+                  if (stockLogsSheet) {
+                    stockLogsSheet.appendRow([
+                      generateUniqueId('STKLOG'),
+                      now,
+                      prodId,
+                      item.productName || item.ProductName || '',
+                      'PO Received',
+                      currentStock,
+                      incomingQty,
+                      newStock,
+                      unitCost || newCost,
+                      targetPO.SupplierName || 'Supplier',
+                      receivedBy,
+                      poId,
+                      `PO ${poId} রিসিভ করে স্টকে যোগ করা হয়েছে`
+                    ]);
+                  }
+                  break;
+                }
+              }
+            }
+          });
+        }
+      } catch (e) {
+        Logger.log('Update PO restock error: ' + e);
+      }
+    }
+  }
+
+  if (updatedCol !== -1) poSheet.getRange(targetPO._rowIndex, updatedCol + 1).setValue(timestampStr);
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: `পারচেজ অর্ডার ${poId} স্ট্যাটাস '${newStatus}' আপডেট হয়েছে।`,
+    data: { poId: poId, status: newStatus }
+  };
+}
+
+/**
+ * সাপ্লায়ারের বকেয়া পাওনা পরিশোধ (Supplier Payment) হ্যান্ডলার
+ */
+function handleRecordSupplierPayment(spreadsheet, payload) {
+  const suppliersSheet = ensureSuppliersSheet(spreadsheet);
+  const ledgerSheet = ensureSupplierLedgerSheet(spreadsheet);
+
+  const supplierId = String(payload.supplierId || payload.SupplierID || '').trim();
+  const amount = Number(payload.amount || payload.Amount || 0);
+  const paymentMethod = String(payload.paymentMethod || payload.PaymentMethod || 'Cash').trim();
+  const trxId = String(payload.trxId || payload.TrxID || payload.transactionRef || '').trim();
+  const collectedBy = String(payload.collectedBy || payload.CollectedBy || 'Admin').trim();
+  const notes = String(payload.notes || payload.Notes || '').trim();
+
+  if (!supplierId || amount <= 0) {
+    return { success: false, message: 'সাপ্লায়ার আইডি এবং বৈধ পেমেন্ট পরিমাণ দিন।' };
+  }
+
+  const suppliers = getSheetRowsAsObjects(SHEETS.SUPPLIERS);
+  const target = suppliers.find(s => String(s.SupplierID || '').trim() === supplierId);
+
+  if (!target || !target._rowIndex) {
+    return { success: false, message: 'সাপ্লায়ার ডাটাবেসে পাওয়া যায়নি।' };
+  }
+
+  const headers = suppliersSheet.getRange(1, 1, 1, suppliersSheet.getLastColumn()).getValues()[0];
+  const paidCol = findCol(headers, 'TotalPaid');
+  const dueCol = findCol(headers, 'CurrentPayable', 'Payable', 'Due');
+  const updatedCol = findCol(headers, 'UpdatedAt');
+
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  const prevPaid = Number(target.TotalPaid || 0);
+  const prevDue = Number(target.CurrentPayable || 0);
+
+  const newPaid = prevPaid + amount;
+  const newDue = Math.max(0, prevDue - amount);
+
+  if (paidCol !== -1) suppliersSheet.getRange(target._rowIndex, paidCol + 1).setValue(newPaid);
+  if (dueCol !== -1) suppliersSheet.getRange(target._rowIndex, dueCol + 1).setValue(newDue);
+  if (updatedCol !== -1) suppliersSheet.getRange(target._rowIndex, updatedCol + 1).setValue(timestampStr);
+
+  // SupplierLedger এ পেমেন্ট এন্ট্রি
+  ledgerSheet.appendRow([
+    generateUniqueId('SUP-LED'),
+    timestampStr,
+    supplierId,
+    target.CompanyName || target.ContactPerson || '',
+    target.Phone || '',
+    payload.poId || payload.PO_ID || '',
+    'Payment',
+    amount, // Debit: পরিশোধিত টাকা
+    0,      // Credit: 0
+    newDue, // Balance: অবশিষ্ট দেনা
+    paymentMethod,
+    trxId,
+    collectedBy,
+    notes || 'সাপ্লায়ারের বকেয়া পরিশোধ'
+  ]);
+
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: `সাপ্লায়ারকে ৳${amount.toLocaleString('en-IN')} পরিশোধ সফলভাবে রেকর্ড হয়েছে। (অবশিষ্ট দেনা: ৳${newDue.toLocaleString('en-IN')})`,
+    data: {
+      supplierId: supplierId,
+      amount: amount,
+      totalPaid: newPaid,
+      currentPayable: newDue
+    }
+  };
 }
 
 
