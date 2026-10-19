@@ -27,6 +27,9 @@ import AbandonedCartModal from './components/AbandonedCartModal';
 import SuppliersModal from './components/SuppliersModal';
 import PurchaseOrdersModal from './components/PurchaseOrdersModal';
 import BarcodePrintModal from './components/BarcodePrintModal';
+import ExpensesModal from './components/ExpensesModal';
+import CashRegisterModal from './components/CashRegisterModal';
+import AuditLogsModal from './components/AuditLogsModal';
 
 import {
   getLocalSettings,
@@ -98,7 +101,20 @@ import {
   updatePurchaseOrderStatusLocally,
   getLocalSupplierLedger,
   saveLocalSupplierLedger,
-  recordSupplierLedgerEntryLocally
+  recordSupplierLedgerEntryLocally,
+  getLocalExpenses,
+  saveLocalExpenses,
+  saveOrUpdateExpenseLocally,
+  deleteExpenseLocally,
+  getLocalCashRegisters,
+  saveLocalCashRegisters,
+  getActiveCashRegister,
+  saveActiveCashRegister,
+  openCashRegisterLocally,
+  closeCashRegisterLocally,
+  getLocalAuditLogs,
+  saveLocalAuditLogs,
+  logAuditEventLocally
 } from './services/storage';
 
 import {
@@ -141,7 +157,12 @@ import {
   postDeleteSupplier,
   postCreatePurchaseOrder,
   postUpdatePOStatus,
-  postRecordSupplierPayment
+  postRecordSupplierPayment,
+  postSaveExpense,
+  postDeleteExpense,
+  postOpenCashRegister,
+  postCloseCashRegister,
+  postLogAuditEvent
 } from './services/api';
 
 export default function App() {
@@ -207,6 +228,33 @@ export default function App() {
     }
   });
 
+  // ফেজ ৫: খরচের খাতা, দৈনিক ক্যাশ ড্রয়ার ও অডিট ট্রেইল স্টেট
+  const [expenses, setExpenses] = useState(() => {
+    try {
+      const exp = getLocalExpenses();
+      return Array.isArray(exp) ? exp : [];
+    } catch {
+      return [];
+    }
+  });
+  const [cashRegisters, setCashRegisters] = useState(() => {
+    try {
+      const cr = getLocalCashRegisters();
+      return Array.isArray(cr) ? cr : [];
+    } catch {
+      return [];
+    }
+  });
+  const [activeRegister, setActiveRegister] = useState(getActiveCashRegister);
+  const [auditLogs, setAuditLogs] = useState(() => {
+    try {
+      const al = getLocalAuditLogs();
+      return Array.isArray(al) ? al : [];
+    } catch {
+      return [];
+    }
+  });
+
   // ভিউ নেভিগেশন স্টেট ('pos' | 'cart' | 'checkout')
   const [currentView, setCurrentView] = useState('pos');
   const [discountAmount, setDiscountAmount] = useState(0);
@@ -218,6 +266,9 @@ export default function App() {
   const [isSuppliersModalOpen, setIsSuppliersModalOpen] = useState(false);
   const [isPurchaseOrdersModalOpen, setIsPurchaseOrdersModalOpen] = useState(false);
   const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+  const [isExpensesModalOpen, setIsExpensesModalOpen] = useState(false);
+  const [isCashRegisterModalOpen, setIsCashRegisterModalOpen] = useState(false);
+  const [isAuditLogsModalOpen, setIsAuditLogsModalOpen] = useState(false);
 
   // পেন্ডিং অসম্পূর্ণ কার্ট গণনা
   const pendingAbandonedCartsCount = useMemo(() => {
@@ -737,6 +788,27 @@ export default function App() {
       if (data && data.supplierLedger && Array.isArray(data.supplierLedger)) {
         setSupplierLedger(data.supplierLedger);
         saveLocalSupplierLedger(data.supplierLedger);
+      }
+
+      // ফেজ ৫: খরচের খাতা ডাটাবেস আপডেট (গুগল শিট Expenses ট্যাব)
+      if (data && data.expenses && Array.isArray(data.expenses)) {
+        setExpenses(data.expenses);
+        saveLocalExpenses(data.expenses);
+      }
+
+      // ফেজ ৫: ক্যাশ রেজিস্টার ডাটাবেস আপডেট (গুগল শিট CashRegister ট্যাব)
+      if (data && data.cashRegisters && Array.isArray(data.cashRegisters)) {
+        setCashRegisters(data.cashRegisters);
+        saveLocalCashRegisters(data.cashRegisters);
+        const openSession = data.cashRegisters.find(r => String(r.Status || '').trim().toLowerCase() === 'open');
+        setActiveRegister(openSession || null);
+        saveActiveCashRegister(openSession || null);
+      }
+
+      // ফেজ ৫: অডিট ট্রেইল ডাটাবেস আপডেট (গুগল শিট AuditLogs ট্যাব)
+      if (data && data.auditLogs && Array.isArray(data.auditLogs)) {
+        setAuditLogs(data.auditLogs);
+        saveLocalAuditLogs(data.auditLogs);
       }
 
       setSyncStatus('online');
@@ -1843,6 +1915,140 @@ export default function App() {
     }
   };
 
+  // ফেজ ৫: খরচের ভাউচার সংরক্ষণ
+  const handleSaveExpense = async (expenseData) => {
+    try {
+      const updatedExpenses = saveOrUpdateExpenseLocally(expenseData);
+      setExpenses(updatedExpenses);
+
+      // অডিট লগ
+      const logEntry = logAuditEventLocally({
+        userId: activeUser?.UserID || 'ADMIN',
+        userName: activeUser?.FullName || 'Admin',
+        userRole: activeUser?.Role || 'Admin',
+        actionType: 'EXPENSE',
+        module: 'Expenses',
+        description: `নতুন খরচের ভাউচার এন্ট্রি: ${expenseData.Category} - ৳${(Number(expenseData.Amount) || 0).toLocaleString('en-IN')}`,
+        details: expenseData
+      });
+      setAuditLogs(getLocalAuditLogs());
+
+      showToast(`৳${(Number(expenseData.Amount) || 0).toLocaleString('en-IN')} খরচ সফলভাবে সংরক্ষিত হয়েছে!`, 'success');
+
+      if (settings.apiUrl) {
+        try {
+          await postSaveExpense(settings.apiUrl, expenseData);
+          postLogAuditEvent(settings.apiUrl, logEntry).catch(() => {});
+        } catch (apiErr) {
+          console.warn('Expense sync delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`খরচ সংরক্ষণ ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
+  // ফেজ ৫: খরচের ভাউচার মুছে ফেলা
+  const handleDeleteExpense = async (expenseId) => {
+    try {
+      const updatedExpenses = deleteExpenseLocally(expenseId);
+      setExpenses(updatedExpenses);
+
+      // অডিট লগ
+      const logEntry = logAuditEventLocally({
+        userId: activeUser?.UserID || 'ADMIN',
+        userName: activeUser?.FullName || 'Admin',
+        userRole: activeUser?.Role || 'Admin',
+        actionType: 'DELETE',
+        module: 'Expenses',
+        description: `খরচের ভাউচার অপসারণ: ${expenseId}`,
+        details: { expenseId }
+      });
+      setAuditLogs(getLocalAuditLogs());
+
+      showToast('খরচের ভাউচারটি সফলভাবে মুছে ফেলা হয়েছে!', 'info');
+
+      if (settings.apiUrl) {
+        try {
+          await postDeleteExpense(settings.apiUrl, expenseId);
+          postLogAuditEvent(settings.apiUrl, logEntry).catch(() => {});
+        } catch (apiErr) {
+          console.warn('Expense delete sync delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`খরচ ডিলিট ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
+  // ফেজ ৫: সকালের ক্যাশ রেজিস্টার সেশন ওপেন
+  const handleOpenCashRegister = async (sessionData) => {
+    try {
+      const newSession = openCashRegisterLocally(sessionData);
+      setActiveRegister(newSession);
+      setCashRegisters(getLocalCashRegisters());
+
+      // অডিট লগ
+      const logEntry = logAuditEventLocally({
+        userId: activeUser?.UserID || 'ADMIN',
+        userName: activeUser?.FullName || 'Admin',
+        userRole: activeUser?.Role || 'Admin',
+        actionType: 'REGISTER',
+        module: 'CashRegister',
+        description: `সকালের ক্যাশ রেজিস্টার খোলা হয়েছে (প্রারম্ভিক ব্যালেন্স: ৳${(Number(sessionData.openingBalance) || 0).toLocaleString('en-IN')})`,
+        details: sessionData
+      });
+      setAuditLogs(getLocalAuditLogs());
+
+      showToast('ক্যাশ রেজিস্টার সফলভাবে চালু হয়েছে!', 'success');
+
+      if (settings.apiUrl) {
+        try {
+          await postOpenCashRegister(settings.apiUrl, sessionData);
+          postLogAuditEvent(settings.apiUrl, logEntry).catch(() => {});
+        } catch (apiErr) {
+          console.warn('Open register sync delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`রেজিস্টার ওপেন ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
+  // ফেজ ৫: দিন শেষে ক্যাশ রেজিস্টার ক্লোজ ও EOD
+  const handleCloseCashRegister = async (closingData) => {
+    try {
+      const closedSession = closeCashRegisterLocally(closingData);
+      setActiveRegister(null);
+      setCashRegisters(getLocalCashRegisters());
+
+      // অডিট লগ
+      const logEntry = logAuditEventLocally({
+        userId: activeUser?.UserID || 'ADMIN',
+        userName: activeUser?.FullName || 'Admin',
+        userRole: activeUser?.Role || 'Admin',
+        actionType: 'REGISTER',
+        module: 'CashRegister',
+        description: `দিন শেষে ক্যাশ রেজিস্টার ক্লোজ সম্পন্ন (প্রত্যাশিত: ৳${closingData.expectedCash}, বাস্তবে: ৳${closingData.actualCash}, পার্থক্য: ৳${closingData.difference})`,
+        details: closingData
+      });
+      setAuditLogs(getLocalAuditLogs());
+
+      showToast('ক্যাশ রেজিস্টার ক্লোজ ও EOD রিপোর্ট সংরক্ষণ সম্পন্ন!', 'success');
+
+      if (settings.apiUrl) {
+        try {
+          await postCloseCashRegister(settings.apiUrl, closingData);
+          postLogAuditEvent(settings.apiUrl, logEntry).catch(() => {});
+        } catch (apiErr) {
+          console.warn('Close register sync delayed:', apiErr);
+        }
+      }
+    } catch (err) {
+      showToast(`রেজিস্টার ক্লোজ ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
   // ৭. অতীত ইনভয়েস রি-প্রিন্ট ওপেন করা
   const handleOpenReprintInvoice = (sale) => {
     setActiveInvoiceData(sale);
@@ -2230,6 +2436,11 @@ export default function App() {
             onOpenSuppliersModal={() => setIsSuppliersModalOpen(true)}
             onOpenPurchaseOrdersModal={() => setIsPurchaseOrdersModalOpen(true)}
             onOpenBarcodeModal={() => setIsBarcodeModalOpen(true)}
+            onOpenExpensesModal={() => setIsExpensesModalOpen(true)}
+            onOpenCashRegisterModal={() => setIsCashRegisterModalOpen(true)}
+            onOpenAuditLogsModal={() => setIsAuditLogsModalOpen(true)}
+            isRegisterOpen={Boolean(activeRegister && activeRegister.Status === 'Open')}
+            expensesCount={expenses.length}
             abandonedCartsCount={pendingAbandonedCartsCount}
             onOpenAbandonedCartModal={() => setIsAbandonedCartModalOpen(true)}
             onOpenUsersModal={() => setIsUsersModalOpen(true)}
@@ -2404,6 +2615,7 @@ export default function App() {
         categories={categories}
         customers={customers}
         customerLedger={customerLedger}
+        expenses={expenses}
         currencySymbol={settings.CurrencySymbol || '৳'}
         storeSettings={settings}
         onRefreshSales={handleRefreshSales}
@@ -2650,6 +2862,41 @@ export default function App() {
         products={products}
         currencySymbol={settings.CurrencySymbol || '৳'}
         storeName={settings.StoreName || 'Pabna Bostraloy'}
+      />
+
+      {/* ফেজ ৫: দৈনন্দিন খরচের খাতা মডাল */}
+      <ExpensesModal
+        isOpen={isExpensesModalOpen}
+        onClose={() => setIsExpensesModalOpen(false)}
+        expenses={expenses}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        activeUser={activeUser}
+        onSaveExpense={handleSaveExpense}
+        onDeleteExpense={handleDeleteExpense}
+      />
+
+      {/* ফেজ ৫: দৈনিক ক্যাশ ড্রয়ার ও EOD ক্লোজিং মডাল */}
+      <CashRegisterModal
+        isOpen={isCashRegisterModalOpen}
+        onClose={() => setIsCashRegisterModalOpen(false)}
+        activeRegister={activeRegister}
+        cashRegisters={cashRegisters}
+        salesHistory={salesHistory}
+        customerLedger={customerLedger}
+        supplierLedger={supplierLedger}
+        expenses={expenses}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        activeUser={activeUser}
+        storeSettings={settings}
+        onOpenRegister={handleOpenCashRegister}
+        onCloseRegister={handleCloseCashRegister}
+      />
+
+      {/* ফেজ ৫: অ্যাক্টিভিটি ও সিকিউরিটি অডিট ট্রেইল মডাল */}
+      <AuditLogsModal
+        isOpen={isAuditLogsModalOpen}
+        onClose={() => setIsAuditLogsModalOpen(false)}
+        auditLogs={auditLogs}
       />
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}

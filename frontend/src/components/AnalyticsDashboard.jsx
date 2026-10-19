@@ -43,6 +43,7 @@ export default function AnalyticsDashboard({
   categories = [],
   customers = [],
   customerLedger = [],
+  expenses = [],
   currencySymbol = '৳',
   storeSettings = {},
   onRefreshSales
@@ -568,6 +569,50 @@ export default function AnalyticsDashboard({
       };
     }).sort((a, b) => b.profit - a.profit);
 
+    // ৮. এই সময়কালে মোট দোকানের খরচ (Operating Expenses):
+    let periodExpenses = 0;
+    const nowDate = new Date();
+    const todayStr = nowDate.toISOString().split('T')[0];
+    const yesterdayDate = new Date(nowDate);
+    yesterdayDate.setDate(nowDate.getDate() - 1);
+    const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+    const sevenDaysAgoDate = new Date(nowDate);
+    sevenDaysAgoDate.setDate(nowDate.getDate() - 7);
+    const lastMonthYear = nowDate.getMonth() === 0 ? nowDate.getFullYear() - 1 : nowDate.getFullYear();
+    const lastMonthIdx = nowDate.getMonth() === 0 ? 11 : nowDate.getMonth() - 1;
+
+    (Array.isArray(expenses) ? expenses : []).forEach(exp => {
+      const expDateStr = String(exp.Date || exp.date || '');
+      if (!expDateStr) return;
+      const expDate = new Date(expDateStr);
+      if (isNaN(expDate.getTime())) return;
+
+      let matches = false;
+      if (filterRange === 'today') matches = (expDateStr === todayStr);
+      else if (filterRange === 'yesterday') matches = (expDateStr === yesterdayStr);
+      else if (filterRange === '7days') matches = (expDate >= sevenDaysAgoDate && expDate <= nowDate);
+      else if (filterRange === 'month') matches = (expDate.getFullYear() === nowDate.getFullYear() && expDate.getMonth() === nowDate.getMonth());
+      else if (filterRange === 'lastMonth') matches = (expDate.getFullYear() === lastMonthYear && expDate.getMonth() === lastMonthIdx);
+      else if (filterRange === 'year') matches = (expDate.getFullYear() === nowDate.getFullYear());
+      else if (filterRange === 'all') matches = true;
+      else if (filterRange === 'custom') {
+        if (!customStartDate && !customEndDate) matches = true;
+        else {
+          const start = customStartDate ? new Date(customStartDate) : new Date('2000-01-01');
+          const end = customEndDate ? new Date(customEndDate) : new Date('2099-12-31');
+          end.setHours(23, 59, 59, 999);
+          matches = (expDate >= start && expDate <= end);
+        }
+      }
+
+      if (matches) {
+        periodExpenses += (Number(exp.Amount) || 0);
+      }
+    });
+
+    const grossProfit = bookedProfit;
+    const trueNetProfit = grossProfit - periodExpenses;
+
     // দৈনিক ট্রেন্ড সাজানো
     const dailyTrendList = Object.values(dateTrendMap)
       .filter((t) => t.date !== 'Unknown')
@@ -588,7 +633,10 @@ export default function AnalyticsDashboard({
       totalCOGS,
       totalTax,
       totalDiscount,
-      netProfit: bookedProfit, // backward-compatibility
+      totalExpenses: periodExpenses,
+      grossProfit,
+      trueNetProfit,
+      netProfit: trueNetProfit, // খরচ বাদ দিয়ে প্রকৃত নিট লাভ
       bookedProfit,
       realizedCashProfit,
       unrealizedDueProfit,
@@ -604,7 +652,7 @@ export default function AnalyticsDashboard({
       paymentMap,
       dailyTrendList
     };
-  }, [filteredSales, products, customers, dateFilteredLedgerPayments]);
+  }, [filteredSales, products, customers, dateFilteredLedgerPayments, expenses, filterRange, customStartDate, customEndDate]);
 
   // ফিল্টার ও সর্ট করা প্রোডাক্ট তালিকা
   const processedProductsList = useMemo(() => {

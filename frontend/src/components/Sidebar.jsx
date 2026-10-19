@@ -20,7 +20,9 @@ import {
   Truck,
   BookOpen,
   Barcode as BarcodeIcon,
-  Building2
+  Building2,
+  Coins,
+  ShieldAlert
 } from 'lucide-react';
 
 /**
@@ -51,6 +53,11 @@ export default function Sidebar({
   onOpenSuppliersModal,
   onOpenPurchaseOrdersModal,
   onOpenBarcodeModal,
+  onOpenExpensesModal,
+  onOpenCashRegisterModal,
+  onOpenAuditLogsModal,
+  isRegisterOpen = false,
+  expensesCount = 0,
   onOpenStockModal,
   onOpenProductModal,
   onOpenAnalyticsModal,
@@ -469,6 +476,77 @@ export default function Sidebar({
                     <BarcodeIcon className="w-4 h-4" />
                   </div>
                   {!isCollapsed && <span>বারকোড স্টিকার</span>}
+                </div>
+              </button>
+
+              {/* দোকানের দৈনন্দিন খরচের খাতা */}
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenExpensesModal)}
+                title="দোকানের ভাড়া, বিল, স্টাফ বেতন ও অন্যান্য ব্যয়"
+                className={`w-full flex items-center rounded-2xl text-xs font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-900 transition-all cursor-pointer group ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Receipt className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && <span>দোকানের খরচের খাতা</span>}
+                </div>
+                {!isCollapsed && expensesCount > 0 && (
+                  <span className="text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                    {expensesCount}
+                  </span>
+                )}
+              </button>
+
+              {/* দৈনিক ক্যাশ ড্রয়ার ও EOD ক্লোজিং */}
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenCashRegisterModal)}
+                title={isRegisterOpen ? 'ক্যাশ রেজিস্টার সক্রিয় রয়েছে - ড্রয়ার হিসাব ও ক্লোজিং' : 'দৈনিক ক্যাশ রেজিস্টার ক্লোজিং'}
+                className={`w-full flex items-center rounded-2xl text-xs font-bold transition-all cursor-pointer group relative ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+                } ${
+                  isRegisterOpen
+                    ? 'bg-emerald-50/80 text-emerald-950 border border-emerald-200/80 hover:bg-emerald-100'
+                    : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-900'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
+                    isRegisterOpen ? 'bg-emerald-600 text-white shadow-xs' : 'bg-emerald-100 text-emerald-700'
+                  }`}>
+                    <Coins className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && <span>ক্যাশ ড্রয়ার (EOD)</span>}
+                </div>
+                <span
+                  className={`${
+                    isCollapsed
+                      ? 'absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-white ' + (isRegisterOpen ? 'bg-emerald-500' : 'bg-slate-300')
+                      : 'px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ' + (isRegisterOpen ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-500')
+                  }`}
+                >
+                  {isCollapsed ? '' : (isRegisterOpen ? 'খোলা' : 'বন্ধ')}
+                </span>
+              </button>
+
+              {/* সিকিউরিটি ও সিস্টেম অডিট ট্রেইল */}
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenAuditLogsModal)}
+                title="ইউজার অ্যাক্টিভিটি, স্টক ও বিক্রয় অডিট ট্রেইল"
+                className={`w-full flex items-center rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all cursor-pointer group ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <ShieldAlert className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && <span>অডিট ট্রেইল</span>}
                 </div>
               </button>
 

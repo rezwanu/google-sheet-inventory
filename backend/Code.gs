@@ -21,7 +21,10 @@ const SHEETS = {
   ABANDONED_CARTS: 'AbandonedCarts',
   SUPPLIERS: 'Suppliers',
   PURCHASE_ORDERS: 'PurchaseOrders',
-  SUPPLIER_LEDGER: 'SupplierLedger'
+  SUPPLIER_LEDGER: 'SupplierLedger',
+  EXPENSES: 'Expenses',
+  CASH_REGISTER: 'CashRegister',
+  AUDIT_LOGS: 'AuditLogs'
 };
 
 /**
@@ -618,6 +621,106 @@ function ensureSupplierLedgerSheet(spreadsheet) {
 }
 
 /**
+ * Expenses (দোকানের দৈনন্দিন খরচ ও ভাউচার খাতা) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} Expenses শিট অবজেক্ট
+ */
+function ensureExpensesSheet(spreadsheet) {
+  let expensesSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.EXPENSES);
+  if (!expensesSheet) {
+    expensesSheet = spreadsheet.insertSheet(SHEETS.EXPENSES);
+  }
+
+  const defaultHeaders = [
+    'ExpenseID', 'Date', 'Category', 'Amount', 'PaymentMethod',
+    'Description', 'ReceiptImage', 'CreatedBy', 'Timestamp'
+  ];
+
+  if (expensesSheet.getLastRow() === 0) {
+    expensesSheet.appendRow(defaultHeaders);
+  } else {
+    const lastCol = expensesSheet.getLastColumn();
+    if (lastCol > 0) {
+      const headers = expensesSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      defaultHeaders.forEach(col => {
+        if (findCol(headers, col) === -1) {
+          expensesSheet.getRange(1, expensesSheet.getLastColumn() + 1).setValue(col);
+        }
+      });
+    }
+  }
+
+  return expensesSheet;
+}
+
+/**
+ * CashRegister (দৈনিক ক্যাশ ড্রয়ার ও ইওডি সেশন) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} CashRegister শিট অবজেক্ট
+ */
+function ensureCashRegisterSheet(spreadsheet) {
+  let registerSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.CASH_REGISTER);
+  if (!registerSheet) {
+    registerSheet = spreadsheet.insertSheet(SHEETS.CASH_REGISTER);
+  }
+
+  const defaultHeaders = [
+    'RegisterID', 'OpeningDate', 'ClosingDate', 'OpeningBalance',
+    'CashSales', 'CashIn', 'CashOut', 'ExpectedCash', 'ActualCash',
+    'Difference', 'Status', 'ClosedBy', 'Notes', 'Timestamp'
+  ];
+
+  if (registerSheet.getLastRow() === 0) {
+    registerSheet.appendRow(defaultHeaders);
+  } else {
+    const lastCol = registerSheet.getLastColumn();
+    if (lastCol > 0) {
+      const headers = registerSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      defaultHeaders.forEach(col => {
+        if (findCol(headers, col) === -1) {
+          registerSheet.getRange(1, registerSheet.getLastColumn() + 1).setValue(col);
+        }
+      });
+    }
+  }
+
+  return registerSheet;
+}
+
+/**
+ * AuditLogs (ইউজার অ্যাক্টিভিটি ও সিকিউরিটি অডিট ট্রেইল) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} AuditLogs শিট অবজেক্ট
+ */
+function ensureAuditLogsSheet(spreadsheet) {
+  let auditSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.AUDIT_LOGS);
+  if (!auditSheet) {
+    auditSheet = spreadsheet.insertSheet(SHEETS.AUDIT_LOGS);
+  }
+
+  const defaultHeaders = [
+    'LogID', 'Timestamp', 'UserID', 'UserName', 'UserRole',
+    'ActionType', 'Module', 'Description', 'DetailsJson'
+  ];
+
+  if (auditSheet.getLastRow() === 0) {
+    auditSheet.appendRow(defaultHeaders);
+  } else {
+    const lastCol = auditSheet.getLastColumn();
+    if (lastCol > 0) {
+      const headers = auditSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      defaultHeaders.forEach(col => {
+        if (findCol(headers, col) === -1) {
+          auditSheet.getRange(1, auditSheet.getLastColumn() + 1).setValue(col);
+        }
+      });
+    }
+  }
+
+  return auditSheet;
+}
+
+/**
  * Coupons (কুপন ডাটাবেস) শিট নিশ্চিত করা (না থাকলে তৈরি এবং প্রয়োজনীয় কলাম হেডার যুক্ত করা)
  * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
  * @return {Sheet} Coupons শিট অবজেক্ট
@@ -957,6 +1060,15 @@ function ensureDatabaseSchema(spreadsheet) {
 
   // ২.৮ SupplierLedger (সাপ্লায়ার দেনার খাতা ও লেজার) শিট নিশ্চিত করা
   ensureSupplierLedgerSheet(spreadsheet);
+
+  // ২.৯ Expenses (দোকানের দৈনন্দিন খরচ ও ভাউচার খাতা) শিট নিশ্চিত করা
+  ensureExpensesSheet(spreadsheet);
+
+  // ২.১০ CashRegister (দৈনিক ক্যাশ ড্রয়ার ও ইওডি সেশন) শিট নিশ্চিত করা
+  ensureCashRegisterSheet(spreadsheet);
+
+  // ২.১১ AuditLogs (অ্যাক্টিভিটি ও সিকিউরিটি অডিট ট্রেইল) শিট নিশ্চিত করা
+  ensureAuditLogsSheet(spreadsheet);
 
   // ৩. Products শিটের সকল কলাম (SellingPrice সহ) নিশ্চিত করা
   const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
@@ -2592,6 +2704,12 @@ function doGet(e) {
       const suppliers = getSheetRowsAsObjects(SHEETS.SUPPLIERS);
       const purchaseOrders = getSheetRowsAsObjects(SHEETS.PURCHASE_ORDERS);
       const supplierLedger = getSheetRowsAsObjects(SHEETS.SUPPLIER_LEDGER);
+      const expenses = getSheetRowsAsObjects(SHEETS.EXPENSES);
+      const cashRegisters = getSheetRowsAsObjects(SHEETS.CASH_REGISTER);
+      const rawAuditLogs = getSheetRowsAsObjects(SHEETS.AUDIT_LOGS);
+      // সর্বশেষ ৫০০টি অডিট লগ রিটার্ন করা যেন রেসপন্স দ্রুত থাকে
+      const auditLogs = rawAuditLogs.slice(-500).reverse();
+
       const users = getSheetRowsAsObjects(SHEETS.USERS).map(user => {
         return {
           UserID: user.UserID,
@@ -2630,6 +2748,9 @@ function doGet(e) {
           suppliers: suppliers,
           purchaseOrders: purchaseOrders,
           supplierLedger: supplierLedger,
+          expenses: expenses,
+          cashRegisters: cashRegisters,
+          auditLogs: auditLogs,
           coupons: coupons,
           sales: sales,
           orders: orders,
@@ -2971,6 +3092,26 @@ function doPost(e) {
 
       case 'recordSupplierPayment':
         result = handleRecordSupplierPayment(spreadsheet, payload);
+        break;
+
+      case 'saveExpense':
+        result = handleSaveExpense(spreadsheet, payload);
+        break;
+
+      case 'deleteExpense':
+        result = handleDeleteExpense(spreadsheet, payload);
+        break;
+
+      case 'openCashRegister':
+        result = handleOpenCashRegister(spreadsheet, payload);
+        break;
+
+      case 'closeCashRegister':
+        result = handleCloseCashRegister(spreadsheet, payload);
+        break;
+
+      case 'logAuditEvent':
+        result = handleLogAuditEvent(spreadsheet, payload);
         break;
 
       default:
@@ -5190,6 +5331,340 @@ function handleRecordSupplierPayment(spreadsheet, payload) {
     }
   };
 }
+
+/**
+ * ============================================================================
+ * Phase 5: দৈনন্দিন খরচের খাতা (Expense Management)
+ * ============================================================================
+ */
+
+/**
+ * খরচের ভাউচার সংরক্ষণ বা আপডেট করা (handleSaveExpense)
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @param {Object} payload - খরচের ডাটা
+ * @return {Object} ফলাফল
+ */
+function handleSaveExpense(spreadsheet, payload) {
+  const expensesSheet = ensureExpensesSheet(spreadsheet);
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+  const dateStr = payload.date || payload.Date || Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+
+  const expenseId = payload.expenseId || payload.ExpenseID || generateUniqueId('EXP');
+  const category = payload.category || payload.Category || 'Other';
+  const amount = Number(payload.amount !== undefined ? payload.amount : payload.Amount) || 0;
+  const paymentMethod = payload.paymentMethod || payload.PaymentMethod || 'Cash';
+  const description = payload.description || payload.Description || '';
+  const receiptImage = payload.receiptImage || payload.ReceiptImage || '';
+  const createdBy = payload.createdBy || payload.CreatedBy || 'Admin';
+
+  const rows = getSheetRowsAsObjects(SHEETS.EXPENSES);
+  const existing = rows.find(r => String(r.ExpenseID).trim() === String(expenseId).trim());
+
+  if (existing && existing._rowIndex) {
+    const headers = expensesSheet.getRange(1, 1, 1, expensesSheet.getLastColumn()).getValues()[0];
+    const dateCol = findCol(headers, 'Date');
+    const catCol = findCol(headers, 'Category');
+    const amtCol = findCol(headers, 'Amount');
+    const payCol = findCol(headers, 'PaymentMethod');
+    const descCol = findCol(headers, 'Description');
+    const imgCol = findCol(headers, 'ReceiptImage');
+    const timeCol = findCol(headers, 'Timestamp');
+
+    if (dateCol !== -1) expensesSheet.getRange(existing._rowIndex, dateCol + 1).setValue(dateStr);
+    if (catCol !== -1) expensesSheet.getRange(existing._rowIndex, catCol + 1).setValue(category);
+    if (amtCol !== -1) expensesSheet.getRange(existing._rowIndex, amtCol + 1).setValue(amount);
+    if (payCol !== -1) expensesSheet.getRange(existing._rowIndex, payCol + 1).setValue(paymentMethod);
+    if (descCol !== -1) expensesSheet.getRange(existing._rowIndex, descCol + 1).setValue(description);
+    if (imgCol !== -1) expensesSheet.getRange(existing._rowIndex, imgCol + 1).setValue(receiptImage);
+    if (timeCol !== -1) expensesSheet.getRange(existing._rowIndex, timeCol + 1).setValue(timestampStr);
+  } else {
+    expensesSheet.appendRow([
+      expenseId,
+      dateStr,
+      category,
+      amount,
+      paymentMethod,
+      description,
+      receiptImage,
+      createdBy,
+      timestampStr
+    ]);
+  }
+
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: `খরচ সফলভাবে সংরক্ষিত হয়েছে: ৳${amount.toLocaleString('en-IN')}`,
+    data: {
+      ExpenseID: expenseId,
+      Date: dateStr,
+      Category: category,
+      Amount: amount,
+      PaymentMethod: paymentMethod,
+      Description: description,
+      ReceiptImage: receiptImage,
+      CreatedBy: createdBy,
+      Timestamp: timestampStr
+    }
+  };
+}
+
+/**
+ * খরচের ভাউচার মুছে ফেলা (handleDeleteExpense)
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @param {Object} payload - { expenseId }
+ * @return {Object} ফলাফল
+ */
+function handleDeleteExpense(spreadsheet, payload) {
+  const expensesSheet = ensureExpensesSheet(spreadsheet);
+  const expenseId = payload.expenseId || payload.ExpenseID;
+  if (!expenseId) {
+    return { success: false, message: 'খরচের আইডি প্রদান করা হয়নি।' };
+  }
+
+  const rows = getSheetRowsAsObjects(SHEETS.EXPENSES);
+  const existing = rows.find(r => String(r.ExpenseID).trim() === String(expenseId).trim());
+
+  if (existing && existing._rowIndex) {
+    expensesSheet.deleteRow(existing._rowIndex);
+    SpreadsheetApp.flush();
+    return { success: true, message: 'খরচটি সফলভাবে মুছে ফেলা হয়েছে।' };
+  }
+
+  return { success: false, message: 'খরচের রেকর্ড পাওয়া যায়নি।' };
+}
+
+/**
+ * ============================================================================
+ * Phase 5: দৈনিক ক্যাশ রেজিস্টার ও ইওডি ক্লোজিং (Daily Cash Register & EOD)
+ * ============================================================================
+ */
+
+/**
+ * সকালের ক্যাশ রেজিস্টার সেশন খোলা (handleOpenCashRegister)
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @param {Object} payload - { openingBalance, openedBy, notes }
+ * @return {Object} ফলাফল
+ */
+function handleOpenCashRegister(spreadsheet, payload) {
+  const registerSheet = ensureCashRegisterSheet(spreadsheet);
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+  const registerId = payload.registerId || payload.RegisterID || generateUniqueId('REG');
+  const openingBalance = Number(payload.openingBalance !== undefined ? payload.openingBalance : payload.OpeningBalance) || 0;
+  const openedBy = payload.openedBy || payload.OpenedBy || payload.CreatedBy || 'Admin';
+  const notes = payload.notes || payload.Notes || '';
+
+  // চেক করা যে ইতিমধ্যে কোনো ওপেন রেজিস্টার আছে কি না
+  const rows = getSheetRowsAsObjects(SHEETS.CASH_REGISTER);
+  const openSession = rows.find(r => String(r.Status).trim().toLowerCase() === 'open');
+
+  if (openSession) {
+    return {
+      success: true,
+      alreadyOpen: true,
+      message: 'ইতিমধ্যে একটি সক্রিয় ক্যাশ রেজিস্টার সেশন চালু রয়েছে।',
+      data: openSession
+    };
+  }
+
+  registerSheet.appendRow([
+    registerId,
+    timestampStr, // OpeningDate
+    '',           // ClosingDate
+    openingBalance,
+    0,            // CashSales
+    0,            // CashIn
+    0,            // CashOut
+    openingBalance, // ExpectedCash
+    0,            // ActualCash
+    0,            // Difference
+    'Open',       // Status
+    openedBy,     // ClosedBy (or active user)
+    notes,
+    timestampStr
+  ]);
+
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: `ক্যাশ রেজিস্টার সফলভাবে খোলা হয়েছে। ওপেনিং ব্যালেন্স: ৳${openingBalance.toLocaleString('en-IN')}`,
+    data: {
+      RegisterID: registerId,
+      OpeningDate: timestampStr,
+      ClosingDate: '',
+      OpeningBalance: openingBalance,
+      CashSales: 0,
+      CashIn: 0,
+      CashOut: 0,
+      ExpectedCash: openingBalance,
+      ActualCash: 0,
+      Difference: 0,
+      Status: 'Open',
+      ClosedBy: openedBy,
+      Notes: notes,
+      Timestamp: timestampStr
+    }
+  };
+}
+
+/**
+ * দিন শেষে ক্যাশ রেজিস্টার ক্লোজ ও EOD সম্পন্ন করা (handleCloseCashRegister)
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @param {Object} payload - { registerId, actualCash, cashSales, cashIn, cashOut, expectedCash, closedBy, notes }
+ * @return {Object} ফলাফল
+ */
+function handleCloseCashRegister(spreadsheet, payload) {
+  const registerSheet = ensureCashRegisterSheet(spreadsheet);
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  const rows = getSheetRowsAsObjects(SHEETS.CASH_REGISTER);
+  let target = null;
+
+  if (payload.registerId || payload.RegisterID) {
+    const regId = String(payload.registerId || payload.RegisterID).trim();
+    target = rows.find(r => String(r.RegisterID).trim() === regId);
+  }
+
+  // যদি নির্দিষ্ট আইডি না মেলে তবে সর্বশেষ Open সেশনটি খোঁজা
+  if (!target) {
+    target = rows.reverse().find(r => String(r.Status).trim().toLowerCase() === 'open');
+  }
+
+  const actualCash = Number(payload.actualCash !== undefined ? payload.actualCash : payload.ActualCash) || 0;
+  const cashSales = Number(payload.cashSales !== undefined ? payload.cashSales : payload.CashSales) || 0;
+  const cashIn = Number(payload.cashIn !== undefined ? payload.cashIn : payload.CashIn) || 0;
+  const cashOut = Number(payload.cashOut !== undefined ? payload.cashOut : payload.CashOut) || 0;
+  const expectedCash = Number(payload.expectedCash !== undefined ? payload.expectedCash : payload.ExpectedCash) || (
+    (target ? Number(target.OpeningBalance || 0) : 0) + cashSales + cashIn - cashOut
+  );
+  const difference = actualCash - expectedCash;
+  const closedBy = payload.closedBy || payload.ClosedBy || 'Admin';
+  const notes = payload.notes || payload.Notes || '';
+
+  if (target && target._rowIndex) {
+    const headers = registerSheet.getRange(1, 1, 1, registerSheet.getLastColumn()).getValues()[0];
+    const closeDateCol = findCol(headers, 'ClosingDate');
+    const cashSalesCol = findCol(headers, 'CashSales');
+    const cashInCol = findCol(headers, 'CashIn');
+    const cashOutCol = findCol(headers, 'CashOut');
+    const expCashCol = findCol(headers, 'ExpectedCash');
+    const actCashCol = findCol(headers, 'ActualCash');
+    const diffCol = findCol(headers, 'Difference');
+    const statusCol = findCol(headers, 'Status');
+    const closedByCol = findCol(headers, 'ClosedBy');
+    const notesCol = findCol(headers, 'Notes');
+    const timeCol = findCol(headers, 'Timestamp');
+
+    if (closeDateCol !== -1) registerSheet.getRange(target._rowIndex, closeDateCol + 1).setValue(timestampStr);
+    if (cashSalesCol !== -1) registerSheet.getRange(target._rowIndex, cashSalesCol + 1).setValue(cashSales);
+    if (cashInCol !== -1) registerSheet.getRange(target._rowIndex, cashInCol + 1).setValue(cashIn);
+    if (cashOutCol !== -1) registerSheet.getRange(target._rowIndex, cashOutCol + 1).setValue(cashOut);
+    if (expCashCol !== -1) registerSheet.getRange(target._rowIndex, expCashCol + 1).setValue(expectedCash);
+    if (actCashCol !== -1) registerSheet.getRange(target._rowIndex, actCashCol + 1).setValue(actualCash);
+    if (diffCol !== -1) registerSheet.getRange(target._rowIndex, diffCol + 1).setValue(difference);
+    if (statusCol !== -1) registerSheet.getRange(target._rowIndex, statusCol + 1).setValue('Closed');
+    if (closedByCol !== -1) registerSheet.getRange(target._rowIndex, closedByCol + 1).setValue(closedBy);
+    if (notesCol !== -1) registerSheet.getRange(target._rowIndex, notesCol + 1).setValue(notes);
+    if (timeCol !== -1) registerSheet.getRange(target._rowIndex, timeCol + 1).setValue(timestampStr);
+  } else {
+    // নতুন ক্লোজড রেকর্ড তৈরি করা
+    const registerId = payload.registerId || generateUniqueId('REG');
+    registerSheet.appendRow([
+      registerId,
+      timestampStr,
+      timestampStr,
+      Number(payload.openingBalance || 0),
+      cashSales,
+      cashIn,
+      cashOut,
+      expectedCash,
+      actualCash,
+      difference,
+      'Closed',
+      closedBy,
+      notes,
+      timestampStr
+    ]);
+  }
+
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: `ক্যাশ ড্রয়ার সফলভাবে ক্লোজ হয়েছে। ${difference === 0 ? 'হিসাব নিখুঁত মিলেছে।' : (difference > 0 ? `৳${difference} অতিরিক্ত জমা রয়েছে।` : `৳${Math.abs(difference)} ঘাটতি রয়েছে।`)}`,
+    data: {
+      ActualCash: actualCash,
+      ExpectedCash: expectedCash,
+      Difference: difference,
+      Status: 'Closed',
+      ClosedBy: closedBy,
+      ClosedAt: timestampStr
+    }
+  };
+}
+
+/**
+ * ============================================================================
+ * Phase 5: ইউজার অ্যাক্টিভিটি ও সিকিউরিটি অডিট ট্রেইল (Activity Audit Trail)
+ * ============================================================================
+ */
+
+/**
+ * গুরুত্বপূর্ণ সিস্টেম অ্যাকশন অডিট লগে রেকর্ড করা (handleLogAuditEvent)
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @param {Object} payload - { userId, userName, userRole, actionType, module, description, details }
+ * @return {Object} ফলাফল
+ */
+function handleLogAuditEvent(spreadsheet, payload) {
+  const auditSheet = ensureAuditLogsSheet(spreadsheet);
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  const logId = generateUniqueId('LOG');
+  const userId = payload.userId || payload.UserID || 'SYSTEM';
+  const userName = payload.userName || payload.UserName || 'System User';
+  const userRole = payload.userRole || payload.UserRole || 'Admin';
+  const actionType = payload.actionType || payload.ActionType || 'GENERAL';
+  const moduleName = payload.module || payload.Module || 'Core';
+  const description = payload.description || payload.Description || '';
+  let detailsJson = '';
+
+  if (payload.details || payload.DetailsJson) {
+    try {
+      detailsJson = typeof (payload.details || payload.DetailsJson) === 'string'
+        ? (payload.details || payload.DetailsJson)
+        : JSON.stringify(payload.details || payload.DetailsJson);
+    } catch (e) {
+      detailsJson = '';
+    }
+  }
+
+  auditSheet.appendRow([
+    logId,
+    timestampStr,
+    userId,
+    userName,
+    userRole,
+    actionType,
+    moduleName,
+    description,
+    detailsJson
+  ]);
+
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: 'অডিট লগ সফলভাবে সংরক্ষিত হয়েছে।',
+    data: { logId: logId, timestamp: timestampStr }
+  };
+}
+
 
 
 

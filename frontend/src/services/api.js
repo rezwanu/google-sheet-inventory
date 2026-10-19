@@ -1524,3 +1524,201 @@ export async function postRecordSupplierPayment(apiUrl, paymentData) {
     };
   }
 }
+
+/**
+ * ============================================================================
+ * Phase 5: দৈনন্দিন খরচের খাতা API মেথডসমূহ
+ * ============================================================================
+ */
+
+/**
+ * খরচের ভাউচার ক্লাউড ডাটাবেসে সংরক্ষণ (action: 'saveExpense')
+ */
+export async function postSaveExpense(apiUrl, expenseData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: খরচ লোকাল স্টোরেজে সংরক্ষিত হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'saveExpense',
+    ...expenseData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `খরচ সিঙ্ক ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * খরচের ভাউচার ক্লাউড ডাটাবেস থেকে মুছে ফেলা (action: 'deleteExpense')
+ */
+export async function postDeleteExpense(apiUrl, expenseId) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: খরচ লোকাল স্টোরেজ থেকে মুছে ফেলা হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'deleteExpense',
+    expenseId: expenseId,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `খরচ ডিলিট ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * ============================================================================
+ * Phase 5: ক্যাশ রেজিস্টার ও ইওডি API মেথডসমূহ
+ * ============================================================================
+ */
+
+/**
+ * সকালের ক্যাশ রেজিস্টার সেশন ওপেন (action: 'openCashRegister')
+ */
+export async function postOpenCashRegister(apiUrl, sessionData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: ক্যাশ রেজিস্টার খোলা হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'openCashRegister',
+    ...sessionData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `ক্যাশ রেজিস্টার ওপেন ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * দিন শেষে ক্যাশ রেজিস্টার ক্লোজ ও EOD রিপোর্ট (action: 'closeCashRegister')
+ */
+export async function postCloseCashRegister(apiUrl, closingData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: ক্যাশ রেজিস্টার ক্লোজ করা হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'closeCashRegister',
+    ...closingData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `ক্যাশ রেজিস্টার ক্লোজ ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * ============================================================================
+ * Phase 5: অডিট লগ API মেথডসমূহ
+ * ============================================================================
+ */
+
+/**
+ * সিকিউরিটি ও সিস্টেম অডিট লগ ক্লাউডে প্রেরণ (action: 'logAuditEvent')
+ */
+export async function postLogAuditEvent(apiUrl, logData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+    };
+  }
+
+  const payload = {
+    action: 'logAuditEvent',
+    ...logData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `অডিট লগ সিঙ্ক ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+

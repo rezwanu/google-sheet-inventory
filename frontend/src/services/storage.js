@@ -24,6 +24,10 @@ const STORAGE_KEYS = {
   SUPPLIERS: 'pos_suppliers',
   PURCHASE_ORDERS: 'pos_purchase_orders',
   SUPPLIER_LEDGER: 'pos_supplier_ledger',
+  EXPENSES: 'pos_expenses',
+  CASH_REGISTERS: 'pos_cash_registers',
+  ACTIVE_REGISTER: 'pos_active_register',
+  AUDIT_LOGS: 'pos_audit_logs',
 };
 
 import {
@@ -2269,5 +2273,259 @@ export function recordSupplierLedgerEntryLocally(entryData) {
   saveLocalSupplierLedger(ledger);
   return ledger;
 }
+
+/**
+ * ============================================================================
+ * Phase 5: দৈনন্দিন খরচের খাতা (Expense Management)
+ * ============================================================================
+ */
+
+export const EXPENSE_CATEGORIES = [
+  { id: 'Rent', name: 'দোকান ভাড়া (Rent)', icon: 'Building2', color: 'text-blue-600 bg-blue-50 border-blue-200' },
+  { id: 'Utility', name: 'বিদ্যুৎ ও ইন্টারনেট বিল (Utility)', icon: 'Zap', color: 'text-amber-600 bg-amber-50 border-amber-200' },
+  { id: 'Salary', name: 'স্টাফ বেতন ও বোনাস (Salary)', icon: 'Users', color: 'text-purple-600 bg-purple-50 border-purple-200' },
+  { id: 'Refreshments', name: 'আপ্যায়ন ও চা-নাস্তা (Refreshments)', icon: 'Coffee', color: 'text-rose-600 bg-rose-50 border-rose-200' },
+  { id: 'Transport', name: 'যাতায়াত ও কুরিয়ার খরচ (Transport)', icon: 'Truck', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+  { id: 'Packaging', name: 'প্যাকেজিং সামগ্রী ও ব্যাগ (Packaging)', icon: 'Package', color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
+  { id: 'Maintenance', name: 'মেরামত ও পরিচ্ছন্নতা (Maintenance)', icon: 'Wrench', color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
+  { id: 'Marketing', name: 'বিজ্ঞাপন ও প্রচারণা (Marketing)', icon: 'Megaphone', color: 'text-pink-600 bg-pink-50 border-pink-200' },
+  { id: 'Other', name: 'অন্যান্য সাধারণ ব্যয় (Other)', icon: 'FileText', color: 'text-slate-600 bg-slate-50 border-slate-200' }
+];
+
+export function getLocalExpenses() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.EXPENSES);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalExpenses(expenses) {
+  setSecureStorageItem(STORAGE_KEYS.EXPENSES, Array.isArray(expenses) ? expenses : []);
+}
+
+export function saveOrUpdateExpenseLocally(expenseData) {
+  if (!expenseData) return getLocalExpenses();
+  const expenses = getLocalExpenses();
+  const now = new Date().toISOString();
+  const dateStr = expenseData.Date || expenseData.date || now.split('T')[0];
+
+  const expenseId = expenseData.ExpenseID || expenseData.expenseId || `EXP-${Date.now().toString().slice(-6)}`;
+
+  const record = {
+    ExpenseID: expenseId,
+    Date: dateStr,
+    Category: expenseData.Category || expenseData.category || 'Other',
+    Amount: Number(expenseData.Amount !== undefined ? expenseData.Amount : expenseData.amount) || 0,
+    PaymentMethod: expenseData.PaymentMethod || expenseData.paymentMethod || 'Cash',
+    Description: expenseData.Description || expenseData.description || '',
+    ReceiptImage: expenseData.ReceiptImage || expenseData.receiptImage || '',
+    CreatedBy: expenseData.CreatedBy || expenseData.createdBy || 'Admin',
+    Timestamp: expenseData.Timestamp || now
+  };
+
+  const existingIdx = expenses.findIndex(e => String(e.ExpenseID).trim() === String(expenseId).trim());
+  if (existingIdx !== -1) {
+    expenses[existingIdx] = { ...expenses[existingIdx], ...record };
+  } else {
+    expenses.unshift(record);
+  }
+
+  saveLocalExpenses(expenses);
+  return expenses;
+}
+
+export function deleteExpenseLocally(expenseId) {
+  if (!expenseId) return getLocalExpenses();
+  const expenses = getLocalExpenses();
+  const filtered = expenses.filter(e => String(e.ExpenseID).trim() !== String(expenseId).trim());
+  saveLocalExpenses(filtered);
+  return filtered;
+}
+
+/**
+ * ============================================================================
+ * Phase 5: দৈনিক ক্যাশ ড্রয়ার ও EOD ক্লোজিং (Daily Cash Register & EOD)
+ * ============================================================================
+ */
+
+export function getLocalCashRegisters() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.CASH_REGISTERS);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalCashRegisters(registers) {
+  setSecureStorageItem(STORAGE_KEYS.CASH_REGISTERS, Array.isArray(registers) ? registers : []);
+}
+
+export function getActiveCashRegister() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.ACTIVE_REGISTER);
+    if (data && data.Status === 'Open') return data;
+    // ব্যাকআপ চেক: registers তালিকা থেকে Open সেশন খোঁজা
+    const registers = getLocalCashRegisters();
+    const openSession = registers.find(r => r.Status === 'Open');
+    return openSession || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export function saveActiveCashRegister(registerSession) {
+  if (!registerSession || registerSession.Status !== 'Open') {
+    removeSecureStorageItem(STORAGE_KEYS.ACTIVE_REGISTER);
+  } else {
+    setSecureStorageItem(STORAGE_KEYS.ACTIVE_REGISTER, registerSession);
+  }
+}
+
+export function openCashRegisterLocally({ openingBalance = 0, openedBy = 'Admin', notes = '' }) {
+  const registers = getLocalCashRegisters();
+  const now = new Date().toISOString();
+  const registerId = `REG-${Date.now().toString().slice(-6)}`;
+
+  const newSession = {
+    RegisterID: registerId,
+    OpeningDate: now,
+    ClosingDate: '',
+    OpeningBalance: Number(openingBalance) || 0,
+    CashSales: 0,
+    CashIn: 0,
+    CashOut: 0,
+    ExpectedCash: Number(openingBalance) || 0,
+    ActualCash: 0,
+    Difference: 0,
+    Status: 'Open',
+    ClosedBy: openedBy,
+    Notes: notes,
+    Timestamp: now
+  };
+
+  registers.unshift(newSession);
+  saveLocalCashRegisters(registers);
+  saveActiveCashRegister(newSession);
+  return newSession;
+}
+
+export function closeCashRegisterLocally({
+  registerId,
+  actualCash = 0,
+  cashSales = 0,
+  cashIn = 0,
+  cashOut = 0,
+  expectedCash = 0,
+  closedBy = 'Admin',
+  notes = ''
+}) {
+  const registers = getLocalCashRegisters();
+  const now = new Date().toISOString();
+  const numActual = Number(actualCash) || 0;
+  const numExpected = Number(expectedCash) || 0;
+  const diff = numActual - numExpected;
+
+  let targetIdx = -1;
+  if (registerId) {
+    targetIdx = registers.findIndex(r => String(r.RegisterID).trim() === String(registerId).trim());
+  }
+  if (targetIdx === -1) {
+    targetIdx = registers.findIndex(r => r.Status === 'Open');
+  }
+
+  let closedRecord = null;
+  if (targetIdx !== -1) {
+    registers[targetIdx] = {
+      ...registers[targetIdx],
+      ClosingDate: now,
+      CashSales: Number(cashSales) || 0,
+      CashIn: Number(cashIn) || 0,
+      CashOut: Number(cashOut) || 0,
+      ExpectedCash: numExpected,
+      ActualCash: numActual,
+      Difference: diff,
+      Status: 'Closed',
+      ClosedBy: closedBy,
+      Notes: notes,
+      Timestamp: now
+    };
+    closedRecord = registers[targetIdx];
+  } else {
+    closedRecord = {
+      RegisterID: registerId || `REG-${Date.now().toString().slice(-6)}`,
+      OpeningDate: now,
+      ClosingDate: now,
+      OpeningBalance: 0,
+      CashSales: Number(cashSales) || 0,
+      CashIn: Number(cashIn) || 0,
+      CashOut: Number(cashOut) || 0,
+      ExpectedCash: numExpected,
+      ActualCash: numActual,
+      Difference: diff,
+      Status: 'Closed',
+      ClosedBy: closedBy,
+      Notes: notes,
+      Timestamp: now
+    };
+    registers.unshift(closedRecord);
+  }
+
+  saveLocalCashRegisters(registers);
+  saveActiveCashRegister(null);
+  return closedRecord;
+}
+
+/**
+ * ============================================================================
+ * Phase 5: সিকিউরিটি ও অ্যাক্টিভিটি অডিট ট্রেইল (Activity Audit Trail)
+ * ============================================================================
+ */
+
+export function getLocalAuditLogs() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.AUDIT_LOGS);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalAuditLogs(logs) {
+  setSecureStorageItem(STORAGE_KEYS.AUDIT_LOGS, Array.isArray(logs) ? logs.slice(0, 500) : []);
+}
+
+export function logAuditEventLocally({
+  userId = 'USER-ADMIN-01',
+  userName = 'Admin',
+  userRole = 'Admin',
+  actionType = 'GENERAL',
+  module = 'Core',
+  description = '',
+  details = null
+}) {
+  const logs = getLocalAuditLogs();
+  const now = new Date().toISOString();
+
+  const newLog = {
+    LogID: `LOG-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`,
+    Timestamp: now,
+    UserID: userId,
+    UserName: userName,
+    UserRole: userRole,
+    ActionType: actionType,
+    Module: module,
+    Description: description,
+    DetailsJson: typeof details === 'string' ? details : (details ? JSON.stringify(details) : '')
+  };
+
+  logs.unshift(newLog);
+  // সর্বোচ্চ ৫০০টি লগ সংরক্ষণ যেন মেমোরি হালকা থাকে
+  saveLocalAuditLogs(logs.slice(0, 500));
+  return newLog;
+}
+
 
 
