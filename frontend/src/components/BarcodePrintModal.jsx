@@ -305,10 +305,16 @@ export default function BarcodePrintModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-60 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200"
+      style={{ zIndex: 100 }}
+    >
       
       {/* স্ক্রিন ইন্টারেক্টিভ মডাল (নো-প্রিন্ট) */}
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 no-print">
+      <div
+        className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[88vh] my-auto flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 no-print relative"
+        style={{ zIndex: 101 }}
+      >
         
         {/* ১. হেডার */}
         <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0">

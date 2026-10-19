@@ -310,8 +310,11 @@ export default function PurchaseOrdersModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+    <div
+      className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+      style={{ zIndex: 100 }}
+    >
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-6xl max-h-[90vh] my-auto flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 relative" style={{ zIndex: 101 }}>
         
         {/* Header */}
         <div className="px-6 py-4.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0">
@@ -995,8 +998,11 @@ export default function PurchaseOrdersModal({
 
       {/* PO Printable Invoice / Voucher Modal Preview */}
       {viewingPO && (
-        <div className="fixed inset-0 z-70 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 overflow-y-auto animate-in fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-2xl w-full overflow-hidden flex flex-col max-h-[92vh]">
+        <div
+          className="fixed inset-0 z-[110] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 overflow-y-auto animate-in fade-in"
+          style={{ zIndex: 110 }}
+        >
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-2xl w-full my-auto overflow-hidden flex flex-col max-h-[90vh] relative" style={{ zIndex: 111 }}>
             
             {/* Modal Header */}
             <div className="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between no-print">
