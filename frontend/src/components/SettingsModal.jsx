@@ -155,6 +155,7 @@ export default function SettingsModal({
               { id: 'api', label: 'ক্লাউড ও API সংযোগ', icon: <Globe className="w-4 h-4" /> },
               { id: 'branding', label: 'স্টোর ব্র্যান্ডিং', icon: <Building className="w-4 h-4" /> },
               { id: 'billing', label: 'মুদ্রা ও কর', icon: <Receipt className="w-4 h-4" /> },
+              { id: 'loyalty', label: 'লয়ালটি ও স্টোরফ্রন্ট', icon: <Sparkles className="w-4 h-4" /> },
               { id: 'courier', label: 'কুরিয়ার ইন্টিগ্রেশন (Steadfast)', icon: <Truck className="w-4 h-4" /> },
               { id: 'sms', label: 'SMS ও WhatsApp নোটিফিকেশন', icon: <MessageSquare className="w-4 h-4" /> },
             ].map((tab) => {
@@ -557,7 +558,148 @@ export default function SettingsModal({
             </div>
           )}
 
-          {/* ---------------- ট্যাব ৪: কুরিয়ার API কনফিগারেশন ---------------- */}
+          {/* ---------------- ট্যাব: লয়ালটি রিওয়ার্ড ও ডিজিটাল স্টোরফ্রন্ট ---------------- */}
+          {activeTab === 'loyalty' && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              
+              {/* লয়ালটি প্রোগ্রাম কনফিগারেশন */}
+              <div className="p-4 sm:p-5 bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/50 border border-purple-200 rounded-2xl space-y-4 shadow-xs">
+                <div className="flex items-center justify-between pb-3 border-b border-purple-100">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold">
+                      🪙
+                    </div>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-black text-purple-950">
+                        লয়ালটি ও ক্যাশব্যাক রিওয়ার্ড ইঞ্জিন
+                      </h4>
+                      <p className="text-[11px] text-purple-700">
+                        গ্রাহকদের প্রতিটি কেনাকাটায় স্বয়ংক্রিয় পয়েন্ট প্রদান ও পরবর্তী কেনাকাটায় পয়েন্ট ভাঙিয়ে ছাড়
+                      </p>
+                    </div>
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-xs font-bold text-slate-700">প্রোগ্রাম চালু:</span>
+                    <input
+                      type="checkbox"
+                      name="LoyaltyEnabled"
+                      checked={formData.LoyaltyEnabled !== false}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, LoyaltyEnabled: e.target.checked }))}
+                      className="w-5 h-5 text-purple-600 rounded-md focus:ring-purple-500 cursor-pointer"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* কত টাকায় ১ পয়েন্ট */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      পয়েন্ট অর্জনের হার (টাকা):
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-bold">{formData.CurrencySymbol || '৳'}</span>
+                      <input
+                        type="number"
+                        min="1"
+                        name="LoyaltyPointsRate"
+                        value={formData.LoyaltyPointsRate || 100}
+                        onChange={handleChange}
+                        className="w-full pl-8 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-500 mt-0.5 block">যেমন: প্রতি ১০০ টাকায় ১ পয়েন্ট</span>
+                  </div>
+
+                  {/* ১ পয়েন্টের রিডেম্পশন মূল্য */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      প্রতি পয়েন্টের ছাড় মূল্য (টাকা):
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-bold">{formData.CurrencySymbol || '৳'}</span>
+                      <input
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        name="LoyaltyRedeemRate"
+                        value={formData.LoyaltyRedeemRate !== undefined ? formData.LoyaltyRedeemRate : 1.0}
+                        onChange={handleChange}
+                        className="w-full pl-8 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-500 mt-0.5 block">যেমন: ১ পয়েন্ট = ১.০০ টাকা ছাড়</span>
+                  </div>
+
+                  {/* ন্যূনতম রিডেম্পশন পয়েন্ট */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      ভাঙানোর জন্য ন্যূনতম পয়েন্ট:
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      name="MinRedeemPoints"
+                      value={formData.MinRedeemPoints || 10}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-0.5 block">কমপক্ষে ১০ পয়েন্ট জমলে ভাঙানো যাবে</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ডিজিটাল স্টোরফ্রন্ট ব্যানার ও ডিসপ্লে কনফিগারেশন */}
+              <div className="p-4 sm:p-5 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50 border border-amber-200 rounded-2xl space-y-4 shadow-xs">
+                <div className="flex items-center justify-between pb-3 border-b border-amber-100">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold">
+                      🛍️
+                    </div>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-black text-amber-950">
+                        পাবলিক ডিজিটাল স্টোরফ্রন্ট (Customer Mini Web)
+                      </h4>
+                      <p className="text-[11px] text-amber-700">
+                        ক্রেতাদের জন্য সাধারণ অনলাইন ক্যাটালগ ও চেকআউট ভিউ
+                      </p>
+                    </div>
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-xs font-bold text-slate-700">স্টোরফ্রন্ট সক্রিয়:</span>
+                    <input
+                      type="checkbox"
+                      name="StorefrontEnabled"
+                      checked={formData.StorefrontEnabled !== false}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, StorefrontEnabled: e.target.checked }))}
+                      className="w-5 h-5 text-amber-600 rounded-md focus:ring-amber-500 cursor-pointer"
+                    />
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    অনলাইন স্টোর ঘোষণার ব্যানার বার্তা (Storefront Announcement Banner):
+                  </label>
+                  <textarea
+                    rows={2}
+                    name="StorefrontBannerText"
+                    placeholder="আমাদের অনলাইন স্টোরে আপনাকে স্বাগতম! সারাদেশে ক্যাশ অন ডেলিভারি সুবিধা।"
+                    value={formData.StorefrontBannerText || ''}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2 text-xs bg-white border border-slate-300 rounded-xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed"
+                  />
+                  <span className="text-[10px] text-slate-500 mt-0.5 block">
+                    স্টোরের উপরে চলমান আকর্ষণীয় নোটিশ বা প্রমোশনাল ঘোষণা প্রদর্শন করবে
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ---------------- ট্যাব ৫: কুরিয়ার API কনফিগারেশন ---------------- */}
           {activeTab === 'courier' && (
             <div className="space-y-4 animate-in fade-in duration-150">
               

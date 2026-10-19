@@ -41,6 +41,8 @@ export default function Sidebar({
   currencySymbol = '৳',
   lowStockCount = 0,
   customers = [],
+  abandonedCartsCount = 0,
+  onOpenAbandonedCartModal,
   onOpenCustomerLedgerModal,
   onOpenStockModal,
   onOpenProductModal,
@@ -386,6 +388,40 @@ export default function Sidebar({
                     }`}
                   >
                     {dueCustomersCount} জন
+                  </span>
+                )}
+              </button>
+
+              {/* অসম্পূর্ণ কার্ট ও ড্রপ-অফ রিকভারি */}
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenAbandonedCartModal)}
+                title={abandonedCartsCount > 0 ? `${abandonedCartsCount}টি অসম্পূর্ণ কার্ট পেন্ডিং আছে` : 'অসম্পূর্ণ কার্ট ও রিকভারি'}
+                className={`w-full flex items-center rounded-2xl text-xs font-bold transition-all cursor-pointer group relative ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+                } ${
+                  abandonedCartsCount > 0
+                    ? 'bg-amber-50/80 text-amber-950 border border-amber-200/80 hover:bg-amber-100'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
+                    abandonedCartsCount > 0 ? 'bg-amber-500 text-white shadow-xs' : 'bg-amber-100 text-amber-700'
+                  }`}>
+                    <ShoppingBag className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && <span>অসম্পূর্ণ কার্ট</span>}
+                </div>
+                {abandonedCartsCount > 0 && (
+                  <span
+                    className={`${
+                      isCollapsed
+                        ? 'absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-600 text-white border-2 border-white'
+                        : 'px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-black shadow-2xs shrink-0'
+                    }`}
+                  >
+                    {abandonedCartsCount}টি
                   </span>
                 )}
               </button>

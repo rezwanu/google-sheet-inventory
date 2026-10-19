@@ -23,6 +23,7 @@ import Sidebar from './components/Sidebar';
 import OrdersPage from './components/OrdersPage';
 import CustomerOrderTrackingModal from './components/CustomerOrderTrackingModal';
 import CustomerLedgerModal from './components/CustomerLedgerModal';
+import AbandonedCartModal from './components/AbandonedCartModal';
 
 import {
   getLocalSettings,
@@ -58,6 +59,11 @@ import {
   recordCustomerLedgerEntryLocally,
   recordCustomerPaymentLocally,
   updateCustomerCreditLimitLocally,
+  getLocalAbandonedCarts,
+  saveLocalAbandonedCarts,
+  saveOrUpdateAbandonedCartLocally,
+  updateAbandonedCartStatusLocally,
+  deleteAbandonedCartLocally,
   getLocalCoupons,
   saveLocalCoupons,
   saveOrUpdateCouponLocally,
@@ -112,7 +118,10 @@ import {
   postSteadfastCheckStatus,
   postSendSmsNotification,
   postRecordCustomerPayment,
-  postUpdateCustomerCreditLimit
+  postUpdateCustomerCreditLimit,
+  postSaveAbandonedCart,
+  postUpdateAbandonedCartStatus,
+  postUpdateCustomerLoyalty
 } from './services/api';
 
 export default function App() {
@@ -143,6 +152,14 @@ export default function App() {
   const [coupons, setCoupons] = useState(getLocalCoupons);
   const [activeUser, setActiveUser] = useState(getActiveUser);
   const [users, setUsers] = useState(getLocalUsers);
+  const [abandonedCarts, setAbandonedCarts] = useState(() => {
+    try {
+      const c = getLocalAbandonedCarts();
+      return Array.isArray(c) ? c : [];
+    } catch {
+      return [];
+    }
+  });
 
   // ভিউ নেভিগেশন স্টেট ('pos' | 'cart' | 'checkout')
   const [currentView, setCurrentView] = useState('pos');
@@ -151,6 +168,14 @@ export default function App() {
   const [isCustomerLedgerModalOpen, setIsCustomerLedgerModalOpen] = useState(false);
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
+  const [isAbandonedCartModalOpen, setIsAbandonedCartModalOpen] = useState(false);
+
+  // পেন্ডিং অসম্পূর্ণ কার্ট গণনা
+  const pendingAbandonedCartsCount = useMemo(() => {
+    return Array.isArray(abandonedCarts)
+      ? abandonedCarts.filter((c) => c.RecoveryStatus === 'Pending').length
+      : 0;
+  }, [abandonedCarts]);
 
   // ২. সিস্টেম স্ট্যাটাস ও মডাল স্টেট (জিরো-ডিলে রেডি স্ট্যাটাস)
   const [syncStatus, setSyncStatus] = useState(() => {
@@ -641,6 +666,12 @@ export default function App() {
         saveLocalCustomerLedger(data.customerLedger);
       }
 
+      // অসম্পূর্ণ কার্ট ডাটাবেস আপডেট (গুগল শিট AbandonedCarts ট্যাব থেকে ক্লাউড ডাটা)
+      if (data && data.abandonedCarts && Array.isArray(data.abandonedCarts)) {
+        setAbandonedCarts(data.abandonedCarts);
+        saveLocalAbandonedCarts(data.abandonedCarts);
+      }
+
       setSyncStatus('online');
       if (manual) {
         showToast('গুগল শিট ডাটাবেসের সাথে সফলভাবে সিঙ্ক সম্পন্ন হয়েছে!', 'success');
@@ -954,7 +985,7 @@ export default function App() {
           Address: saleOrder.customerAddress,
           CustomerType: saleOrder.customerType,
           CustomerID: saleOrder.customerId,
-        }, saleOrder.grandTotal, saleDue, salePaid);
+        }, saleOrder.grandTotal, saleDue, salePaid, Number(saleOrder.loyaltyEarned) || 0, Number(saleOrder.loyaltyRedeemed) || 0);
         setCustomers(updatedCustList);
 
         // যদি বিক্রয়ে বকেয়া (Due) থাকে, তবে কাস্টমার লেজারে ডেবিট (Sale on Credit) এন্ট্রি সংরক্ষণ
@@ -975,6 +1006,12 @@ export default function App() {
             Notes: saleOrder.paymentMethod === 'Split' ? 'মাল্টি-পেমেন্ট স্প্লিট বাকি' : 'ইনভয়েস বিক্রয়ের বাকি'
           });
           setCustomerLedger(getLocalCustomerLedger());
+        }
+
+        // অসম্পূর্ণ কার্ট যদি অর্ডার করা হয়ে থাকে, তবে স্বয়ংক্রিয়ভাবে 'Recovered' মার্ক করা
+        if (saleOrder.cartId) {
+          const updatedCarts = updateAbandonedCartStatusLocally(saleOrder.cartId, 'Recovered', `অর্ডার সম্পন্ন: ${localInvoiceNo}`);
+          setAbandonedCarts(updatedCarts);
         }
       }
 
@@ -1010,6 +1047,9 @@ export default function App() {
             paidAmount: salePaid,
             dueAmount: saleDue,
             splitPayments: saleOrder.splitPayments || null,
+            loyaltyEarned: Number(saleOrder.loyaltyEarned) || 0,
+            loyaltyRedeemed: Number(saleOrder.loyaltyRedeemed) || 0,
+            cartId: saleOrder.cartId || '',
             cashierEmail: activeUser?.Email || 'guest@store.local',
           });
 
@@ -1500,6 +1540,77 @@ export default function App() {
     }
   };
 
+  // ৬.১০ অসম্পূর্ণ কার্ট (Abandoned Cart) হ্যান্ডলারসমূহ
+  const handleSaveAbandonedCart = async (cartData) => {
+    try {
+      const updatedList = saveOrUpdateAbandonedCartLocally(cartData);
+      setAbandonedCarts(updatedList);
+
+      if (settings.apiUrl) {
+        try {
+          await postSaveAbandonedCart(settings.apiUrl, cartData);
+        } catch (cloudErr) {
+          console.warn('Abandoned cart cloud sync delayed:', cloudErr);
+        }
+      }
+    } catch (err) {
+      console.warn('Error saving abandoned cart:', err);
+    }
+  };
+
+  const handleUpdateAbandonedCartStatus = async (cartId, status, notes = '') => {
+    try {
+      const updatedList = updateAbandonedCartStatusLocally(cartId, status, notes);
+      setAbandonedCarts(updatedList);
+      showToast(`কার্ট স্ট্যাটাস '${status === 'Contacted' ? 'যোগাযোগ সম্পন্ন' : status === 'Recovered' ? 'অর্ডার রিকভার্ড' : status}' হিসেবে সংরক্ষিত হয়েছে।`, 'success');
+
+      if (settings.apiUrl) {
+        try {
+          await postUpdateAbandonedCartStatus(settings.apiUrl, cartId, status, notes);
+        } catch (cloudErr) {
+          console.warn('Abandoned cart status cloud sync delayed:', cloudErr);
+        }
+      }
+    } catch (err) {
+      showToast(`কার্ট স্ট্যাটাস আপডেট ব্যর্থ: ${err.message}`, 'error');
+    }
+  };
+
+  const handleDeleteAbandonedCart = (cartId) => {
+    try {
+      const updatedList = deleteAbandonedCartLocally(cartId);
+      setAbandonedCarts(updatedList);
+      showToast('অসম্পূর্ণ কার্ট তালিকা থেকে মুছে ফেলা হয়েছে।', 'info');
+    } catch (err) {
+      showToast('কার্ট মুছতে সমস্যা হয়েছে।', 'error');
+    }
+  };
+
+  const handleConvertToOrderFromAbandoned = (cartRecord) => {
+    try {
+      if (!cartRecord) return;
+      let items = [];
+      if (Array.isArray(cartRecord.CartItems)) {
+        items = cartRecord.CartItems;
+      } else if (typeof cartRecord.CartItemsJSON === 'string' && cartRecord.CartItemsJSON.trim()) {
+        try {
+          items = JSON.parse(cartRecord.CartItemsJSON);
+        } catch {}
+      }
+
+      if (Array.isArray(items) && items.length > 0) {
+        setCart(items);
+        setCurrentView('checkout');
+        setIsAbandonedCartModalOpen(false);
+        showToast('অসম্পূর্ণ কার্ট আইটেমগুলো চেকআউটে লোড করা হয়েছে!', 'success');
+      } else {
+        showToast('এই কার্টে কোনো বৈধ পণ্য আইটেম পাওয়া যায়নি।', 'warning');
+      }
+    } catch (err) {
+      showToast(`কার্ট লোড করতে সমস্যা: ${err.message}`, 'error');
+    }
+  };
+
   // ৭. অতীত ইনভয়েস রি-প্রিন্ট ওপেন করা
   const handleOpenReprintInvoice = (sale) => {
     setActiveInvoiceData(sale);
@@ -1882,6 +1993,8 @@ export default function App() {
             onOpenCustomersModal={() => setIsCustomersModalOpen(true)}
             onOpenCustomerLedgerModal={() => setIsCustomerLedgerModalOpen(true)}
             customers={customers}
+            abandonedCartsCount={pendingAbandonedCartsCount}
+            onOpenAbandonedCartModal={() => setIsAbandonedCartModalOpen(true)}
             onOpenUsersModal={() => setIsUsersModalOpen(true)}
             onOpenCouponModal={() => setIsCouponModalOpen(true)}
             onOpenInvoiceLookupModal={handleOpenInvoiceLookup}
@@ -1895,6 +2008,15 @@ export default function App() {
 
         {/* প্রধান লেআউট ভিউ: ক্যাটালগ | কার্ট পেজ | চেকআউট পেজ | অর্ডার পেজ */}
         <main className={`flex-1 min-w-0 p-3 sm:p-4 lg:p-6 flex flex-col ${!isAdmin ? 'max-w-7xl mx-auto w-full' : ''}`}>
+          
+          {/* স্টোরফ্রন্ট প্রমোশনাল অফার ব্যানার */}
+          {settings?.StorefrontBannerText && settings?.StorefrontEnabled !== false && (
+            <div className="mb-3.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white text-xs sm:text-sm font-bold py-2.5 px-4 rounded-2xl shadow-sm flex items-center justify-center space-x-2 animate-in fade-in duration-300">
+              <span className="text-amber-300 text-base shrink-0">✨</span>
+              <span className="tracking-wide text-center">{settings.StorefrontBannerText}</span>
+            </div>
+          )}
+
           {currentView === 'pos' && (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-6.5rem)]">
               <ProductCatalog
@@ -1942,6 +2064,7 @@ export default function App() {
               onNavigateToCart={() => setCurrentView('cart')}
               onNavigateToCatalog={() => setCurrentView('pos')}
               onCompleteSale={handleCompleteSale}
+              onSaveAbandonedCart={handleSaveAbandonedCart}
               isProcessing={isProcessingSale}
               activeUser={activeUser}
               onOpenAuthModal={() => setIsAuthModalOpen(true)}
@@ -2233,6 +2356,17 @@ export default function App() {
         onSubmitRma={(orderId, rmaData) => {
           handleResolveRma(orderId, 'Submitted', rmaData);
         }}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+      />
+
+      {/* ড্রপ-অফ ও অসম্পূর্ণ কার্ট রিকভারি মডাল */}
+      <AbandonedCartModal
+        isOpen={isAbandonedCartModalOpen}
+        onClose={() => setIsAbandonedCartModalOpen(false)}
+        abandonedCarts={abandonedCarts}
+        onUpdateStatus={handleUpdateAbandonedCartStatus}
+        onDeleteCart={handleDeleteAbandonedCart}
+        onConvertToOrder={handleConvertToOrderFromAbandoned}
         currencySymbol={settings.CurrencySymbol || '৳'}
       />
 

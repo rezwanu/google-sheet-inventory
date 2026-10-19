@@ -20,6 +20,7 @@ const STORAGE_KEYS = {
   ACTIVE_USER: 'pos_active_user',
   USERS: 'pos_users',
   ORDERS: 'pos_orders',
+  ABANDONED_CARTS: 'pos_abandoned_carts',
 };
 
 import {
@@ -80,6 +81,12 @@ export const DEFAULT_SETTINGS = {
   Email: BASELINE_SETTINGS?.Email || 'rezwanureee@gmail.com',
   ReceiptFooter: BASELINE_SETTINGS?.ReceiptFooter || '',
   apiUrl: ENV_API_URL || DEFAULT_APPS_SCRIPT_URL,
+  LoyaltyEnabled: BASELINE_SETTINGS?.LoyaltyEnabled !== undefined ? BASELINE_SETTINGS.LoyaltyEnabled : true,
+  LoyaltyPointsRate: Number(BASELINE_SETTINGS?.LoyaltyPointsRate) || 100,
+  LoyaltyRedeemRate: Number(BASELINE_SETTINGS?.LoyaltyRedeemRate) || 1.0,
+  MinRedeemPoints: Number(BASELINE_SETTINGS?.MinRedeemPoints) || 10,
+  StorefrontBannerText: BASELINE_SETTINGS?.StorefrontBannerText || 'আমাদের অনলাইন স্টোরে আপনাকে স্বাগতম! সারাদেশে ক্যাশ অন ডেলিভারি সুবিধা।',
+  StorefrontEnabled: BASELINE_SETTINGS?.StorefrontEnabled !== undefined ? BASELINE_SETTINGS.StorefrontEnabled : true,
 };
 
 // পরিচিত ডামি সেটিংসের মানসমূহ (লোকাল ক্যাশ বা শিট থেকে পরিচ্ছন্ন করার জন্য)
@@ -273,6 +280,24 @@ export function sanitizeSettings(settings) {
   const api = candidateApi || ENV_API_URL || DEFAULT_APPS_SCRIPT_URL;
   cleaned.apiUrl = api;
   cleaned.ApiUrl = api;
+
+  // ৯. লয়ালটি ও ডিজিটাল স্টোরফ্রন্ট সেটিংস
+  if (settings.LoyaltyEnabled !== undefined) cleaned.LoyaltyEnabled = Boolean(settings.LoyaltyEnabled);
+  if (settings.loyaltyEnabled !== undefined) cleaned.LoyaltyEnabled = Boolean(settings.loyaltyEnabled);
+  if (settings.LoyaltyPointsRate !== undefined || settings.loyaltyPointsRate !== undefined) {
+    cleaned.LoyaltyPointsRate = Number(settings.LoyaltyPointsRate !== undefined ? settings.LoyaltyPointsRate : settings.loyaltyPointsRate) || 100;
+  }
+  if (settings.LoyaltyRedeemRate !== undefined || settings.loyaltyRedeemRate !== undefined) {
+    cleaned.LoyaltyRedeemRate = Number(settings.LoyaltyRedeemRate !== undefined ? settings.LoyaltyRedeemRate : settings.loyaltyRedeemRate) || 1.0;
+  }
+  if (settings.MinRedeemPoints !== undefined || settings.minRedeemPoints !== undefined) {
+    cleaned.MinRedeemPoints = Number(settings.MinRedeemPoints !== undefined ? settings.MinRedeemPoints : settings.minRedeemPoints) || 10;
+  }
+  if (settings.StorefrontBannerText !== undefined || settings.storefrontBannerText !== undefined) {
+    cleaned.StorefrontBannerText = String(settings.StorefrontBannerText !== undefined ? settings.StorefrontBannerText : settings.storefrontBannerText);
+  }
+  if (settings.StorefrontEnabled !== undefined) cleaned.StorefrontEnabled = Boolean(settings.StorefrontEnabled);
+  if (settings.storefrontEnabled !== undefined) cleaned.StorefrontEnabled = Boolean(settings.storefrontEnabled);
 
   return cleaned;
 }
@@ -1271,9 +1296,43 @@ export function clearDemoCustomers() {
 }
 
 /**
+ * কাস্টমারকে RFM (Recency, Frequency, Monetary) এর ভিত্তিতে সেগমেন্ট শ্রেণীকরণ করা
+ * @param {Object} customer 
+ * @return {'VIP' | 'Regular' | 'At-Risk' | 'New'}
+ */
+export function classifyCustomerSegment(customer) {
+  if (!customer) return 'New';
+  const orders = Number(customer.TotalOrders || 0);
+  const spent = Number(customer.TotalSpent || 0);
+  const lastOrder = customer.LastOrderDate || customer.UpdatedAt || customer.CreatedAt;
+
+  if (lastOrder && orders > 0) {
+    try {
+      const orderDate = new Date(lastOrder).getTime();
+      if (!isNaN(orderDate)) {
+        const diffDays = (Date.now() - orderDate) / (1000 * 60 * 60 * 24);
+        if (diffDays > 45) {
+          return 'At-Risk';
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  if (spent >= 10000 || orders >= 5) {
+    return 'VIP';
+  }
+  if (orders >= 2) {
+    return 'Regular';
+  }
+  return 'New';
+}
+
+/**
  * বিক্রয় সম্পন্ন করার পর বা সরাসরি নতুন গ্রাহক তৈরি হলে কাস্টমার ডাটাবেস আপডেট করা
  */
-export function saveOrUpdateCustomerLocally(customerData, saleAmount = 0, dueAmount = 0, paidAmount = 0) {
+export function saveOrUpdateCustomerLocally(customerData, saleAmount = 0, dueAmount = 0, paidAmount = 0, loyaltyEarned = 0, loyaltyRedeemed = 0) {
   if (!customerData) return getLocalCustomers();
   const phone = String(customerData.Phone || customerData.customerPhone || '').trim();
   const name = String(customerData.CustomerName || customerData.customerName || '').trim();
@@ -1299,7 +1358,15 @@ export function saveOrUpdateCustomerLocally(customerData, saleAmount = 0, dueAmo
     const prevDue = Number(existing.CurrentDue) || 0;
     const prevPaid = Number(existing.TotalPaid) || 0;
 
-    customers[existingIndex] = {
+    const curPoints = Number(existing.LoyaltyPoints || 0);
+    const curEarned = Number(existing.TotalPointsEarned || 0);
+    const curRedeemed = Number(existing.TotalPointsRedeemed || 0);
+
+    const newPoints = Math.max(0, curPoints + Number(loyaltyEarned || 0) - Number(loyaltyRedeemed || 0));
+    const newEarned = curEarned + Number(loyaltyEarned || 0);
+    const newRedeemed = curRedeemed + Number(loyaltyRedeemed || 0);
+
+    const updatedCustomer = {
       ...existing,
       CustomerName: name || existing.CustomerName,
       Phone: phone || existing.Phone,
@@ -1313,9 +1380,17 @@ export function saveOrUpdateCustomerLocally(customerData, saleAmount = 0, dueAmo
       TotalPaid: prevPaid + Number(paidAmount || (saleAmount - dueAmount) || 0),
       CurrentDue: Math.max(0, prevDue + Number(dueAmount || 0) - (paidAmount > 0 && saleAmount === 0 ? paidAmount : 0)),
       LastPaymentDate: paidAmount > 0 ? now : (existing.LastPaymentDate || ''),
+      LoyaltyPoints: newPoints,
+      TotalPointsEarned: newEarned,
+      TotalPointsRedeemed: newRedeemed,
+      LastOrderDate: saleAmount > 0 ? now : (existing.LastOrderDate || ''),
       UpdatedAt: now,
     };
+
+    updatedCustomer.CustomerSegment = classifyCustomerSegment(updatedCustomer);
+    customers[existingIndex] = updatedCustomer;
   } else {
+    const newPoints = Math.max(0, Number(loyaltyEarned || 0) - Number(loyaltyRedeemed || 0));
     const newCustomer = {
       CustomerID: customerData.CustomerID || `CUST-${Date.now().toString().slice(-6)}`,
       CustomerName: name || 'নামহীন গ্রাহক',
@@ -1330,6 +1405,11 @@ export function saveOrUpdateCustomerLocally(customerData, saleAmount = 0, dueAmo
       TotalPaid: Number(paidAmount || (saleAmount - dueAmount) || 0),
       CurrentDue: Math.max(0, Number(dueAmount || 0)),
       LastPaymentDate: paidAmount > 0 ? now : '',
+      LoyaltyPoints: newPoints,
+      TotalPointsEarned: Number(loyaltyEarned || 0),
+      TotalPointsRedeemed: Number(loyaltyRedeemed || 0),
+      LastOrderDate: saleAmount > 0 ? now : '',
+      CustomerSegment: 'New',
       Status: 'Active',
       CreatedAt: now,
       UpdatedAt: now,
@@ -1787,6 +1867,139 @@ export function deleteOrderLocally(orderId) {
   const orders = getLocalOrders();
   const filtered = orders.filter(o => o.OrderID !== orderId);
   saveLocalOrders(filtered);
+  return filtered;
+}
+
+/**
+ * কাস্টমারের লয়ালটি পয়েন্ট সরাসরি লোকাল স্টোরেজে হালনাগাদ করা
+ */
+export function updateCustomerLoyaltyLocally(customerId, phone, pointsDelta, isRedeem = false) {
+  const customers = getLocalCustomers();
+  const targetIdx = customers.findIndex(c => 
+    (customerId && String(c.CustomerID || '').trim() === String(customerId).trim()) ||
+    (phone && String(c.Phone || '').trim() === String(phone).trim())
+  );
+
+  if (targetIdx !== -1) {
+    const cust = customers[targetIdx];
+    const curPts = Number(cust.LoyaltyPoints || 0);
+    const curEarned = Number(cust.TotalPointsEarned || 0);
+    const curRedeemed = Number(cust.TotalPointsRedeemed || 0);
+    const delta = Number(pointsDelta || 0);
+
+    let newPts = curPts;
+    let newEarned = curEarned;
+    let newRedeemed = curRedeemed;
+
+    if (isRedeem) {
+      newPts = Math.max(0, curPts - delta);
+      newRedeemed += delta;
+    } else {
+      newPts += delta;
+      newEarned += delta;
+    }
+
+    customers[targetIdx] = {
+      ...cust,
+      LoyaltyPoints: newPts,
+      TotalPointsEarned: newEarned,
+      TotalPointsRedeemed: newRedeemed,
+      UpdatedAt: new Date().toISOString()
+    };
+    saveLocalCustomers(customers);
+    return customers[targetIdx];
+  }
+  return null;
+}
+
+/**
+ * ============================================================================
+ * Phase 3: ড্রপ-অফ ও অসম্পূর্ণ কার্ট (Abandoned Carts) লোকাল স্টোরেজ সার্ভিস
+ * ============================================================================
+ */
+
+export function getLocalAbandonedCarts() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.ABANDONED_CARTS);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalAbandonedCarts(carts) {
+  setSecureStorageItem(STORAGE_KEYS.ABANDONED_CARTS, Array.isArray(carts) ? carts : []);
+}
+
+export function saveOrUpdateAbandonedCartLocally(cartData) {
+  if (!cartData) return getLocalAbandonedCarts();
+  const carts = getLocalAbandonedCarts();
+  const phone = String(cartData.CustomerPhone || cartData.customerPhone || cartData.phone || '').trim();
+  const cartId = String(cartData.CartID || cartData.cartId || '').trim();
+
+  const now = new Date().toISOString();
+  const existingIdx = carts.findIndex(c => {
+    if (cartId && c.CartID && String(c.CartID).trim() === cartId) return true;
+    if (phone && c.CustomerPhone && String(c.CustomerPhone).trim() === phone && c.RecoveryStatus === 'Pending') return true;
+    return false;
+  });
+
+  const rawItems = cartData.items || cartData.CartItemsJSON || [];
+  const itemsJson = typeof rawItems === 'string' ? rawItems : JSON.stringify(rawItems);
+
+  if (existingIdx !== -1) {
+    carts[existingIdx] = {
+      ...carts[existingIdx],
+      CustomerPhone: phone || carts[existingIdx].CustomerPhone,
+      CustomerName: cartData.CustomerName || cartData.customerName || carts[existingIdx].CustomerName || 'Online Visitor',
+      CustomerEmail: cartData.CustomerEmail || cartData.customerEmail || carts[existingIdx].CustomerEmail || '',
+      CustomerAddress: cartData.CustomerAddress || cartData.customerAddress || carts[existingIdx].CustomerAddress || '',
+      CartItemsJSON: itemsJson,
+      TotalAmount: Number(cartData.TotalAmount !== undefined ? cartData.TotalAmount : (cartData.totalAmount !== undefined ? cartData.totalAmount : (cartData.grandTotal !== undefined ? cartData.grandTotal : carts[existingIdx].TotalAmount))) || 0,
+      RecoveryStatus: cartData.RecoveryStatus || cartData.status || carts[existingIdx].RecoveryStatus || 'Pending',
+      Notes: cartData.Notes !== undefined ? cartData.Notes : carts[existingIdx].Notes,
+      Timestamp: now
+    };
+  } else {
+    const newCart = {
+      CartID: cartId || `CART-${Date.now().toString().slice(-6)}`,
+      Timestamp: now,
+      CustomerPhone: phone,
+      CustomerName: cartData.CustomerName || cartData.customerName || 'Online Visitor',
+      CustomerEmail: cartData.CustomerEmail || cartData.customerEmail || '',
+      CustomerAddress: cartData.CustomerAddress || cartData.customerAddress || '',
+      CartItemsJSON: itemsJson,
+      TotalAmount: Number(cartData.TotalAmount !== undefined ? cartData.TotalAmount : (cartData.totalAmount !== undefined ? cartData.totalAmount : cartData.grandTotal)) || 0,
+      RecoveryStatus: cartData.RecoveryStatus || cartData.status || 'Pending',
+      LastContactedAt: '',
+      Notes: cartData.Notes || ''
+    };
+    carts.unshift(newCart);
+  }
+
+  saveLocalAbandonedCarts(carts);
+  return carts;
+}
+
+export function updateAbandonedCartStatusLocally(cartId, status = 'Contacted', notes = '') {
+  if (!cartId) return getLocalAbandonedCarts();
+  const carts = getLocalAbandonedCarts();
+  const idx = carts.findIndex(c => String(c.CartID || '').trim() === String(cartId).trim());
+  if (idx !== -1) {
+    const now = new Date().toISOString();
+    carts[idx].RecoveryStatus = status;
+    carts[idx].LastContactedAt = now;
+    if (notes) carts[idx].Notes = notes;
+    saveLocalAbandonedCarts(carts);
+  }
+  return carts;
+}
+
+export function deleteAbandonedCartLocally(cartId) {
+  if (!cartId) return getLocalAbandonedCarts();
+  const carts = getLocalAbandonedCarts();
+  const filtered = carts.filter(c => String(c.CartID || '').trim() !== String(cartId).trim());
+  saveLocalAbandonedCarts(filtered);
   return filtered;
 }
 

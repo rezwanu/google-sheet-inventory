@@ -31,22 +31,28 @@ import {
   User,
   ShieldCheck,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  MessageCircle,
+  Award
 } from 'lucide-react';
+import { classifyCustomerSegment } from '../services/storage';
 
 export default function CustomersModal({
   isOpen,
   onClose,
   customers = [],
   currencySymbol = '৳',
+  settings = {},
   onAddCustomer,
   onDeleteCustomer,
   onRefreshCustomers,
   onOpenCustomerLedgerModal,
+  showToast
 }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('ALL');
+  const [rfmFilter, setRfmFilter] = useState('ALL'); // 'ALL' | 'VIP' | 'Regular' | 'At-Risk' | 'New'
   const [sortBy, setSortBy] = useState('spent-desc');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -67,12 +73,15 @@ export default function CustomersModal({
   const stats = useMemo(() => {
     const list = Array.isArray(customers) ? customers : [];
     const totalCount = list.length;
-    const vipCount = list.filter((c) => c?.CustomerType === 'VIP').length;
+    const vipCount = list.filter((c) => c?.CustomerType === 'VIP' || classifyCustomerSegment(c) === 'VIP').length;
     const wholesaleCount = list.filter((c) => c?.CustomerType === 'Wholesale').length;
     const corporateCount = list.filter((c) => c?.CustomerType === 'Corporate').length;
-    const regularCount = list.filter((c) => !c?.CustomerType || c?.CustomerType === 'Regular').length;
+    const regularCount = list.filter((c) => classifyCustomerSegment(c) === 'Regular').length;
+    const atRiskCount = list.filter((c) => classifyCustomerSegment(c) === 'At-Risk').length;
+    const newCount = list.filter((c) => classifyCustomerSegment(c) === 'New').length;
     const totalRevenue = list.reduce((sum, c) => sum + (Number(c?.TotalSpent) || 0), 0);
     const totalOrders = list.reduce((sum, c) => sum + (Number(c?.TotalOrders) || 0), 0);
+    const totalLoyaltyPoints = list.reduce((sum, c) => sum + (Number(c?.LoyaltyPoints) || 0), 0);
     const avgSpent = totalCount > 0 ? totalRevenue / totalCount : 0;
     const totalDue = list.reduce((sum, c) => sum + (Number(c?.CurrentDue) || 0), 0);
     const dueCount = list.filter((c) => (Number(c?.CurrentDue) || 0) > 0).length;
@@ -83,6 +92,9 @@ export default function CustomersModal({
       wholesaleCount,
       corporateCount,
       regularCount,
+      atRiskCount,
+      newCount,
+      totalLoyaltyPoints,
       totalRevenue,
       totalOrders,
       avgSpent,
@@ -98,6 +110,11 @@ export default function CustomersModal({
     // ক্যাটাগরি ফিল্টার
     if (filterType !== 'ALL') {
       list = list.filter((c) => c.CustomerType === filterType);
+    }
+
+    // RFM সেগমেন্ট ফিল্টার
+    if (rfmFilter !== 'ALL') {
+      list = list.filter((c) => classifyCustomerSegment(c) === rfmFilter);
     }
 
     // সার্চ কিউরি ফিল্টার
@@ -119,6 +136,8 @@ export default function CustomersModal({
       sorted.sort((a, b) => (Number(b.TotalSpent) || 0) - (Number(a.TotalSpent) || 0));
     } else if (sortBy === 'orders-desc') {
       sorted.sort((a, b) => (Number(b.TotalOrders) || 0) - (Number(a.TotalOrders) || 0));
+    } else if (sortBy === 'points-desc') {
+      sorted.sort((a, b) => (Number(b.LoyaltyPoints) || 0) - (Number(a.LoyaltyPoints) || 0));
     } else if (sortBy === 'name-asc') {
       sorted.sort((a, b) => String(a.CustomerName || '').localeCompare(String(b.CustomerName || '')));
     } else if (sortBy === 'newest') {
@@ -126,7 +145,63 @@ export default function CustomersModal({
     }
 
     return sorted;
-  }, [customers, searchQuery, filterType, sortBy]);
+  }, [customers, searchQuery, filterType, rfmFilter, sortBy]);
+
+  // টার্গেটেড WhatsApp অফার হ্যান্ডলার
+  const handleTargetedOffer = (cust) => {
+    const rawPhone = String(cust.Phone || '').replace(/[^0-9]/g, '');
+    if (!rawPhone) {
+      if (showToast) showToast('গ্রাহকের মোবাইল নম্বর পাওয়া যায়নি।', 'error');
+      return;
+    }
+    let phone = rawPhone;
+    if (phone.startsWith('01')) phone = '88' + phone;
+    else if (!phone.startsWith('880')) phone = '880' + phone;
+
+    const rfm = classifyCustomerSegment(cust);
+    const storeName = settings?.StoreName || settings?.storeName || 'আমাদের স্টোর';
+    const points = Number(cust.LoyaltyPoints || 0);
+
+    let message = '';
+    if (rfm === 'At-Risk') {
+      message = `আসসালামু আলাইকুম ${cust.CustomerName || 'সম্মানিত গ্রাহক'},\n${storeName} থেকে অনেকদিন আপনাকে কাছে পাইনি! আপনার জন্য আমাদের নতুন কালেকশনে রয়েছে বিশেষ ছাড়। আপনার জমানো লয়ালটি ব্যালেন্স: ${points} পয়েন্ট। কেনাকাটা করতে আজই ভিজিট করুন!`;
+    } else if (rfm === 'VIP') {
+      message = `আসসালামু আলাইকুম প্রিয় VIP গ্রাহক ${cust.CustomerName || ''},\n${storeName}-এর সাথে থাকার জন্য আন্তরিক ধন্যবাদ! আপনার জমাকৃত ${points} লয়ালটি পয়েন্ট দিয়ে পরবর্তী অর্ডারে বিশেষ ডিসকাউন্ট উপভোগ করুন।`;
+    } else {
+      message = `আসসালামু আলাইকুম ${cust.CustomerName || 'গ্রাহক'},\n${storeName}-এ আপনার বর্তমান রিওয়ার্ড ব্যালেন্স: ${points} পয়েন্ট। যে কোনো কেনাকাটায় এই পয়েন্ট ব্যবহার করতে পারেন। ধন্যবাদ!`;
+    }
+
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
+  // RFM সেগমেন্ট ব্যাজ কনফিগ
+  const getRfmBadge = (cust) => {
+    const segment = classifyCustomerSegment(cust);
+    switch (segment) {
+      case 'VIP':
+        return {
+          label: '👑 VIP চ্যাম্পিয়ন',
+          class: 'bg-amber-100 text-amber-800 border-amber-300'
+        };
+      case 'At-Risk':
+        return {
+          label: '⚠️ ঝুঁকিপূর্ণ (>৪৫ দিন)',
+          class: 'bg-rose-100 text-rose-800 border-rose-300'
+        };
+      case 'New':
+        return {
+          label: '🟢 নতুন গ্রাহক',
+          class: 'bg-emerald-100 text-emerald-800 border-emerald-300'
+        };
+      case 'Regular':
+      default:
+        return {
+          label: '🌟 নিয়মিত ক্রেতা',
+          class: 'bg-blue-100 text-blue-800 border-blue-300'
+        };
+    }
+  };
 
   // কারেন্সি ফরম্যাট হেল্পার
   const formatCurrency = (val) => {
@@ -702,6 +777,46 @@ export default function CustomersModal({
           </div>
         </div>
 
+        {/* ================= RFM সেগমেন্টেশন কুইক ফিল্টার স্ট্রিপ ================= */}
+        <div className="px-4 py-2 bg-gradient-to-r from-slate-50 via-indigo-50/40 to-purple-50/30 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs overflow-x-auto pb-0.5">
+            <span className="font-bold text-slate-500 text-[11px] flex items-center gap-1 shrink-0 mr-1">
+              <Award className="w-3.5 h-3.5 text-indigo-600" />
+              CRM সেগমেন্ট:
+            </span>
+            {[
+              { id: 'ALL', label: 'সকল গ্রাহক', count: stats.totalCount },
+              { id: 'VIP', label: '👑 VIP চ্যাম্পিয়ন', count: stats.vipCount },
+              { id: 'Regular', label: '🌟 নিয়মিত', count: stats.regularCount },
+              { id: 'At-Risk', label: '⚠️ ঝুঁকিপূর্ণ (>৪৫ দিন)', count: stats.atRiskCount },
+              { id: 'New', label: '🟢 নতুন', count: stats.newCount },
+            ].map((seg) => (
+              <button
+                key={seg.id}
+                onClick={() => setRfmFilter(seg.id)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap border cursor-pointer ${
+                  rfmFilter === seg.id
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <span>{seg.label}</span>
+                <span className={`ml-1.5 text-[10px] px-1.5 py-0.2 rounded-full ${
+                  rfmFilter === seg.id ? 'bg-white/20 text-white font-mono' : 'bg-slate-100 text-slate-600 font-mono'
+                }`}>
+                  {seg.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="text-[11px] font-bold text-purple-700 bg-white border border-purple-200 px-2.5 py-1 rounded-lg shrink-0 flex items-center gap-1 shadow-2xs">
+            <span>🪙 মোট অর্জিত লয়ালটি:</span>
+            <span className="font-mono text-purple-900 font-black">{stats.totalLoyaltyPoints.toLocaleString()}</span>
+            <span className="text-slate-400 font-normal">পয়েন্ট</span>
+          </div>
+        </div>
+
         {/* ================= গ্রাহক তালিকা বডি (গ্রিড / টেবিল) ================= */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-5 min-h-0 bg-slate-50/50">
           {filteredCustomers.length === 0 ? (
@@ -756,6 +871,14 @@ export default function CustomersModal({
                               <h4 className="text-sm font-black text-slate-900 truncate">
                                 {cust.CustomerName || 'নামহীন গ্রাহক'}
                               </h4>
+                              {(() => {
+                                const rfm = getRfmBadge(cust);
+                                return (
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${rfm.class}`}>
+                                    {rfm.label}
+                                  </span>
+                                );
+                              })()}
                             </div>
                             <div className="flex items-center space-x-2 text-[10px] font-mono text-slate-400 mt-0.5">
                               <span>{cust.CustomerID || 'CUST-ID'}</span>
@@ -829,8 +952,8 @@ export default function CustomersModal({
                     </div>
 
                       {/* নিচের আর্থিক মেট্রিক্স রিবন ও অ্যাকশন */}
-                    <div className="pt-3 flex items-center justify-between gap-2">
-                      <div className="flex items-center space-x-3 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70">
+                    <div className="pt-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70">
                         <div>
                           <span className="text-[9px] uppercase tracking-wider font-bold text-slate-400 block">
                             মোট অর্ডার
@@ -846,6 +969,15 @@ export default function CustomersModal({
                           </span>
                           <span className="text-xs font-black text-emerald-600">
                             {formatCurrency(spentAmount)}
+                          </span>
+                        </div>
+                        <div className="h-6 w-px bg-purple-200" />
+                        <div>
+                          <span className="text-[9px] uppercase tracking-wider font-bold text-purple-700 block">
+                            লয়ালটি
+                          </span>
+                          <span className="text-xs font-black text-purple-700 font-mono">
+                            🪙 {Number(cust.LoyaltyPoints || 0).toLocaleString()}
                           </span>
                         </div>
                         {Number(cust.CurrentDue || 0) > 0 && (
@@ -865,6 +997,16 @@ export default function CustomersModal({
 
                       {/* অ্যাকশন বাটনস */}
                       <div className="flex items-center space-x-1.5">
+                        {/* টার্গেটেড WhatsApp অফার বাটন */}
+                        <button
+                          type="button"
+                          onClick={() => handleTargetedOffer(cust)}
+                          title="টার্গেটেড WhatsApp অফার বা রিওয়ার্ড মেসেজ পাঠান"
+                          className="p-2 text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all border border-emerald-200 cursor-pointer shadow-2xs"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </button>
+
                         {onOpenCustomerLedgerModal && (
                           <button
                             type="button"
@@ -909,10 +1051,12 @@ export default function CustomersModal({
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px]">
                     <tr>
                       <th className="py-3 px-4">গ্রাহকের নাম ও আইডি</th>
+                      <th className="py-3 px-3">CRM সেগমেন্ট</th>
                       <th className="py-3 px-3">ক্যাটাগরি</th>
                       <th className="py-3 px-3">যোগাযোগ</th>
                       <th className="py-3 px-3 text-right">মোট অর্ডার</th>
                       <th className="py-3 px-3 text-right">সর্বমোট ব্যয়</th>
+                      <th className="py-3 px-3 text-right">লয়ালটি</th>
                       <th className="py-3 px-3 text-right">বকেয়া পাওনা</th>
                       <th className="py-3 px-4 text-center">অ্যাকশন</th>
                     </tr>
@@ -920,6 +1064,7 @@ export default function CustomersModal({
                   <tbody className="divide-y divide-slate-100">
                     {filteredCustomers.map((cust) => {
                       const conf = getCategoryConfig(cust.CustomerType);
+                      const rfm = getRfmBadge(cust);
                       return (
                         <tr
                           key={cust.CustomerID || cust.Phone}
@@ -939,6 +1084,12 @@ export default function CustomersModal({
                                 </div>
                               </div>
                             </div>
+                          </td>
+
+                          <td className="py-3 px-3">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap ${rfm.class}`}>
+                              {rfm.label}
+                            </span>
                           </td>
 
                           <td className="py-3 px-3">
@@ -967,6 +1118,10 @@ export default function CustomersModal({
                             {formatCurrency(cust.TotalSpent)}
                           </td>
 
+                          <td className="py-3 px-3 text-right font-mono font-bold text-purple-700">
+                            🪙 {Number(cust.LoyaltyPoints || 0).toLocaleString()}
+                          </td>
+
                           <td className="py-3 px-3 text-right">
                             {Number(cust.CurrentDue || 0) > 0 ? (
                               <span className="font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 text-xs">
@@ -979,6 +1134,16 @@ export default function CustomersModal({
 
                           <td className="py-3 px-4 text-center">
                             <div className="flex items-center justify-center space-x-1.5">
+                              {/* টার্গেটেড WhatsApp অফার বাটন */}
+                              <button
+                                type="button"
+                                onClick={() => handleTargetedOffer(cust)}
+                                title="টার্গেটেড WhatsApp অফার বা রিওয়ার্ড মেসেজ পাঠান"
+                                className="p-1.5 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                              </button>
+
                               {onOpenCustomerLedgerModal && (
                                 <button
                                   type="button"

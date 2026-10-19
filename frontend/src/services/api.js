@@ -1224,3 +1224,123 @@ export async function postUpdateCustomerCreditLimit(apiUrl, customerId, creditLi
     };
   }
 }
+
+/**
+ * ============================================================================
+ * Phase 3: ডিজিটাল স্টোরফ্রন্ট, লয়ালটি ও ড্রপ-অফ কার্ট রিকভারি API
+ * ============================================================================
+ */
+
+/**
+ * ড্রপ-অফ বা অসম্পূর্ণ কার্ট সার্ভারে সংরক্ষণ করা (action: 'saveAbandonedCart')
+ */
+export async function postSaveAbandonedCart(apiUrl, cartData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'লোকাল মোড: কার্ট ব্রাউজারে সংরক্ষিত হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'saveAbandonedCart',
+    ...cartData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `কার্ট ডাটাবেসে সেভ করতে সমস্যা: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * অসম্পূর্ণ কার্টের স্ট্যাটাস আপডেট করা (action: 'updateAbandonedCartStatus')
+ */
+export async function postUpdateAbandonedCartStatus(apiUrl, cartId, status = 'Contacted', notes = '') {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'লোকাল মোড: কার্ট স্ট্যাটাস আপডেট হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'updateAbandonedCartStatus',
+    cartId: cartId,
+    status: status,
+    notes: notes,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `কার্ট স্ট্যাটাস আপডেট করতে সমস্যা: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * গ্রাহকের লয়ালটি পয়েন্ট আপডেট করা (action: 'updateCustomerLoyalty')
+ */
+export async function postUpdateCustomerLoyalty(apiUrl, { customerId, phone, pointsDelta, isRedeem = false, notes = '' }) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'লোকাল মোড: লয়ালটি পয়েন্ট আপডেট হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'updateCustomerLoyalty',
+    customerId: customerId,
+    phone: phone,
+    pointsDelta: pointsDelta,
+    isRedeem: isRedeem,
+    notes: notes,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `লয়ালটি পয়েন্ট আপডেট করতে সমস্যা: ${err.message}`,
+    };
+  }
+}

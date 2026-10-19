@@ -38,6 +38,7 @@ export default function CheckoutPage({
   onNavigateToCart,
   onNavigateToCatalog,
   onCompleteSale,
+  onSaveAbandonedCart,
   isProcessing,
   activeUser,
   onOpenAuthModal,
@@ -45,6 +46,18 @@ export default function CheckoutPage({
   const isAdmin = Boolean(activeUser && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier'));
   const isCustomer = !isAdmin;
   const isGuest = !activeUser;
+
+  // কার্ট ট্র্যাকিং আইডি (অসম্পূর্ণ ড্রপ-অফ কার্ট স্বয়ংক্রিয় শনাক্তকরণের জন্য)
+  const [cartTrackingId] = useState(() => 'CART-' + Date.now().toString().slice(-6));
+
+  // লয়ালটি ও ক্যাশব্যাক কনফিগারেশন
+  const loyaltyEnabled = settings?.LoyaltyEnabled !== false;
+  const loyaltyPointsRate = Number(settings?.LoyaltyPointsRate) || 100;
+  const loyaltyRedeemRate = Number(settings?.LoyaltyRedeemRate) || 1.0;
+  const minRedeemPoints = Number(settings?.MinRedeemPoints) || 10;
+
+  const [isRedeemingLoyalty, setIsRedeemingLoyalty] = useState(false);
+  const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState('');
 
   // কাস্টমার সার্চ ও ড্রপডাউন স্টেট
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
@@ -104,6 +117,7 @@ export default function CheckoutPage({
 
   const customerCurrentDue = Number(selectedCustomerObj?.CurrentDue || 0);
   const customerCreditLimit = Number(selectedCustomerObj?.CreditLimit || 0);
+  const availableLoyaltyPoints = Number(selectedCustomerObj?.LoyaltyPoints || 0);
 
   // মোট আইটেম সংখ্যা এবং ইউনিট হিসাব
   const totalItemsCount = cartItems.length;
@@ -115,11 +129,29 @@ export default function CheckoutPage({
     0
   );
 
-  // ডিসকাউন্ট এবং ট্যাক্স হিসাব
-  const discount = Math.max(0, Math.min(Number(discountAmount) || 0, subTotal));
-  const taxableAmount = Math.max(0, subTotal - discount);
+  // কুপন ডিসকাউন্ট হিসাব
+  const couponDiscount = Math.max(0, Math.min(Number(discountAmount) || 0, subTotal));
+  const amountAfterCoupon = Math.max(0, subTotal - couponDiscount);
+
+  // লয়ালটি পয়েন্ট ডিসকাউন্ট হিসাব
+  const maxRedeemablePoints = Math.min(
+    availableLoyaltyPoints,
+    Math.ceil(amountAfterCoupon / loyaltyRedeemRate)
+  );
+
+  const pointsActuallyRedeemed = isRedeemingLoyalty
+    ? Math.max(0, Math.min(Number(loyaltyPointsToRedeem) || 0, maxRedeemablePoints))
+    : 0;
+
+  const loyaltyDiscount = pointsActuallyRedeemed * loyaltyRedeemRate;
+  const totalDiscount = couponDiscount + loyaltyDiscount;
+
+  const taxableAmount = Math.max(0, subTotal - totalDiscount);
   const taxAmount = parseFloat(((taxableAmount * (Number(taxRatePercent) || 0)) / 100).toFixed(2));
   const grandTotal = parseFloat((taxableAmount + taxAmount).toFixed(2));
+
+  // এই অর্ডারে অর্জিত নতুন পয়েন্ট
+  const newlyEarnedPoints = loyaltyEnabled ? Math.floor(grandTotal / loyaltyPointsRate) : 0;
 
   // ক্যাশ পরিবর্তনের (Change / Return) হিসাব
   const cashGiven = Number(receivedCash) || 0;
@@ -131,6 +163,26 @@ export default function CheckoutPage({
   const splitDue = Number(splitPayments.due) || 0;
   const splitSum = splitTotalPaid + splitDue;
   const splitRemaining = Math.max(0, parseFloat((grandTotal - splitSum).toFixed(2)));
+
+  // ড্রপ-অফ কার্ট স্বয়ংক্রিয় ট্র্যাকিং (মোবাইল নম্বর দেওয়ার সাথে সাথে ডেবউন্সড সেভ)
+  React.useEffect(() => {
+    const rawPhone = String(customerPhone || '').replace(/[^0-9]/g, '');
+    if (rawPhone.length >= 11 && cartItems.length > 0 && onSaveAbandonedCart) {
+      const timer = setTimeout(() => {
+        onSaveAbandonedCart({
+          cartId: cartTrackingId,
+          customerPhone: rawPhone,
+          customerName: customerName.trim() || 'Online Visitor',
+          customerEmail: customerEmail.trim(),
+          customerAddress: customerAddress.trim(),
+          items: cartItems,
+          totalAmount: grandTotal,
+          status: 'Pending'
+        });
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [customerPhone, customerName, customerEmail, customerAddress, cartItems, grandTotal, onSaveAbandonedCart, cartTrackingId]);
 
   // ফিল্টারকৃত কাস্টমার তালিকা (ডাটাবেস সার্চ)
   const filteredCustomers = useMemo(() => {
@@ -223,7 +275,12 @@ export default function CheckoutPage({
       customerType: customerType,
       customerId: selectedCustomerId || selectedCustomerObj?.CustomerID || '',
       orderNotes: orderNotes.trim(),
-      discountAmount: discount,
+      discountAmount: totalDiscount,
+      couponDiscount: couponDiscount,
+      loyaltyDiscount: loyaltyDiscount,
+      loyaltyEarned: newlyEarnedPoints,
+      loyaltyRedeemed: pointsActuallyRedeemed,
+      cartId: cartTrackingId,
       taxPercent: Number(taxRatePercent) || 0,
       taxAmount: taxAmount,
       subTotal: subTotal,
@@ -1003,6 +1060,77 @@ export default function CheckoutPage({
               ))}
             </div>
 
+            {/* লয়ালটি পয়েন্ট রিওয়ার্ড কার্ড */}
+            {loyaltyEnabled && (
+              <div className="p-3.5 bg-gradient-to-br from-purple-50/80 via-indigo-50/40 to-purple-50/60 border border-purple-200/90 rounded-2xl space-y-2.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold text-xs">
+                      🪙
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-slate-800">লয়ালটি পয়েন্ট রিওয়ার্ড</div>
+                      <div className="text-[10px] text-slate-500">
+                        উপলব্ধ ব্যালেন্স: <strong className="text-purple-700 font-bold">{availableLoyaltyPoints}</strong> পয়েন্ট
+                      </div>
+                    </div>
+                  </div>
+
+                  {availableLoyaltyPoints >= minRedeemPoints ? (
+                    <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-purple-700">
+                      <input
+                        type="checkbox"
+                        checked={isRedeemingLoyalty}
+                        onChange={(e) => {
+                          setIsRedeemingLoyalty(e.target.checked);
+                          if (e.target.checked && !loyaltyPointsToRedeem) {
+                            setLoyaltyPointsToRedeem(Math.min(availableLoyaltyPoints, maxRedeemablePoints).toString());
+                          }
+                        }}
+                        className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                      />
+                      <span>ভাঙিয়ে ছাড় নিন</span>
+                    </label>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      (ন্যূনতম {minRedeemPoints} পয়েন্ট আবশ্যক)
+                    </span>
+                  )}
+                </div>
+
+                {/* পয়েন্ট ইনপুট ফিল্ড (যখন রিডিম সক্রিয় করা হয়) */}
+                {isRedeemingLoyalty && availableLoyaltyPoints >= minRedeemPoints && (
+                  <div className="pt-2 border-t border-purple-200/70 flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="number"
+                        min="1"
+                        max={maxRedeemablePoints}
+                        value={loyaltyPointsToRedeem}
+                        onChange={(e) => setLoyaltyPointsToRedeem(e.target.value)}
+                        placeholder={`সর্বোচ্চ ${maxRedeemablePoints}`}
+                        className="w-full px-3 py-1.5 text-xs bg-white border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-bold text-purple-900"
+                      />
+                    </div>
+                    <span className="text-xs font-black text-purple-700 shrink-0">
+                      = -{currencySymbol}{(Number(loyaltyPointsToRedeem || 0) * loyaltyRedeemRate).toFixed(2)} ছাড়
+                    </span>
+                  </div>
+                )}
+
+                {/* এই কেনাকাটায় অর্জিত পয়েন্ট ব্যাজ */}
+                {newlyEarnedPoints > 0 && (
+                  <div className="text-[11px] font-bold text-emerald-700 bg-white/80 border border-emerald-200/80 px-2.5 py-1 rounded-xl flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>এই কেনাকাটায় অর্জন হবে:</span>
+                    </span>
+                    <span className="font-mono font-black text-emerald-800">+{newlyEarnedPoints} পয়েন্ট</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* খরচ ও মোট টাকার তালিকা */}
             <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs sm:text-sm">
               <div className="flex justify-between text-slate-600">
@@ -1010,10 +1138,17 @@ export default function CheckoutPage({
                 <span className="font-bold text-slate-800">{currencySymbol}{subTotal.toFixed(2)}</span>
               </div>
 
-              {discount > 0 && (
+              {couponDiscount > 0 && (
                 <div className="flex justify-between text-rose-600 font-bold">
-                  <span>ডিসকাউন্ট ছাড়:</span>
-                  <span>-{currencySymbol}{discount.toFixed(2)}</span>
+                  <span>কুপন ডিসকাউন্ট ছাড়:</span>
+                  <span>-{currencySymbol}{couponDiscount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {loyaltyDiscount > 0 && (
+                <div className="flex justify-between text-purple-600 font-bold">
+                  <span>লয়ালটি পয়েন্ট ছাড় ({pointsActuallyRedeemed} pt):</span>
+                  <span>-{currencySymbol}{loyaltyDiscount.toFixed(2)}</span>
                 </div>
               )}
 

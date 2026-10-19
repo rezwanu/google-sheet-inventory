@@ -17,7 +17,8 @@ const SHEETS = {
   CUSTOMERS: 'Customers',
   COUPONS: 'Coupons',
   ORDERS: 'Orders',
-  CUSTOMER_LEDGER: 'CustomerLedger'
+  CUSTOMER_LEDGER: 'CustomerLedger',
+  ABANDONED_CARTS: 'AbandonedCarts'
 };
 
 /**
@@ -314,7 +315,8 @@ function ensureSettingsSheet(spreadsheet) {
     'TaxRatePercent', 'Address', 'Phone', 'Email', 'ReceiptFooter', 'ApiUrl', 'UpdatedAt',
     'SteadfastApiKey', 'SteadfastSecretKey', 'PathaoClientId', 'PathaoClientSecret', 'PathaoStoreId',
     'SmsProvider', 'SmsApiKey', 'SmsSenderId', 'SmsTemplateOrder', 'SmsTemplateCourier', 'SmsTemplateDelivered',
-    'WhatsappEnabled'
+    'WhatsappEnabled', 'LoyaltyEnabled', 'LoyaltyPointsRate', 'LoyaltyRedeemRate', 'MinRedeemPoints',
+    'StorefrontBannerText', 'StorefrontEnabled'
   ];
 
   if (settingsSheet.getLastRow() === 0) {
@@ -413,17 +415,21 @@ function ensureCustomersSheet(spreadsheet) {
     customersSheet.appendRow([
       'CustomerID', 'CustomerName', 'Phone', 'Email', 'Address', 'CustomerType',
       'TotalOrders', 'TotalSpent', 'CreditLimit', 'TotalPurchases', 'TotalPaid', 'CurrentDue', 'LastPaymentDate',
+      'LoyaltyPoints', 'TotalPointsEarned', 'TotalPointsRedeemed', 'CustomerSegment', 'LastOrderDate',
       'Status', 'CreatedAt', 'UpdatedAt'
     ]);
   } else {
     // পূর্বে থাকা ডামি কাস্টমার ডাটা স্বয়ংক্রিয়ভাবে ক্লিন করা
     cleanDummyCustomersFromSheet(customersSheet);
 
-    // মিসিং ক্রেডিট ও বাকির কলাম স্বয়ংক্রিয়ভাবে ডানপাশে অ্যাপেন্ড করা (কোনো ডাটা ক্ষতিগ্রস্ত হবে না)
+    // মিসিং ক্রেডিট, বাকির এবং লয়ালটি কলাম স্বয়ংক্রিয়ভাবে ডানপাশে অ্যাপেন্ড করা (কোনো ডাটা ক্ষতিগ্রস্ত হবে না)
     const lastCol = customersSheet.getLastColumn();
     if (lastCol > 0) {
       const headers = customersSheet.getRange(1, 1, 1, lastCol).getValues()[0];
-      const requiredDueCols = ['CreditLimit', 'TotalPurchases', 'TotalPaid', 'CurrentDue', 'LastPaymentDate'];
+      const requiredDueCols = [
+        'CreditLimit', 'TotalPurchases', 'TotalPaid', 'CurrentDue', 'LastPaymentDate',
+        'LoyaltyPoints', 'TotalPointsEarned', 'TotalPointsRedeemed', 'CustomerSegment', 'LastOrderDate'
+      ];
       requiredDueCols.forEach(col => {
         if (findCol(headers, col) === -1) {
           customersSheet.getRange(1, customersSheet.getLastColumn() + 1).setValue(col);
@@ -470,6 +476,41 @@ function ensureCustomerLedgerSheet(spreadsheet) {
   }
 
   return ledgerSheet;
+}
+
+/**
+ * AbandonedCarts (ড্রপ-অফ ও অসম্পূর্ণ কার্ট ডাটাবেস) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} AbandonedCarts শিট অবজেক্ট
+ */
+function ensureAbandonedCartsSheet(spreadsheet) {
+  let cartsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.ABANDONED_CARTS);
+  if (!cartsSheet) {
+    cartsSheet = spreadsheet.insertSheet(SHEETS.ABANDONED_CARTS);
+  }
+
+  if (cartsSheet.getLastRow() === 0) {
+    cartsSheet.appendRow([
+      'CartID', 'Timestamp', 'CustomerPhone', 'CustomerName', 'CustomerEmail', 'CustomerAddress',
+      'CartItemsJSON', 'TotalAmount', 'RecoveryStatus', 'LastContactedAt', 'Notes'
+    ]);
+  } else {
+    const lastCol = cartsSheet.getLastColumn();
+    if (lastCol > 0) {
+      const headers = cartsSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      const requiredCartCols = [
+        'CartID', 'Timestamp', 'CustomerPhone', 'CustomerName', 'CustomerEmail', 'CustomerAddress',
+        'CartItemsJSON', 'TotalAmount', 'RecoveryStatus', 'LastContactedAt', 'Notes'
+      ];
+      requiredCartCols.forEach(col => {
+        if (findCol(headers, col) === -1) {
+          cartsSheet.getRange(1, cartsSheet.getLastColumn() + 1).setValue(col);
+        }
+      });
+    }
+  }
+
+  return cartsSheet;
 }
 
 /**
@@ -800,6 +841,9 @@ function ensureDatabaseSchema(spreadsheet) {
 
   // ২.৪ CustomerLedger (বাকির খাতা ও লেনদেন) শিট নিশ্চিত করা
   ensureCustomerLedgerSheet(spreadsheet);
+
+  // ২.৫ AbandonedCarts (অসম্পূর্ণ কার্ট ও ড্রপ-অফ ডাটাবেস) শিট নিশ্চিত করা
+  ensureAbandonedCartsSheet(spreadsheet);
 
 
   // ৩. Products শিটের সকল কলাম (SellingPrice সহ) নিশ্চিত করা
@@ -1407,15 +1451,48 @@ function handleCreateSale(spreadsheet, payload) {
         UpdatedAt: findCol(custHeaders, 'UpdatedAt', 'Updated')
       };
 
+      const loyaltyEarned = Number(payload.loyaltyEarned) || 0;
+      const loyaltyRedeemed = Number(payload.loyaltyRedeemed) || 0;
+      const ptsCol = findCol(custHeaders, 'LoyaltyPoints', 'Points');
+      const earnedCol = findCol(custHeaders, 'TotalPointsEarned', 'PointsEarned');
+      const redeemedCol = findCol(custHeaders, 'TotalPointsRedeemed', 'PointsRedeemed');
+      const segCol = findCol(custHeaders, 'CustomerSegment', 'Segment');
+      const lastOrderCol = findCol(custHeaders, 'LastOrderDate', 'LastOrder');
+
       if (existingCust && existingCust._rowIndex) {
         // বিদ্যমান কাস্টমার আপডেট (মোট অর্ডার ও স্পেন্ট বৃদ্ধি)
         const prevOrders = Number(existingCust.TotalOrders) || 0;
         const prevSpent = Number(existingCust.TotalSpent) || 0;
+        const newOrders = prevOrders + 1;
+        const newSpent = prevSpent + grandTotal;
         
-        if (colMap.TotalOrders !== -1) customersSheet.getRange(existingCust._rowIndex, colMap.TotalOrders + 1).setValue(prevOrders + 1);
-        if (colMap.TotalSpent !== -1) customersSheet.getRange(existingCust._rowIndex, colMap.TotalSpent + 1).setValue(prevSpent + grandTotal);
+        if (colMap.TotalOrders !== -1) customersSheet.getRange(existingCust._rowIndex, colMap.TotalOrders + 1).setValue(newOrders);
+        if (colMap.TotalSpent !== -1) customersSheet.getRange(existingCust._rowIndex, colMap.TotalSpent + 1).setValue(newSpent);
         if (cAddress && colMap.Address !== -1 && !existingCust.Address) customersSheet.getRange(existingCust._rowIndex, colMap.Address + 1).setValue(cAddress);
         if (cEmail && colMap.Email !== -1 && !existingCust.Email) customersSheet.getRange(existingCust._rowIndex, colMap.Email + 1).setValue(cEmail);
+
+        // লয়ালটি পয়েন্ট হিসাব ও সংরক্ষণ
+        const curPoints = Number(existingCust.LoyaltyPoints || 0);
+        const curEarned = Number(existingCust.TotalPointsEarned || 0);
+        const curRedeemed = Number(existingCust.TotalPointsRedeemed || 0);
+        const newPoints = Math.max(0, curPoints + loyaltyEarned - loyaltyRedeemed);
+        const newTotalEarned = curEarned + loyaltyEarned;
+        const newTotalRedeemed = curRedeemed + loyaltyRedeemed;
+
+        if (ptsCol !== -1) customersSheet.getRange(existingCust._rowIndex, ptsCol + 1).setValue(newPoints);
+        if (earnedCol !== -1) customersSheet.getRange(existingCust._rowIndex, earnedCol + 1).setValue(newTotalEarned);
+        if (redeemedCol !== -1) customersSheet.getRange(existingCust._rowIndex, redeemedCol + 1).setValue(newTotalRedeemed);
+        if (lastOrderCol !== -1) customersSheet.getRange(existingCust._rowIndex, lastOrderCol + 1).setValue(timestamp);
+
+        // RFM সেগমেন্ট শ্রেণীকরণ
+        let segment = 'Regular';
+        if (newSpent >= 10000 || newOrders >= 5) {
+          segment = 'VIP';
+        } else if (newOrders <= 1) {
+          segment = 'New';
+        }
+        if (segCol !== -1) customersSheet.getRange(existingCust._rowIndex, segCol + 1).setValue(segment);
+
         if (colMap.UpdatedAt !== -1) customersSheet.getRange(existingCust._rowIndex, colMap.UpdatedAt + 1).setValue(timestamp);
       } else {
         // নতুন কাস্টমার এন্ট্রি তৈরি (ডায়নামিক কলাম ম্যাপিং দ্বারা)
@@ -1432,10 +1509,31 @@ function handleCreateSale(spreadsheet, payload) {
         if (colMap.Status !== -1) newRow[colMap.Status] = 'Active';
         if (colMap.CreatedAt !== -1) newRow[colMap.CreatedAt] = timestamp;
         if (colMap.UpdatedAt !== -1) newRow[colMap.UpdatedAt] = timestamp;
+
+        if (ptsCol !== -1) newRow[ptsCol] = Math.max(0, loyaltyEarned - loyaltyRedeemed);
+        if (earnedCol !== -1) newRow[earnedCol] = loyaltyEarned;
+        if (redeemedCol !== -1) newRow[redeemedCol] = loyaltyRedeemed;
+        if (segCol !== -1) newRow[segCol] = 'New';
+        if (lastOrderCol !== -1) newRow[lastOrderCol] = timestamp;
+
         customersSheet.appendRow(newRow);
       }
     } catch (custErr) {
       Logger.log('Customer sync soft error: ' + custErr.toString());
+    }
+  }
+
+  // ৬. যদি কোনো অসম্পূর্ণ কার্ট (Abandoned Cart) থেকে এই সেলস কনভার্ট হয়ে থাকে, কার্টটি Recovered চিহ্নিত করা
+  const cartId = String(payload.cartId || payload.CartID || '').trim();
+  if (cartId) {
+    try {
+      handleUpdateAbandonedCartStatus(spreadsheet, {
+        cartId: cartId,
+        status: 'Recovered',
+        notes: `অর্ডার ${invoiceNo || saleId} হিসেবে রিকভার্ড হয়েছে।`
+      });
+    } catch (cartErr) {
+      Logger.log('Abandoned cart mark recovered error: ' + cartErr.toString());
     }
   }
 
@@ -2056,6 +2154,15 @@ function handleUpdateSettings(spreadsheet, payload) {
   const smsTemplateCourier = payload.SmsTemplateCourier || payload.smsTemplateCourier || '';
   const smsTemplateDelivered = payload.SmsTemplateDelivered || payload.smsTemplateDelivered || '';
   const whatsappEnabled = payload.WhatsappEnabled !== undefined ? payload.WhatsappEnabled : true;
+  
+  // লয়ালটি ও ডিজিটাল স্টোরফ্রন্ট সেটিংস
+  const loyaltyEnabled = payload.LoyaltyEnabled !== undefined ? payload.LoyaltyEnabled : (payload.loyaltyEnabled !== undefined ? payload.loyaltyEnabled : true);
+  const loyaltyPointsRate = Number(payload.LoyaltyPointsRate !== undefined ? payload.LoyaltyPointsRate : (payload.loyaltyPointsRate !== undefined ? payload.loyaltyPointsRate : 100)) || 100;
+  const loyaltyRedeemRate = Number(payload.LoyaltyRedeemRate !== undefined ? payload.LoyaltyRedeemRate : (payload.loyaltyRedeemRate !== undefined ? payload.loyaltyRedeemRate : 1.0)) || 1.0;
+  const minRedeemPoints = Number(payload.MinRedeemPoints !== undefined ? payload.MinRedeemPoints : (payload.minRedeemPoints !== undefined ? payload.minRedeemPoints : 10)) || 10;
+  const storefrontBannerText = payload.StorefrontBannerText !== undefined ? payload.StorefrontBannerText : (payload.storefrontBannerText !== undefined ? payload.storefrontBannerText : 'আমাদের অনলাইন স্টোরে আপনাকে স্বাগতম! সারাদেশে ক্যাশ অন ডেলিভারি সুবিধা।');
+  const storefrontEnabled = payload.StorefrontEnabled !== undefined ? payload.StorefrontEnabled : (payload.storefrontEnabled !== undefined ? payload.storefrontEnabled : true);
+  
   const timestamp = new Date();
 
   const lastCol = settingsSheet.getLastColumn();
@@ -2084,7 +2191,13 @@ function handleUpdateSettings(spreadsheet, payload) {
     SmsTemplateOrder: findCol(headers, 'SmsTemplateOrder'),
     SmsTemplateCourier: findCol(headers, 'SmsTemplateCourier'),
     SmsTemplateDelivered: findCol(headers, 'SmsTemplateDelivered'),
-    WhatsappEnabled: findCol(headers, 'WhatsappEnabled')
+    WhatsappEnabled: findCol(headers, 'WhatsappEnabled'),
+    LoyaltyEnabled: findCol(headers, 'LoyaltyEnabled'),
+    LoyaltyPointsRate: findCol(headers, 'LoyaltyPointsRate'),
+    LoyaltyRedeemRate: findCol(headers, 'LoyaltyRedeemRate'),
+    MinRedeemPoints: findCol(headers, 'MinRedeemPoints'),
+    StorefrontBannerText: findCol(headers, 'StorefrontBannerText'),
+    StorefrontEnabled: findCol(headers, 'StorefrontEnabled')
   };
 
   // যদি ২য় সারি না থাকে, নতুন রেকর্ড তৈরি করা
@@ -2113,6 +2226,12 @@ function handleUpdateSettings(spreadsheet, payload) {
     if (colMap.SmsTemplateCourier !== -1) newRow[colMap.SmsTemplateCourier] = smsTemplateCourier;
     if (colMap.SmsTemplateDelivered !== -1) newRow[colMap.SmsTemplateDelivered] = smsTemplateDelivered;
     if (colMap.WhatsappEnabled !== -1) newRow[colMap.WhatsappEnabled] = whatsappEnabled;
+    if (colMap.LoyaltyEnabled !== -1) newRow[colMap.LoyaltyEnabled] = loyaltyEnabled;
+    if (colMap.LoyaltyPointsRate !== -1) newRow[colMap.LoyaltyPointsRate] = loyaltyPointsRate;
+    if (colMap.LoyaltyRedeemRate !== -1) newRow[colMap.LoyaltyRedeemRate] = loyaltyRedeemRate;
+    if (colMap.MinRedeemPoints !== -1) newRow[colMap.MinRedeemPoints] = minRedeemPoints;
+    if (colMap.StorefrontBannerText !== -1) newRow[colMap.StorefrontBannerText] = storefrontBannerText;
+    if (colMap.StorefrontEnabled !== -1) newRow[colMap.StorefrontEnabled] = storefrontEnabled;
     settingsSheet.appendRow(newRow);
   } else {
     // বিদ্যমান ২য় সারির সংশ্লিষ্ট কলামগুলো ডাইনামিক্যালি আপডেট করা
@@ -2141,6 +2260,12 @@ function handleUpdateSettings(spreadsheet, payload) {
     if (colMap.SmsTemplateCourier !== -1) settingsSheet.getRange(2, colMap.SmsTemplateCourier + 1).setValue(smsTemplateCourier);
     if (colMap.SmsTemplateDelivered !== -1) settingsSheet.getRange(2, colMap.SmsTemplateDelivered + 1).setValue(smsTemplateDelivered);
     if (colMap.WhatsappEnabled !== -1) settingsSheet.getRange(2, colMap.WhatsappEnabled + 1).setValue(whatsappEnabled);
+    if (colMap.LoyaltyEnabled !== -1) settingsSheet.getRange(2, colMap.LoyaltyEnabled + 1).setValue(loyaltyEnabled);
+    if (colMap.LoyaltyPointsRate !== -1) settingsSheet.getRange(2, colMap.LoyaltyPointsRate + 1).setValue(loyaltyPointsRate);
+    if (colMap.LoyaltyRedeemRate !== -1) settingsSheet.getRange(2, colMap.LoyaltyRedeemRate + 1).setValue(loyaltyRedeemRate);
+    if (colMap.MinRedeemPoints !== -1) settingsSheet.getRange(2, colMap.MinRedeemPoints + 1).setValue(minRedeemPoints);
+    if (colMap.StorefrontBannerText !== -1) settingsSheet.getRange(2, colMap.StorefrontBannerText + 1).setValue(storefrontBannerText);
+    if (colMap.StorefrontEnabled !== -1) settingsSheet.getRange(2, colMap.StorefrontEnabled + 1).setValue(storefrontEnabled);
   }
 
   SpreadsheetApp.flush();
@@ -2170,7 +2295,13 @@ function handleUpdateSettings(spreadsheet, payload) {
       SmsTemplateOrder: smsTemplateOrder,
       SmsTemplateCourier: smsTemplateCourier,
       SmsTemplateDelivered: smsTemplateDelivered,
-      WhatsappEnabled: whatsappEnabled
+      WhatsappEnabled: whatsappEnabled,
+      LoyaltyEnabled: loyaltyEnabled,
+      LoyaltyPointsRate: loyaltyPointsRate,
+      LoyaltyRedeemRate: loyaltyRedeemRate,
+      MinRedeemPoints: minRedeemPoints,
+      StorefrontBannerText: storefrontBannerText,
+      StorefrontEnabled: storefrontEnabled
     }
   };
 }
@@ -2345,6 +2476,7 @@ function doGet(e) {
       const sales = getSheetRowsAsObjects(SHEETS.SALES);
       const orders = getSheetRowsAsObjects(SHEETS.ORDERS);
       const customerLedger = getSheetRowsAsObjects(SHEETS.CUSTOMER_LEDGER);
+      const abandonedCarts = getSheetRowsAsObjects(SHEETS.ABANDONED_CARTS);
       const users = getSheetRowsAsObjects(SHEETS.USERS).map(user => {
         return {
           UserID: user.UserID,
@@ -2379,6 +2511,7 @@ function doGet(e) {
           units: units,
           customers: customers,
           customerLedger: customerLedger,
+          abandonedCarts: abandonedCarts,
           coupons: coupons,
           sales: sales,
           orders: orders,
@@ -2688,6 +2821,18 @@ function doPost(e) {
 
       case 'updateCustomerCreditLimit':
         result = handleUpdateCustomerCreditLimit(spreadsheet, payload);
+        break;
+
+      case 'saveAbandonedCart':
+        result = handleSaveAbandonedCart(spreadsheet, payload);
+        break;
+
+      case 'updateAbandonedCartStatus':
+        result = handleUpdateAbandonedCartStatus(spreadsheet, payload);
+        break;
+
+      case 'updateCustomerLoyalty':
+        result = handleUpdateCustomerLoyalty(spreadsheet, payload);
         break;
 
       default:
@@ -3075,6 +3220,197 @@ function handleUpdateCustomerCreditLimit(spreadsheet, payload) {
     success: true,
     message: `গ্রাহকের ক্রেডিট লিমিট ৳${creditLimit} হিসেবে সফলভাবে হালনাগাদ করা হয়েছে।`,
     data: { customerId: target.CustomerID, creditLimit: creditLimit }
+  };
+}
+
+/**
+ * ============================================================================
+ * Phase 3: ডিজিটাল স্টোরফ্রন্ট, লয়ালটি রিওয়ার্ড ও অসম্পূর্ণ কার্ট রিকভারি হ্যান্ডলারসমূহ
+ * ============================================================================
+ */
+
+/**
+ * ড্রপ-অফ বা অসম্পূর্ণ কার্ট সেভ বা আপডেট করা
+ * @param {Spreadsheet} spreadsheet - স্প্রেডশিট
+ * @param {Object} payload - { cartId, customerPhone, customerName, customerEmail, customerAddress, items, totalAmount, status, notes }
+ * @return {Object} রেসপন্স
+ */
+function handleSaveAbandonedCart(spreadsheet, payload) {
+  const cartsSheet = ensureAbandonedCartsSheet(spreadsheet);
+  const phone = String(payload.customerPhone || payload.phone || '').trim();
+  const name = String(payload.customerName || payload.name || '').trim();
+  const email = String(payload.customerEmail || payload.email || '').trim();
+  const address = String(payload.customerAddress || payload.address || '').trim();
+  const totalAmount = Number(payload.totalAmount || payload.grandTotal || 0);
+  const items = payload.items || [];
+  const itemsJson = typeof items === 'string' ? items : JSON.stringify(items);
+  const notes = String(payload.notes || '').trim();
+  const cartId = String(payload.cartId || payload.CartID || generateUniqueId('CART')).trim();
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  if (!phone && !name && (!items || items.length === 0)) {
+    return { success: false, message: 'কার্ট সংরক্ষণের জন্য ফোন নম্বর বা আইটেম প্রয়োজন।' };
+  }
+
+  const existingCarts = getSheetRowsAsObjects(SHEETS.ABANDONED_CARTS);
+  const targetCart = existingCarts.find(c => 
+    (cartId && String(c.CartID || '').trim() === cartId) ||
+    (phone && String(c.CustomerPhone || '').trim() === phone && c.RecoveryStatus === 'Pending')
+  );
+
+  const headers = cartsSheet.getRange(1, 1, 1, cartsSheet.getLastColumn()).getValues()[0];
+  const colMap = {
+    CartID: findCol(headers, 'CartID', 'ID'),
+    Timestamp: findCol(headers, 'Timestamp', 'Date'),
+    CustomerPhone: findCol(headers, 'CustomerPhone', 'Phone', 'Mobile'),
+    CustomerName: findCol(headers, 'CustomerName', 'Name'),
+    CustomerEmail: findCol(headers, 'CustomerEmail', 'Email'),
+    CustomerAddress: findCol(headers, 'CustomerAddress', 'Address'),
+    CartItemsJSON: findCol(headers, 'CartItemsJSON', 'Items', 'CartItems'),
+    TotalAmount: findCol(headers, 'TotalAmount', 'Amount'),
+    RecoveryStatus: findCol(headers, 'RecoveryStatus', 'Status'),
+    LastContactedAt: findCol(headers, 'LastContactedAt', 'ContactedAt'),
+    Notes: findCol(headers, 'Notes')
+  };
+
+  if (targetCart && targetCart._rowIndex) {
+    if (colMap.Timestamp !== -1) cartsSheet.getRange(targetCart._rowIndex, colMap.Timestamp + 1).setValue(timestampStr);
+    if (name && colMap.CustomerName !== -1) cartsSheet.getRange(targetCart._rowIndex, colMap.CustomerName + 1).setValue(name);
+    if (email && colMap.CustomerEmail !== -1) cartsSheet.getRange(targetCart._rowIndex, colMap.CustomerEmail + 1).setValue(email);
+    if (address && colMap.CustomerAddress !== -1) cartsSheet.getRange(targetCart._rowIndex, colMap.CustomerAddress + 1).setValue(address);
+    if (colMap.CartItemsJSON !== -1) cartsSheet.getRange(targetCart._rowIndex, colMap.CartItemsJSON + 1).setValue(itemsJson);
+    if (colMap.TotalAmount !== -1) cartsSheet.getRange(targetCart._rowIndex, colMap.TotalAmount + 1).setValue(totalAmount);
+    if (notes && colMap.Notes !== -1) cartsSheet.getRange(targetCart._rowIndex, colMap.Notes + 1).setValue(notes);
+  } else {
+    const newRow = new Array(headers.length).fill('');
+    if (colMap.CartID !== -1) newRow[colMap.CartID] = cartId;
+    if (colMap.Timestamp !== -1) newRow[colMap.Timestamp] = timestampStr;
+    if (colMap.CustomerPhone !== -1) newRow[colMap.CustomerPhone] = phone;
+    if (colMap.CustomerName !== -1) newRow[colMap.CustomerName] = name || 'Online Visitor';
+    if (colMap.CustomerEmail !== -1) newRow[colMap.CustomerEmail] = email;
+    if (colMap.CustomerAddress !== -1) newRow[colMap.CustomerAddress] = address;
+    if (colMap.CartItemsJSON !== -1) newRow[colMap.CartItemsJSON] = itemsJson;
+    if (colMap.TotalAmount !== -1) newRow[colMap.TotalAmount] = totalAmount;
+    if (colMap.RecoveryStatus !== -1) newRow[colMap.RecoveryStatus] = 'Pending';
+    if (colMap.Notes !== -1) newRow[colMap.Notes] = notes;
+    cartsSheet.appendRow(newRow);
+  }
+
+  SpreadsheetApp.flush();
+  return {
+    success: true,
+    message: 'অসম্পূর্ণ কার্ট সফলভাবে সংরক্ষিত হয়েছে।',
+    data: { cartId: cartId }
+  };
+}
+
+/**
+ * অসম্পূর্ণ কার্টের স্ট্যাটাস আপডেট (যেমন: Contacted, Recovered, Expired)
+ * @param {Spreadsheet} spreadsheet - স্প্রেডশিট
+ * @param {Object} payload - { cartId, status, notes }
+ * @return {Object} রেসপন্স
+ */
+function handleUpdateAbandonedCartStatus(spreadsheet, payload) {
+  const cartId = String(payload.cartId || payload.CartID || '').trim();
+  const status = String(payload.status || payload.RecoveryStatus || 'Contacted').trim();
+  const notes = String(payload.notes || '').trim();
+
+  if (!cartId) {
+    return { success: false, message: 'কার্ট আইডি প্রদান করা আবশ্যক।' };
+  }
+
+  const cartsSheet = ensureAbandonedCartsSheet(spreadsheet);
+  const existingCarts = getSheetRowsAsObjects(SHEETS.ABANDONED_CARTS);
+  const target = existingCarts.find(c => String(c.CartID || '').trim() === cartId);
+
+  if (!target || !target._rowIndex) {
+    return { success: false, message: 'কার্ট রেকর্ড খুঁজে পাওয়া যায়নি।' };
+  }
+
+  const headers = cartsSheet.getRange(1, 1, 1, cartsSheet.getLastColumn()).getValues()[0];
+  const statusCol = findCol(headers, 'RecoveryStatus', 'Status');
+  const contactCol = findCol(headers, 'LastContactedAt', 'ContactedAt');
+  const notesCol = findCol(headers, 'Notes');
+
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  if (statusCol !== -1) cartsSheet.getRange(target._rowIndex, statusCol + 1).setValue(status);
+  if (contactCol !== -1) cartsSheet.getRange(target._rowIndex, contactCol + 1).setValue(timestampStr);
+  if (notes && notesCol !== -1) cartsSheet.getRange(target._rowIndex, notesCol + 1).setValue(notes);
+
+  SpreadsheetApp.flush();
+  return {
+    success: true,
+    message: `কার্ট স্ট্যাটাস '${status}' হিসেবে আপডেট করা হয়েছে।`,
+    data: { cartId: cartId, status: status }
+  };
+}
+
+/**
+ * কাস্টমারের লয়ালটি পয়েন্ট আপডেট (অধিগ্রহণ বা ভাঙানো)
+ * @param {Spreadsheet} spreadsheet - স্প্রেডশিট
+ * @param {Object} payload - { customerId, phone, pointsDelta, isRedeem, notes }
+ * @return {Object} রেসপন্স
+ */
+function handleUpdateCustomerLoyalty(spreadsheet, payload) {
+  const customerId = String(payload.customerId || payload.CustomerID || '').trim();
+  const phone = String(payload.phone || payload.customerPhone || '').trim();
+  const pointsDelta = Number(payload.pointsDelta || payload.points || 0);
+  const isRedeem = Boolean(payload.isRedeem);
+
+  if (!customerId && !phone) {
+    return { success: false, message: 'গ্রাহক আইডি বা ফোন নম্বর প্রদান করুন।' };
+  }
+
+  const customersSheet = ensureCustomersSheet(spreadsheet);
+  const custData = getSheetRowsAsObjects(SHEETS.CUSTOMERS);
+  const target = custData.find(c => 
+    (customerId && String(c.CustomerID || '').trim() === customerId) ||
+    (phone && String(c.Phone || '').trim() === phone)
+  );
+
+  if (!target || !target._rowIndex) {
+    return { success: false, message: 'গ্রাহক খুঁজে পাওয়া যায়নি।' };
+  }
+
+  const headers = customersSheet.getRange(1, 1, 1, customersSheet.getLastColumn()).getValues()[0];
+  const ptsCol = findCol(headers, 'LoyaltyPoints', 'Points');
+  const earnedCol = findCol(headers, 'TotalPointsEarned', 'PointsEarned');
+  const redeemedCol = findCol(headers, 'TotalPointsRedeemed', 'PointsRedeemed');
+  const updatedCol = findCol(headers, 'UpdatedAt', 'Updated');
+
+  let currentPts = Number(target.LoyaltyPoints || 0);
+  let totalEarned = Number(target.TotalPointsEarned || 0);
+  let totalRedeemed = Number(target.TotalPointsRedeemed || 0);
+
+  if (isRedeem) {
+    currentPts = Math.max(0, currentPts - pointsDelta);
+    totalRedeemed += pointsDelta;
+  } else {
+    currentPts += pointsDelta;
+    totalEarned += pointsDelta;
+  }
+
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  if (ptsCol !== -1) customersSheet.getRange(target._rowIndex, ptsCol + 1).setValue(currentPts);
+  if (earnedCol !== -1) customersSheet.getRange(target._rowIndex, earnedCol + 1).setValue(totalEarned);
+  if (redeemedCol !== -1) customersSheet.getRange(target._rowIndex, redeemedCol + 1).setValue(totalRedeemed);
+  if (updatedCol !== -1) customersSheet.getRange(target._rowIndex, updatedCol + 1).setValue(timestampStr);
+
+  SpreadsheetApp.flush();
+  return {
+    success: true,
+    message: isRedeem ? `${pointsDelta} লয়ালটি পয়েন্ট সফলভাবে ছাড় হিসেবে ব্যবহার হয়েছে!` : `${pointsDelta} লয়ালটি পয়েন্ট অর্জিত হয়েছে!`,
+    data: {
+      customerId: target.CustomerID,
+      loyaltyPoints: currentPts,
+      totalPointsEarned: totalEarned,
+      totalPointsRedeemed: totalRedeemed
+    }
   };
 }
 
