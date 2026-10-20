@@ -48,7 +48,8 @@ import {
   MessageCircle,
   Download,
   CheckSquare,
-  Square
+  Square,
+  MoreVertical
 } from 'lucide-react';
 import { calculateOrderRisk, isValidBdPhone } from '../services/riskAnalysis';
 import CustomerOrderTrackingModal from './CustomerOrderTrackingModal';
@@ -329,6 +330,9 @@ export default function OrdersPage({
   // কুইক স্ট্যাটাস ড্রপডাউন
   const [statusDropdownOrderId, setStatusDropdownOrderId] = useState(null);
 
+  // কুইক অ্যাকশন মেনু ড্রপডাউন
+  const [actionMenuOrderId, setActionMenuOrderId] = useState(null);
+
   // ফিল্টার করা অর্ডার তালিকা
   const filteredOrders = useMemo(() => {
     return (orders || []).filter((order) => {
@@ -456,6 +460,7 @@ export default function OrdersPage({
 
   const handleQuickStatusChange = (order, newStatus) => {
     setStatusDropdownOrderId(null);
+    setActionMenuOrderId(null);
     if (onUpdateStatus) {
       onUpdateStatus(order.OrderID, newStatus, null, null, activeUser?.FullName || 'Admin');
     }
@@ -726,8 +731,8 @@ export default function OrdersPage({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="অর্ডার আইডি, নাম, মোবাইল বা ট্র্যাকিং কোড দিয়ে খুঁজুন..."
-              className="w-full pl-10 pr-12 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-medium"
+              placeholder="অর্ডার আইডি, ফোন বা নাম দিয়ে খুঁজুন..."
+              className="w-full pl-10 pr-16 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-medium"
             />
             {searchQuery ? (
               <button
@@ -849,7 +854,7 @@ export default function OrdersPage({
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50/90 border-b border-slate-200/90 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                  <tr className="bg-slate-50/90 border-b border-slate-200/90 text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">
                     <th className="p-4 pl-4 w-10 text-center">
                       <input
                         type="checkbox"
@@ -859,13 +864,13 @@ export default function OrdersPage({
                         title="সব অর্ডার সিলেক্ট করুন"
                       />
                     </th>
-                    <th className="p-4 pl-2">অর্ডার আইডি ও তারিখ</th>
-                    <th className="p-4">গ্রাহক ও এআই রিস্ক স্কোর</th>
-                    <th className="p-4">অর্ডারকৃত পণ্যসমূহ</th>
-                    <th className="p-4">কুরিয়ার ও ট্র্যাকিং</th>
-                    <th className="p-4 text-right">টাকার হিসাব (COD)</th>
-                    <th className="p-4 text-center">স্ট্যাটাস</th>
-                    <th className="p-4 pr-6 text-center">অ্যাকশন</th>
+                    <th className="p-4 pl-2 whitespace-nowrap min-w-[140px]">অর্ডার আইডি ও তারিখ</th>
+                    <th className="p-4 whitespace-nowrap min-w-[190px]">গ্রাহক ও এআই রিস্ক স্কোর</th>
+                    <th className="p-4 whitespace-nowrap min-w-[180px]">অর্ডারকৃত পণ্যসমূহ</th>
+                    <th className="p-4 whitespace-nowrap min-w-[140px]">কুরিয়ার ও ট্র্যাকিং</th>
+                    <th className="p-4 whitespace-nowrap min-w-[130px] text-right">টাকার হিসাব (COD)</th>
+                    <th className="p-4 whitespace-nowrap min-w-[110px] text-center">স্ট্যাটাস</th>
+                    <th className="p-4 pr-6 whitespace-nowrap min-w-[140px] text-center">অ্যাকশন</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -884,21 +889,21 @@ export default function OrdersPage({
                     const initials = getCustomerInitials(order.CustomerName);
 
                     return (
-                      <tr key={order.OrderID} className="hover:bg-indigo-50/25 transition-colors group">
+                      <tr key={order.OrderID} className="hover:bg-indigo-50/20 transition-colors group">
                         {/* সিলেকশন চেকবক্স */}
                         <td className="p-4 pl-4 align-top text-center w-10" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={selectedOrderIds.includes(order.OrderID)}
                             onChange={(e) => toggleSelectOrder(order.OrderID, e)}
-                            className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600 mt-0.5"
+                            className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600 mt-1"
                           />
                         </td>
 
                         {/* অর্ডার আইডি ও সোর্স */}
-                        <td className="p-4 pl-2 align-top">
+                        <td className="p-4 pl-2 align-top whitespace-nowrap min-w-[140px]">
                           <div className="flex items-center space-x-1.5">
-                            <span className="font-mono font-black text-indigo-700 text-xs tracking-tight">
+                            <span className="font-mono font-extrabold text-indigo-700 text-xs tracking-tight whitespace-nowrap">
                               {order.OrderID}
                             </span>
                             <button
@@ -914,86 +919,87 @@ export default function OrdersPage({
                             </button>
                           </div>
 
-                          <div className="flex items-center space-x-1.5 mt-1 flex-wrap gap-y-1">
-                            <span className="text-[10px] text-slate-400">{formattedDate}</span>
+                          <div className="flex flex-col items-start gap-1 mt-1">
+                            <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{formattedDate}</span>
                             {order.OrderSource === 'In-Store / POS' || order.OrderSource === 'Walk-in' || order.CourierName === 'Counter Pickup' ? (
-                              <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md text-[9px] font-black">
+                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md text-[9px] font-bold whitespace-nowrap">
                                 🏪 ইন-স্টোর (POS)
                               </span>
                             ) : (
-                              <span className="px-1.5 py-0.2 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[9px] font-black">
+                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[9px] font-bold whitespace-nowrap">
                                 🌐 {order.OrderSource || 'অনলাইন'}
                               </span>
                             )}
-                          </div>
 
-                          {order.IsPreOrder && (
-                            <span className="inline-flex items-center space-x-1 mt-1 px-1.5 py-0.5 rounded-md text-[9px] font-black bg-violet-100 text-violet-800 border border-violet-200">
-                              <Bookmark className="w-2.5 h-2.5" />
-                              <span>প্রি-অর্ডার</span>
-                            </span>
-                          )}
+                            {order.IsPreOrder && (
+                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md text-[9px] font-black bg-violet-100 text-violet-800 border border-violet-200 whitespace-nowrap">
+                                <Bookmark className="w-2.5 h-2.5" />
+                                <span>প্রি-অর্ডার</span>
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         {/* কাস্টমার তথ্য ও এআই রিস্ক স্কোর */}
-                        <td className="p-4 align-top">
+                        <td className="p-4 align-top min-w-[190px]">
                           <div className="flex items-start space-x-2.5">
-                            <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${avatarGradient} text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs`}>
+                            <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${avatarGradient} text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs mt-0.5`}>
                               {initials}
                             </div>
 
-                            <div className="space-y-0.5 min-w-0">
-                              <div className="flex items-center space-x-1.5">
-                                <span className="font-bold text-slate-900 text-xs truncate max-w-[120px]">
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center flex-wrap gap-1.5">
+                                <span className="font-bold text-slate-900 text-xs truncate max-w-[150px]" title={order.CustomerName}>
                                   {order.CustomerName}
                                 </span>
 
                                 {/* এআই রিস্ক ব্যাজ */}
                                 <span
-                                  className={`px-1.5 py-0.5 rounded-md text-[9px] font-black border flex items-center space-x-1 cursor-help ${
+                                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold border shrink-0 cursor-help ${
                                     risk.level === 'High'
-                                      ? 'bg-rose-50 text-rose-700 border-rose-200/90 shadow-xs shadow-rose-500/10'
+                                      ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-2xs'
                                       : risk.level === 'Medium'
-                                      ? 'bg-amber-50 text-amber-700 border-amber-200/90'
-                                      : 'bg-emerald-50 text-emerald-700 border-emerald-200/90'
+                                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                   }`}
                                   title={risk.flags.length > 0 ? risk.flags.join(' • ') : risk.recommendation}
                                 >
                                   {risk.level === 'High' ? (
                                     <>
-                                      <span className="relative flex h-1.5 w-1.5">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500" />
-                                      </span>
-                                      <span>উচ্চ ঝুঁকি</span>
+                                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
+                                      <span className="whitespace-nowrap">উচ্চ ঝুঁকি</span>
                                     </>
                                   ) : risk.level === 'Medium' ? (
                                     <>
-                                      <Clock className="w-2.5 h-2.5" />
-                                      <span>সতর্কতা</span>
+                                      <Clock className="w-2.5 h-2.5 shrink-0" />
+                                      <span className="whitespace-nowrap">সতর্কতা</span>
                                     </>
                                   ) : (
                                     <>
-                                      <ShieldCheck className="w-2.5 h-2.5" />
-                                      <span>নিরাপদ</span>
+                                      <ShieldCheck className="w-2.5 h-2.5 shrink-0" />
+                                      <span className="whitespace-nowrap">নিরাপদ</span>
                                     </>
                                   )}
                                 </span>
                               </div>
 
-                              <div className="flex items-center space-x-1 text-slate-500 text-[11px] font-mono">
-                                <a
-                                  href={`tel:${order.CustomerPhone}`}
-                                  className="hover:text-indigo-600 flex items-center space-x-1"
-                                  title="কল করতে ক্লিক করুন"
-                                >
-                                  <Phone className="w-2.5 h-2.5 text-slate-400 shrink-0" />
-                                  <span>{order.CustomerPhone}</span>
-                                </a>
-                              </div>
+                              {order.CustomerPhone ? (
+                                <div className="flex items-center space-x-1 text-slate-500 text-[11px] font-mono">
+                                  <a
+                                    href={`tel:${order.CustomerPhone}`}
+                                    className="hover:text-indigo-600 flex items-center space-x-1"
+                                    title="কল করতে ক্লিক করুন"
+                                  >
+                                    <Phone className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                                    <span>{order.CustomerPhone}</span>
+                                  </a>
+                                </div>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic block">ফোন নম্বর নেই</span>
+                              )}
 
                               {order.CustomerAddress && (
-                                <div className="flex items-start space-x-1 text-slate-400 text-[10px] max-w-[190px] truncate" title={order.CustomerAddress}>
+                                <div className="flex items-start space-x-1 text-slate-400 text-[10px] max-w-[200px] truncate" title={order.CustomerAddress}>
                                   <MapPin className="w-2.5 h-2.5 text-slate-400 shrink-0 mt-0.5" />
                                   <span className="truncate">{order.CustomerAddress}</span>
                                 </div>
@@ -1001,7 +1007,7 @@ export default function OrdersPage({
 
                               {order.RmaRequest && (
                                 <div className="pt-0.5">
-                                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black border ${
+                                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black border ${
                                     order.RmaRequest.status === 'Approved'
                                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                       : order.RmaRequest.status === 'Rejected'
@@ -1017,18 +1023,20 @@ export default function OrdersPage({
                         </td>
 
                         {/* পণ্যসমূহ */}
-                        <td className="p-4 align-top">
-                          <div className="space-y-1 max-w-[200px]">
+                        <td className="p-4 align-top min-w-[180px] max-w-[260px]">
+                          <div className="space-y-1.5">
                             {(order.Items || []).slice(0, 2).map((item, idx) => (
-                              <div key={idx} className="text-[11px] text-slate-700 truncate flex items-center justify-between">
-                                <span className="font-semibold truncate">{item.productName || item.ProductName}</span>
-                                <span className="font-mono text-slate-500 bg-slate-100 px-1 py-0.2 rounded text-[10px] ml-1 shrink-0">
+                              <div key={idx} className="text-[11px] text-slate-700 flex items-center justify-between gap-1.5 bg-slate-50/70 p-1.5 rounded-xl border border-slate-100">
+                                <span className="font-semibold truncate" title={item.productName || item.ProductName}>
+                                  {item.productName || item.ProductName}
+                                </span>
+                                <span className="font-mono font-bold text-slate-600 bg-white border border-slate-200 px-1.5 py-0.2 rounded text-[10px] shrink-0">
                                   ×{item.quantity || item.Quantity}
                                 </span>
                               </div>
                             ))}
                             {(order.Items || []).length > 2 && (
-                              <span className="text-[10px] font-bold text-indigo-600 block">
+                              <span className="text-[10px] font-bold text-indigo-600 block pl-1">
                                 + আরো {(order.Items || []).length - 2}টি আইটেম
                               </span>
                             )}
@@ -1036,22 +1044,22 @@ export default function OrdersPage({
                         </td>
 
                         {/* কুরিয়ার ও ট্র্যাকিং */}
-                        <td className="p-4 align-top">
+                        <td className="p-4 align-top whitespace-nowrap min-w-[140px]">
                           <div className="space-y-1">
-                            <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${courierBadge.bg}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${courierBadge.dot}`} />
-                              <span>{courierBadge.name}</span>
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-bold border whitespace-nowrap shadow-2xs ${courierBadge.bg}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${courierBadge.dot}`} />
+                              <span className="whitespace-nowrap">{courierBadge.name}</span>
                             </span>
 
                             {order.TrackingID ? (
-                              <div className="flex items-center space-x-1">
-                                <span className="font-mono text-[10px] text-indigo-700 bg-indigo-50/80 px-1.5 py-0.5 rounded-md border border-indigo-100 font-bold">
+                              <div className="flex items-center space-x-1 pt-0.5">
+                                <span className="font-mono text-[10px] text-indigo-700 bg-indigo-50/80 px-1.5 py-0.5 rounded-md border border-indigo-100 font-bold whitespace-nowrap">
                                   {order.TrackingID}
                                 </span>
                                 <button
                                   onClick={() => handleCopyId(order.TrackingID)}
                                   title="ট্র্যাকিং কোড কপি করুন"
-                                  className="text-slate-400 hover:text-slate-600 p-0.5 rounded"
+                                  className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
                                 >
                                   {copiedId === order.TrackingID ? (
                                     <Check className="w-3 h-3 text-emerald-600" />
@@ -1061,7 +1069,7 @@ export default function OrdersPage({
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-[10px] text-slate-400 italic block">
+                              <span className="text-[10px] text-slate-400 italic block pt-0.5">
                                 ট্র্যাকিং নেই
                               </span>
                             )}
@@ -1084,153 +1092,213 @@ export default function OrdersPage({
                         </td>
 
                         {/* টাকার হিসাব (COD / Due) */}
-                        <td className="p-4 align-top text-right">
-                          <div className="font-bold text-slate-800 text-xs">
-                            মোট: {currencySymbol}{Number(order.TotalAmount || 0).toLocaleString('en-US')}
+                        <td className="p-4 align-top text-right whitespace-nowrap min-w-[130px]">
+                          <div className="text-[11px] font-bold text-slate-700">
+                            মোট: <span className="font-extrabold text-slate-900 font-mono">{currencySymbol}{Number(order.TotalAmount || 0).toLocaleString('en-US')}</span>
                           </div>
-                          {order.AdvancePaid > 0 && (
-                            <div className="text-[10px] text-emerald-600 font-medium">
-                              অগ্রিম: {currencySymbol}{order.AdvancePaid}
+                          {Number(order.AdvancePaid || 0) > 0 && (
+                            <div className="text-[10px] text-emerald-700 font-medium mt-0.5">
+                              অগ্রিম: <span className="font-bold font-mono">{currencySymbol}{Number(order.AdvancePaid || 0).toLocaleString('en-US')}</span>
                             </div>
                           )}
-                          <div className="text-[12px] font-black text-rose-600 mt-0.5 font-mono">
-                            COD: {currencySymbol}{Number(order.DueAmount || 0).toLocaleString('en-US')}
+                          <div className="mt-1">
+                            {Number(order.DueAmount || 0) > 0 ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200 font-mono">
+                                COD: {currencySymbol}{Number(order.DueAmount || 0).toLocaleString('en-US')}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <Check className="w-2.5 h-2.5" />
+                                <span>পরিশোধিত</span>
+                              </span>
+                            )}
                           </div>
                         </td>
 
                         {/* স্ট্যাটাস ব্যাজ ও কুইক চেঞ্জার */}
-                        <td className="p-4 align-top text-center">
+                        <td className="p-4 align-top text-center whitespace-nowrap min-w-[110px]">
                           <div className="relative inline-block text-left">
                             <button
-                              onClick={() => setStatusDropdownOrderId(statusDropdownOrderId === order.OrderID ? null : order.OrderID)}
-                              className={`px-2.5 py-1 rounded-full text-[10px] font-black border transition-all flex items-center space-x-1 cursor-pointer ${statusObj.color}`}
+                              onClick={() => {
+                                setActionMenuOrderId(null);
+                                setStatusDropdownOrderId(statusDropdownOrderId === order.OrderID ? null : order.OrderID);
+                              }}
+                              className={`px-3 py-1 rounded-xl text-[10px] font-black border transition-all flex items-center space-x-1 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${statusObj.color}`}
                             >
                               <span>{statusObj.label}</span>
-                              <ChevronDown className="w-3 h-3 ml-0.5" />
+                              <ChevronDown className="w-3 h-3 ml-0.5 opacity-70" />
                             </button>
 
                             {statusDropdownOrderId === order.OrderID && (
-                              <div className="absolute left-1/2 -translate-x-1/2 mt-1 w-36 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-30 animate-in fade-in zoom-in-95">
-                                {ORDER_STATUSES.map((st) => (
-                                  <button
-                                    key={st.id}
-                                    onClick={() => handleQuickStatusChange(order, st.id)}
-                                    className={`w-full text-left px-3 py-1.5 text-xs font-bold hover:bg-slate-50 flex items-center justify-between cursor-pointer ${
-                                      order.Status === st.id ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-700'
-                                    }`}
-                                  >
-                                    <span>{st.label}</span>
-                                    {order.Status === st.id && <Check className="w-3.5 h-3.5" />}
-                                  </button>
-                                ))}
-                              </div>
+                              <>
+                                <div className="fixed inset-0 z-20" onClick={() => setStatusDropdownOrderId(null)} />
+                                <div className="absolute left-1/2 -translate-x-1/2 mt-1 w-36 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-30 animate-in fade-in zoom-in-95">
+                                  {ORDER_STATUSES.map((st) => (
+                                    <button
+                                      key={st.id}
+                                      onClick={() => handleQuickStatusChange(order, st.id)}
+                                      className={`w-full text-left px-3 py-1.5 text-xs font-bold hover:bg-slate-50 flex items-center justify-between cursor-pointer ${
+                                        order.Status === st.id ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-700'
+                                      }`}
+                                    >
+                                      <span>{st.label}</span>
+                                      {order.Status === st.id && <Check className="w-3.5 h-3.5" />}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
                             )}
                           </div>
                         </td>
 
                         {/* অ্যাকশন বাটনসমূহ */}
-                        <td className="p-4 pr-6 align-top text-center">
-                          <div className="flex items-center justify-center space-x-1">
-                            {/* বিস্তারিত ও অডিট লগ */}
+                        <td className="p-4 pr-6 align-top text-center whitespace-nowrap min-w-[140px]">
+                          <div className="flex items-center justify-center space-x-1.5">
+                            {/* ১. বিস্তারিত ভিউ */}
                             <button
                               onClick={() => setSelectedOrderDetails(order)}
-                              title="অর্ডারের বিবরণ ও টাইমলাইন অডিট লগ"
-                              className="p-1.5 bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-700 rounded-lg transition-colors cursor-pointer"
+                              title="অর্ডারের বিস্তারিত বিবরণ"
+                              className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl transition-all hover:scale-105 cursor-pointer shadow-2xs"
                             >
                               <Eye className="w-3.5 h-3.5" />
                             </button>
 
-                            {/* অর্ডার এডিট করুন */}
+                            {/* ২. অর্ডার এডিট */}
                             <button
                               onClick={() => {
                                 setEditingOrder(order);
                                 setIsCreateModalOpen(true);
                               }}
                               title="অর্ডারের তথ্য, আইটেম ও পেমেন্ট এডিট করুন"
-                              className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg transition-colors cursor-pointer"
+                              className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl transition-all hover:scale-105 cursor-pointer shadow-2xs"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
 
-                            {/* সরাসরি হোয়াটসঅ্যাপ বার্তা */}
+                            {/* ৩. হোয়াটসঅ্যাপ মেসেজ */}
                             <button
                               onClick={() => openOrderWhatsApp(order, settings.StoreName, currencySymbol)}
-                              title="গ্রাহককে সরাসরি হোয়াটসঅ্যাপে বিস্তারিত মেসেজ ও ট্র্যাকিং পাঠান"
-                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-colors cursor-pointer"
+                              title="গ্রাহককে হোয়াটসঅ্যাপ বার্তা পাঠান"
+                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl transition-all hover:scale-105 cursor-pointer shadow-2xs"
                             >
                               <MessageCircle className="w-3.5 h-3.5" />
                             </button>
 
-                            {/* Steadfast লাইভ ট্র্যাকিং চেক */}
-                            {(order.TrackingID || order.ConsignmentID) && (
-                              <button
-                                onClick={() => setTrackingModalOrder(order)}
-                                title="Steadfast লাইভ ট্র্যাকিং স্ট্যাটাস দেখুন"
-                                className="p-1.5 bg-emerald-100/90 hover:bg-emerald-200 text-emerald-800 rounded-lg transition-colors cursor-pointer"
-                              >
-                                <Truck className="w-3.5 h-3.5 text-emerald-700" />
-                              </button>
-                            )}
-
-                            {/* SMS নোটিফিকেশন পাঠান */}
-                            <button
-                              onClick={() => setSingleSmsModalOrder(order)}
-                              title="গ্রাহককে সরাসরি SMS বা WhatsApp বার্তা পাঠান"
-                              className="p-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <MessageSquare className="w-3.5 h-3.5" />
-                            </button>
-
-                            {/* গ্রাহক ট্র্যাকিং পেজ দেখুন */}
-                            <button
-                              onClick={() => setCustomerTrackingOrderId(order.OrderID)}
-                              title="গ্রাহকের লাইভ ট্র্যাকিং পেজ দেখুন"
-                              className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </button>
-
-                            {/* ট্র্যাকিং লিংক কপি */}
-                            <button
-                              onClick={() => handleCopyTrackingLink(order.OrderID)}
-                              title="গ্রাহককে পাঠানোর জন্য ট্র্যাকিং লিংক কপি করুন"
-                              className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <Share2 className="w-3.5 h-3.5" />
-                            </button>
-
-                            {/* শিপিং স্টিকার লেবেল প্রিন্ট */}
-                            <button
-                              onClick={() => setLabelPrintOrder(order)}
-                              title="কুরিয়ার পার্সেল স্টিকার প্রিন্ট করুন"
-                              className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <Tag className="w-3.5 h-3.5" />
-                            </button>
-
-                            {/* ডেলিভারি চালান প্রিন্ট */}
-                            <button
-                              onClick={() => setChallanPrintOrder(order)}
-                              title="ডেলিভারি চালান / মেমো প্রিন্ট করুন"
-                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <FileText className="w-3.5 h-3.5" />
-                            </button>
-
-                            {/* ডিলিট */}
-                            {onDeleteOrder && (
+                            {/* ৪. আরো অ্যাকশন ড্রপডাউন (More Actions Menu) */}
+                            <div className="relative inline-block text-left">
                               <button
                                 onClick={() => {
-                                  if (window.confirm(`আপনি কি নিশ্চিতভাবে ${order.OrderID} অর্ডারটি মুছে ফেলতে চান?`)) {
-                                    onDeleteOrder(order.OrderID);
-                                  }
+                                  setStatusDropdownOrderId(null);
+                                  setActionMenuOrderId(actionMenuOrderId === order.OrderID ? null : order.OrderID);
                                 }}
-                                title="মুছে ফেলুন"
-                                className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors cursor-pointer"
+                                title="আরো অ্যাকশন"
+                                className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all hover:scale-105 cursor-pointer shadow-2xs"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <MoreVertical className="w-3.5 h-3.5" />
                               </button>
-                            )}
+
+                              {actionMenuOrderId === order.OrderID && (
+                                <>
+                                  <div className="fixed inset-0 z-20" onClick={() => setActionMenuOrderId(null)} />
+                                  <div className="absolute right-0 mt-1 w-52 bg-white rounded-2xl shadow-2xl border border-slate-200 py-1.5 z-30 animate-in fade-in zoom-in-95 text-left divide-y divide-slate-100">
+                                    
+                                    {/* মেসেজিং ও ট্র্যাকিং সেকশন */}
+                                    <div className="py-1">
+                                      <button
+                                        onClick={() => {
+                                          setActionMenuOrderId(null);
+                                          setSingleSmsModalOrder(order);
+                                        }}
+                                        className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-violet-50 hover:text-violet-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                      >
+                                        <MessageSquare className="w-3.5 h-3.5 text-violet-600" />
+                                        <span>SMS বার্তা পাঠান</span>
+                                      </button>
+
+                                      {(order.TrackingID || order.ConsignmentID) && (
+                                        <button
+                                          onClick={() => {
+                                            setActionMenuOrderId(null);
+                                            setTrackingModalOrder(order);
+                                          }}
+                                          className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                        >
+                                          <Truck className="w-3.5 h-3.5 text-sky-600" />
+                                          <span>Steadfast লাইভ ট্র্যাকিং</span>
+                                        </button>
+                                      )}
+
+                                      <button
+                                        onClick={() => {
+                                          setActionMenuOrderId(null);
+                                          setCustomerTrackingOrderId(order.OrderID);
+                                        }}
+                                        className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                      >
+                                        <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
+                                        <span>গ্রাহক ট্র্যাকিং পেজ</span>
+                                      </button>
+
+                                      <button
+                                        onClick={() => {
+                                          setActionMenuOrderId(null);
+                                          handleCopyTrackingLink(order.OrderID);
+                                        }}
+                                        className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                      >
+                                        <Share2 className="w-3.5 h-3.5 text-amber-600" />
+                                        <span>ট্র্যাকিং লিংক কপি</span>
+                                      </button>
+                                    </div>
+
+                                    {/* প্রিন্টিং সেকশন */}
+                                    <div className="py-1">
+                                      <button
+                                        onClick={() => {
+                                          setActionMenuOrderId(null);
+                                          setLabelPrintOrder(order);
+                                        }}
+                                        className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                      >
+                                        <Tag className="w-3.5 h-3.5 text-indigo-600" />
+                                        <span>শিপিং লেবেল প্রিন্ট</span>
+                                      </button>
+
+                                      <button
+                                        onClick={() => {
+                                          setActionMenuOrderId(null);
+                                          setChallanPrintOrder(order);
+                                        }}
+                                        className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                      >
+                                        <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                                        <span>ডেলিভারি চালান প্রিন্ট</span>
+                                      </button>
+                                    </div>
+
+                                    {/* ডিলিট সেকশন */}
+                                    {onDeleteOrder && (
+                                      <div className="py-1">
+                                        <button
+                                          onClick={() => {
+                                            setActionMenuOrderId(null);
+                                            if (window.confirm(`আপনি কি নিশ্চিতভাবে ${order.OrderID} অর্ডারটি মুছে ফেলতে চান?`)) {
+                                              onDeleteOrder(order.OrderID);
+                                            }
+                                          }}
+                                          className="w-full px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center space-x-2 cursor-pointer transition-colors"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                          <span>অর্ডার মুছে ফেলুন</span>
+                                        </button>
+                                      </div>
+                                    )}
+
+                                  </div>
+                                </>
+                              )}
+                            </div>
+
                           </div>
                         </td>
                       </tr>
@@ -1336,12 +1404,16 @@ export default function OrdersPage({
                         </span>
                       </div>
 
-                      <div className="flex items-center space-x-1 text-slate-500 text-xs font-mono">
-                        <a href={`tel:${order.CustomerPhone}`} className="hover:text-indigo-600 flex items-center space-x-1">
-                          <Phone className="w-3 h-3 text-slate-400" />
-                          <span>{order.CustomerPhone}</span>
-                        </a>
-                      </div>
+                      {order.CustomerPhone ? (
+                        <div className="flex items-center space-x-1 text-slate-500 text-xs font-mono">
+                          <a href={`tel:${order.CustomerPhone}`} className="hover:text-indigo-600 flex items-center space-x-1">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            <span>{order.CustomerPhone}</span>
+                          </a>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-slate-400 italic block">ফোন নম্বর নেই</span>
+                      )}
 
                       {order.CustomerAddress && (
                         <div className="flex items-start space-x-1 text-slate-400 text-xs truncate">
@@ -1355,7 +1427,7 @@ export default function OrdersPage({
                   {/* পণ্য ও কুরিয়ার তথ্য */}
                   <div className="bg-slate-50/80 rounded-2xl p-3 border border-slate-100 text-xs space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${courierBadge.bg}`}>
+                      <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border whitespace-nowrap ${courierBadge.bg}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${courierBadge.dot}`} />
                         <span>{courierBadge.name}</span>
                       </span>
@@ -1386,9 +1458,16 @@ export default function OrdersPage({
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">কালেকশন (COD)</span>
-                      <span className="text-lg font-black text-rose-600 font-mono">
-                        {currencySymbol}{Number(order.DueAmount || 0).toLocaleString('en-US')}
-                      </span>
+                      {Number(order.DueAmount || 0) > 0 ? (
+                        <span className="text-lg font-black text-rose-600 font-mono">
+                          {currencySymbol}{Number(order.DueAmount || 0).toLocaleString('en-US')}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200 mt-1">
+                          <Check className="w-3 h-3" />
+                          <span>পরিশোধিত</span>
+                        </span>
+                      )}
                     </div>
 
                     <div className="text-right">
