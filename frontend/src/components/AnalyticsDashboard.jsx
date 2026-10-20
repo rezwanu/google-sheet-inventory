@@ -31,8 +31,12 @@ import {
   ArrowRight,
   Store,
   Globe,
-  Truck
+  Truck,
+  AlertTriangle,
+  ChevronDown,
+  Archive
 } from 'lucide-react';
+import { calculateDeadStockAnalysis, exportToCSV } from '../services/storage';
 
 export default function AnalyticsDashboard({
   isOpen,
@@ -56,8 +60,13 @@ export default function AnalyticsDashboard({
   // চ্যানেল ফিল্টার স্টেট: 'all' | 'offline' | 'online'
   const [channelFilter, setChannelFilter] = useState('all');
 
-  // অ্যাক্টিভ ভিউ ট্যাব: 'overview' | 'statement' | 'products' | 'categories' | 'transactions'
+  // অ্যাক্টিভ ভিউ ট্যাব: 'overview' | 'statement' | 'products' | 'categories' | 'transactions' | 'dead_stock'
   const [activeTab, setActiveTab] = useState('overview');
+
+  // ফেজ ৮: ডেড স্টক ও কাস্টম এক্সপোর্ট স্টেট (Phase 8)
+  const [deadStockThreshold, setDeadStockThreshold] = useState(60);
+  const [deadStockSearch, setDeadStockSearch] = useState('');
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // প্রোডাক্টস টেবিল সার্চ ও সর্টিং
   const [productSearch, setProductSearch] = useState('');
@@ -776,9 +785,80 @@ export default function AnalyticsDashboard({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setShowExportMenu(false);
     } catch (err) {
       alert(`CSV তৈরি ব্যর্থ হয়েছে: ${err.message}`);
     }
+  };
+
+  // ডেড স্টক অ্যানালাইসিস হিসাব (Phase 8)
+  const deadStockData = useMemo(() => {
+    return calculateDeadStockAnalysis(products, salesHistory, orders, deadStockThreshold);
+  }, [products, salesHistory, orders, deadStockThreshold]);
+
+  // ফিল্টারকৃত ডেড স্টক তালিকা
+  const filteredDeadStockItems = useMemo(() => {
+    if (!deadStockSearch.trim()) return deadStockData.items;
+    const q = deadStockSearch.trim().toLowerCase();
+    return deadStockData.items.filter(
+      (itm) => itm.productName.toLowerCase().includes(q) || itm.barcode.toLowerCase().includes(q) || itm.category.toLowerCase().includes(q)
+    );
+  }, [deadStockData, deadStockSearch]);
+
+  // ১. ইনভয়েস বিক্রয় বিবরণী CSV এক্সপোর্ট (Phase 8)
+  const handleExportSalesCSV = () => {
+    const headers = ['তারিখ', 'ইনভয়েস নম্বর', 'চ্যানেল', 'গ্রাহক', 'ফোন', 'পেমেন্ট মেথড', 'সাব-টোটাল', 'ছাড়', 'ভ্যাট', 'সর্বমোট', 'পরিশোধিত', 'বকেয়া'];
+    const rows = (filteredSales || []).map((s) => [
+      s.timestamp ? new Date(s.timestamp).toLocaleDateString('bn-BD') : '',
+      s.invoiceNo || s.id,
+      s.channel === 'offline' ? 'In-Store POS' : 'Online Delivery',
+      s.customerName || 'Customer',
+      s.customerPhone || '',
+      s.paymentMethod || 'Cash',
+      Number(s.subTotal || 0).toFixed(2),
+      Number(s.discountAmount || 0).toFixed(2),
+      Number(s.taxAmount || 0).toFixed(2),
+      Number(s.grandTotal || 0).toFixed(2),
+      Number(s.paidAmount || 0).toFixed(2),
+      Number(s.dueAmount || 0).toFixed(2),
+    ]);
+    exportToCSV(`Sales_Statement_${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
+    setShowExportMenu(false);
+  };
+
+  // ২. ডেড স্টক ও অচল ইনভেন্টরি CSV এক্সপোর্ট (Phase 8)
+  const handleExportDeadStockCSV = () => {
+    const headers = ['পণ্য আইডি', 'পণ্যের নাম', 'বারকোড', 'ক্যাটাগরি', 'বর্তমান স্টক', 'ক্রয়মূল্য', 'বিক্রয়মূল্য', 'আটকে থাকা মূলধন', 'অবিক্রিত দিন', 'শেষ বিক্রয় তারিখ', 'সুপারিশকৃত ছাড় %'];
+    const rows = deadStockData.items.map((itm) => [
+      itm.productId,
+      itm.productName,
+      itm.barcode,
+      itm.category,
+      itm.stockQuantity,
+      itm.costPrice,
+      itm.sellingPrice,
+      itm.blockedCapital,
+      itm.daysStagnant,
+      itm.lastSoldDate,
+      `${itm.suggestedDiscount}%`
+    ]);
+    exportToCSV(`Dead_Stock_Analysis_${deadStockThreshold}days_${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
+    setShowExportMenu(false);
+  };
+
+  // ৩. কাস্টমার বকেয়া ও বাকির খাতা CSV এক্সপোর্ট (Phase 8)
+  const handleExportCustomerDueCSV = () => {
+    const headers = ['কাস্টমার আইডি', 'নাম', 'মোবাইল', 'বর্তমান বকেয়া', 'ক্রেডিট লিমিট', 'লয়ালটি পয়েন্ট'];
+    const rows = (customers || []).map((c) => [
+      c.CustomerID || c.id,
+      c.FullName || c.Name,
+      c.Phone || '',
+      Number(c.CurrentDue || 0).toFixed(2),
+      Number(c.CreditLimit || 0).toFixed(2),
+      Number(c.LoyaltyPoints || 0)
+    ]);
+    exportToCSV(`Customer_Due_Ledger_${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
+    setShowExportMenu(false);
   };
 
   // প্রিন্ট হ্যান্ডলার
@@ -835,15 +915,74 @@ export default function AnalyticsDashboard({
               </button>
             )}
 
-            {/* CSV এক্সপোর্ট বাটন */}
-            <button
-              onClick={handleExportCSV}
-              title="সম্পূর্ণ রিপোর্ট এক্সেল/CSV ফাইলে ডাউনলোড করুন"
-              className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-600/20 active:scale-95"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>CSV এক্সপোর্ট</span>
-            </button>
+            {/* CSV এক্সপোর্ট ড্রপডাউন বাটন (Phase 8) */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                title="বিভিন্ন রিপোর্ট এক্সেল/CSV ফাইলে ডাউনলোড করুন"
+                className="flex items-center space-x-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-600/20 active:scale-95"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>রিপোর্ট এক্সপোর্ট</span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+
+              {showExportMenu && (
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-200 py-1.5 z-50 divide-y divide-slate-100 text-slate-800 animate-in fade-in duration-150">
+                  <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    এক্সেল / CSV রিপোর্ট নির্বাচন
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleExportCSV}
+                    className="w-full px-3.5 py-2 text-left hover:bg-emerald-50 text-xs font-bold flex items-center space-x-2 text-slate-800 transition-colors"
+                  >
+                    <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <span className="block">পূর্ণাঙ্গ P&L ফাইন্যান্সিয়াল CSV</span>
+                      <span className="text-[10px] text-slate-400 font-normal">আয়, ব্যয়, মার্জিন ও প্রোডাক্ট লাভ</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleExportSalesCSV}
+                    className="w-full px-3.5 py-2 text-left hover:bg-indigo-50 text-xs font-bold flex items-center space-x-2 text-slate-800 transition-colors"
+                  >
+                    <CreditCard className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <div>
+                      <span className="block">ইনভয়েস বিক্রয় বিবরণী CSV</span>
+                      <span className="text-[10px] text-slate-400 font-normal">সকল মেমো, ছাড়, ভ্যাট ও পেমেন্ট</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleExportDeadStockCSV}
+                    className="w-full px-3.5 py-2 text-left hover:bg-rose-50 text-xs font-bold flex items-center space-x-2 text-slate-800 transition-colors"
+                  >
+                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <div>
+                      <span className="block">অচল ও ডেড স্টক ইনভেন্টরি CSV</span>
+                      <span className="text-[10px] text-slate-400 font-normal">আটকে থাকা মূলধন ও অবিক্রিত দিন</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleExportCustomerDueCSV}
+                    className="w-full px-3.5 py-2 text-left hover:bg-amber-50 text-xs font-bold flex items-center space-x-2 text-slate-800 transition-colors"
+                  >
+                    <Coins className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div>
+                      <span className="block">গ্রাহক বাকি খাতা ও লেজার CSV</span>
+                      <span className="text-[10px] text-slate-400 font-normal">বর্তমান বকেয়া ও কাস্টমার তালিকা</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* প্রিন্ট বাটন */}
             <button
@@ -1073,6 +1212,7 @@ export default function AnalyticsDashboard({
               { id: 'products', label: 'পণ্যভিত্তিক লাভ-ক্ষতি', icon: Package, count: analyticsKPI.allProductList.length },
               { id: 'categories', label: 'ক্যাটাগরি বিশ্লেষণ', icon: Layers, count: analyticsKPI.allCategoryList.length },
               { id: 'transactions', label: 'ইনভয়েস লেনদেন', icon: CreditCard, count: filteredSales.length },
+              { id: 'dead_stock', label: 'অচল ও ডেড স্টক', icon: AlertTriangle, count: deadStockData.totalStagnantItems },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -2056,6 +2196,192 @@ export default function AnalyticsDashboard({
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* ট্যাব ৬: অচল ও ডেড স্টক ইনভেন্টরি বিশ্লেষণ (Phase 8 Dead Stock) */}
+          {/* ============================================================== */}
+          {activeTab === 'dead_stock' && (
+            <div className="space-y-5 animate-in fade-in duration-150">
+              
+              {/* ডেড স্টক ব্যানার ও থ্রেশহোল্ড সিলেক্টর */}
+              <div className="bg-gradient-to-br from-rose-950 via-slate-900 to-rose-900 text-white p-5 sm:p-6 rounded-3xl shadow-xl border border-rose-800/40 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-rose-800/40">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-2xl bg-rose-500/20 border border-rose-400/30 text-rose-400 flex items-center justify-center font-black shadow-inner">
+                      <AlertTriangle className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-white tracking-tight flex items-center space-x-2">
+                        <span>অচল ও ডেড স্টক ক্যাপিটাল বিশ্লেষণ</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/30 text-rose-200 border border-rose-400/20">
+                          Phase 8 Live
+                        </span>
+                      </h3>
+                      <p className="text-xs text-rose-200/90 mt-0.5">
+                        যেসব পণ্যের কোনো বিক্রয় নেই এবং দোকানে মূলধন আটকে রয়েছে তা চিহ্নিত করে দ্রুত ক্লিয়ারেন্স অফার চালু করুন
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleExportDeadStockCSV}
+                    className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md shadow-rose-900/40 transition-all shrink-0"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>ডেড স্টক CSV ডাউনলোড</span>
+                  </button>
+                </div>
+
+                {/* থ্রেশহোল্ড সিলেক্টর ফিল্টার */}
+                <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-rose-200 font-bold">অচলাবস্থার সময়সীমা:</span>
+                    <div className="flex bg-slate-900/80 p-1 rounded-xl border border-rose-800/40">
+                      {[30, 60, 90, 120].map((days) => (
+                        <button
+                          key={days}
+                          type="button"
+                          onClick={() => setDeadStockThreshold(days)}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                            deadStockThreshold === days
+                              ? 'bg-rose-600 text-white shadow-xs'
+                              : 'text-rose-200 hover:text-white'
+                          }`}
+                        >
+                          {days} দিন+
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <span className="text-[11px] text-rose-300">
+                    গত <strong className="text-white font-mono">{deadStockThreshold}</strong> দিনে ১ পিসও বিক্রি হয়নি এমন পণ্যের তালিকা
+                  </span>
+                </div>
+              </div>
+
+              {/* ৩টি প্রধান ডেড স্টক মেট্রিক কার্ড */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-slate-500 block">মোট অচল পণ্যের সংখ্যা</span>
+                    <div className="text-2xl font-black text-rose-600 font-mono mt-1">
+                      {deadStockData.totalStagnantItems} টি
+                    </div>
+                    <span className="text-[10px] text-slate-400">ইনভেন্টরিতে স্টক জমা আছে</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                    <Package className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-slate-500 block">মোট আটকে থাকা পণ্যের ইউনিট</span>
+                    <div className="text-2xl font-black text-amber-600 font-mono mt-1">
+                      {deadStockData.totalStagnantUnits.toLocaleString('en-IN')} পিস
+                    </div>
+                    <span className="text-[10px] text-slate-400">অবিক্রিত অবস্থায় দোকানে মজুত</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <Archive className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white rounded-2xl border border-rose-200 shadow-xs flex items-center justify-between bg-gradient-to-br from-rose-50/50 to-white">
+                  <div>
+                    <span className="text-xs font-bold text-rose-700 block">আটকে থাকা ডেড মূলধন (Blocked Capital)</span>
+                    <div className="text-2xl font-black text-rose-700 font-mono mt-1">
+                      {currencySymbol}{Math.round(deadStockData.totalBlockedCapital).toLocaleString('en-IN')}
+                    </div>
+                    <span className="text-[10px] text-rose-600 font-semibold">ক্রয়মূল্য ভিত্তিক আটকে থাকা টাকা</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-600/30">
+                    <Coins className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* সার্চ ও টেবিল সেকশন */}
+              <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-600" />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-700">
+                      অচল পণ্যের বিস্তারিত তালিকা ({filteredDeadStockItems.length}টি)
+                    </h4>
+                  </div>
+
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-4 h-4 absolute left-3 top-2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="পণ্যের নাম, বারকোড বা ক্যাটাগরি..."
+                      value={deadStockSearch}
+                      onChange={(e) => setDeadStockSearch(e.target.value)}
+                      className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-1 focus:ring-rose-500"
+                    />
+                  </div>
+                </div>
+
+                {filteredDeadStockItems.length === 0 ? (
+                  <div className="py-12 text-center text-slate-400 space-y-2">
+                    <CheckCircle2 className="w-10 h-10 mx-auto stroke-1 text-emerald-500" />
+                    <p className="text-sm font-bold text-slate-700">অভিনন্দন! কোনো ডেড স্টক নেই</p>
+                    <p className="text-xs">গত {deadStockThreshold} দিনে সকল পণ্যের কোনো না কোনো বিক্রয় সম্পন্ন হয়েছে।</p>
+                  </div>
+                ) : (
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                    <table className="w-full text-xs text-left">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                          <th className="py-2.5 px-3">পণ্যের নাম ও বারকোড</th>
+                          <th className="py-2.5 px-3">ক্যাটাগরি</th>
+                          <th className="py-2.5 px-3 text-center">মজুত স্টক</th>
+                          <th className="py-2.5 px-3 text-right">কেনা দাম</th>
+                          <th className="py-2.5 px-3 text-right">আটকে থাকা টাকা</th>
+                          <th className="py-2.5 px-3 text-center">অবিক্রিত দিন</th>
+                          <th className="py-2.5 px-3 text-center">সুপারিশকৃত ছাড়</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredDeadStockItems.map((itm) => (
+                          <tr key={itm.productId} className="hover:bg-rose-50/30 transition-colors">
+                            <td className="py-2.5 px-3">
+                              <span className="font-bold text-slate-900 block">{itm.productName}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">বারকোড: {itm.barcode}</span>
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-600">{itm.category}</td>
+                            <td className="py-2.5 px-3 text-center font-bold font-mono text-slate-800">
+                              {itm.stockQuantity} পিস
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-mono text-slate-600">
+                              {currencySymbol}{itm.costPrice.toFixed(2)}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-black font-mono text-rose-600">
+                              {currencySymbol}{Math.round(itm.blockedCapital).toLocaleString('en-IN')}
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 font-mono">
+                                {itm.daysStagnant >= 999 ? 'কখনও বিক্রি হয়নি' : `${itm.daysStagnant} দিন`}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              <span className="px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                                {itm.suggestedDiscount}% ছাড় প্রস্তাবিত
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
 

@@ -3398,6 +3398,10 @@ function doPost(e) {
         result = handleUpdateStockTransferStatus(spreadsheet, payload);
         break;
 
+      case 'sendBulkTargetedSms':
+        result = handleSendBulkTargetedSms(spreadsheet, payload);
+        break;
+
       default:
         result = {
           success: false,
@@ -6479,6 +6483,91 @@ function handleUpdateStockTransferStatus(spreadsheet, payload) {
   }
 
   return { success: false, message: `ট্রান্সফার রেকর্ড '${targetId}' খুঁজে পাওয়া যায়নি।` };
+}
+
+/**
+ * ============================================================================
+ * Phase 8: টার্গেটেড বাল্ক এসএমএস রি-অ্যাক্টিভেশন ক্যাম্পেইন হ্যান্ডলার
+ * ============================================================================
+ */
+function handleSendBulkTargetedSms(spreadsheet, payload) {
+  const recipients = Array.isArray(payload.recipients) ? payload.recipients : [];
+  const template = String(payload.messageTemplate || payload.message || '').trim();
+  const campaignTitle = payload.title || payload.Title || 'Targeted SMS Campaign';
+  const segment = payload.segment || payload.Segment || 'All';
+  const sentBy = payload.sentBy || 'Admin';
+
+  if (recipients.length === 0 || !template) {
+    return {
+      success: false,
+      message: 'প্রাপক তালিকা বা এসএমএস মেসেজ পাওয়া যায়নি।'
+    };
+  }
+
+  // সেটিংস থেকে এসএমএস ক্রেডেনশিয়াল রিড
+  const settingsSheet = ensureSettingsSheet(spreadsheet);
+  const sData = settingsSheet.getDataRange().getValues();
+  const sHeaders = sData[0];
+  const providerCol = findCol(sHeaders, 'SmsProvider');
+  const apiKeyCol = findCol(sHeaders, 'SmsApiKey', 'SmsKey');
+  const senderIdCol = findCol(sHeaders, 'SmsSenderId', 'SenderId');
+
+  let provider = (providerCol !== -1 && sData.length > 1) ? String(sData[1][providerCol] || '').trim() : 'Greenweb';
+  let apiKey = (apiKeyCol !== -1 && sData.length > 1) ? String(sData[1][apiKeyCol] || '').trim() : '';
+  let senderId = (senderIdCol !== -1 && sData.length > 1) ? String(sData[1][senderIdCol] || '').trim() : '';
+
+  if (payload.apiKey) apiKey = payload.apiKey;
+  if (payload.senderId) senderId = payload.senderId;
+  if (payload.provider) provider = payload.provider;
+
+  let successCount = 0;
+  let failCount = 0;
+
+  for (let i = 0; i < recipients.length; i++) {
+    const rc = recipients[i];
+    const phone = String(rc.phone || rc.Phone || '').replace(/[^0-9]/g, '');
+    const name = rc.name || rc.Name || rc.customerName || 'সম্মানিত ক্রেতা';
+    const voucher = rc.voucherCode || rc.VoucherCode || '';
+
+    if (phone.length >= 11) {
+      let personalizedMsg = template
+        .replace(/\{Name\}|\{CustomerName\}/gi, name)
+        .replace(/\{StoreName\}/gi, sData.length > 1 ? (sData[1][findCol(sHeaders, 'StoreName')] || 'Pabna Bostraloy') : 'Pabna Bostraloy')
+        .replace(/\{VoucherCode\}|\{CouponCode\}/gi, voucher);
+
+      try {
+        if (apiKey) {
+          sendSingleSmsViaGateway(provider, apiKey, senderId, phone, personalizedMsg);
+        }
+        successCount++;
+      } catch (e) {
+        failCount++;
+      }
+    }
+  }
+
+  // অডিট লগ
+  handleLogAuditEvent(spreadsheet, {
+    userId: sentBy,
+    userName: sentBy,
+    userRole: 'Admin',
+    actionType: 'SMS_CAMPAIGN',
+    module: 'Campaigns',
+    description: `টার্গেটেড বাল্ক এসএমএস ক্যাম্পেইন সম্পন্ন: '${campaignTitle}' (${segment} সেগমেন্ট, মোট প্রেরিত: ${successCount})`,
+    details: { campaignTitle, segment, totalRecipients: recipients.length, successCount, failCount }
+  });
+
+  return {
+    success: true,
+    message: `${successCount} জন গ্রাহককে সফলভাবে এসএমএস পাঠানো হয়েছে!`,
+    data: {
+      campaignTitle,
+      segment,
+      totalRecipients: recipients.length,
+      successCount,
+      failCount
+    }
+  };
 }
 
 

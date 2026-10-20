@@ -25,7 +25,8 @@ import {
   ShieldAlert,
   CalendarClock,
   RotateCcw,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Sparkles
 } from 'lucide-react';
 
 /**
@@ -72,6 +73,7 @@ export default function Sidebar({
   onOpenExpiryAlertModal,
   expiringProductsCount = 0,
   onOpenCustomersModal,
+  onOpenRFMCampaignModal,
   onOpenUsersModal,
   onOpenCouponModal,
   onOpenInvoiceLookupModal,
@@ -414,6 +416,23 @@ export default function Sidebar({
                     <Users className="w-4 h-4" />
                   </div>
                   {!isCollapsed && <span>গ্রাহক ডাটাবেস</span>}
+                </div>
+              </button>
+
+              {/* আরএফএম গ্রাহক সেগমেন্টেশন ও রি-টার্গেটিং ক্যাম্পেইন (Phase 8) */}
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenRFMCampaignModal)}
+                title="গ্রাহক আচরণ সেগমেন্টেশন ও টার্গেটেড এসএমএস ক্যাম্পেইন"
+                className={`w-full flex items-center rounded-2xl text-xs font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-900 transition-all cursor-pointer group ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && <span>RFM ক্যাম্পেইন</span>}
                 </div>
               </button>
 

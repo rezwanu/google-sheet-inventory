@@ -34,6 +34,7 @@ import ExpiryAlertModal from './components/ExpiryAlertModal';
 import ProductVariantSelectModal from './components/ProductVariantSelectModal';
 import SalesReturnModal from './components/SalesReturnModal';
 import StockTransferModal from './components/StockTransferModal';
+import RFMCampaignModal from './components/RFMCampaignModal';
 
 import {
   getLocalSettings,
@@ -127,7 +128,10 @@ import {
   getLocalStockTransfers,
   saveLocalStockTransfers,
   saveStockTransferLocally,
-  updateStockTransferStatusLocally
+  updateStockTransferStatusLocally,
+  getLocalCampaigns,
+  saveLocalCampaigns,
+  saveCampaignLocally
 } from './services/storage';
 
 import {
@@ -179,7 +183,8 @@ import {
   postCreateSalesReturn,
   postRedeemStoreCredit,
   postCreateStockTransfer,
-  postUpdateStockTransferStatus
+  postUpdateStockTransferStatus,
+  postSendBulkTargetedSms
 } from './services/api';
 
 export default function App() {
@@ -291,6 +296,9 @@ export default function App() {
   });
   const [isSalesReturnModalOpen, setIsSalesReturnModalOpen] = useState(false);
   const [isStockTransferModalOpen, setIsStockTransferModalOpen] = useState(false);
+
+  // ফেজ ৮: আরএফএম গ্রাহক সেগমেন্টেশন ও টার্গেটেড এসএমএস ক্যাম্পেইন মডাল স্টেট
+  const [isRFMCampaignModalOpen, setIsRFMCampaignModalOpen] = useState(false);
 
   // ভিউ নেভিগেশন স্টেট ('pos' | 'cart' | 'checkout')
   const [currentView, setCurrentView] = useState('pos');
@@ -2490,6 +2498,59 @@ export default function App() {
     }
   };
 
+  // ============================================================================
+  // ফেজ ৮: টার্গেটেড আরএফএম এসএমএস ক্যাম্পেইন ও ডিরেক্ট রি-অ্যাক্টিভেশন
+  // ============================================================================
+  const handleSendBulkSmsCampaign = async (campaignPayload) => {
+    try {
+      const sentBy = activeUser?.FullName || 'Admin';
+      const payloadWithUser = {
+        ...campaignPayload,
+        sentBy
+      };
+
+      // স্থানীয়ভাবে তাৎক্ষণিক ক্যাম্পেইন হিস্ট্রি সংরক্ষণ (অফলাইন-ফার্স্ট)
+      const localRecord = saveCampaignLocally(payloadWithUser);
+
+      // অডিট ট্রেইল সংরক্ষণ
+      const logEntry = logAuditEventLocally({
+        userId: activeUser?.UserID || 'ADMIN',
+        userName: activeUser?.FullName || 'Admin',
+        userRole: activeUser?.Role || 'Admin',
+        actionType: 'SMS_CAMPAIGN',
+        module: 'CustomerCampaigns',
+        description: `টার্গেটেড এসএমএস ক্যাম্পেইন সম্পন্ন: "${campaignPayload.title}" (${campaignPayload.recipients?.length || 0} প্রাপক, সেগমেন্ট: ${campaignPayload.segment || 'All'})`,
+        details: payloadWithUser
+      });
+      setAuditLogs(getLocalAuditLogs());
+
+      if (settings?.apiUrl) {
+        try {
+          postLogAuditEvent(settings.apiUrl, logEntry).catch(() => {});
+          const res = await postSendBulkTargetedSms(settings.apiUrl, payloadWithUser);
+          if (res.success) {
+            showToast(`এসএমএস ক্যাম্পেইন সফল: ${res.sentCount || campaignPayload.recipients?.length} টি এসএমএস পাঠানো হয়েছে!`, 'success');
+            return { success: true, count: res.sentCount || campaignPayload.recipients?.length };
+          } else {
+            showToast(`এসএমএস নোটিশ: ${res.message || 'কিছু এসএমএস প্রেরণে সমস্যা হতে পারে'}`, 'warning');
+            return { success: false, message: res.message };
+          }
+        } catch (apiErr) {
+          console.warn('Targeted SMS sync delayed:', apiErr);
+          showToast(`এসএমএস ব্যাকগ্রাউন্ড পাঠানো হচ্ছে: ${apiErr.message}`, 'info');
+          return { success: true, count: campaignPayload.recipients?.length };
+        }
+      } else {
+        showToast('অফলাইন মোড: এসএমএস ক্যাম্পেইন হিস্ট্রি স্থানীয়ভাবে সংরক্ষিত হয়েছে।', 'info');
+        return { success: true, count: campaignPayload.recipients?.length };
+      }
+    } catch (err) {
+      console.error('Campaign dispatch error:', err);
+      showToast(`ক্যাম্পেইন ত্রুটি: ${err.message}`, 'error');
+      return { success: false, message: err.message };
+    }
+  };
+
   // ৭. অতীত ইনভয়েস রি-প্রিন্ট ওপেন করা
   const handleOpenReprintInvoice = (sale) => {
     setActiveInvoiceData(sale);
@@ -2887,6 +2948,7 @@ export default function App() {
             expiringProductsCount={expiringProductsSummary.totalAlerts}
             onOpenCustomersModal={() => setIsCustomersModalOpen(true)}
             onOpenCustomerLedgerModal={() => setIsCustomerLedgerModalOpen(true)}
+            onOpenRFMCampaignModal={() => setIsRFMCampaignModalOpen(true)}
             customers={customers}
             suppliersCount={suppliers.length}
             pendingPOCount={purchaseOrders.filter(po => po.Status === 'Ordered').length}
@@ -3411,6 +3473,19 @@ export default function App() {
         storeSettings={settings}
         onSaveStockTransfer={handleSaveStockTransfer}
         onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
+      />
+
+      {/* ফেজ ৮: আরএফএম গ্রাহক সেগমেন্টেশন ও টার্গেটেড এসএমএস ক্যাম্পেইন মডাল */}
+      <RFMCampaignModal
+        isOpen={isRFMCampaignModalOpen}
+        onClose={() => setIsRFMCampaignModalOpen(false)}
+        customers={customers}
+        salesHistory={salesHistory}
+        orders={orders}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        activeUser={activeUser}
+        storeSettings={settings}
+        onSendBulkSmsCampaign={handleSendBulkSmsCampaign}
       />
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}

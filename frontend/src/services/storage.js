@@ -30,6 +30,7 @@ const STORAGE_KEYS = {
   AUDIT_LOGS: 'pos_audit_logs',
   SALES_RETURNS: 'pos_sales_returns',
   STOCK_TRANSFERS: 'pos_stock_transfers',
+  CAMPAIGNS: 'pos_campaigns',
 };
 
 import {
@@ -2913,6 +2914,385 @@ export function updateStockTransferStatusLocally(transferId, newStatus, received
 
   return { record: null, transfers };
 }
+
+/**
+ * ============================================================================
+ * Phase 8: উন্নত বিজনেস অ্যানালিটিক্স, আরএফএম কাস্টমার সেগমেন্টেশন ও সিএসভি এক্সপোর্ট
+ * ============================================================================
+ */
+
+/**
+ * গ্রাহকদের কেনাকাটার হিসেব অনুযায়ী RFM সেগমেন্টেশন বিশ্লেষণ
+ * @param {Array} customers - নিবন্ধিত গ্রাহক তালিকা
+ * @param {Array} salesHistory - অফলাইন পিওএস বিক্রয় ইতিহাস
+ * @param {Array} orders - ওমনিচ্যানেল অর্ডার তালিকা
+ * @returns {Object} সেগমেন্ট বিশ্লেষণ ফলাফল ও গ্রাহক তালিকা
+ */
+export function calculateRFMSegmentation(customers = [], salesHistory = [], orders = []) {
+  const safeCustomers = Array.isArray(customers) ? customers : [];
+  const safeSales = Array.isArray(salesHistory) ? salesHistory : [];
+  const safeOrders = Array.isArray(orders) ? orders : [];
+  const now = new Date();
+
+  // গ্রাহক ফোন এবং নাম ভিত্তিক লেনদেন মানচিত্র (Map) তৈরি
+  const customerMap = new Map();
+
+  // ১. প্রাথমিক গ্রাহক রেজিস্ট্রি লোড
+  safeCustomers.forEach((c) => {
+    const phone = String(c.Phone || c.phone || '').trim();
+    const id = String(c.CustomerID || c.id || phone).trim();
+    const name = c.FullName || c.Name || c.name || 'সম্মানিত ক্রেতা';
+
+    if (phone || id) {
+      const key = phone || id;
+      customerMap.set(key, {
+        customerId: id,
+        name: name,
+        phone: phone,
+        email: c.Email || c.email || '',
+        currentDue: Number(c.CurrentDue || 0),
+        loyaltyPoints: Number(c.LoyaltyPoints || 0),
+        totalOrders: 0,
+        totalSpent: 0,
+        lastPurchaseDate: null,
+        daysSinceLastPurchase: 999,
+        purchasedItems: [],
+        firstPurchaseDate: null
+      });
+    }
+  });
+
+  // ২. সেলস হিস্ট্রি থেকে ট্রানজেকশন প্রসেসিং
+  safeSales.forEach((sale) => {
+    const phone = String(sale.customerPhone || sale.CustomerPhone || '').trim();
+    const name = String(sale.customerName || sale.CustomerName || '').trim();
+    const key = phone || name;
+
+    if (!key || key.toLowerCase() === 'walk-in' || key.toLowerCase() === 'walk-in customer') return;
+
+    let cust = customerMap.get(phone) || customerMap.get(key);
+    if (!cust) {
+      cust = {
+        customerId: sale.customerId || `CUST-${phone.slice(-4) || 'GUEST'}`,
+        name: name || 'কাউন্টার ক্রেতা',
+        phone: phone,
+        email: '',
+        currentDue: 0,
+        loyaltyPoints: 0,
+        totalOrders: 0,
+        totalSpent: 0,
+        lastPurchaseDate: null,
+        daysSinceLastPurchase: 999,
+        purchasedItems: [],
+        firstPurchaseDate: null
+      };
+      customerMap.set(key, cust);
+    }
+
+    const saleAmount = Number(sale.grandTotal || sale.GrandTotal || sale.totalAmount || 0);
+    const dateStr = sale.timestamp || sale.date || sale.Timestamp || sale.Date;
+    const saleDate = dateStr ? new Date(dateStr) : null;
+
+    cust.totalOrders += 1;
+    cust.totalSpent += saleAmount;
+
+    if (saleDate && !isNaN(saleDate.getTime())) {
+      if (!cust.lastPurchaseDate || saleDate > cust.lastPurchaseDate) {
+        cust.lastPurchaseDate = saleDate;
+      }
+      if (!cust.firstPurchaseDate || saleDate < cust.firstPurchaseDate) {
+        cust.firstPurchaseDate = saleDate;
+      }
+    }
+  });
+
+  // ৩. অনলাইন ও ওমনিচ্যানেল অর্ডার থেকে প্রসেসিং
+  safeOrders.forEach((ord) => {
+    const phone = String(ord.CustomerPhone || ord.customerPhone || '').trim();
+    const name = String(ord.CustomerName || ord.customerName || '').trim();
+    const key = phone || name;
+
+    if (!key) return;
+
+    let cust = customerMap.get(phone) || customerMap.get(key);
+    if (!cust) {
+      cust = {
+        customerId: ord.CustomerID || `CUST-${phone.slice(-4) || 'GUEST'}`,
+        name: name || 'অনলাইন ক্রেতা',
+        phone: phone,
+        email: ord.CustomerEmail || '',
+        currentDue: 0,
+        loyaltyPoints: 0,
+        totalOrders: 0,
+        totalSpent: 0,
+        lastPurchaseDate: null,
+        daysSinceLastPurchase: 999,
+        purchasedItems: [],
+        firstPurchaseDate: null
+      };
+      customerMap.set(key, cust);
+    }
+
+    const ordAmount = Number(ord.TotalAmount || ord.totalAmount || 0);
+    const ordDateStr = ord.OrderDate || ord.CreatedAt || ord.orderDate;
+    const ordDate = ordDateStr ? new Date(ordDateStr) : null;
+
+    cust.totalOrders += 1;
+    cust.totalSpent += ordAmount;
+
+    if (ordDate && !isNaN(ordDate.getTime())) {
+      if (!cust.lastPurchaseDate || ordDate > cust.lastPurchaseDate) {
+        cust.lastPurchaseDate = ordDate;
+      }
+      if (!cust.firstPurchaseDate || ordDate < cust.firstPurchaseDate) {
+        cust.firstPurchaseDate = ordDate;
+      }
+    }
+  });
+
+  // ৪. RFM মেট্রিক্স ও সেগমেন্ট নির্ধারণ
+  const customerList = Array.from(customerMap.values());
+  const totalRevenue = customerList.reduce((sum, c) => sum + c.totalSpent, 0);
+  const avgSpend = customerList.length > 0 ? totalRevenue / customerList.length : 1;
+
+  const segments = {
+    champions: [],     // ভিআইপি ক্রেতা: সম্প্রতি এসেছে, ঘনঘন ও বেশি কেনাকাটা
+    loyal: [],         // বিশ্বস্ত নিয়মিত ক্রেতা
+    new_customers: [], // নতুন গ্রাহক (৩০ দিনের মধ্যে প্রথম কেনাকাটা)
+    at_risk: [],       // হারিয়ে যাওয়ার ঝুঁকিতে (৬০-১৮০ দিন কোনো ক্রয় নেই)
+    lost: [],          // নিষ্ক্রিয় গ্রাহক (১৮০+ দিন কোনো ক্রয় নেই)
+    regular: []        // সাধারণ ক্রেতা
+  };
+
+  customerList.forEach((cust) => {
+    if (cust.lastPurchaseDate) {
+      const diffTime = Math.abs(now - cust.lastPurchaseDate);
+      cust.daysSinceLastPurchase = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    } else {
+      cust.daysSinceLastPurchase = 999;
+    }
+
+    const r = cust.daysSinceLastPurchase;
+    const f = cust.totalOrders;
+    const m = cust.totalSpent;
+
+    let segmentTag = 'regular';
+    let segmentLabel = 'সাধারণ গ্রাহক';
+    let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+
+    if (r <= 35 && f >= 3 && m >= avgSpend * 1.2) {
+      segmentTag = 'champions';
+      segmentLabel = '👑 চ্যাম্পিয়ন (VIP)';
+      badgeColor = 'bg-amber-100 text-amber-900 border-amber-300';
+      segments.champions.push(cust);
+    } else if (r <= 60 && f >= 2) {
+      segmentTag = 'loyal';
+      segmentLabel = '💎 বিশ্বস্ত ক্রেতা (Loyal)';
+      badgeColor = 'bg-indigo-100 text-indigo-900 border-indigo-300';
+      segments.loyal.push(cust);
+    } else if (r <= 35 && f === 1) {
+      segmentTag = 'new_customers';
+      segmentLabel = '🌱 নতুন গ্রাহক (New)';
+      badgeColor = 'bg-emerald-100 text-emerald-900 border-emerald-300';
+      segments.new_customers.push(cust);
+    } else if (r > 60 && r <= 180 && f >= 1) {
+      segmentTag = 'at_risk';
+      segmentLabel = '⚠️ ঝুঁকিপূর্ণ (At-Risk)';
+      badgeColor = 'bg-rose-100 text-rose-900 border-rose-300';
+      segments.at_risk.push(cust);
+    } else if (r > 180) {
+      segmentTag = 'lost';
+      segmentLabel = '💤 নিষ্ক্রিয় (Lost)';
+      badgeColor = 'bg-slate-200 text-slate-700 border-slate-300';
+      segments.lost.push(cust);
+    } else {
+      segments.regular.push(cust);
+    }
+
+    cust.segmentTag = segmentTag;
+    cust.segmentLabel = segmentLabel;
+    cust.badgeColor = badgeColor;
+  });
+
+  return {
+    totalCustomers: customerList.length,
+    totalRevenue,
+    avgSpend,
+    segments,
+    allCustomers: customerList.sort((a, b) => b.totalSpent - a.totalSpent)
+  };
+}
+
+/**
+ * স্লো-মুভিং ও ডেড স্টক (অচল পণ্য) বিশ্লেষণ
+ * @param {Array} products - পণ্য ডাটাবেস
+ * @param {Array} salesHistory - বিক্রয় ইতিহাস
+ * @param {Array} orders - ওমনিচ্যানেল অর্ডার
+ * @param {number} daysThreshold - অচলাবস্থা গণ্য করার দিন (ডিফল্ট ৬০ দিন)
+ */
+export function calculateDeadStockAnalysis(products = [], salesHistory = [], orders = [], daysThreshold = 60) {
+  const safeProducts = Array.isArray(products) ? products : [];
+  const safeSales = Array.isArray(salesHistory) ? salesHistory : [];
+  const safeOrders = Array.isArray(orders) ? orders : [];
+  const now = new Date();
+
+  // প্রতিটি পণ্যের শেষ বিক্রয় তারিখ বের করা
+  const lastSoldMap = new Map();
+
+  safeSales.forEach((s) => {
+    const sDate = s.timestamp || s.date ? new Date(s.timestamp || s.date) : null;
+    if (!sDate || isNaN(sDate.getTime())) return;
+
+    (s.items || []).forEach((itm) => {
+      const pid = String(itm.productId || itm.id || '').trim();
+      const existing = lastSoldMap.get(pid);
+      if (!existing || sDate > existing) {
+        lastSoldMap.set(pid, sDate);
+      }
+    });
+  });
+
+  safeOrders.forEach((o) => {
+    const oDate = o.OrderDate || o.CreatedAt ? new Date(o.OrderDate || o.CreatedAt) : null;
+    if (!oDate || isNaN(oDate.getTime())) return;
+
+    (o.Items || []).forEach((itm) => {
+      const pid = String(itm.productId || itm.ProductID || '').trim();
+      const existing = lastSoldMap.get(pid);
+      if (!existing || oDate > existing) {
+        lastSoldMap.set(pid, oDate);
+      }
+    });
+  });
+
+  const deadStockItems = [];
+  let totalBlockedCapital = 0;
+  let totalStagnantUnits = 0;
+
+  safeProducts.forEach((p) => {
+    const pid = String(p.ProductID || p.id || '').trim();
+    const stock = Number(p.StockQuantity || p.stock || 0);
+    const cost = Number(p.CostPrice || p.costPrice || 0);
+    const price = Number(p.SellingPrice || p.sellingPrice || 0);
+
+    // শুধুমাত্র যেসব পণ্যের বর্তমানে স্টক আছে
+    if (stock > 0) {
+      const lastSold = lastSoldMap.get(pid);
+      let daysStagnant = 999;
+      let hasSoldBefore = false;
+
+      if (lastSold) {
+        hasSoldBefore = true;
+        const diff = Math.abs(now - lastSold);
+        daysStagnant = Math.floor(diff / (1000 * 60 * 60 * 24));
+      }
+
+      if (daysStagnant >= daysThreshold) {
+        const blockedMoney = stock * cost;
+        totalBlockedCapital += blockedMoney;
+        totalStagnantUnits += stock;
+
+        deadStockItems.push({
+          productId: pid,
+          productName: p.ProductName || p.productName || 'অজ্ঞাত পণ্য',
+          barcode: p.Barcode || p.barcode || 'N/A',
+          category: p.Category || p.category || 'General',
+          stockQuantity: stock,
+          costPrice: cost,
+          sellingPrice: price,
+          blockedCapital: blockedMoney,
+          daysStagnant: daysStagnant,
+          hasSoldBefore: hasSoldBefore,
+          lastSoldDate: lastSold ? lastSold.toLocaleDateString('bn-BD') : 'কখনও বিক্রি হয়নি',
+          suggestedDiscount: daysStagnant >= 120 ? 30 : (daysStagnant >= 90 ? 20 : 15)
+        });
+      }
+    }
+  });
+
+  return {
+    thresholdDays: daysThreshold,
+    totalStagnantItems: deadStockItems.length,
+    totalStagnantUnits,
+    totalBlockedCapital,
+    items: deadStockItems.sort((a, b) => b.blockedCapital - a.blockedCapital)
+  };
+}
+
+/**
+ * বাংলা ও ইংরেজি সমর্থিত UTF-8 BOM সহ প্রফেশনাল CSV এক্সপোর্ট ইঞ্জিন
+ * @param {string} filename - ফাইলের নাম (যেমন: sales_report.csv)
+ * @param {Array<string>} headers - কলামের হেডার অ্যারে
+ * @param {Array<Array>} rows - ডাটার সারি অ্যারে
+ */
+export function exportToCSV(filename, headers = [], rows = []) {
+  try {
+    const csvContent = [
+      headers.map(h => `"${String(h || '').replace(/"/g, '""')}"`).join(','),
+      ...rows.map(row => 
+        row.map(cell => {
+          if (cell === null || cell === undefined) return '""';
+          const str = String(cell).replace(/"/g, '""');
+          return `"${str}"`;
+        }).join(',')
+      )
+    ].join('\r\n');
+
+    // UTF-8 BOM (\uFEFF) যাতে এক্সেল সরাসরি বাংলা ফন্ট ও বিশেষ ক্যারেক্টার সঠিক দেখাতে পারে
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename.endsWith('.csv') ? filename : `${filename}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    return true;
+  } catch (err) {
+    console.error('CSV Export Error:', err);
+    return false;
+  }
+}
+
+/**
+ * এসএমএস ক্যাম্পেইন হিস্ট্রি লোকাল স্টোরেজ হেল্পার
+ */
+export function getLocalCampaigns() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.CAMPAIGNS);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalCampaigns(campaigns) {
+  setSecureStorageItem(STORAGE_KEYS.CAMPAIGNS, Array.isArray(campaigns) ? campaigns.slice(0, 100) : []);
+}
+
+export function saveCampaignLocally(campaignData) {
+  if (!campaignData) return getLocalCampaigns();
+  const campaigns = getLocalCampaigns();
+  const now = new Date().toISOString();
+
+  const record = {
+    CampaignID: campaignData.CampaignID || `CAMP-${Date.now().toString().slice(-6)}`,
+    Title: campaignData.Title || campaignData.title || 'SMS Campaign',
+    TargetSegment: campaignData.TargetSegment || campaignData.targetSegment || 'All',
+    MessageTemplate: campaignData.MessageTemplate || campaignData.message || '',
+    RecipientCount: Number(campaignData.RecipientCount || campaignData.recipientCount || 0),
+    SuccessCount: Number(campaignData.SuccessCount || campaignData.successCount || 0),
+    Status: campaignData.Status || campaignData.status || 'Sent',
+    SentBy: campaignData.SentBy || campaignData.sentBy || 'Admin',
+    SentAt: now
+  };
+
+  campaigns.unshift(record);
+  saveLocalCampaigns(campaigns);
+  return record;
+}
+
 
 
 

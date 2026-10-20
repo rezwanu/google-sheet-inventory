@@ -1881,3 +1881,41 @@ export async function postUpdateStockTransferStatus(apiUrl, { transferId, status
   }
 }
 
+/**
+ * ============================================================================
+ * Phase 8: টার্গেটেড বাল্ক এসএমএস রি-অ্যাক্টিভেশন ক্যাম্পেইন API (action: 'sendBulkTargetedSms')
+ * ============================================================================
+ */
+export async function postSendBulkTargetedSms(apiUrl, campaignPayload) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: এসএমএস ক্যাম্পেইন স্থানীয়ভাবে সম্পন্ন হিসেবে সংরক্ষিত হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'sendBulkTargetedSms',
+    ...campaignPayload,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `বাল্ক এসএমএস ক্যাম্পেইন প্রেরণ ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
