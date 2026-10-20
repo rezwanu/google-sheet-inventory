@@ -24,6 +24,7 @@ import {
 export default function AbandonedCartModal({
   isOpen,
   onClose,
+  embedded = false,
   abandonedCarts = [],
   settings = {},
   onUpdateCartStatus,
@@ -158,11 +159,11 @@ export default function AbandonedCartModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !embedded) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn"}>
+      <div className={embedded ? "bg-white rounded-2xl shadow-sm border border-slate-200 w-full flex-1 min-h-[calc(100vh-6.5rem)] flex flex-col overflow-hidden" : "bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200"}>
         
         {/* Modal Header */}
         <div className="px-6 py-4 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white flex items-center justify-between shadow-md">
@@ -184,9 +185,21 @@ export default function AbandonedCartModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
+            className={`transition-all cursor-pointer flex items-center space-x-1 ${
+              embedded
+                ? 'px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/10 shadow-xs'
+                : 'p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl'
+            }`}
+            title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
           >
-            <X className="w-6 h-6" />
+            {embedded ? (
+              <>
+                <span className="text-sm font-bold">←</span>
+                <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
+              </>
+            ) : (
+              <X className="w-6 h-6" />
+            )}
           </button>
         </div>
 

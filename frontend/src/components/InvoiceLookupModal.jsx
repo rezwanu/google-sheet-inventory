@@ -35,6 +35,7 @@ import StoreLogo from './StoreLogo';
 export default function InvoiceLookupModal({
   isOpen,
   onClose,
+  embedded = false,
   salesHistory = [],
   currencySymbol = '৳',
   settings = {},
@@ -138,7 +139,7 @@ export default function InvoiceLookupModal({
     }
   }, [isOpen, initialInvoiceNo, normalizedSales]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !embedded) return null;
 
   // কারেন্সি ফরম্যাট হেল্পার
   const formatCurrency = (val) => {
@@ -257,8 +258,8 @@ ${itemsText}
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-6xl w-full overflow-hidden flex flex-col max-h-[94vh] animate-in zoom-in-95 duration-150">
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"}>
+      <div className={embedded ? "bg-white rounded-2xl shadow-sm border border-slate-200/90 w-full flex-1 min-h-[calc(100vh-6.5rem)] overflow-hidden flex flex-col" : "bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-6xl w-full overflow-hidden flex flex-col max-h-[94vh] animate-in zoom-in-95 duration-150"}>
         
         {/* ================= ১. শীর্ষ প্রিমিয়াম হেডার বার ================= */}
         <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
@@ -298,10 +299,21 @@ ${itemsText}
 
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
-              title="বন্ধ করুন"
+              className={`transition-all cursor-pointer flex items-center space-x-1 ${
+                embedded
+                  ? 'px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/10 shadow-xs'
+                  : 'text-slate-400 hover:text-white p-2 rounded-xl hover:bg-white/10'
+              }`}
+              title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
             >
-              <X className="w-5 h-5" />
+              {embedded ? (
+                <>
+                  <span className="text-sm font-bold">←</span>
+                  <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
+                </>
+              ) : (
+                <X className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>

@@ -40,6 +40,7 @@ import { classifyCustomerSegment } from '../services/storage';
 export default function CustomersModal({
   isOpen,
   onClose,
+  embedded = false,
   customers = [],
   currencySymbol = '৳',
   settings = {},
@@ -288,11 +289,11 @@ export default function CustomersModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !embedded) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-3xl max-w-5xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200 relative">
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4"}>
+      <div className={embedded ? "bg-white rounded-2xl w-full shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-[calc(100vh-6.5rem)] relative" : "bg-white rounded-3xl max-w-5xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200 relative"}>
         
         {/* ================= হেডার সেকশন ================= */}
         <div className="p-4 sm:p-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-indigo-50/40 flex items-center justify-between shrink-0">
@@ -360,13 +361,24 @@ export default function CustomersModal({
               )}
             </button>
 
-            {/* মডাল ক্লোজ বাটন */}
+            {/* মডাল ক্লোজ বা ক্যাটালগ ব্যাক বাটন */}
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-              title="বন্ধ করুন"
+              className={`p-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1 ${
+                embedded
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-3 py-1.5 border border-slate-200 shadow-xs'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+              }`}
+              title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
             >
-              <X className="w-5 h-5" />
+              {embedded ? (
+                <>
+                  <span className="text-sm font-bold">←</span>
+                  <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
+                </>
+              ) : (
+                <X className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>

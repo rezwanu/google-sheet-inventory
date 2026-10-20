@@ -3063,6 +3063,313 @@ export default function App() {
               currencySymbol={settings.CurrencySymbol || '৳'}
             />
           )}
+
+          {/* পূর্ণাঙ্গ ইন-প্লেস পেজ ভিউসমূহ (SPA Page Views - No Discarding Popups) */}
+          {currentView === 'analytics' && (
+            <AnalyticsDashboard
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              salesHistory={salesHistory}
+              orders={orders}
+              products={products}
+              categories={categories}
+              customers={customers}
+              customerLedger={customerLedger}
+              expenses={expenses}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              storeSettings={settings}
+              onRefreshSales={handleRefreshSales}
+            />
+          )}
+
+          {currentView === 'customers' && (
+            <CustomersModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              customers={customers}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              settings={settings}
+              onAddCustomer={handleAddCustomer}
+              onDeleteCustomer={handleDeleteCustomer}
+              onRefreshCustomers={handleRefreshCustomers}
+              onOpenCustomerLedgerModal={() => setCurrentView('customer_ledger')}
+              showToast={showToast}
+            />
+          )}
+
+          {currentView === 'customer_ledger' && (
+            <CustomerLedgerModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              customers={customers}
+              customerLedger={customerLedger}
+              orders={orders}
+              settings={settings}
+              activeUser={activeUser}
+              onRecordPayment={handleRecordCustomerPayment}
+              onUpdateCreditLimit={handleUpdateCustomerCreditLimit}
+              onSendSms={handleSendSmsNotification}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              showToast={showToast}
+            />
+          )}
+
+          {currentView === 'sales_returns' && (
+            <SalesReturnModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              salesHistory={salesHistory}
+              customers={customers}
+              products={products}
+              salesReturns={salesReturns}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              activeUser={activeUser}
+              storeSettings={settings}
+              onSaveSalesReturn={handleSaveSalesReturn}
+              onRedeemStoreCredit={handleRedeemStoreCredit}
+            />
+          )}
+
+          {currentView === 'stock_transfers' && (
+            <StockTransferModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              products={products}
+              stockTransfers={stockTransfers}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              activeUser={activeUser}
+              storeSettings={settings}
+              onSaveStockTransfer={handleSaveStockTransfer}
+              onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
+            />
+          )}
+
+          {currentView === 'rfm_campaigns' && (
+            <RFMCampaignModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              customers={customers}
+              salesHistory={salesHistory}
+              orders={orders}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              activeUser={activeUser}
+              storeSettings={settings}
+              onSendBulkSmsCampaign={handleSendBulkSmsCampaign}
+            />
+          )}
+
+          {currentView === 'purchase_orders' && (
+            <PurchaseOrdersModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              purchaseOrders={purchaseOrders}
+              suppliers={suppliers}
+              products={products}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              storeName={settings.StoreName || 'Pabna Bostraloy'}
+              storeSettings={settings}
+              onCreatePO={handleCreatePurchaseOrder}
+              onUpdatePOStatus={handleUpdatePOStatus}
+              onOpenSuppliersModal={() => setCurrentView('suppliers')}
+            />
+          )}
+
+          {currentView === 'suppliers' && (
+            <SuppliersModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              suppliers={suppliers}
+              supplierLedger={supplierLedger}
+              purchaseOrders={purchaseOrders}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              storeName={settings.StoreName || 'Pabna Bostraloy'}
+              onSaveSupplier={handleSaveSupplier}
+              onDeleteSupplier={handleDeleteSupplier}
+              onRecordPayment={handleRecordSupplierPayment}
+              onOpenCreatePO={() => setCurrentView('purchase_orders')}
+              showToast={showToast}
+            />
+          )}
+
+          {currentView === 'expenses' && (
+            <ExpensesModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              expenses={expenses}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              activeUser={activeUser}
+              onSaveExpense={handleSaveExpense}
+              onDeleteExpense={handleDeleteExpense}
+            />
+          )}
+
+          {currentView === 'cash_register' && (
+            <CashRegisterModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              activeRegister={activeRegister}
+              cashRegisters={cashRegisters}
+              salesHistory={salesHistory}
+              customerLedger={customerLedger}
+              supplierLedger={supplierLedger}
+              expenses={expenses}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              activeUser={activeUser}
+              storeSettings={settings}
+              onOpenRegister={handleOpenCashRegister}
+              onCloseRegister={handleCloseCashRegister}
+            />
+          )}
+
+          {currentView === 'coupons' && (
+            <CouponModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              coupons={coupons}
+              products={products}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              onSaveCoupon={handleSaveCoupon}
+              onDeleteCoupon={handleDeleteCoupon}
+              onRefreshCoupons={handleRefreshCoupons}
+            />
+          )}
+
+          {currentView === 'abandoned_carts' && (
+            <AbandonedCartModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              abandonedCarts={abandonedCarts}
+              onUpdateStatus={handleUpdateAbandonedCartStatus}
+              onDeleteCart={handleDeleteAbandonedCart}
+              onConvertToOrder={handleConvertToOrderFromAbandoned}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              settings={settings}
+              showToast={showToast}
+            />
+          )}
+
+          {currentView === 'audit_logs' && (
+            <AuditLogsModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              auditLogs={auditLogs}
+            />
+          )}
+
+          {currentView === 'users' && (
+            <UsersModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              users={users}
+              activeUser={activeUser}
+              onAddUser={handleAddUser}
+              onUpdateUser={handleUpdateUser}
+              onDeleteUser={handleDeleteUser}
+              onRefreshUsers={handleRefreshUsers}
+              isLoading={syncStatus === 'syncing'}
+            />
+          )}
+
+          {currentView === 'low_stock' && (
+            <LowStockModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              products={products}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              onQuickRestock={handleQuickRestock}
+              onAddToCart={handleAddToCart}
+            />
+          )}
+
+          {currentView === 'expiry_alerts' && (
+            <ExpiryAlertModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              products={products}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              onAddToCart={handleAddToCart}
+              onEditProduct={(prod) => {
+                handleOpenEditProduct(prod);
+              }}
+              settings={settings}
+            />
+          )}
+
+          {currentView === 'barcode_print' && (
+            <BarcodePrintModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              products={products}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              storeName={settings.StoreName || 'Pabna Bostraloy'}
+            />
+          )}
+
+          {currentView === 'invoice_lookup' && (
+            <InvoiceLookupModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              salesHistory={salesHistory}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              settings={settings}
+              apiUrl={settings.apiUrl}
+              initialInvoiceNo={selectedLookupInvoiceNo}
+              onOpenPrintInvoice={(sale) => {
+                handleOpenReprintInvoice(sale);
+              }}
+            />
+          )}
+
+          {currentView === 'add_product' && (
+            <AddProductModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              onSubmitProduct={handleSubmitProduct}
+              categories={categories}
+              onAddCategory={handleAddCategory}
+              units={units}
+              onAddUnit={handleAddUnit}
+              products={products}
+              settings={settings}
+            />
+          )}
+
+          {currentView === 'stock_restock' && (
+            <AddStockModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => {
+                setQuickRestockProductId('');
+                setCurrentView('pos');
+              }}
+              products={products}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              activeUser={activeUser}
+              onSubmitStock={handleSubmitStock}
+              initialProductId={quickRestockProductId}
+              settings={settings}
+            />
+          )}
         </main>
       </div>
 

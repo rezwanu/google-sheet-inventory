@@ -123,6 +123,7 @@ const ROLES = [
 export default function UsersModal({
   isOpen,
   onClose,
+  embedded = false,
   users = [],
   activeUser = null,
   onAddUser,
@@ -429,15 +430,15 @@ export default function UsersModal({
     );
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !embedded) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
-      onClick={onClose}
+      className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"}
+      onClick={embedded ? undefined : onClose}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-5xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 my-auto relative"
+        className={embedded ? "bg-white rounded-2xl shadow-sm border border-slate-200/90 w-full flex-1 min-h-[calc(100vh-6.5rem)] flex flex-col overflow-hidden relative" : "bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-5xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 my-auto relative"}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ================= ১. লাক্সারি হেডার (Dark Mesh Glass Header) ================= */}
@@ -513,14 +514,21 @@ export default function UsersModal({
                 )}
               </button>
 
-              {/* মডাল ক্লোজ বাটন */}
+              {/* মডাল ক্লোজ বা ক্যাটালগ ব্যাক বাটন */}
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-all cursor-pointer border border-white/15 shrink-0"
-                title="বন্ধ করুন"
+                className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-all cursor-pointer border border-white/15 shrink-0 flex items-center space-x-1 text-xs font-bold"
+                title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
               >
-                <X className="w-4 h-4" />
+                {embedded ? (
+                  <>
+                    <span className="text-sm font-bold">←</span>
+                    <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
+                  </>
+                ) : (
+                  <X className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>

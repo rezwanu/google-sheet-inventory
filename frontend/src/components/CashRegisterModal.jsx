@@ -27,6 +27,7 @@ import {
 export default function CashRegisterModal({
   isOpen = false,
   onClose,
+  embedded = false,
   activeRegister = null,
   cashRegisters = [],
   salesHistory = [],
@@ -321,16 +322,16 @@ _Google Sheets Enterprise POS দ্বারা স্বয়ংক্রিয়�
     printWindow.document.close();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !embedded) return null;
 
   const isRegisterOpen = activeRegister && activeRegister.Status === 'Open';
 
   return (
     <div
-      className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 z-[100] animate-fadeIn"
-      style={{ zIndex: 100 }}
+      className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 z-[100] animate-fadeIn"}
+      style={embedded ? {} : { zIndex: 100 }}
     >
-      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-100">
+      <div className={embedded ? "bg-white w-full flex-1 min-h-[calc(100vh-6.5rem)] rounded-2xl shadow-sm flex flex-col overflow-hidden border border-slate-200/90" : "bg-white w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-100"}>
         
         {/* মোডাল হেডার */}
         <div className="bg-gradient-to-r from-emerald-700 via-teal-800 to-cyan-900 text-white px-6 py-4 flex items-center justify-between shadow-md shrink-0">
@@ -352,10 +353,21 @@ _Google Sheets Enterprise POS দ্বারা স্বয়ংক্রিয়�
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/90 hover:text-white transition-all cursor-pointer"
-            title="বন্ধ করুন"
+            className={`transition-all cursor-pointer flex items-center space-x-1 ${
+              embedded
+                ? 'px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/10 shadow-xs'
+                : 'w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white/90 hover:text-white justify-center'
+            }`}
+            title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
           >
-            <X className="w-5 h-5" />
+            {embedded ? (
+              <>
+                <span className="text-sm font-bold">←</span>
+                <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
+              </>
+            ) : (
+              <X className="w-5 h-5" />
+            )}
           </button>
         </div>
 

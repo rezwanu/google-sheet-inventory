@@ -186,7 +186,8 @@ export default function Sidebar({
           subTitle: 'ফেরত ও ক্রেডিট ভাউচার',
           icon: RotateCcw,
           iconGradient: 'from-violet-500 to-purple-600 text-white shadow-purple-500/25',
-          onClick: onOpenSalesReturnModal,
+          isActive: currentView === 'sales_returns',
+          onClick: () => onNavigate ? onNavigate('sales_returns') : onOpenSalesReturnModal && onOpenSalesReturnModal(),
           badge: returnsCount > 0 ? { text: `${returnsCount}টি`, color: 'bg-purple-100 text-purple-700 border border-purple-200' } : null
         },
         {
@@ -195,7 +196,8 @@ export default function Sidebar({
           subTitle: 'মেমো অনুসন্ধান ও রি-প্রিন্ট',
           icon: Receipt,
           iconGradient: 'from-slate-600 to-slate-800 text-white shadow-slate-500/25',
-          onClick: onOpenInvoiceLookupModal,
+          isActive: currentView === 'invoice_lookup',
+          onClick: () => onNavigate ? onNavigate('invoice_lookup') : onOpenInvoiceLookupModal && onOpenInvoiceLookupModal(),
           badge: null
         }
       ]
@@ -216,7 +218,8 @@ export default function Sidebar({
           subTitle: 'ক্যাটালগ এন্ট্রি ও ভ্যারিয়েন্ট',
           icon: PackagePlus,
           iconGradient: 'from-slate-800 to-slate-950 text-white shadow-slate-900/25',
-          onClick: onOpenProductModal,
+          isActive: currentView === 'add_product',
+          onClick: () => onNavigate ? onNavigate('add_product') : onOpenProductModal && onOpenProductModal(),
           badge: null
         },
         {
@@ -225,7 +228,8 @@ export default function Sidebar({
           subTitle: 'মজুত সংখ্যা ও কেনা দাম বৃদ্ধি',
           icon: PlusCircle,
           iconGradient: 'from-emerald-500 to-green-600 text-white shadow-emerald-500/25',
-          onClick: onOpenStockModal,
+          isActive: currentView === 'stock_restock',
+          onClick: () => onNavigate ? onNavigate('stock_restock') : onOpenStockModal && onOpenStockModal(),
           badge: null
         },
         {
@@ -235,7 +239,8 @@ export default function Sidebar({
           icon: AlertTriangle,
           iconGradient: lowStockCount > 0 ? 'from-rose-500 to-red-600 text-white shadow-rose-500/30' : 'from-slate-400 to-slate-600 text-white',
           isAlertItem: lowStockCount > 0,
-          onClick: onOpenLowStockModal,
+          isActive: currentView === 'low_stock',
+          onClick: () => onNavigate ? onNavigate('low_stock') : onOpenLowStockModal && onOpenLowStockModal(),
           badge: lowStockCount > 0 ? { text: `${lowStockCount}টি`, color: 'bg-rose-600 text-white animate-pulse shadow-xs' } : null
         },
         {
@@ -245,7 +250,8 @@ export default function Sidebar({
           icon: CalendarClock,
           iconGradient: expiringProductsCount > 0 ? 'from-rose-600 to-pink-600 text-white shadow-rose-600/30' : 'from-slate-400 to-slate-600 text-white',
           isAlertItem: expiringProductsCount > 0,
-          onClick: onOpenExpiryAlertModal,
+          isActive: currentView === 'expiry_alerts',
+          onClick: () => onNavigate ? onNavigate('expiry_alerts') : onOpenExpiryAlertModal && onOpenExpiryAlertModal(),
           badge: expiringProductsCount > 0 ? { text: `${expiringProductsCount}টি`, color: 'bg-rose-600 text-white animate-pulse shadow-xs' } : null
         },
         {
@@ -254,7 +260,8 @@ export default function Sidebar({
           subTitle: 'গোডাউন টু দোকান চালান',
           icon: ArrowRightLeft,
           iconGradient: transfersInTransitCount > 0 ? 'from-teal-500 to-emerald-600 text-white shadow-teal-500/25' : 'from-slate-400 to-slate-600 text-white',
-          onClick: onOpenStockTransferModal,
+          isActive: currentView === 'stock_transfers',
+          onClick: () => onNavigate ? onNavigate('stock_transfers') : onOpenStockTransferModal && onOpenStockTransferModal(),
           badge: transfersInTransitCount > 0 ? { text: `${transfersInTransitCount}টি পথে`, color: 'bg-teal-600 text-white animate-pulse shadow-xs' } : null
         },
         {
@@ -263,7 +270,8 @@ export default function Sidebar({
           subTitle: 'থার্মাল স্টিকার প্রিন্টার',
           icon: BarcodeIcon,
           iconGradient: 'from-indigo-500 to-blue-600 text-white shadow-indigo-500/25',
-          onClick: onOpenBarcodeModal,
+          isActive: currentView === 'barcode_print',
+          onClick: () => onNavigate ? onNavigate('barcode_print') : onOpenBarcodeModal && onOpenBarcodeModal(),
           badge: null
         }
       ]
@@ -284,7 +292,8 @@ export default function Sidebar({
           subTitle: 'স্টক ক্রয় ও চালান রিসিভ',
           icon: PackageCheck,
           iconGradient: pendingPOCount > 0 ? 'from-amber-500 to-orange-600 text-white shadow-amber-500/25' : 'from-blue-500 to-indigo-600 text-white shadow-blue-500/25',
-          onClick: onOpenPurchaseOrdersModal,
+          isActive: currentView === 'purchase_orders',
+          onClick: () => onNavigate ? onNavigate('purchase_orders') : onOpenPurchaseOrdersModal && onOpenPurchaseOrdersModal(),
           badge: pendingPOCount > 0 ? { text: `${pendingPOCount}টি অপেক্ষমান`, color: 'bg-amber-600 text-white shadow-xs' } : null
         },
         {
@@ -293,7 +302,8 @@ export default function Sidebar({
           subTitle: 'মহাজন তালিকা ও দেনা লেজার',
           icon: Building2,
           iconGradient: 'from-slate-600 to-slate-800 text-white shadow-slate-600/25',
-          onClick: onOpenSuppliersModal,
+          isActive: currentView === 'suppliers',
+          onClick: () => onNavigate ? onNavigate('suppliers') : onOpenSuppliersModal && onOpenSuppliersModal(),
           badge: suppliersCount > 0 ? { text: `${suppliersCount}`, color: 'bg-slate-100 text-slate-700 font-bold' } : null
         }
       ]
@@ -314,7 +324,8 @@ export default function Sidebar({
           subTitle: 'ক্রেতা তথ্য ও ক্রয়ের ইতিহাস',
           icon: Users,
           iconGradient: 'from-slate-600 to-indigo-700 text-white shadow-slate-600/25',
-          onClick: onOpenCustomersModal,
+          isActive: currentView === 'customers',
+          onClick: () => onNavigate ? onNavigate('customers') : onOpenCustomersModal && onOpenCustomersModal(),
           badge: safeCustomers.length > 0 ? { text: `${safeCustomers.length}`, color: 'bg-slate-100 text-slate-700' } : null
         },
         {
@@ -323,7 +334,8 @@ export default function Sidebar({
           subTitle: 'টার্গেটেড রি-অ্যাক্টিভেশন',
           icon: Sparkles,
           iconGradient: 'from-purple-500 via-fuchsia-500 to-pink-500 text-white shadow-purple-500/30',
-          onClick: onOpenRFMCampaignModal,
+          isActive: currentView === 'rfm_campaigns',
+          onClick: () => onNavigate ? onNavigate('rfm_campaigns') : onOpenRFMCampaignModal && onOpenRFMCampaignModal(),
           badge: { text: '✨ স্মার্ট AI', color: 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border border-purple-200 shadow-2xs font-bold' }
         },
         {
@@ -333,7 +345,8 @@ export default function Sidebar({
           icon: BookOpen,
           iconGradient: totalDueAmount > 0 ? 'from-amber-500 to-orange-600 text-white shadow-amber-500/30' : 'from-amber-400 to-amber-600 text-white',
           isAlertItem: totalDueAmount > 0,
-          onClick: onOpenCustomerLedgerModal,
+          isActive: currentView === 'customer_ledger',
+          onClick: () => onNavigate ? onNavigate('customer_ledger') : onOpenCustomerLedgerModal && onOpenCustomerLedgerModal(),
           badge: totalDueAmount > 0 ? { text: `${currencySymbol}${Math.round(totalDueAmount).toLocaleString('en-IN')}`, color: 'bg-gradient-to-r from-amber-500 to-rose-600 text-white shadow-xs' } : null
         },
         {
@@ -342,7 +355,8 @@ export default function Sidebar({
           subTitle: 'ছাড় কোড ও প্রোমোশন তৈরি',
           icon: Ticket,
           iconGradient: 'from-orange-400 to-amber-600 text-white shadow-orange-500/25',
-          onClick: onOpenCouponModal,
+          isActive: currentView === 'coupons',
+          onClick: () => onNavigate ? onNavigate('coupons') : onOpenCouponModal && onOpenCouponModal(),
           badge: null
         },
         {
@@ -351,7 +365,8 @@ export default function Sidebar({
           subTitle: 'ড্রপ-অফ ক্রেতা রি-টার্গেটিং',
           icon: ShoppingBag,
           iconGradient: abandonedCartsCount > 0 ? 'from-amber-500 to-rose-500 text-white shadow-amber-500/25' : 'from-slate-400 to-slate-600 text-white',
-          onClick: onOpenAbandonedCartModal,
+          isActive: currentView === 'abandoned_carts',
+          onClick: () => onNavigate ? onNavigate('abandoned_carts') : onOpenAbandonedCartModal && onOpenAbandonedCartModal(),
           badge: abandonedCartsCount > 0 ? { text: `${abandonedCartsCount}টি`, color: 'bg-amber-600 text-white shadow-xs' } : null
         }
       ]
@@ -371,7 +386,8 @@ export default function Sidebar({
           subTitle: 'আর্থিক P&L ও ডেড স্টক',
           icon: TrendingUp,
           iconGradient: 'from-blue-600 to-indigo-700 text-white shadow-indigo-600/25',
-          onClick: onOpenAnalyticsModal,
+          isActive: currentView === 'analytics',
+          onClick: () => onNavigate ? onNavigate('analytics') : onOpenAnalyticsModal && onOpenAnalyticsModal(),
           badge: null
         },
         {
@@ -380,7 +396,8 @@ export default function Sidebar({
           subTitle: 'কাউন্টার ব্যালেন্স ও ক্লোজিং',
           icon: Coins,
           iconGradient: isRegisterOpen ? 'from-emerald-500 to-teal-600 text-white shadow-emerald-500/30' : 'from-slate-400 to-slate-600 text-white',
-          onClick: onOpenCashRegisterModal,
+          isActive: currentView === 'cash_register',
+          onClick: () => onNavigate ? onNavigate('cash_register') : onOpenCashRegisterModal && onOpenCashRegisterModal(),
           badge: {
             text: isRegisterOpen ? '● খোলা' : 'বন্ধ',
             color: isRegisterOpen ? 'bg-emerald-500 text-white shadow-xs font-black ring-2 ring-emerald-200' : 'bg-slate-100 text-slate-500'
@@ -392,7 +409,8 @@ export default function Sidebar({
           subTitle: 'ভাড়া, বিদ্যুৎ ও স্টাফ খরচ',
           icon: Receipt,
           iconGradient: 'from-rose-500 to-pink-600 text-white shadow-rose-500/25',
-          onClick: onOpenExpensesModal,
+          isActive: currentView === 'expenses',
+          onClick: () => onNavigate ? onNavigate('expenses') : onOpenExpensesModal && onOpenExpensesModal(),
           badge: expensesCount > 0 ? { text: `${expensesCount}`, color: 'bg-rose-50 text-rose-700 border border-rose-200' } : null
         },
         {
@@ -401,7 +419,8 @@ export default function Sidebar({
           subTitle: 'ইউজার লগ ও নিরাপত্তা ট্র্যাক',
           icon: ShieldAlert,
           iconGradient: 'from-slate-700 to-slate-900 text-white shadow-slate-700/25',
-          onClick: onOpenAuditLogsModal,
+          isActive: currentView === 'audit_logs',
+          onClick: () => onNavigate ? onNavigate('audit_logs') : onOpenAuditLogsModal && onOpenAuditLogsModal(),
           badge: null
         }
       ]
@@ -421,7 +440,8 @@ export default function Sidebar({
           subTitle: 'রোল পারমিশন ও একাউন্টস',
           icon: UserCog,
           iconGradient: 'from-indigo-600 to-slate-800 text-white shadow-indigo-600/25',
-          onClick: onOpenUsersModal,
+          isActive: currentView === 'users',
+          onClick: () => onNavigate ? onNavigate('users') : onOpenUsersModal && onOpenUsersModal(),
           badge: null
         },
         {

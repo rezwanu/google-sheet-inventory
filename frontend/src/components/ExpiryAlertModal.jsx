@@ -22,6 +22,7 @@ import { calculateExpiryStatus } from '../services/storage';
 export default function ExpiryAlertModal({
   isOpen,
   onClose,
+  embedded = false,
   products = [],
   currencySymbol = '৳',
   onAddToCart,
@@ -121,12 +122,12 @@ export default function ExpiryAlertModal({
     window.print();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !embedded) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"}>
       <div 
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+        className={embedded ? "bg-white rounded-2xl shadow-sm border border-slate-200/90 w-full flex-1 min-h-[calc(100vh-6.5rem)] flex flex-col overflow-hidden" : "bg-white rounded-3xl shadow-2xl border border-slate-200/90 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"}
         role="dialog"
         aria-modal="true"
       >
@@ -155,9 +156,21 @@ export default function ExpiryAlertModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-all cursor-pointer"
+            className={`p-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1 ${
+              embedded
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-3 py-1.5 border border-slate-200 shadow-xs'
+                : 'w-9 h-9 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 justify-center'
+            }`}
+            title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
           >
-            <X className="w-5 h-5" />
+            {embedded ? (
+              <>
+                <span className="text-sm font-bold">←</span>
+                <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
+              </>
+            ) : (
+              <X className="w-5 h-5" />
+            )}
           </button>
         </div>
 

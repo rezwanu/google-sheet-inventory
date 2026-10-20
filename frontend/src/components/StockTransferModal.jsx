@@ -22,6 +22,7 @@ import {
 export default function StockTransferModal({
   isOpen,
   onClose,
+  embedded = false,
   products = [],
   stockTransfers = [],
   currencySymbol = '৳',
@@ -264,11 +265,11 @@ export default function StockTransferModal({
     });
   }, [stockTransfers, listSearch, statusFilter]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !embedded) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto flex flex-col max-h-[92vh]">
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-xs overflow-y-auto"}>
+      <div className={embedded ? "relative w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-[calc(100vh-6.5rem)]" : "relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto flex flex-col max-h-[92vh]"}>
         
         {/* মডাল হেডার */}
         <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white flex items-center justify-between shrink-0">
@@ -323,9 +324,21 @@ export default function StockTransferModal({
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className={`rounded-xl transition-all cursor-pointer flex items-center space-x-1 ${
+                embedded
+                  ? 'px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/10 shadow-xs'
+                  : 'p-2 text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+              title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
             >
-              <X className="w-5 h-5" />
+              {embedded ? (
+                <>
+                  <span className="text-sm font-bold">←</span>
+                  <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
+                </>
+              ) : (
+                <X className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>

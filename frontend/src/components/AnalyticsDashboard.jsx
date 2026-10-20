@@ -41,6 +41,7 @@ import { calculateDeadStockAnalysis, exportToCSV } from '../services/storage';
 export default function AnalyticsDashboard({
   isOpen,
   onClose,
+  embedded = false,
   salesHistory = [],
   orders = [],
   products = [],
@@ -872,13 +873,13 @@ export default function AnalyticsDashboard({
     return Math.max(...analyticsKPI.dailyTrendList.map((t) => t.revenue), 100);
   }, [analyticsKPI.dailyTrendList]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !embedded) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 sm:py-5 animate-in fade-in duration-200">
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 sm:py-5 animate-in fade-in duration-200"}>
       
       {/* প্রধান ড্যাশবোর্ড উইন্ডো (Screen Only - No Print) */}
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-7xl w-full overflow-hidden flex flex-col max-h-[94vh] animate-in zoom-in-95 duration-200 no-print">
+      <div className={embedded ? "bg-white rounded-2xl shadow-sm border border-slate-200/90 w-full overflow-hidden flex flex-col flex-1 min-h-[calc(100vh-6.5rem)] no-print" : "bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-7xl w-full overflow-hidden flex flex-col max-h-[94vh] animate-in zoom-in-95 duration-200 no-print"}>
         
         {/* ড্যাশবোর্ড হেডার ও দ্রুত অ্যাকশন বার */}
         <div className="shrink-0 px-5 sm:px-8 py-3.5 sm:py-4 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white flex flex-wrap items-center justify-between gap-3 border-b border-indigo-900/50 select-none">
@@ -994,13 +995,20 @@ export default function AnalyticsDashboard({
               <span>প্রিন্ট স্টেটমেন্ট</span>
             </button>
 
-            {/* ক্লোজ বাটন */}
+            {/* ক্লোজ / ব্যাক বাটন */}
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all active:scale-95 ml-1"
-              title="বন্ধ করুন"
+              className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all border border-white/10 shadow-xs cursor-pointer active:scale-95 ml-1"
+              title={embedded ? "ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
             >
-              <X className="w-5 h-5" />
+              {embedded ? (
+                <>
+                  <span className="text-sm font-bold">←</span>
+                  <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
+                </>
+              ) : (
+                <X className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>

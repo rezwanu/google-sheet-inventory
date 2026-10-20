@@ -134,6 +134,7 @@ function SingleStickerItem({
 export default function BarcodePrintModal({
   isOpen,
   onClose,
+  embedded = false,
   products = [],
   currencySymbol = '৳',
   storeName = 'Pabna Bostraloy'
@@ -302,18 +303,18 @@ export default function BarcodePrintModal({
     window.print();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !embedded) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200"
-      style={{ zIndex: 100 }}
+      className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200"}
+      style={embedded ? {} : { zIndex: 100 }}
     >
       
       {/* স্ক্রিন ইন্টারেক্টিভ মডাল (নো-প্রিন্ট) */}
       <div
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[88vh] my-auto flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 no-print relative"
-        style={{ zIndex: 101 }}
+        className={embedded ? "bg-white rounded-2xl shadow-sm border border-slate-200 w-full flex-1 min-h-[calc(100vh-6.5rem)] flex flex-col overflow-hidden no-print relative" : "bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[88vh] my-auto flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 no-print relative"}
+        style={embedded ? {} : { zIndex: 101 }}
       >
         
         {/* ১. হেডার */}
@@ -339,10 +340,21 @@ export default function BarcodePrintModal({
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-            title="বন্ধ করুন"
+            className={`rounded-xl transition-all cursor-pointer flex items-center space-x-1 ${
+              embedded
+                ? 'px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/10 shadow-xs'
+                : 'w-9 h-9 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white justify-center'
+            }`}
+            title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
           >
-            <X className="w-5 h-5" />
+            {embedded ? (
+              <>
+                <span className="text-sm font-bold">←</span>
+                <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
+              </>
+            ) : (
+              <X className="w-5 h-5" />
+            )}
           </button>
         </div>
 

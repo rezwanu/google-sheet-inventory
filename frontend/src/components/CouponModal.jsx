@@ -34,6 +34,7 @@ import {
 export default function CouponModal({
   isOpen,
   onClose,
+  embedded = false,
   coupons = [],
   products = [],
   currencySymbol = '৳',
@@ -281,11 +282,11 @@ export default function CouponModal({
     return products.find((p) => String(p.ProductID).trim() === String(formData.ProductID).trim()) || null;
   }, [formData.ApplicableType, formData.ProductID, products]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !embedded) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 bg-slate-950/75 backdrop-blur-xl animate-in fade-in duration-200">
-      <div className="bg-white rounded-[2rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] border border-slate-200/90 w-full max-w-6xl flex flex-col max-h-[92vh] overflow-hidden transition-all duration-300 ring-1 ring-slate-900/5">
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 bg-slate-950/75 backdrop-blur-xl animate-in fade-in duration-200"}>
+      <div className={embedded ? "bg-white rounded-2xl shadow-sm border border-slate-200/90 w-full flex-1 min-h-[calc(100vh-6.5rem)] flex flex-col overflow-hidden" : "bg-white rounded-[2rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] border border-slate-200/90 w-full max-w-6xl flex flex-col max-h-[92vh] overflow-hidden transition-all duration-300 ring-1 ring-slate-900/5"}>
         
         {/* ========================================================= */}
         {/* ১. প্রিমিয়াম হেডার বার (Balanced Spacing & Ambient Light) */}
@@ -341,10 +342,21 @@ export default function CouponModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-2xl transition-all duration-200 cursor-pointer active:scale-95"
-                title="বন্ধ করুন"
+                className={`transition-all duration-200 cursor-pointer active:scale-95 flex items-center space-x-1 ${
+                  embedded
+                    ? 'px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200 shadow-xs'
+                    : 'p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-2xl'
+                }`}
+                title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
               >
-                <X className="w-5 h-5 stroke-[2.2]" />
+                {embedded ? (
+                  <>
+                    <span className="text-sm font-bold">←</span>
+                    <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
+                  </>
+                ) : (
+                  <X className="w-5 h-5 stroke-[2.2]" />
+                )}
               </button>
             </div>
 
