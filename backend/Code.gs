@@ -24,7 +24,9 @@ const SHEETS = {
   SUPPLIER_LEDGER: 'SupplierLedger',
   EXPENSES: 'Expenses',
   CASH_REGISTER: 'CashRegister',
-  AUDIT_LOGS: 'AuditLogs'
+  AUDIT_LOGS: 'AuditLogs',
+  SALES_RETURNS: 'SalesReturns',
+  STOCK_TRANSFERS: 'StockTransfers'
 };
 
 /**
@@ -721,6 +723,74 @@ function ensureAuditLogsSheet(spreadsheet) {
 }
 
 /**
+ * SalesReturns (সেলস রিটার্ন, পণ্য বিনিময় ও স্টোর ক্রেডিট) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} SalesReturns শিট অবজেক্ট
+ */
+function ensureSalesReturnsSheet(spreadsheet) {
+  let returnsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.SALES_RETURNS);
+  if (!returnsSheet) {
+    returnsSheet = spreadsheet.insertSheet(SHEETS.SALES_RETURNS);
+  }
+
+  const defaultHeaders = [
+    'ReturnID', 'InvoiceNo', 'ReturnDate', 'CustomerID', 'CustomerName', 'CustomerPhone',
+    'ItemsJSON', 'TotalRefundAmount', 'RefundMethod', 'CreditNoteCode', 'CreditNoteExpiry',
+    'CreditNoteStatus', 'Restocked', 'Reason', 'ProcessedBy', 'CreatedAt'
+  ];
+
+  if (returnsSheet.getLastRow() === 0) {
+    returnsSheet.appendRow(defaultHeaders);
+  } else {
+    const lastCol = returnsSheet.getLastColumn();
+    if (lastCol > 0) {
+      const headers = returnsSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      defaultHeaders.forEach(col => {
+        if (findCol(headers, col) === -1) {
+          returnsSheet.getRange(1, returnsSheet.getLastColumn() + 1).setValue(col);
+        }
+      });
+    }
+  }
+
+  return returnsSheet;
+}
+
+/**
+ * StockTransfers (গোডাউন ও দোকান স্টক ট্রান্সফার চালান) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} StockTransfers শিট অবজেক্ট
+ */
+function ensureStockTransfersSheet(spreadsheet) {
+  let transferSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.STOCK_TRANSFERS);
+  if (!transferSheet) {
+    transferSheet = spreadsheet.insertSheet(SHEETS.STOCK_TRANSFERS);
+  }
+
+  const defaultHeaders = [
+    'TransferID', 'ChallanNo', 'TransferDate', 'FromLocation', 'ToLocation',
+    'ItemsJSON', 'TotalItems', 'TotalQuantity', 'Status', 'DriverName', 'Notes',
+    'CreatedBy', 'ReceivedBy', 'CreatedAt', 'UpdatedAt'
+  ];
+
+  if (transferSheet.getLastRow() === 0) {
+    transferSheet.appendRow(defaultHeaders);
+  } else {
+    const lastCol = transferSheet.getLastColumn();
+    if (lastCol > 0) {
+      const headers = transferSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      defaultHeaders.forEach(col => {
+        if (findCol(headers, col) === -1) {
+          transferSheet.getRange(1, transferSheet.getLastColumn() + 1).setValue(col);
+        }
+      });
+    }
+  }
+
+  return transferSheet;
+}
+
+/**
  * Coupons (কুপন ডাটাবেস) শিট নিশ্চিত করা (না থাকলে তৈরি এবং প্রয়োজনীয় কলাম হেডার যুক্ত করা)
  * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
  * @return {Sheet} Coupons শিট অবজেক্ট
@@ -1112,6 +1182,12 @@ function ensureDatabaseSchema(spreadsheet) {
 
   // ২.১১ AuditLogs (অ্যাক্টিভিটি ও সিকিউরিটি অডিট ট্রেইল) শিট নিশ্চিত করা
   ensureAuditLogsSheet(spreadsheet);
+
+  // ২.১২ SalesReturns (সেলস রিটার্ন ও স্টোর ক্রেডিট) শিট নিশ্চিত করা
+  ensureSalesReturnsSheet(spreadsheet);
+
+  // ২.১৩ StockTransfers (গোডাউন ও দোকান স্টক ট্রান্সফার চালান) শিট নিশ্চিত করা
+  ensureStockTransfersSheet(spreadsheet);
 
   // ৩. Products শিটের সকল কলাম (SellingPrice সহ) নিশ্চিত করা
   const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
@@ -2876,6 +2952,8 @@ function doGet(e) {
       const supplierLedger = getSheetRowsAsObjects(SHEETS.SUPPLIER_LEDGER);
       const expenses = getSheetRowsAsObjects(SHEETS.EXPENSES);
       const cashRegisters = getSheetRowsAsObjects(SHEETS.CASH_REGISTER);
+      const salesReturns = getSheetRowsAsObjects(SHEETS.SALES_RETURNS);
+      const stockTransfers = getSheetRowsAsObjects(SHEETS.STOCK_TRANSFERS);
       const rawAuditLogs = getSheetRowsAsObjects(SHEETS.AUDIT_LOGS);
       // সর্বশেষ ৫০০টি অডিট লগ রিটার্ন করা যেন রেসপন্স দ্রুত থাকে
       const auditLogs = rawAuditLogs.slice(-500).reverse();
@@ -2920,6 +2998,8 @@ function doGet(e) {
           supplierLedger: supplierLedger,
           expenses: expenses,
           cashRegisters: cashRegisters,
+          salesReturns: salesReturns,
+          stockTransfers: stockTransfers,
           auditLogs: auditLogs,
           coupons: coupons,
           sales: sales,
@@ -3052,6 +3132,24 @@ function doGet(e) {
       return createJsonResponse({
         success: true,
         data: users
+      });
+    }
+
+    // ৭. সেলস রিটার্ন ও এক্সচেঞ্জ তালিকা আনা
+    if (action === 'getSalesReturns') {
+      const returns = getSheetRowsAsObjects(SHEETS.SALES_RETURNS);
+      return createJsonResponse({
+        success: true,
+        data: returns
+      });
+    }
+
+    // ৮. গোডাউন ও দোকান স্টক ট্রান্সফার চালান তালিকা আনা
+    if (action === 'getStockTransfers') {
+      const transfers = getSheetRowsAsObjects(SHEETS.STOCK_TRANSFERS);
+      return createJsonResponse({
+        success: true,
+        data: transfers
       });
     }
 
@@ -3282,6 +3380,22 @@ function doPost(e) {
 
       case 'logAuditEvent':
         result = handleLogAuditEvent(spreadsheet, payload);
+        break;
+
+      case 'createSalesReturn':
+        result = handleCreateSalesReturn(spreadsheet, payload);
+        break;
+
+      case 'redeemStoreCredit':
+        result = handleRedeemStoreCredit(spreadsheet, payload);
+        break;
+
+      case 'createStockTransfer':
+        result = handleCreateStockTransfer(spreadsheet, payload);
+        break;
+
+      case 'updateStockTransferStatus':
+        result = handleUpdateStockTransferStatus(spreadsheet, payload);
         break;
 
       default:
@@ -5833,6 +5947,538 @@ function handleLogAuditEvent(spreadsheet, payload) {
     message: 'অডিট লগ সফলভাবে সংরক্ষিত হয়েছে।',
     data: { logId: logId, timestamp: timestampStr }
   };
+}
+
+/**
+ * ============================================================================
+ * Phase 7: সেলস রিটার্ন, পণ্য বিনিময়, স্টোর ক্রেডিট ও গোডাউন স্টক চালান
+ * ============================================================================
+ */
+
+/**
+ * সেলস রিটার্ন ও এক্সচেঞ্জ তৈরি করা (handleCreateSalesReturn)
+ */
+function handleCreateSalesReturn(spreadsheet, payload) {
+  const returnsSheet = ensureSalesReturnsSheet(spreadsheet);
+  const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
+  const stockLogsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.STOCK_LOGS);
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  const returnId = generateUniqueId('RET');
+  const invoiceNo = String(payload.invoiceNo || payload.InvoiceNo || '').trim();
+  const customerId = payload.customerId || payload.CustomerID || 'GUEST';
+  const customerName = payload.customerName || payload.CustomerName || 'Walk-in Customer';
+  const customerPhone = payload.customerPhone || payload.CustomerPhone || '';
+  const refundMethod = payload.refundMethod || payload.RefundMethod || 'Cash'; // 'Cash' | 'StoreCredit' | 'DeductDue' | 'Exchange'
+  const reason = payload.reason || payload.Reason || 'Customer Return';
+  const processedBy = payload.processedBy || payload.ProcessedBy || 'Cashier';
+  const items = Array.isArray(payload.items) ? payload.items : [];
+
+  let totalRefundAmount = Number(payload.totalRefundAmount || payload.refundAmount || 0);
+  if (!totalRefundAmount && items.length > 0) {
+    totalRefundAmount = items.reduce((sum, item) => sum + (Number(item.returnPrice || item.sellingPrice || 0) * Number(item.quantity || 1)), 0);
+  }
+
+  // স্টোর ক্রেডিট কোড তৈরি (যদি রিফান্ড মেথড StoreCredit হয়)
+  let creditNoteCode = '';
+  let creditNoteExpiry = '';
+  let creditNoteStatus = 'None';
+
+  if (refundMethod === 'StoreCredit' || payload.generateCreditNote) {
+    creditNoteCode = 'SCN-' + Math.floor(100000 + Math.random() * 900000);
+    const expDate = new Date();
+    expDate.setDate(expDate.getDate() + (Number(payload.creditValidityDays) || 60)); // ৬০ দিন মেয়াদ ডিফল্ট
+    creditNoteExpiry = Utilities.formatDate(expDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    creditNoteStatus = 'Active';
+  }
+
+  // স্টক রিস্টক প্রক্রিয়া (যদি পণ্য ভালো অবস্থায় থাকে Resellable)
+  let hasRestocked = false;
+  if (productsSheet && items.length > 0) {
+    const prodHeaders = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+    const stockColIdx = findCol(prodHeaders, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity');
+    const prodIdColIdx = findCol(prodHeaders, 'ProductID', 'ID');
+    const barcodeColIdx = findCol(prodHeaders, 'Barcode');
+    const variantsColIdx = findCol(prodHeaders, 'VariantsJSON', 'Variants');
+    const allProdData = productsSheet.getDataRange().getValues();
+
+    for (let i = 0; i < items.length; i++) {
+      const itm = items[i];
+      const pid = String(itm.productId || itm.ProductID || '').trim();
+      const variantId = itm.variantId || itm.VariantID || null;
+      const qty = Number(itm.quantity) || 1;
+      const condition = itm.condition || 'Resellable'; // 'Resellable' | 'Damaged'
+
+      if (condition === 'Resellable') {
+        hasRestocked = true;
+        // প্রোডাক্ট রো খুঁজে বের করা
+        for (let r = 1; r < allProdData.length; r++) {
+          const rowId = String(allProdData[r][prodIdColIdx] || '').trim();
+          const rowBarcode = barcodeColIdx !== -1 ? String(allProdData[r][barcodeColIdx] || '').trim() : '';
+
+          if (rowId === pid || (rowBarcode && rowBarcode === pid)) {
+            const currentStock = Number(allProdData[r][stockColIdx]) || 0;
+            const newStock = currentStock + qty;
+            productsSheet.getRange(r + 1, stockColIdx + 1).setValue(newStock);
+            allProdData[r][stockColIdx] = newStock;
+
+            // ভ্যারিয়েন্ট স্টক বৃদ্ধি
+            if (variantsColIdx !== -1 && variantId) {
+              try {
+                const rawV = productsSheet.getRange(r + 1, variantsColIdx + 1).getValue();
+                if (rawV) {
+                  const parsedV = typeof rawV === 'string' ? JSON.parse(rawV) : rawV;
+                  if (Array.isArray(parsedV)) {
+                    const vIdx = parsedV.findIndex(v => String(v.VariantID || v.variantId || '').trim() === String(variantId).trim());
+                    if (vIdx !== -1) {
+                      parsedV[vIdx].StockQuantity = (Number(parsedV[vIdx].StockQuantity) || 0) + qty;
+                      productsSheet.getRange(r + 1, variantsColIdx + 1).setValue(JSON.stringify(parsedV));
+                    }
+                  }
+                }
+              } catch (e) {}
+            }
+
+            // StockLogs এ লগ তৈরি
+            if (stockLogsSheet) {
+              stockLogsSheet.appendRow([
+                generateUniqueId('LOG'),
+                timestampStr,
+                rowId,
+                allProdData[r][findCol(prodHeaders, 'ProductName')] || itm.productName,
+                'STOCK_IN_RETURN',
+                qty,
+                currentStock,
+                newStock,
+                `রিটার্ন মেমো #${invoiceNo} থেকে ফেরত (${condition})`
+              ]);
+            }
+            break;
+          }
+        }
+      } else {
+        // Damaged পণ্য হলে StockLogs এ ড্যামেজ লগ
+        if (stockLogsSheet) {
+          stockLogsSheet.appendRow([
+            generateUniqueId('LOG'),
+            timestampStr,
+            pid,
+            itm.productName || 'Damaged Product',
+            'STOCK_DAMAGED_RETURN',
+            qty,
+            0,
+            0,
+            `ত্রুটিযুক্ত পণ্য ফেরত #${invoiceNo} (বিক্রয় স্টকে যোগ হয়নি)`
+          ]);
+        }
+      }
+    }
+  }
+
+  // কাস্টমার বাকির খাতা থেকে বকেয়া সমন্বয় (যদি DeductDue হয়)
+  if (refundMethod === 'DeductDue' && customerPhone) {
+    try {
+      const custSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.CUSTOMERS);
+      if (custSheet && custSheet.getLastRow() > 1) {
+        const cHeaders = custSheet.getRange(1, 1, 1, custSheet.getLastColumn()).getValues()[0];
+        const phoneIdx = findCol(cHeaders, 'Phone', 'CustomerPhone');
+        const dueIdx = findCol(cHeaders, 'CurrentDue', 'DueAmount', 'Due');
+        if (phoneIdx !== -1 && dueIdx !== -1) {
+          const cData = custSheet.getDataRange().getValues();
+          for (let cr = 1; cr < cData.length; cr++) {
+            if (String(cData[cr][phoneIdx]).trim() === String(customerPhone).trim()) {
+              const currentDue = Number(cData[cr][dueIdx]) || 0;
+              const newDue = Math.max(0, currentDue - totalRefundAmount);
+              custSheet.getRange(cr + 1, dueIdx + 1).setValue(newDue);
+              break;
+            }
+          }
+        }
+      }
+    } catch (dueErr) {}
+  }
+
+  const itemsJsonStr = JSON.stringify(items);
+
+  returnsSheet.appendRow([
+    returnId,
+    invoiceNo,
+    timestampStr,
+    customerId,
+    customerName,
+    customerPhone,
+    itemsJsonStr,
+    totalRefundAmount,
+    refundMethod,
+    creditNoteCode,
+    creditNoteExpiry,
+    creditNoteStatus,
+    hasRestocked ? 'Yes' : 'No',
+    reason,
+    processedBy,
+    timestampStr
+  ]);
+
+  SpreadsheetApp.flush();
+
+  // অডিট লগ
+  handleLogAuditEvent(spreadsheet, {
+    userId: processedBy,
+    userName: processedBy,
+    userRole: 'Staff',
+    actionType: 'SALES_RETURN',
+    module: 'SalesReturns',
+    description: `ইনভয়েস #${invoiceNo}-এর জন্য ৳${totalRefundAmount} টাকার পণ্য রিটার্ন সম্পন্ন হয়েছে। মেথড: ${refundMethod}`,
+    details: { returnId, invoiceNo, totalRefundAmount, refundMethod, creditNoteCode }
+  });
+
+  return {
+    success: true,
+    message: refundMethod === 'StoreCredit'
+      ? `রিটার্ন সফল হয়েছে! স্টোর ক্রেডিট ভাউচার: ${creditNoteCode} (৳${totalRefundAmount})`
+      : `রিটার্ন সফলভাবে সম্পন্ন হয়েছে (৳${totalRefundAmount})।`,
+    data: {
+      ReturnID: returnId,
+      InvoiceNo: invoiceNo,
+      ReturnDate: timestampStr,
+      CustomerID: customerId,
+      CustomerName: customerName,
+      CustomerPhone: customerPhone,
+      Items: items,
+      TotalRefundAmount: totalRefundAmount,
+      RefundMethod: refundMethod,
+      CreditNoteCode: creditNoteCode,
+      CreditNoteExpiry: creditNoteExpiry,
+      CreditNoteStatus: creditNoteStatus,
+      Restocked: hasRestocked ? 'Yes' : 'No',
+      Reason: reason,
+      ProcessedBy: processedBy,
+      CreatedAt: timestampStr
+    }
+  };
+}
+
+/**
+ * স্টোর ক্রেডিট ভাউচার যাচাই ও রিডিম করা (handleRedeemStoreCredit)
+ */
+function handleRedeemStoreCredit(spreadsheet, payload) {
+  const returnsSheet = ensureSalesReturnsSheet(spreadsheet);
+  const targetCode = String(payload.creditNoteCode || payload.CreditNoteCode || '').trim().toUpperCase();
+
+  if (!targetCode) {
+    return { success: false, message: 'স্টোর ক্রেডিট কোড প্রদান করুন।' };
+  }
+
+  const lastRow = returnsSheet.getLastRow();
+  if (lastRow <= 1) {
+    return { success: false, message: 'কোনো স্টোর ক্রেডিট রেকর্ড পাওয়া যায়নি।' };
+  }
+
+  const headers = returnsSheet.getRange(1, 1, 1, returnsSheet.getLastColumn()).getValues()[0];
+  const codeIdx = findCol(headers, 'CreditNoteCode');
+  const statusIdx = findCol(headers, 'CreditNoteStatus');
+  const amountIdx = findCol(headers, 'TotalRefundAmount');
+  const expiryIdx = findCol(headers, 'CreditNoteExpiry');
+
+  if (codeIdx === -1 || statusIdx === -1) {
+    return { success: false, message: 'শিটে ক্রেডিট নোট কলাম অনুপস্থিত।' };
+  }
+
+  const data = returnsSheet.getDataRange().getValues();
+  for (let r = 1; r < data.length; r++) {
+    const rowCode = String(data[r][codeIdx] || '').trim().toUpperCase();
+    if (rowCode === targetCode) {
+      const currentStatus = String(data[r][statusIdx] || 'Active').trim();
+      const creditAmount = Number(data[r][amountIdx]) || 0;
+      const expiry = data[r][expiryIdx] ? new Date(data[r][expiryIdx]) : null;
+
+      if (currentStatus === 'Redeemed') {
+        return { success: false, message: `ভাউচার '${targetCode}' ইতিমধ্যে ব্যবহৃত হয়ে গেছে!` };
+      }
+      if (expiry && new Date() > expiry) {
+        return { success: false, message: `ভাউচার '${targetCode}'-এর মেয়াদ উত্তীর্ণ হয়ে গেছে!` };
+      }
+
+      // স্ট্যাটাস Redeemed করা
+      returnsSheet.getRange(r + 1, statusIdx + 1).setValue('Redeemed');
+      SpreadsheetApp.flush();
+
+      // অডিট লগ
+      handleLogAuditEvent(spreadsheet, {
+        userId: payload.cashier || 'Cashier',
+        userName: payload.cashier || 'Cashier',
+        userRole: 'Cashier',
+        actionType: 'CREDIT_NOTE_REDEEM',
+        module: 'SalesReturns',
+        description: `স্টোর ক্রেডিট নোট ${targetCode} রিডিম করা হয়েছে (৳${creditAmount})`,
+        details: { targetCode, creditAmount }
+      });
+
+      return {
+        success: true,
+        message: `স্টোর ক্রেডিট সফলভাবে ব্যবহৃত হয়েছে! (৳${creditAmount})`,
+        data: {
+          creditNoteCode: targetCode,
+          creditAmount: creditAmount,
+          customerName: data[r][findCol(headers, 'CustomerName')] || ''
+        }
+      };
+    }
+  }
+
+  return { success: false, message: `ভাউচার কোড '${targetCode}' সঠিক নয় বা পাওয়া যায়নি।` };
+}
+
+/**
+ * গোডাউন থেকে দোকানে স্টক ট্রান্সফার চালান তৈরি করা (handleCreateStockTransfer)
+ */
+function handleCreateStockTransfer(spreadsheet, payload) {
+  const transferSheet = ensureStockTransfersSheet(spreadsheet);
+  const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
+  const stockLogsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.STOCK_LOGS);
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  const transferId = generateUniqueId('TRF');
+  const challanNo = payload.challanNo || ('CHL-' + Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyMM') + '-' + Math.floor(1000 + Math.random() * 9000));
+  const transferDate = payload.transferDate || timestampStr;
+  const fromLocation = payload.fromLocation || payload.FromLocation || 'Main Warehouse';
+  const toLocation = payload.toLocation || payload.ToLocation || 'Main Shop';
+  const driverName = payload.driverName || payload.DriverName || '';
+  const notes = payload.notes || payload.Notes || '';
+  const createdBy = payload.createdBy || payload.CreatedBy || 'Admin';
+  const status = payload.status || 'In Transit'; // 'Pending' | 'In Transit' | 'Received' | 'Cancelled'
+  const items = Array.isArray(payload.items) ? payload.items : [];
+
+  let totalQty = 0;
+  items.forEach(itm => { totalQty += (Number(itm.quantity) || 0); });
+
+  // যদি উৎস মূল দোকান হয় এবং স্ট্যাটাস In Transit হয়, তবে দোকান থেকে স্টক কর্তন
+  if (status === 'In Transit' && /shop|store|counter/i.test(fromLocation) && productsSheet) {
+    const prodHeaders = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+    const stockColIdx = findCol(prodHeaders, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity');
+    const prodIdColIdx = findCol(prodHeaders, 'ProductID', 'ID');
+    const barcodeColIdx = findCol(prodHeaders, 'Barcode');
+    const allProdData = productsSheet.getDataRange().getValues();
+
+    items.forEach(itm => {
+      const pid = String(itm.productId || itm.ProductID || '').trim();
+      const qty = Number(itm.quantity) || 0;
+      for (let r = 1; r < allProdData.length; r++) {
+        const rowId = String(allProdData[r][prodIdColIdx] || '').trim();
+        const rowBarcode = barcodeColIdx !== -1 ? String(allProdData[r][barcodeColIdx] || '').trim() : '';
+        if (rowId === pid || (rowBarcode && rowBarcode === pid)) {
+          const currentStock = Number(allProdData[r][stockColIdx]) || 0;
+          const newStock = Math.max(0, currentStock - qty);
+          productsSheet.getRange(r + 1, stockColIdx + 1).setValue(newStock);
+          allProdData[r][stockColIdx] = newStock;
+
+          if (stockLogsSheet) {
+            stockLogsSheet.appendRow([
+              generateUniqueId('LOG'),
+              timestampStr,
+              rowId,
+              allProdData[r][findCol(prodHeaders, 'ProductName')] || itm.productName,
+              'TRANSFER_OUT',
+              qty,
+              currentStock,
+              newStock,
+              `ট্রান্সফার চালান #${challanNo} (${fromLocation} ➔ ${toLocation})`
+            ]);
+          }
+          break;
+        }
+      }
+    });
+  }
+
+  const itemsJsonStr = JSON.stringify(items);
+
+  transferSheet.appendRow([
+    transferId,
+    challanNo,
+    transferDate,
+    fromLocation,
+    toLocation,
+    itemsJsonStr,
+    items.length,
+    totalQty,
+    status,
+    driverName,
+    notes,
+    createdBy,
+    '', // ReceivedBy
+    timestampStr,
+    timestampStr
+  ]);
+
+  SpreadsheetApp.flush();
+
+  handleLogAuditEvent(spreadsheet, {
+    userId: createdBy,
+    userName: createdBy,
+    userRole: 'Admin',
+    actionType: 'STOCK_TRANSFER_CREATE',
+    module: 'StockTransfers',
+    description: `নতুন স্টক ট্রান্সফার চালান #${challanNo} তৈরি হয়েছে (${fromLocation} ➔ ${toLocation}, মোট: ${totalQty} পিস)`,
+    details: { transferId, challanNo, fromLocation, toLocation, totalQty, status }
+  });
+
+  return {
+    success: true,
+    message: `স্টক ট্রান্সফার চালান #${challanNo} সফলভাবে তৈরি হয়েছে!`,
+    data: {
+      TransferID: transferId,
+      ChallanNo: challanNo,
+      TransferDate: transferDate,
+      FromLocation: fromLocation,
+      ToLocation: toLocation,
+      Items: items,
+      TotalItems: items.length,
+      TotalQuantity: totalQty,
+      Status: status,
+      DriverName: driverName,
+      Notes: notes,
+      CreatedBy: createdBy,
+      ReceivedBy: '',
+      CreatedAt: timestampStr,
+      UpdatedAt: timestampStr
+    }
+  };
+}
+
+/**
+ * স্টক ট্রান্সফার চালানের স্ট্যাটাস আপডেট করা (handleUpdateStockTransferStatus)
+ */
+function handleUpdateStockTransferStatus(spreadsheet, payload) {
+  const transferSheet = ensureStockTransfersSheet(spreadsheet);
+  const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
+  const stockLogsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.STOCK_LOGS);
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  const targetId = String(payload.transferId || payload.TransferID || payload.challanNo || '').trim();
+  const newStatus = payload.status || payload.Status; // 'Received' | 'Cancelled' | 'In Transit'
+  const receivedBy = payload.receivedBy || payload.ReceivedBy || 'Manager';
+
+  if (!targetId || !newStatus) {
+    return { success: false, message: 'ট্রান্সফার আইডি এবং নতুন স্ট্যাটাস প্রদান করুন।' };
+  }
+
+  const headers = transferSheet.getRange(1, 1, 1, transferSheet.getLastColumn()).getValues()[0];
+  const trfIdIdx = findCol(headers, 'TransferID');
+  const challanIdx = findCol(headers, 'ChallanNo');
+  const statusIdx = findCol(headers, 'Status');
+  const toLocIdx = findCol(headers, 'ToLocation');
+  const itemsIdx = findCol(headers, 'ItemsJSON', 'Items');
+  const recByIdx = findCol(headers, 'ReceivedBy');
+  const updateIdx = findCol(headers, 'UpdatedAt');
+
+  const data = transferSheet.getDataRange().getValues();
+  for (let r = 1; r < data.length; r++) {
+    const rowId = String(data[r][trfIdIdx] || '').trim();
+    const rowChallan = String(data[r][challanIdx] || '').trim();
+
+    if (rowId === targetId || rowChallan === targetId) {
+      const prevStatus = String(data[r][statusIdx] || '').trim();
+      const toLoc = String(data[r][toLocIdx] || '').trim();
+      const rawItems = data[r][itemsIdx];
+      let items = [];
+      try {
+        items = typeof rawItems === 'string' ? JSON.parse(rawItems) : (rawItems || []);
+      } catch (e) { items = []; }
+
+      // যদি স্ট্যাটাস Received হয় এবং প্রাপক স্থান দোকান হয়, তবে দোকানে স্টক বৃদ্ধি
+      if (newStatus === 'Received' && prevStatus !== 'Received' && productsSheet && items.length > 0) {
+        const prodHeaders = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+        const stockColIdx = findCol(prodHeaders, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity');
+        const prodIdColIdx = findCol(prodHeaders, 'ProductID', 'ID');
+        const barcodeColIdx = findCol(prodHeaders, 'Barcode');
+        const variantsColIdx = findCol(prodHeaders, 'VariantsJSON', 'Variants');
+        const allProdData = productsSheet.getDataRange().getValues();
+
+        items.forEach(itm => {
+          const pid = String(itm.productId || itm.ProductID || '').trim();
+          const variantId = itm.variantId || itm.VariantID || null;
+          const qty = Number(itm.quantity) || 0;
+
+          for (let pr = 1; pr < allProdData.length; pr++) {
+            const pIdVal = String(allProdData[pr][prodIdColIdx] || '').trim();
+            const pBarcode = barcodeColIdx !== -1 ? String(allProdData[pr][barcodeColIdx] || '').trim() : '';
+
+            if (pIdVal === pid || (pBarcode && pBarcode === pid)) {
+              const currentStock = Number(allProdData[pr][stockColIdx]) || 0;
+              const newStock = currentStock + qty;
+              productsSheet.getRange(pr + 1, stockColIdx + 1).setValue(newStock);
+              allProdData[pr][stockColIdx] = newStock;
+
+              // ভ্যারিয়েন্ট স্টক বৃদ্ধি
+              if (variantsColIdx !== -1 && variantId) {
+                try {
+                  const rawV = productsSheet.getRange(pr + 1, variantsColIdx + 1).getValue();
+                  if (rawV) {
+                    const parsedV = typeof rawV === 'string' ? JSON.parse(rawV) : rawV;
+                    if (Array.isArray(parsedV)) {
+                      const vIdx = parsedV.findIndex(v => String(v.VariantID || v.variantId || '').trim() === String(variantId).trim());
+                      if (vIdx !== -1) {
+                        parsedV[vIdx].StockQuantity = (Number(parsedV[vIdx].StockQuantity) || 0) + qty;
+                        productsSheet.getRange(pr + 1, variantsColIdx + 1).setValue(JSON.stringify(parsedV));
+                      }
+                    }
+                  }
+                } catch (e) {}
+              }
+
+              if (stockLogsSheet) {
+                stockLogsSheet.appendRow([
+                  generateUniqueId('LOG'),
+                  timestampStr,
+                  pIdVal,
+                  allProdData[pr][findCol(prodHeaders, 'ProductName')] || itm.productName,
+                  'TRANSFER_IN',
+                  qty,
+                  currentStock,
+                  newStock,
+                  `ট্রান্সফার চালান #${rowChallan} রিসিভ সম্পন্ন (${data[r][findCol(headers, 'FromLocation')]} ➔ ${toLoc})`
+                ]);
+              }
+              break;
+            }
+          }
+        });
+      }
+
+      // ট্রান্সফার শিট আপডেট
+      transferSheet.getRange(r + 1, statusIdx + 1).setValue(newStatus);
+      if (recByIdx !== -1 && newStatus === 'Received') {
+        transferSheet.getRange(r + 1, recByIdx + 1).setValue(receivedBy);
+      }
+      if (updateIdx !== -1) {
+        transferSheet.getRange(r + 1, updateIdx + 1).setValue(timestampStr);
+      }
+
+      SpreadsheetApp.flush();
+
+      handleLogAuditEvent(spreadsheet, {
+        userId: receivedBy,
+        userName: receivedBy,
+        userRole: 'Staff',
+        actionType: 'STOCK_TRANSFER_STATUS',
+        module: 'StockTransfers',
+        description: `ট্রান্সফার চালান #${rowChallan}-এর স্ট্যাটাস পরিবর্তন: ${prevStatus} ➔ ${newStatus}`,
+        details: { targetId, challanNo: rowChallan, prevStatus, newStatus, receivedBy }
+      });
+
+      return {
+        success: true,
+        message: `চালান #${rowChallan} সফলভাবে '${newStatus}' হিসেবে আপডেট হয়েছে!`,
+        data: { transferId: rowId, challanNo: rowChallan, status: newStatus, receivedBy }
+      };
+    }
+  }
+
+  return { success: false, message: `ট্রান্সফার রেকর্ড '${targetId}' খুঁজে পাওয়া যায়নি।` };
 }
 
 

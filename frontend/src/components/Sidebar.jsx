@@ -23,7 +23,9 @@ import {
   Building2,
   Coins,
   ShieldAlert,
-  CalendarClock
+  CalendarClock,
+  RotateCcw,
+  ArrowRightLeft
 } from 'lucide-react';
 
 /**
@@ -57,6 +59,10 @@ export default function Sidebar({
   onOpenExpensesModal,
   onOpenCashRegisterModal,
   onOpenAuditLogsModal,
+  onOpenSalesReturnModal,
+  onOpenStockTransferModal,
+  returnsCount = 0,
+  transfersInTransitCount = 0,
   isRegisterOpen = false,
   expensesCount = 0,
   onOpenStockModal,
@@ -536,6 +542,62 @@ export default function Sidebar({
                 {!isCollapsed && expensesCount > 0 && (
                   <span className="text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
                     {expensesCount}
+                  </span>
+                )}
+              </button>
+
+              {/* পণ্য বিক্রয় রিটার্ন ও স্টোর ক্রেডিট নোট (Phase 7) */}
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenSalesReturnModal)}
+                title="বিক্রিত পণ্য ফেরত নেওয়া ও স্টোর ক্রেডিট ভাউচার প্রদান"
+                className={`w-full flex items-center rounded-2xl text-xs font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-900 transition-all cursor-pointer group ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <RotateCcw className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && <span>পণ্য বিক্রয় রিটার্ন</span>}
+                </div>
+                {!isCollapsed && returnsCount > 0 && (
+                  <span className="text-[10px] text-indigo-600 font-bold bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                    {returnsCount}
+                  </span>
+                )}
+              </button>
+
+              {/* গোডাউন টু দোকান স্টক ট্রান্সফার চালান (Phase 7) */}
+              <button
+                type="button"
+                onClick={() => handleAction(onOpenStockTransferModal)}
+                title={transfersInTransitCount > 0 ? `${transfersInTransitCount}টি ট্রান্সফার চালান পথে আছে` : 'গোডাউন থেকে দোকানে মালামাল ট্রান্সফার চালান'}
+                className={`w-full flex items-center rounded-2xl text-xs font-bold transition-all cursor-pointer group relative ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3 py-2.5'
+                } ${
+                  transfersInTransitCount > 0
+                    ? 'bg-emerald-50/70 text-emerald-950 border border-emerald-200/80 hover:bg-emerald-100'
+                    : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-900'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
+                    transfersInTransitCount > 0 ? 'bg-emerald-600 text-white shadow-xs' : 'bg-emerald-100 text-emerald-700'
+                  }`}>
+                    <ArrowRightLeft className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && <span>গোডাউন চালান</span>}
+                </div>
+                {transfersInTransitCount > 0 && (
+                  <span
+                    className={`${
+                      isCollapsed
+                        ? 'absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-600 text-white border-2 border-white'
+                        : 'px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black shadow-2xs shrink-0 animate-pulse'
+                    }`}
+                  >
+                    {transfersInTransitCount}টি
                   </span>
                 )}
               </button>

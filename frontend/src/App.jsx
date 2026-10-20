@@ -32,6 +32,8 @@ import CashRegisterModal from './components/CashRegisterModal';
 import AuditLogsModal from './components/AuditLogsModal';
 import ExpiryAlertModal from './components/ExpiryAlertModal';
 import ProductVariantSelectModal from './components/ProductVariantSelectModal';
+import SalesReturnModal from './components/SalesReturnModal';
+import StockTransferModal from './components/StockTransferModal';
 
 import {
   getLocalSettings,
@@ -117,7 +119,15 @@ import {
   getLocalAuditLogs,
   saveLocalAuditLogs,
   logAuditEventLocally,
-  getExpiringProductsSummary
+  getExpiringProductsSummary,
+  getLocalSalesReturns,
+  saveLocalSalesReturns,
+  saveSalesReturnLocally,
+  redeemStoreCreditLocally,
+  getLocalStockTransfers,
+  saveLocalStockTransfers,
+  saveStockTransferLocally,
+  updateStockTransferStatusLocally
 } from './services/storage';
 
 import {
@@ -165,7 +175,11 @@ import {
   postDeleteExpense,
   postOpenCashRegister,
   postCloseCashRegister,
-  postLogAuditEvent
+  postLogAuditEvent,
+  postCreateSalesReturn,
+  postRedeemStoreCredit,
+  postCreateStockTransfer,
+  postUpdateStockTransferStatus
 } from './services/api';
 
 export default function App() {
@@ -257,6 +271,26 @@ export default function App() {
       return [];
     }
   });
+
+  // ফেজ ৭: পণ্য বিক্রয় রিটার্ন ও গোডাউন ট্রান্সফার স্টেট (Phase 7)
+  const [salesReturns, setSalesReturns] = useState(() => {
+    try {
+      const sr = getLocalSalesReturns();
+      return Array.isArray(sr) ? sr : [];
+    } catch {
+      return [];
+    }
+  });
+  const [stockTransfers, setStockTransfers] = useState(() => {
+    try {
+      const st = getLocalStockTransfers();
+      return Array.isArray(st) ? st : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isSalesReturnModalOpen, setIsSalesReturnModalOpen] = useState(false);
+  const [isStockTransferModalOpen, setIsStockTransferModalOpen] = useState(false);
 
   // ভিউ নেভিগেশন স্টেট ('pos' | 'cart' | 'checkout')
   const [currentView, setCurrentView] = useState('pos');
@@ -823,6 +857,18 @@ export default function App() {
         saveLocalAuditLogs(data.auditLogs);
       }
 
+      // ফেজ ৭: পণ্য বিক্রয় রিটার্ন ও ভাউচার ডাটাবেস আপডেট (গুগল শিট SalesReturns ট্যাব)
+      if (data && data.salesReturns && Array.isArray(data.salesReturns)) {
+        setSalesReturns(data.salesReturns);
+        saveLocalSalesReturns(data.salesReturns);
+      }
+
+      // ফেজ ৭: স্টক ট্রান্সফার চালান ডাটাবেস আপডেট (গুগল শিট StockTransfers ট্যাব)
+      if (data && data.stockTransfers && Array.isArray(data.stockTransfers)) {
+        setStockTransfers(data.stockTransfers);
+        saveLocalStockTransfers(data.stockTransfers);
+      }
+
       setSyncStatus('online');
       if (manual) {
         showToast('গুগল শিট ডাটাবেসের সাথে সফলভাবে সিঙ্ক সম্পন্ন হয়েছে!', 'success');
@@ -1296,6 +1342,11 @@ export default function App() {
         }
       } else {
         showToast('অর্ডার সফলভাবে সম্পন্ন হয়েছে!', 'success');
+      }
+
+      // ফেজ ৭: স্টোর ক্রেডিট ভাউচার ব্যবহার করা হয়ে থাকলে তা রিডিম হিসেবে চিহ্নিত করা
+      if (saleOrder.creditNoteCode) {
+        handleRedeemStoreCredit(saleOrder.creditNoteCode).catch(() => {});
       }
 
     } catch (error) {
@@ -2128,6 +2179,317 @@ export default function App() {
     }
   };
 
+  // ============================================================================
+  // ফেজ ৭: পণ্য বিক্রয় রিটার্ন ও রিফান্ড হ্যান্ডলার (Sales Returns & Refunds)
+  // ============================================================================
+  const handleSaveSalesReturn = async (returnPayload) => {
+    try {
+      const { record, returns } = saveSalesReturnLocally(returnPayload);
+      setSalesReturns(returns);
+
+      // ১. যদি কোনো পণ্য পুনর্বিক্রয়যোগ্য (Resellable) হিসেবে ফেরত আসে, তবে মূল প্রোডাক্ট স্টকে স্বয়ংক্রিয়ভাবে যোগ করা
+      const returnItems = Array.isArray(returnPayload.items) ? returnPayload.items : [];
+      let updatedProducts = [...products];
+      let hasRestocked = false;
+
+      returnItems.forEach((itm) => {
+        if (itm.condition === 'Resellable') {
+          const qty = Number(itm.quantity) || 1;
+          const pid = String(itm.productId || '').trim();
+          const variantId = itm.variantId || null;
+
+          const prodIdx = updatedProducts.findIndex(
+            (p) => String(p.ProductID || '').trim() === pid || String(p.Barcode || '').trim() === pid
+          );
+
+          if (prodIdx !== -1) {
+            hasRestocked = true;
+            const targetProd = { ...updatedProducts[prodIdx] };
+            targetProd.StockQuantity = (Number(targetProd.StockQuantity) || 0) + qty;
+
+            // ভ্যারিয়েন্ট স্টক আপডেট
+            if (variantId && Array.isArray(targetProd.Variants)) {
+              const vIdx = targetProd.Variants.findIndex(
+                (v) => String(v.VariantID || '').trim() === String(variantId).trim()
+              );
+              if (vIdx !== -1) {
+                const updatedVariants = [...targetProd.Variants];
+                updatedVariants[vIdx] = {
+                  ...updatedVariants[vIdx],
+                  StockQuantity: (Number(updatedVariants[vIdx].StockQuantity) || 0) + qty
+                };
+                targetProd.Variants = updatedVariants;
+              }
+            }
+
+            updatedProducts[prodIdx] = targetProd;
+          }
+        }
+      });
+
+      if (hasRestocked) {
+        setProducts(updatedProducts);
+        saveLocalProducts(updatedProducts);
+      }
+
+      // ২. যদি রিফান্ড মেথড DeductDue হয়, তবে কাস্টমারের বকেয়া কমিয়ে লেজারে এন্ট্রি দেওয়া
+      if (returnPayload.refundMethod === 'DeductDue' && returnPayload.customerId && returnPayload.customerId !== 'GUEST') {
+        const refundAmt = Number(returnPayload.totalRefundAmount) || 0;
+        const custIdx = customers.findIndex(
+          (c) => String(c.CustomerID || '').trim() === String(returnPayload.customerId).trim()
+        );
+        if (custIdx !== -1) {
+          const updatedCusts = [...customers];
+          const curDue = Number(updatedCusts[custIdx].CurrentDue) || 0;
+          updatedCusts[custIdx] = {
+            ...updatedCusts[custIdx],
+            CurrentDue: Math.max(0, curDue - refundAmt)
+          };
+          setCustomers(updatedCusts);
+          saveLocalCustomers(updatedCusts);
+
+          // লেজার এন্ট্রি
+          recordCustomerLedgerEntryLocally({
+            customerId: returnPayload.customerId,
+            customerName: returnPayload.customerName,
+            customerPhone: returnPayload.customerPhone,
+            transactionType: 'RETURN_ADJUST',
+            amount: refundAmt,
+            previousDue: curDue,
+            newDue: Math.max(0, curDue - refundAmt),
+            paymentMethod: 'Return Adjustment',
+            note: `পণ্য রিটার্ন ইনভয়েস #${returnPayload.invoiceNo} থেকে বকেয়া সমন্বয়`,
+            cashier: activeUser?.FullName || 'Cashier'
+          });
+          setCustomerLedger(getLocalCustomerLedger());
+        }
+      }
+
+      // ৩. অডিট লগ
+      const logEntry = logAuditEventLocally({
+        userId: activeUser?.UserID || 'ADMIN',
+        userName: activeUser?.FullName || 'Admin',
+        userRole: activeUser?.Role || 'Admin',
+        actionType: 'RETURN',
+        module: 'SalesReturns',
+        description: `বিক্রয় রিটার্ন প্রসেস সম্পন্ন: ইনভয়েস #${returnPayload.invoiceNo} (রিফান্ড: ৳${returnPayload.totalRefundAmount}, মাধ্যম: ${returnPayload.refundMethod})`,
+        details: returnPayload
+      });
+      setAuditLogs(getLocalAuditLogs());
+
+      showToast('পণ্য বিক্রয় রিটার্ন সফলভাবে সম্পন্ন হয়েছে!', 'success');
+
+      // ৪. ব্যাকএন্ড সিঙ্ক
+      if (settings.apiUrl) {
+        try {
+          postCreateSalesReturn(settings.apiUrl, returnPayload).catch(() => {});
+          postLogAuditEvent(settings.apiUrl, logEntry).catch(() => {});
+        } catch (apiErr) {
+          console.warn('Sales return sync delayed:', apiErr);
+        }
+      }
+
+      return { record, returns };
+    } catch (err) {
+      showToast(`রিটার্ন প্রক্রিয়াকরণ ব্যর্থ: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
+  // স্টোর ক্রেডিট ভাউচার রিডিম হ্যান্ডলার
+  const handleRedeemStoreCredit = async (creditNoteCode) => {
+    try {
+      const result = redeemStoreCreditLocally(creditNoteCode, activeUser?.FullName || 'Cashier');
+      if (result.success) {
+        setSalesReturns(getLocalSalesReturns());
+
+        const logEntry = logAuditEventLocally({
+          userId: activeUser?.UserID || 'ADMIN',
+          userName: activeUser?.FullName || 'Admin',
+          userRole: activeUser?.Role || 'Admin',
+          actionType: 'CREDIT_REDEEM',
+          module: 'SalesReturns',
+          description: `স্টোর ক্রেডিট নোট ${creditNoteCode} রিডিম করা হয়েছে (৳${result.creditAmount})`,
+          details: { creditNoteCode, creditAmount: result.creditAmount }
+        });
+        setAuditLogs(getLocalAuditLogs());
+
+        if (settings.apiUrl) {
+          postRedeemStoreCredit(settings.apiUrl, {
+            creditNoteCode,
+            cashier: activeUser?.FullName || 'Cashier'
+          }).catch(() => {});
+          postLogAuditEvent(settings.apiUrl, logEntry).catch(() => {});
+        }
+      }
+      return result;
+    } catch (err) {
+      console.warn('Store credit redeem error:', err);
+      return { success: false, message: err.message };
+    }
+  };
+
+  // ============================================================================
+  // ফেজ ৭: গোডাউন ও দোকান স্টক ট্রান্সফার চালান হ্যান্ডলার (Stock Transfers)
+  // ============================================================================
+  const handleSaveStockTransfer = async (transferPayload) => {
+    try {
+      const { record, transfers } = saveStockTransferLocally(transferPayload);
+      setStockTransfers(transfers);
+
+      // যদি উৎস দোকান হয় এবং স্ট্যাটাস In Transit হয়, তবে দোকান থেকে স্টক কর্তন
+      if (transferPayload.status === 'In Transit' && /shop|store|counter/i.test(transferPayload.fromLocation)) {
+        let updatedProducts = [...products];
+        const transferItems = Array.isArray(transferPayload.items) ? transferPayload.items : [];
+        let hasDeducted = false;
+
+        transferItems.forEach((itm) => {
+          const qty = Number(itm.quantity) || 0;
+          const pid = String(itm.productId || '').trim();
+          const variantId = itm.variantId || null;
+
+          const prodIdx = updatedProducts.findIndex(
+            (p) => String(p.ProductID || '').trim() === pid || String(p.Barcode || '').trim() === pid
+          );
+
+          if (prodIdx !== -1) {
+            hasDeducted = true;
+            const target = { ...updatedProducts[prodIdx] };
+            target.StockQuantity = Math.max(0, (Number(target.StockQuantity) || 0) - qty);
+
+            if (variantId && Array.isArray(target.Variants)) {
+              const vIdx = target.Variants.findIndex(
+                (v) => String(v.VariantID || '').trim() === String(variantId).trim()
+              );
+              if (vIdx !== -1) {
+                const uVars = [...target.Variants];
+                uVars[vIdx] = {
+                  ...uVars[vIdx],
+                  StockQuantity: Math.max(0, (Number(uVars[vIdx].StockQuantity) || 0) - qty)
+                };
+                target.Variants = uVars;
+              }
+            }
+
+            updatedProducts[prodIdx] = target;
+          }
+        });
+
+        if (hasDeducted) {
+          setProducts(updatedProducts);
+          saveLocalProducts(updatedProducts);
+        }
+      }
+
+      // অডিট লগ
+      const logEntry = logAuditEventLocally({
+        userId: activeUser?.UserID || 'ADMIN',
+        userName: activeUser?.FullName || 'Admin',
+        userRole: activeUser?.Role || 'Admin',
+        actionType: 'TRANSFER_CREATE',
+        module: 'StockTransfers',
+        description: `নতুন স্টক ট্রান্সফার চালান #${transferPayload.challanNo} তৈরি হয়েছে (${transferPayload.fromLocation} ➔ ${transferPayload.toLocation})`,
+        details: transferPayload
+      });
+      setAuditLogs(getLocalAuditLogs());
+
+      showToast(`স্টক ট্রান্সফার চালান #${transferPayload.challanNo} সফলভাবে তৈরি হয়েছে!`, 'success');
+
+      if (settings.apiUrl) {
+        try {
+          postCreateStockTransfer(settings.apiUrl, transferPayload).catch(() => {});
+          postLogAuditEvent(settings.apiUrl, logEntry).catch(() => {});
+        } catch (apiErr) {
+          console.warn('Stock transfer sync delayed:', apiErr);
+        }
+      }
+
+      return { record, transfers };
+    } catch (err) {
+      showToast(`চালান তৈরি ব্যর্থ: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
+  const handleUpdateStockTransferStatus = async ({ transferId, status, receivedBy = 'Manager' }) => {
+    try {
+      const { record, transfers } = updateStockTransferStatusLocally(transferId, status, receivedBy);
+      setStockTransfers(transfers);
+
+      // যদি স্ট্যাটাস Received হয়, তবে গন্তব্য দোকানে স্টক স্বয়ংক্রিয়ভাবে বৃদ্ধি করা
+      if (status === 'Received' && record) {
+        let updatedProducts = [...products];
+        const transferItems = Array.isArray(record.Items) ? record.Items : (typeof record.Items === 'string' ? JSON.parse(record.Items || '[]') : []);
+        let hasRestocked = false;
+
+        transferItems.forEach((itm) => {
+          const qty = Number(itm.quantity) || 0;
+          const pid = String(itm.productId || '').trim();
+          const variantId = itm.variantId || null;
+
+          const prodIdx = updatedProducts.findIndex(
+            (p) => String(p.ProductID || '').trim() === pid || String(p.Barcode || '').trim() === pid
+          );
+
+          if (prodIdx !== -1) {
+            hasRestocked = true;
+            const target = { ...updatedProducts[prodIdx] };
+            target.StockQuantity = (Number(target.StockQuantity) || 0) + qty;
+
+            if (variantId && Array.isArray(target.Variants)) {
+              const vIdx = target.Variants.findIndex(
+                (v) => String(v.VariantID || '').trim() === String(variantId).trim()
+              );
+              if (vIdx !== -1) {
+                const uVars = [...target.Variants];
+                uVars[vIdx] = {
+                  ...uVars[vIdx],
+                  StockQuantity: (Number(uVars[vIdx].StockQuantity) || 0) + qty
+                };
+                target.Variants = uVars;
+              }
+            }
+
+            updatedProducts[prodIdx] = target;
+          }
+        });
+
+        if (hasRestocked) {
+          setProducts(updatedProducts);
+          saveLocalProducts(updatedProducts);
+        }
+      }
+
+      // অডিট লগ
+      const logEntry = logAuditEventLocally({
+        userId: activeUser?.UserID || 'ADMIN',
+        userName: activeUser?.FullName || 'Admin',
+        userRole: activeUser?.Role || 'Admin',
+        actionType: 'TRANSFER_STATUS',
+        module: 'StockTransfers',
+        description: `চালান #${record?.ChallanNo || transferId}-এর স্ট্যাটাস পরিবর্তিত হয়ে '${status}' হয়েছে।`,
+        details: { transferId, status, receivedBy }
+      });
+      setAuditLogs(getLocalAuditLogs());
+
+      showToast(`চালান স্ট্যাটাস '${status}' হিসেবে আপডেট হয়েছে!`, 'success');
+
+      if (settings.apiUrl) {
+        try {
+          postUpdateStockTransferStatus(settings.apiUrl, { transferId, status, receivedBy }).catch(() => {});
+          postLogAuditEvent(settings.apiUrl, logEntry).catch(() => {});
+        } catch (apiErr) {
+          console.warn('Update transfer status sync delayed:', apiErr);
+        }
+      }
+
+      return { record, transfers };
+    } catch (err) {
+      showToast(`চালান স্ট্যাটাস আপডেট ব্যর্থ: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
   // ৭. অতীত ইনভয়েস রি-প্রিন্ট ওপেন করা
   const handleOpenReprintInvoice = (sale) => {
     setActiveInvoiceData(sale);
@@ -2534,6 +2896,10 @@ export default function App() {
             onOpenExpensesModal={() => setIsExpensesModalOpen(true)}
             onOpenCashRegisterModal={() => setIsCashRegisterModalOpen(true)}
             onOpenAuditLogsModal={() => setIsAuditLogsModalOpen(true)}
+            onOpenSalesReturnModal={() => setIsSalesReturnModalOpen(true)}
+            onOpenStockTransferModal={() => setIsStockTransferModalOpen(true)}
+            returnsCount={salesReturns.length}
+            transfersInTransitCount={stockTransfers.filter(t => t.Status === 'In Transit').length}
             isRegisterOpen={Boolean(activeRegister && activeRegister.Status === 'Open')}
             expensesCount={expenses.length}
             abandonedCartsCount={pendingAbandonedCartsCount}
@@ -2604,6 +2970,7 @@ export default function App() {
               taxRatePercent={settings.TaxRatePercent || 0}
               discountAmount={discountAmount}
               customers={customers}
+              salesReturns={salesReturns}
               settings={settings}
               onNavigateToCart={() => setCurrentView('cart')}
               onNavigateToCatalog={() => setCurrentView('pos')}
@@ -3016,6 +3383,34 @@ export default function App() {
         product={variantSelectModalProduct}
         currencySymbol={settings.CurrencySymbol || '৳'}
         onAddToCart={handleAddToCart}
+      />
+
+      {/* ফেজ ৭: পণ্য বিক্রয় রিটার্ন ও স্টোর ক্রেডিট ভাউচার মডাল */}
+      <SalesReturnModal
+        isOpen={isSalesReturnModalOpen}
+        onClose={() => setIsSalesReturnModalOpen(false)}
+        salesHistory={salesHistory}
+        customers={customers}
+        products={products}
+        salesReturns={salesReturns}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        activeUser={activeUser}
+        storeSettings={settings}
+        onSaveSalesReturn={handleSaveSalesReturn}
+        onRedeemStoreCredit={handleRedeemStoreCredit}
+      />
+
+      {/* ফেজ ৭: গোডাউন ও দোকান স্টক ট্রান্সফার চালান মডাল */}
+      <StockTransferModal
+        isOpen={isStockTransferModalOpen}
+        onClose={() => setIsStockTransferModalOpen(false)}
+        products={products}
+        stockTransfers={stockTransfers}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        activeUser={activeUser}
+        storeSettings={settings}
+        onSaveStockTransfer={handleSaveStockTransfer}
+        onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
       />
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}

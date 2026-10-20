@@ -34,6 +34,7 @@ export default function CheckoutPage({
   taxRatePercent = 0,
   discountAmount = 0,
   customers = [],
+  salesReturns = [],
   settings = {},
   onNavigateToCart,
   onNavigateToCatalog,
@@ -49,6 +50,11 @@ export default function CheckoutPage({
 
   // কার্ট ট্র্যাকিং আইডি (অসম্পূর্ণ ড্রপ-অফ কার্ট স্বয়ংক্রিয় শনাক্তকরণের জন্য)
   const [cartTrackingId] = useState(() => 'CART-' + Date.now().toString().slice(-6));
+
+  // স্টোর ক্রেডিট ভাউচার স্টেট (Phase 7)
+  const [storeCreditCodeInput, setStoreCreditCodeInput] = useState('');
+  const [appliedStoreCredit, setAppliedStoreCredit] = useState(null); // { code, amount }
+  const [storeCreditError, setStoreCreditError] = useState('');
 
   // লয়ালটি ও ক্যাশব্যাক কনফিগারেশন
   const loyaltyEnabled = settings?.LoyaltyEnabled !== false;
@@ -144,11 +150,56 @@ export default function CheckoutPage({
     : 0;
 
   const loyaltyDiscount = pointsActuallyRedeemed * loyaltyRedeemRate;
-  const totalDiscount = couponDiscount + loyaltyDiscount;
+  const initialDiscount = couponDiscount + loyaltyDiscount;
+
+  // স্টোর ক্রেডিট ভাউচার ডিসকাউন্ট (Phase 7)
+  const storeCreditDiscount = appliedStoreCredit
+    ? Math.min(appliedStoreCredit.amount, Math.max(0, subTotal - initialDiscount))
+    : 0;
+
+  const totalDiscount = initialDiscount + storeCreditDiscount;
 
   const taxableAmount = Math.max(0, subTotal - totalDiscount);
   const taxAmount = parseFloat(((taxableAmount * (Number(taxRatePercent) || 0)) / 100).toFixed(2));
   const grandTotal = parseFloat((taxableAmount + taxAmount).toFixed(2));
+
+  // স্টোর ক্রেডিট ভাউচার প্রয়োগ হ্যান্ডলার
+  const handleApplyStoreCredit = (e) => {
+    if (e) e.preventDefault();
+    setStoreCreditError('');
+    const code = storeCreditCodeInput.trim().toUpperCase();
+    if (!code) return;
+
+    const record = (salesReturns || []).find((r) => String(r.CreditNoteCode || '').trim().toUpperCase() === code);
+    if (!record) {
+      setStoreCreditError('ভাউচার কোড পাওয়া যায়নি বা সঠিক নয়।');
+      return;
+    }
+
+    if (record.CreditNoteStatus === 'Redeemed') {
+      setStoreCreditError('এই ভাউচারটি ইতিমধ্যে ব্যবহৃত হয়েছে।');
+      return;
+    }
+
+    if (record.CreditNoteExpiry && new Date() > new Date(record.CreditNoteExpiry)) {
+      setStoreCreditError('এই ভাউচারের মেয়াদ উত্তীর্ণ হয়ে গেছে।');
+      return;
+    }
+
+    const amt = Number(record.TotalRefundAmount) || 0;
+    if (amt <= 0) {
+      setStoreCreditError('ভাউচারের ব্যালেন্স শূন্য।');
+      return;
+    }
+
+    setAppliedStoreCredit({ code, amount: amt });
+    setStoreCreditCodeInput('');
+  };
+
+  const handleRemoveStoreCredit = () => {
+    setAppliedStoreCredit(null);
+    setStoreCreditError('');
+  };
 
   // এই অর্ডারে অর্জিত নতুন পয়েন্ট
   const newlyEarnedPoints = loyaltyEnabled ? Math.floor(grandTotal / loyaltyPointsRate) : 0;
@@ -278,6 +329,8 @@ export default function CheckoutPage({
       discountAmount: totalDiscount,
       couponDiscount: couponDiscount,
       loyaltyDiscount: loyaltyDiscount,
+      creditNoteCode: appliedStoreCredit?.code || '',
+      creditNoteDiscount: storeCreditDiscount,
       loyaltyEarned: newlyEarnedPoints,
       loyaltyRedeemed: pointsActuallyRedeemed,
       cartId: cartTrackingId,
@@ -1146,6 +1199,64 @@ export default function CheckoutPage({
               </div>
             )}
 
+            {/* স্টোর ক্রেডিট ভাউচার নোট বক্স (Phase 7) */}
+            <div className="p-3 bg-gradient-to-r from-amber-50/70 to-indigo-50/70 border border-amber-200/80 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-800">
+                  <Ticket className="w-4 h-4 text-amber-600" />
+                  <span>স্টোর ক্রেডিট ভাউচার</span>
+                </div>
+                {appliedStoreCredit && (
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                    প্রযুক্ত
+                  </span>
+                )}
+              </div>
+
+              {appliedStoreCredit ? (
+                <div className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-emerald-200">
+                  <div>
+                    <span className="font-mono font-bold text-xs text-indigo-700 block">{appliedStoreCredit.code}</span>
+                    <span className="text-[10px] text-emerald-700 font-semibold">
+                      ভাউচার ব্যালেন্স: {currencySymbol}{appliedStoreCredit.amount.toFixed(2)} (ছাড়: -{currencySymbol}{storeCreditDiscount.toFixed(2)})
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveStoreCredit}
+                    className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                    title="ভাউচার বাতিল"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleApplyStoreCredit} className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="SCN-XXXXXX কোড দিন"
+                    value={storeCreditCodeInput}
+                    onChange={(e) => setStoreCreditCodeInput(e.target.value)}
+                    className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-xl bg-white font-mono uppercase focus:ring-1 focus:ring-indigo-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!storeCreditCodeInput.trim()}
+                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold disabled:opacity-40 transition-colors shadow-2xs"
+                  >
+                    প্রয়োগ
+                  </button>
+                </form>
+              )}
+
+              {storeCreditError && (
+                <div className="flex items-center space-x-1 text-[10px] text-rose-600 font-bold">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{storeCreditError}</span>
+                </div>
+              )}
+            </div>
+
             {/* খরচ ও মোট টাকার তালিকা */}
             <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs sm:text-sm">
               <div className="flex justify-between text-slate-600">
@@ -1164,6 +1275,13 @@ export default function CheckoutPage({
                 <div className="flex justify-between text-purple-600 font-bold">
                   <span>লয়ালটি পয়েন্ট ছাড় ({pointsActuallyRedeemed} pt):</span>
                   <span>-{currencySymbol}{loyaltyDiscount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {storeCreditDiscount > 0 && (
+                <div className="flex justify-between text-emerald-600 font-bold">
+                  <span>স্টোর ক্রেডিট ভাউচার ছাড়:</span>
+                  <span>-{currencySymbol}{storeCreditDiscount.toFixed(2)}</span>
                 </div>
               )}
 

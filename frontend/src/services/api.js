@@ -1722,3 +1722,162 @@ export async function postLogAuditEvent(apiUrl, logData) {
   }
 }
 
+/**
+ * ============================================================================
+ * Phase 7: পণ্য বিক্রয় রিটার্ন ও রিফান্ড API মেথডসমূহ
+ * ============================================================================
+ */
+
+/**
+ * বিক্রয় রিটার্ন তৈরি এবং ইনভেন্টরি রিস্টক (action: 'createSalesReturn')
+ */
+export async function postCreateSalesReturn(apiUrl, returnData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: রিটার্ন রেকর্ড শুধুমাত্র লোকাল স্টোরেজে সেভ হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'createSalesReturn',
+    ...returnData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `রিটার্ন সিঙ্ক ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * স্টোর ক্রেডিট ভাউচার রিডিম / ব্যবহার করা (action: 'redeemStoreCredit')
+ */
+export async function postRedeemStoreCredit(apiUrl, { creditNoteCode, cashier = 'Cashier' }) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: স্টোর ক্রেডিট রিডিম হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'redeemStoreCredit',
+    creditNoteCode,
+    cashier,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `স্টোর ক্রেডিট রিডিম ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * ============================================================================
+ * Phase 7: গোডাউন ও দোকান স্টক ট্রান্সফার চালান API মেথডসমূহ
+ * ============================================================================
+ */
+
+/**
+ * স্টক ট্রান্সফার চালান তৈরি (action: 'createStockTransfer')
+ */
+export async function postCreateStockTransfer(apiUrl, transferData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: চালান শুধুমাত্র লোকাল স্টোরেজে সংরক্ষিত হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'createStockTransfer',
+    ...transferData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `চালান সিঙ্ক ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * স্টক ট্রান্সফার চালান স্ট্যাটাস আপডেট (action: 'updateStockTransferStatus')
+ */
+export async function postUpdateStockTransferStatus(apiUrl, { transferId, status, receivedBy = 'Manager' }) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: চালানের স্ট্যাটাস আপডেট হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'updateStockTransferStatus',
+    transferId,
+    status,
+    receivedBy,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `চালান স্ট্যাটাস আপডেট ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+

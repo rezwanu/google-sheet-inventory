@@ -11,13 +11,17 @@ import {
   User, 
   Phone, 
   Tag,
-  Printer
+  Printer,
+  Ticket,
+  X,
+  AlertCircle
 } from 'lucide-react';
 
 export default function CartView({
   cartItems,
   currencySymbol,
   taxRatePercent,
+  salesReturns = [],
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
@@ -28,6 +32,9 @@ export default function CartView({
   const [customerPhone, setCustomerPhone] = useState('');
   const [discountAmount, setDiscountAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [voucherInput, setVoucherInput] = useState('');
+  const [appliedVoucher, setAppliedVoucher] = useState(null); // { code, amount }
+  const [voucherError, setVoucherError] = useState('');
 
   // মোট আইটেম সংখ্যা এবং ইউনিট হিসাব
   const totalUnits = cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -37,9 +44,50 @@ export default function CartView({
 
   // ডিসকাউন্ট এবং ট্যাক্স হিসাব
   const discount = Math.max(0, Math.min(Number(discountAmount) || 0, subTotal));
-  const taxableAmount = Math.max(0, subTotal - discount);
+  
+  // স্টোর ক্রেডিট ভাউচার ডিসকাউন্ট
+  const storeCreditDiscount = appliedVoucher ? Math.min(appliedVoucher.amount, Math.max(0, subTotal - discount)) : 0;
+  const taxableAmount = Math.max(0, subTotal - discount - storeCreditDiscount);
   const taxAmount = parseFloat(((taxableAmount * (Number(taxRatePercent) || 0)) / 100).toFixed(2));
   const grandTotal = parseFloat((taxableAmount + taxAmount).toFixed(2));
+
+  // ভাউচার প্রয়োগ হ্যান্ডলার
+  const handleApplyVoucher = (e) => {
+    if (e) e.preventDefault();
+    setVoucherError('');
+    const code = voucherInput.trim().toUpperCase();
+    if (!code) return;
+
+    const record = (salesReturns || []).find((r) => String(r.CreditNoteCode || '').trim().toUpperCase() === code);
+    if (!record) {
+      setVoucherError('ভাউচার কোড পাওয়া যায়নি।');
+      return;
+    }
+
+    if (record.CreditNoteStatus === 'Redeemed') {
+      setVoucherError('এই ভাউচারটি ইতিমধ্যে ব্যবহৃত হয়েছে।');
+      return;
+    }
+
+    if (record.CreditNoteExpiry && new Date() > new Date(record.CreditNoteExpiry)) {
+      setVoucherError('এই ভাউচারের মেয়াদ উত্তীর্ণ হয়ে গেছে।');
+      return;
+    }
+
+    const amt = Number(record.TotalRefundAmount) || 0;
+    if (amt <= 0) {
+      setVoucherError('ভাউচারের ব্যালেন্স শূন্য।');
+      return;
+    }
+
+    setAppliedVoucher({ code, amount: amt });
+    setVoucherInput('');
+  };
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null);
+    setVoucherError('');
+  };
 
   // বিক্রয় সম্পন্ন করার হ্যান্ডলার
   const handleCheckout = (shouldPrint = false) => {
@@ -50,6 +98,8 @@ export default function CartView({
       customerName: customerName.trim() || 'Walk-in Customer',
       customerPhone: customerPhone.trim(),
       discountAmount: discount,
+      creditNoteCode: appliedVoucher?.code || '',
+      creditNoteDiscount: storeCreditDiscount,
       taxPercent: Number(taxRatePercent) || 0,
       taxAmount: taxAmount,
       subTotal: subTotal,
@@ -62,6 +112,7 @@ export default function CartView({
     setCustomerName('');
     setCustomerPhone('');
     setDiscountAmount('');
+    setAppliedVoucher(null);
   };
 
   return (
@@ -217,6 +268,53 @@ export default function CartView({
             />
           </div>
 
+          {/* স্টোর ক্রেডিট ভাউচার ইনপুট (Phase 7) */}
+          <div className="space-y-1.5 pt-1 border-t border-slate-100 text-xs">
+            {appliedVoucher ? (
+              <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center justify-between">
+                <div className="flex items-center space-x-1.5">
+                  <Ticket className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="font-bold text-emerald-900 font-mono text-[11px]">{appliedVoucher.code}</span>
+                  <span className="text-[10px] text-emerald-700 font-bold">(-{currencySymbol}{storeCreditDiscount.toFixed(2)})</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveVoucher}
+                  className="p-1 hover:bg-emerald-100 text-emerald-700 rounded transition-colors"
+                  title="ভাউচার বাতিল"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleApplyVoucher} className="flex space-x-1.5">
+                <div className="relative flex-1">
+                  <Ticket className="w-3.5 h-3.5 absolute left-2 top-2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="ক্রেডিট ভাউচার (SCN-XXXXXX)"
+                    value={voucherInput}
+                    onChange={(e) => setVoucherInput(e.target.value)}
+                    className="w-full pl-7 pr-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-xs font-mono uppercase focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={!voucherInput.trim()}
+                  className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-bold disabled:opacity-40 transition-colors"
+                >
+                  প্রয়োগ
+                </button>
+              </form>
+            )}
+            {voucherError && (
+              <div className="flex items-center space-x-1 text-[10px] text-rose-600 font-medium">
+                <AlertCircle className="w-3 h-3 shrink-0" />
+                <span>{voucherError}</span>
+              </div>
+            )}
+          </div>
+
           {/* হিসেব সারসংক্ষেপ */}
           <div className="space-y-1.5 pt-2 border-t border-slate-100 text-xs">
             <div className="flex justify-between text-slate-500">
@@ -227,6 +325,12 @@ export default function CartView({
               <div className="flex justify-between text-rose-600">
                 <span>ছাড় (ডিসকাউন্ট):</span>
                 <span>-{currencySymbol}{discount.toFixed(2)}</span>
+              </div>
+            )}
+            {storeCreditDiscount > 0 && (
+              <div className="flex justify-between text-emerald-600 font-bold">
+                <span>স্টোর ক্রেডিট ভাউচার:</span>
+                <span>-{currencySymbol}{storeCreditDiscount.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between text-slate-500">

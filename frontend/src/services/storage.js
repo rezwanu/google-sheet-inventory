@@ -28,6 +28,8 @@ const STORAGE_KEYS = {
   CASH_REGISTERS: 'pos_cash_registers',
   ACTIVE_REGISTER: 'pos_active_register',
   AUDIT_LOGS: 'pos_audit_logs',
+  SALES_RETURNS: 'pos_sales_returns',
+  STOCK_TRANSFERS: 'pos_stock_transfers',
 };
 
 import {
@@ -2721,6 +2723,197 @@ export function logAuditEventLocally({
   saveLocalAuditLogs(logs.slice(0, 500));
   return newLog;
 }
+
+/**
+ * ============================================================================
+ * Phase 7: পণ্য বিক্রয় রিটার্ন ও রিফান্ড (Sales Returns & Refunds)
+ * ============================================================================
+ */
+export function getLocalSalesReturns() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.SALES_RETURNS);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalSalesReturns(returns) {
+  setSecureStorageItem(STORAGE_KEYS.SALES_RETURNS, Array.isArray(returns) ? returns : []);
+}
+
+export function saveSalesReturnLocally(returnData) {
+  if (!returnData) return { record: null, returns: getLocalSalesReturns() };
+  const returns = getLocalSalesReturns();
+  const now = new Date().toISOString();
+  const returnId = returnData.ReturnID || returnData.returnId || `RET-${Date.now().toString().slice(-6)}`;
+
+  const rawItems = returnData.Items || returnData.items || [];
+  let parsedItems = rawItems;
+  if (typeof rawItems === 'string') {
+    try {
+      parsedItems = JSON.parse(rawItems);
+    } catch {
+      parsedItems = [];
+    }
+  }
+
+  const record = {
+    ReturnID: returnId,
+    InvoiceNo: returnData.InvoiceNo || returnData.invoiceNo || '',
+    ReturnDate: returnData.ReturnDate || returnData.returnDate || now,
+    CustomerID: returnData.CustomerID || returnData.customerId || 'GUEST',
+    CustomerName: returnData.CustomerName || returnData.customerName || 'Walk-in Customer',
+    CustomerPhone: returnData.CustomerPhone || returnData.customerPhone || '',
+    Items: Array.isArray(parsedItems) ? parsedItems : [],
+    TotalItems: returnData.TotalItems !== undefined ? returnData.TotalItems : (Array.isArray(parsedItems) ? parsedItems.length : 0),
+    TotalRefundAmount: Number(returnData.TotalRefundAmount !== undefined ? returnData.TotalRefundAmount : returnData.totalRefundAmount) || 0,
+    RefundMethod: returnData.RefundMethod || returnData.refundMethod || 'Cash', // 'Cash' | 'StoreCredit' | 'DeductDue' | 'Exchange'
+    CreditNoteCode: returnData.CreditNoteCode || returnData.creditNoteCode || '',
+    CreditNoteExpiry: returnData.CreditNoteExpiry || returnData.creditNoteExpiry || '',
+    CreditNoteStatus: returnData.CreditNoteStatus || returnData.creditNoteStatus || (returnData.CreditNoteCode ? 'Active' : 'None'),
+    Reason: returnData.Reason || returnData.reason || 'Customer Return',
+    ProcessedBy: returnData.ProcessedBy || returnData.processedBy || 'Cashier',
+    Timestamp: returnData.Timestamp || now
+  };
+
+  const existingIdx = returns.findIndex(r => String(r.ReturnID).trim() === String(returnId).trim());
+  if (existingIdx !== -1) {
+    returns[existingIdx] = { ...returns[existingIdx], ...record };
+  } else {
+    returns.unshift(record);
+  }
+
+  saveLocalSalesReturns(returns);
+  return { record, returns };
+}
+
+export function redeemStoreCreditLocally(creditNoteCode, cashier = 'Cashier') {
+  if (!creditNoteCode) return { success: false, message: 'ভাউচার কোড দিন।' };
+  const target = String(creditNoteCode).trim().toUpperCase();
+  const returns = getLocalSalesReturns();
+
+  const idx = returns.findIndex(r => String(r.CreditNoteCode || '').trim().toUpperCase() === target);
+  if (idx === -1) {
+    return { success: false, message: `স্টোর ক্রেডিট ভাউচার '${target}' পাওয়া যায়নি।` };
+  }
+
+  const record = returns[idx];
+  if (record.CreditNoteStatus === 'Redeemed') {
+    return { success: false, message: `ভাউচার '${target}' ইতিমধ্যে ব্যবহার করা হয়েছে!` };
+  }
+
+  if (record.CreditNoteExpiry && new Date() > new Date(record.CreditNoteExpiry)) {
+    return { success: false, message: `ভাউচার '${target}'-এর মেয়াদ উত্তীর্ণ হয়ে গেছে!` };
+  }
+
+  returns[idx] = {
+    ...record,
+    CreditNoteStatus: 'Redeemed',
+    RedeemedAt: new Date().toISOString(),
+    RedeemedBy: cashier
+  };
+
+  saveLocalSalesReturns(returns);
+  return {
+    success: true,
+    message: `স্টোর ক্রেডিট সফলভাবে ব্যবহৃত হয়েছে! (৳${record.TotalRefundAmount})`,
+    creditAmount: Number(record.TotalRefundAmount) || 0,
+    record: returns[idx]
+  };
+}
+
+/**
+ * ============================================================================
+ * Phase 7: গোডাউন ও দোকান স্টক ট্রান্সফার চালান (Stock Transfers)
+ * ============================================================================
+ */
+export function getLocalStockTransfers() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.STOCK_TRANSFERS);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalStockTransfers(transfers) {
+  setSecureStorageItem(STORAGE_KEYS.STOCK_TRANSFERS, Array.isArray(transfers) ? transfers : []);
+}
+
+export function saveStockTransferLocally(transferData) {
+  if (!transferData) return { record: null, transfers: getLocalStockTransfers() };
+  const transfers = getLocalStockTransfers();
+  const now = new Date().toISOString();
+  const transferId = transferData.TransferID || transferData.transferId || `TRF-${Date.now().toString().slice(-6)}`;
+  const challanNo = transferData.ChallanNo || transferData.challanNo || `CHL-${Date.now().toString().slice(-6)}`;
+
+  const rawItems = transferData.Items || transferData.items || [];
+  let parsedItems = rawItems;
+  if (typeof rawItems === 'string') {
+    try {
+      parsedItems = JSON.parse(rawItems);
+    } catch {
+      parsedItems = [];
+    }
+  }
+
+  const items = Array.isArray(parsedItems) ? parsedItems : [];
+  const totalQty = items.reduce((sum, itm) => sum + (Number(itm.quantity || itm.Quantity || 0)), 0);
+
+  const record = {
+    TransferID: transferId,
+    ChallanNo: challanNo,
+    TransferDate: transferData.TransferDate || transferData.transferDate || now,
+    FromLocation: transferData.FromLocation || transferData.fromLocation || 'Main Warehouse',
+    ToLocation: transferData.ToLocation || transferData.toLocation || 'Main Shop',
+    Items: items,
+    TotalItems: items.length,
+    TotalQuantity: totalQty,
+    Status: transferData.Status || transferData.status || 'In Transit', // 'Pending' | 'In Transit' | 'Received' | 'Cancelled'
+    DriverName: transferData.DriverName || transferData.driverName || '',
+    Notes: transferData.Notes || transferData.notes || '',
+    CreatedBy: transferData.CreatedBy || transferData.createdBy || 'Admin',
+    ReceivedBy: transferData.ReceivedBy || transferData.receivedBy || '',
+    CreatedAt: transferData.CreatedAt || transferData.createdAt || now,
+    UpdatedAt: now
+  };
+
+  const existingIdx = transfers.findIndex(t => String(t.TransferID).trim() === String(transferId).trim());
+  if (existingIdx !== -1) {
+    transfers[existingIdx] = { ...transfers[existingIdx], ...record };
+  } else {
+    transfers.unshift(record);
+  }
+
+  saveLocalStockTransfers(transfers);
+  return { record, transfers };
+}
+
+export function updateStockTransferStatusLocally(transferId, newStatus, receivedBy = 'Manager') {
+  if (!transferId || !newStatus) return { record: null, transfers: getLocalStockTransfers() };
+  const transfers = getLocalStockTransfers();
+  const now = new Date().toISOString();
+
+  const idx = transfers.findIndex(t => 
+    String(t.TransferID).trim() === String(transferId).trim() ||
+    String(t.ChallanNo).trim() === String(transferId).trim()
+  );
+
+  if (idx !== -1) {
+    transfers[idx] = {
+      ...transfers[idx],
+      Status: newStatus,
+      ReceivedBy: newStatus === 'Received' ? receivedBy : (transfers[idx].ReceivedBy || ''),
+      UpdatedAt: now
+    };
+    saveLocalStockTransfers(transfers);
+    return { record: transfers[idx], transfers };
+  }
+
+  return { record: null, transfers };
+}
+
 
 
 
