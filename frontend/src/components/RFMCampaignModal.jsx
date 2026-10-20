@@ -53,8 +53,6 @@ export default function RFMCampaignModal({
   // ক্যাম্পেইন হিস্ট্রি স্টেট
   const [campaignHistory, setCampaignHistory] = useState(getLocalCampaigns);
 
-  if (!isOpen) return null;
-
   // RFM অ্যানালিটিক্স হিসাব
   const rfmData = useMemo(() => {
     return calculateRFMSegmentation(customers, salesHistory, orders);
@@ -193,6 +191,8 @@ export default function RFMCampaignModal({
       setIsSending(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-xs overflow-y-auto">

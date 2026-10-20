@@ -59,8 +59,6 @@ export default function SalesReturnModal({
   const [historySearch, setHistorySearch] = useState('');
   const [historyMethodFilter, setHistoryMethodFilter] = useState('ALL');
 
-  if (!isOpen) return null;
-
   // ইনভয়েস সার্চ রেজাল্ট ফিল্টার
   const filteredInvoices = useMemo(() => {
     if (!invoiceQuery.trim()) return [];
@@ -258,6 +256,8 @@ export default function SalesReturnModal({
       alert(`ভাউচার রিডিম ব্যর্থ: ${e.message}`);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-xs overflow-y-auto">

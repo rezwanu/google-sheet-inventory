@@ -57,8 +57,6 @@ export default function StockTransferModal({
   const [listSearch, setListSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  if (!isOpen) return null;
-
   // পণ্য ফিল্টার সাজেশন্স
   const filteredProducts = useMemo(() => {
     if (!productSearch.trim()) return [];
@@ -265,6 +263,8 @@ export default function StockTransferModal({
       return matchSearch && matchStatus;
     });
   }, [stockTransfers, listSearch, statusFilter]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-xs overflow-y-auto">
