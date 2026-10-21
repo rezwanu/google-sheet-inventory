@@ -86,3 +86,4 @@ export function formatFabricQuantity(quantity, unit, showDecimalNote = true) {
   }
   return `${decimal} গজ`;
 }
+
