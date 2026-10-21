@@ -25,8 +25,6 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronLeft,
-  Search,
-  X,
   Store,
   Layers,
   CircleDollarSign,
@@ -95,13 +93,10 @@ export default function Sidebar({
   const isLoggedIn = Boolean(activeUser && activeUser.Role && activeUser.UserID !== 'USER-GUEST');
   const isAdmin = isLoggedIn && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier');
 
-  // কুইক সার্চ ফিল্টার স্টেট
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // ক্যাটাগরি ফোল্ডিং / অ্যাকর্ডিয়ন স্টেট (লোকালস্টোরেজে প্রিফারেন্স মনে রাখা)
+  // ক্যাটাগরি ফোল্ডিং / অ্যাকর্ডিয়ন স্টেট (ডিফল্টভাবে সবগুলো সেকশন উন্মুক্ত ও দৃশ্যমান)
   const [openSections, setOpenSections] = useState(() => {
     try {
-      const saved = localStorage.getItem('inventory_sidebar_sections_v2');
+      const saved = localStorage.getItem('inventory_sidebar_sections_v3');
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
@@ -118,7 +113,7 @@ export default function Sidebar({
     setOpenSections((prev) => {
       const next = { ...prev, [sectionKey]: !prev[sectionKey] };
       try {
-        localStorage.setItem('inventory_sidebar_sections_v2', JSON.stringify(next));
+        localStorage.setItem('inventory_sidebar_sections_v3', JSON.stringify(next));
       } catch {}
       return next;
     });
@@ -145,6 +140,7 @@ export default function Sidebar({
       title: 'বিক্রয় ও বিলিং',
       shortTitle: 'বিক্রয়',
       icon: ShoppingBag,
+      dotColor: 'bg-indigo-600',
       accentBorder: 'border-indigo-500',
       tagColor: 'text-indigo-600 bg-indigo-50/80',
       hasAlert: pendingOrdersCount > 0 || returnsCount > 0,
@@ -207,6 +203,7 @@ export default function Sidebar({
       title: 'ইনভেন্টরি ও গোডাউন',
       shortTitle: 'স্টক',
       icon: Layers,
+      dotColor: 'bg-emerald-600',
       accentBorder: 'border-emerald-500',
       tagColor: 'text-emerald-600 bg-emerald-50/80',
       hasAlert: lowStockCount > 0 || expiringProductsCount > 0 || transfersInTransitCount > 0,
@@ -281,6 +278,7 @@ export default function Sidebar({
       title: 'সাপ্লায়ার ও প্রকিউরমেন্ট',
       shortTitle: 'সাপ্লায়ার',
       icon: PackageCheck,
+      dotColor: 'bg-blue-600',
       accentBorder: 'border-blue-500',
       tagColor: 'text-blue-600 bg-blue-50/80',
       hasAlert: pendingPOCount > 0,
@@ -313,6 +311,7 @@ export default function Sidebar({
       title: 'গ্রাহক ও রিলেশনশিপ',
       shortTitle: 'গ্রাহক',
       icon: Users,
+      dotColor: 'bg-purple-600',
       accentBorder: 'border-purple-500',
       tagColor: 'text-purple-600 bg-purple-50/80',
       hasAlert: totalDueAmount > 0 || abandonedCartsCount > 0,
@@ -376,9 +375,10 @@ export default function Sidebar({
       title: 'হিসাব ও ক্যাশ ড্রয়ার',
       shortTitle: 'হিসাব',
       icon: CircleDollarSign,
+      dotColor: 'bg-rose-600',
       accentBorder: 'border-rose-500',
       tagColor: 'text-rose-600 bg-rose-50/80',
-      hasAlert: isRegisterOpen,
+      hasAlert: false,
       items: [
         {
           id: 'pnl_analytics',
@@ -430,6 +430,7 @@ export default function Sidebar({
       title: 'সিস্টেম ও স্টাফ',
       shortTitle: 'সিস্টেম',
       icon: UserCog,
+      dotColor: 'bg-slate-700',
       accentBorder: 'border-slate-500',
       tagColor: 'text-slate-600 bg-slate-100',
       hasAlert: false,
@@ -473,23 +474,6 @@ export default function Sidebar({
     currencySymbol
   ]);
 
-  // সার্চ কুয়েরি অনুযায়ী ফিল্টারকৃত মেনু আইটেম
-  const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) return menuCategories;
-    const q = searchQuery.trim().toLowerCase();
-
-    return menuCategories
-      .map((cat) => ({
-        ...cat,
-        items: cat.items.filter(
-          (itm) =>
-            itm.title.toLowerCase().includes(q) ||
-            (itm.subTitle && itm.subTitle.toLowerCase().includes(q))
-        )
-      }))
-      .filter((cat) => cat.items.length > 0);
-  }, [menuCategories, searchQuery]);
-
   return (
     <aside
       className={`bg-white/95 backdrop-blur-2xl border-r border-slate-200/80 flex flex-col shrink-0 transition-all duration-300 ease-in-out z-30 sticky top-16 h-[calc(100vh-4rem)] select-none shadow-[4px_0_24px_-4px_rgba(15,23,42,0.04)] ${
@@ -532,82 +516,40 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* ২. কুইক সার্চ ফিল্টার (শুধুমাত্র এক্সপান্ডেড ভিউতে) */}
-      {!isCollapsed && (
-        <div className="px-3.5 pt-1 pb-1">
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="মেনু খুঁজুন... (Ctrl+K)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-7 py-2 bg-slate-50 hover:bg-slate-100/90 focus:bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-2xs font-medium"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                title="সার্চ মুছুন"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ৩. সাইডবার ন্যাভিগেশন লিংকসমূহ (স্ক্রোলেবল প্যানেল বডি) */}
+      {/* ২. সাইডবার ন্যাভিগেশন লিংকসমূহ (স্ক্রোলেবল প্যানেল বডি) */}
       <div className="flex-1 overflow-y-auto px-2.5 space-y-3.5 py-2 scrollbar-thin scrollbar-thumb-slate-200/80 hover:scrollbar-thumb-slate-300">
         
-        {/* সার্চে কোনো আইটেম না পাওয়া গেলে */}
-        {!isCollapsed && searchQuery && filteredCategories.length === 0 && (
-          <div className="py-10 text-center text-slate-400 space-y-2">
-            <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-              <Search className="w-5 h-5 stroke-[1.5]" />
-            </div>
-            <p className="text-xs font-bold text-slate-700">কোনো মেনু খুঁজে পাওয়া যায়নি</p>
-            <p className="text-[11px] text-slate-400">"{searchQuery}" দিয়ে কোনো অপশন মেলেনি</p>
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-all cursor-pointer"
-            >
-              সার্চ ফিল্টার মুছুন
-            </button>
-          </div>
-        )}
-
         {/* সুবিন্যস্ত ক্যাটাগরি তালিকা */}
-        {filteredCategories.map((category, catIdx) => {
-          const isSectionOpen = searchQuery ? true : (openSections[category.id] !== false);
+        {menuCategories.map((category, catIdx) => {
+          const isSectionOpen = openSections[category.id] !== false;
           const CatIcon = category.icon;
 
           return (
             <div key={category.id} className="space-y-1">
               
-              {/* ক্যাটাগরি হেডার (এক্সপান্ডেড মোডে মডার্ন অ্যাকর্ডিয়ন টগল) */}
+              {/* ক্যাটাগরি হেডার (বোল্ড, হাই-কনট্রাস্ট টেক্সট ও ভাইব্রেন্ট অ্যাকসেন্ট ডট) */}
               {!isCollapsed ? (
                 <button
                   type="button"
                   onClick={() => toggleSection(category.id)}
                   title={`${category.title} সেকশন টগল করুন`}
-                  className="w-full flex items-center justify-between px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-800 hover:bg-slate-100/70 rounded-xl transition-all group cursor-pointer"
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-black uppercase tracking-wider text-slate-800 hover:text-slate-950 hover:bg-slate-100/80 rounded-xl transition-all group cursor-pointer"
                 >
                   <div className="flex items-center space-x-2 min-w-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-indigo-500 transition-colors shrink-0" />
-                    <span className="truncate">{category.title}</span>
+                    <span className={`w-2 h-2 rounded-full ${category.dotColor || 'bg-indigo-600'} shrink-0 shadow-2xs`} />
+                    <span className="truncate text-slate-800 group-hover:text-slate-950 font-black text-[12px] tracking-wide">
+                      {category.title}
+                    </span>
                     
-                    {/* ফোল্ড করা থাকলে সতর্কবার্তা ব্যাজ */}
-                    {!isSectionOpen && category.hasAlert && (
-                      <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white animate-pulse shadow-2xs">
-                        {category.alertCount}টি সতর্কতা
+                    {/* ফোল্ড করা থাকলে বা সতর্কতা থাকলে ব্যাজ */}
+                    {category.hasAlert && typeof category.alertCount === 'number' && category.alertCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white animate-pulse shadow-xs">
+                        {category.alertCount} সতর্কতা
                       </span>
                     )}
                   </div>
                   
-                  <div className="text-slate-400 group-hover:text-slate-700 transition-transform duration-200">
+                  <div className="text-slate-500 group-hover:text-slate-800 transition-transform duration-200">
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isSectionOpen ? 'rotate-0' : '-rotate-90'}`} />
                   </div>
                 </button>
@@ -630,13 +572,13 @@ export default function Sidebar({
                         onClick={() => handleAction(item.onClick)}
                         title={`${item.title}${item.subTitle ? ` - ${item.subTitle}` : ''}`}
                         className={`w-full flex items-center rounded-2xl text-xs font-bold transition-all duration-200 cursor-pointer group relative ${
-                          isCollapsed ? 'justify-center p-2.5' : 'justify-between px-2.5 py-2'
+                          isCollapsed ? 'justify-center p-2.5' : 'justify-between px-2.5 py-2.5'
                         } ${
                           isActive
-                            ? 'bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 text-white shadow-md shadow-indigo-600/25 ring-1 ring-indigo-500'
+                            ? 'bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 text-white shadow-md shadow-indigo-600/30 ring-1 ring-indigo-500'
                             : item.isAlertItem
-                            ? 'bg-amber-50/80 text-amber-950 border border-amber-200 hover:bg-amber-100 hover:shadow-2xs'
-                            : 'text-slate-700 hover:bg-slate-100/90 hover:text-slate-950 hover:translate-x-0.5'
+                            ? 'bg-amber-50/90 text-amber-950 border border-amber-300 hover:bg-amber-100 hover:shadow-xs'
+                            : 'text-slate-900 bg-white hover:bg-indigo-50/60 hover:text-indigo-950 border border-slate-200/70 hover:border-indigo-200 shadow-2xs hover:shadow-xs hover:translate-x-0.5'
                         }`}
                       >
                         {/* বাম পাশের গ্লোয়িং অ্যাক্টিভ ইন্ডিকেটর বার */}
@@ -658,11 +600,15 @@ export default function Sidebar({
 
                           {!isCollapsed && (
                             <div className="text-left truncate">
-                              <span className="block truncate text-[12.5px] leading-tight font-extrabold tracking-tight">
+                              <span className={`block truncate text-[12.5px] leading-tight font-black ${
+                                isActive ? 'text-white' : 'text-slate-900 group-hover:text-indigo-950'
+                              }`}>
                                 {item.title}
                               </span>
-                              {item.subTitle && !isActive && (
-                                <span className="block text-[10px] font-medium text-slate-400 group-hover:text-slate-600 truncate mt-0.5">
+                              {item.subTitle && (
+                                <span className={`block text-[10.5px] font-semibold truncate mt-0.5 ${
+                                  isActive ? 'text-indigo-100' : 'text-slate-600 group-hover:text-slate-800'
+                                }`}>
                                   {item.subTitle}
                                 </span>
                               )}
