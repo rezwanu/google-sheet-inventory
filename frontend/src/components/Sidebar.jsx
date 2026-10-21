@@ -29,7 +29,8 @@ import {
   Layers,
   CircleDollarSign,
   Wifi,
-  WifiOff
+  WifiOff,
+  PauseCircle
 } from 'lucide-react';
 
 /**
@@ -55,7 +56,9 @@ export default function Sidebar({
   suppliersCount = 0,
   pendingPOCount = 0,
   abandonedCartsCount = 0,
+  heldCartsCount = 0,
   onOpenAbandonedCartModal,
+  onOpenHeldCartsModal,
   onOpenCustomerLedgerModal,
   onOpenSuppliersModal,
   onOpenPurchaseOrdersModal,
@@ -363,6 +366,16 @@ export default function Sidebar({
           isActive: currentView === 'abandoned_carts',
           onClick: () => onNavigate ? onNavigate('abandoned_carts') : onOpenAbandonedCartModal && onOpenAbandonedCartModal(),
           badge: abandonedCartsCount > 0 ? { text: `${abandonedCartsCount}টি`, color: 'bg-amber-600 text-white shadow-xs' } : null
+        },
+        {
+          id: 'held_carts',
+          title: 'হোল্ডকৃত অর্ডার (Queue)',
+          subTitle: 'কাউন্টার কিউ ও পার্কড কার্ট',
+          icon: PauseCircle,
+          iconGradient: heldCartsCount > 0 ? 'from-amber-500 to-orange-600 text-white shadow-amber-500/25' : 'from-slate-400 to-slate-600 text-white',
+          isActive: false,
+          onClick: () => onOpenHeldCartsModal && onOpenHeldCartsModal(),
+          badge: heldCartsCount > 0 ? { text: `${heldCartsCount}টি`, color: 'bg-amber-600 text-white shadow-xs' } : null
         }
       ]
     },

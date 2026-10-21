@@ -31,6 +31,7 @@ const STORAGE_KEYS = {
   SALES_RETURNS: 'pos_sales_returns',
   STOCK_TRANSFERS: 'pos_stock_transfers',
   CAMPAIGNS: 'pos_campaigns',
+  HELD_CARTS: 'pos_held_carts',
 };
 
 import {
@@ -858,6 +859,39 @@ export function getLocalCart() {
 
 export function saveLocalCart(cart) {
   setSecureStorageItem(STORAGE_KEYS.CART, Array.isArray(cart) ? cart : []);
+}
+
+// ============================================================================
+// কাউন্টার হোল্ড কার্ট সার্ভিস (POS Order Hold & Multi-Customer Queue Management)
+// ============================================================================
+
+export function getLocalHeldCarts() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.HELD_CARTS);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalHeldCarts(heldCarts) {
+  setSecureStorageItem(STORAGE_KEYS.HELD_CARTS, Array.isArray(heldCarts) ? heldCarts : []);
+}
+
+export function addHeldCartLocally(heldCartData) {
+  if (!heldCartData) return getLocalHeldCarts();
+  const list = getLocalHeldCarts();
+  list.unshift(heldCartData);
+  saveLocalHeldCarts(list);
+  return list;
+}
+
+export function deleteHeldCartLocally(heldCartId) {
+  if (!heldCartId) return getLocalHeldCarts();
+  const list = getLocalHeldCarts();
+  const filtered = list.filter((c) => String(c.id || '').trim() !== String(heldCartId).trim());
+  saveLocalHeldCarts(filtered);
+  return filtered;
 }
 
 // সেলস হিস্ট্রি মেথড

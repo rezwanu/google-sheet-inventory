@@ -18,7 +18,11 @@ import {
   UserPlus,
   Gift,
   Check,
-  X
+  X,
+  PauseCircle,
+  Play,
+  Clock,
+  Layers
 } from 'lucide-react';
 
 export default function CartPage({
@@ -36,6 +40,10 @@ export default function CartPage({
   coupons = [],
   activeUser = null,
   onOpenAuthModal,
+  heldCarts = [],
+  onHoldCart,
+  onResumeHeldCart,
+  onOpenHeldCartsModal
 }) {
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
@@ -269,7 +277,7 @@ export default function CartPage({
     <div className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col animate-in fade-in duration-200">
       
       {/* ================= ১. পেশাদার মাল্টি-স্টেপ প্রোগ্রেস বার (Modern Stepper) ================= */}
-      <div className="mb-6 bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-5 shadow-xs">
+      <div className="mb-4 bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-5 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           
           <div className="flex items-center space-x-3.5">
@@ -340,25 +348,128 @@ export default function CartPage({
         </div>
       </div>
 
+      {/* ================= কাউন্টার কিউ ও মাল্টি-কার্ট বার (Counter Queue & Hold Bar) ================= */}
+      {(heldCarts.length > 0 || cartItems.length > 0) && (
+        <div className="mb-5 bg-gradient-to-r from-amber-50/80 via-indigo-50/50 to-slate-50 border border-amber-200/90 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs">
+          <div className="flex items-center space-x-2 flex-wrap gap-y-1.5">
+            <span className="text-xs font-black text-slate-800 flex items-center gap-1.5 mr-1">
+              <Layers className="w-4 h-4 text-amber-600" />
+              <span>কাউন্টার কিউ:</span>
+            </span>
+
+            {/* বর্তমান সক্রিয় কার্ট চিপ */}
+            <span className="px-3 py-1 rounded-xl bg-white border border-indigo-300 text-indigo-950 font-black text-xs shadow-2xs flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>সক্রিয় কার্ট ({totalItemsCount} আইটেম • {currencySymbol}{subTotal.toFixed(2)})</span>
+            </span>
+
+            {/* হোল্ডকৃত কার্ট চিপসমূহ */}
+            {heldCarts.map((h, hIdx) => (
+              <button
+                key={h.id || hIdx}
+                type="button"
+                onClick={() => onResumeHeldCart && onResumeHeldCart(h.id)}
+                className="px-3 py-1 rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                title="ক্লিক করে এই কাস্টমারের অর্ডার কার্টে ফিরিয়ে আনুন"
+              >
+                <PauseCircle className="w-3.5 h-3.5 text-amber-700" />
+                <span>{h.token || `হোল্ড #${hIdx + 1}`} ({h.itemCount} আইটেম • {currencySymbol}{Number(h.subTotal || 0).toFixed(2)})</span>
+                <span className="text-[10px] bg-amber-600 text-white px-1.5 py-0.2 rounded font-black">চালু</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {cartItems.length > 0 && onHoldCart && (
+              <button
+                type="button"
+                onClick={() => {
+                  const note = window.prompt('কাস্টমারের নাম বা টোকেন নম্বর লিখুন (ঐচ্ছিক):', `কাস্টমার #${heldCarts.length + 1}`);
+                  if (note !== null) {
+                    onHoldCart(note.trim() || undefined);
+                  }
+                }}
+                className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                title="সিরিয়ালের পরবর্তী কাস্টমারের জন্য বর্তমান অর্ডারটি হোল্ড করে কার্ট খালি করুন"
+              >
+                <PauseCircle className="w-4 h-4" />
+                <span>অর্ডার হোল্ড করুন</span>
+              </button>
+            )}
+
+            {heldCarts.length > 0 && onOpenHeldCartsModal && (
+              <button
+                type="button"
+                onClick={onOpenHeldCartsModal}
+                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+              >
+                <span>সব হোল্ড তালিকা ({heldCarts.length})</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ================= ২. কার্ট যদি সম্পূর্ণ খালি থাকে ================= */}
       {cartItems.length === 0 ? (
-        <div className="bg-white border border-slate-200/90 rounded-3xl p-10 sm:p-16 text-center shadow-xs flex flex-col items-center justify-center my-auto max-w-xl mx-auto w-full">
-          <div className="w-24 h-24 rounded-3xl bg-indigo-50 border border-indigo-100/80 flex items-center justify-center text-indigo-600 mb-5 shadow-inner">
-            <ShoppingCart className="w-12 h-12 stroke-[1.5]" />
+        <div className="space-y-4 my-auto max-w-xl mx-auto w-full">
+          {heldCarts.length > 0 && (
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50/80 border-2 border-amber-300 rounded-3xl p-5 sm:p-6 shadow-sm space-y-3 animate-in fade-in zoom-in-95">
+              <div className="flex items-center space-x-2.5 text-amber-950 font-black text-sm sm:text-base">
+                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <PauseCircle className="w-5 h-5" />
+                </div>
+                <span>আপনার {heldCarts.length}টি পূর্ববর্তী কাস্টমারের অর্ডার হোল্ডে সংরক্ষিত আছে!</span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                সিরিয়ালের অন্য কাস্টমারকে বিদায় দেওয়া হয়েছে। এখন পূর্ববর্তী কাস্টমারের হোল্ডকৃত অর্ডারটি এক ক্লিকেই চালু করে দিন:
+              </p>
+              <div className="space-y-2 pt-1">
+                {heldCarts.map((h, idx) => (
+                  <div
+                    key={h.id || idx}
+                    className="bg-white border border-amber-200 rounded-2xl p-3 flex items-center justify-between shadow-2xs hover:border-amber-400 transition-all"
+                  >
+                    <div>
+                      <div className="text-xs font-black text-slate-900">
+                        {h.token || `কাস্টমার #${idx + 1}`}
+                      </div>
+                      <div className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                        {h.itemCount}টি আইটেম • মোট: <strong className="text-indigo-900">{currencySymbol}{Number(h.subTotal || 0).toFixed(2)}</strong>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onResumeHeldCart && onResumeHeldCart(h.id)}
+                      className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>কার্টে চালু করুন</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-8 sm:p-12 text-center shadow-xs flex flex-col items-center justify-center">
+            <div className="w-20 h-20 rounded-3xl bg-indigo-50 border border-indigo-100/80 flex items-center justify-center text-indigo-600 mb-4 shadow-inner">
+              <ShoppingCart className="w-10 h-10 stroke-[1.5]" />
+            </div>
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 mb-2">
+              আপনার কার্ট বর্তমানে খালি!
+            </h2>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mb-5 leading-relaxed">
+              পণ্য ক্যাটালগ থেকে নতুন কাস্টমারের জন্য পছন্দসই পণ্য কার্টে যোগ করুন।
+            </p>
+            <button
+              onClick={onNavigateToCatalog}
+              className="inline-flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md shadow-indigo-600/25 transition-all active:scale-95 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>পণ্য ক্যাটালগে ফিরে যান</span>
+            </button>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 mb-2">
-            আপনার কার্ট সম্পূর্ণ খালি!
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mb-6 leading-relaxed">
-            বর্তমানে কোনো পণ্য কার্টে যুক্ত নেই। পণ্য ক্যাটালগ থেকে পছন্দসই পণ্য কার্টে যোগ করুন এবং সহজে অর্ডার সম্পন্ন করুন।
-          </p>
-          <button
-            onClick={onNavigateToCatalog}
-            className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-extrabold rounded-2xl shadow-lg shadow-indigo-600/25 transition-all active:scale-95 cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>পণ্য ক্যাটালগে ফিরে যান</span>
-          </button>
         </div>
       ) : (
         /* ================= ৩. মূল কার্ট গ্রিড লেআউট ================= */
@@ -368,7 +479,7 @@ export default function CartPage({
           <div className="lg:col-span-7 xl:col-span-8 space-y-3.5">
             
             {/* লিস্ট হেডার কন্ট্রোল বার */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex items-center justify-between">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center space-x-3">
                 <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
                   <Package className="w-4 h-4" />
@@ -383,19 +494,39 @@ export default function CartPage({
                 </div>
               </div>
 
-              {/* পুরো কার্ট খালি করার বাটন */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm('আপনি কি নিশ্চিত যে সম্পূর্ণ কার্ট খালি করতে চান?')) {
-                    onClearCart();
-                  }
-                }}
-                className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200/80 transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>কার্ট খালি করুন</span>
-              </button>
+              {/* অ্যাকশন বাটনসমূহ */}
+              <div className="flex items-center space-x-2">
+                {onHoldCart && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const note = window.prompt('কাস্টমারের নাম বা টোকেন নম্বর লিখুন (ঐচ্ছিক):', `কাস্টমার #${heldCarts.length + 1}`);
+                      if (note !== null) {
+                        onHoldCart(note.trim() || undefined);
+                      }
+                    }}
+                    className="text-xs font-black text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-xl border border-amber-300 transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95 shadow-2xs"
+                    title="পরবর্তী কাস্টমারকে দ্রুত বিদায় দিতে বর্তমান কার্টটি হোল্ড করুন"
+                  >
+                    <PauseCircle className="w-4 h-4 text-amber-700" />
+                    <span>অর্ডার হোল্ড করুন</span>
+                  </button>
+                )}
+
+                {/* পুরো কার্ট খালি করার বাটন */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('আপনি কি নিশ্চিত যে সম্পূর্ণ কার্ট খালি করতে চান?')) {
+                      onClearCart();
+                    }
+                  }}
+                  className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200/80 transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>কার্ট খালি করুন</span>
+                </button>
+              </div>
             </div>
 
             {/* প্রতিটি পণ্যের কার্ড */}

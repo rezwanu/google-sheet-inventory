@@ -17,7 +17,8 @@ import {
   LayoutGrid,
   ShoppingCart,
   MapPin,
-  Users
+  Users,
+  PauseCircle
 } from 'lucide-react';
 import StoreLogo from './StoreLogo';
 import { formatImageUrl } from '../services/storage';
@@ -43,6 +44,8 @@ export default function Navbar({
   isSidebarCollapsed = false,
   lowStockCount = 0,
   cartCount = 0,
+  heldCartsCount = 0,
+  onOpenHeldCartsModal,
   currentView = 'pos',
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -231,6 +234,21 @@ export default function Navbar({
                   <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
                 </button>
               </>
+            )}
+
+            {/* হোল্ডকৃত অর্ডার বাটন (হোল্ডে অর্ডার থাকলে হাইলাইট হবে) */}
+            {heldCartsCount > 0 && (
+              <button
+                type="button"
+                onClick={onOpenHeldCartsModal}
+                title={`হোল্ডকৃত অর্ডার (${heldCartsCount}টি সংরক্ষিত)`}
+                aria-label="হোল্ডকৃত অর্ডার তালিকা"
+                className="px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-md shadow-amber-500/25 flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer animate-in zoom-in-95"
+              >
+                <PauseCircle className="w-4 h-4 animate-pulse text-amber-100" />
+                <span className="hidden sm:inline">হোল্ড ({heldCartsCount})</span>
+                <span className="sm:hidden font-mono font-black">{heldCartsCount}</span>
+              </button>
             )}
 
             {/* সর্বজনীন শপিং কার্ট বাটন (মোবাইল ও ট্যাবলেট সহ সবার জন্য) */}

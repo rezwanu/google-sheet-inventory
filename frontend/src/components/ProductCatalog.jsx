@@ -16,7 +16,8 @@ import {
   Zap,
   Camera,
   CalendarClock,
-  Scissors
+  Scissors,
+  PauseCircle
 } from 'lucide-react';
 import BarcodeScannerModal from './BarcodeScannerModal';
 import { calculateExpiryStatus } from '../services/storage';
@@ -35,6 +36,8 @@ export default function ProductCatalog({
   onSync,
   coupons = [],
   onOpenVariantSelector,
+  heldCartsCount = 0,
+  onOpenHeldCartsModal,
 }) {
   const isAdmin = Boolean(activeUser && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier'));
   const isCustomer = !isAdmin;
@@ -348,6 +351,19 @@ export default function ProductCatalog({
 
           {/* সর্টিং ও ভিউ মোড কন্ট্রোল গ্রুপ */}
           <div className="flex items-center space-x-2 shrink-0">
+            {/* হোল্ডকৃত অর্ডার কুইক বাটন (যদি অর্ডার হোল্ডে থাকে) */}
+            {heldCartsCount > 0 && (
+              <button
+                type="button"
+                onClick={onOpenHeldCartsModal}
+                className="px-3 py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95 animate-in zoom-in-95"
+                title="হোল্ডকৃত অর্ডার তালিকা খুলুন"
+              >
+                <PauseCircle className="w-4 h-4 animate-pulse text-amber-100" />
+                <span>হোল্ড ({heldCartsCount})</span>
+              </button>
+            )}
+
             {/* সর্টিং ড্রপডাউন */}
             <div className="relative">
               <select

@@ -36,6 +36,7 @@ import SalesReturnModal from './components/SalesReturnModal';
 import StockTransferModal from './components/StockTransferModal';
 import RFMCampaignModal from './components/RFMCampaignModal';
 import FabricCutModal from './components/FabricCutModal';
+import HeldCartsModal from './components/HeldCartsModal';
 import { isFabricUnit } from './utils/fabricUtils';
 
 import {
@@ -56,6 +57,9 @@ import {
   saveLocalUnits,
   getLocalCart,
   saveLocalCart,
+  getLocalHeldCarts,
+  saveLocalHeldCarts,
+  deleteHeldCartLocally,
   getLocalSalesHistory,
   saveSaleLocally,
   saveLocalSalesHistory,
@@ -217,6 +221,16 @@ export default function App() {
       return [];
     }
   });
+  // কাউন্টার অর্ডার হোল্ড স্টেট (সিরিয়ালের অন্য কাস্টমারকে বিদায় দেওয়ার জন্য)
+  const [heldCarts, setHeldCarts] = useState(() => {
+    try {
+      const h = getLocalHeldCarts();
+      return Array.isArray(h) ? h : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isHeldCartsModalOpen, setIsHeldCartsModalOpen] = useState(false);
 
   // ফেজ ৪: সাপ্লায়ার ও ভেন্ডর, পারচেজ অর্ডার এবং লেজার স্টেট
   const [suppliers, setSuppliers] = useState(() => {
@@ -1056,6 +1070,80 @@ export default function App() {
 
   const handleClearCart = () => {
     setCart([]);
+  };
+
+  // কাউন্টার অর্ডার হোল্ড হ্যান্ডলার (সিরিয়ালের পরবর্তী কাস্টমারকে বিদায় দেওয়ার জন্য)
+  const handleHoldCurrentCart = (customNoteOrName) => {
+    if (!cart || cart.length === 0) {
+      showToast('হোল্ড করার মতো কোনো পণ্য কার্টে নেই!', 'warning');
+      return null;
+    }
+
+    const holdIndex = heldCarts.length + 1;
+    const newHeld = {
+      id: `HOLD-${Date.now()}`,
+      token: customNoteOrName || `কাস্টমার #${holdIndex}`,
+      customerName: customNoteOrName || '',
+      items: [...cart],
+      discountAmount: discountAmount || 0,
+      subTotal: cart.reduce((acc, it) => acc + (Number(it.sellingPrice) || 0) * (Number(it.quantity) || 0), 0),
+      itemCount: cart.length,
+      totalUnits: cart.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0),
+      createdAt: new Date().toISOString()
+    };
+
+    const updated = [newHeld, ...heldCarts];
+    setHeldCarts(updated);
+    saveLocalHeldCarts(updated);
+
+    setCart([]);
+    setDiscountAmount(0);
+    saveLocalCart([]);
+
+    showToast(`✓ ${newHeld.token} এর অর্ডার হোল্ডে রাখা হয়েছে! নতুন কাস্টমারের অর্ডার নিতে পারেন।`, 'success');
+    return newHeld;
+  };
+
+  // হোল্ডকৃত অর্ডার পুনরায় সক্রিয় কার্টে চালু করার হ্যান্ডলার
+  const handleResumeHeldCart = (heldCartId) => {
+    const target = heldCarts.find((h) => h.id === heldCartId);
+    if (!target) return;
+
+    let remaining = heldCarts.filter((h) => h.id !== heldCartId);
+
+    // বর্তমান কার্ট যদি খালি না থাকে, তবে বর্তমান কার্টটিকে স্বয়ংক্রিয়ভাবে একটি নতুন হোল্ডে রাখা হবে
+    if (cart && cart.length > 0) {
+      const autoHoldCurrent = {
+        id: `HOLD-${Date.now()}`,
+        token: `কাস্টমার #${remaining.length + 1}`,
+        customerName: '',
+        items: [...cart],
+        discountAmount: discountAmount || 0,
+        subTotal: cart.reduce((acc, it) => acc + (Number(it.sellingPrice) || 0) * (Number(it.quantity) || 0), 0),
+        itemCount: cart.length,
+        totalUnits: cart.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0),
+        createdAt: new Date().toISOString()
+      };
+      remaining = [autoHoldCurrent, ...remaining];
+    }
+
+    setHeldCarts(remaining);
+    saveLocalHeldCarts(remaining);
+
+    setCart(target.items || []);
+    setDiscountAmount(target.discountAmount || 0);
+    saveLocalCart(target.items || []);
+
+    setCurrentView('cart');
+    setIsHeldCartsModalOpen(false);
+    showToast(`✓ ${target.token} সফলভাবে কার্টে চালু করা হয়েছে!`, 'success');
+  };
+
+  // হোল্ডকৃত অর্ডার ডিলিট হ্যান্ডলার
+  const handleDeleteHeldCart = (heldCartId) => {
+    const filtered = deleteHeldCartLocally(heldCartId);
+    setHeldCarts(filtered);
+    showToast('হোল্ডকৃত অর্ডারটি মুছে ফেলা হয়েছে।', 'info');
   };
 
   // কাস্টমারের সাথে দামাদামির জন্য কার্টের পণ্যের বিক্রয়মূল্য পরিবর্তন (ফ্লোর প্রাইস সুরক্ষা সহ)
@@ -2972,6 +3060,8 @@ export default function App() {
         isSidebarCollapsed={isSidebarCollapsed}
         lowStockCount={lowStockCount}
         cartCount={Array.isArray(cart) ? cart.length : 0}
+        heldCartsCount={heldCarts.length}
+        onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
         currentView={currentView}
       />
 
@@ -3022,7 +3112,9 @@ export default function App() {
             isRegisterOpen={Boolean(activeRegister && activeRegister.Status === 'Open')}
             expensesCount={expenses.length}
             abandonedCartsCount={pendingAbandonedCartsCount}
+            heldCartsCount={heldCarts.length}
             onOpenAbandonedCartModal={() => setIsAbandonedCartModalOpen(true)}
+            onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
             onOpenUsersModal={() => setIsUsersModalOpen(true)}
             onOpenCouponModal={() => setIsCouponModalOpen(true)}
             onOpenInvoiceLookupModal={handleOpenInvoiceLookup}
@@ -3060,6 +3152,8 @@ export default function App() {
                 onSync={() => handleSync(true)}
                 coupons={coupons}
                 onOpenVariantSelector={(prod) => setVariantSelectModalProduct(prod)}
+                heldCartsCount={heldCarts.length}
+                onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
               />
             </div>
           )}
@@ -3080,6 +3174,10 @@ export default function App() {
               coupons={coupons}
               activeUser={activeUser}
               onOpenAuthModal={() => setIsAuthModalOpen(true)}
+              heldCarts={heldCarts}
+              onHoldCart={handleHoldCurrentCart}
+              onResumeHeldCart={handleResumeHeldCart}
+              onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
             />
           )}
 
@@ -3864,6 +3962,18 @@ export default function App() {
         activeUser={activeUser}
         storeSettings={settings}
         onSendBulkSmsCampaign={handleSendBulkSmsCampaign}
+      />
+
+      {/* কাউন্টার হোল্ড অর্ডার ও মাল্টি-কাস্টমার কিউ ড্রয়ার */}
+      <HeldCartsModal
+        isOpen={isHeldCartsModalOpen}
+        onClose={() => setIsHeldCartsModalOpen(false)}
+        heldCarts={heldCarts}
+        activeCartItems={cart}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        onHoldCurrentCart={handleHoldCurrentCart}
+        onResumeHeldCart={handleResumeHeldCart}
+        onDeleteHeldCart={handleDeleteHeldCart}
       />
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}
