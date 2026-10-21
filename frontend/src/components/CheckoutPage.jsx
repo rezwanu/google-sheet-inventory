@@ -24,7 +24,9 @@ import {
   X,
   Package,
   LogIn,
-  Layers
+  Layers,
+  Ticket,
+  AlertCircle
 } from 'lucide-react';
 import { formatImageUrl } from '../services/storage';
 import StoreLogo from './StoreLogo';

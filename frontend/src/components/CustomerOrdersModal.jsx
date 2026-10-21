@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Clock,
   Printer,
+  LogIn,
 } from 'lucide-react';
 import { extractAndNormalizeItems, formatImageUrl } from '../services/storage';
 import StoreLogo from './StoreLogo';
