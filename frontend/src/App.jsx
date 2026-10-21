@@ -3826,6 +3826,7 @@ export default function App() {
         onClose={() => setFabricCutProduct(null)}
         product={fabricCutProduct}
         currencySymbol={settings.CurrencySymbol || '৳'}
+        storeName={settings.StoreName || 'Pabna Bostraloy'}
         cartItems={cart}
         onConfirmAddToCart={(prod, totalYards) => {
           handleAddToCart(prod, totalYards, true);
