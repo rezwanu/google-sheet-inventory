@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { isFabricUnit, parseGojGira, calculateTotalYards } from '../utils/fabricUtils';
 import {
   ShoppingCart,
   Trash2,
@@ -451,42 +452,194 @@ export default function CartPage({
                     {/* কোয়ান্টিটি এবং লাইন টোটাল কন্ট্রোল */}
                     <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
                       
-                      {/* পরিমাণ কন্ট্রোলার */}
-                      <div className="flex items-center bg-slate-100/80 border border-slate-200/80 rounded-xl p-1 shadow-2xs">
-                        <button
-                          type="button"
-                          onClick={() => onUpdateQuantity(itemKey, item.quantity - 1)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors active:scale-95 shadow-2xs cursor-pointer"
-                          title="পরিমাণ কমান"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        
-                        <input
-                          type="number"
-                          min="0.01"
-                          step="any"
-                          max={item.stockQuantity || 9999}
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const val = parseFloat(e.target.value);
-                            if (!isNaN(val) && val >= 0) {
-                              onUpdateQuantity(itemKey, Math.round(val * 10000) / 10000);
-                            }
-                          }}
-                          className="w-16 text-center bg-transparent text-xs sm:text-sm font-black text-slate-900 focus:outline-none"
-                        />
+                      {/* পরিমাণ কন্ট্রোলার (গজ কাপড়ের জন্য পৃথক গজ ও গিরা ইনপুট, অন্যান্য পণ্যের জন্য স্বাভাবিক ইনপুট) */}
+                      {isFabricUnit(item.unit) ? (
+                        (() => {
+                          const { goj: currentGoj, gira: currentGira } = parseGojGira(item.quantity);
+                          return (
+                            <div className="flex flex-col items-end gap-1.5">
+                              {/* দ্বৈত গজ ও গিরা ইনপুট বক্স */}
+                              <div className="flex items-center gap-1.5 p-1 bg-amber-50/90 border border-amber-300/90 rounded-2xl shadow-2xs">
+                                
+                                {/* গজ বক্স */}
+                                <div className="flex items-center bg-white border border-amber-300 rounded-xl p-0.5 shadow-2xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const nextGoj = Math.max(0, currentGoj - 1);
+                                      const total = calculateTotalYards(nextGoj, currentGira);
+                                      if (total > 0) onUpdateQuantity(itemKey, total);
+                                    }}
+                                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 active:scale-95 transition-all cursor-pointer"
+                                    title="১ গজ কমান"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <div className="flex items-center px-1">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max={item.stockQuantity || 9999}
+                                      value={currentGoj}
+                                      onChange={(e) => {
+                                        const g = parseInt(e.target.value, 10);
+                                        const safeGoj = isNaN(g) || g < 0 ? 0 : g;
+                                        const total = calculateTotalYards(safeGoj, currentGira);
+                                        onUpdateQuantity(itemKey, total);
+                                      }}
+                                      className="w-9 sm:w-11 text-center font-black text-xs sm:text-sm text-slate-900 bg-transparent focus:outline-none"
+                                    />
+                                    <span className="text-[11px] font-black text-amber-900 pr-1 select-none">গজ</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const nextGoj = currentGoj + 1;
+                                      const total = calculateTotalYards(nextGoj, currentGira);
+                                      onUpdateQuantity(itemKey, total);
+                                    }}
+                                    disabled={isAtMaxStock}
+                                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                                    title="১ গজ বাড়ান"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
 
-                        <button
-                          type="button"
-                          onClick={() => onUpdateQuantity(itemKey, item.quantity + 1)}
-                          disabled={isAtMaxStock}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs cursor-pointer"
-                          title="পরিমাণ বাড়ান"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                                <span className="text-sm font-black text-amber-600">+</span>
+
+                                {/* গিরা বক্স (০-১৫ গিরা) */}
+                                <div className="flex items-center bg-white border border-amber-300 rounded-xl p-0.5 shadow-2xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      let nextGira = currentGira - 1;
+                                      let nextGoj = currentGoj;
+                                      if (nextGira < 0) {
+                                        if (nextGoj > 0) {
+                                          nextGoj -= 1;
+                                          nextGira = 15;
+                                        } else {
+                                          nextGira = 0;
+                                        }
+                                      }
+                                      const total = calculateTotalYards(nextGoj, nextGira);
+                                      if (total > 0) onUpdateQuantity(itemKey, total);
+                                    }}
+                                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 active:scale-95 transition-all cursor-pointer"
+                                    title="১ গিরা কমান"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <div className="flex items-center px-1">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="15"
+                                      value={currentGira}
+                                      onChange={(e) => {
+                                        const gi = parseInt(e.target.value, 10);
+                                        const safeGira = isNaN(gi) || gi < 0 ? 0 : gi;
+                                        const total = calculateTotalYards(currentGoj, safeGira);
+                                        onUpdateQuantity(itemKey, total);
+                                      }}
+                                      className="w-8 sm:w-9 text-center font-black text-xs sm:text-sm text-slate-900 bg-transparent focus:outline-none"
+                                    />
+                                    <span className="text-[11px] font-black text-amber-900 pr-1 select-none">গিরা</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const nextGira = currentGira + 1;
+                                      const total = calculateTotalYards(currentGoj, nextGira);
+                                      onUpdateQuantity(itemKey, total);
+                                    }}
+                                    disabled={isAtMaxStock}
+                                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 active:scale-95 disabled:opacity-40 transition-all cursor-pointer"
+                                    title="১ গিরা বাড়ান"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                              </div>
+
+                              {/* মোট হিসাব ও দ্রুত ৪/৮/১২ গিরা শর্টকাট */}
+                              <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                                <span className="text-[10px] font-black text-amber-950 bg-amber-200/80 px-2 py-0.5 rounded-md border border-amber-300">
+                                  মোট: {item.quantity} গজ
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => onUpdateQuantity(itemKey, calculateTotalYards(currentGoj, 4))}
+                                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                                    currentGira === 4 ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-amber-50'
+                                  }`}
+                                  title="৪ গিরা (সোয়া গজ)"
+                                >
+                                  ৪ গিরা
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onUpdateQuantity(itemKey, calculateTotalYards(currentGoj, 8))}
+                                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                                    currentGira === 8 ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-amber-50'
+                                  }`}
+                                  title="৮ গিরা (আধা গজ)"
+                                >
+                                  ৮ গিরা
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onUpdateQuantity(itemKey, calculateTotalYards(currentGoj, 12))}
+                                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                                    currentGira === 12 ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-amber-50'
+                                  }`}
+                                  title="১২ গিরা (পৌনে গজ)"
+                                >
+                                  ১২ গিরা
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        <div className="flex items-center bg-slate-100/80 border border-slate-200/80 rounded-xl p-1 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => onUpdateQuantity(itemKey, item.quantity - 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors active:scale-95 shadow-2xs cursor-pointer"
+                            title="পরিমাণ কমান"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="any"
+                            max={item.stockQuantity || 9999}
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              if (!isNaN(val) && val >= 0) {
+                                onUpdateQuantity(itemKey, Math.round(val * 10000) / 10000);
+                              }
+                            }}
+                            className="w-16 text-center bg-transparent text-xs sm:text-sm font-black text-slate-900 focus:outline-none"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => onUpdateQuantity(itemKey, item.quantity + 1)}
+                            disabled={isAtMaxStock}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs cursor-pointer"
+                            title="পরিমাণ বাড়ান"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
 
                       {/* মোট মূল্য */}
                       <div className="text-right min-w-[90px]">

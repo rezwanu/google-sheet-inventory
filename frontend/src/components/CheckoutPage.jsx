@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { formatFabricQuantity } from '../utils/fabricUtils';
 import {
   User,
   Phone,
@@ -1116,8 +1117,8 @@ export default function CheckoutPage({
                           </span>
                         )}
                       </p>
-                      <p className="text-[11px] text-slate-400 font-medium">
-                        {item.quantity} × {currencySymbol}{Number(item.sellingPrice).toFixed(2)}
+                      <p className="text-[11px] text-slate-500 font-medium">
+                        {formatFabricQuantity(item.quantity, item.unit)} × {currencySymbol}{Number(item.sellingPrice).toFixed(2)}
                       </p>
                     </div>
                     <span className="font-black text-slate-900">

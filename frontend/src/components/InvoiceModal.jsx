@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Printer, FileText, CheckCircle2, RotateCcw } from 'lucide-react';
 import { extractAndNormalizeItems, formatImageUrl, getDriveImageCandidates } from '../services/storage';
+import { formatFabricQuantity } from '../utils/fabricUtils';
 
 export default function InvoiceModal({
   isOpen,
@@ -195,7 +196,7 @@ export default function InvoiceModal({
                             )}
                           </td>
                           <td className="text-center py-1 whitespace-nowrap">
-                            x{item.quantity}
+                            x{formatFabricQuantity(item.quantity, item.unit, false)}
                           </td>
                           <td className="text-right py-1 whitespace-nowrap">
                             {Number(item.sellingPrice).toFixed(1)}
@@ -346,7 +347,7 @@ export default function InvoiceModal({
                             )}
                           </td>
                           <td className="py-3 px-3 text-center font-bold">
-                            {item.quantity} {item.unit || 'Pcs'}
+                            {formatFabricQuantity(item.quantity, item.unit, true)}
                           </td>
                           <td className="py-3 px-3 text-right">
                             {currencySymbol}{Number(item.sellingPrice).toFixed(2)}

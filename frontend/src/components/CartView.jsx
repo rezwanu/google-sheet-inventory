@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { isFabricUnit, parseGojGira, calculateTotalYards } from '../utils/fabricUtils';
 import { 
   ShoppingCart, 
   Trash2, 
@@ -187,36 +188,80 @@ export default function CartView({
                 </div>
 
                 {/* কোয়ান্টিটি কন্ট্রোল */}
-                <div className="flex items-center space-x-1.5">
-                  <button
-                    onClick={() => onUpdateQuantity(itemKey, Math.max(0, item.quantity - 1))}
-                    className="w-6 h-6 flex items-center justify-center rounded-md bg-white border border-slate-300 text-slate-600 hover:bg-slate-200 active:scale-95 transition-transform"
-                    title="পরিমাণ কমান"
-                  >
-                    <Minus className="w-3 h-3" />
-                  </button>
-                  <input
-                    type="number"
-                    min="0.01"
-                    step="any"
-                    value={item.quantity}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      if (!isNaN(val) && val >= 0) {
-                        onUpdateQuantity(itemKey, Math.round(val * 10000) / 10000);
-                      }
-                    }}
-                    className="w-12 text-center text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-1 focus:outline-none focus:border-indigo-500"
-                  />
-                  <button
-                    onClick={() => onUpdateQuantity(itemKey, item.quantity + 1)}
-                    disabled={isAtMaxStock}
-                    className="w-6 h-6 flex items-center justify-center rounded-md bg-white border border-slate-300 text-slate-600 hover:bg-slate-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-transform"
-                    title="পরিমাণ বাড়ান"
-                  >
-                    <Plus className="w-3 h-3" />
-                  </button>
-                </div>
+                {isFabricUnit(item.unit) ? (
+                  (() => {
+                    const { goj: currentGoj, gira: currentGira } = parseGojGira(item.quantity);
+                    return (
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-1 bg-amber-50/90 border border-amber-300 rounded-lg p-0.5 shadow-2xs">
+                          <input
+                            type="number"
+                            min="0"
+                            value={currentGoj}
+                            onChange={(e) => {
+                              const g = parseInt(e.target.value, 10);
+                              const safeGoj = isNaN(g) || g < 0 ? 0 : g;
+                              const total = calculateTotalYards(safeGoj, currentGira);
+                              onUpdateQuantity(itemKey, total);
+                            }}
+                            className="w-8 text-center text-xs font-black text-slate-900 bg-white border border-amber-300 rounded px-0.5 focus:outline-none"
+                            title="গজ"
+                          />
+                          <span className="text-[10px] font-black text-amber-900 pr-0.5 select-none">গজ</span>
+                          <input
+                            type="number"
+                            min="0"
+                            max="15"
+                            value={currentGira}
+                            onChange={(e) => {
+                              const gi = parseInt(e.target.value, 10);
+                              const safeGira = isNaN(gi) || gi < 0 ? 0 : gi;
+                              const total = calculateTotalYards(currentGoj, safeGira);
+                              onUpdateQuantity(itemKey, total);
+                            }}
+                            className="w-7 text-center text-xs font-black text-slate-900 bg-white border border-amber-300 rounded px-0.5 focus:outline-none"
+                            title="গিরা (০-১৫)"
+                          />
+                          <span className="text-[10px] font-black text-amber-900 pr-0.5 select-none">গিরা</span>
+                        </div>
+                        <span className="text-[9.5px] font-bold text-amber-900">
+                          মোট: {item.quantity} গজ
+                        </span>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="flex items-center space-x-1.5">
+                    <button
+                      onClick={() => onUpdateQuantity(itemKey, Math.max(0, item.quantity - 1))}
+                      className="w-6 h-6 flex items-center justify-center rounded-md bg-white border border-slate-300 text-slate-600 hover:bg-slate-200 active:scale-95 transition-transform"
+                      title="পরিমাণ কমান"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="any"
+                      value={item.quantity}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val) && val >= 0) {
+                          onUpdateQuantity(itemKey, Math.round(val * 10000) / 10000);
+                        }
+                      }}
+                      className="w-12 text-center text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-1 focus:outline-none focus:border-indigo-500"
+                    />
+                    <button
+                      onClick={() => onUpdateQuantity(itemKey, item.quantity + 1)}
+                      disabled={isAtMaxStock}
+                      className="w-6 h-6 flex items-center justify-center rounded-md bg-white border border-slate-300 text-slate-600 hover:bg-slate-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-transform"
+                      title="পরিমাণ বাড়ান"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
 
                 {/* মোট টাকা এবং ডিলিট বাটন */}
                 <div className="flex items-center space-x-2 pl-3">
