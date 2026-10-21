@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { isFabricUnit, calculateTotalYards, formatFabricQuantity } from '../utils/fabricUtils';
 import { 
   X, 
   Layers, 
@@ -22,6 +23,11 @@ export default function ProductVariantSelectModal({
 }) {
   const [selectedVariantId, setSelectedVariantId] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [fabricGoj, setFabricGoj] = useState(1);
+  const [fabricGira, setFabricGira] = useState(0);
+
+  const isFabric = isFabricUnit(product?.Unit);
+  const effectiveQuantity = isFabric ? calculateTotalYards(fabricGoj, fabricGira) : quantity;
 
   // ভ্যারিয়েন্ট তালিকা নিরাপদ এক্সট্র্যাক্ট
   const variants = useMemo(() => {
@@ -38,6 +44,8 @@ export default function ProductVariantSelectModal({
       const inStockVariant = variants.find((v) => Number(v.StockQuantity || 0) > 0);
       setSelectedVariantId(inStockVariant ? inStockVariant.VariantID : variants[0].VariantID);
       setQuantity(1);
+      setFabricGoj(1);
+      setFabricGira(0);
     }
   }, [variants, isOpen]);
 
@@ -59,7 +67,7 @@ export default function ProductVariantSelectModal({
   const handleConfirmAddToCart = () => {
     if (!currentVariant) return;
     if (variantStock <= 0) return;
-    if (quantity > maxSelectable) return;
+    if (effectiveQuantity > maxSelectable) return;
 
     // বিশেষ প্রোডাক্ট অবজেক্ট তৈরি যা কার্টে ভ্যারিয়েন্টের সব ডেটাসহ যাবে
     const attributesText = currentVariant.Attributes
@@ -78,7 +86,7 @@ export default function ProductVariantSelectModal({
     };
 
     if (onAddToCart) {
-      onAddToCart(productWithVariant, quantity);
+      onAddToCart(productWithVariant, effectiveQuantity, true);
     }
     onClose();
   };
@@ -210,35 +218,102 @@ export default function ProductVariantSelectModal({
         {/* কোয়ান্টিটি ও সাবটোটাল ফুটার */}
         <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-600">পরিমাণ (Quantity):</span>
+            <span className="text-xs font-bold text-slate-600">
+              পরিমাণ {isFabric ? '(গজ ও গিরা)' : '(Quantity)'}:
+            </span>
             
-            <div className="flex items-center space-x-2 bg-white px-2 py-1 rounded-xl border border-slate-200 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                disabled={quantity <= 1}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-              >
-                <Minus className="w-3.5 h-3.5" />
-              </button>
-              <span className="text-sm font-black text-slate-900 w-8 text-center">
-                {quantity}
-              </span>
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => Math.min(maxSelectable, q + 1))}
-                disabled={quantity >= maxSelectable}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            {isFabric ? (
+              <div className="flex items-center gap-1.5 p-1 bg-amber-50/90 border border-amber-300 rounded-xl shadow-2xs">
+                {/* গজ */}
+                <div className="flex items-center bg-white border border-amber-300 rounded-lg p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setFabricGoj((g) => Math.max(0, g - 1))}
+                    className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 cursor-pointer"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <input
+                    type="number"
+                    min="0"
+                    value={fabricGoj}
+                    onChange={(e) => setFabricGoj(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    className="w-9 text-center font-black text-xs text-slate-900 bg-transparent focus:outline-none"
+                  />
+                  <span className="text-[10px] font-black text-amber-900 pr-0.5 select-none">গজ</span>
+                  <button
+                    type="button"
+                    onClick={() => setFabricGoj((g) => g + 1)}
+                    className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+
+                <span className="text-xs font-black text-amber-600">+</span>
+
+                {/* গিরা */}
+                <div className="flex items-center bg-white border border-amber-300 rounded-lg p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setFabricGira((gi) => Math.max(0, gi - 1))}
+                    className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 cursor-pointer"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <input
+                    type="number"
+                    min="0"
+                    max="15"
+                    value={fabricGira}
+                    onChange={(e) => setFabricGira(Math.max(0, Math.min(15, parseInt(e.target.value, 10) || 0)))}
+                    className="w-7 text-center font-black text-xs text-slate-900 bg-transparent focus:outline-none"
+                  />
+                  <span className="text-[10px] font-black text-amber-900 pr-0.5 select-none">গিরা</span>
+                  <button
+                    type="button"
+                    onClick={() => setFabricGira((gi) => (gi + 1 >= 16 ? 0 : gi + 1))}
+                    className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2 bg-white px-2 py-1 rounded-xl border border-slate-200 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-sm font-black text-slate-900 w-8 text-center">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.min(maxSelectable, q + 1))}
+                  disabled={quantity >= maxSelectable}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
+
+          {isFabric && (
+            <div className="text-right text-[11px] font-bold text-amber-900">
+              নির্বাচিত: {formatFabricQuantity(effectiveQuantity, 'গজ')}
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-xs pt-1">
             <span className="text-slate-500 font-medium">সাবটোটাল:</span>
             <span className="text-base font-black text-slate-900">
-              {currencySymbol}{(variantPrice * quantity).toLocaleString('en-IN')}
+              {currencySymbol}{(variantPrice * effectiveQuantity).toLocaleString('en-IN')}
             </span>
           </div>
 

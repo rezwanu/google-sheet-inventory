@@ -24,10 +24,12 @@ import {
   Zap,
   CheckCircle2,
   Camera,
-  CalendarClock
+  CalendarClock,
+  Scissors
 } from 'lucide-react';
 import BarcodeScannerModal from './BarcodeScannerModal';
 import { calculateExpiryStatus } from '../services/storage';
+import { isFabricUnit } from '../utils/fabricUtils';
 
 export default function ProductCatalog({ 
   products = [], 
@@ -741,6 +743,23 @@ export default function ProductCatalog({
                           <Layers className="w-3.5 h-3.5" />
                           <span>বাছাই</span>
                         </button>
+                      ) : isFabricUnit(product.Unit) ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAddToCart(product);
+                          }}
+                          title="গজ ও গিরা পরিমাপ নির্বাচন করে কার্টে যোগ করুন"
+                          className={`px-2.5 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-black active:scale-95 shadow-2xs cursor-pointer ${
+                            cartQty > 0
+                              ? 'bg-amber-600 text-white border-amber-600 shadow-amber-600/20'
+                              : 'bg-amber-50 hover:bg-amber-600 text-amber-900 hover:text-white border-amber-300'
+                          }`}
+                        >
+                          <Scissors className="w-3.5 h-3.5" />
+                          <span>গজ-গিরা</span>
+                        </button>
                       ) : (
                         <button
                           type="button"
@@ -886,6 +905,23 @@ export default function ProductCatalog({
                                 >
                                   <Layers className="w-3 h-3" />
                                   <span>বাছাই</span>
+                                </button>
+                              ) : isFabricUnit(product.Unit) ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAddToCart(product);
+                                  }}
+                                  title="গজ ও গিরা পরিমাপ নির্বাচন করে কার্টে যোগ করুন"
+                                  className={`px-2 py-1 rounded-lg text-xs font-black transition-all border flex items-center space-x-1 cursor-pointer ${
+                                    cartQty > 0
+                                      ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                                      : 'bg-amber-50 hover:bg-amber-600 text-amber-900 hover:text-white border-amber-300'
+                                  }`}
+                                >
+                                  <Scissors className="w-3 h-3" />
+                                  <span>গজ-গিরা</span>
                                 </button>
                               ) : (
                                 <button

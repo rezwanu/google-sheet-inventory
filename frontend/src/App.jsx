@@ -35,6 +35,8 @@ import ProductVariantSelectModal from './components/ProductVariantSelectModal';
 import SalesReturnModal from './components/SalesReturnModal';
 import StockTransferModal from './components/StockTransferModal';
 import RFMCampaignModal from './components/RFMCampaignModal';
+import FabricCutModal from './components/FabricCutModal';
+import { isFabricUnit } from './utils/fabricUtils';
 
 import {
   getLocalSettings,
@@ -318,6 +320,7 @@ export default function App() {
   // ফেজ ৬: মেয়াদ সতর্কতা ও ভ্যারিয়েন্ট সিলেক্টর মডাল স্টেট
   const [isExpiryAlertModalOpen, setIsExpiryAlertModalOpen] = useState(false);
   const [variantSelectModalProduct, setVariantSelectModalProduct] = useState(null);
+  const [fabricCutProduct, setFabricCutProduct] = useState(null);
 
   // মেয়াদোত্তীর্ণ ও সন্নিকটে থাকা পণ্যের মোট সংখ্যা হিসাব
   const expiringProductsSummary = useMemo(() => {
@@ -959,8 +962,14 @@ export default function App() {
     saveLocalCart(cart);
   }, [cart]);
 
-  // ৪. কার্ট অপারেশনসমূহ (সাপোর্টস সিম্পল পণ্য, সাইজ/রং ভ্যারিয়েন্ট এবং কম্বো বান্ডেল)
-  const handleAddToCart = (product, qtyToAdd = 1) => {
+  // ৪. কার্ট অপারেশনসমূহ (সাপোর্টস সিম্পল পণ্য, সাইজ/রং ভ্যারিয়েন্ট, গজ কাপড় থান এবং কম্বো বান্ডেল)
+  const handleAddToCart = (product, qtyToAdd = 1, fromFabricModal = false) => {
+    // গজ কাপড়ের ক্ষেত্রে যদি পৃথক গজ-গিরা মডাল থেকে না আসে এবং পরিমাণ সুনির্দিষ্ট না থাকে, তবে গজ-গিরা সিলেক্টর ওপেন করুন
+    const isFabric = isFabricUnit(product.Unit || product.unit);
+    if (isFabric && !fromFabricModal && qtyToAdd === 1) {
+      setFabricCutProduct(product);
+      return;
+    }
     const isVariant = Boolean(product.variantId || product.VariantID || product._selectedVariant);
     const variantId = product.variantId || product.VariantID || product._selectedVariant?.VariantID || null;
     const variantName = product.variantName || (product._selectedVariant ? [product._selectedVariant.Size, product._selectedVariant.Color, product._selectedVariant.Weight, product._selectedVariant.Title].filter(Boolean).join(' / ') : '');
@@ -3752,6 +3761,18 @@ export default function App() {
         product={variantSelectModalProduct}
         currencySymbol={settings.CurrencySymbol || '৳'}
         onAddToCart={handleAddToCart}
+      />
+
+      {/* গজ কাপড় ও থান কাটার জন্য গজ-গিরা নির্বাচন মডাল */}
+      <FabricCutModal
+        isOpen={Boolean(fabricCutProduct)}
+        onClose={() => setFabricCutProduct(null)}
+        product={fabricCutProduct}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        cartItems={cart}
+        onConfirmAddToCart={(prod, totalYards) => {
+          handleAddToCart(prod, totalYards, true);
+        }}
       />
 
       {/* ফেজ ৭: পণ্য বিক্রয় রিটার্ন ও স্টোর ক্রেডিট ভাউচার মডাল */}
