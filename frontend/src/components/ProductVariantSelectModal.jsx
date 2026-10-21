@@ -78,6 +78,7 @@ export default function ProductVariantSelectModal({
       ...product,
       SellingPrice: variantPrice,
       CostPrice: Number(currentVariant.CostPrice || product.CostPrice || 0),
+      MinSellingPrice: Number(currentVariant.MinSellingPrice !== undefined ? currentVariant.MinSellingPrice : (product.MinSellingPrice !== undefined ? product.MinSellingPrice : (currentVariant.CostPrice || product.CostPrice || 0))),
       Barcode: currentVariant.Barcode || product.Barcode,
       variantId: currentVariant.VariantID,
       variantName: attributesText || currentVariant.VariantID,

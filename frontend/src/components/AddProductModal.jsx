@@ -103,6 +103,7 @@ export default function AddProductModal({
     category: 'Grocery',
     subCategory: 'Rice & Grain',
     costPrice: '',
+    minSellingPrice: '',
     sellingPrice: '',
     initialStock: '10',
     minStockAlert: '5',
@@ -157,6 +158,7 @@ export default function AddProductModal({
     const generated = [];
     const baseCost = Number(formData.costPrice) || 0;
     const baseSell = Number(formData.sellingPrice) || 0;
+    const baseMinSell = formData.minSellingPrice !== '' ? Number(formData.minSellingPrice) : baseCost;
 
     if (sizes.length > 0 && colors.length > 0) {
       sizes.forEach((size) => {
@@ -167,6 +169,7 @@ export default function AddProductModal({
             Attributes: { Size: size, Color: color },
             Barcode: `${formData.barcode || 'VAR'}-${size}-${color}`.toLowerCase(),
             CostPrice: baseCost,
+            MinSellingPrice: baseMinSell,
             SellingPrice: baseSell,
             StockQuantity: 10
           });
@@ -179,6 +182,7 @@ export default function AddProductModal({
           Attributes: { Size: size },
           Barcode: `${formData.barcode || 'VAR'}-${size}`.toLowerCase(),
           CostPrice: baseCost,
+          MinSellingPrice: baseMinSell,
           SellingPrice: baseSell,
           StockQuantity: 10
         });
@@ -190,6 +194,7 @@ export default function AddProductModal({
           Attributes: { Color: color },
           Barcode: `${formData.barcode || 'VAR'}-${color}`.toLowerCase(),
           CostPrice: baseCost,
+          MinSellingPrice: baseMinSell,
           SellingPrice: baseSell,
           StockQuantity: 10
         });
@@ -324,9 +329,10 @@ export default function AddProductModal({
     );
   }, [formData.barcode, products]);
 
-  // রিয়েল-টাইম মার্জিন ও মুনাফা হিসাব
+  // রিয়েল-টাইম মার্জিন, ফ্লোর প্রাইস ও মুনাফা হিসাব
   const cost = parseFloat(formData.costPrice) || 0;
   const sell = parseFloat(formData.sellingPrice) || 0;
+  const minSell = parseFloat(formData.minSellingPrice) || 0;
   const initialStockNum = parseFloat(formData.initialStock) || 0;
   const minStockNum = parseFloat(formData.minStockAlert) || 5;
   const netProfit = sell - cost;
@@ -334,6 +340,16 @@ export default function AddProductModal({
     ? ((netProfit / cost) * 100).toFixed(1) 
     : (sell > 0 ? '100' : '0');
   const isProfitable = netProfit >= 0;
+
+  // ফ্লোর প্রাইস বিশ্লেষণ (দামাদামির সর্বনিম্ন সীমা)
+  const effectiveFloorPrice = minSell > 0 ? minSell : cost;
+  const minFloorProfit = effectiveFloorPrice - cost;
+  const minFloorMarginPercent = cost > 0 
+    ? ((minFloorProfit / cost) * 100).toFixed(1) 
+    : (effectiveFloorPrice > 0 ? '100' : '0');
+  const isFloorBelowCost = cost > 0 && minSell > 0 && minSell < cost;
+  const isFloorAboveSell = sell > 0 && minSell > 0 && minSell > sell;
+
   const totalStockInvestment = cost * initialStockNum;
   const totalPotentialRevenue = sell * initialStockNum;
   const totalPotentialProfit = netProfit * initialStockNum;
@@ -530,6 +546,20 @@ export default function AddProductModal({
       return;
     }
 
+    const costNum = Number(formData.costPrice) || 0;
+    const sellNum = Number(formData.sellingPrice) || 0;
+    const minSellNum = formData.minSellingPrice !== '' ? Number(formData.minSellingPrice) : costNum;
+
+    if (formData.minSellingPrice !== '' && minSellNum > sellNum) {
+      alert(`নূন্যতম বিক্রয়মূল্য বা ফ্লোর প্রাইস (${currencySymbol}${minSellNum}) সাধারণ বিক্রয়মূল্যের (${currencySymbol}${sellNum}) চেয়ে বেশি হতে পারে না!`);
+      return;
+    }
+
+    if (formData.minSellingPrice !== '' && costNum > 0 && minSellNum < costNum) {
+      const confirmLow = window.confirm(`সতর্কতা: নূন্যতম বিক্রয়মূল্য (${currencySymbol}${minSellNum}) কেনা দামের (${currencySymbol}${costNum}) চেয়ে কম! আপনি কি নিশ্চিতভাবে লোকসানে বিক্রির ফ্লোর প্রাইস রাখতে চান?`);
+      if (!confirmLow) return;
+    }
+
     if (barcodeConflictProduct) {
       alert(`সতর্কতা: এই বারকোডটি (${formData.barcode}) ইতিমধ্যে "${barcodeConflictProduct.ProductName}" পণ্যে ব্যবহৃত হয়েছে! দয়া করে অনন্য বারকোড দিন বা স্বয়ংক্রিয়ভাবে তৈরি করুন।`);
       return;
@@ -538,7 +568,9 @@ export default function AddProductModal({
     const savedProdData = {
       ProductName: formData.productName.trim(),
       Barcode: formData.barcode.trim(),
-      SellingPrice: Number(formData.sellingPrice) || 0,
+      CostPrice: costNum,
+      MinSellingPrice: minSellNum,
+      SellingPrice: sellNum,
       Unit: formData.unit,
       StockQuantity: Number(formData.initialStock) || 0
     };
@@ -547,8 +579,9 @@ export default function AddProductModal({
     try {
       await onSubmitProduct({
         ...formData,
-        costPrice: Number(formData.costPrice) || 0,
-        sellingPrice: Number(formData.sellingPrice) || 0,
+        costPrice: costNum,
+        minSellingPrice: minSellNum,
+        sellingPrice: sellNum,
         initialStock: Number(formData.initialStock) || 0,
         minStockAlert: Number(formData.minStockAlert) || 5,
         imageUrl: imageUploadMode === 'url' ? formData.imageUrl.trim() : '',
@@ -577,6 +610,7 @@ export default function AddProductModal({
         category: uniqueCategories[0] || 'Grocery',
         subCategory: '',
         costPrice: '',
+        minSellingPrice: '',
         sellingPrice: '',
         initialStock: '10',
         minStockAlert: '5',
@@ -1087,8 +1121,8 @@ export default function AddProductModal({
                   </span>
                 </div>
 
-                {/* ক্রয়মূল্য ও বিক্রয়মূল্য */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {/* আর্থিক তথ্য: ক্রয়মূল্য, ফ্লোর প্রাইস (নূন্যতম বিক্রয়মূল্য) ও বিক্রয়মূল্য */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
                   <div>
                     <label className="block text-xs font-bold text-slate-800 mb-1.5">
                       কেনা দাম / Cost ({currencySymbol})
@@ -1111,6 +1145,40 @@ export default function AddProductModal({
                   </div>
 
                   <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-amber-900">
+                        নূন্যতম বিক্রয়মূল্য ({currencySymbol})
+                      </label>
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded border border-amber-300" title="দামাদামির সর্বনিম্ন সীমা">
+                        ফ্লোর প্রাইস
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs font-bold text-amber-600">
+                        {currencySymbol}
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="minSellingPrice"
+                        placeholder={formData.costPrice ? `${formData.costPrice}` : "110.00"}
+                        value={formData.minSellingPrice}
+                        onChange={handleChange}
+                        className={`w-full pl-7 pr-3 py-2 bg-amber-50/50 border rounded-xl text-sm font-black text-amber-950 focus:outline-none focus:ring-4 transition-all shadow-2xs ${
+                          isFloorBelowCost 
+                            ? 'border-rose-400 focus:ring-rose-500/10 focus:border-rose-500' 
+                            : isFloorAboveSell 
+                              ? 'border-rose-400 focus:ring-rose-500/10 focus:border-rose-500' 
+                              : 'border-amber-300 focus:ring-amber-500/10 focus:border-amber-500'
+                        }`}
+                        title="কাস্টমার দামাদামি করলেও এর নিচে বিক্রি করা যাবে না"
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-1">দামাদামির সর্বনিম্ন সীমা</p>
+                  </div>
+
+                  <div>
                     <label className="block text-xs font-bold text-slate-800 mb-1.5">
                       বিক্রয়মূল্য / Selling ({currencySymbol}) *
                     </label>
@@ -1130,30 +1198,64 @@ export default function AddProductModal({
                         className="w-full pl-7 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-2xs"
                       />
                     </div>
+                    <p className="text-[10px] text-slate-500 mt-1">স্বাভাবিক বিক্রয়মূল্য (MRP)</p>
                   </div>
                 </div>
 
+                {/* সতর্কবার্তা যদি ফ্লোর প্রাইস কেনা দামের নিচে বা বিক্রয়মূল্যের উপরে যায় */}
+                {isFloorBelowCost && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>সতর্কতা: নূন্যতম বিক্রয়মূল্য ({currencySymbol}{minSell}) কেনা দামের ({currencySymbol}{cost}) নিচে নির্ধারণ করা হয়েছে (লোকসান হতে পারে)।</span>
+                  </div>
+                )}
+                {isFloorAboveSell && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>ত্রুটি: নূন্যতম বিক্রয়মূল্য ({currencySymbol}{minSell}) সাধারণ বিক্রয়মূল্যের ({currencySymbol}{sell}) চেয়ে বেশি হতে পারে না।</span>
+                  </div>
+                )}
+
                 {/* লাইভ লাভ ও মার্জিন প্রিভিউ বার */}
-                {(cost > 0 || sell > 0) && (
-                  <div className={`p-3 rounded-xl border flex items-center justify-between text-xs font-semibold transition-all ${
-                    isProfitable 
-                      ? 'bg-emerald-50/80 border-emerald-200/90 text-emerald-900' 
-                      : 'bg-rose-50/80 border-rose-200/90 text-rose-900'
-                  }`}>
-                    <div className="flex items-center space-x-2">
-                      <TrendingUp className={`w-4 h-4 ${isProfitable ? 'text-emerald-600' : 'text-rose-600'}`} />
-                      <span>
-                        একক প্রতি লাভ: <strong className="font-black">{currencySymbol}{netProfit.toFixed(2)}</strong>
-                      </span>
+                {(cost > 0 || sell > 0 || minSell > 0) && (
+                  <div className="p-3 rounded-xl border bg-slate-100/70 border-slate-200 space-y-2">
+                    <div className={`p-2.5 rounded-lg border flex items-center justify-between text-xs font-semibold transition-all ${
+                      isProfitable 
+                        ? 'bg-emerald-50/90 border-emerald-200 text-emerald-900' 
+                        : 'bg-rose-50/90 border-rose-200 text-rose-900'
+                    }`}>
+                      <div className="flex items-center space-x-2">
+                        <TrendingUp className={`w-4 h-4 ${isProfitable ? 'text-emerald-600' : 'text-rose-600'}`} />
+                        <span>
+                          স্বাভাবিক লাভ (MRP-তে): <strong className="font-black">{currencySymbol}{netProfit.toFixed(2)}</strong>
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-[11px] text-slate-500">প্রফিট মার্জিন:</span>
+                        <span className={`px-2 py-0.5 rounded-full font-black text-xs ${
+                          isProfitable ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                        }`}>
+                          {isProfitable ? `+${profitMarginPercent}%` : `${profitMarginPercent}%`}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-1.5">
-                      <span className="text-[11px] text-slate-500">প্রফিট মার্জিন:</span>
-                      <span className={`px-2 py-0.5 rounded-full font-black text-xs ${
-                        isProfitable ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
-                      }`}>
-                        {isProfitable ? `+${profitMarginPercent}%` : `${profitMarginPercent}%`}
-                      </span>
-                    </div>
+
+                    {minSell > 0 && (
+                      <div className="flex items-center justify-between text-xs font-semibold px-2.5 py-1.5 bg-amber-50/80 border border-amber-200/90 rounded-lg text-amber-950">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                          <span>
+                            দামাদামির সর্বনিম্ন লাভ (ফ্লোর দর {currencySymbol}{minSell.toFixed(2)}): <strong className="font-black">{currencySymbol}{minFloorProfit.toFixed(2)}</strong>
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <span className="text-[11px] text-amber-700">ফ্লোর মার্জিন:</span>
+                          <span className="px-1.5 py-0.5 rounded font-black text-[11px] bg-amber-200 text-amber-950">
+                            {minFloorProfit >= 0 ? `+${minFloorMarginPercent}%` : `${minFloorMarginPercent}%`}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

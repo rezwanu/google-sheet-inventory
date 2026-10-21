@@ -175,10 +175,20 @@ export default function CartView({
                       </span>
                     )}
                   </h4>
-                  <div className="flex items-center space-x-2 text-[11px] text-slate-500 mt-0.5">
+                  <div className="flex items-center space-x-2 text-[11px] text-slate-500 mt-0.5 flex-wrap">
                     <span>
                       {currencySymbol}{Number(item.sellingPrice).toFixed(2)} / {item.unit || 'Pcs'}
                     </span>
+                    {item.minSellingPrice !== undefined && Number(item.minSellingPrice) > 0 && (
+                      <span className="text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1 rounded" title="দামাদামির সর্বনিম্ন সীমা">
+                        ফ্লোর: {currencySymbol}{Number(item.minSellingPrice).toFixed(2)}
+                      </span>
+                    )}
+                    {item.isBargained && (
+                      <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1 rounded">
+                        দরদামকৃত
+                      </span>
+                    )}
                     {isAtMaxStock && (
                       <span className="text-[10px] text-amber-600 font-medium">
                         (সর্বোচ্চ স্টক)

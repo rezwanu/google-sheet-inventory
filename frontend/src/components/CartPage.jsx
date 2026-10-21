@@ -24,7 +24,9 @@ import {
   Zap,
   Clock,
   Check,
-  Store
+  Store,
+  X,
+  Edit3
 } from 'lucide-react';
 
 export default function CartPage({
@@ -32,6 +34,7 @@ export default function CartPage({
   currencySymbol = '৳',
   taxRatePercent = 0,
   onUpdateQuantity,
+  onUpdateItemPrice,
   onRemoveItem,
   onClearCart,
   onNavigateToCatalog,
@@ -45,6 +48,11 @@ export default function CartPage({
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
   const [couponError, setCouponError] = useState('');
+
+  // দরদাম বা কাস্টম মূল্য এডিটিং স্টেট
+  const [editingPriceKey, setEditingPriceKey] = useState(null);
+  const [tempPriceInput, setTempPriceInput] = useState('');
+  const [tempPriceError, setTempPriceError] = useState('');
 
   // ব্যবহারকারীর অথেনটিকেশন ও রোল নির্ধারণ
   const isLoggedIn = Boolean(activeUser && activeUser.Role && activeUser.UserID !== 'USER-GUEST');
@@ -65,6 +73,36 @@ export default function CartPage({
     (acc, item) => acc + (Number(item.sellingPrice) || 0) * (Number(item.quantity) || 0),
     0
   );
+
+  // ফ্লোর প্রাইস ও মার্জিন সুরক্ষা হিসাব (দামাদামির সর্বনিম্ন সীমা)
+  const minCartFloorTotal = cartItems.reduce(
+    (acc, it) => acc + (Number(it.minSellingPrice !== undefined ? it.minSellingPrice : (it.costPrice || 0)) * (Number(it.quantity) || 0)),
+    0
+  );
+  const maxAllowableDiscount = Math.max(0, subTotal - minCartFloorTotal);
+  const isDiscountBreachingFloor = discountAmount > maxAllowableDiscount && maxAllowableDiscount >= 0;
+
+  // দরদাম সংরক্ষণ হ্যান্ডলার
+  const handleSaveItemPrice = (itemKey, item) => {
+    const val = parseFloat(tempPriceInput);
+    if (isNaN(val) || val <= 0) {
+      setTempPriceError('সঠিক বিক্রয়মূল্য লিখুন');
+      return;
+    }
+    const floor = Number(item.minSellingPrice !== undefined ? item.minSellingPrice : (item.costPrice || 0));
+    if (val < floor) {
+      setTempPriceError(`নূন্যতম ফ্লোর প্রাইস ${currencySymbol}${floor.toFixed(2)} এর নিচে যাওয়া যাবে না!`);
+      return;
+    }
+    if (onUpdateItemPrice) {
+      const success = onUpdateItemPrice(itemKey, val);
+      if (success !== false) {
+        setEditingPriceKey(null);
+        setTempPriceInput('');
+        setTempPriceError('');
+      }
+    }
+  };
 
   // কার্টের আইটেমগুলোর জন্য প্রযোজ্য ও সক্রিয় কুপনসমূহ ফিল্টার
   const availableCouponsForCart = useMemo(() => {
@@ -429,16 +467,156 @@ export default function CartPage({
                           )}
                         </h4>
 
-                        <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
+                        <div className="flex items-center gap-2 text-xs text-slate-500 mt-1 flex-wrap">
                           <span>
-                            একক মূল্য: <strong className="text-slate-800">{formatCurrency(item.sellingPrice)}</strong>
+                            একক মূল্য: <strong className="text-slate-800 font-black">{formatCurrency(item.sellingPrice)}</strong>
                           </span>
+                          {item.originalSellingPrice && item.originalSellingPrice !== item.sellingPrice && (
+                            <span className="text-[11px] line-through text-slate-400" title="আসল বিক্রয়মূল্য (MRP)">
+                              {formatCurrency(item.originalSellingPrice)}
+                            </span>
+                          )}
+                          {item.minSellingPrice !== undefined && Number(item.minSellingPrice) > 0 && (
+                            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200/90 px-1.5 py-0.5 rounded-md" title="কাস্টমার দামাদামি করলেও এর নিচে বিক্রি করা যাবে না">
+                              ফ্লোর: {formatCurrency(item.minSellingPrice)}
+                            </span>
+                          )}
+                          {item.isBargained && (
+                            <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-md">
+                              দরদামে নির্ধারিত
+                            </span>
+                          )}
                           {item.stockQuantity !== undefined && (
                             <span className="text-slate-400 font-medium">
                               (মজুদ: {item.stockQuantity} {item.unit || ''})
                             </span>
                           )}
+                          {onUpdateItemPrice && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (editingPriceKey === itemKey) {
+                                  setEditingPriceKey(null);
+                                  setTempPriceInput('');
+                                  setTempPriceError('');
+                                } else {
+                                  setEditingPriceKey(itemKey);
+                                  setTempPriceInput(String(item.sellingPrice));
+                                  setTempPriceError('');
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer ml-1"
+                              title="কাস্টমারের সাথে দরদাম করতে মূল্য পরিবর্তন করুন"
+                            >
+                              <Tag className="w-3 h-3 text-indigo-500" />
+                              <span>{editingPriceKey === itemKey ? 'বন্ধ করুন' : 'দরদাম করুন'}</span>
+                            </button>
+                          )}
                         </div>
+
+                        {/* ইনলাইন দামাদামি (Bargaining) ইনপুট বক্স */}
+                        {editingPriceKey === itemKey && (
+                          <div className="mt-2 p-2.5 rounded-xl bg-amber-50/90 border border-amber-300 animate-in fade-in duration-150 space-y-1.5 shadow-2xs">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-amber-950">
+                              <span className="flex items-center gap-1">
+                                <Tag className="w-3.5 h-3.5 text-amber-600" />
+                                <span>দামাদামির বিক্রয়মূল্য নির্ধারণ:</span>
+                              </span>
+                              <span className="text-amber-800">
+                                সর্বনিম্ন ফ্লোর সীমা: <strong className="font-black">{formatCurrency(item.minSellingPrice || item.costPrice || 0)}</strong>
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="relative flex-1">
+                                <span className="absolute left-2.5 top-1.5 text-xs font-bold text-amber-600">{currencySymbol}</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={tempPriceInput}
+                                  onChange={(e) => {
+                                    setTempPriceInput(e.target.value);
+                                    const val = parseFloat(e.target.value);
+                                    const floor = Number(item.minSellingPrice !== undefined ? item.minSellingPrice : (item.costPrice || 0));
+                                    if (!isNaN(val) && val < floor) {
+                                      setTempPriceError(`নূন্যতম ফ্লোর প্রাইস ${formatCurrency(floor)} এর নিচে যাওয়া যাবে না!`);
+                                    } else {
+                                      setTempPriceError('');
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleSaveItemPrice(itemKey, item);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingPriceKey(null);
+                                    }
+                                  }}
+                                  className={`w-full pl-6 pr-2 py-1 text-xs font-black rounded-lg border bg-white focus:outline-none focus:ring-2 ${
+                                    tempPriceError ? 'border-rose-400 focus:ring-rose-500 text-rose-900' : 'border-amber-300 focus:ring-indigo-500 text-slate-900'
+                                  }`}
+                                  placeholder="নতুন দর লিখুন"
+                                  autoFocus
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleSaveItemPrice(itemKey, item)}
+                                className="px-2.5 py-1 text-xs font-black bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>প্রয়োগ</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingPriceKey(null);
+                                  setTempPriceError('');
+                                }}
+                                className="px-2 py-1 text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg active:scale-95 transition-all cursor-pointer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            
+                            {/* শর্টকাট বাটন: ফ্লোর দর ও আসল MRP */}
+                            <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
+                              {item.minSellingPrice !== undefined && Number(item.minSellingPrice) > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setTempPriceInput(String(item.minSellingPrice));
+                                    setTempPriceError('');
+                                  }}
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 transition-colors cursor-pointer"
+                                  title="সর্বনিম্ন অনুমোদনযোগ্য দর সেট করুন"
+                                >
+                                  সর্বনিম্ন ফ্লোর দর ({formatCurrency(item.minSellingPrice)})
+                                </button>
+                              )}
+                              {item.originalSellingPrice && item.originalSellingPrice !== item.sellingPrice && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setTempPriceInput(String(item.originalSellingPrice));
+                                    setTempPriceError('');
+                                  }}
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors cursor-pointer"
+                                  title="আসল MRP ফিরিয়ে আনুন"
+                                >
+                                  আসল MRP ({formatCurrency(item.originalSellingPrice)})
+                                </button>
+                              )}
+                            </div>
+
+                            {tempPriceError && (
+                              <p className="text-[11px] font-bold text-rose-600 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3 shrink-0" />
+                                <span>{tempPriceError}</span>
+                              </p>
+                            )}
+                          </div>
+                        )}
 
                         {isAtMaxStock && (
                           <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 mt-1">
@@ -872,6 +1050,19 @@ export default function CartPage({
                   </div>
                 )}
 
+                {/* ফ্লোর প্রাইস মার্জিন লঙ্ঘন সতর্কতা */}
+                {isDiscountBreachingFloor && (
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs font-semibold space-y-1 shadow-2xs">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>দামাদামির সর্বোচ্চ ছাড় অতিক্রম হয়েছে!</span>
+                    </div>
+                    <p className="text-[11px] text-amber-800">
+                      পণ্যের নূন্যতম ফ্লোর প্রাইস বজায় রাখতে এই কার্টে সর্বোচ্চ অনুমোদনযোগ্য ছাড় <strong>{formatCurrency(maxAllowableDiscount)}</strong>।
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-slate-600">
                   <span>ভ্যাট ও কর ({taxRatePercent}%):</span>
                   <span className="font-semibold text-slate-800">{formatCurrency(taxAmount)}</span>
@@ -897,7 +1088,13 @@ export default function CartPage({
               <div className="pt-2">
                 <button
                   type="button"
-                  onClick={onNavigateToCheckout}
+                  onClick={() => {
+                    if (isDiscountBreachingFloor) {
+                      const confirmProceed = window.confirm(`সতর্কতা: বর্তমান মোট ছাড় পণ্যের নূন্যতম ফ্লোর প্রাইস সীমা (${formatCurrency(maxAllowableDiscount)}) অতিক্রম করেছে!\n\nআপনি কি নিশ্চিত যে এই বিশেষ ছাড়ে চেকআউট করতে চান?`);
+                      if (!confirmProceed) return;
+                    }
+                    onNavigateToCheckout();
+                  }}
                   disabled={cartItems.length === 0}
                   className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.99] text-white font-black rounded-2xl shadow-lg shadow-emerald-600/25 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >

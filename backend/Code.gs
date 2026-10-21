@@ -154,6 +154,9 @@ function getSheetRowsAsObjects(sheetName) {
       if (rowObj.CostPrice === undefined) {
         rowObj.CostPrice = rowObj['Cost Price'] !== undefined ? rowObj['Cost Price'] : (rowObj.Cost !== undefined ? rowObj.Cost : (rowObj.BuyPrice !== undefined ? rowObj.BuyPrice : (rowObj.PurchasePrice !== undefined ? rowObj.PurchasePrice : 0)));
       }
+      if (rowObj.MinSellingPrice === undefined) {
+        rowObj.MinSellingPrice = rowObj['Min Selling Price'] !== undefined ? rowObj['Min Selling Price'] : (rowObj.minSellingPrice !== undefined ? rowObj.minSellingPrice : (rowObj.FloorPrice !== undefined ? rowObj.FloorPrice : (rowObj.floorPrice !== undefined ? rowObj.floorPrice : (rowObj.MinPrice !== undefined ? rowObj.MinPrice : (rowObj.CostPrice !== undefined ? rowObj.CostPrice : 0)))));
+      }
       if (rowObj.StockQuantity === undefined) {
         rowObj.StockQuantity = rowObj.StockQuantit !== undefined ? rowObj.StockQuantit : (rowObj.StockQty !== undefined ? rowObj.StockQty : (rowObj['Stock Quantity'] !== undefined ? rowObj['Stock Quantity'] : (rowObj.Stock !== undefined ? rowObj.Stock : (rowObj.Quantity !== undefined ? rowObj.Quantity : (rowObj.Qty !== undefined ? rowObj.Qty : 0)))));
       }
@@ -903,7 +906,7 @@ function ensureProductsHeaders(productsSheet) {
   if (productsSheet.getLastRow() === 0) {
     const defaultHeaders = [
       'ProductID', 'Barcode', 'ProductName', 'Category', 'SubCategory',
-      'CostPrice', 'SellingPrice', 'StockQuantity', 'MinStockAlert', 
+      'CostPrice', 'MinSellingPrice', 'SellingPrice', 'StockQuantity', 'MinStockAlert', 
       'Unit', 'ImageUrl', 'ImageCaption', 'ShortDescription', 'Description', 'Features', 
       'CreatedAt', 'UpdatedAt',
       'HasVariants', 'VariantsJSON', 'BatchNumber', 'ExpiryDate', 'MfgDate', 'IsBundle', 'BundleItemsJSON'
@@ -937,6 +940,18 @@ function ensureProductsHeaders(productsSheet) {
       productsSheet.getRange(1, targetIdx + 2).setValue('CostPrice');
     } else {
       productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('CostPrice');
+    }
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ২.১ MinSellingPrice কলাম যুক্ত করা (যদি না থাকে - দামাদামির ফ্লোর প্রাইস)
+  if (findCol(headers, 'MinSellingPrice', 'FloorPrice', 'MinPrice') === -1) {
+    const costIndex = findCol(headers, 'CostPrice', 'Cost', 'BuyPrice');
+    if (costIndex !== -1) {
+      productsSheet.insertColumnAfter(costIndex + 1);
+      productsSheet.getRange(1, costIndex + 2).setValue('MinSellingPrice');
+    } else {
+      productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('MinSellingPrice');
     }
     headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
   }
@@ -2107,6 +2122,7 @@ function handleAddProduct(spreadsheet, payload) {
     const category = payload.category || payload.Category || 'General';
     const subCategory = payload.subCategory || payload.SubCategory || '';
     const costPrice = payload.costPrice !== undefined ? payload.costPrice : (payload.CostPrice !== undefined ? payload.CostPrice : 0);
+    const minSellingPrice = payload.minSellingPrice !== undefined ? payload.minSellingPrice : (payload.MinSellingPrice !== undefined ? payload.MinSellingPrice : (payload.FloorPrice !== undefined ? payload.FloorPrice : costPrice));
     const sellingPrice = payload.sellingPrice !== undefined ? payload.sellingPrice : (payload.SellingPrice !== undefined ? payload.SellingPrice : 0);
     const initialStock = payload.initialStock !== undefined ? payload.initialStock : (payload.stockQuantity !== undefined ? payload.stockQuantity : (payload.StockQuantity !== undefined ? payload.StockQuantity : 0));
     const minStockAlert = payload.minStockAlert !== undefined ? payload.minStockAlert : (payload.MinStockAlert !== undefined ? payload.MinStockAlert : 5);
@@ -2211,6 +2227,7 @@ function handleAddProduct(spreadsheet, payload) {
     setAt(findCol(headers, 'Category', 'Cat'), category || 'General');
     setAt(findCol(headers, 'SubCategory', 'SubCat'), subCategory || '');
     setAt(findCol(headers, 'CostPrice', 'Cost', 'BuyPrice'), cPrice);
+    setAt(findCol(headers, 'MinSellingPrice', 'FloorPrice', 'MinPrice'), Number(minSellingPrice) || cPrice);
     setAt(findCol(headers, 'SellingPrice', 'Price', 'SalePrice'), sPrice);
     setAt(findCol(headers, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity', 'Qty'), stockQty);
     setAt(findCol(headers, 'MinStockAlert', 'MinStockAler', 'MinStock', 'Alert'), Number(minStockAlert) || 5);
@@ -2290,6 +2307,7 @@ function handleAddProduct(spreadsheet, payload) {
         imageCaption: imageCaption,
         stockQuantity: stockQty,
         sellingPrice: sPrice,
+        minSellingPrice: Number(minSellingPrice) || cPrice,
         costPrice: cPrice
       }
     };
@@ -2322,6 +2340,7 @@ function handleUpdateProduct(spreadsheet, payload) {
   const category = payload.category || payload.Category;
   const subCategory = payload.subCategory !== undefined ? payload.subCategory : payload.SubCategory;
   const costPrice = payload.costPrice !== undefined ? Number(payload.costPrice) : (payload.CostPrice !== undefined ? Number(payload.CostPrice) : undefined);
+  const minSellingPrice = payload.minSellingPrice !== undefined ? Number(payload.minSellingPrice) : (payload.MinSellingPrice !== undefined ? Number(payload.MinSellingPrice) : (payload.FloorPrice !== undefined ? Number(payload.FloorPrice) : undefined));
   const sellingPrice = payload.sellingPrice !== undefined ? Number(payload.sellingPrice) : (payload.SellingPrice !== undefined ? Number(payload.SellingPrice) : undefined);
   const stockQuantity = payload.stockQuantity !== undefined ? Number(payload.stockQuantity) : (payload.StockQuantity !== undefined ? Number(payload.StockQuantity) : undefined);
   const minStockAlert = payload.minStockAlert !== undefined ? Number(payload.minStockAlert) : (payload.MinStockAlert !== undefined ? Number(payload.MinStockAlert) : undefined);
@@ -2395,6 +2414,7 @@ function handleUpdateProduct(spreadsheet, payload) {
   const catColIdx = findCol(headers, 'Category', 'Cat');
   const subCatColIdx = findCol(headers, 'SubCategory', 'SubCat');
   const costColIdx = findCol(headers, 'CostPrice', 'Cost', 'BuyPrice');
+  const minSellColIdx = findCol(headers, 'MinSellingPrice', 'FloorPrice', 'MinPrice');
   const sellColIdx = findCol(headers, 'SellingPrice', 'Price', 'SalePrice');
   const stockColIdx = findCol(headers, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity', 'Qty');
   const alertColIdx = findCol(headers, 'MinStockAlert', 'MinStockAler', 'MinStock', 'Alert');
@@ -2461,6 +2481,7 @@ function handleUpdateProduct(spreadsheet, payload) {
   updateIfDefined(catColIdx, category);
   updateIfDefined(subCatColIdx, subCategory);
   updateIfDefined(costColIdx, costPrice);
+  updateIfDefined(minSellColIdx, minSellingPrice);
   updateIfDefined(sellColIdx, sellingPrice);
   updateIfDefined(stockColIdx, stockQuantity);
   updateIfDefined(alertColIdx, minStockAlert);
@@ -2510,6 +2531,7 @@ function handleUpdateProduct(spreadsheet, payload) {
       category: category,
       subCategory: subCategory,
       costPrice: costPrice,
+      minSellingPrice: minSellingPrice,
       sellingPrice: sellingPrice,
       stockQuantity: stockQuantity,
       unit: unit,

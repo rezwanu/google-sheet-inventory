@@ -24,7 +24,8 @@ import {
   CalendarClock,
   Box,
   Sparkles,
-  Trash2
+  Trash2,
+  TrendingUp
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';
@@ -84,6 +85,7 @@ export default function EditProductModal({
     category: 'General',
     subCategory: '',
     costPrice: '',
+    minSellingPrice: '',
     sellingPrice: '',
     stockQuantity: '',
     minStockAlert: '5',
@@ -143,6 +145,7 @@ export default function EditProductModal({
     const generated = [];
     const baseCost = Number(formData.costPrice) || 0;
     const baseSell = Number(formData.sellingPrice) || 0;
+    const baseMinSell = formData.minSellingPrice !== '' ? Number(formData.minSellingPrice) : baseCost;
 
     if (sizes.length > 0 && colors.length > 0) {
       sizes.forEach((size) => {
@@ -153,6 +156,7 @@ export default function EditProductModal({
             Attributes: { Size: size, Color: color },
             Barcode: `${formData.barcode || 'VAR'}-${size}-${color}`.toLowerCase(),
             CostPrice: baseCost,
+            MinSellingPrice: baseMinSell,
             SellingPrice: baseSell,
             StockQuantity: 10
           });
@@ -165,6 +169,7 @@ export default function EditProductModal({
           Attributes: { Size: size },
           Barcode: `${formData.barcode || 'VAR'}-${size}`.toLowerCase(),
           CostPrice: baseCost,
+          MinSellingPrice: baseMinSell,
           SellingPrice: baseSell,
           StockQuantity: 10
         });
@@ -176,6 +181,7 @@ export default function EditProductModal({
           Attributes: { Color: color },
           Barcode: `${formData.barcode || 'VAR'}-${color}`.toLowerCase(),
           CostPrice: baseCost,
+          MinSellingPrice: baseMinSell,
           SellingPrice: baseSell,
           StockQuantity: 10
         });
@@ -270,6 +276,7 @@ export default function EditProductModal({
         category: product.Category || 'General',
         subCategory: product.SubCategory || '',
         costPrice: product.CostPrice !== undefined ? String(product.CostPrice) : '',
+        minSellingPrice: product.MinSellingPrice !== undefined ? String(product.MinSellingPrice) : (product.minSellingPrice !== undefined ? String(product.minSellingPrice) : ''),
         sellingPrice: product.SellingPrice !== undefined ? String(product.SellingPrice) : '',
         stockQuantity: product.StockQuantity !== undefined ? String(product.StockQuantity) : '0',
         minStockAlert: product.MinStockAlert !== undefined ? String(product.MinStockAlert) : '5',
@@ -354,6 +361,25 @@ export default function EditProductModal({
         String(p.Barcode).trim().toLowerCase() === clean
     );
   }, [formData.barcode, formData.productId, products]);
+
+  // রিয়েল-টাইম মার্জিন, ফ্লোর প্রাইস ও মুনাফা হিসাব
+  const cost = parseFloat(formData.costPrice) || 0;
+  const sell = parseFloat(formData.sellingPrice) || 0;
+  const minSell = parseFloat(formData.minSellingPrice) || 0;
+  const netProfit = sell - cost;
+  const profitMarginPercent = cost > 0 
+    ? ((netProfit / cost) * 100).toFixed(1) 
+    : (sell > 0 ? '100' : '0');
+  const isProfitable = netProfit >= 0;
+
+  // ফ্লোর প্রাইস বিশ্লেষণ (দামাদামির সর্বনিম্ন সীমা)
+  const effectiveFloorPrice = minSell > 0 ? minSell : cost;
+  const minFloorProfit = effectiveFloorPrice - cost;
+  const minFloorMarginPercent = cost > 0 
+    ? ((minFloorProfit / cost) * 100).toFixed(1) 
+    : (effectiveFloorPrice > 0 ? '100' : '0');
+  const isFloorBelowCost = cost > 0 && minSell > 0 && minSell < cost;
+  const isFloorAboveSell = sell > 0 && minSell > 0 && minSell > sell;
 
   if (!isOpen || !product) return null;
 
@@ -544,6 +570,20 @@ export default function EditProductModal({
       return;
     }
 
+    const costNum = Number(formData.costPrice) || 0;
+    const sellNum = Number(formData.sellingPrice) || 0;
+    const minSellNum = formData.minSellingPrice !== '' ? Number(formData.minSellingPrice) : costNum;
+
+    if (formData.minSellingPrice !== '' && minSellNum > sellNum) {
+      alert(`নূন্যতম বিক্রয়মূল্য (${currencySymbol}${minSellNum}) সাধারণ বিক্রয়মূল্যের (${currencySymbol}${sellNum}) চেয়ে বেশি হতে পারে না!`);
+      return;
+    }
+
+    if (formData.minSellingPrice !== '' && costNum > 0 && minSellNum < costNum) {
+      const confirmLow = window.confirm(`সতর্কতা: নূন্যতম বিক্রয়মূল্য (${currencySymbol}${minSellNum}) কেনা দামের (${currencySymbol}${costNum}) চেয়ে কম! আপনি কি নিশ্চিতভাবে লোকসানে বিক্রির অনুমতি দিতে চান?`);
+      if (!confirmLow) return;
+    }
+
     if (barcodeConflictProduct) {
       alert(`সতর্কতা: এই বারকোডটি (${formData.barcode}) ইতিমধ্যে "${barcodeConflictProduct.ProductName}" পণ্যে ব্যবহৃত হয়েছে! দয়া করে অনন্য বারকোড দিন বা স্বয়ংক্রিয়ভাবে তৈরি করুন।`);
       return;
@@ -554,8 +594,9 @@ export default function EditProductModal({
       await onSubmitUpdate({
         ...formData,
         productId: product.ProductID,
-        costPrice: Number(formData.costPrice) || 0,
-        sellingPrice: Number(formData.sellingPrice) || 0,
+        costPrice: costNum,
+        minSellingPrice: minSellNum,
+        sellingPrice: sellNum,
         stockQuantity: Number(formData.stockQuantity) || 0,
         minStockAlert: Number(formData.minStockAlert) || 5,
         imageUrl: imageUploadMode === 'url' ? formData.imageUrl.trim() : (formData.imageUrl || ''),
@@ -860,46 +901,113 @@ export default function EditProductModal({
             </div>
           </div>
 
-          {/* ৪. আর্থিক তথ্য: কেনা দাম ও বিক্রয়মূল্য */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                কেনা দাম / Cost ({currencySymbol})
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  name="costPrice"
-                  step="any"
-                  min="0"
-                  value={formData.costPrice}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  className="w-full pl-7 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
-                />
-                <span className="absolute left-2.5 top-1.5 text-xs text-slate-400 font-bold">{currencySymbol}</span>
+          {/* ৪. আর্থিক তথ্য: কেনা দাম, নূন্যতম বিক্রয়মূল্য (ফ্লোর প্রাইস) ও বিক্রয়মূল্য */}
+          <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  কেনা দাম / Cost ({currencySymbol})
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="costPrice"
+                    step="any"
+                    min="0"
+                    value={formData.costPrice}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                    className="w-full pl-7 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium"
+                  />
+                  <span className="absolute left-2.5 top-1.5 text-xs text-slate-400 font-bold">{currencySymbol}</span>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-amber-900">
+                    ফ্লোর প্রাইস ({currencySymbol})
+                  </label>
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-100/90 px-1.5 py-0.2 rounded border border-amber-300">
+                    নূন্যতম দর
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="minSellingPrice"
+                    step="any"
+                    min="0"
+                    value={formData.minSellingPrice}
+                    onChange={handleChange}
+                    placeholder={formData.costPrice ? `${formData.costPrice}` : "0.00"}
+                    className={`w-full pl-7 pr-3 py-1.5 text-xs font-black text-amber-950 border rounded-lg focus:ring-2 focus:outline-none bg-amber-50/60 transition-all ${
+                      isFloorBelowCost 
+                        ? 'border-rose-400 focus:ring-rose-500' 
+                        : isFloorAboveSell 
+                          ? 'border-rose-400 focus:ring-rose-500' 
+                          : 'border-amber-300 focus:ring-amber-500'
+                    }`}
+                    title="কাস্টমার দামাদামি করলেও এর নিচে বিক্রি করা যাবে না"
+                  />
+                  <span className="absolute left-2.5 top-1.5 text-xs text-amber-600 font-bold">{currencySymbol}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-indigo-900 mb-1">
+                  বিক্রয়মূল্য / Selling ({currencySymbol}) <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="sellingPrice"
+                    step="any"
+                    min="0"
+                    required
+                    value={formData.sellingPrice}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                    className="w-full pl-7 pr-3 py-1.5 text-xs font-bold text-indigo-900 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+                  />
+                  <span className="absolute left-2.5 top-1.5 text-xs text-indigo-600 font-bold">{currencySymbol}</span>
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-indigo-900 mb-1">
-                বিক্রয়মূল্য / Selling ({currencySymbol}) <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  name="sellingPrice"
-                  step="any"
-                  min="0"
-                  required
-                  value={formData.sellingPrice}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  className="w-full pl-7 pr-3 py-1.5 text-xs font-bold text-indigo-900 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
-                />
-                <span className="absolute left-2.5 top-1.5 text-xs text-indigo-600 font-bold">{currencySymbol}</span>
+            {/* সতর্কবার্তা যদি ফ্লোর প্রাইস কেনা দামের নিচে বা বিক্রয়মূল্যের উপরে যায় */}
+            {isFloorBelowCost && (
+              <div className="p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center space-x-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                <span>সতর্কতা: নূন্যতম বিক্রয়মূল্য ({currencySymbol}{minSell}) কেনা দামের ({currencySymbol}{cost}) নিচে নির্ধারণ করা হয়েছে (লোকসান হতে পারে)।</span>
               </div>
-            </div>
+            )}
+            {isFloorAboveSell && (
+              <div className="p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center space-x-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                <span>ত্রুটি: নূন্যতম বিক্রয়মূল্য ({currencySymbol}{minSell}) সাধারণ বিক্রয়মূল্যের ({currencySymbol}{sell}) চেয়ে বেশি হতে পারে না।</span>
+              </div>
+            )}
+
+            {/* লাইভ লাভ ও মার্জিন প্রিভিউ বার */}
+            {(cost > 0 || sell > 0 || minSell > 0) && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 pt-1 text-xs border-t border-slate-200">
+                <div className="flex items-center space-x-1 text-slate-700">
+                  <span className="text-[11px] font-semibold">স্বাভাবিক লাভ:</span>
+                  <strong className={isProfitable ? 'text-emerald-700 font-black' : 'text-rose-700 font-black'}>
+                    {currencySymbol}{netProfit.toFixed(2)} ({isProfitable ? `+${profitMarginPercent}%` : `${profitMarginPercent}%`})
+                  </strong>
+                </div>
+                {minSell > 0 && (
+                  <div className="flex items-center space-x-1 text-amber-900 bg-amber-100/70 px-2 py-0.5 rounded-md border border-amber-200">
+                    <span className="text-[11px] font-semibold">ফ্লোর দর লাভ:</span>
+                    <strong className="font-black text-amber-950">
+                      {currencySymbol}{minFloorProfit.toFixed(2)} ({minFloorProfit >= 0 ? `+${minFloorMarginPercent}%` : `${minFloorMarginPercent}%`})
+                    </strong>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ৫. বর্তমান মজুত ও পরিমাপক একক (Unit) */}

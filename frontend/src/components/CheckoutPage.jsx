@@ -160,6 +160,14 @@ export default function CheckoutPage({
 
   const totalDiscount = initialDiscount + storeCreditDiscount;
 
+  // ফ্লোর প্রাইস ও মার্জিন সুরক্ষা হিসাব
+  const minCartFloorTotal = cartItems.reduce(
+    (acc, it) => acc + (Number(it.minSellingPrice !== undefined ? it.minSellingPrice : (it.costPrice || 0)) * (Number(it.quantity) || 0)),
+    0
+  );
+  const maxAllowableDiscount = Math.max(0, subTotal - minCartFloorTotal);
+  const isDiscountBreachingFloor = totalDiscount > maxAllowableDiscount && maxAllowableDiscount >= 0;
+
   const taxableAmount = Math.max(0, subTotal - totalDiscount);
   const taxAmount = parseFloat(((taxableAmount * (Number(taxRatePercent) || 0)) / 100).toFixed(2));
   const grandTotal = parseFloat((taxableAmount + taxAmount).toFixed(2));
@@ -1117,8 +1125,13 @@ export default function CheckoutPage({
                           </span>
                         )}
                       </p>
-                      <p className="text-[11px] text-slate-500 font-medium">
-                        {formatFabricQuantity(item.quantity, item.unit)} × {currencySymbol}{Number(item.sellingPrice).toFixed(2)}
+                      <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 flex-wrap">
+                        <span>{formatFabricQuantity(item.quantity, item.unit)} × {currencySymbol}{Number(item.sellingPrice).toFixed(2)}</span>
+                        {item.isBargained && (
+                          <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1 py-0.2 rounded">
+                            দরদামকৃত
+                          </span>
+                        )}
                       </p>
                     </div>
                     <span className="font-black text-slate-900">

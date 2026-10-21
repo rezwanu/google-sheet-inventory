@@ -517,6 +517,19 @@ export function normalizeProduct(p) {
                         ? p.SalePrice
                         : (p.Rate !== undefined && p.Rate !== null && p.Rate !== '' ? p.Rate : 0))))));
 
+  // নূন্যতম বিক্রয়মূল্য / ফ্লোর প্রাইস (Min Selling Price / Floor Price / Margin Price)
+  const minSellingPrice = p.MinSellingPrice !== undefined && p.MinSellingPrice !== null && p.MinSellingPrice !== ''
+    ? p.MinSellingPrice
+    : (p.minSellingPrice !== undefined && p.minSellingPrice !== null && p.minSellingPrice !== ''
+        ? p.minSellingPrice
+        : (p.FloorPrice !== undefined && p.FloorPrice !== null && p.FloorPrice !== ''
+            ? p.FloorPrice
+            : (p.floorPrice !== undefined && p.floorPrice !== null && p.floorPrice !== ''
+                ? p.floorPrice
+                : (p.MinPrice !== undefined && p.MinPrice !== null && p.MinPrice !== ''
+                    ? p.MinPrice
+                    : (p['Min Selling Price'] || p['Min Price'] || cost)))));
+
   // একক (Unit)
   const unit = p.Unit || p.unit || p['Unit'] || p['Unit Name'] || p.UOM || 'Pcs';
 
@@ -562,6 +575,7 @@ export function normalizeProduct(p) {
     Attributes: v.Attributes || v.attributes || (v.Size || v.Color ? { Size: v.Size, Color: v.Color } : {}),
     Barcode: String(v.Barcode || v.barcode || ''),
     CostPrice: Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice || cost)),
+    MinSellingPrice: Number(v.MinSellingPrice !== undefined ? v.MinSellingPrice : (v.minSellingPrice || v.CostPrice || cost)),
     SellingPrice: Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice || price)),
     StockQuantity: Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)),
   }));
@@ -612,6 +626,8 @@ export function normalizeProduct(p) {
     StockQuantit: Number(stock) || 0,
     MinStockAlert: Number(minAlert) || 5,
     CostPrice: Number(cost) || 0,
+    MinSellingPrice: Math.max(0, Number(minSellingPrice) >= 0 ? Number(minSellingPrice) : (Number(cost) || 0)),
+    minSellingPrice: Math.max(0, Number(minSellingPrice) >= 0 ? Number(minSellingPrice) : (Number(cost) || 0)),
     SellingPrice: Number(price) || 0,
     Unit: String(unit),
     ImageUrl: formatImageUrl(String(img)),

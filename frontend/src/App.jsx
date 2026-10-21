@@ -1012,6 +1012,8 @@ export default function App() {
         productName: product.ProductName,
         sellingPrice: Number(product.SellingPrice),
         costPrice: Number(product.CostPrice) || 0,
+        minSellingPrice: Number(product.MinSellingPrice !== undefined ? product.MinSellingPrice : (product.minSellingPrice || product.CostPrice || 0)),
+        originalSellingPrice: Number(product.SellingPrice),
         stockQuantity: availableStock,
         unit: product.Unit || 'Pcs',
         quantity: addQty,
@@ -1054,6 +1056,49 @@ export default function App() {
 
   const handleClearCart = () => {
     setCart([]);
+  };
+
+  // কাস্টমারের সাথে দামাদামির জন্য কার্টের পণ্যের বিক্রয়মূল্য পরিবর্তন (ফ্লোর প্রাইস সুরক্ষা সহ)
+  const handleUpdateItemPrice = (itemIdentifier, newPrice) => {
+    const parsedPrice = parseFloat(newPrice);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      showToast('সঠিক মূল্য প্রদান করুন', 'error');
+      return false;
+    }
+
+    let isViolatingFloor = false;
+    let floorVal = 0;
+    let violatingItemName = '';
+
+    const updatedCart = cart.map((item) => {
+      const currentId = item.cartItemId || (item.variantId ? `${item.productId}__${item.variantId}` : item.productId);
+      if (currentId === itemIdentifier || item.productId === itemIdentifier) {
+        const minFloor = Number(item.minSellingPrice !== undefined ? item.minSellingPrice : (item.costPrice || 0));
+        if (parsedPrice < minFloor) {
+          isViolatingFloor = true;
+          floorVal = minFloor;
+          violatingItemName = item.productName;
+          return item;
+        }
+        return {
+          ...item,
+          sellingPrice: parsedPrice,
+          isBargained: true,
+        };
+      }
+      return item;
+    });
+
+    if (isViolatingFloor) {
+      const curSym = settings.CurrencySymbol || '৳';
+      showToast(`দামাদামির সীমা লঙ্ঘন: '${violatingItemName}' এর নূন্যতম ফ্লোর প্রাইস ${curSym}${floorVal.toFixed(2)} এর নিচে যাওয়া যাবে না!`, 'error');
+      return false;
+    }
+
+    setCart(updatedCart);
+    saveLocalCart(updatedCart);
+    showToast('পণ্যের দরদাম মূল্য সফলভাবে প্রযোজ্য হয়েছে!', 'success');
+    return true;
   };
 
   // ৫. নতুন স্টক সাবমিট হ্যান্ডলার (Cumulative Stock Input)
@@ -2587,6 +2632,7 @@ export default function App() {
       ImageUrl: productData.imageUrl || productData.imageBase64 || '',
       ImageCaption: productData.imageCaption || '',
       CostPrice: Number(productData.costPrice) || 0,
+      MinSellingPrice: productData.minSellingPrice !== undefined && productData.minSellingPrice !== '' ? Number(productData.minSellingPrice) : (Number(productData.costPrice) || 0),
       SellingPrice: Number(productData.sellingPrice),
       StockQuantity: Number(productData.initialStock) || 0,
       MinStockAlert: Number(productData.minStockAlert) || 5,
@@ -2743,6 +2789,7 @@ export default function App() {
           ImageUrl: productData.imageUrl || (productData.imageBase64 ? productData.imageBase64 : p.ImageUrl || ''),
           ImageCaption: productData.imageCaption !== undefined ? productData.imageCaption : (p.ImageCaption || ''),
           CostPrice: Number(productData.costPrice) || 0,
+          MinSellingPrice: productData.minSellingPrice !== undefined && productData.minSellingPrice !== '' ? Number(productData.minSellingPrice) : (Number(productData.costPrice) || 0),
           SellingPrice: Number(productData.sellingPrice) || 0,
           StockQuantity: Number(productData.stockQuantity) || 0,
           MinStockAlert: Number(productData.minStockAlert) || 5,
@@ -2774,6 +2821,7 @@ export default function App() {
           productName: productData.productName,
           sellingPrice: Number(productData.sellingPrice) || 0,
           costPrice: Number(productData.costPrice) || 0,
+          minSellingPrice: productData.minSellingPrice !== undefined && productData.minSellingPrice !== '' ? Number(productData.minSellingPrice) : (Number(productData.costPrice) || 0),
           unit: productData.unit || 'Pcs',
           stockQuantity: Number(productData.stockQuantity) || 0,
         };
@@ -3022,6 +3070,7 @@ export default function App() {
               currencySymbol={settings.CurrencySymbol || '৳'}
               taxRatePercent={settings.TaxRatePercent || 0}
               onUpdateQuantity={handleUpdateQuantity}
+              onUpdateItemPrice={handleUpdateItemPrice}
               onRemoveItem={handleRemoveItem}
               onClearCart={handleClearCart}
               onNavigateToCatalog={() => setCurrentView('pos')}

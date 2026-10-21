@@ -212,6 +212,7 @@ export default function ProductCatalog({
           ...variantMatchedProduct,
           SellingPrice: Number(matchedVariantObj.SellingPrice || variantMatchedProduct.SellingPrice || 0),
           CostPrice: Number(matchedVariantObj.CostPrice || variantMatchedProduct.CostPrice || 0),
+          MinSellingPrice: Number(matchedVariantObj.MinSellingPrice !== undefined ? matchedVariantObj.MinSellingPrice : (variantMatchedProduct.MinSellingPrice !== undefined ? variantMatchedProduct.MinSellingPrice : (matchedVariantObj.CostPrice || variantMatchedProduct.CostPrice || 0))),
           Barcode: matchedVariantObj.Barcode,
           variantId: matchedVariantObj.VariantID,
           variantName: attrText || matchedVariantObj.VariantID,
@@ -269,6 +270,7 @@ export default function ProductCatalog({
         ...variantMatchedProduct,
         SellingPrice: Number(matchedVariantObj.SellingPrice || variantMatchedProduct.SellingPrice || 0),
         CostPrice: Number(matchedVariantObj.CostPrice || variantMatchedProduct.CostPrice || 0),
+        MinSellingPrice: Number(matchedVariantObj.MinSellingPrice !== undefined ? matchedVariantObj.MinSellingPrice : (variantMatchedProduct.MinSellingPrice !== undefined ? variantMatchedProduct.MinSellingPrice : (matchedVariantObj.CostPrice || variantMatchedProduct.CostPrice || 0))),
         Barcode: matchedVariantObj.Barcode,
         variantId: matchedVariantObj.VariantID,
         variantName: attrText || matchedVariantObj.VariantID,
@@ -719,9 +721,16 @@ export default function ProductCatalog({
                   <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-1">
                     <div>
                       <span className="text-[10px] text-slate-400 font-semibold block uppercase">বিক্রয় মূল্য</span>
-                      <span className="text-sm sm:text-base font-black text-slate-900">
-                        {formatCurrency(product.SellingPrice)}
-                      </span>
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-sm sm:text-base font-black text-slate-900">
+                          {formatCurrency(product.SellingPrice)}
+                        </span>
+                        {product.MinSellingPrice && Number(product.MinSellingPrice) > 0 && Number(product.MinSellingPrice) < Number(product.SellingPrice) && (
+                          <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200/90 px-1.5 py-0.2 rounded-md" title={`দামাদামির সর্বনিম্ন সীমা: ${formatCurrency(product.MinSellingPrice)}`}>
+                            ফ্লোর: {formatCurrency(product.MinSellingPrice)}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* দ্রুত কার্ট বাটন অথবা ভ্যারিয়েন্ট বাছাই বাটন */}
@@ -884,7 +893,12 @@ export default function ProductCatalog({
                         </td>
 
                         <td className="py-3 px-3 text-right font-black text-slate-900">
-                          {formatCurrency(product.SellingPrice)}
+                          <div>{formatCurrency(product.SellingPrice)}</div>
+                          {product.MinSellingPrice && Number(product.MinSellingPrice) > 0 && Number(product.MinSellingPrice) < Number(product.SellingPrice) && (
+                            <div className="text-[10px] font-bold text-amber-700 font-sans" title="দামাদামির সর্বনিম্ন সীমা">
+                              ফ্লোর: {formatCurrency(product.MinSellingPrice)}
+                            </div>
+                          )}
                         </td>
 
                         <td className="py-3 px-4 text-center">
