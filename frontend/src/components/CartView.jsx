@@ -189,18 +189,30 @@ export default function CartView({
                 {/* কোয়ান্টিটি কন্ট্রোল */}
                 <div className="flex items-center space-x-1.5">
                   <button
-                    onClick={() => onUpdateQuantity(itemKey, item.quantity - 1)}
+                    onClick={() => onUpdateQuantity(itemKey, Math.max(0, item.quantity - 1))}
                     className="w-6 h-6 flex items-center justify-center rounded-md bg-white border border-slate-300 text-slate-600 hover:bg-slate-200 active:scale-95 transition-transform"
+                    title="পরিমাণ কমান"
                   >
                     <Minus className="w-3 h-3" />
                   </button>
-                  <span className="w-8 text-center text-xs font-bold text-slate-800">
-                    {item.quantity}
-                  </span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="any"
+                    value={item.quantity}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val) && val >= 0) {
+                        onUpdateQuantity(itemKey, Math.round(val * 10000) / 10000);
+                      }
+                    }}
+                    className="w-12 text-center text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-1 focus:outline-none focus:border-indigo-500"
+                  />
                   <button
                     onClick={() => onUpdateQuantity(itemKey, item.quantity + 1)}
                     disabled={isAtMaxStock}
                     className="w-6 h-6 flex items-center justify-center rounded-md bg-white border border-slate-300 text-slate-600 hover:bg-slate-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-transform"
+                    title="পরিমাণ বাড়ান"
                   >
                     <Plus className="w-3 h-3" />
                   </button>

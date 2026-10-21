@@ -434,7 +434,7 @@ export default function CartPage({
                           </span>
                           {item.stockQuantity !== undefined && (
                             <span className="text-slate-400 font-medium">
-                              (মজুদ: {item.stockQuantity})
+                              (মজুদ: {item.stockQuantity} {item.unit || ''})
                             </span>
                           )}
                         </div>
@@ -464,16 +464,17 @@ export default function CartPage({
                         
                         <input
                           type="number"
-                          min="1"
+                          min="0.01"
+                          step="any"
                           max={item.stockQuantity || 9999}
                           value={item.quantity}
                           onChange={(e) => {
-                            const val = parseInt(e.target.value, 10);
-                            if (!isNaN(val)) {
-                              onUpdateQuantity(itemKey, val);
+                            const val = parseFloat(e.target.value);
+                            if (!isNaN(val) && val >= 0) {
+                              onUpdateQuantity(itemKey, Math.round(val * 10000) / 10000);
                             }
                           }}
-                          className="w-12 text-center bg-transparent text-xs sm:text-sm font-black text-slate-900 focus:outline-none"
+                          className="w-16 text-center bg-transparent text-xs sm:text-sm font-black text-slate-900 focus:outline-none"
                         />
 
                         <button

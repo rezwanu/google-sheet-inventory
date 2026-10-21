@@ -972,7 +972,7 @@ export default function App() {
     });
 
     const availableStock = Number(product.StockQuantity) || 0;
-    const addQty = Math.max(1, Number(qtyToAdd) || 1);
+    const addQty = Math.max(0.001, Number(qtyToAdd) || 1);
     const displayName = `${product.ProductName}${variantName ? ` (${variantName})` : ''}`;
 
     if (existingIndex !== -1) {

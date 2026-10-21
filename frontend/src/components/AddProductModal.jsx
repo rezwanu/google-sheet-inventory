@@ -327,8 +327,8 @@ export default function AddProductModal({
   // রিয়েল-টাইম মার্জিন ও মুনাফা হিসাব
   const cost = parseFloat(formData.costPrice) || 0;
   const sell = parseFloat(formData.sellingPrice) || 0;
-  const initialStockNum = parseInt(formData.initialStock, 10) || 0;
-  const minStockNum = parseInt(formData.minStockAlert, 10) || 5;
+  const initialStockNum = parseFloat(formData.initialStock) || 0;
+  const minStockNum = parseFloat(formData.minStockAlert) || 5;
   const netProfit = sell - cost;
   const profitMarginPercent = cost > 0 
     ? ((netProfit / cost) * 100).toFixed(1) 
@@ -1166,6 +1166,7 @@ export default function AddProductModal({
                     <input
                       type="number"
                       min="0"
+                      step="any"
                       name="initialStock"
                       value={formData.initialStock}
                       onChange={handleChange}
@@ -1179,7 +1180,8 @@ export default function AddProductModal({
                     </label>
                     <input
                       type="number"
-                      min="1"
+                      min="0"
+                      step="any"
                       name="minStockAlert"
                       value={formData.minStockAlert}
                       onChange={handleChange}
