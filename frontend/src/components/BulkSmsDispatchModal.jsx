@@ -4,13 +4,9 @@ import {
   MessageSquare,
   Send,
   Smartphone,
-  CheckCircle2,
   AlertCircle,
   RefreshCw,
   Copy,
-  ExternalLink,
-  Sparkles,
-  User,
   Check
 } from 'lucide-react';
 

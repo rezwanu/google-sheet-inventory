@@ -1,24 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  X, 
-  Scissors, 
-  Check, 
-  ShoppingCart, 
-  Tag, 
-  Plus, 
-  Minus, 
-  Sparkles, 
+import {
+  X,
+  Scissors,
+  Check,
+  ShoppingCart,
+  Tag,
+  Plus,
+  Minus,
+  Sparkles,
   AlertCircle,
   Ruler,
   Shirt,
-  Percent,
   CheckCircle2,
-  TrendingDown,
-  Layers,
   Lock,
-  Store,
-  Receipt,
-  Info
+  Receipt
 } from 'lucide-react';
 import { calculateTotalYards, formatFabricQuantity } from '../utils/fabricUtils';
 

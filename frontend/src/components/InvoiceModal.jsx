@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Printer, FileText, CheckCircle2, RotateCcw } from 'lucide-react';
-import { extractAndNormalizeItems, formatImageUrl, getDriveImageCandidates } from '../services/storage';
+import { X, Printer } from 'lucide-react';
+import { extractAndNormalizeItems, getDriveImageCandidates } from '../services/storage';
 import { formatFabricQuantity } from '../utils/fabricUtils';
 
 export default function InvoiceModal({

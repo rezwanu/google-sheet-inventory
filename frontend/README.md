@@ -16,7 +16,7 @@ frontend/
 │   ├── components/
 │   │   ├── Navbar.jsx           # ব্র্যান্ডিং, সিঙ্ক স্ট্যাটাস ও কুইক বাটন
 │   │   ├── ProductCatalog.jsx   # বারকোড সার্চ ও প্রোডাক্ট গ্রিড (Emerald/Amber/Crimson)
-│   │   ├── CartView.jsx         # হাই-ডেনসিটি বিলিং কার্ট ও চেকআউট
+│   │   ├── CartPage.jsx         # হাই-ডেনসিটি বিলিং কার্ট ও চেকআউট
 │   │   ├── AddStockModal.jsx    # কিউমুলেটিভ স্টক ও ওয়েইটেড কস্ট ইনপুট মডাল
 │   │   ├── AddProductModal.jsx  # নতুন পণ্য তৈরির মডাল
 │   │   ├── SettingsModal.jsx    # Google Apps Script API URL কনফিগারেশন

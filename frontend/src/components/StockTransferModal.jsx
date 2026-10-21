@@ -7,16 +7,10 @@ import {
   Trash2,
   Printer,
   CheckCircle,
-  Clock,
   Search,
   Check,
-  AlertCircle,
-  Building2,
   Boxes,
-  FileText,
-  User,
-  Phone,
-  Navigation
+  Phone
 } from 'lucide-react';
 
 export default function StockTransferModal({

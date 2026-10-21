@@ -1,18 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  X, 
-  Printer, 
-  Tag, 
-  Barcode as BarcodeIcon, 
-  Layers, 
-  Plus, 
-  Minus, 
-  Settings2, 
-  Check, 
-  Store, 
-  Sparkles, 
-  Grid, 
-  FileText,
+import {
+  X,
+  Printer,
+  Tag,
+  Barcode as BarcodeIcon,
+  Plus,
+  Minus,
+  Sparkles,
+  Grid,
   Sliders,
   AlertCircle
 } from 'lucide-react';

@@ -14,19 +14,11 @@ import {
   Receipt,
   Sparkles,
   AlertCircle,
-  CreditCard,
   CheckCircle2,
   UserPlus,
   Gift,
-  LogIn,
-  Lock,
-  BadgeCheck,
-  Zap,
-  Clock,
   Check,
-  Store,
-  X,
-  Edit3
+  X
 } from 'lucide-react';
 
 export default function CartPage({

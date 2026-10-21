@@ -1,25 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
   X,
-  Users,
   Send,
-  MessageSquare,
   Sparkles,
-  Award,
-  AlertTriangle,
-  Clock,
-  CheckCircle,
   Search,
-  Filter,
   CheckSquare,
-  Square,
-  Copy,
-  Tag,
-  Gift,
-  HelpCircle,
-  TrendingUp,
   History,
-  Phone,
   ArrowRight
 } from 'lucide-react';
 import { calculateRFMSegmentation, getLocalCampaigns, saveCampaignLocally } from '../services/storage';

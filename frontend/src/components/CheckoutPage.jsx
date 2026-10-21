@@ -15,20 +15,16 @@ import {
   Search,
   UserCheck,
   UserPlus,
-  ShieldCheck,
   Receipt,
   AlertTriangle,
-  BadgePercent,
-  Clock,
   Sparkles,
   X,
-  Package,
   LogIn,
   Layers,
   Ticket,
   AlertCircle
 } from 'lucide-react';
-import { formatImageUrl } from '../services/storage';
+
 import StoreLogo from './StoreLogo';
 
 export default function CheckoutPage({

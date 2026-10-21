@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, History, Search, Receipt, Calendar, CreditCard, User, Printer, Eye, FileText } from 'lucide-react';
+import { X, History, Search, Receipt, Calendar, CreditCard, Printer, Eye } from 'lucide-react';
 import { normalizeSale } from '../services/storage';
 
 export default function SalesHistoryModal({

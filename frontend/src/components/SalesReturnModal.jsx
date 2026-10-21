@@ -8,17 +8,10 @@ import {
   CheckCircle,
   AlertTriangle,
   Printer,
-  Calendar,
-  User,
   Phone,
   Banknote,
   Coins,
-  ArrowRight,
-  Sparkles,
-  Clock,
-  Check,
-  FileText,
-  BadgeAlert
+  Check
 } from 'lucide-react';
 import { extractAndNormalizeItems } from '../services/storage';
 

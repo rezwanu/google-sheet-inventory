@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Navbar from './components/Navbar';
 import ProductCatalog from './components/ProductCatalog';
-import CartView from './components/CartView';
+
 import CartPage from './components/CartPage';
 import CheckoutPage from './components/CheckoutPage';
 import CustomersModal from './components/CustomersModal';
@@ -45,7 +45,6 @@ import {
   saveLocalProducts,
   normalizeProduct,
   getLocalOrders,
-  saveLocalOrders,
   saveOrUpdateOrderLocally,
   updateOrderStatusLocally,
   deleteOrderLocally,
@@ -55,7 +54,6 @@ import {
   saveLocalCategories,
   getLocalUnits,
   saveLocalUnits,
-  updateProductStockLocally,
   getLocalCart,
   saveLocalCart,
   getLocalSalesHistory,
@@ -90,7 +88,6 @@ import {
   registerCustomerLocally,
   authenticateUser,
   logoutUser,
-  getCustomerOrders,
   addToOfflineQueue,
   isDemoProduct,
   clearDemoData,
@@ -108,7 +105,6 @@ import {
   updatePurchaseOrderStatusLocally,
   getLocalSupplierLedger,
   saveLocalSupplierLedger,
-  recordSupplierLedgerEntryLocally,
   getLocalExpenses,
   saveLocalExpenses,
   saveOrUpdateExpenseLocally,
@@ -131,8 +127,6 @@ import {
   saveLocalStockTransfers,
   saveStockTransferLocally,
   updateStockTransferStatusLocally,
-  getLocalCampaigns,
-  saveLocalCampaigns,
   saveCampaignLocally
 } from './services/storage';
 
@@ -145,7 +139,6 @@ import {
   postUpdateCoupon,
   postDeleteCoupon,
   postAddCustomer,
-  postUpdateCustomer,
   postDeleteCustomer,
   fetchUsers,
   postAddUser,
@@ -171,7 +164,6 @@ import {
   postUpdateCustomerCreditLimit,
   postSaveAbandonedCart,
   postUpdateAbandonedCartStatus,
-  postUpdateCustomerLoyalty,
   postSaveSupplier,
   postDeleteSupplier,
   postCreatePurchaseOrder,

@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  X, 
-  Settings, 
-  Link, 
-  Check, 
-  RefreshCw, 
-  AlertCircle, 
-  Save, 
-  Info,
+import {
+  X,
+  Settings,
+  Link,
+  RefreshCw,
+  AlertCircle,
+  Save,
   Globe,
   Building,
   Receipt,
@@ -15,7 +13,6 @@ import {
   Percent,
   Sparkles,
   ShieldCheck,
-  Eye,
   HelpCircle,
   CheckCircle2,
   Image,

@@ -21,24 +21,16 @@ import {
   RefreshCw,
   Power,
   Sparkles,
-  ShieldAlert,
   Loader2,
   Crown,
   Upload,
   Camera,
-  Image as ImageIcon,
   User,
   Copy,
   Check,
   LayoutGrid,
   List,
-  ArrowUpDown,
-  Filter,
-  Calendar,
-  CheckCircle,
-  ExternalLink,
-  Lock,
-  ChevronDown
+  Filter
 } from 'lucide-react';
 import { formatImageUrl } from '../services/storage';
 

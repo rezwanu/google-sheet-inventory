@@ -29,11 +29,7 @@ import {
   Layers,
   CircleDollarSign,
   Wifi,
-  WifiOff,
-  User,
-  ShieldCheck,
-  CheckCircle2,
-  Clock
+  WifiOff
 } from 'lucide-react';
 
 /**

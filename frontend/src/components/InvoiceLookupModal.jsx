@@ -1,34 +1,25 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { 
-  Search, 
-  X, 
-  FileText, 
-  Printer, 
-  Copy, 
-  Check, 
-  Calendar, 
-  User, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  CreditCard, 
-  ShoppingBag, 
-  ArrowRight, 
-  CloudDownload, 
-  RotateCcw,
+import {
+  Search,
+  X,
+  FileText,
+  Printer,
+  Copy,
+  Check,
+  Calendar,
+  User,
+  Phone,
+  CreditCard,
+  ShoppingBag,
+  CloudDownload,
   CheckCircle2,
   Clock,
   Sparkles,
-  ExternalLink,
   Receipt,
   Wallet,
-  Banknote,
-  BadgeCheck,
-  TrendingUp,
-  Tag,
-  ArrowUpRight
+  Banknote
 } from 'lucide-react';
-import { normalizeSale, extractAndNormalizeItems, formatImageUrl } from '../services/storage';
+import { normalizeSale, extractAndNormalizeItems } from '../services/storage';
 import { fetchSaleByInvoice } from '../services/api';
 import StoreLogo from './StoreLogo';
 

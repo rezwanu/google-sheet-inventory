@@ -14,11 +14,9 @@ import {
   UserPlus,
   LogIn,
   ShieldCheck,
-  Sparkles,
   Loader2,
   Camera,
-  Upload,
-  Trash2
+  Upload
 } from 'lucide-react';
 import { formatImageUrl } from '../services/storage';
 import StoreLogo from './StoreLogo';

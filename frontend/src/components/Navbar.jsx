@@ -16,10 +16,7 @@ import {
   Store,
   LayoutGrid,
   ShoppingCart,
-  Sparkles,
-  CheckCircle2,
   MapPin,
-  ArrowRight,
   Users
 } from 'lucide-react';
 import StoreLogo from './StoreLogo';

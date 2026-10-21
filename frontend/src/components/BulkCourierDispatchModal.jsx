@@ -6,11 +6,8 @@ import {
   AlertCircle,
   AlertTriangle,
   RefreshCw,
-  ExternalLink,
   Printer,
-  ShieldCheck,
   Send,
-  HelpCircle,
   Key
 } from 'lucide-react';
 

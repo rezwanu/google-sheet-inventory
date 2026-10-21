@@ -11,15 +11,11 @@ import {
   XCircle,
   FileText,
   Printer,
-  ChevronDown,
   Trash2,
   AlertCircle,
   Building2,
-  DollarSign,
   Calendar,
   Layers,
-  ArrowRight,
-  ExternalLink,
   Phone,
   RefreshCw
 } from 'lucide-react';

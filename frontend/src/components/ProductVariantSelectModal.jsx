@@ -1,14 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { isFabricUnit, calculateTotalYards, formatFabricQuantity } from '../utils/fabricUtils';
-import { 
-  X, 
-  Layers, 
-  Check, 
-  ShoppingCart, 
-  Tag, 
-  Barcode, 
-  Boxes, 
-  AlertCircle,
+import {
+  X,
+  Layers,
+  Check,
+  ShoppingCart,
+  Barcode,
   Plus,
   Minus
 } from 'lucide-react';

@@ -8,18 +8,15 @@ import {
   MapPin,
   Building2,
   DollarSign,
-  CreditCard,
   X,
   Edit2,
   Trash2,
   Send,
-  FileText,
   CheckCircle,
   AlertCircle,
   User,
   History,
-  TrendingUp,
-  Receipt
+  TrendingUp
 } from 'lucide-react';
 
 export default function SuppliersModal({

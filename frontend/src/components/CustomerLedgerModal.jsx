@@ -4,34 +4,20 @@ import {
   Search,
   DollarSign,
   TrendingUp,
-  AlertTriangle,
   Phone,
-  MessageSquare,
   MessageCircle,
   Printer,
-  Calendar,
   CheckCircle2,
-  Clock,
-  Send,
   User,
   MapPin,
-  ExternalLink,
-  ChevronDown,
-  ChevronUp,
   FileText,
-  CreditCard,
   Banknote,
-  Smartphone,
-  Sparkles,
   ShieldAlert,
-  ArrowDownLeft,
-  ArrowUpRight,
-  Filter,
   RefreshCw,
   PlusCircle,
   Edit3
 } from 'lucide-react';
-import StoreLogo from './StoreLogo';
+
 
 export default function CustomerLedgerModal({
   isOpen,

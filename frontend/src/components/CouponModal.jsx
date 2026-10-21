@@ -8,24 +8,16 @@ import {
   Copy,
   Check,
   CheckCircle2,
-  Calendar,
   AlertCircle,
-  Percent,
   Package,
   Layers,
   Sparkles,
   X,
   RefreshCw,
   Clock,
-  ArrowRight,
   Wand2,
-  Tag,
-  ShieldCheck,
   Zap,
-  Gift,
-  Flame,
-  Award,
-  Info,
+  Award
 } from 'lucide-react';
 
 /**

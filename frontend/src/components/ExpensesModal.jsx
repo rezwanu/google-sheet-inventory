@@ -4,8 +4,6 @@ import {
   Receipt,
   PlusCircle,
   Search,
-  Filter,
-  Calendar,
   Building2,
   Zap,
   Users,
@@ -15,17 +13,10 @@ import {
   Wrench,
   Megaphone,
   FileText,
-  DollarSign,
-  TrendingDown,
   Trash2,
   CheckCircle2,
   AlertCircle,
-  CreditCard,
-  Wallet,
-  Sparkles,
-  ArrowUpRight,
-  Download,
-  Image as ImageIcon
+  Wallet
 } from 'lucide-react';
 import { EXPENSE_CATEGORIES } from '../services/storage';
 

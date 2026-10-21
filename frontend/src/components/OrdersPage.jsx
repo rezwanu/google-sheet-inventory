@@ -8,10 +8,7 @@ import {
   Truck,
   CheckCircle2,
   Clock,
-  XCircle,
-  AlertCircle,
   AlertTriangle,
-  RefreshCw,
   Phone,
   MapPin,
   Tag,
@@ -21,16 +18,13 @@ import {
   Check,
   ChevronDown,
   RotateCcw,
-  Calendar,
   X,
-  CreditCard,
   ShoppingBag,
   Share2,
   FileText,
   ShieldAlert,
   ShieldCheck,
   History,
-  Send,
   Sparkles,
   ExternalLink,
   MessageSquare,
@@ -38,20 +32,14 @@ import {
   LayoutGrid,
   ListFilter,
   SlidersHorizontal,
-  ArrowUpRight,
-  Zap,
   User,
-  ChevronRight,
-  TrendingUp,
   DollarSign,
   Edit3,
   MessageCircle,
   Download,
-  CheckSquare,
-  Square,
   MoreVertical
 } from 'lucide-react';
-import { calculateOrderRisk, isValidBdPhone } from '../services/riskAnalysis';
+import { calculateOrderRisk } from '../services/riskAnalysis';
 import CustomerOrderTrackingModal from './CustomerOrderTrackingModal';
 import BulkCourierDispatchModal from './BulkCourierDispatchModal';
 import BulkSmsDispatchModal from './BulkSmsDispatchModal';

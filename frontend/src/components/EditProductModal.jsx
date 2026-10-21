@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  X, 
-  Edit3, 
-  Barcode, 
-  DollarSign, 
-  Layers, 
-  Image as ImageIcon, 
-  PlusCircle, 
-  Tag, 
+import {
+  X,
+  Edit3,
+  Barcode,
+  Layers,
+  Image as ImageIcon,
+  PlusCircle,
+  Tag,
   Check,
   FileText,
   AlignLeft,
   ListPlus,
   PackageCheck,
-  Upload, 
-  Globe, 
+  Upload,
+  Globe,
   Loader2,
   Camera,
   Printer,
@@ -24,8 +23,7 @@ import {
   CalendarClock,
   Box,
   Sparkles,
-  Trash2,
-  TrendingUp
+  Trash2
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';

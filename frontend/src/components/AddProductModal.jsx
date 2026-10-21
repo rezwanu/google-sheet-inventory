@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  X, 
-  PackagePlus, 
-  Barcode, 
-  DollarSign, 
-  Layers, 
-  Image as ImageIcon, 
-  PlusCircle, 
-  Tag, 
+import {
+  X,
+  PackagePlus,
+  Barcode,
+  Layers,
+  Image as ImageIcon,
+  PlusCircle,
+  Tag,
   Check,
   FileText,
   AlignLeft,
@@ -23,17 +22,11 @@ import {
   Eye,
   CheckCircle2,
   Coins,
-  Percent,
-  Zap,
   UploadCloud,
-  ChevronDown,
-  ChevronUp,
   ShieldCheck,
   Trash2,
   Camera,
   Printer,
-  ScanLine,
-  QrCode,
   CalendarClock
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';

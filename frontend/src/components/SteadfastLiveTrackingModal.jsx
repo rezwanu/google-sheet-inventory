@@ -7,11 +7,7 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  Package,
-  Calendar,
-  MapPin,
-  Phone,
-  ShieldCheck
+  Package
 } from 'lucide-react';
 
 export default function SteadfastLiveTrackingModal({

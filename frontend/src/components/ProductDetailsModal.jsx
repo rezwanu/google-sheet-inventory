@@ -1,25 +1,24 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  X, 
-  Package, 
-  Barcode, 
-  Layers, 
-  Calendar, 
-  AlertTriangle, 
-  CheckCircle2, 
-  XCircle, 
-  Plus, 
-  Minus, 
-  ShoppingCart, 
-  Scale, 
+import {
+  X,
+  Package,
+  Barcode,
+  Layers,
+  Calendar,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Plus,
+  Minus,
+  ShoppingCart,
+  Scale,
   PlusCircle,
   FileText,
   AlignLeft,
   Sparkles,
   Edit3,
   Trash2,
-  Printer,
-  Tag
+  Printer
 } from 'lucide-react';
 import BarcodeStickerModal from './BarcodeStickerModal';
 

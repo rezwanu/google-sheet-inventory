@@ -9,16 +9,10 @@ import {
   ArrowRight,
   Clock,
   CheckCircle,
-  AlertCircle,
   Trash2,
-  ExternalLink,
-  RefreshCw,
   ShoppingBag,
   DollarSign,
-  User,
-  Calendar,
-  Send,
-  Sparkles
+  User
 } from 'lucide-react';
 
 export default function AbandonedCartModal({

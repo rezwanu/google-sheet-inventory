@@ -9,17 +9,9 @@ import {
   Square,
   Plus,
   Minus,
-  Sliders,
-  Store,
-  Sparkles,
   Layers,
-  Settings2,
-  RefreshCw,
-  AlertCircle,
-  Check,
   Grid,
-  Box,
-  ChevronRight
+  Box
 } from 'lucide-react';
 import JsBarcode from 'jsbarcode';
 

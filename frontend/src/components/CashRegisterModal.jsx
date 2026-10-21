@@ -2,13 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   X,
   Coins,
-  DollarSign,
-  ArrowUpRight,
-  ArrowDownRight,
   Clock,
-  Calendar,
-  User,
-  ShieldCheck,
   CheckCircle2,
   AlertTriangle,
   Printer,
@@ -16,11 +10,7 @@ import {
   Lock,
   Unlock,
   FileText,
-  TrendingUp,
-  TrendingDown,
-  RefreshCw,
   Sparkles,
-  HelpCircle,
   AlertCircle
 } from 'lucide-react';
 

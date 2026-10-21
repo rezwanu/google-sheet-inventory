@@ -2,20 +2,12 @@ import React, { useState, useMemo } from 'react';
 import {
   Search,
   Truck,
-  CheckCircle2,
-  Clock,
-  Package,
   X,
-  Phone,
-  MapPin,
   ExternalLink,
   RotateCcw,
-  AlertCircle,
   HelpCircle,
-  ShieldCheck,
   Copy,
-  Check,
-  ArrowRight
+  Check
 } from 'lucide-react';
 
 const TRACKING_STEPS = [

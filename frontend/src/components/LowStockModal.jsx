@@ -1,25 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  X, 
-  AlertTriangle, 
-  PackageX, 
-  PlusCircle, 
-  Search, 
-  Layers, 
-  Barcode, 
-  CheckCircle2, 
-  ArrowUpDown,
+import {
+  X,
+  PackageX,
+  PlusCircle,
+  Search,
+  Barcode,
+  CheckCircle2,
   Filter,
   ShoppingCart,
   Sparkles,
-  TrendingDown,
   Coins,
-  ShieldAlert,
-  SlidersHorizontal,
-  Box,
-  Check,
-  Zap,
-  ArrowRight
+  ShieldAlert
 } from 'lucide-react';
 
 export default function LowStockModal({

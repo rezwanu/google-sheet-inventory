@@ -1,21 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  X, 
-  CalendarClock, 
-  AlertTriangle, 
-  Clock, 
-  CheckCircle2, 
-  Search, 
-  ShoppingCart, 
-  Printer, 
-  Trash2, 
+import {
+  X,
+  CalendarClock,
+  AlertTriangle,
+  Clock,
+  CheckCircle2,
+  Search,
+  ShoppingCart,
+  Printer,
   ArrowUpRight,
-  TrendingDown,
   Layers,
-  Sparkles,
   PackageCheck,
-  ShieldAlert,
-  Percent
+  ShieldAlert
 } from 'lucide-react';
 import { calculateExpiryStatus } from '../services/storage';
 

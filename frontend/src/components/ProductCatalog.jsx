@@ -1,12 +1,10 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { 
-  Search, 
-  Barcode, 
-  Plus, 
-  Check, 
-  Package, 
-  Sparkles, 
-  AlertTriangle,
+import {
+  Search,
+  Barcode,
+  Plus,
+  Package,
+  Sparkles,
   X,
   Layers,
   RefreshCw,
@@ -15,14 +13,7 @@ import {
   Tag,
   LayoutGrid,
   List,
-  ArrowUpDown,
-  SlidersHorizontal,
-  Eye,
-  Percent,
-  TrendingUp,
-  ShoppingBag,
   Zap,
-  CheckCircle2,
   Camera,
   CalendarClock,
   Scissors

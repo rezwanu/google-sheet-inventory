@@ -2,20 +2,15 @@ import React, { useState, useMemo } from 'react';
 import {
   X,
   ShoppingBag,
-  Receipt,
-  Calendar,
   CreditCard,
   CheckCircle2,
-  Package,
-  ExternalLink,
   Search,
   Sparkles,
-  ArrowRight,
   Clock,
   Printer,
-  LogIn,
+  LogIn
 } from 'lucide-react';
-import { extractAndNormalizeItems, formatImageUrl } from '../services/storage';
+import { extractAndNormalizeItems } from '../services/storage';
 import StoreLogo from './StoreLogo';
 
 export default function CustomerOrdersModal({
