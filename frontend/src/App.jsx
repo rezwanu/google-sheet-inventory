@@ -992,6 +992,13 @@ export default function App() {
       }
       const updatedCart = [...cart];
       updatedCart[existingIndex].quantity += addQty;
+      if (product.SellingPrice && Number(product.SellingPrice) !== Number(cart[existingIndex].sellingPrice)) {
+        updatedCart[existingIndex].sellingPrice = Number(product.SellingPrice);
+        updatedCart[existingIndex].isBargained = Boolean(product.isBargained);
+        if (product.originalSellingPrice) {
+          updatedCart[existingIndex].originalSellingPrice = Number(product.originalSellingPrice);
+        }
+      }
       setCart(updatedCart);
       showToast(`'${displayName}' কার্টে যোগ হয়েছে (+${addQty})`, 'success');
     } else {
@@ -1013,7 +1020,8 @@ export default function App() {
         sellingPrice: Number(product.SellingPrice),
         costPrice: Number(product.CostPrice) || 0,
         minSellingPrice: Number(product.MinSellingPrice !== undefined ? product.MinSellingPrice : (product.minSellingPrice || product.CostPrice || 0)),
-        originalSellingPrice: Number(product.SellingPrice),
+        originalSellingPrice: Number(product.originalSellingPrice || product.SellingPrice),
+        isBargained: Boolean(product.isBargained),
         stockQuantity: availableStock,
         unit: product.Unit || 'Pcs',
         quantity: addQty,
