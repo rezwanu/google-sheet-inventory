@@ -28,6 +28,7 @@ import {
 import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';
 import BarcodeStickerModal from './BarcodeStickerModal';
+import { canViewCostPrice } from '../utils/permissionUtils';
 
 // ছবি কম্প্রেস ও অপটিমাইজ ফাংশন (যাতে দ্রুত ড্রাইভে আপলোড হয়)
 const compressImageForUpload = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
@@ -74,6 +75,7 @@ export default function EditProductModal({
   units = [],
   onAddUnit,
   products = [],
+  activeUser = null,
   settings = {}
 }) {
   const [formData, setFormData] = useState({
@@ -907,17 +909,26 @@ export default function EditProductModal({
                   কেনা দাম / Cost ({currencySymbol})
                 </label>
                 <div className="relative">
-                  <input
-                    type="number"
-                    name="costPrice"
-                    step="any"
-                    min="0"
-                    value={formData.costPrice}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    className="w-full pl-7 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium"
-                  />
-                  <span className="absolute left-2.5 top-1.5 text-xs text-slate-400 font-bold">{currencySymbol}</span>
+                  {canViewCostPrice(activeUser) ? (
+                    <>
+                      <input
+                        type="number"
+                        name="costPrice"
+                        step="any"
+                        min="0"
+                        value={formData.costPrice}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                        className="w-full pl-7 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium"
+                      />
+                      <span className="absolute left-2.5 top-1.5 text-xs text-slate-400 font-bold">{currencySymbol}</span>
+                    </>
+                  ) : (
+                    <div className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-100 text-slate-400 font-bold flex items-center justify-between">
+                      <span>🔒 কেবল মালিকের দৃশ্যমান</span>
+                      <span className="text-[10px] text-slate-400 font-normal">সুরক্ষিত</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

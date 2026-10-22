@@ -31,8 +31,10 @@ import {
   Wifi,
   WifiOff,
   PauseCircle,
-  Scissors
+  Scissors,
+  Database
 } from 'lucide-react';
+import { isAdminUser } from '../utils/permissionUtils';
 
 /**
  * আল্ট্রা-মডার্ন ও আই-ক্যাচি সাইডবার ন্যাভিগেশন প্যানেল (Ultra-Modern SaaS Sidebar)
@@ -73,6 +75,7 @@ export default function Sidebar({
   tailoringOrdersCount = 0,
   onOpenFabricWastageModal,
   fabricWastageCount = 0,
+  onOpenBackupModal,
   returnsCount = 0,
   transfersInTransitCount = 0,
   isRegisterOpen = false,
@@ -95,7 +98,7 @@ export default function Sidebar({
   syncStatus = 'offline',
 }) {
   const isLoggedIn = Boolean(activeUser && activeUser.Role && activeUser.UserID !== 'USER-GUEST');
-  const isAdmin = isLoggedIn && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier');
+  const isAdmin = isLoggedIn && isAdminUser(activeUser);
 
   // ক্যাটাগরি ফোল্ডিং / অ্যাকর্ডিয়ন স্টেট (ডিফল্টভাবে সবগুলো সেকশন উন্মুক্ত ও দৃশ্যমান)
   const [openSections, setOpenSections] = useState(() => {
@@ -422,7 +425,9 @@ export default function Sidebar({
           iconGradient: 'from-blue-600 to-indigo-700 text-white shadow-indigo-600/25',
           isActive: currentView === 'analytics',
           onClick: () => onNavigate ? onNavigate('analytics') : onOpenAnalyticsModal && onOpenAnalyticsModal(),
-          badge: null
+          badge: !isAdminUser(activeUser)
+            ? { text: '🔒 সুরক্ষিত', color: 'bg-amber-100 text-amber-800 border border-amber-300 font-bold' }
+            : null
         },
         {
           id: 'cash_register',
@@ -477,7 +482,21 @@ export default function Sidebar({
           iconGradient: 'from-indigo-600 to-slate-800 text-white shadow-indigo-600/25',
           isActive: currentView === 'users',
           onClick: () => onNavigate ? onNavigate('users') : onOpenUsersModal && onOpenUsersModal(),
-          badge: null
+          badge: !isAdminUser(activeUser)
+            ? { text: '🔒 অ্যাডমিন', color: 'bg-amber-100 text-amber-800 border border-amber-300 font-bold' }
+            : null
+        },
+        {
+          id: 'backup_restore',
+          title: '১-ক্লিক ডাটা ব্যাকআপ ও এক্সেল',
+          subTitle: 'সম্পূর্ণ ব্যাকআপ ও এক্সেল ডাউনলোড',
+          icon: Database,
+          iconGradient: 'from-emerald-600 to-teal-700 text-white shadow-emerald-600/25',
+          isActive: currentView === 'backup',
+          onClick: () => onOpenBackupModal && onOpenBackupModal(),
+          badge: !isAdminUser(activeUser)
+            ? { text: '🔒 সুরক্ষিত', color: 'bg-amber-100 text-amber-800 border border-amber-300 font-bold' }
+            : { text: 'নতুন', color: 'bg-emerald-100 text-emerald-800 font-bold' }
         },
         {
           id: 'switch_to_customer',
@@ -505,7 +524,9 @@ export default function Sidebar({
     abandonedCartsCount,
     isRegisterOpen,
     expensesCount,
-    currencySymbol
+    currencySymbol,
+    activeUser,
+    onOpenBackupModal
   ]);
 
   return (

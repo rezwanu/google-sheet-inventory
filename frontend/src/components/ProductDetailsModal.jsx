@@ -21,6 +21,7 @@ import {
   Printer
 } from 'lucide-react';
 import BarcodeStickerModal from './BarcodeStickerModal';
+import { isAdminUser, canViewCostPrice, formatMaskedCostPrice } from '../utils/permissionUtils';
 
 export default function ProductDetailsModal({
   isOpen,
@@ -35,7 +36,7 @@ export default function ProductDetailsModal({
   activeUser,
   settings = {},
 }) {
-  const isAdmin = Boolean(activeUser && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier'));
+  const isAdmin = isAdminUser(activeUser);
   const [quantity, setQuantity] = useState(1);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -304,6 +305,21 @@ export default function ProductDetailsModal({
                     </span>
                   </div>
                 </div>
+
+                {/* ফেজ ৩: ক্যাশিয়ারের জন্য কেনা দাম সুরক্ষা */}
+                {canViewCostPrice(activeUser) ? (
+                  <div className="text-center px-3 border-x border-indigo-200/60">
+                    <span className="text-[11px] text-slate-500 font-bold block">কেনা দাম</span>
+                    <span className="text-base font-black text-slate-800 font-mono">
+                      {currencySymbol}{Number(product.CostPrice || 0).toFixed(2)}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-center px-3 border-x border-indigo-200/60">
+                    <span className="text-[10px] text-slate-400 font-bold block">কেনা দাম</span>
+                    <span className="text-xs font-bold text-slate-400">🔒 সুরক্ষিত</span>
+                  </div>
+                )}
 
                 <div className="text-right">
                   <span className="text-xs text-slate-500 font-medium block">বর্তমান মজুত</span>

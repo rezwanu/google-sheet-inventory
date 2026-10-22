@@ -3736,3 +3736,198 @@ export function deleteFabricWastageLocally(recordId) {
   return true;
 }
 
+// ============================================================================
+// ১-ক্লিক সম্পূর্ণ ক্লাউড/লোকাল ডাটা ব্যাকআপ ও এক্সেল এক্সপোর্ট (Phase 3: Backup & Restore)
+// ============================================================================
+
+export function exportDatabaseBackupJSON(storeName = 'Pabna Bostraloy') {
+  try {
+    const backupData = {
+      backupVersion: '2.1',
+      exportedAt: new Date().toISOString(),
+      storeName: storeName,
+      collections: {
+        settings: getLocalSettings(),
+        products: getLocalProducts(),
+        categories: getLocalCategories(),
+        units: getLocalUnits(),
+        salesHistory: getLocalSalesHistory(),
+        customers: getLocalCustomers(),
+        customerLedger: getLocalCustomerLedger(),
+        coupons: getLocalCoupons(),
+        users: getLocalUsers(),
+        orders: getLocalOrders(),
+        abandonedCarts: getLocalAbandonedCarts(),
+        suppliers: getLocalSuppliers(),
+        purchaseOrders: getLocalPurchaseOrders(),
+        supplierLedger: getLocalSupplierLedger(),
+        expenses: getLocalExpenses(),
+        cashRegisters: getLocalCashRegisters(),
+        auditLogs: getLocalAuditLogs(),
+        salesReturns: getLocalSalesReturns(),
+        stockTransfers: getLocalStockTransfers(),
+        campaigns: getLocalCampaigns(),
+        heldCarts: getLocalHeldCarts(),
+        tailoringOrders: getLocalTailoringOrders(),
+        tailorMasters: getLocalTailorMasters(),
+        fabricWastage: getLocalFabricWastage()
+      }
+    };
+
+    const jsonStr = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const safeStore = storeName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.setAttribute('download', `${safeStore}_backup_${dateStr}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    return true;
+  } catch (err) {
+    console.error('Backup export failed:', err);
+    return false;
+  }
+}
+
+export function restoreDatabaseFromJSON(jsonString) {
+  try {
+    const parsed = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+    if (!parsed || !parsed.collections) {
+      throw new Error('অবৈধ ব্যাকআপ ফাইল ফরম্যাট! কোনো ডাটা কালেকশন পাওয়া যায়নি।');
+    }
+
+    const { collections } = parsed;
+    let counts = {};
+
+    if (collections.settings) {
+      saveLocalSettings(collections.settings);
+      counts.settings = 1;
+    }
+    if (Array.isArray(collections.products)) {
+      saveLocalProducts(collections.products);
+      counts.products = collections.products.length;
+    }
+    if (Array.isArray(collections.categories)) {
+      saveLocalCategories(collections.categories);
+      counts.categories = collections.categories.length;
+    }
+    if (Array.isArray(collections.units)) {
+      saveLocalUnits(collections.units);
+      counts.units = collections.units.length;
+    }
+    if (Array.isArray(collections.salesHistory)) {
+      saveLocalSalesHistory(collections.salesHistory);
+      counts.salesHistory = collections.salesHistory.length;
+    }
+    if (Array.isArray(collections.customers)) {
+      saveLocalCustomers(collections.customers);
+      counts.customers = collections.customers.length;
+    }
+    if (Array.isArray(collections.customerLedger)) {
+      saveLocalCustomerLedger(collections.customerLedger);
+      counts.customerLedger = collections.customerLedger.length;
+    }
+    if (Array.isArray(collections.coupons)) {
+      saveLocalCoupons(collections.coupons);
+      counts.coupons = collections.coupons.length;
+    }
+    if (Array.isArray(collections.users)) {
+      saveLocalUsers(collections.users);
+      counts.users = collections.users.length;
+    }
+    if (Array.isArray(collections.orders)) {
+      saveLocalOrders(collections.orders);
+      counts.orders = collections.orders.length;
+    }
+    if (Array.isArray(collections.suppliers)) {
+      saveLocalSuppliers(collections.suppliers);
+      counts.suppliers = collections.suppliers.length;
+    }
+    if (Array.isArray(collections.purchaseOrders)) {
+      saveLocalPurchaseOrders(collections.purchaseOrders);
+      counts.purchaseOrders = collections.purchaseOrders.length;
+    }
+    if (Array.isArray(collections.expenses)) {
+      saveLocalExpenses(collections.expenses);
+      counts.expenses = collections.expenses.length;
+    }
+    if (Array.isArray(collections.cashRegisters)) {
+      saveLocalCashRegisters(collections.cashRegisters);
+      counts.cashRegisters = collections.cashRegisters.length;
+    }
+    if (Array.isArray(collections.tailoringOrders)) {
+      saveLocalTailoringOrders(collections.tailoringOrders);
+      counts.tailoringOrders = collections.tailoringOrders.length;
+    }
+    if (Array.isArray(collections.tailorMasters)) {
+      saveLocalTailorMasters(collections.tailorMasters);
+      counts.tailorMasters = collections.tailorMasters.length;
+    }
+    if (Array.isArray(collections.fabricWastage)) {
+      saveLocalFabricWastage(collections.fabricWastage);
+      counts.fabricWastage = collections.fabricWastage.length;
+    }
+
+    return { success: true, counts };
+  } catch (err) {
+    console.error('Backup restore failed:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export function exportProductsExcelCSV(products = []) {
+  const headers = ['প্রোডাক্ট আইডি', 'পণ্যের নাম', 'ক্যাটাগরি', 'একক', 'কেনা দাম (৳)', 'বিক্রয় মূল্য (৳)', 'বর্তমান স্টক', 'বারকোড'];
+  const rows = products.map((p) => [
+    p.ProductID || p.id || '',
+    p.ProductName || p.name || '',
+    p.Category || p.category || '',
+    p.Unit || p.unit || '',
+    Number(p.CostPrice || p.costPrice || 0),
+    Number(p.SellingPrice || p.sellingPrice || 0),
+    Number(p.CurrentStock || p.stock || 0),
+    p.Barcode || p.barcode || ''
+  ]);
+  exportToCSV(`Products_Inventory_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+export function exportSalesExcelCSV(salesHistory = []) {
+  const headers = ['ইনভয়েস নং', 'তারিখ ও সময়', 'গ্রাহকের নাম', 'মোবাইল', 'মোট আইটেম', 'মোট মূল্য (৳)', 'ডিসকাউন্ট (৳)', 'পরিশোধিত (৳)', 'বকেয়া (৳)', 'পেমেন্ট মাধ্যম'];
+  const rows = salesHistory.map((s) => [
+    s.InvoiceNo || s.invoiceNo || s.saleId || '',
+    s.SaleDate || s.saleDate || s.createdAt || '',
+    s.CustomerName || s.customerName || '',
+    s.CustomerPhone || s.customerPhone || '',
+    Number(s.TotalItems || s.itemCount || 0),
+    Number(s.GrandTotal || s.grandTotal || s.totalAmount || 0),
+    Number(s.DiscountAmount || s.discountAmount || 0),
+    Number(s.PaidAmount || s.paidAmount || 0),
+    Number(s.DueAmount || s.dueAmount || 0),
+    s.PaymentMethod || s.paymentMethod || 'Cash'
+  ]);
+  exportToCSV(`Sales_History_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+export function exportTailoringExcelCSV(tailoringOrders = []) {
+  const headers = ['টোকেন নং', 'অর্ডার নং', 'গ্রাহকের নাম', 'মোবাইল', 'পোশাক', 'পরিমাণ', 'মাস্টার কারিগর', 'মোট মজুরি (৳)', 'অগ্রিম (৳)', 'বকেয়া (৳)', 'ডেলিভারি তারিখ', 'বর্তমান অবস্থা'];
+  const rows = tailoringOrders.map((o) => [
+    o.TokenNo || '',
+    o.OrderID || '',
+    o.CustomerName || '',
+    o.CustomerPhone || '',
+    o.GarmentType || '',
+    Number(o.Quantity || 1),
+    o.TailorMaster || '',
+    Number(o.TotalAmount || 0),
+    Number(o.AdvancePaid || 0),
+    Number(o.DueAmount || 0),
+    o.DeliveryDate || '',
+    o.Status || ''
+  ]);
+  exportToCSV(`Tailoring_Orders_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+

@@ -41,6 +41,7 @@ export default function AnalyticsDashboard({
   customers = [],
   customerLedger = [],
   expenses = [],
+  fabricWastage = [],
   currencySymbol = '৳',
   storeSettings = {},
   onRefreshSales
@@ -612,8 +613,39 @@ export default function AnalyticsDashboard({
       }
     });
 
+    // ৮.১ থান কাপড়ের ছাঁট ও ড্যামেজ অপচয় ক্ষতি (Fabric Wastage Loss in period):
+    let periodFabricLoss = 0;
+    (Array.isArray(fabricWastage) ? fabricWastage : []).forEach(fw => {
+      const fwDateStr = String(fw.CreatedAt || fw.createdAt || fw.Date || fw.date || '');
+      if (!fwDateStr) return;
+      const fwDate = new Date(fwDateStr);
+      if (isNaN(fwDate.getTime())) return;
+
+      let matches = false;
+      if (filterRange === 'today') matches = (fwDateStr.slice(0, 10) === todayStr);
+      else if (filterRange === 'yesterday') matches = (fwDateStr.slice(0, 10) === yesterdayStr);
+      else if (filterRange === '7days') matches = (fwDate >= sevenDaysAgoDate && fwDate <= nowDate);
+      else if (filterRange === 'month') matches = (fwDate.getFullYear() === nowDate.getFullYear() && fwDate.getMonth() === nowDate.getMonth());
+      else if (filterRange === 'lastMonth') matches = (fwDate.getFullYear() === lastMonthYear && fwDate.getMonth() === lastMonthIdx);
+      else if (filterRange === 'year') matches = (fwDate.getFullYear() === nowDate.getFullYear());
+      else if (filterRange === 'all') matches = true;
+      else if (filterRange === 'custom') {
+        if (!customStartDate && !customEndDate) matches = true;
+        else {
+          const start = customStartDate ? new Date(customStartDate) : new Date('2000-01-01');
+          const end = customEndDate ? new Date(customEndDate) : new Date('2099-12-31');
+          end.setHours(23, 59, 59, 999);
+          matches = (fwDate >= start && fwDate <= end);
+        }
+      }
+
+      if (matches) {
+        periodFabricLoss += (Number(fw.LossAmount) || 0);
+      }
+    });
+
     const grossProfit = bookedProfit;
-    const trueNetProfit = grossProfit - periodExpenses;
+    const trueNetProfit = grossProfit - periodExpenses - periodFabricLoss;
 
     // দৈনিক ট্রেন্ড সাজানো
     const dailyTrendList = Object.values(dateTrendMap)
@@ -636,6 +668,7 @@ export default function AnalyticsDashboard({
       totalTax,
       totalDiscount,
       totalExpenses: periodExpenses,
+      totalFabricLoss: periodFabricLoss,
       grossProfit,
       trueNetProfit,
       netProfit: trueNetProfit, // খরচ বাদ দিয়ে প্রকৃত নিট লাভ
@@ -1797,13 +1830,30 @@ export default function AnalyticsDashboard({
 
                 {/* মোট মুনাফা (Gross Profit) */}
                 <div className="flex justify-between font-black text-sm bg-indigo-50 text-indigo-950 p-3 rounded-xl border border-indigo-200 font-sans">
-                  <span>৩. মোট মুনাফা (Gross Profit = Net Sales - COGS)</span>
-                  <span>{currencySymbol}{(analyticsKPI.netSales - analyticsKPI.totalCOGS).toFixed(2)}</span>
+                  <span>৩. মোট বিক্রয় মুনাফা (Gross Profit = Net Sales - COGS)</span>
+                  <span>{currencySymbol}{analyticsKPI.grossProfit.toFixed(2)}</span>
+                </div>
+
+                {/* পরিচালন খরচ ও থান অপচয় ক্ষতি (Operating Expenses & Fabric Loss) */}
+                <div className="space-y-2 pb-3 border-b border-slate-100">
+                  <div className="font-sans font-bold text-slate-900 text-sm">৪. পরিচালন খরচ ও থান অপচয় ক্ষতি (Operating Expenses & Fabric Scrap Loss)</div>
+                  <div className="flex justify-between pl-4 text-slate-700">
+                    <span>দোকানের পরিচালন খরচ (Shop Operating Expenses)</span>
+                    <span className="text-rose-600 font-medium">- {currencySymbol}{analyticsKPI.totalExpenses.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between pl-4 text-slate-700">
+                    <span>থান কাপড়ের ছাঁট ও ড্যামেজ অপচয় (Fabric Scrap & Wastage Loss)</span>
+                    <span className="text-rose-600 font-medium">- {currencySymbol}{analyticsKPI.totalFabricLoss.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between pl-4 font-bold text-slate-900 bg-rose-50/60 py-1.5 px-3 rounded-xl font-sans text-rose-900">
+                    <span>মোট পরিচালন কর্তন (Total Deductions)</span>
+                    <span>- {currencySymbol}{(analyticsKPI.totalExpenses + analyticsKPI.totalFabricLoss).toFixed(2)}</span>
+                  </div>
                 </div>
 
                 {/* ট্যাক্স ও শুল্ক */}
                 <div className="space-y-2 pb-3 border-b border-slate-100">
-                  <div className="font-sans font-bold text-slate-900 text-sm">৪. সংগৃহীত কর/ভ্যাট (Taxes Collected)</div>
+                  <div className="font-sans font-bold text-slate-900 text-sm">৫. সংগৃহীত কর/ভ্যাট (Taxes Collected)</div>
                   <div className="flex justify-between pl-4 text-slate-700">
                     <span>সংগৃহীত বিক্রয় কর (Sales Tax / VAT)</span>
                     <span>{currencySymbol}{analyticsKPI.totalTax.toFixed(2)}</span>
@@ -1817,9 +1867,9 @@ export default function AnalyticsDashboard({
                     : 'bg-rose-50 text-rose-900 border-rose-300'
                 }`}>
                   <div className="flex flex-col">
-                    <span>চূড়ান্ত নিট মুনাফা (Net Operating Profit)</span>
+                    <span>চূড়ান্ত নিট পরিচালন লাভ (True Net Operating Profit)</span>
                     <span className="text-xs font-semibold opacity-80 mt-0.5">
-                      মুনাফার মার্জিন শতকরা হার: {analyticsKPI.profitMarginPercent}%
+                      নিট মুনাফার মার্জিন শতকরা হার: {analyticsKPI.profitMarginPercent}% (খরচ ও ছাঁট কর্তন পরবর্তী)
                     </span>
                   </div>
                   <span className="text-xl">
@@ -1829,7 +1879,7 @@ export default function AnalyticsDashboard({
 
                 {/* ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় */}
                 <div className="space-y-2 pt-2 pb-1">
-                  <div className="font-sans font-bold text-slate-900 text-sm">৫. ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় (Cash Realization & Ledger)</div>
+                  <div className="font-sans font-bold text-slate-900 text-sm">৬. ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় (Cash Realization & Ledger)</div>
                   <div className="flex justify-between pl-4 text-slate-700">
                     <span>হিসাবকৃত মোট মুনাফা (Booked Accrual Profit)</span>
                     <span className="font-bold">{currencySymbol}{analyticsKPI.bookedProfit.toFixed(2)}</span>

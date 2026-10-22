@@ -40,6 +40,9 @@ import HeldCartsModal from './components/HeldCartsModal';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import TailoringModal from './components/TailoringModal';
 import FabricWastageModal from './components/FabricWastageModal';
+import BackupRestoreModal from './components/BackupRestoreModal';
+import AdminPinModal from './components/AdminPinModal';
+import { isAdminUser } from './utils/permissionUtils';
 import { isFabricUnit } from './utils/fabricUtils';
 import {
   playBarcodeBeep,
@@ -368,6 +371,41 @@ export default function App() {
   // ভিউ নেভিগেশন স্টেট ('pos' | 'cart' | 'checkout')
   const [currentView, setCurrentView] = useState('pos');
   const [discountAmount, setDiscountAmount] = useState(0);
+
+  // ফেজ ৩: ব্যবসায়িক লাভ ও নিরাপত্তা (Role-Based Restriction & 1-Click Backup)
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [isAdminPinModalOpen, setIsAdminPinModalOpen] = useState(false);
+  const [adminPinActionDescription, setAdminPinActionDescription] = useState('');
+  const [pendingAdminAction, setPendingAdminAction] = useState(null);
+  const [isPinAuthorizedSession, setIsPinAuthorizedSession] = useState(false);
+
+  // অ্যাডমিন অনুমতি যাচাই ও পিন শিল্ড প্রোটেকশন
+  const executeAdminAction = useCallback((actionCallback, actionName = 'এই সুরক্ষিত সেকশনটি ব্যবহার করতে') => {
+    if (isAdminUser(activeUser) || isPinAuthorizedSession) {
+      if (typeof actionCallback === 'function') actionCallback();
+    } else {
+      setAdminPinActionDescription(actionName);
+      setPendingAdminAction(() => actionCallback);
+      setIsAdminPinModalOpen(true);
+    }
+  }, [activeUser, isPinAuthorizedSession]);
+
+  const handleSecureNavigate = useCallback((view) => {
+    if (view === 'analytics') {
+      executeAdminAction(() => setCurrentView('analytics'), 'লাভ-ক্ষতি ও P&L অ্যানালিটিক্স রিপোর্ট দেখতে');
+      return;
+    }
+    if (view === 'users') {
+      executeAdminAction(() => setCurrentView('users'), 'ইউজার ও স্টাফ একাউন্ট ম্যানেজ করতে');
+      return;
+    }
+    if (view === 'backup') {
+      executeAdminAction(() => setCurrentView('backup'), '১-ক্লিক সম্পূর্ণ ডাটা ব্যাকআপ ও এক্সেল ডাউনলোড করতে');
+      return;
+    }
+    setCurrentView(view);
+  }, [executeAdminAction]);
+
   const [isCustomersModalOpen, setIsCustomersModalOpen] = useState(false);
   const [isCustomerLedgerModalOpen, setIsCustomerLedgerModalOpen] = useState(false);
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
@@ -745,6 +783,7 @@ export default function App() {
     const guest = logoutUser();
     setActiveUser(guest);
     setDiscountAmount(0);
+    setIsPinAuthorizedSession(false);
     showToast('সফলভাবে লগআউট সম্পন্ন হয়েছে।', 'info');
   };
 
@@ -3378,12 +3417,12 @@ export default function App() {
         onSync={() => handleSync(true)}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
-        onOpenUsersModal={() => setIsUsersModalOpen(true)}
+        onOpenUsersModal={() => executeAdminAction(() => setIsUsersModalOpen(true), 'ইউজার ও স্টাফ একাউন্ট ম্যানেজ করতে')}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onOpenCustomerOrdersModal={() => setIsCustomerOrdersOpen(true)}
         onSwitchToCustomerMode={handleSwitchToCustomerMode}
         onLogout={handleLogout}
-        onNavigate={setCurrentView}
+        onNavigate={handleSecureNavigate}
         onToggleSidebar={handleToggleSidebar}
         isSidebarCollapsed={isSidebarCollapsed}
         lowStockCount={lowStockCount}
@@ -3414,7 +3453,7 @@ export default function App() {
             settings={settings}
             activeUser={activeUser}
             currentView={currentView}
-            onNavigate={setCurrentView}
+            onNavigate={handleSecureNavigate}
             cartCount={Array.isArray(cart) ? cart.length : 0}
             cartTotal={Array.isArray(cart) ? cart.reduce((a, b) => a + (Number(b.sellingPrice) || 0) * (Number(b.quantity) || 0), 0) : 0}
             currencySymbol={settings.CurrencySymbol || '৳'}
@@ -3425,7 +3464,8 @@ export default function App() {
               setIsStockModalOpen(true);
             }}
             onOpenProductModal={() => setIsProductModalOpen(true)}
-            onOpenAnalyticsModal={() => setIsAnalyticsModalOpen(true)}
+            onOpenAnalyticsModal={() => executeAdminAction(() => setIsAnalyticsModalOpen(true), 'লাভ-ক্ষতি ও P&L অ্যানালিটিক্স রিপোর্ট দেখতে')}
+            onOpenBackupModal={() => executeAdminAction(() => setIsBackupModalOpen(true), '১-ক্লিক সম্পূর্ণ ডাটা ব্যাকআপ ও এক্সেল ডাউনলোড করতে')}
             onOpenLowStockModal={() => setIsLowStockModalOpen(true)}
             onOpenExpiryAlertModal={() => setIsExpiryAlertModalOpen(true)}
             expiringProductsCount={expiringProductsSummary.totalAlerts}
@@ -3458,7 +3498,7 @@ export default function App() {
             heldCartsCount={heldCarts.length}
             onOpenAbandonedCartModal={() => setIsAbandonedCartModalOpen(true)}
             onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
-            onOpenUsersModal={() => setIsUsersModalOpen(true)}
+            onOpenUsersModal={() => executeAdminAction(() => setIsUsersModalOpen(true), 'ইউজার ও স্টাফ একাউন্ট ম্যানেজ করতে')}
             onOpenCouponModal={() => setIsCouponModalOpen(true)}
             onOpenInvoiceLookupModal={handleOpenInvoiceLookup}
             onOpenCustomerOrdersModal={() => setIsCustomerOrdersOpen(true)}
@@ -3577,6 +3617,7 @@ export default function App() {
               customers={customers}
               customerLedger={customerLedger}
               expenses={expenses}
+              fabricWastage={fabricWastageList}
               currencySymbol={settings.CurrencySymbol || '৳'}
               storeSettings={settings}
               onRefreshSales={handleRefreshSales}
@@ -3907,6 +3948,34 @@ export default function App() {
               onDeleteWastageRecord={handleDeleteFabricWastage}
             />
           )}
+
+          {currentView === 'backup' && (
+            <BackupRestoreModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              products={products}
+              salesHistory={salesHistory}
+              customers={customers}
+              tailoringOrders={tailoringOrders}
+              storeSettings={settings}
+              onRestoreComplete={() => {
+                setProducts(getLocalProducts());
+                setCategories(getLocalCategories());
+                setUnits(getLocalUnits());
+                setSalesHistory(getLocalSalesHistory());
+                setOrders(getLocalOrders());
+                setCustomers(getLocalCustomers());
+                setCustomerLedger(getLocalCustomerLedger());
+                setExpenses(getLocalExpenses());
+                setTailoringOrders(getLocalTailoringOrders());
+                setFabricWastageList(getLocalFabricWastage());
+                setSuppliers(getLocalSuppliers());
+                setPurchaseOrders(getLocalPurchaseOrders());
+                showToast('ডাটাবেস সফলভাবে রিস্টোর হয়েছে!', 'success');
+              }}
+            />
+          )}
         </main>
       </div>
 
@@ -3972,6 +4041,7 @@ export default function App() {
         onAddUnit={handleAddUnit}
         products={products}
         settings={settings}
+        activeUser={activeUser}
       />
 
       {/* P&L লাভ-ক্ষতি অ্যানালিটিক্স ড্যাশবোর্ড মডাল */}
@@ -3985,6 +4055,7 @@ export default function App() {
         customers={customers}
         customerLedger={customerLedger}
         expenses={expenses}
+        fabricWastage={fabricWastageList}
         currencySymbol={settings.CurrencySymbol || '৳'}
         storeSettings={settings}
         onRefreshSales={handleRefreshSales}
@@ -4399,6 +4470,55 @@ export default function App() {
           onDeleteWastageRecord={handleDeleteFabricWastage}
         />
       )}
+
+      {/* ফেজ ৩: ১-ক্লিক সম্পূর্ণ ডাটা ব্যাকআপ ও এক্সেল ডাউনলোড মডাল */}
+      {isBackupModalOpen && currentView !== 'backup' && (
+        <BackupRestoreModal
+          isOpen={isBackupModalOpen}
+          onClose={() => setIsBackupModalOpen(false)}
+          products={products}
+          salesHistory={salesHistory}
+          customers={customers}
+          tailoringOrders={tailoringOrders}
+          storeSettings={settings}
+          onRestoreComplete={() => {
+            setProducts(getLocalProducts());
+            setCategories(getLocalCategories());
+            setUnits(getLocalUnits());
+            setSalesHistory(getLocalSalesHistory());
+            setOrders(getLocalOrders());
+            setCustomers(getLocalCustomers());
+            setCustomerLedger(getLocalCustomerLedger());
+            setExpenses(getLocalExpenses());
+            setTailoringOrders(getLocalTailoringOrders());
+            setFabricWastageList(getLocalFabricWastage());
+            setSuppliers(getLocalSuppliers());
+            setPurchaseOrders(getLocalPurchaseOrders());
+            showToast('ডাটাবেস সফলভাবে রিস্টোর হয়েছে!', 'success');
+          }}
+        />
+      )}
+
+      {/* ফেজ ৩: অ্যাডমিন পিন অথরাইজেশন শিল্ড মডাল */}
+      <AdminPinModal
+        isOpen={isAdminPinModalOpen}
+        onClose={() => {
+          setIsAdminPinModalOpen(false);
+          setPendingAdminAction(null);
+        }}
+        onSuccess={() => {
+          setIsPinAuthorizedSession(true);
+          setIsAdminPinModalOpen(false);
+          if (typeof pendingAdminAction === 'function') {
+            const action = pendingAdminAction;
+            setPendingAdminAction(null);
+            action();
+          }
+        }}
+        users={users}
+        settings={settings}
+        actionDescription={adminPinActionDescription}
+      />
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}
       {toastMessage && (
