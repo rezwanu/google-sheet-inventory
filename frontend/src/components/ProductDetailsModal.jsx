@@ -369,7 +369,9 @@ export default function ProductDetailsModal({
                   <div key={idx} className="p-2.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between text-xs shadow-2xs">
                     <div>
                       <span className="font-bold text-slate-900 block">
-                        {[v.Size, v.Color, v.Weight, v.Title].filter(Boolean).join(' / ') || `ভ্যারিয়েন্ট #${idx + 1}`}
+                        {(v.Attributes && typeof v.Attributes === 'object' && Object.keys(v.Attributes).length > 0)
+                          ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ')
+                          : ([v.Size, v.Color, v.Weight, v.Title].filter(Boolean).join(' / ') || `ভ্যারিয়েন্ট #${idx + 1}`)}
                       </span>
                       {v.Barcode && <span className="font-mono text-[10px] text-slate-400">#{v.Barcode}</span>}
                     </div>

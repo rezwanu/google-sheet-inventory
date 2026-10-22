@@ -3871,6 +3871,34 @@ export function restoreDatabaseFromJSON(jsonString) {
       saveLocalFabricWastage(collections.fabricWastage);
       counts.fabricWastage = collections.fabricWastage.length;
     }
+    if (Array.isArray(collections.abandonedCarts)) {
+      saveLocalAbandonedCarts(collections.abandonedCarts);
+      counts.abandonedCarts = collections.abandonedCarts.length;
+    }
+    if (Array.isArray(collections.supplierLedger)) {
+      saveLocalSupplierLedger(collections.supplierLedger);
+      counts.supplierLedger = collections.supplierLedger.length;
+    }
+    if (Array.isArray(collections.auditLogs)) {
+      saveLocalAuditLogs(collections.auditLogs);
+      counts.auditLogs = collections.auditLogs.length;
+    }
+    if (Array.isArray(collections.salesReturns)) {
+      saveLocalSalesReturns(collections.salesReturns);
+      counts.salesReturns = collections.salesReturns.length;
+    }
+    if (Array.isArray(collections.stockTransfers)) {
+      saveLocalStockTransfers(collections.stockTransfers);
+      counts.stockTransfers = collections.stockTransfers.length;
+    }
+    if (Array.isArray(collections.campaigns)) {
+      saveLocalCampaigns(collections.campaigns);
+      counts.campaigns = collections.campaigns.length;
+    }
+    if (Array.isArray(collections.heldCarts)) {
+      saveLocalHeldCarts(collections.heldCarts);
+      counts.heldCarts = collections.heldCarts.length;
+    }
 
     return { success: true, counts };
   } catch (err) {
@@ -3888,7 +3916,7 @@ export function exportProductsExcelCSV(products = []) {
     p.Unit || p.unit || '',
     Number(p.CostPrice || p.costPrice || 0),
     Number(p.SellingPrice || p.sellingPrice || 0),
-    Number(p.CurrentStock || p.stock || 0),
+    Number(p.StockQuantity !== undefined ? p.StockQuantity : (p.CurrentStock || p.stock || 0)),
     p.Barcode || p.barcode || ''
   ]);
   exportToCSV(`Products_Inventory_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
@@ -3898,10 +3926,10 @@ export function exportSalesExcelCSV(salesHistory = []) {
   const headers = ['ইনভয়েস নং', 'তারিখ ও সময়', 'গ্রাহকের নাম', 'মোবাইল', 'মোট আইটেম', 'মোট মূল্য (৳)', 'ডিসকাউন্ট (৳)', 'পরিশোধিত (৳)', 'বকেয়া (৳)', 'পেমেন্ট মাধ্যম'];
   const rows = salesHistory.map((s) => [
     s.InvoiceNo || s.invoiceNo || s.saleId || '',
-    s.SaleDate || s.saleDate || s.createdAt || '',
+    s.Timestamp || s.timestamp || s.SaleDate || s.saleDate || s.createdAt || '',
     s.CustomerName || s.customerName || '',
     s.CustomerPhone || s.customerPhone || '',
-    Number(s.TotalItems || s.itemCount || 0),
+    Number(s.TotalItems || s.itemCount || (Array.isArray(s.items) ? s.items.length : 0)),
     Number(s.GrandTotal || s.grandTotal || s.totalAmount || 0),
     Number(s.DiscountAmount || s.discountAmount || 0),
     Number(s.PaidAmount || s.paidAmount || 0),
@@ -3909,6 +3937,22 @@ export function exportSalesExcelCSV(salesHistory = []) {
     s.PaymentMethod || s.paymentMethod || 'Cash'
   ]);
   exportToCSV(`Sales_History_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+export function exportCustomersExcelCSV(customers = []) {
+  const headers = ['কাস্টমার আইডি', 'নাম', 'মোবাইল', 'ঠিকানা', 'ধরন', 'মোট ক্রয় (৳)', 'পরিশোধ (৳)', 'বর্তমান বকেয়া (৳)', 'লয়ালটি পয়েন্ট'];
+  const rows = customers.map((c) => [
+    c.CustomerID || c.id || '',
+    c.CustomerName || c.name || '',
+    c.Phone || c.phone || '',
+    c.Address || c.address || '',
+    c.CustomerType || c.customerType || 'Regular',
+    Number(c.TotalPurchases || c.totalPurchases || 0),
+    Number(c.TotalPaid || c.totalPaid || 0),
+    Number(c.CurrentDue || c.currentDue || 0),
+    Number(c.LoyaltyPoints || c.loyaltyPoints || 0)
+  ]);
+  exportToCSV(`Customers_Ledger_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
 }
 
 export function exportTailoringExcelCSV(tailoringOrders = []) {

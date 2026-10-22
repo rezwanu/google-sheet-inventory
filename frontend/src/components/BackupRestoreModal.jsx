@@ -22,7 +22,8 @@ import {
   restoreDatabaseFromJSON,
   exportProductsExcelCSV,
   exportSalesExcelCSV,
-  exportTailoringExcelCSV
+  exportTailoringExcelCSV,
+  exportCustomersExcelCSV
 } from '../services/storage';
 import { playCashChime, playWarningBeep } from '../utils/soundEffects';
 
@@ -341,7 +342,7 @@ export default function BackupRestoreModal({
               দোকানের হিসাব বা অডিটের জন্য আলাদা আলাদা এক্সেল শিট ডাউনলোড করুন (UTF-8 বাংলা সাপোর্ট সহ):
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -386,8 +387,24 @@ export default function BackupRestoreModal({
                   <FileSpreadsheet className="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" />
                   <span className="text-[10px] font-bold text-slate-400 font-mono">{tailoringOrders.length} Orders</span>
                 </div>
-                <h4 className="font-black text-xs text-slate-900 mt-2">টেইলারিং অর্ডার রেজিস্টার (.csv)</h4>
+                <h4 className="font-black text-xs text-slate-900 mt-2">টেইলারিং রেজিস্টার (.csv)</h4>
                 <p className="text-[10px] text-slate-500 mt-0.5">পোশাক, মাপ, মজুরি ও ডেলিভারি রিপোর্ট</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  exportCustomersExcelCSV(customers);
+                  playCashChime();
+                }}
+                className="p-4 bg-slate-50 hover:bg-indigo-50/60 border border-slate-200 hover:border-indigo-300 rounded-2xl text-left transition-all group cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <FileSpreadsheet className="w-5 h-5 text-amber-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-[10px] font-bold text-slate-400 font-mono">{customers.length} Customers</span>
+                </div>
+                <h4 className="font-black text-xs text-slate-900 mt-2">গ্রাহক ও বাকি লেজার (.csv)</h4>
+                <p className="text-[10px] text-slate-500 mt-0.5">ক্রেতার নাম, মোবাইল ও বকেয়া খাতা</p>
               </button>
             </div>
           </div>

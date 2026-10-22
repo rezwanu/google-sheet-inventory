@@ -1372,6 +1372,26 @@ export default function App() {
   // ==========================================================================
 
   const handleSaveTailoringOrder = (orderPayload) => {
+    // ১. দোকানের থান কাপড় ব্যবহার হলে স্টক স্বয়ংক্রিয়ভাবে কর্তন করা
+    if (orderPayload.FabricSource === 'store' && orderPayload.FabricProductID && Number(orderPayload.FabricYards) > 0) {
+      const pIdx = products.findIndex((p) => String(p.ProductID || p.id).trim() === String(orderPayload.FabricProductID).trim());
+      if (pIdx !== -1) {
+        const curP = products[pIdx];
+        const curStock = Number(curP.StockQuantity !== undefined ? curP.StockQuantity : (curP.CurrentStock || curP.stock || 0));
+        const newStock = Math.max(0, Math.round((curStock - Number(orderPayload.FabricYards)) * 10000) / 10000);
+        const updatedProds = [...products];
+        updatedProds[pIdx] = {
+          ...curP,
+          StockQuantity: newStock,
+          CurrentStock: newStock,
+          stock: newStock,
+          UpdatedAt: new Date().toISOString()
+        };
+        setProducts(updatedProds);
+        saveLocalProducts(updatedProds);
+      }
+    }
+
     const saved = addTailoringOrderLocally(orderPayload);
     setTailoringOrders(getLocalTailoringOrders());
     showToast(`টেইলারিং অর্ডার #${saved.TokenNo} (${saved.OrderID}) সফলভাবে তৈরি হয়েছে!`, 'success');
@@ -1432,9 +1452,30 @@ export default function App() {
   };
 
   const handleDeleteTailoringOrder = (orderId) => {
+    const orders = getLocalTailoringOrders();
+    const target = orders.find((o) => (o.OrderID || o.orderId) === orderId);
+    if (target && target.FabricSource === 'store' && target.FabricProductID && Number(target.FabricYards) > 0) {
+      const pIdx = products.findIndex((p) => String(p.ProductID || p.id).trim() === String(target.FabricProductID).trim());
+      if (pIdx !== -1) {
+        const curP = products[pIdx];
+        const curStock = Number(curP.StockQuantity !== undefined ? curP.StockQuantity : (curP.CurrentStock || curP.stock || 0));
+        const restoredStock = Math.round((curStock + Number(target.FabricYards)) * 10000) / 10000;
+        const updatedProds = [...products];
+        updatedProds[pIdx] = {
+          ...curP,
+          StockQuantity: restoredStock,
+          CurrentStock: restoredStock,
+          stock: restoredStock,
+          UpdatedAt: new Date().toISOString()
+        };
+        setProducts(updatedProds);
+        saveLocalProducts(updatedProds);
+      }
+    }
+
     deleteTailoringOrderLocally(orderId);
     setTailoringOrders(getLocalTailoringOrders());
-    showToast('টেইলারিং অর্ডারটি মুছে ফেলা হয়েছে।', 'info');
+    showToast('টেইলারিং অর্ডারটি মুছে ফেলা হয়েছে এবং থান কাপড়ের স্টক পুনরুদ্ধার করা হয়েছে।', 'info');
   };
 
   const handleSendToTailoringFromCart = (fabricItem) => {
@@ -1452,25 +1493,26 @@ export default function App() {
   // ==========================================================================
 
   const handleRecordFabricWastage = (payload) => {
+    let updatedProds = [...products];
+
     // ১. প্রোডাক্ট স্টক থেকে মোট নষ্ট/ছাঁট গজ বিয়োগ করা
     if (payload.ProductID && payload.TotalYards > 0) {
-      const pIdx = products.findIndex((p) => String(p.ProductID || p.id) === String(payload.ProductID));
+      const pIdx = updatedProds.findIndex((p) => String(p.ProductID || p.id).trim() === String(payload.ProductID).trim());
       if (pIdx !== -1) {
-        const curP = products[pIdx];
-        const curStock = Number(curP.CurrentStock || curP.stock || 0);
+        const curP = updatedProds[pIdx];
+        const curStock = Number(curP.StockQuantity !== undefined ? curP.StockQuantity : (curP.CurrentStock || curP.stock || 0));
         const newStock = Math.max(0, Math.round((curStock - payload.TotalYards) * 10000) / 10000);
-        const updatedProds = [...products];
         updatedProds[pIdx] = {
           ...curP,
+          StockQuantity: newStock,
           CurrentStock: newStock,
-          stock: newStock
+          stock: newStock,
+          UpdatedAt: new Date().toISOString()
         };
-        setProducts(updatedProds);
-        saveLocalProducts(updatedProds);
       }
     }
 
-    // ২. যদি ক্লিয়ারেন্স ছাঁট প্যাক হিসেবে যুক্ত করতে চায়
+    // ২. যদি ক্লিয়ারেন্স ছাঁট প্যাক হিসেবে ক্যাটালগে যুক্ত করতে চায়
     if (payload.CreateBundle && payload.BundlePrice > 0) {
       const newBundleItem = {
         ProductID: `BUNDLE-${Date.now().toString().slice(-6)}`,
@@ -1478,15 +1520,17 @@ export default function App() {
         Category: 'ছাঁট ও বান্ডিল',
         CostPrice: payload.LossAmount,
         SellingPrice: payload.BundlePrice,
+        StockQuantity: 1,
         CurrentStock: 1,
         Unit: 'প্যাক',
         Barcode: `BND${Date.now().toString().slice(-6)}`,
         Description: `থানের শেষ অবশিষ্টাংশ ছাঁট প্যাক (${payload.TotalYards} গজ)`
       };
-      const prodsWithBundle = [newBundleItem, ...products];
-      setProducts(prodsWithBundle);
-      saveLocalProducts(prodsWithBundle);
+      updatedProds = [newBundleItem, ...updatedProds];
     }
+
+    setProducts(updatedProds);
+    saveLocalProducts(updatedProds);
 
     // ৩. ছাঁট ও ড্যামেজ লগে সংরক্ষণ
     const saved = addFabricWastageLocally(payload);
@@ -1506,9 +1550,30 @@ export default function App() {
   };
 
   const handleDeleteFabricWastage = (recordId) => {
+    const list = getLocalFabricWastage();
+    const target = list.find((r) => (r.WastageID || r.wastageId) === recordId);
+    if (target && target.ProductID && Number(target.TotalYards) > 0) {
+      const pIdx = products.findIndex((p) => String(p.ProductID || p.id).trim() === String(target.ProductID).trim());
+      if (pIdx !== -1) {
+        const curP = products[pIdx];
+        const curStock = Number(curP.StockQuantity !== undefined ? curP.StockQuantity : (curP.CurrentStock || curP.stock || 0));
+        const restoredStock = Math.round((curStock + Number(target.TotalYards)) * 10000) / 10000;
+        const updatedProds = [...products];
+        updatedProds[pIdx] = {
+          ...curP,
+          StockQuantity: restoredStock,
+          CurrentStock: restoredStock,
+          stock: restoredStock,
+          UpdatedAt: new Date().toISOString()
+        };
+        setProducts(updatedProds);
+        saveLocalProducts(updatedProds);
+      }
+    }
+
     deleteFabricWastageLocally(recordId);
     setFabricWastageList(getLocalFabricWastage());
-    showToast('ছাঁট/ড্যামেজ রেকর্ডটি মুছে ফেলা হয়েছে।', 'info');
+    showToast('ছাঁট/ড্যামেজ রেকর্ডটি মুছে ফেলা হয়েছে এবং স্টক পুনরুদ্ধার করা হয়েছে।', 'info');
   };
 
   // কাস্টমারের সাথে দামাদামির জন্য কার্টের পণ্যের বিক্রয়মূল্য পরিবর্তন (ফ্লোর প্রাইস সুরক্ষা সহ)
@@ -3764,6 +3829,7 @@ export default function App() {
               customerLedger={customerLedger}
               supplierLedger={supplierLedger}
               expenses={expenses}
+              tailoringOrders={tailoringOrders}
               currencySymbol={settings.CurrencySymbol || '৳'}
               activeUser={activeUser}
               storeSettings={settings}
@@ -4325,6 +4391,7 @@ export default function App() {
         customerLedger={customerLedger}
         supplierLedger={supplierLedger}
         expenses={expenses}
+        tailoringOrders={tailoringOrders}
         currencySymbol={settings.CurrencySymbol || '৳'}
         activeUser={activeUser}
         storeSettings={settings}

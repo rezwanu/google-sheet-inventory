@@ -313,6 +313,7 @@ export default function TailoringModal({
       GarmentType: garmentType,
       Quantity: Number(quantity) || 1,
       FabricSource: fabricSource,
+      FabricProductID: fabricSource === 'store' ? fabricProductId : '',
       FabricName: fabricSource === 'store' ? (fabricName || 'দোকানের কাপড়') : (fabricName || 'গ্রাহকের কাপড়'),
       FabricYards: Number(fabricYards) || 0,
       TailorMaster: tailorMaster,

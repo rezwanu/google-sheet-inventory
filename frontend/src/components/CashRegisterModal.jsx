@@ -24,6 +24,7 @@ export default function CashRegisterModal({
   customerLedger = [],
   supplierLedger = [],
   expenses = [],
+  tailoringOrders = [],
   currencySymbol = '৳',
   activeUser = null,
   storeSettings = {},
@@ -63,22 +64,50 @@ export default function CashRegisterModal({
     // ১. ক্যাশ সেলস (ক্যাশ পেমেন্ট বা স্প্লিট ক্যাশ)
     let cashSales = 0;
     (Array.isArray(salesHistory) ? salesHistory : []).forEach(sale => {
-      const saleTime = new Date(sale.Timestamp || sale.Date || sale.CreatedAt).getTime();
-      if (saleTime >= sessionStart) {
-        if (sale.SplitPayments && sale.SplitPayments.Cash !== undefined) {
-          cashSales += Number(sale.SplitPayments.Cash) || 0;
-        } else if (String(sale.PaymentMethod || '').toLowerCase() === 'cash') {
-          cashSales += Number(sale.FinalTotal !== undefined ? sale.FinalTotal : sale.TotalAmount) || 0;
-        }
+      const timeVal = sale.Timestamp || sale.timestamp || sale.Date || sale.date || sale.CreatedAt;
+      if (!timeVal) return;
+      const saleTime = new Date(timeVal).getTime();
+      if (isNaN(saleTime) || saleTime < sessionStart) return;
+
+      const split = sale.splitPayments || sale.SplitPayments;
+      const method = String(sale.paymentMethod || sale.PaymentMethod || '').toLowerCase();
+
+      if (split && (split.Cash !== undefined || split.cash !== undefined)) {
+        cashSales += Number(split.Cash !== undefined ? split.Cash : split.cash) || 0;
+      } else if (method === 'cash') {
+        const amt = sale.paidAmount !== undefined
+          ? Number(sale.paidAmount)
+          : Number(sale.grandTotal !== undefined ? sale.grandTotal : (sale.FinalTotal !== undefined ? sale.FinalTotal : (sale.TotalAmount || 0)));
+        cashSales += (amt || 0);
+      }
+    });
+
+    // ১.১ টেইলারিং নগদ অগ্রিম ও কালেকশন (Tailoring Cash Inflow)
+    let cashTailoring = 0;
+    (Array.isArray(tailoringOrders) ? tailoringOrders : []).forEach(to => {
+      const timeVal = to.CreatedAt || to.createdAt || to.Date || to.date || to.Timestamp;
+      if (!timeVal) return;
+      const toTime = new Date(timeVal).getTime();
+      if (isNaN(toTime) || toTime < sessionStart) return;
+
+      if (String(to.PaymentMethod || to.paymentMethod || '').toLowerCase() === 'cash') {
+        cashTailoring += (Number(to.AdvancePaid || to.advancePaid) || 0);
       }
     });
 
     // ২. কাস্টমার বকেয়া কালেকশন (নগদ ক্যাশে আসা)
-    let cashIn = 0;
+    let cashIn = cashTailoring;
     (Array.isArray(customerLedger) ? customerLedger : []).forEach(entry => {
-      const entryTime = new Date(entry.Timestamp).getTime();
-      if (entryTime >= sessionStart && entry.EntryType === 'Payment' && String(entry.PaymentMethod || '').toLowerCase() === 'cash') {
-        cashIn += Number(entry.Debit) || 0;
+      const timeVal = entry.Timestamp || entry.timestamp || entry.Date || entry.date || entry.CreatedAt;
+      if (!timeVal) return;
+      const entryTime = new Date(timeVal).getTime();
+      if (isNaN(entryTime) || entryTime < sessionStart) return;
+
+      const eType = String(entry.EntryType || entry.entryType || '').toLowerCase();
+      const eMethod = String(entry.PaymentMethod || entry.paymentMethod || '').toLowerCase();
+
+      if ((eType === 'payment' || eType === 'collection') && eMethod === 'cash') {
+        cashIn += Number(entry.Credit !== undefined ? entry.Credit : (entry.Amount || entry.Debit || 0)) || 0;
       }
     });
 
@@ -107,12 +136,13 @@ export default function CashRegisterModal({
       opening,
       cashSales,
       cashIn,
+      cashTailoring,
       cashOutExpenses,
       cashOutSuppliers,
       totalCashOut,
       expectedCash
     };
-  }, [activeRegister, salesHistory, customerLedger, expenses, supplierLedger]);
+  }, [activeRegister, salesHistory, customerLedger, expenses, supplierLedger, tailoringOrders]);
 
   // ওপেন হ্যান্ডলার
   const handleOpenRegisterSubmit = async (e) => {
