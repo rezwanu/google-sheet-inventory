@@ -319,11 +319,12 @@ export default function ProductCatalog({
             </div>
             <input
               ref={searchInputRef}
+              id="pos-product-search-input"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isCustomer ? "পণ্য পছন্দ করুন বা নাম লিখে খুঁজুন..." : "পণ্য, বারকোড স্ক্যান বা ক্যাটাগরি দিয়ে খুঁজুন..."}
+              placeholder={isCustomer ? "পণ্য পছন্দ করুন বা নাম লিখে খুঁজুন..." : "পণ্য, বারকোড বা নাম দিয়ে খুঁজুন... [F1]"}
               className="block w-full pl-11 pr-24 py-2.5 sm:py-3 border border-slate-200 rounded-2xl text-xs sm:text-sm bg-slate-50/80 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all shadow-2xs font-medium text-slate-800"
             />
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center space-x-1.5">

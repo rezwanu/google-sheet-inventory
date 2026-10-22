@@ -340,7 +340,7 @@ export default function CartPage({
               <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">
                 ৩
               </span>
-              <span>চেকআউট ও পেমেন্ট</span>
+              <span>চেকআউট ও পেমেন্ট [F9]</span>
             </button>
 
           </div>
@@ -390,10 +390,10 @@ export default function CartPage({
                   }
                 }}
                 className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95"
-                title="সিরিয়ালের পরবর্তী কাস্টমারের জন্য বর্তমান অর্ডারটি হোল্ড করে কার্ট খালি করুন"
+                title="সিরিয়ালের পরবর্তী কাস্টমারের জন্য বর্তমান অর্ডারটি হোল্ড করে কার্ট খালি করুন (শর্টকাট: F2)"
               >
                 <PauseCircle className="w-4 h-4" />
-                <span>অর্ডার হোল্ড করুন</span>
+                <span>অর্ডার হোল্ড [F2]</span>
               </button>
             )}
 
@@ -402,8 +402,9 @@ export default function CartPage({
                 type="button"
                 onClick={onOpenHeldCartsModal}
                 className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                title="হোল্ডকৃত অর্ডার তালিকা (শর্টকাট: F3)"
               >
-                <span>সব হোল্ড তালিকা ({heldCarts.length})</span>
+                <span>হোল্ড তালিকা [F3] ({heldCarts.length})</span>
               </button>
             )}
           </div>
@@ -1091,8 +1092,9 @@ export default function CartPage({
                   ) : (
                     <form onSubmit={handleApplyCoupon} className="flex gap-2">
                       <input
+                        id="pos-coupon-discount-input"
                         type="text"
-                        placeholder="কুপন লিখুন (যেমন: EID10)"
+                        placeholder="কুপন বা ডিসকাউন্ট [F8]"
                         value={couponInput}
                         onChange={(e) => setCouponInput(e.target.value)}
                         className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold uppercase"
@@ -1221,7 +1223,7 @@ export default function CartPage({
                   disabled={cartItems.length === 0}
                   className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.99] text-white font-black rounded-2xl shadow-lg shadow-emerald-600/25 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  <span>চেকআউটে এগিয়ে যান</span>
+                  <span>চেকআউটে এগিয়ে যান [F9]</span>
                   <ArrowRight className="w-5 h-5 stroke-[2.5]" />
                 </button>
               </div>

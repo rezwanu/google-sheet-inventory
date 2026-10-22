@@ -18,7 +18,10 @@ import {
   ShoppingCart,
   MapPin,
   Users,
-  PauseCircle
+  PauseCircle,
+  Keyboard,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import StoreLogo from './StoreLogo';
 import { formatImageUrl } from '../services/storage';
@@ -46,6 +49,9 @@ export default function Navbar({
   cartCount = 0,
   heldCartsCount = 0,
   onOpenHeldCartsModal,
+  onOpenShortcutsModal,
+  isSoundActive = true,
+  onToggleSound,
   currentView = 'pos',
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -233,6 +239,36 @@ export default function Navbar({
                 >
                   <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
                 </button>
+
+                {/* কিবোর্ড শর্টকাট সহায়িকা বোতাম */}
+                {onOpenShortcutsModal && (
+                  <button
+                    type="button"
+                    onClick={onOpenShortcutsModal}
+                    title="ক্যাশ কাউন্টার কিবোর্ড শর্টকাট গাইড [Shift + ?]"
+                    aria-label="কিবোর্ড শর্টকাট"
+                    className="hidden md:flex p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 active:scale-95 rounded-xl border border-transparent hover:border-slate-200 transition-all cursor-pointer shadow-2xs"
+                  >
+                    <Keyboard className="w-4 h-4" />
+                  </button>
+                )}
+
+                {/* অডিও বীপ ও সাউন্ড এফেক্ট টগল */}
+                {onToggleSound && (
+                  <button
+                    type="button"
+                    onClick={onToggleSound}
+                    title={isSoundActive ? "স্ক্যানার ও পিওএস সাউন্ড অন আছে (ক্লিক করে মিউট করুন)" : "সাউন্ড মিউট আছে (ক্লিক করে অন করুন)"}
+                    aria-label="সাউন্ড টগল"
+                    className={`p-2 rounded-xl border transition-all cursor-pointer active:scale-95 shadow-2xs ${
+                      isSoundActive
+                        ? 'text-indigo-600 bg-indigo-50/70 border-indigo-200 hover:bg-indigo-100'
+                        : 'text-slate-400 bg-slate-50 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {isSoundActive ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                  </button>
+                )}
               </>
             )}
 

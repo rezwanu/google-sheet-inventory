@@ -37,7 +37,17 @@ import StockTransferModal from './components/StockTransferModal';
 import RFMCampaignModal from './components/RFMCampaignModal';
 import FabricCutModal from './components/FabricCutModal';
 import HeldCartsModal from './components/HeldCartsModal';
+import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import { isFabricUnit } from './utils/fabricUtils';
+import {
+  playBarcodeBeep,
+  playCashChime,
+  playHoldSound,
+  playWarningBeep,
+  playErrorBeep,
+  isSoundEnabled,
+  setSoundEnabled
+} from './utils/soundEffects';
 
 import {
   getLocalSettings,
@@ -231,6 +241,9 @@ export default function App() {
     }
   });
   const [isHeldCartsModalOpen, setIsHeldCartsModalOpen] = useState(false);
+  // ফেজ ১: কিবোর্ড শর্টকাট ও অডিও সাউন্ড স্টেট
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
+  const [isSoundActive, setIsSoundActive] = useState(isSoundEnabled);
 
   // ফেজ ৪: সাপ্লায়ার ও ভেন্ডর, পারচেজ অর্ডার এবং লেজার স্টেট
   const [suppliers, setSuppliers] = useState(() => {
@@ -968,6 +981,105 @@ export default function App() {
     saveLocalCart(cart);
   }, [cart]);
 
+  // ফেজ ১: সাউন্ড এফেক্ট টগল হ্যান্ডলার
+  const handleToggleSound = () => {
+    const nextState = !isSoundActive;
+    setIsSoundActive(nextState);
+    setSoundEnabled(nextState);
+    if (nextState) {
+      playBarcodeBeep();
+      showToast('সাউন্ড ইফেক্ট অন করা হয়েছে।', 'info');
+    } else {
+      showToast('সাউন্ড ইফেক্ট মিউট করা হয়েছে।', 'info');
+    }
+  };
+
+  // ফেজ ১: গ্লোবাল পিওএস কিবোর্ড শর্টকাট ইঞ্জিন (F1-F10 & Hotkeys)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      // Shift + ? => কিবোর্ড শর্টকাট সহায়িকা মডাল
+      if (e.shiftKey && (e.key === '?' || e.key === '/')) {
+        e.preventDefault();
+        setIsShortcutsModalOpen((prev) => !prev);
+        return;
+      }
+
+      // Escape => যেকোনো সক্রিয় মডাল বন্ধ করা
+      if (e.key === 'Escape') {
+        if (isShortcutsModalOpen) {
+          setIsShortcutsModalOpen(false);
+          return;
+        }
+        if (isHeldCartsModalOpen) {
+          setIsHeldCartsModalOpen(false);
+          return;
+        }
+        if (isInvoiceModalOpen) {
+          setIsInvoiceModalOpen(false);
+          return;
+        }
+        if (fabricCutProduct) {
+          setFabricCutProduct(null);
+          return;
+        }
+      }
+
+      // ফাংশন কি-সমূহ (F1 - F10)
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setCurrentView('pos');
+        setTimeout(() => {
+          const el = document.getElementById('pos-product-search-input');
+          if (el) {
+            el.focus();
+            el.select();
+          }
+        }, 50);
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        handleHoldCurrentCart();
+      } else if (e.key === 'F3') {
+        e.preventDefault();
+        setIsHeldCartsModalOpen((prev) => !prev);
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        setCurrentView('pos');
+        setIsBarcodeModalOpen(true);
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        setCurrentView('cart');
+        setTimeout(() => {
+          const el = document.getElementById('pos-coupon-discount-input');
+          if (el) {
+            el.focus();
+            el.select();
+          }
+        }, 50);
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        if (cart && cart.length > 0) {
+          setCurrentView('checkout');
+        } else {
+          showToast('চেকআউটে যেতে কার্টে পণ্য যোগ করুন!', 'warning');
+          playWarningBeep();
+        }
+      } else if (e.key === 'F10') {
+        e.preventDefault();
+        handleOpenInvoiceLookup('');
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [
+    cart,
+    heldCarts,
+    isShortcutsModalOpen,
+    isHeldCartsModalOpen,
+    isInvoiceModalOpen,
+    fabricCutProduct
+  ]);
+
   // ৪. কার্ট অপারেশনসমূহ (সাপোর্টস সিম্পল পণ্য, সাইজ/রং ভ্যারিয়েন্ট, গজ কাপড় থান এবং কম্বো বান্ডেল)
   const handleAddToCart = (product, qtyToAdd = 1, fromFabricModal = false) => {
     // গজ কাপড়ের ক্ষেত্রে যদি পৃথক গজ-গিরা মডাল থেকে না আসে এবং পরিমাণ সুনির্দিষ্ট না থাকে, তবে গজ-গিরা সিলেক্টর ওপেন করুন
@@ -1006,14 +1118,17 @@ export default function App() {
         }
       }
       setCart(updatedCart);
+      playBarcodeBeep();
       showToast(`'${displayName}' কার্টে যোগ হয়েছে (+${addQty})`, 'success');
     } else {
       if (availableStock <= 0) {
         showToast(`'${displayName}' স্টক শেষ!`, 'error');
+        playWarningBeep();
         return;
       }
       if (addQty > availableStock) {
         showToast(`'${displayName}' এর পর্যাপ্ত স্টক নেই! (সর্বোচ্চ: ${availableStock})`, 'warning');
+        playWarningBeep();
         return;
       }
       const newItem = {
@@ -1036,6 +1151,7 @@ export default function App() {
         bundleItems: product.BundleItems || product.bundleItems || []
       };
       setCart([...cart, newItem]);
+      playBarcodeBeep();
       showToast(`'${displayName}' কার্টে যোগ হয়েছে (+${addQty})`, 'success');
     }
   };
@@ -1100,6 +1216,7 @@ export default function App() {
     setDiscountAmount(0);
     saveLocalCart([]);
 
+    playHoldSound();
     showToast(`✓ ${newHeld.token} এর অর্ডার হোল্ডে রাখা হয়েছে! নতুন কাস্টমারের অর্ডার নিতে পারেন।`, 'success');
     return newHeld;
   };
@@ -1136,6 +1253,7 @@ export default function App() {
 
     setCurrentView('cart');
     setIsHeldCartsModalOpen(false);
+    playHoldSound();
     showToast(`✓ ${target.token} সফলভাবে কার্টে চালু করা হয়েছে!`, 'success');
   };
 
@@ -1179,6 +1297,7 @@ export default function App() {
 
     if (isViolatingFloor) {
       const curSym = settings.CurrencySymbol || '৳';
+      playWarningBeep();
       showToast(`দামাদামির সীমা লঙ্ঘন: '${violatingItemName}' এর নূন্যতম ফ্লোর প্রাইস ${curSym}${floorVal.toFixed(2)} এর নিচে যাওয়া যাবে না!`, 'error');
       return false;
     }
@@ -1388,6 +1507,7 @@ export default function App() {
       // ৩. কার্ট খালি করা এবং ভিউ রিসেট করা
       setCart([]);
       setDiscountAmount(0);
+      playCashChime();
       setCurrentView('pos');
 
       // ৩.১ গ্রাহক ডাটাবেস ও বাকির খাতা আপডেট (Customer Database & Ledger Persistence)
@@ -3062,6 +3182,9 @@ export default function App() {
         cartCount={Array.isArray(cart) ? cart.length : 0}
         heldCartsCount={heldCarts.length}
         onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
+        onOpenShortcutsModal={() => setIsShortcutsModalOpen(true)}
+        isSoundActive={isSoundActive}
+        onToggleSound={handleToggleSound}
         currentView={currentView}
       />
 
@@ -3974,6 +4097,12 @@ export default function App() {
         onHoldCurrentCart={handleHoldCurrentCart}
         onResumeHeldCart={handleResumeHeldCart}
         onDeleteHeldCart={handleDeleteHeldCart}
+      />
+
+      {/* ফেজ ১: ক্যাশিয়ার কিবোর্ড শর্টকাট সহায়িকা মডাল */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
       />
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}

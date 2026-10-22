@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Printer } from 'lucide-react';
+import { X, Printer, MessageCircle } from 'lucide-react';
 import { extractAndNormalizeItems, getDriveImageCandidates } from '../services/storage';
 import { formatFabricQuantity } from '../utils/fabricUtils';
+import { generateWhatsAppInvoiceText, openWhatsAppInvoice } from '../utils/whatsappUtils';
 
 export default function InvoiceModal({
   isOpen,
@@ -58,6 +59,23 @@ export default function InvoiceModal({
     window.print();
   };
 
+  // হোয়াটসঅ্যাপ ডিজিটাল মেমো হ্যান্ডলার
+  const handleSendWhatsApp = () => {
+    if (!saleData) return;
+    const phone = saleData.CustomerPhone || saleData.customerPhone || '';
+    let targetPhone = phone;
+    if (!targetPhone) {
+      targetPhone = window.prompt('কাস্টমারের হোয়াটসঅ্যাপ মোবাইল নম্বর লিখুন (যেমন: 017xxxxxxxx):', '');
+      if (!targetPhone) return;
+    }
+    const text = generateWhatsAppInvoiceText({
+      invoice: saleData,
+      storeSettings: settings,
+      currencySymbol: currencySymbol
+    });
+    openWhatsAppInvoice(targetPhone, text);
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white print:static">
       
@@ -100,8 +118,17 @@ export default function InvoiceModal({
           {/* অ্যাকশন বাটনসমূহ */}
           <div className="flex items-center space-x-2">
             <button
+              type="button"
+              onClick={handleSendWhatsApp}
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+              title="হোয়াটসঅ্যাপে পেপারলেস ডিজিটাল মেমো পাঠান"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>WhatsApp মেমো</span>
+            </button>
+            <button
               onClick={handlePrint}
-              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center space-x-1.5"
+              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
             >
               <Printer className="w-4 h-4" />
               <span>প্রিন্ট / PDF সংরক্ষণ</span>
