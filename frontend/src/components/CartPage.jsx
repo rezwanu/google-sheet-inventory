@@ -22,7 +22,8 @@ import {
   PauseCircle,
   Play,
   Clock,
-  Layers
+  Layers,
+  Scissors
 } from 'lucide-react';
 
 export default function CartPage({
@@ -43,7 +44,8 @@ export default function CartPage({
   heldCarts = [],
   onHoldCart,
   onResumeHeldCart,
-  onOpenHeldCartsModal
+  onOpenHeldCartsModal,
+  onSendToTailoring
 }) {
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
@@ -902,6 +904,18 @@ export default function CartPage({
                                   ১২ গিরা
                                 </button>
                               </div>
+
+                              {onSendToTailoring && (
+                                <button
+                                  type="button"
+                                  onClick={() => onSendToTailoring(item)}
+                                  className="mt-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 px-2 py-0.5 rounded-lg transition-all flex items-center space-x-1 cursor-pointer"
+                                  title="এই কাপড়টি দিয়ে টেইলারিং এ সেলাই অর্ডার তৈরি করুন"
+                                >
+                                  <Scissors className="w-3 h-3 text-indigo-600" />
+                                  <span>টেইলারিং মাপ দিন</span>
+                                </button>
+                              )}
                             </div>
                           );
                         })()

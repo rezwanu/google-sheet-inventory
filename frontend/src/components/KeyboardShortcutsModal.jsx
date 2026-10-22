@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Keyboard, Sparkles, Check, ShoppingCart, PauseCircle, Search, Camera, Receipt, CreditCard } from 'lucide-react';
+import { X, Keyboard, Sparkles, Check, ShoppingCart, PauseCircle, Search, Camera, Receipt, CreditCard, Scissors } from 'lucide-react';
 
 /**
  * প্রফেশনাল ক্যাশিয়ার কিবোর্ড শর্টকাট গাইড মডাল (Keyboard Shortcuts Cheat Sheet)
@@ -13,6 +13,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
       items: [
         { key: 'F1', description: 'পণ্য দ্রুত অনুসন্ধান / সার্চ বক্সে ফোকাস', icon: Search },
         { key: 'F4', description: 'ক্যামেরা ও বারকোড স্ক্যানার চালু করুন', icon: Camera },
+        { key: 'F7', description: 'টেইলারিং ও সেলাই অর্ডার স্টুডিও', icon: Scissors },
         { key: 'F8', description: 'ডিসকাউন্ট বা কুপন কোড বক্সে ফোকাস করুন', icon: Sparkles },
         { key: 'F9', description: 'সরাসরি চূড়ান্ত চেকআউট ও ক্যাশ পেমেন্টে যান', icon: CreditCard },
       ]

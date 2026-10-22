@@ -32,6 +32,9 @@ const STORAGE_KEYS = {
   STOCK_TRANSFERS: 'pos_stock_transfers',
   CAMPAIGNS: 'pos_campaigns',
   HELD_CARTS: 'pos_held_carts',
+  TAILORING_ORDERS: 'pos_tailoring_orders',
+  TAILORS: 'pos_tailor_masters',
+  FABRIC_WASTAGE: 'pos_fabric_wastage',
 };
 
 import {
@@ -3341,7 +3344,395 @@ export function saveCampaignLocally(campaignData) {
   return record;
 }
 
+// ============================================================================
+// টেইলারিং ও সেলাই অর্ডার ব্যবস্থাপনা (Phase 2: Tailoring & Custom Stitching)
+// ============================================================================
 
+export const DEFAULT_TAILOR_MASTERS = [
+  {
+    TailorID: 'TLR-01',
+    Name: 'মাস্টার বশির আহমেদ',
+    Phone: '01710000001',
+    Speciality: 'পাঞ্জাবি ও শেরওয়ানি',
+    Experience: '১২ বছর',
+    Status: 'Active'
+  },
+  {
+    TailorID: 'TLR-02',
+    Name: 'আকরাম আলী',
+    Phone: '01820000002',
+    Speciality: 'ফরমাল শার্ট ও প্যান্ট',
+    Experience: '৮ বছর',
+    Status: 'Active'
+  },
+  {
+    TailorID: 'TLR-03',
+    Name: 'রাবেয়া খাতুন',
+    Phone: '01930000003',
+    Speciality: 'মহিলাদের কামিজ, বোরকা ও ব্লাউজ',
+    Experience: '১০ বছর',
+    Status: 'Active'
+  }
+];
 
+export const DEFAULT_TAILORING_ORDERS = [
+  {
+    OrderID: 'TL-20261020-001',
+    TokenNo: '101',
+    CustomerName: 'মো: রফিকুল ইসলাম',
+    CustomerPhone: '01711223344',
+    CustomerAddress: 'বসতি হাউজিং, মোহাম্মদপুর',
+    GarmentType: 'পাঞ্জাবি',
+    Quantity: 1,
+    FabricSource: 'store',
+    FabricName: 'প্রিমিয়াম সুতি থান কাপড় (সাদা)',
+    FabricYards: 2.5,
+    TailorMaster: 'মাস্টার বশির আহমেদ',
+    Measurements: {
+      length: '40',
+      chest: '38',
+      waist: '36',
+      shoulder: '17',
+      sleeve: '24',
+      collar: '15.5',
+      armhole: '18',
+      cuff: '9.5',
+      flair: '26',
+      pocket: 'দুই পাশে কাট পকেট'
+    },
+    DesignDetails: 'ব্যান্ড কলার, মেটাল রিভেট বোতাম, ডাবল সেলাই ফিনিশিং',
+    StitchingCharge: 450,
+    AccessoriesCharge: 100,
+    TotalAmount: 550,
+    AdvancePaid: 300,
+    DueAmount: 250,
+    PaymentMethod: 'Cash',
+    Status: 'Stitching', // Pending -> Cutting -> Stitching -> Ready -> Delivered
+    OrderDate: '2026-10-20T10:30:00.000Z',
+    DeliveryDate: '2026-10-24T18:00:00.000Z',
+    Notes: 'ব্যান্ড কলারে হালকা সুতার এমব্রয়ডারি ডিজাইন হবে',
+    StatusHistory: [
+      { status: 'Pending', timestamp: '2026-10-20T10:30:00.000Z', note: 'অর্ডার গৃহীত হয়েছে ও ৩০০ টাকা অগ্রিম জমা' },
+      { status: 'Cutting', timestamp: '2026-10-21T11:00:00.000Z', note: 'মাস্টার বশির কাটিং সম্পন্ন করেছেন' },
+      { status: 'Stitching', timestamp: '2026-10-22T09:00:00.000Z', note: 'সেলাই চলছে' }
+    ]
+  },
+  {
+    OrderID: 'TL-20261021-002',
+    TokenNo: '102',
+    CustomerName: 'তানভীর আহমেদ',
+    CustomerPhone: '01822334455',
+    CustomerAddress: 'ধানমন্ডি ২৭, ঢাকা',
+    GarmentType: 'শার্ট',
+    Quantity: 2,
+    FabricSource: 'store',
+    FabricName: 'রেমি কটন প্রিন্ট থান',
+    FabricYards: 4.5,
+    TailorMaster: 'আকরাম আলী',
+    Measurements: {
+      length: '29',
+      chest: '39',
+      waist: '36',
+      shoulder: '18',
+      sleeve: '24',
+      collar: '15.5',
+      armhole: '18.5',
+      cuff: '9.5',
+      pocket: '১টি বুক পকেট'
+    },
+    DesignDetails: 'স্মার্ট সেমি-স্প্রেড কলার, রেগুলার ফিট, মার্বেল বোতাম',
+    StitchingCharge: 700,
+    AccessoriesCharge: 100,
+    TotalAmount: 800,
+    AdvancePaid: 500,
+    DueAmount: 300,
+    PaymentMethod: 'bKash',
+    Status: 'Cutting',
+    OrderDate: '2026-10-21T14:15:00.000Z',
+    DeliveryDate: '2026-10-25T17:00:00.000Z',
+    Notes: 'একটি ফুল হাতা এবং একটি হাফ হাতা শার্ট',
+    StatusHistory: [
+      { status: 'Pending', timestamp: '2026-10-21T14:15:00.000Z', note: 'বিকাশে ৫০০ টাকা অগ্রিম গৃহীত' },
+      { status: 'Cutting', timestamp: '2026-10-22T10:30:00.000Z', note: 'কাটিং টেবিল এ দেওয়া হয়েছে' }
+    ]
+  },
+  {
+    OrderID: 'TL-20261019-003',
+    TokenNo: '103',
+    CustomerName: 'নাসরিন আক্তার',
+    CustomerPhone: '01933445566',
+    CustomerAddress: 'বসিলা গার্ডেন সিটি, ঢাকা',
+    GarmentType: 'কামিজ ও সালোয়ার',
+    Quantity: 1,
+    FabricSource: 'customer',
+    FabricName: 'গ্রাহকের নিজস্ব জর্জেট থান কাপড়',
+    FabricYards: 3.5,
+    TailorMaster: 'রাবেয়া খাতুন',
+    Measurements: {
+      length: '42',
+      chest: '36',
+      waist: '32',
+      hip: '38',
+      shoulder: '14.5',
+      sleeve: '19',
+      armhole: '16',
+      frontNeck: '6',
+      backNeck: '5',
+      slit: '20'
+    },
+    DesignDetails: 'পান গলা, বেল হাতা, সুতি আস্তরণ দেওয়া হবে',
+    StitchingCharge: 450,
+    AccessoriesCharge: 50,
+    TotalAmount: 500,
+    AdvancePaid: 500,
+    DueAmount: 0,
+    PaymentMethod: 'Cash',
+    Status: 'Ready',
+    OrderDate: '2026-10-19T16:00:00.000Z',
+    DeliveryDate: '2026-10-22T20:00:00.000Z',
+    Notes: 'কাজ সম্পূর্ণ শেষ, কাস্টমারকে এসএমএস পাঠানো হয়েছে',
+    StatusHistory: [
+      { status: 'Pending', timestamp: '2026-10-19T16:00:00.000Z', note: 'অর্ডার গৃহীত ও ফুল পেমেন্ট কমপ্লিট' },
+      { status: 'Cutting', timestamp: '2026-10-20T11:00:00.000Z', note: 'কাটিং সম্পন্ন' },
+      { status: 'Stitching', timestamp: '2026-10-21T15:30:00.000Z', note: 'সেলাই সম্পন্ন' },
+      { status: 'Ready', timestamp: '2026-10-22T11:00:00.000Z', note: 'প্যাকিং ও আয়রন শেষ, ডেলিভারির জন্য প্রস্তুত' }
+    ]
+  }
+];
 
+export function getLocalTailoringOrders() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.TAILORING_ORDERS);
+    return Array.isArray(data) && data.length > 0 ? data : DEFAULT_TAILORING_ORDERS;
+  } catch (e) {
+    return DEFAULT_TAILORING_ORDERS;
+  }
+}
+
+export function saveLocalTailoringOrders(orders) {
+  setSecureStorageItem(STORAGE_KEYS.TAILORING_ORDERS, Array.isArray(orders) ? orders : []);
+}
+
+export function addTailoringOrderLocally(orderData) {
+  if (!orderData) return getLocalTailoringOrders();
+  const orders = getLocalTailoringOrders();
+  const now = new Date().toISOString();
+  const orderCount = orders.length + 1;
+  const tokenNo = String(100 + (orderCount % 900));
+  const orderId = orderData.OrderID || `TL-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(orderCount).padStart(3, '0')}`;
+
+  const record = {
+    OrderID: orderId,
+    TokenNo: orderData.TokenNo || tokenNo,
+    CustomerName: orderData.CustomerName || orderData.customerName || 'সম্মানিত ক্রেতা',
+    CustomerPhone: orderData.CustomerPhone || orderData.customerPhone || '',
+    CustomerAddress: orderData.CustomerAddress || orderData.customerAddress || '',
+    GarmentType: orderData.GarmentType || orderData.garmentType || 'পাঞ্জাবি',
+    Quantity: Math.max(1, Number(orderData.Quantity || orderData.quantity || 1)),
+    FabricSource: orderData.FabricSource || orderData.fabricSource || 'store',
+    FabricName: orderData.FabricName || orderData.fabricName || 'দোকানের কাপড়',
+    FabricYards: Number(orderData.FabricYards || orderData.fabricYards || 0),
+    TailorMaster: orderData.TailorMaster || orderData.tailorMaster || 'মাস্টার বশির আহমেদ',
+    Measurements: orderData.Measurements || orderData.measurements || {},
+    DesignDetails: orderData.DesignDetails || orderData.designDetails || '',
+    StitchingCharge: Number(orderData.StitchingCharge || orderData.stitchingCharge || 0),
+    AccessoriesCharge: Number(orderData.AccessoriesCharge || orderData.accessoriesCharge || 0),
+    TotalAmount: Number(orderData.TotalAmount || orderData.totalAmount || 0),
+    AdvancePaid: Number(orderData.AdvancePaid || orderData.advancePaid || 0),
+    DueAmount: Math.max(0, (Number(orderData.TotalAmount || orderData.totalAmount || 0) - Number(orderData.AdvancePaid || orderData.advancePaid || 0))),
+    PaymentMethod: orderData.PaymentMethod || orderData.paymentMethod || 'Cash',
+    Status: orderData.Status || orderData.status || 'Pending',
+    OrderDate: orderData.OrderDate || orderData.orderDate || now,
+    DeliveryDate: orderData.DeliveryDate || orderData.deliveryDate || now,
+    Notes: orderData.Notes || orderData.notes || '',
+    StatusHistory: Array.isArray(orderData.StatusHistory) ? orderData.StatusHistory : [
+      {
+        status: orderData.Status || 'Pending',
+        timestamp: now,
+        note: `অর্ডার গৃহীত হয়েছে। অগ্রিম: ৳${orderData.AdvancePaid || 0}`
+      }
+    ]
+  };
+
+  orders.unshift(record);
+  saveLocalTailoringOrders(orders);
+  return record;
+}
+
+export function updateTailoringOrderStatusLocally(orderId, newStatus, historyNote = '', updatedBy = 'Admin') {
+  if (!orderId || !newStatus) return null;
+  const orders = getLocalTailoringOrders();
+  const idx = orders.findIndex(o => (o.OrderID || o.orderId) === orderId);
+  if (idx === -1) return null;
+
+  const current = orders[idx];
+  const now = new Date().toISOString();
+  const history = Array.isArray(current.StatusHistory) ? [...current.StatusHistory] : [];
+  history.push({
+    status: newStatus,
+    timestamp: now,
+    note: historyNote || `স্ট্যাটাস পরিবর্তন: ${newStatus}`,
+    updatedBy: updatedBy
+  });
+
+  const updatedOrder = {
+    ...current,
+    Status: newStatus,
+    StatusHistory: history
+  };
+
+  orders[idx] = updatedOrder;
+  saveLocalTailoringOrders(orders);
+  return updatedOrder;
+}
+
+export function updateTailoringOrderLocally(orderId, updatedFields = {}) {
+  if (!orderId) return null;
+  const orders = getLocalTailoringOrders();
+  const idx = orders.findIndex(o => (o.OrderID || o.orderId) === orderId);
+  if (idx === -1) return null;
+
+  const current = orders[idx];
+  const merged = { ...current, ...updatedFields };
+
+  // বকেয়া পুনর্গণনা
+  if ('TotalAmount' in updatedFields || 'AdvancePaid' in updatedFields) {
+    const tot = Number(merged.TotalAmount || 0);
+    const adv = Number(merged.AdvancePaid || 0);
+    merged.DueAmount = Math.max(0, tot - adv);
+  }
+
+  orders[idx] = merged;
+  saveLocalTailoringOrders(orders);
+  return merged;
+}
+
+export function deleteTailoringOrderLocally(orderId) {
+  if (!orderId) return false;
+  const orders = getLocalTailoringOrders();
+  const filtered = orders.filter(o => (o.OrderID || o.orderId) !== orderId);
+  saveLocalTailoringOrders(filtered);
+  return true;
+}
+
+export function getLocalTailorMasters() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.TAILORS);
+    return Array.isArray(data) && data.length > 0 ? data : DEFAULT_TAILOR_MASTERS;
+  } catch (e) {
+    return DEFAULT_TAILOR_MASTERS;
+  }
+}
+
+export function saveLocalTailorMasters(masters) {
+  setSecureStorageItem(STORAGE_KEYS.TAILORS, Array.isArray(masters) ? masters : []);
+}
+
+export function addTailorMasterLocally(masterData) {
+  if (!masterData) return getLocalTailorMasters();
+  const list = getLocalTailorMasters();
+  const newId = masterData.TailorID || `TLR-${String(list.length + 1).padStart(2, '0')}`;
+  const record = {
+    TailorID: newId,
+    Name: masterData.Name || masterData.name || 'নতুন কারিগর',
+    Phone: masterData.Phone || masterData.phone || '',
+    Speciality: masterData.Speciality || masterData.speciality || 'সাধারণ সেলাই',
+    Experience: masterData.Experience || masterData.experience || '১ বছর',
+    Status: 'Active'
+  };
+  list.push(record);
+  saveLocalTailorMasters(list);
+  return record;
+}
+
+// ============================================================================
+// থান কাপড়ের ছাঁট ও ড্যামেজ ট্র্যাকার (Phase 2: Fabric Wastage & Remnant Tracker)
+// ============================================================================
+
+export const DEFAULT_FABRIC_WASTAGE = [
+  {
+    WastageID: 'WST-20261020-001',
+    ProductID: 'PAB-FAB-001',
+    ProductName: 'প্রিমিয়াম সুতি থান কাপড় (সাদা)',
+    Category: 'থান কাপড়',
+    Type: 'Remnant', // 'Remnant' (ছাঁট কাপড়) | 'Damaged' (নষ্ট কাপড়)
+    Goj: 1,
+    Gira: 8,
+    TotalYards: 1.5,
+    CostPricePerYard: 150,
+    LossAmount: 225,
+    Reason: 'থানের শেষ ছাঁট (End-of-bolt Remnant)',
+    ActionTaken: 'ClearanceBundle', // 'WrittenOff' | 'ClearanceBundle'
+    LoggedBy: 'Admin',
+    CreatedAt: '2026-10-20T12:00:00.000Z',
+    Notes: 'থান শেষ হওয়ার পর অবশিষ্ট ১.৫ গজ ছোট টুকরা ছাঁট হিসেবে আলাদা রাখা হয়েছে'
+  },
+  {
+    WastageID: 'WST-20261021-002',
+    ProductID: 'PAB-FAB-002',
+    ProductName: 'জাপানি জর্জেট থান কাপড় (নেভি ব্লু)',
+    Category: 'থান কাপড়',
+    Type: 'Damaged',
+    Goj: 0,
+    Gira: 12,
+    TotalYards: 0.75,
+    CostPricePerYard: 220,
+    LossAmount: 165,
+    Reason: 'মিল কালার ফল্ট ও ছেঁড়া (Mill Defect)',
+    ActionTaken: 'WrittenOff',
+    LoggedBy: 'Admin',
+    CreatedAt: '2026-10-21T16:45:00.000Z',
+    Notes: 'থানের মাঝখানে সুতা কাটা ও রঙের ছোপ দাগ থাকায় বাদ দেওয়া হলো'
+  }
+];
+
+export function getLocalFabricWastage() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.FABRIC_WASTAGE);
+    return Array.isArray(data) && data.length > 0 ? data : DEFAULT_FABRIC_WASTAGE;
+  } catch (e) {
+    return DEFAULT_FABRIC_WASTAGE;
+  }
+}
+
+export function saveLocalFabricWastage(records) {
+  setSecureStorageItem(STORAGE_KEYS.FABRIC_WASTAGE, Array.isArray(records) ? records : []);
+}
+
+export function addFabricWastageLocally(wastageData) {
+  if (!wastageData) return getLocalFabricWastage();
+  const list = getLocalFabricWastage();
+  const now = new Date().toISOString();
+  const newId = wastageData.WastageID || `WST-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(list.length + 1).padStart(3, '0')}`;
+
+  const record = {
+    WastageID: newId,
+    ProductID: wastageData.ProductID || wastageData.productId || '',
+    ProductName: wastageData.ProductName || wastageData.productName || 'থান কাপড়',
+    Category: wastageData.Category || wastageData.category || 'থান কাপড়',
+    Type: wastageData.Type || wastageData.type || 'Remnant', // Remnant or Damaged
+    Goj: Number(wastageData.Goj || wastageData.goj || 0),
+    Gira: Number(wastageData.Gira || wastageData.gira || 0),
+    TotalYards: Number(wastageData.TotalYards || wastageData.totalYards || 0),
+    CostPricePerYard: Number(wastageData.CostPricePerYard || wastageData.costPricePerYard || 0),
+    LossAmount: Number(wastageData.LossAmount || wastageData.lossAmount || 0),
+    Reason: wastageData.Reason || wastageData.reason || 'থানের শেষ ছাঁট',
+    ActionTaken: wastageData.ActionTaken || wastageData.actionTaken || 'WrittenOff',
+    LoggedBy: wastageData.LoggedBy || wastageData.loggedBy || 'Cashier',
+    CreatedAt: wastageData.CreatedAt || now,
+    Notes: wastageData.Notes || wastageData.notes || ''
+  };
+
+  list.unshift(record);
+  saveLocalFabricWastage(list);
+  return record;
+}
+
+export function deleteFabricWastageLocally(recordId) {
+  if (!recordId) return false;
+  const list = getLocalFabricWastage();
+  const filtered = list.filter(r => (r.WastageID || r.wastageId) !== recordId);
+  saveLocalFabricWastage(filtered);
+  return true;
+}
 

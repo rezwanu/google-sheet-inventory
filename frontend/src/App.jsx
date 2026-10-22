@@ -38,6 +38,8 @@ import RFMCampaignModal from './components/RFMCampaignModal';
 import FabricCutModal from './components/FabricCutModal';
 import HeldCartsModal from './components/HeldCartsModal';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
+import TailoringModal from './components/TailoringModal';
+import FabricWastageModal from './components/FabricWastageModal';
 import { isFabricUnit } from './utils/fabricUtils';
 import {
   playBarcodeBeep,
@@ -141,7 +143,20 @@ import {
   saveLocalStockTransfers,
   saveStockTransferLocally,
   updateStockTransferStatusLocally,
-  saveCampaignLocally
+  saveCampaignLocally,
+  getLocalTailoringOrders,
+  saveLocalTailoringOrders,
+  addTailoringOrderLocally,
+  updateTailoringOrderStatusLocally,
+  updateTailoringOrderLocally,
+  deleteTailoringOrderLocally,
+  getLocalTailorMasters,
+  saveLocalTailorMasters,
+  addTailorMasterLocally,
+  getLocalFabricWastage,
+  saveLocalFabricWastage,
+  addFabricWastageLocally,
+  deleteFabricWastageLocally
 } from './services/storage';
 
 import {
@@ -244,6 +259,35 @@ export default function App() {
   // ফেজ ১: কিবোর্ড শর্টকাট ও অডিও সাউন্ড স্টেট
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [isSoundActive, setIsSoundActive] = useState(isSoundEnabled);
+
+  // ফেজ ২: টেইলারিং ও সেলাই অর্ডার এবং কাপড়ের ছাঁট/ড্যামেজ ট্র্যাকার স্টেট
+  const [tailoringOrders, setTailoringOrders] = useState(() => {
+    try {
+      const to = getLocalTailoringOrders();
+      return Array.isArray(to) ? to : [];
+    } catch {
+      return [];
+    }
+  });
+  const [tailorMasters, setTailorMasters] = useState(() => {
+    try {
+      const tm = getLocalTailorMasters();
+      return Array.isArray(tm) ? tm : [];
+    } catch {
+      return [];
+    }
+  });
+  const [fabricWastageList, setFabricWastageList] = useState(() => {
+    try {
+      const fw = getLocalFabricWastage();
+      return Array.isArray(fw) ? fw : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isTailoringModalOpen, setIsTailoringModalOpen] = useState(false);
+  const [isFabricWastageModalOpen, setIsFabricWastageModalOpen] = useState(false);
+  const [tailoringPreloadData, setTailoringPreloadData] = useState(null);
 
   // ফেজ ৪: সাপ্লায়ার ও ভেন্ডর, পারচেজ অর্ডার এবং লেজার স্টেট
   const [suppliers, setSuppliers] = useState(() => {
@@ -516,6 +560,11 @@ export default function App() {
   const pendingOrdersCount = useMemo(() => {
     return (orders || []).filter((o) => o.Status === 'Pending').length;
   }, [orders]);
+
+  // সেলাই বা কাটিং চলমান টেইলারিং অর্ডারের সংখ্যা (Badge Count)
+  const runningTailoringOrdersCount = useMemo(() => {
+    return (tailoringOrders || []).filter((o) => o.Status !== 'Delivered' && o.Status !== 'Cancelled').length;
+  }, [tailoringOrders]);
 
   // দ্রুত স্টক ইনপুট ওপেন হ্যান্ডলার
   const handleQuickRestock = (product) => {
@@ -1022,6 +1071,14 @@ export default function App() {
           setFabricCutProduct(null);
           return;
         }
+        if (isTailoringModalOpen) {
+          setIsTailoringModalOpen(false);
+          return;
+        }
+        if (isFabricWastageModalOpen) {
+          setIsFabricWastageModalOpen(false);
+          return;
+        }
       }
 
       // ফাংশন কি-সমূহ (F1 - F10)
@@ -1045,6 +1102,11 @@ export default function App() {
         e.preventDefault();
         setCurrentView('pos');
         setIsBarcodeModalOpen(true);
+      } else if (e.key === 'F7') {
+        e.preventDefault();
+        setTailoringPreloadData(null);
+        setCurrentView('tailoring');
+        setIsTailoringModalOpen(true);
       } else if (e.key === 'F8') {
         e.preventDefault();
         setCurrentView('cart');
@@ -1077,6 +1139,8 @@ export default function App() {
     isShortcutsModalOpen,
     isHeldCartsModalOpen,
     isInvoiceModalOpen,
+    isTailoringModalOpen,
+    isFabricWastageModalOpen,
     fabricCutProduct
   ]);
 
@@ -1262,6 +1326,150 @@ export default function App() {
     const filtered = deleteHeldCartLocally(heldCartId);
     setHeldCarts(filtered);
     showToast('হোল্ডকৃত অর্ডারটি মুছে ফেলা হয়েছে।', 'info');
+  };
+
+  // ==========================================================================
+  // ফেজ ২: টেইলারিং ও সেলাই অর্ডার ব্যবস্থাপনা হ্যান্ডলারসমূহ
+  // ==========================================================================
+
+  const handleSaveTailoringOrder = (orderPayload) => {
+    const saved = addTailoringOrderLocally(orderPayload);
+    setTailoringOrders(getLocalTailoringOrders());
+    showToast(`টেইলারিং অর্ডার #${saved.TokenNo} (${saved.OrderID}) সফলভাবে তৈরি হয়েছে!`, 'success');
+
+    // অডিট লগ
+    logAuditEventLocally({
+      ActionType: 'CREATE_TAILORING_ORDER',
+      Module: 'Tailoring',
+      Details: `নতুন টেইলারিং অর্ডার #${saved.TokenNo} (${saved.OrderID}), পোশাক: ${saved.GarmentType}, মজুরি: ৳${saved.TotalAmount}, অগ্রিম: ৳${saved.AdvancePaid}`,
+      UserID: activeUser?.UserID || 'USER-ADMIN-01',
+      UserName: activeUser?.FullName || 'Admin'
+    });
+
+    return saved;
+  };
+
+  const handleUpdateTailoringOrderStatus = (orderId, newStatus, note) => {
+    const updated = updateTailoringOrderStatusLocally(orderId, newStatus, note, activeUser?.FullName || 'Admin');
+    if (updated) {
+      setTailoringOrders(getLocalTailoringOrders());
+      showToast(`অর্ডার #${updated.TokenNo} এর স্ট্যাটাস আপডেট: ${newStatus}`, 'info');
+
+      logAuditEventLocally({
+        ActionType: 'UPDATE_TAILORING_STATUS',
+        Module: 'Tailoring',
+        Details: `টেইলারিং অর্ডার #${updated.TokenNo} (${orderId}) স্ট্যাটাস পরিবর্তন: ${newStatus}`,
+        UserID: activeUser?.UserID || 'USER-ADMIN-01',
+        UserName: activeUser?.FullName || 'Admin'
+      });
+    }
+    return updated;
+  };
+
+  const handleCollectTailoringDue = (orderId, amount, method = 'Cash') => {
+    const orders = getLocalTailoringOrders();
+    const target = orders.find((o) => o.OrderID === orderId);
+    if (!target) return;
+
+    const currentAdv = Number(target.AdvancePaid || 0);
+    const newAdv = currentAdv + Number(amount);
+    const updated = updateTailoringOrderLocally(orderId, {
+      AdvancePaid: newAdv,
+      PaymentMethod: method
+    });
+
+    setTailoringOrders(getLocalTailoringOrders());
+    showToast(`অর্ডার #${target.TokenNo} এর বকেয়া ৳${amount} সফলভাবে আদায় হয়েছে!`, 'success');
+
+    logAuditEventLocally({
+      ActionType: 'COLLECT_TAILORING_DUE',
+      Module: 'Tailoring',
+      Details: `টেইলারিং অর্ডার #${target.TokenNo} (${orderId}) এর বকেয়া ৳${amount} আদায় সম্পন্ন (${method})`,
+      UserID: activeUser?.UserID || 'USER-ADMIN-01',
+      UserName: activeUser?.FullName || 'Admin'
+    });
+
+    return updated;
+  };
+
+  const handleDeleteTailoringOrder = (orderId) => {
+    deleteTailoringOrderLocally(orderId);
+    setTailoringOrders(getLocalTailoringOrders());
+    showToast('টেইলারিং অর্ডারটি মুছে ফেলা হয়েছে।', 'info');
+  };
+
+  const handleSendToTailoringFromCart = (fabricItem) => {
+    setTailoringPreloadData({
+      customerName: '',
+      customerPhone: '',
+      fabricItem: fabricItem
+    });
+    setCurrentView('tailoring');
+    setIsTailoringModalOpen(true);
+  };
+
+  // ==========================================================================
+  // ফেজ ২: থান কাপড়ের ছাঁট ও ড্যামেজ ট্র্যাকার হ্যান্ডলারসমূহ
+  // ==========================================================================
+
+  const handleRecordFabricWastage = (payload) => {
+    // ১. প্রোডাক্ট স্টক থেকে মোট নষ্ট/ছাঁট গজ বিয়োগ করা
+    if (payload.ProductID && payload.TotalYards > 0) {
+      const pIdx = products.findIndex((p) => String(p.ProductID || p.id) === String(payload.ProductID));
+      if (pIdx !== -1) {
+        const curP = products[pIdx];
+        const curStock = Number(curP.CurrentStock || curP.stock || 0);
+        const newStock = Math.max(0, Math.round((curStock - payload.TotalYards) * 10000) / 10000);
+        const updatedProds = [...products];
+        updatedProds[pIdx] = {
+          ...curP,
+          CurrentStock: newStock,
+          stock: newStock
+        };
+        setProducts(updatedProds);
+        saveLocalProducts(updatedProds);
+      }
+    }
+
+    // ২. যদি ক্লিয়ারেন্স ছাঁট প্যাক হিসেবে যুক্ত করতে চায়
+    if (payload.CreateBundle && payload.BundlePrice > 0) {
+      const newBundleItem = {
+        ProductID: `BUNDLE-${Date.now().toString().slice(-6)}`,
+        ProductName: `[ছাঁট প্যাক] ${payload.ProductName} (${payload.TotalYards} গজ)`,
+        Category: 'ছাঁট ও বান্ডিল',
+        CostPrice: payload.LossAmount,
+        SellingPrice: payload.BundlePrice,
+        CurrentStock: 1,
+        Unit: 'প্যাক',
+        Barcode: `BND${Date.now().toString().slice(-6)}`,
+        Description: `থানের শেষ অবশিষ্টাংশ ছাঁট প্যাক (${payload.TotalYards} গজ)`
+      };
+      const prodsWithBundle = [newBundleItem, ...products];
+      setProducts(prodsWithBundle);
+      saveLocalProducts(prodsWithBundle);
+    }
+
+    // ৩. ছাঁট ও ড্যামেজ লগে সংরক্ষণ
+    const saved = addFabricWastageLocally(payload);
+    setFabricWastageList(getLocalFabricWastage());
+    showToast(`ছাঁট/ড্যামেজ (${payload.TotalYards} গজ) রেকর্ড ও স্টক সফলভাবে সমন্বয় করা হয়েছে!`, 'success');
+
+    // ৪. অডিট লগ
+    logAuditEventLocally({
+      ActionType: 'RECORD_FABRIC_WASTAGE',
+      Module: 'Inventory',
+      Details: `কাপড়ের অপচয় রেকর্ড: ${payload.ProductName}, পরিমাণ: ${payload.TotalYards} গজ, ক্ষতি: ৳${payload.LossAmount}, কারণ: ${payload.Reason}`,
+      UserID: activeUser?.UserID || 'USER-ADMIN-01',
+      UserName: activeUser?.FullName || 'Admin'
+    });
+
+    return saved;
+  };
+
+  const handleDeleteFabricWastage = (recordId) => {
+    deleteFabricWastageLocally(recordId);
+    setFabricWastageList(getLocalFabricWastage());
+    showToast('ছাঁট/ড্যামেজ রেকর্ডটি মুছে ফেলা হয়েছে।', 'info');
   };
 
   // কাস্টমারের সাথে দামাদামির জন্য কার্টের পণ্যের বিক্রয়মূল্য পরিবর্তন (ফ্লোর প্রাইস সুরক্ষা সহ)
@@ -3182,6 +3390,11 @@ export default function App() {
         cartCount={Array.isArray(cart) ? cart.length : 0}
         heldCartsCount={heldCarts.length}
         onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
+        onOpenTailoringModal={() => {
+          setTailoringPreloadData(null);
+          setCurrentView('tailoring');
+        }}
+        tailoringOrdersCount={runningTailoringOrdersCount}
         onOpenShortcutsModal={() => setIsShortcutsModalOpen(true)}
         isSoundActive={isSoundActive}
         onToggleSound={handleToggleSound}
@@ -3230,6 +3443,13 @@ export default function App() {
             onOpenAuditLogsModal={() => setIsAuditLogsModalOpen(true)}
             onOpenSalesReturnModal={() => setIsSalesReturnModalOpen(true)}
             onOpenStockTransferModal={() => setIsStockTransferModalOpen(true)}
+            onOpenTailoringModal={() => {
+              setTailoringPreloadData(null);
+              setCurrentView('tailoring');
+            }}
+            tailoringOrdersCount={runningTailoringOrdersCount}
+            onOpenFabricWastageModal={() => setCurrentView('fabric_wastage')}
+            fabricWastageCount={fabricWastageList.length}
             returnsCount={salesReturns.length}
             transfersInTransitCount={stockTransfers.filter(t => t.Status === 'In Transit').length}
             isRegisterOpen={Boolean(activeRegister && activeRegister.Status === 'Open')}
@@ -3301,6 +3521,7 @@ export default function App() {
               onHoldCart={handleHoldCurrentCart}
               onResumeHeldCart={handleResumeHeldCart}
               onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
+              onSendToTailoring={handleSendToTailoringFromCart}
             />
           )}
 
@@ -3647,6 +3868,43 @@ export default function App() {
               onSubmitStock={handleSubmitStock}
               initialProductId={quickRestockProductId}
               settings={settings}
+            />
+          )}
+
+          {currentView === 'tailoring' && (
+            <TailoringModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => {
+                setTailoringPreloadData(null);
+                setCurrentView('pos');
+              }}
+              tailoringOrders={tailoringOrders}
+              tailorMasters={tailorMasters}
+              products={products}
+              customers={customers}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              activeUser={activeUser}
+              storeSettings={settings}
+              initialPreload={tailoringPreloadData}
+              onSaveOrder={handleSaveTailoringOrder}
+              onUpdateOrderStatus={handleUpdateTailoringOrderStatus}
+              onCollectDue={handleCollectTailoringDue}
+              onDeleteOrder={handleDeleteTailoringOrder}
+            />
+          )}
+
+          {currentView === 'fabric_wastage' && (
+            <FabricWastageModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              fabricWastageList={fabricWastageList}
+              products={products}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              activeUser={activeUser}
+              onRecordWastage={handleRecordFabricWastage}
+              onDeleteWastageRecord={handleDeleteFabricWastage}
             />
           )}
         </main>
@@ -4104,6 +4362,43 @@ export default function App() {
         isOpen={isShortcutsModalOpen}
         onClose={() => setIsShortcutsModalOpen(false)}
       />
+
+      {/* ফেজ ২: টেইলারিং ও সেলাই অর্ডার পপআপ মডাল */}
+      {isTailoringModalOpen && currentView !== 'tailoring' && (
+        <TailoringModal
+          isOpen={isTailoringModalOpen}
+          onClose={() => {
+            setIsTailoringModalOpen(false);
+            setTailoringPreloadData(null);
+          }}
+          tailoringOrders={tailoringOrders}
+          tailorMasters={tailorMasters}
+          products={products}
+          customers={customers}
+          currencySymbol={settings.CurrencySymbol || '৳'}
+          activeUser={activeUser}
+          storeSettings={settings}
+          initialPreload={tailoringPreloadData}
+          onSaveOrder={handleSaveTailoringOrder}
+          onUpdateOrderStatus={handleUpdateTailoringOrderStatus}
+          onCollectDue={handleCollectTailoringDue}
+          onDeleteOrder={handleDeleteTailoringOrder}
+        />
+      )}
+
+      {/* ফেজ ২: কাপড়ের ছাঁট ও ড্যামেজ হিসাব পপআপ মডাল */}
+      {isFabricWastageModalOpen && currentView !== 'fabric_wastage' && (
+        <FabricWastageModal
+          isOpen={isFabricWastageModalOpen}
+          onClose={() => setIsFabricWastageModalOpen(false)}
+          fabricWastageList={fabricWastageList}
+          products={products}
+          currencySymbol={settings.CurrencySymbol || '৳'}
+          activeUser={activeUser}
+          onRecordWastage={handleRecordFabricWastage}
+          onDeleteWastageRecord={handleDeleteFabricWastage}
+        />
+      )}
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}
       {toastMessage && (

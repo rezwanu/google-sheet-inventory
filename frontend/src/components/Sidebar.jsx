@@ -30,7 +30,8 @@ import {
   CircleDollarSign,
   Wifi,
   WifiOff,
-  PauseCircle
+  PauseCircle,
+  Scissors
 } from 'lucide-react';
 
 /**
@@ -68,6 +69,10 @@ export default function Sidebar({
   onOpenAuditLogsModal,
   onOpenSalesReturnModal,
   onOpenStockTransferModal,
+  onOpenTailoringModal,
+  tailoringOrdersCount = 0,
+  onOpenFabricWastageModal,
+  fabricWastageCount = 0,
   returnsCount = 0,
   transfersInTransitCount = 0,
   isRegisterOpen = false,
@@ -176,6 +181,16 @@ export default function Sidebar({
           badge: pendingOrdersCount > 0 ? { text: `${pendingOrdersCount} অপেক্ষমান`, color: 'bg-amber-500 text-white shadow-xs' } : null
         },
         {
+          id: 'tailoring_orders',
+          title: 'টেইলারিং ও সেলাই অর্ডার',
+          subTitle: 'গ্রাহক মাপজোখ ও ডেলিভারি',
+          icon: Scissors,
+          iconGradient: 'from-indigo-600 via-indigo-700 to-purple-800 text-white shadow-indigo-600/25',
+          isActive: currentView === 'tailoring',
+          onClick: () => onNavigate ? onNavigate('tailoring') : onOpenTailoringModal && onOpenTailoringModal(),
+          badge: tailoringOrdersCount > 0 ? { text: `${tailoringOrdersCount}টি রানিং`, color: 'bg-indigo-600 text-white shadow-xs animate-pulse font-bold' } : null
+        },
+        {
           id: 'sales_returns',
           title: 'পণ্য রিটার্ন ও এক্সচেঞ্জ',
           subTitle: 'ফেরত ও ক্রেডিট ভাউচার',
@@ -268,6 +283,16 @@ export default function Sidebar({
           iconGradient: 'from-indigo-500 to-blue-600 text-white shadow-indigo-500/25',
           isActive: currentView === 'barcode_print',
           onClick: () => onNavigate ? onNavigate('barcode_print') : onOpenBarcodeModal && onOpenBarcodeModal(),
+          badge: null
+        },
+        {
+          id: 'fabric_wastage',
+          title: 'কাপড়ের ছাঁট ও ড্যামেজ হিসাব',
+          subTitle: 'থানের টুকরা ও ক্ষতি ট্র্যাকার',
+          icon: Layers,
+          iconGradient: 'from-rose-500 to-pink-600 text-white shadow-rose-500/25',
+          isActive: currentView === 'fabric_wastage',
+          onClick: () => onNavigate ? onNavigate('fabric_wastage') : onOpenFabricWastageModal && onOpenFabricWastageModal(),
           badge: null
         }
       ]

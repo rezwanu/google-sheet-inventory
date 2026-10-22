@@ -21,7 +21,8 @@ import {
   PauseCircle,
   Keyboard,
   Volume2,
-  VolumeX
+  VolumeX,
+  Scissors
 } from 'lucide-react';
 import StoreLogo from './StoreLogo';
 import { formatImageUrl } from '../services/storage';
@@ -49,6 +50,8 @@ export default function Navbar({
   cartCount = 0,
   heldCartsCount = 0,
   onOpenHeldCartsModal,
+  onOpenTailoringModal,
+  tailoringOrdersCount = 0,
   onOpenShortcutsModal,
   isSoundActive = true,
   onToggleSound,
@@ -217,6 +220,28 @@ export default function Navbar({
                     </>
                   )}
                 </button>
+
+                {/* টেইলারিং ও সেলাই অর্ডার কুইক বোতাম [F7] */}
+                {onOpenTailoringModal && (
+                  <button
+                    type="button"
+                    onClick={onOpenTailoringModal}
+                    title="টেইলারিং ও সেলাই অর্ডার স্টুডিও [F7]"
+                    className={`hidden sm:flex px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer items-center space-x-1.5 active:scale-95 shadow-2xs font-bold text-xs ${
+                      currentView === 'tailoring'
+                        ? 'bg-indigo-600 text-white border-indigo-700 shadow-indigo-500/25'
+                        : 'bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 border-indigo-200/80'
+                    }`}
+                  >
+                    <Scissors className="w-3.5 h-3.5" />
+                    <span>টেইলারিং</span>
+                    {tailoringOrdersCount > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-600 text-white font-black animate-pulse">
+                        {tailoringOrdersCount}
+                      </span>
+                    )}
+                  </button>
+                )}
 
                 {/* হিস্ট্রি আইকন */}
                 <button
