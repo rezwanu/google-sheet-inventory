@@ -302,3 +302,4 @@ graph TD
 
 *পাবনা বস্ত্রালয় — আপনার বিশ্বস্ত স্মার্ট ফ্যাশন ও ইনভেন্টরি পার্টনার*  
 *ডকুমেন্টেশন প্রস্তুতকরণ: Google Deepmind Antigravity Pair-Programming Team*
+
