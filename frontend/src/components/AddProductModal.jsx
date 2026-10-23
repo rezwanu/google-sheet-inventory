@@ -99,6 +99,7 @@ export default function AddProductModal({
     minSellingPrice: '',
     sellingPrice: '',
     initialStock: '10',
+    initialGodownStock: '20',
     minStockAlert: '5',
     unit: 'Pcs',
     imageUrl: '',
@@ -576,6 +577,9 @@ export default function AddProductModal({
         minSellingPrice: minSellNum,
         sellingPrice: sellNum,
         initialStock: Number(formData.initialStock) || 0,
+        initialGodownStock: Number(formData.initialGodownStock) || 0,
+        godownStock: Number(formData.initialGodownStock) || 0,
+        GodownStock: Number(formData.initialGodownStock) || 0,
         minStockAlert: Number(formData.minStockAlert) || 5,
         imageUrl: imageUploadMode === 'url' ? formData.imageUrl.trim() : '',
         imageCaption: formData.imageCaption.trim(),
@@ -1253,10 +1257,10 @@ export default function AddProductModal({
                 )}
 
                 {/* ওপেনিং স্টক, সতর্কবার্তা লেভেল এবং ইউনিট */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                      প্রারম্ভিক মজুদ (Stock)
+                      🏬 দোকান স্টক
                     </label>
                     <input
                       type="number"
@@ -1266,6 +1270,21 @@ export default function AddProductModal({
                       value={formData.initialStock}
                       onChange={handleChange}
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      🏭 গোডাউন স্টক
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      name="initialGodownStock"
+                      value={formData.initialGodownStock}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
                     />
                   </div>
 

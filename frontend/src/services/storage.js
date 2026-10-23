@@ -35,6 +35,7 @@ const STORAGE_KEYS = {
   TAILORING_ORDERS: 'pos_tailoring_orders',
   TAILORS: 'pos_tailor_masters',
   FABRIC_WASTAGE: 'pos_fabric_wastage',
+  STOCK_MOVEMENTS: 'pos_stock_movements',
 };
 
 import {
@@ -489,6 +490,21 @@ export function normalizeProduct(p) {
             ? p['Min Stock Alert']
             : (p.MinStock !== undefined && p.MinStock !== null && p.MinStock !== '' ? p.MinStock : 5)));
 
+  // গোডাউন স্টক পরিমাণ (Warehouse / Godown Stock)
+  const rawGodownStock = p.GodownStock !== undefined && p.GodownStock !== null && p.GodownStock !== ''
+    ? p.GodownStock
+    : (p.godownStock !== undefined && p.godownStock !== null && p.godownStock !== ''
+        ? p.godownStock
+        : (p.WarehouseStock !== undefined && p.WarehouseStock !== null && p.WarehouseStock !== ''
+            ? p.WarehouseStock
+            : (p.warehouseStock !== undefined && p.warehouseStock !== null && p.warehouseStock !== ''
+                ? p.warehouseStock
+                : null)));
+
+  const godownStock = rawGodownStock !== null
+    ? Number(rawGodownStock)
+    : (Number(stock) > 0 ? Math.max(15, Math.round(Number(stock) * 2)) : 0);
+
   // ক্রয়মূল্য (Cost Price)
   const cost = p.CostPrice !== undefined && p.CostPrice !== null && p.CostPrice !== ''
     ? p.CostPrice
@@ -626,6 +642,12 @@ export function normalizeProduct(p) {
     SubCategory: String(subCat),
     StockQuantity: Number(stock) || 0,
     StockQuantit: Number(stock) || 0,
+    CurrentStock: Number(stock) || 0,
+    ShopStock: Number(stock) || 0,
+    shopStock: Number(stock) || 0,
+    GodownStock: isNaN(godownStock) ? 0 : Math.max(0, godownStock),
+    godownStock: isNaN(godownStock) ? 0 : Math.max(0, godownStock),
+    TotalStock: (Number(stock) || 0) + (isNaN(godownStock) ? 0 : Math.max(0, godownStock)),
     MinStockAlert: Number(minAlert) || 5,
     CostPrice: Number(cost) || 0,
     MinSellingPrice: Math.max(0, Number(minSellingPrice) >= 0 ? Number(minSellingPrice) : (Number(cost) || 0)),
@@ -2968,6 +2990,313 @@ export function updateStockTransferStatusLocally(transferId, newStatus, received
 
 /**
  * ============================================================================
+ * মাল্টি-লোকেশন ইনভেন্টরি ও স্টক মুভমেন্ট খতিয়ান (Stock Movements & Outflows)
+ * গোডাউন বনাম দোকান স্টক কমার আলাদা আলাদা খাতা ও ইতিহাস
+ * ============================================================================
+ */
+
+export function getLocalStockMovements() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.STOCK_MOVEMENTS);
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      // যদি আগে কোনো মুভমেন্ট রেকর্ড না থাকে, তবে পূর্বের ইতিহাস থেকে স্বয়ংক্রিয় ব্যাকফিল করা
+      return syncHistoricalStockMovements();
+    }
+    return data;
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalStockMovements(movements) {
+  if (!Array.isArray(movements)) return;
+  setSecureStorageItem(STORAGE_KEYS.STOCK_MOVEMENTS, movements);
+}
+
+export function recordStockMovementLocally({
+  location = 'Shop', // 'Godown' | 'Shop'
+  type = 'SALE', // 'SALE' | 'TAILORING' | 'WASTAGE' | 'TRANSFER_OUT' | 'TRANSFER_IN' | 'DAMAGE' | 'ADJUSTMENT' | 'RETURN'
+  reasonBangla = '',
+  productId = '',
+  productName = '',
+  barcode = '',
+  unit = 'Pcs',
+  quantity = 0,
+  previousStock = 0,
+  remainingStock = 0,
+  referenceNo = '',
+  operatorName = 'Admin',
+  notes = ''
+}) {
+  const movements = getLocalStockMovements();
+  const now = new Date().toISOString();
+  const entry = {
+    id: `MOV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    timestamp: now,
+    location: location === 'Godown' ? 'Godown' : 'Shop',
+    locationBangla: location === 'Godown' ? 'গোডাউন' : 'দোকান',
+    type,
+    reasonBangla: reasonBangla || (location === 'Godown' ? 'গোডাউন থেকে নির্গমন' : 'দোকান থেকে নির্গমন'),
+    productId: String(productId || '').trim(),
+    productName: String(productName || 'নামহীন পণ্য').trim(),
+    barcode: String(barcode || '').trim(),
+    unit: String(unit || 'Pcs').trim(),
+    quantity: Math.round(Number(quantity || 0) * 10000) / 10000,
+    previousStock: previousStock !== '-' && previousStock !== null ? Math.round(Number(previousStock || 0) * 10000) / 10000 : '-',
+    remainingStock: remainingStock !== '-' && remainingStock !== null ? Math.round(Number(remainingStock || 0) * 10000) / 10000 : '-',
+    referenceNo: String(referenceNo || '').trim(),
+    operatorName: String(operatorName || 'Admin').trim(),
+    notes: String(notes || '').trim()
+  };
+
+  movements.unshift(entry);
+  if (movements.length > 5000) {
+    movements.length = 5000;
+  }
+  saveLocalStockMovements(movements);
+  return { entry, movements };
+}
+
+/**
+ * পূর্বের সেলস, ট্রান্সফার ও টেইলারিং থেকে প্রাথমিক স্টক মুভমেন্ট ব্যাকফিল
+ */
+export function syncHistoricalStockMovements() {
+  try {
+    const historical = [];
+    const sales = getLocalSalesHistory();
+    const transfers = getLocalStockTransfers();
+    const tailors = getLocalTailoringOrders();
+    const wastages = getLocalFabricWastage();
+
+    // ১. ট্রান্সফার চালানসমূহ থেকে গোডাউন ও দোকান এন্ট্রি
+    transfers.forEach((tr) => {
+      const items = Array.isArray(tr.Items) ? tr.Items : [];
+      items.forEach((item) => {
+        // গোডাউন থেকে দোকানে চালান পাঠানো
+        historical.push({
+          id: `MOV-TR-OUT-${tr.ChallanNo}-${item.productId || Math.random()}`,
+          timestamp: tr.TransferDate || tr.CreatedAt || new Date().toISOString(),
+          location: 'Godown',
+          locationBangla: 'গোডাউন',
+          type: 'TRANSFER_OUT',
+          reasonBangla: `দোকানে চালান স্থানান্তর (চালান #${tr.ChallanNo})`,
+          productId: item.productId || '',
+          productName: item.productName || 'পণ্য',
+          barcode: item.barcode || '',
+          unit: item.unit || 'Pcs',
+          quantity: Number(item.quantity) || 1,
+          previousStock: '-',
+          remainingStock: '-',
+          referenceNo: tr.ChallanNo,
+          operatorName: tr.CreatedBy || 'Admin',
+          notes: tr.DriverName ? `বাহক: ${tr.DriverName}` : ''
+        });
+
+        // যদি চালান রিসিভড হয়ে থাকে, তবে দোকানে আগমন
+        if (tr.Status === 'Received') {
+          historical.push({
+            id: `MOV-TR-IN-${tr.ChallanNo}-${item.productId || Math.random()}`,
+            timestamp: tr.UpdatedAt || tr.TransferDate || new Date().toISOString(),
+            location: 'Shop',
+            locationBangla: 'দোকান',
+            type: 'TRANSFER_IN',
+            reasonBangla: `গোডাউন থেকে চালানে গ্রহণ (চালান #${tr.ChallanNo})`,
+            productId: item.productId || '',
+            productName: item.productName || 'পণ্য',
+            barcode: item.barcode || '',
+            unit: item.unit || 'Pcs',
+            quantity: Number(item.quantity) || 1,
+            previousStock: '-',
+            remainingStock: '-',
+            referenceNo: tr.ChallanNo,
+            operatorName: tr.ReceivedBy || 'Manager',
+            notes: ''
+          });
+        }
+      });
+    });
+
+    // ২. পিওএস সেলস হিস্ট্রি থেকে দোকান কমার এন্ট্রি
+    sales.forEach((s) => {
+      const items = Array.isArray(s.Items) ? s.Items : (Array.isArray(s.items) ? s.items : []);
+      const inv = s.InvoiceNo || s.invoiceNo || s.id || 'INV';
+      const time = s.Timestamp || s.timestamp || s.CreatedAt || new Date().toISOString();
+      const cashier = s.CashierName || s.cashier || 'Cashier';
+
+      items.forEach((item) => {
+        historical.push({
+          id: `MOV-SALE-${inv}-${item.productId || item.ProductID || Math.random()}`,
+          timestamp: time,
+          location: 'Shop',
+          locationBangla: 'দোকান',
+          type: 'SALE',
+          reasonBangla: `কাউন্টার পিওএস বিক্রয় (মেমো #${inv})`,
+          productId: item.productId || item.ProductID || '',
+          productName: item.productName || item.ProductName || 'পণ্য',
+          barcode: item.barcode || item.Barcode || '',
+          unit: item.unit || item.Unit || 'Pcs',
+          quantity: Number(item.quantity || item.Quantity) || 1,
+          previousStock: '-',
+          remainingStock: '-',
+          referenceNo: inv,
+          operatorName: cashier,
+          notes: ''
+        });
+      });
+    });
+
+    // ৩. টেইলারিং ফ্যাব্রিক ব্যবহার থেকে দোকান কমার এন্ট্রি
+    tailors.forEach((t) => {
+      if (t.FabricProductID && Number(t.FabricYards) > 0) {
+        historical.push({
+          id: `MOV-TLR-${t.OrderNumber || t.OrderID}`,
+          timestamp: t.CreatedAt || new Date().toISOString(),
+          location: 'Shop',
+          locationBangla: 'দোকান',
+          type: 'TAILORING',
+          reasonBangla: `টেইলারিং কার্যাদেশ (অর্ডার #${t.OrderNumber})`,
+          productId: t.FabricProductID,
+          productName: t.FabricProductName || 'থান কাপড়',
+          barcode: '',
+          unit: 'গজ',
+          quantity: Number(t.FabricYards),
+          previousStock: '-',
+          remainingStock: '-',
+          referenceNo: t.OrderNumber,
+          operatorName: t.CreatedBy || 'Tailor Master',
+          notes: `কারিগর: ${t.TailorName || 'সাধারণ'}`
+        });
+      }
+    });
+
+    // ৪. থান কাপড়ের ছাঁট/ওয়েস্টেজ থেকে দোকান কমার এন্ট্রি
+    wastages.forEach((w) => {
+      if (w.FabricProductID && Number(w.TotalYards) > 0) {
+        historical.push({
+          id: `MOV-WST-${w.WastageID}`,
+          timestamp: w.CreatedAt || new Date().toISOString(),
+          location: 'Shop',
+          locationBangla: 'দোকান',
+          type: 'WASTAGE',
+          reasonBangla: `থান কাপড়ের ছাঁট/টুকরা অবশিষ্টাংশ কর্তন`,
+          productId: w.FabricProductID,
+          productName: w.FabricProductName || 'থান কাপড়',
+          barcode: '',
+          unit: 'গজ',
+          quantity: Number(w.TotalYards),
+          previousStock: '-',
+          remainingStock: '-',
+          referenceNo: w.WastageID,
+          operatorName: w.RecordedBy || 'Admin',
+          notes: w.Reason || ''
+        });
+      }
+    });
+
+    // তারিখ অনুযায়ী সাজানো (নতুনগুলো প্রথমে)
+    historical.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    saveLocalStockMovements(historical);
+    return historical;
+  } catch (err) {
+    console.warn('Historical movement sync failed:', err);
+    return [];
+  }
+}
+
+/**
+ * গোডাউন থেকে কী কী স্টক কমেছে তার খাতা
+ */
+export function getGodownOutflowLedger(movements = []) {
+  const safeMovements = Array.isArray(movements) && movements.length > 0 ? movements : getLocalStockMovements();
+  return safeMovements.filter(
+    (m) => m.location === 'Godown' && (m.type === 'TRANSFER_OUT' || m.type === 'DAMAGE' || m.type === 'ADJUSTMENT_OUT' || m.type === 'ADJUSTMENT')
+  );
+}
+
+/**
+ * দোকানে আসার পর কী কী স্টক কমেছে তার খাতা
+ */
+export function getShopOutflowLedger(movements = []) {
+  const safeMovements = Array.isArray(movements) && movements.length > 0 ? movements : getLocalStockMovements();
+  return safeMovements.filter(
+    (m) => m.location === 'Shop' && (m.type === 'SALE' || m.type === 'TAILORING' || m.type === 'WASTAGE' || m.type === 'DAMAGE' || m.type === 'TRANSFER_OUT' || m.type === 'ADJUSTMENT')
+  );
+}
+
+/**
+ * গোডাউন স্টক কমার এক্সেল (CSV) এক্সপোর্ট
+ */
+export function exportGodownOutflowExcelCSV(movements = []) {
+  const outflow = getGodownOutflowLedger(movements);
+  const headers = ['তারিখ ও সময়', 'পণ্যের নাম', 'বারকোড/কোড', 'কমার কারণ', 'রেফারেন্স / চালান নং', 'পরিমাণ', 'একক', 'পূর্বের গোডাউন স্টক', 'অবশিষ্ট গোডাউন স্টক', 'অনুমোদনকারী/চালক', 'মন্তব্য'];
+  const rows = outflow.map((m) => [
+    new Date(m.timestamp).toLocaleString('bn-BD'),
+    m.productName || '',
+    m.barcode || m.productId || '',
+    m.reasonBangla || '',
+    m.referenceNo || '',
+    m.quantity,
+    m.unit || 'Pcs',
+    m.previousStock,
+    m.remainingStock,
+    m.operatorName || '',
+    m.notes || ''
+  ]);
+  exportToCSV(`Godown_Outflow_Report_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+/**
+ * দোকান স্টক কমার এক্সেল (CSV) এক্সপোর্ট
+ */
+export function exportShopOutflowExcelCSV(movements = []) {
+  const outflow = getShopOutflowLedger(movements);
+  const headers = ['তারিখ ও সময়', 'পণ্যের নাম', 'বারকোড/কোড', 'কমার উৎস/কারণ', 'রেফারেন্স / মেমো নং', 'পরিমাণ', 'একক', 'পূর্বের দোকান স্টক', 'অবশিষ্ট দোকান স্টক', 'ক্যাশিয়ার/বিক্রেতা', 'মন্তব্য'];
+  const rows = outflow.map((m) => [
+    new Date(m.timestamp).toLocaleString('bn-BD'),
+    m.productName || '',
+    m.barcode || m.productId || '',
+    m.reasonBangla || '',
+    m.referenceNo || '',
+    m.quantity,
+    m.unit || 'Pcs',
+    m.previousStock,
+    m.remainingStock,
+    m.operatorName || '',
+    m.notes || ''
+  ]);
+  exportToCSV(`Shop_Outflow_Report_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+/**
+ * গোডাউন ও দোকান লাইভ স্টক সামারি এক্সেল (CSV) এক্সপোর্ট
+ */
+export function exportLocationStockExcelCSV(products = []) {
+  const safeProds = Array.isArray(products) && products.length > 0 ? products : getLocalProducts();
+  const headers = ['পণ্য কোড', 'বারকোড', 'পণ্যের নাম', 'ক্যাটাগরি', 'একক', 'গোডাউন স্টক (Godown)', 'দোকান স্টক (Shop)', 'মোট স্টক (Total)', 'ক্রয়মূল্য', 'বিক্রয়মূল্য', 'মোট পণ্যের আর্থিক মূল্য'];
+  const rows = safeProds.map((p) => {
+    const gStock = Number(p.GodownStock || 0);
+    const sStock = Number(p.StockQuantity || 0);
+    const total = gStock + sStock;
+    const cost = Number(p.CostPrice || 0);
+    return [
+      p.ProductID || '',
+      p.Barcode || '',
+      p.ProductName || '',
+      p.Category || '',
+      p.Unit || 'Pcs',
+      gStock,
+      sStock,
+      total,
+      cost,
+      Number(p.SellingPrice || 0),
+      Math.round(total * cost * 100) / 100
+    ];
+  });
+  exportToCSV(`Location_Stock_Summary_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+/**
+ * ============================================================================
  * Phase 8: উন্নত বিজনেস অ্যানালিটিক্স, আরএফএম কাস্টমার সেগমেন্টেশন ও সিএসভি এক্সপোর্ট
  * ============================================================================
  */
@@ -3770,7 +4099,8 @@ export function exportDatabaseBackupJSON(storeName = 'Pabna Bostraloy') {
         heldCarts: getLocalHeldCarts(),
         tailoringOrders: getLocalTailoringOrders(),
         tailorMasters: getLocalTailorMasters(),
-        fabricWastage: getLocalFabricWastage()
+        fabricWastage: getLocalFabricWastage(),
+        stockMovements: getLocalStockMovements()
       }
     };
 
@@ -3899,6 +4229,10 @@ export function restoreDatabaseFromJSON(jsonString) {
       saveLocalHeldCarts(collections.heldCarts);
       counts.heldCarts = collections.heldCarts.length;
     }
+    if (Array.isArray(collections.stockMovements)) {
+      saveLocalStockMovements(collections.stockMovements);
+      counts.stockMovements = collections.stockMovements.length;
+    }
 
     return { success: true, counts };
   } catch (err) {
@@ -3908,7 +4242,7 @@ export function restoreDatabaseFromJSON(jsonString) {
 }
 
 export function exportProductsExcelCSV(products = []) {
-  const headers = ['প্রোডাক্ট আইডি', 'পণ্যের নাম', 'ক্যাটাগরি', 'একক', 'কেনা দাম (৳)', 'বিক্রয় মূল্য (৳)', 'বর্তমান স্টক', 'বারকোড'];
+  const headers = ['প্রোডাক্ট আইডি', 'পণ্যের নাম', 'ক্যাটাগরি', 'একক', 'কেনা দাম (৳)', 'বিক্রয় মূল্য (৳)', 'দোকান স্টক', 'গোডাউন স্টক', 'মোট স্টক', 'বারকোড'];
   const rows = products.map((p) => [
     p.ProductID || p.id || '',
     p.ProductName || p.name || '',
@@ -3917,6 +4251,8 @@ export function exportProductsExcelCSV(products = []) {
     Number(p.CostPrice || p.costPrice || 0),
     Number(p.SellingPrice || p.sellingPrice || 0),
     Number(p.StockQuantity !== undefined ? p.StockQuantity : (p.CurrentStock || p.stock || 0)),
+    Number(p.GodownStock || 0),
+    Number(p.StockQuantity !== undefined ? p.StockQuantity : (p.CurrentStock || p.stock || 0)) + Number(p.GodownStock || 0),
     p.Barcode || p.barcode || ''
   ]);
   exportToCSV(`Products_Inventory_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);

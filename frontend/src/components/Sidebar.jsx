@@ -270,8 +270,8 @@ export default function Sidebar({
         },
         {
           id: 'stock_transfers',
-          title: 'গোডাউন চালান ট্রান্সফার',
-          subTitle: 'গোডাউন টু দোকান চালান',
+          title: 'গোডাউন ও দোকান স্টক',
+          subTitle: 'মজুত, চালান ও কমার খাতা',
           icon: ArrowRightLeft,
           iconGradient: transfersInTransitCount > 0 ? 'from-teal-500 to-emerald-600 text-white shadow-teal-500/25' : 'from-slate-400 to-slate-600 text-white',
           isActive: currentView === 'stock_transfers',

@@ -159,7 +159,15 @@ import {
   getLocalFabricWastage,
   saveLocalFabricWastage,
   addFabricWastageLocally,
-  deleteFabricWastageLocally
+  deleteFabricWastageLocally,
+  getLocalStockMovements,
+  saveLocalStockMovements,
+  recordStockMovementLocally,
+  getGodownOutflowLedger,
+  getShopOutflowLedger,
+  exportGodownOutflowExcelCSV,
+  exportShopOutflowExcelCSV,
+  exportLocationStockExcelCSV
 } from './services/storage';
 
 import {
@@ -358,6 +366,14 @@ export default function App() {
     try {
       const st = getLocalStockTransfers();
       return Array.isArray(st) ? st : [];
+    } catch {
+      return [];
+    }
+  });
+  const [stockMovements, setStockMovements] = useState(() => {
+    try {
+      const sm = getLocalStockMovements();
+      return Array.isArray(sm) ? sm : [];
     } catch {
       return [];
     }
@@ -1389,6 +1405,23 @@ export default function App() {
         };
         setProducts(updatedProds);
         saveLocalProducts(updatedProds);
+
+        // দোকান স্টক কমার খতিয়ানে টেইলারিং থান কাপড় কর্তন সংরক্ষণ
+        recordStockMovementLocally({
+          location: 'Shop',
+          type: 'TAILORING',
+          reasonBangla: `টেইলারিং কার্যাদেশ (অর্ডার #${orderPayload.OrderNumber || orderPayload.TokenNo || 'TLR'})`,
+          productId: curP.ProductID,
+          productName: curP.ProductName,
+          barcode: curP.Barcode,
+          unit: curP.Unit || 'গজ',
+          quantity: Number(orderPayload.FabricYards),
+          previousStock: curStock,
+          remainingStock: newStock,
+          referenceNo: orderPayload.OrderNumber || orderPayload.TokenNo || '',
+          operatorName: activeUser?.FullName || 'Tailor Master'
+        });
+        setStockMovements(getLocalStockMovements());
       }
     }
 
@@ -1470,6 +1503,23 @@ export default function App() {
         };
         setProducts(updatedProds);
         saveLocalProducts(updatedProds);
+
+        // দোকান স্টকে থান কাপড় পুনরুদ্ধার খতিয়ান সংরক্ষণ
+        recordStockMovementLocally({
+          location: 'Shop',
+          type: 'CANCEL_RESTORE',
+          reasonBangla: `টেইলারিং অর্ডার #${target.TokenNo || target.OrderID} বাতিল হওয়ায় দোকানে থান কাপড় ফেরত`,
+          productId: curP.ProductID,
+          productName: curP.ProductName,
+          barcode: curP.Barcode,
+          unit: curP.Unit || 'গজ',
+          quantity: Number(target.FabricYards),
+          previousStock: curStock,
+          remainingStock: restoredStock,
+          referenceNo: target.OrderNumber || target.TokenNo || '',
+          operatorName: activeUser?.FullName || 'Admin'
+        });
+        setStockMovements(getLocalStockMovements());
       }
     }
 
@@ -1509,6 +1559,24 @@ export default function App() {
           stock: newStock,
           UpdatedAt: new Date().toISOString()
         };
+
+        // দোকান স্টক কমার খতিয়ানে ছাঁট/ওয়েস্টেজ এন্ট্রি সংরক্ষণ
+        recordStockMovementLocally({
+          location: 'Shop',
+          type: 'WASTAGE',
+          reasonBangla: `থান কাপড়ের ছাঁট/টুকরা অবশিষ্টাংশ কর্তন (${payload.Reason || 'ছাঁট'})`,
+          productId: curP.ProductID,
+          productName: curP.ProductName,
+          barcode: curP.Barcode,
+          unit: curP.Unit || 'গজ',
+          quantity: payload.TotalYards,
+          previousStock: curStock,
+          remainingStock: newStock,
+          referenceNo: payload.WastageID || '',
+          operatorName: activeUser?.FullName || 'Admin',
+          notes: payload.Reason || ''
+        });
+        setStockMovements(getLocalStockMovements());
       }
     }
 
@@ -1568,6 +1636,23 @@ export default function App() {
         };
         setProducts(updatedProds);
         saveLocalProducts(updatedProds);
+
+        // দোকান স্টকে ছাঁট কাপড় পুনরুদ্ধার খতিয়ান সংরক্ষণ
+        recordStockMovementLocally({
+          location: 'Shop',
+          type: 'CANCEL_RESTORE',
+          reasonBangla: `ছাঁট/ড্যামেজ রেকর্ড বাতিল হওয়ায় দোকানে কাপড় ফেরত`,
+          productId: curP.ProductID,
+          productName: curP.ProductName,
+          barcode: curP.Barcode,
+          unit: curP.Unit || 'গজ',
+          quantity: Number(target.TotalYards),
+          previousStock: curStock,
+          remainingStock: restoredStock,
+          referenceNo: target.WastageID || '',
+          operatorName: activeUser?.FullName || 'Admin'
+        });
+        setStockMovements(getLocalStockMovements());
       }
     }
 
@@ -1748,6 +1833,30 @@ export default function App() {
 
       // ২. লোকাল সেলস রেকর্ড তৈরি
       const localInvoiceNo = `INV-${new Date().getTime().toString().slice(-6)}`;
+
+      // দোকান স্টক কমার খতিয়ানে বিক্রয় এন্ট্রি সংরক্ষণ
+      itemsToProcess.forEach((soldItem) => {
+        const itemQty = Number(soldItem.quantity) || 1;
+        const targetPid = String(soldItem.productId || '').trim();
+        const foundProd = products.find((p) => String(p.ProductID || '').trim() === targetPid || String(p.Barcode || '').trim() === targetPid);
+        const prev = foundProd ? Number(foundProd.StockQuantity || 0) : itemQty;
+        const remaining = Math.max(0, prev - itemQty);
+        recordStockMovementLocally({
+          location: 'Shop',
+          type: 'SALE',
+          reasonBangla: `কাউন্টার পিওএস বিক্রয় (মেমো #${localInvoiceNo})`,
+          productId: foundProd ? foundProd.ProductID : targetPid,
+          productName: soldItem.productName || foundProd?.ProductName || 'পণ্য',
+          barcode: foundProd?.Barcode || '',
+          unit: soldItem.unit || foundProd?.Unit || 'Pcs',
+          quantity: itemQty,
+          previousStock: prev,
+          remainingStock: remaining,
+          referenceNo: localInvoiceNo,
+          operatorName: activeUser?.FullName || 'Cashier'
+        });
+      });
+      setStockMovements(getLocalStockMovements());
       const salePaid = Number(saleOrder.paidAmount !== undefined ? saleOrder.paidAmount : (saleOrder.paymentMethod === 'Due' ? 0 : saleOrder.grandTotal));
       const saleDue = Number(saleOrder.dueAmount !== undefined ? saleOrder.dueAmount : (saleOrder.paymentMethod === 'Due' ? saleOrder.grandTotal : 0));
 
@@ -2912,32 +3021,65 @@ export default function App() {
   };
 
   // ============================================================================
-  // ফেজ ৭: গোডাউন ও দোকান স্টক ট্রান্সফার চালান হ্যান্ডলার (Stock Transfers)
+  // ফেজ ৭: গোডাউন ও দোকান স্টক ট্রান্সফার চালান ও মুভমেন্ট হ্যান্ডলার (Stock Transfers)
   // ============================================================================
   const handleSaveStockTransfer = async (transferPayload) => {
     try {
       const { record, transfers } = saveStockTransferLocally(transferPayload);
       setStockTransfers(transfers);
 
-      // যদি উৎস দোকান হয় এবং স্ট্যাটাস In Transit হয়, তবে দোকান থেকে স্টক কর্তন
-      if (transferPayload.status === 'In Transit' && /shop|store|counter/i.test(transferPayload.fromLocation)) {
-        let updatedProducts = [...products];
-        const transferItems = Array.isArray(transferPayload.items) ? transferPayload.items : [];
-        let hasDeducted = false;
+      // প্রেরক লোকেশন নির্ধারণ
+      const isFromWarehouse = /warehouse|godown|গোডাউন/i.test(transferPayload.fromLocation || '') || !/shop|store|counter|দোকান/i.test(transferPayload.fromLocation || '');
+      const isFromShop = /shop|store|counter|দোকান/i.test(transferPayload.fromLocation || '');
 
-        transferItems.forEach((itm) => {
-          const qty = Number(itm.quantity) || 0;
-          const pid = String(itm.productId || '').trim();
-          const variantId = itm.variantId || null;
+      // চালান তৈরি হলে প্রেরক স্থান থেকে স্টক কর্তন (ইন ট্রানজিট)
+      let updatedProducts = [...products];
+      const transferItems = Array.isArray(transferPayload.items) ? transferPayload.items : [];
+      let hasModifiedStock = false;
 
-          const prodIdx = updatedProducts.findIndex(
-            (p) => String(p.ProductID || '').trim() === pid || String(p.Barcode || '').trim() === pid
-          );
+      transferItems.forEach((itm) => {
+        const qty = Number(itm.quantity) || 0;
+        const pid = String(itm.productId || '').trim();
+        const variantId = itm.variantId || null;
 
-          if (prodIdx !== -1) {
-            hasDeducted = true;
-            const target = { ...updatedProducts[prodIdx] };
-            target.StockQuantity = Math.max(0, (Number(target.StockQuantity) || 0) - qty);
+        const prodIdx = updatedProducts.findIndex(
+          (p) => String(p.ProductID || '').trim() === pid || String(p.Barcode || '').trim() === pid
+        );
+
+        if (prodIdx !== -1) {
+          hasModifiedStock = true;
+          const target = { ...updatedProducts[prodIdx] };
+
+          if (isFromWarehouse) {
+            // গোডাউন থেকে স্টক কর্তন
+            const prevGodown = Number(target.GodownStock || 0);
+            const newGodown = Math.max(0, prevGodown - qty);
+            target.GodownStock = newGodown;
+            target.godownStock = newGodown;
+            target.TotalStock = (Number(target.StockQuantity) || 0) + newGodown;
+
+            recordStockMovementLocally({
+              location: 'Godown',
+              type: 'TRANSFER_OUT',
+              reasonBangla: `দোকানে চালান স্থানান্তর (চালান #${transferPayload.challanNo})`,
+              productId: target.ProductID,
+              productName: target.ProductName,
+              barcode: target.Barcode,
+              unit: target.Unit || 'Pcs',
+              quantity: qty,
+              previousStock: prevGodown,
+              remainingStock: newGodown,
+              referenceNo: transferPayload.challanNo,
+              operatorName: activeUser?.FullName || 'Admin',
+              notes: transferPayload.notes || ''
+            });
+          } else if (isFromShop) {
+            // দোকান থেকে স্টক কর্তন
+            const prevShop = Number(target.StockQuantity) || 0;
+            const newShop = Math.max(0, prevShop - qty);
+            target.StockQuantity = newShop;
+            target.CurrentStock = newShop;
+            target.TotalStock = newShop + (Number(target.GodownStock) || 0);
 
             if (variantId && Array.isArray(target.Variants)) {
               const vIdx = target.Variants.findIndex(
@@ -2953,14 +3095,31 @@ export default function App() {
               }
             }
 
-            updatedProducts[prodIdx] = target;
+            recordStockMovementLocally({
+              location: 'Shop',
+              type: 'TRANSFER_OUT',
+              reasonBangla: `চালানে স্থানান্তর (চালান #${transferPayload.challanNo})`,
+              productId: target.ProductID,
+              productName: target.ProductName,
+              barcode: target.Barcode,
+              unit: target.Unit || 'Pcs',
+              quantity: qty,
+              previousStock: prevShop,
+              remainingStock: newShop,
+              referenceNo: transferPayload.challanNo,
+              operatorName: activeUser?.FullName || 'Admin',
+              notes: transferPayload.notes || ''
+            });
           }
-        });
 
-        if (hasDeducted) {
-          setProducts(updatedProducts);
-          saveLocalProducts(updatedProducts);
+          updatedProducts[prodIdx] = target;
         }
+      });
+
+      if (hasModifiedStock) {
+        setProducts(updatedProducts);
+        saveLocalProducts(updatedProducts);
+        setStockMovements(getLocalStockMovements());
       }
 
       // অডিট লগ
@@ -2998,7 +3157,7 @@ export default function App() {
       const { record, transfers } = updateStockTransferStatusLocally(transferId, status, receivedBy);
       setStockTransfers(transfers);
 
-      // যদি স্ট্যাটাস Received হয়, তবে গন্তব্য দোকানে স্টক স্বয়ংক্রিয়ভাবে বৃদ্ধি করা
+      // যদি স্ট্যাটাস Received হয়, তবে গন্তব্য দোকানে স্টক বৃদ্ধি এবং আগমন রেকর্ড
       if (status === 'Received' && record) {
         let updatedProducts = [...products];
         const transferItems = Array.isArray(record.Items) ? record.Items : (typeof record.Items === 'string' ? JSON.parse(record.Items || '[]') : []);
@@ -3016,7 +3175,11 @@ export default function App() {
           if (prodIdx !== -1) {
             hasRestocked = true;
             const target = { ...updatedProducts[prodIdx] };
-            target.StockQuantity = (Number(target.StockQuantity) || 0) + qty;
+            const prevShop = Number(target.StockQuantity) || 0;
+            const newShop = prevShop + qty;
+            target.StockQuantity = newShop;
+            target.CurrentStock = newShop;
+            target.TotalStock = newShop + (Number(target.GodownStock) || 0);
 
             if (variantId && Array.isArray(target.Variants)) {
               const vIdx = target.Variants.findIndex(
@@ -3033,12 +3196,74 @@ export default function App() {
             }
 
             updatedProducts[prodIdx] = target;
+
+            // দোকানে চালান আগমনের খতিয়ান সংরক্ষণ
+            recordStockMovementLocally({
+              location: 'Shop',
+              type: 'TRANSFER_IN',
+              reasonBangla: `গোডাউন থেকে চালানে গ্রহণ (চালান #${record?.ChallanNo || transferId})`,
+              productId: target.ProductID,
+              productName: target.ProductName,
+              barcode: target.Barcode,
+              unit: target.Unit || 'Pcs',
+              quantity: qty,
+              previousStock: prevShop,
+              remainingStock: newShop,
+              referenceNo: record?.ChallanNo || transferId,
+              operatorName: receivedBy || activeUser?.FullName || 'Manager'
+            });
           }
         });
 
         if (hasRestocked) {
           setProducts(updatedProducts);
           saveLocalProducts(updatedProducts);
+          setStockMovements(getLocalStockMovements());
+        }
+      } else if (status === 'Cancelled' && record) {
+        // যদি চালান বাতিল হয়, তবে গোডাউনে স্টক ফেরত দেওয়া
+        let updatedProducts = [...products];
+        const transferItems = Array.isArray(record.Items) ? record.Items : (typeof record.Items === 'string' ? JSON.parse(record.Items || '[]') : []);
+        let hasRestored = false;
+
+        transferItems.forEach((itm) => {
+          const qty = Number(itm.quantity) || 0;
+          const pid = String(itm.productId || '').trim();
+          const prodIdx = updatedProducts.findIndex(
+            (p) => String(p.ProductID || '').trim() === pid || String(p.Barcode || '').trim() === pid
+          );
+
+          if (prodIdx !== -1) {
+            hasRestored = true;
+            const target = { ...updatedProducts[prodIdx] };
+            const prevGodown = Number(target.GodownStock || 0);
+            const newGodown = prevGodown + qty;
+            target.GodownStock = newGodown;
+            target.godownStock = newGodown;
+            target.TotalStock = (Number(target.StockQuantity) || 0) + newGodown;
+            updatedProducts[prodIdx] = target;
+
+            recordStockMovementLocally({
+              location: 'Godown',
+              type: 'CANCEL_RESTORE',
+              reasonBangla: `চালান #${record?.ChallanNo || transferId} বাতিল হওয়ায় গোডাউনে স্টক ফেরত`,
+              productId: target.ProductID,
+              productName: target.ProductName,
+              barcode: target.Barcode,
+              unit: target.Unit || 'Pcs',
+              quantity: qty,
+              previousStock: prevGodown,
+              remainingStock: newGodown,
+              referenceNo: record?.ChallanNo || transferId,
+              operatorName: receivedBy || 'Manager'
+            });
+          }
+        });
+
+        if (hasRestored) {
+          setProducts(updatedProducts);
+          saveLocalProducts(updatedProducts);
+          setStockMovements(getLocalStockMovements());
         }
       }
 
@@ -3069,6 +3294,67 @@ export default function App() {
     } catch (err) {
       showToast(`চালান স্ট্যাটাস আপডেট ব্যর্থ: ${err.message}`, 'error');
       throw err;
+    }
+  };
+
+  // গোডাউন ও দোকান সরাসরি স্টক অ্যাডজাস্টমেন্ট হ্যান্ডলার
+  const handleAdjustLocationStock = ({ productId, location = 'Godown', actionType = 'ADD', quantity = 1, reason = '', notes = '' }) => {
+    try {
+      let updatedProducts = [...products];
+      const idx = updatedProducts.findIndex(p => p.ProductID === productId || p.Barcode === productId);
+      if (idx === -1) {
+        showToast('পণ্যটি খুঁজে পাওয়া যায়নি!', 'error');
+        return;
+      }
+      const prod = { ...updatedProducts[idx] };
+      const numQty = Math.max(0, Number(quantity) || 0);
+
+      let prevStock = 0;
+      let newStock = 0;
+
+      if (location === 'Godown') {
+        prevStock = Number(prod.GodownStock || 0);
+        if (actionType === 'ADD') newStock = prevStock + numQty;
+        else if (actionType === 'DEDUCT') newStock = Math.max(0, prevStock - numQty);
+        else if (actionType === 'SET') newStock = numQty;
+        prod.GodownStock = newStock;
+        prod.godownStock = newStock;
+      } else {
+        prevStock = Number(prod.StockQuantity || 0);
+        if (actionType === 'ADD') newStock = prevStock + numQty;
+        else if (actionType === 'DEDUCT') newStock = Math.max(0, prevStock - numQty);
+        else if (actionType === 'SET') newStock = numQty;
+        prod.StockQuantity = newStock;
+        prod.StockQuantit = newStock;
+        prod.CurrentStock = newStock;
+      }
+      prod.TotalStock = (Number(prod.StockQuantity) || 0) + (Number(prod.GodownStock) || 0);
+      prod.UpdatedAt = new Date().toISOString();
+      updatedProducts[idx] = prod;
+
+      setProducts(updatedProducts);
+      saveLocalProducts(updatedProducts);
+
+      const moveType = actionType === 'DEDUCT' ? (reason?.includes('ড্যামেজ') ? 'DAMAGE' : 'ADJUSTMENT') : 'ADJUSTMENT';
+      const { entry, movements } = recordStockMovementLocally({
+        location,
+        type: moveType,
+        reasonBangla: reason || `${location === 'Godown' ? 'গোডাউন' : 'দোকান'} স্টক সমন্বয় (${actionType === 'ADD' ? 'যোগ' : actionType === 'DEDUCT' ? 'কর্তন' : 'নতুন মান নির্ধারণ'})`,
+        productId: prod.ProductID,
+        productName: prod.ProductName,
+        barcode: prod.Barcode,
+        unit: prod.Unit || 'Pcs',
+        quantity: numQty,
+        previousStock: prevStock,
+        remainingStock: newStock,
+        referenceNo: `ADJ-${Date.now().toString().slice(-6)}`,
+        operatorName: activeUser?.FullName || 'Admin',
+        notes: notes || ''
+      });
+      setStockMovements(movements);
+      showToast(`${location === 'Godown' ? 'গোডাউন' : 'দোকান'} স্টক সফলভাবে আপডেট হয়েছে!`, 'success');
+    } catch (err) {
+      showToast(`স্টক অ্যাডজাস্ট ব্যর্থ: ${err.message}`, 'error');
     }
   };
 
@@ -3155,6 +3441,11 @@ export default function App() {
       MinSellingPrice: productData.minSellingPrice !== undefined && productData.minSellingPrice !== '' ? Number(productData.minSellingPrice) : (Number(productData.costPrice) || 0),
       SellingPrice: Number(productData.sellingPrice),
       StockQuantity: Number(productData.initialStock) || 0,
+      CurrentStock: Number(productData.initialStock) || 0,
+      ShopStock: Number(productData.initialStock) || 0,
+      GodownStock: Number(productData.initialGodownStock !== undefined ? productData.initialGodownStock : (productData.godownStock || 0)),
+      godownStock: Number(productData.initialGodownStock !== undefined ? productData.initialGodownStock : (productData.godownStock || 0)),
+      TotalStock: (Number(productData.initialStock) || 0) + Number(productData.initialGodownStock !== undefined ? productData.initialGodownStock : (productData.godownStock || 0)),
       MinStockAlert: Number(productData.minStockAlert) || 5,
       Unit: productData.unit || 'Pcs',
       ShortDescription: productData.shortDescription || '',
@@ -3312,6 +3603,11 @@ export default function App() {
           MinSellingPrice: productData.minSellingPrice !== undefined && productData.minSellingPrice !== '' ? Number(productData.minSellingPrice) : (Number(productData.costPrice) || 0),
           SellingPrice: Number(productData.sellingPrice) || 0,
           StockQuantity: Number(productData.stockQuantity) || 0,
+          CurrentStock: Number(productData.stockQuantity) || 0,
+          ShopStock: Number(productData.stockQuantity) || 0,
+          GodownStock: productData.godownStock !== undefined ? Number(productData.godownStock) : Number(p.GodownStock || 0),
+          godownStock: productData.godownStock !== undefined ? Number(productData.godownStock) : Number(p.GodownStock || 0),
+          TotalStock: (Number(productData.stockQuantity) || 0) + (productData.godownStock !== undefined ? Number(productData.godownStock) : Number(p.GodownStock || 0)),
           MinStockAlert: Number(productData.minStockAlert) || 5,
           Unit: productData.unit || 'Pcs',
           ShortDescription: productData.shortDescription || '',
@@ -3747,11 +4043,13 @@ export default function App() {
               onClose={() => setCurrentView('pos')}
               products={products}
               stockTransfers={stockTransfers}
+              stockMovements={stockMovements}
               currencySymbol={settings.CurrencySymbol || '৳'}
               activeUser={activeUser}
               storeSettings={settings}
               onSaveStockTransfer={handleSaveStockTransfer}
               onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
+              onAdjustLocationStock={handleAdjustLocationStock}
             />
           )}
 
@@ -4463,11 +4761,13 @@ export default function App() {
         onClose={() => setIsStockTransferModalOpen(false)}
         products={products}
         stockTransfers={stockTransfers}
+        stockMovements={stockMovements}
         currencySymbol={settings.CurrencySymbol || '৳'}
         activeUser={activeUser}
         storeSettings={settings}
         onSaveStockTransfer={handleSaveStockTransfer}
         onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
+        onAdjustLocationStock={handleAdjustLocationStock}
       />
 
       {/* ফেজ ৮: আরএফএম গ্রাহক সেগমেন্টেশন ও টার্গেটেড এসএমএস ক্যাম্পেইন মডাল */}

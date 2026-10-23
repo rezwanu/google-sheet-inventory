@@ -322,9 +322,31 @@ export default function ProductDetailsModal({
                 )}
 
                 <div className="text-right">
-                  <span className="text-xs text-slate-500 font-medium block">বর্তমান মজুত</span>
+                  <span className="text-xs text-slate-500 font-medium block">দোকানে মজুত</span>
                   <span className={`text-xl font-extrabold block ${isOutOfStock ? 'text-rose-600' : isLowStock ? 'text-amber-600' : 'text-emerald-700'}`}>
                     {stock} <span className="text-xs font-semibold text-slate-500">{product.Unit || 'Pcs'}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* গোডাউন বনাম দোকান স্টক বিভাজন */}
+              <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200">
+                <div className="p-2 bg-emerald-50/80 rounded-xl border border-emerald-200 text-center">
+                  <span className="text-[10px] font-bold text-emerald-800 block">🏬 দোকান স্টক</span>
+                  <span className="text-base font-black text-emerald-950 block">
+                    {stock} <span className="text-[10px] font-medium text-emerald-700">{product.Unit || 'Pcs'}</span>
+                  </span>
+                </div>
+                <div className="p-2 bg-indigo-50/80 rounded-xl border border-indigo-200 text-center">
+                  <span className="text-[10px] font-bold text-indigo-800 block">🏭 গোডাউন স্টক</span>
+                  <span className="text-base font-black text-indigo-950 block">
+                    {Number(product.GodownStock || 0)} <span className="text-[10px] font-medium text-indigo-700">{product.Unit || 'Pcs'}</span>
+                  </span>
+                </div>
+                <div className="p-2 bg-slate-100 rounded-xl border border-slate-200 text-center">
+                  <span className="text-[10px] font-bold text-slate-700 block">📦 মোট স্টক</span>
+                  <span className="text-base font-black text-slate-900 block">
+                    {stock + Number(product.GodownStock || 0)} <span className="text-[10px] font-medium text-slate-600">{product.Unit || 'Pcs'}</span>
                   </span>
                 </div>
               </div>

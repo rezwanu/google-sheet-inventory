@@ -684,16 +684,22 @@ export default function ProductCatalog({
                       {/* ছবির ওপরে ভাসমান স্টক ব্যাজ */}
                       <div className="absolute bottom-2 left-2 z-10">
                         {isOutOfStock ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600/95 text-white backdrop-blur-md shadow-xs">
-                            স্টক শেষ
-                          </span>
+                          Number(product.GodownStock || 0) > 0 ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-600/95 text-white backdrop-blur-md shadow-xs animate-pulse">
+                              {isCustomer ? 'সীমিত স্টক' : `দোকানে শেষ (গোডাউনে ${product.GodownStock})`}
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600/95 text-white backdrop-blur-md shadow-xs">
+                              স্টক শেষ
+                            </span>
+                          )
                         ) : isLowStock ? (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/95 text-white backdrop-blur-md shadow-xs animate-pulse">
-                            {isCustomer ? 'সীমিত স্টক' : `কম স্টক: ${stock} ${product.Unit || 'Pcs'}`}
+                            {isCustomer ? 'সীমিত স্টক' : `দোকান: ${stock} | গোডাউন: ${Number(product.GodownStock || 0)}`}
                           </span>
                         ) : (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-900/80 text-white backdrop-blur-md shadow-2xs">
-                            {isCustomer ? 'মজুদ আছে' : `মজুদ: ${stock} ${product.Unit || 'Pcs'}`}
+                            {isCustomer ? 'মজুদ আছে' : (Number(product.GodownStock || 0) > 0 ? `দোকান: ${stock} | গোডাউন: ${product.GodownStock}` : `দোকান: ${stock} ${product.Unit || 'Pcs'}`)}
                           </span>
                         )}
                       </div>

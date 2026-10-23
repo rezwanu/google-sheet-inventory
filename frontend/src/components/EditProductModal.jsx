@@ -279,6 +279,7 @@ export default function EditProductModal({
         minSellingPrice: product.MinSellingPrice !== undefined ? String(product.MinSellingPrice) : (product.minSellingPrice !== undefined ? String(product.minSellingPrice) : ''),
         sellingPrice: product.SellingPrice !== undefined ? String(product.SellingPrice) : '',
         stockQuantity: product.StockQuantity !== undefined ? String(product.StockQuantity) : '0',
+        godownStock: product.GodownStock !== undefined ? String(product.GodownStock) : '0',
         minStockAlert: product.MinStockAlert !== undefined ? String(product.MinStockAlert) : '5',
         unit: product.Unit || 'Pcs',
         imageUrl: product.ImageUrl || '',
@@ -598,6 +599,7 @@ export default function EditProductModal({
         minSellingPrice: minSellNum,
         sellingPrice: sellNum,
         stockQuantity: Number(formData.stockQuantity) || 0,
+        godownStock: Number(formData.godownStock) || 0,
         minStockAlert: Number(formData.minStockAlert) || 5,
         imageUrl: imageUploadMode === 'url' ? formData.imageUrl.trim() : (formData.imageUrl || ''),
         imageCaption: formData.imageCaption.trim(),
@@ -1020,11 +1022,11 @@ export default function EditProductModal({
           </div>
 
           {/* ৫. বর্তমান মজুত ও পরিমাপক একক (Unit) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center space-x-1">
-                <PackageCheck className="w-3.5 h-3.5 text-indigo-600" />
-                <span>বর্তমান মজুত</span>
+                <PackageCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>🏬 দোকান স্টক</span>
               </label>
               <input
                 type="number"
@@ -1032,6 +1034,23 @@ export default function EditProductModal({
                 step="any"
                 min="0"
                 value={formData.stockQuantity}
+                onChange={handleChange}
+                placeholder="0"
+                className="w-full px-3 py-2 text-xs font-bold text-slate-800 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center space-x-1">
+                <PackageCheck className="w-3.5 h-3.5 text-indigo-600" />
+                <span>🏭 গোডাউন স্টক</span>
+              </label>
+              <input
+                type="number"
+                name="godownStock"
+                step="any"
+                min="0"
+                value={formData.godownStock !== undefined ? formData.godownStock : '0'}
                 onChange={handleChange}
                 placeholder="0"
                 className="w-full px-3 py-2 text-xs font-bold text-slate-800 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
