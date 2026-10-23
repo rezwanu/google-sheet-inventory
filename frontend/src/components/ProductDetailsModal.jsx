@@ -59,6 +59,7 @@ export default function ProductDetailsModal({
   const isLowStock = inStock && stock <= minAlert;
   const isOutOfStock = !inStock;
   const remainingStockForCart = Math.max(0, stock - cartQuantity);
+  const isThanUnit = String(product.Unit || '').includes('থান') || String(product.Unit || '').toLowerCase().includes('than') || Number(product.YardsPerThan) > 0;
 
   // পণ্য বৈশিষ্ট্যসমূহ তালিকা
   const productFeatures = Array.isArray(product.Features)
@@ -321,6 +322,16 @@ export default function ProductDetailsModal({
                   </div>
                 )}
 
+                {/* পাইকারি বিক্রয়মূল্য */}
+                {Number(product.WholesalePrice || product.wholesalePrice) > 0 && (
+                  <div className="text-center px-3 border-r border-indigo-200/60">
+                    <span className="text-[11px] text-indigo-700 font-bold block">পাইকারি দর</span>
+                    <span className="text-base font-black text-indigo-900 font-mono">
+                      {currencySymbol}{Number(product.WholesalePrice || product.wholesalePrice).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
                 <div className="text-right">
                   <span className="text-xs text-slate-500 font-medium block">দোকানে মজুত</span>
                   <span className={`text-xl font-extrabold block ${isOutOfStock ? 'text-rose-600' : isLowStock ? 'text-amber-600' : 'text-emerald-700'}`}>
@@ -449,7 +460,14 @@ export default function ProductDetailsModal({
                     </div>
                     <div className="text-right">
                       <span className="font-black text-slate-900 block">{currencySymbol}{Number(v.SellingPrice || product.SellingPrice).toFixed(2)}</span>
-                      <span className="text-[10px] text-slate-500 font-medium">মজুদ: {v.StockQuantity || 0}</span>
+                      {Number(v.WholesalePrice) > 0 && (
+                        <span className="text-[10px] text-indigo-700 font-bold block">
+                          পাইকারি: {currencySymbol}{Number(v.WholesalePrice).toFixed(2)}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-slate-500 font-medium block">
+                        মজুদ: {v.StockQuantity || 0} {isThanUnit ? `থান (${(Number(v.StockQuantity) || 0) * (Number(product.YardsPerThan) || 0)} গজ)` : (product.Unit || 'একক')}
+                      </span>
                     </div>
                   </div>
                 ))}

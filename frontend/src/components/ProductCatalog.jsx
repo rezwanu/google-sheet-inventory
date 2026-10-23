@@ -750,6 +750,11 @@ export default function ProductCatalog({
                             ফ্লোর: {formatCurrency(product.MinSellingPrice)}
                           </span>
                         )}
+                        {product.WholesalePrice && Number(product.WholesalePrice) > 0 && (
+                          <span className="text-[10px] font-bold text-indigo-800 bg-indigo-50 border border-indigo-200/90 px-1.5 py-0.2 rounded-md" title={`পাইকারি বিক্রয়মূল্য: ${formatCurrency(product.WholesalePrice)}`}>
+                            পাইকারি: {formatCurrency(product.WholesalePrice)}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -943,6 +948,11 @@ export default function ProductCatalog({
                           {product.MinSellingPrice && Number(product.MinSellingPrice) > 0 && Number(product.MinSellingPrice) < Number(product.SellingPrice) && (
                             <div className="text-[10px] font-bold text-amber-700 font-sans" title="দামাদামির সর্বনিম্ন সীমা">
                               ফ্লোর: {formatCurrency(product.MinSellingPrice)}
+                            </div>
+                          )}
+                          {product.WholesalePrice && Number(product.WholesalePrice) > 0 && (
+                            <div className="text-[10px] font-bold text-indigo-700 font-sans" title={`পাইকারি বিক্রয়মূল্য: ${formatCurrency(product.WholesalePrice)}`}>
+                              পাইকারি: {formatCurrency(product.WholesalePrice)}
                             </div>
                           )}
                         </td>

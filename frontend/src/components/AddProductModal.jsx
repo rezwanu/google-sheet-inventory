@@ -27,7 +27,9 @@ import {
   Trash2,
   Camera,
   Printer,
-  CalendarClock
+  CalendarClock,
+  Palette,
+  Plus
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';
@@ -96,6 +98,7 @@ export default function AddProductModal({
     category: 'Grocery',
     subCategory: 'Rice & Grain',
     costPrice: '',
+    wholesalePrice: '',
     minSellingPrice: '',
     sellingPrice: '',
     initialStock: '0',
@@ -108,6 +111,10 @@ export default function AddProductModal({
     shortDescription: '',
     description: '',
   });
+
+  // দ্রুত কালার ভ্যারিয়েন্ট ইনপুট স্টেট (থান কাপড়ের কালার ভিত্তিক স্টক)
+  const [quickColorName, setQuickColorName] = useState('');
+  const [quickColorThans, setQuickColorThans] = useState('1');
 
   // বারকোড স্ক্যানার, স্টিকার ও জেনারেটর স্টেট
   const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
@@ -152,6 +159,7 @@ export default function AddProductModal({
 
     const generated = [];
     const baseCost = Number(formData.costPrice) || 0;
+    const baseWholesale = Number(formData.wholesalePrice) || 0;
     const baseSell = Number(formData.sellingPrice) || 0;
     const baseMinSell = formData.minSellingPrice !== '' ? Number(formData.minSellingPrice) : baseCost;
 
@@ -164,6 +172,7 @@ export default function AddProductModal({
             Attributes: { Size: size, Color: color },
             Barcode: `${formData.barcode || 'VAR'}-${size}-${color}`.toLowerCase(),
             CostPrice: baseCost,
+            WholesalePrice: baseWholesale,
             MinSellingPrice: baseMinSell,
             SellingPrice: baseSell,
             StockQuantity: 10
@@ -177,6 +186,7 @@ export default function AddProductModal({
           Attributes: { Size: size },
           Barcode: `${formData.barcode || 'VAR'}-${size}`.toLowerCase(),
           CostPrice: baseCost,
+          WholesalePrice: baseWholesale,
           MinSellingPrice: baseMinSell,
           SellingPrice: baseSell,
           StockQuantity: 10
@@ -189,6 +199,7 @@ export default function AddProductModal({
           Attributes: { Color: color },
           Barcode: `${formData.barcode || 'VAR'}-${color}`.toLowerCase(),
           CostPrice: baseCost,
+          WholesalePrice: baseWholesale,
           MinSellingPrice: baseMinSell,
           SellingPrice: baseSell,
           StockQuantity: 10
@@ -199,24 +210,36 @@ export default function AddProductModal({
     if (generated.length > 0) {
       setVariants(generated);
       const sumStock = generated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
-      setFormData((prev) => ({ ...prev, initialStock: String(sumStock) }));
+      setFormData((prev) => ({ 
+        ...prev, 
+        initialGodownStock: String(sumStock),
+        initialStock: '0' 
+      }));
     }
   };
 
   const handleAddManualVariant = () => {
     const nextIdx = variants.length + 1;
+    const baseCost = Number(formData.costPrice) || 0;
+    const baseWholesale = Number(formData.wholesalePrice) || 0;
+    const baseSell = Number(formData.sellingPrice) || 0;
     const newV = {
       VariantID: `VAR-${nextIdx}`,
-      Attributes: { Option: `অপশন ${nextIdx}` },
+      Attributes: { Option: `কালার/অপশন ${nextIdx}` },
       Barcode: `${formData.barcode || 'VAR'}-${nextIdx}`.toLowerCase(),
-      CostPrice: Number(formData.costPrice) || 0,
-      SellingPrice: Number(formData.sellingPrice) || 0,
+      CostPrice: baseCost,
+      WholesalePrice: baseWholesale,
+      SellingPrice: baseSell,
       StockQuantity: 10
     };
     const updated = [...variants, newV];
     setVariants(updated);
     const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
-    setFormData((prev) => ({ ...prev, initialStock: String(sumStock) }));
+    setFormData((prev) => ({ 
+      ...prev, 
+      initialGodownStock: String(sumStock),
+      initialStock: '0' 
+    }));
   };
 
   const handleUpdateVariantField = (idx, field, value) => {
@@ -225,7 +248,11 @@ export default function AddProductModal({
     setVariants(updated);
     if (field === 'StockQuantity') {
       const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
-      setFormData((prev) => ({ ...prev, initialStock: String(sumStock) }));
+      setFormData((prev) => ({ 
+        ...prev, 
+        initialGodownStock: String(sumStock),
+        initialStock: '0' 
+      }));
     }
   };
 
@@ -233,7 +260,72 @@ export default function AddProductModal({
     const updated = variants.filter((_, i) => i !== idx);
     setVariants(updated);
     const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
-    setFormData((prev) => ({ ...prev, initialStock: String(sumStock) }));
+    setFormData((prev) => ({ 
+      ...prev, 
+      initialGodownStock: String(sumStock),
+      initialStock: '0' 
+    }));
+  };
+
+  // দ্রুত কালার ভ্যারিয়েন্ট যোগ ফাংশন (থান কাপড়ের ক্ষেত্রে সরাসরি গোডাউনে স্টক বৃদ্ধি)
+  const handleAddQuickColor = (colorInput, thansInput) => {
+    const cleanName = String(colorInput || quickColorName).trim();
+    if (!cleanName) return;
+    const qty = Math.max(0.1, Number(thansInput || quickColorThans) || 1);
+    const baseCost = Number(formData.costPrice) || 0;
+    const baseWholesale = Number(formData.wholesalePrice) || 0;
+    const baseSell = Number(formData.sellingPrice) || 0;
+    const baseMinSell = formData.minSellingPrice !== '' ? Number(formData.minSellingPrice) : baseCost;
+
+    const existingIdx = variants.findIndex(v => 
+      (v.Attributes?.Color && v.Attributes.Color.toLowerCase() === cleanName.toLowerCase()) ||
+      (v.Attributes?.Option && v.Attributes.Option.toLowerCase() === cleanName.toLowerCase())
+    );
+
+    let updated = [];
+    if (existingIdx !== -1) {
+      updated = [...variants];
+      updated[existingIdx] = {
+        ...updated[existingIdx],
+        StockQuantity: (Number(updated[existingIdx].StockQuantity) || 0) + qty
+      };
+    } else {
+      const varId = `VAR-${cleanName.replace(/\s+/g, '-').toUpperCase()}`;
+      const newV = {
+        VariantID: varId,
+        Attributes: { Color: cleanName },
+        Barcode: `${formData.barcode || 'VAR'}-${cleanName}`.toLowerCase(),
+        CostPrice: baseCost,
+        WholesalePrice: baseWholesale,
+        MinSellingPrice: baseMinSell,
+        SellingPrice: baseSell,
+        StockQuantity: qty
+      };
+      updated = [...variants, newV];
+    }
+
+    setVariants(updated);
+    setProductType('variable');
+    const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+    setFormData(prev => ({
+      ...prev,
+      initialGodownStock: String(sumStock),
+      initialStock: '0'
+    }));
+    setQuickColorName('');
+    setQuickColorThans('1');
+  };
+
+  const handleUpdateVariantStock = (idx, newStock) => {
+    const updated = [...variants];
+    updated[idx] = { ...updated[idx], StockQuantity: Math.max(0, Number(newStock) || 0) };
+    setVariants(updated);
+    const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+    setFormData(prev => ({
+      ...prev,
+      initialGodownStock: String(sumStock),
+      initialStock: '0'
+    }));
   };
 
   const handleAddBundleItem = () => {
@@ -333,8 +425,9 @@ export default function AddProductModal({
     );
   }, [formData.barcode, products]);
 
-  // রিয়েল-টাইম মার্জিন, ফ্লোর প্রাইস ও মুনাফা হিসাব
+  // রিয়েল-টাইম মার্জিন, ফ্লোর প্রাইস, পাইকারি দর ও মুনাফা হিসাব
   const cost = parseFloat(formData.costPrice) || 0;
+  const wholesale = parseFloat(formData.wholesalePrice) || 0;
   const sell = parseFloat(formData.sellingPrice) || 0;
   const minSell = parseFloat(formData.minSellingPrice) || 0;
   const initialStockNum = parseFloat(formData.initialStock) || 0;
@@ -345,6 +438,12 @@ export default function AddProductModal({
     : (sell > 0 ? '100' : '0');
   const isProfitable = netProfit >= 0;
 
+  // পাইকারি মুনাফা বিশ্লেষণ
+  const wholesaleProfit = wholesale > 0 ? wholesale - cost : 0;
+  const wholesaleMarginPercent = cost > 0 && wholesale > 0
+    ? ((wholesaleProfit / cost) * 100).toFixed(1)
+    : (wholesale > 0 ? '100' : '0');
+
   // ফ্লোর প্রাইস বিশ্লেষণ (দামাদামির সর্বনিম্ন সীমা)
   const effectiveFloorPrice = minSell > 0 ? minSell : cost;
   const minFloorProfit = effectiveFloorPrice - cost;
@@ -353,6 +452,11 @@ export default function AddProductModal({
     : (effectiveFloorPrice > 0 ? '100' : '0');
   const isFloorBelowCost = cost > 0 && minSell > 0 && minSell < cost;
   const isFloorAboveSell = sell > 0 && minSell > 0 && minSell > sell;
+
+  const totalVariantStock = useMemo(() => {
+    if (!variants || variants.length === 0) return 0;
+    return variants.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+  }, [variants]);
 
   const godownStockNum = parseFloat(formData.initialGodownStock) || 0;
   const totalCombinedStock = initialStockNum + godownStockNum;
@@ -581,6 +685,8 @@ export default function AddProductModal({
       StockQuantity: Number(formData.initialStock) || 0
     };
 
+    const hasVar = productType === 'variable' || variants.length > 0;
+    const effectiveVariants = hasVar ? variants : [];
     const thanCount = Number(formData.initialGodownStock) || Number(formData.initialStock) || 0;
     const yardsPerThan = Number(formData.yardsPerThan) || 0;
     const totalYards = (Number(formData.initialStock || 0) + Number(formData.initialGodownStock || 0)) * yardsPerThan;
@@ -590,6 +696,8 @@ export default function AddProductModal({
       await onSubmitProduct({
         ...formData,
         costPrice: costNum,
+        wholesalePrice: Number(formData.wholesalePrice) || 0,
+        WholesalePrice: Number(formData.wholesalePrice) || 0,
         minSellingPrice: minSellNum,
         sellingPrice: sellNum,
         initialStock: Number(formData.initialStock) || 0,
@@ -611,9 +719,9 @@ export default function AddProductModal({
         description: formData.description.trim(),
         features: features,
         // Phase 6
-        hasVariants: productType === 'variable',
-        variants: productType === 'variable' ? variants : [],
-        variantsJSON: productType === 'variable' ? JSON.stringify(variants) : '',
+        hasVariants: hasVar,
+        variants: effectiveVariants,
+        variantsJSON: hasVar ? JSON.stringify(effectiveVariants) : '',
         batchNumber: batchNumber.trim(),
         expiryDate: expiryDate.trim(),
         mfgDate: mfgDate.trim(),
@@ -629,6 +737,7 @@ export default function AddProductModal({
         category: uniqueCategories[0] || 'Grocery',
         subCategory: '',
         costPrice: '',
+        wholesalePrice: '',
         minSellingPrice: '',
         sellingPrice: '',
         initialStock: '0',
@@ -641,6 +750,8 @@ export default function AddProductModal({
         shortDescription: '',
         description: '',
       });
+      setQuickColorName('');
+      setQuickColorThans('1');
       setImageUploadMode('upload');
       setLocalImagePreview('');
       setImageBase64('');
@@ -1142,8 +1253,8 @@ export default function AddProductModal({
                   </span>
                 </div>
 
-                {/* আর্থিক তথ্য: ক্রয়মূল্য, ফ্লোর প্রাইস (নূন্যতম বিক্রয়মূল্য) ও বিক্রয়মূল্য */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
+                {/* আর্থিক তথ্য: ক্রয়মূল্য, পাইকারি দর, ফ্লোর প্রাইস (নূন্যতম বিক্রয়মূল্য) ও বিক্রয়মূল্য */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-800 mb-1.5">
                       কেনা দাম / Cost ({currencySymbol})
@@ -1163,6 +1274,34 @@ export default function AddProductModal({
                         className="w-full pl-7 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-2xs"
                       />
                     </div>
+                    <p className="text-[10px] text-slate-500 mt-1">মিলের কেনা দর</p>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-indigo-900">
+                        পাইকারি দর ({currencySymbol})
+                      </label>
+                      <span className="text-[10px] font-bold text-indigo-800 bg-indigo-100/80 px-1.5 py-0.5 rounded border border-indigo-200" title="পাইকারি ক্রেতাদের জন্য দর">
+                        হোলসেল
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs font-bold text-indigo-600">
+                        {currencySymbol}
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="wholesalePrice"
+                        placeholder={formData.costPrice ? `${(Number(formData.costPrice) * 1.15).toFixed(0)}` : "115.00"}
+                        value={formData.wholesalePrice}
+                        onChange={handleChange}
+                        className="w-full pl-7 pr-3 py-2 bg-indigo-50/40 border border-indigo-200 rounded-xl text-sm font-bold text-indigo-950 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-2xs"
+                      />
+                    </div>
+                    <p className="text-[10px] text-indigo-700 mt-1">পাইকারি ক্রেতাদের জন্য দর</p>
                   </div>
 
                   <div>
@@ -1201,7 +1340,7 @@ export default function AddProductModal({
 
                   <div>
                     <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                      বিক্রয়মূল্য / Selling ({currencySymbol}) *
+                      বিক্রয়মূল্য / MRP ({currencySymbol}) *
                     </label>
                     <div className="relative">
                       <span className="absolute left-3 top-2.5 text-xs font-bold text-emerald-600">
@@ -1219,7 +1358,7 @@ export default function AddProductModal({
                         className="w-full pl-7 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-2xs"
                       />
                     </div>
-                    <p className="text-[10px] text-slate-500 mt-1">স্বাভাবিক বিক্রয়মূল্য (MRP)</p>
+                    <p className="text-[10px] text-slate-500 mt-1">স্বাভাবিক খুচরা বিক্রয় দর</p>
                   </div>
                 </div>
 
@@ -1238,7 +1377,7 @@ export default function AddProductModal({
                 )}
 
                 {/* লাইভ লাভ ও মার্জিন প্রিভিউ বার */}
-                {(cost > 0 || sell > 0 || minSell > 0) && (
+                {(cost > 0 || sell > 0 || minSell > 0 || wholesale > 0) && (
                   <div className="p-3 rounded-xl border bg-slate-100/70 border-slate-200 space-y-2">
                     <div className={`p-2.5 rounded-lg border flex items-center justify-between text-xs font-semibold transition-all ${
                       isProfitable 
@@ -1260,6 +1399,23 @@ export default function AddProductModal({
                         </span>
                       </div>
                     </div>
+
+                    {wholesale > 0 && (
+                      <div className="flex items-center justify-between text-xs font-semibold px-2.5 py-1.5 bg-indigo-50/80 border border-indigo-200/90 rounded-lg text-indigo-950">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                          <span>
+                            পাইকারি মুনাফা (হোলসেল দর {currencySymbol}{wholesale.toFixed(2)}): <strong className="font-black">{currencySymbol}{wholesaleProfit.toFixed(2)}</strong>
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <span className="text-[11px] text-indigo-700">পাইকারি মার্জিন:</span>
+                          <span className="px-1.5 py-0.5 rounded font-black text-[11px] bg-indigo-200 text-indigo-950">
+                            {wholesaleProfit >= 0 ? `+${wholesaleMarginPercent}%` : `${wholesaleMarginPercent}%`}
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     {minSell > 0 && (
                       <div className="flex items-center justify-between text-xs font-semibold px-2.5 py-1.5 bg-amber-50/80 border border-amber-200/90 rounded-lg text-amber-950">
@@ -1390,15 +1546,15 @@ export default function AddProductModal({
 
                 {/* থান ও গজ ক্যালকুলেটর (কাপড় পরিমাপ) */}
                 {isThanUnit && (
-                  <div className="bg-gradient-to-r from-amber-50/90 to-orange-50/90 border border-amber-200/90 rounded-2xl p-4 space-y-3 shadow-2xs mt-3">
+                  <div className="bg-gradient-to-r from-amber-50/90 to-orange-50/90 border border-amber-200/90 rounded-2xl p-4 space-y-3.5 shadow-2xs mt-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <div className="p-1.5 bg-amber-500/10 rounded-lg text-amber-700">
                           <Sparkles className="w-4 h-4 text-amber-600" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-black text-amber-950">থান ও গজ ক্যালকুলেটর (কাপড় পরিমাপ)</h4>
-                          <p className="text-[10px] text-amber-800">প্রতি থানের দৈর্ঘ্য ও মোট গজের নিখুঁত হিসাব</p>
+                          <h4 className="text-xs font-black text-amber-950">থান ও গজ ক্যালকুলেটর (বস্ত্রালয় কাপড় পরিমাপ)</h4>
+                          <p className="text-[10px] text-amber-800">প্রতি থানের দৈর্ঘ্য ও মোট গজের নিখুঁত হিসাব ও কালার ভিত্তিক বণ্টন</p>
                         </div>
                       </div>
                       <span className="text-[10px] font-black bg-amber-200/70 text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-300">
@@ -1408,19 +1564,32 @@ export default function AddProductModal({
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
-                        <label className="block text-[11px] font-bold text-amber-950 mb-1">
-                          🏭 মোট থান সংখ্যা (গোডাউনে)
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-amber-950">
+                            🏭 মোট থান (গোডাউনে)
+                          </label>
+                          {variants.length > 0 && (
+                            <span className="text-[9px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded border border-amber-300">
+                              কালার যোগফল
+                            </span>
+                          )}
+                        </div>
                         <input
                           type="number"
                           min="0"
                           step="any"
                           value={formData.initialGodownStock}
                           onChange={(e) => setFormData(prev => ({ ...prev, initialGodownStock: e.target.value }))}
+                          readOnly={variants.length > 0}
                           placeholder="যেমন: ১০"
-                          className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-black text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                          className={`w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-black text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs ${
+                            variants.length > 0 ? 'bg-amber-100/50 cursor-not-allowed' : ''
+                          }`}
+                          title={variants.length > 0 ? "কালার ভ্যারিয়েন্ট থাকায় নিচের কালার থানগুলোর যোগফল স্বয়ংক্রিয়ভাবে এখানে আসছে" : "মোট থান সংখ্যা লিখুন"}
                         />
-                        <span className="text-[10px] text-amber-700">পণ্য যুক্ত হলে সরাসরি গোডাউনে ঢুকবে</span>
+                        <span className="text-[10px] text-amber-700">
+                          {variants.length > 0 ? '✓ কালার ভ্যারিয়েন্ট থেকে অটো আপডেট হচ্ছে' : 'পণ্য যুক্ত হলে সরাসরি গোডাউনে ঢুকবে'}
+                        </span>
                       </div>
 
                       <div>
@@ -1449,6 +1618,171 @@ export default function AddProductModal({
                           ({(Number(formData.initialGodownStock) || 0) + (Number(formData.initialStock) || 0)} থান × {Number(formData.yardsPerThan) || 0} গজ/থান)
                         </span>
                       </div>
+                    </div>
+
+                    {/* কালার ভিত্তিক থান ও গজ স্টক বণ্টন (User Request) */}
+                    <div className="bg-white/95 rounded-xl p-3.5 border border-amber-200/90 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1.5">
+                          <Palette className="w-4 h-4 text-amber-700" />
+                          <span className="text-xs font-black text-amber-950">কালার ভিত্তিক থান স্টক এন্ট্রি (Color-wise Thans)</span>
+                        </div>
+                        <span className="text-[10px] text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full font-bold border border-amber-200">
+                          {variants.length} টি কালার ভ্যারিয়েন্ট
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600">
+                        কাপড়ের বিভিন্ন কালার অনুযায়ী থান সংখ্যা দিন। প্রতিটি কালারের থান সংখ্যা স্বয়ংক্রিয়ভাবে মোট গোডাউন থান ও গজে যোগ হবে।
+                      </p>
+
+                      {/* দ্রুত কালার এন্ট্রি ইনপুট বার */}
+                      <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="কালার / রঙের নাম (যেমন: লাল, নেভি ব্লু)"
+                          value={quickColorName}
+                          onChange={(e) => setQuickColorName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddQuickColor();
+                            }
+                          }}
+                          className="flex-1 min-w-[140px] px-3 py-1.5 bg-slate-50 border border-amber-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        />
+                        <div className="flex items-center space-x-1 shrink-0">
+                          <input
+                            type="number"
+                            min="0.5"
+                            step="any"
+                            placeholder="থান সংখ্যা"
+                            value={quickColorThans}
+                            onChange={(e) => setQuickColorThans(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddQuickColor();
+                              }
+                            }}
+                            className="w-20 px-2.5 py-1.5 bg-slate-50 border border-amber-200 rounded-lg text-xs font-black text-amber-950 text-center focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                          <span className="text-[11px] font-bold text-amber-900">থান</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAddQuickColor()}
+                          className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-colors shadow-xs flex items-center space-x-1 cursor-pointer shrink-0"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>+ কালার যোগ</span>
+                        </button>
+                      </div>
+
+                      {/* দ্রুত নির্বাচন চিপস */}
+                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                        <span className="text-[10px] font-bold text-amber-800 shrink-0">জনপ্রিয় কালার:</span>
+                        {['লাল', 'নীল', 'কালো', 'সাদা', 'সবুজ', 'হলুদ', 'গোলাপি', 'মেরুন', 'নেভি ব্লু', 'অফ-হোয়াইট', 'ছাই', 'বেগুনি'].map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => handleAddQuickColor(c, quickColorThans || 1)}
+                            className="px-2 py-0.5 text-[10px] font-semibold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-md transition-colors cursor-pointer"
+                          >
+                            + {c}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* কালার ভিত্তিক স্টকের তালিকা টেবিল */}
+                      {variants.length > 0 && (
+                        <div className="mt-2 border border-amber-200 rounded-xl overflow-hidden bg-white shadow-2xs">
+                          <table className="w-full text-left text-xs">
+                            <thead className="bg-amber-100/60 border-b border-amber-200 text-amber-950 font-bold">
+                              <tr>
+                                <th className="p-2 pl-3">রঙ / কালার</th>
+                                <th className="p-2 w-32 text-center">থান সংখ্যা</th>
+                                <th className="p-2 w-28 text-center">গজ হিসাব</th>
+                                <th className="p-2 pr-3 w-14 text-center">মুছুন</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-amber-100 font-medium">
+                              {variants.map((v, idx) => {
+                                const colorTitle = v.Attributes?.Color || v.Attributes?.Option || Object.values(v.Attributes || {})[0] || v.VariantID;
+                                const thans = Number(v.StockQuantity) || 0;
+                                const calculatedGoj = thans * (Number(formData.yardsPerThan) || 0);
+                                return (
+                                  <tr key={v.VariantID || idx} className="hover:bg-amber-50/40">
+                                    <td className="p-2 pl-3">
+                                      <div className="flex items-center space-x-1.5">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                                        <span className="font-bold text-slate-900">{colorTitle}</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-2 text-center">
+                                      <div className="flex items-center justify-center space-x-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateVariantStock(idx, Math.max(0, thans - 1))}
+                                          className="w-5 h-5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-black flex items-center justify-center cursor-pointer"
+                                          title="১ থান কমান"
+                                        >
+                                          -
+                                        </button>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          step="any"
+                                          value={v.StockQuantity}
+                                          onChange={(e) => handleUpdateVariantStock(idx, e.target.value)}
+                                          className="w-14 px-1 py-0.5 bg-slate-50 border border-slate-200 rounded text-center text-xs font-black text-amber-950"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateVariantStock(idx, thans + 1)}
+                                          className="w-5 h-5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-black flex items-center justify-center cursor-pointer"
+                                          title="১ থান বাড়ান"
+                                        >
+                                          +
+                                        </button>
+                                        <span className="text-[10px] text-slate-500 font-medium">থান</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-2 text-center">
+                                      <span className="font-black text-amber-950 text-xs">
+                                        {calculatedGoj} গজ
+                                      </span>
+                                    </td>
+                                    <td className="p-2 pr-3 text-center">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveVariant(idx)}
+                                        className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
+                                        title="এই কালার বাদ দিন"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                            <tfoot className="bg-amber-100/70 border-t border-amber-200 text-amber-950 font-black">
+                              <tr>
+                                <td className="p-2 pl-3">
+                                  মোট: {variants.length} টি কালার
+                                </td>
+                                <td className="p-2 text-center text-amber-900">
+                                  {variants.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0)} থান (গোডাউন)
+                                </td>
+                                <td className="p-2 text-center text-amber-950">
+                                  {variants.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0) * (Number(formData.yardsPerThan) || 0)} গজ
+                                </td>
+                                <td className="p-2 pr-3 text-center"></td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      )}
                     </div>
 
                     <div className="p-2.5 bg-white/80 rounded-xl border border-amber-200/60 text-[11px] text-amber-900 flex items-start space-x-1.5">
@@ -1521,8 +1855,9 @@ export default function AddProductModal({
                             <th className="p-2 pl-3">বৈশিষ্ট্য (Attributes)</th>
                             <th className="p-2">বারকোড</th>
                             <th className="p-2 w-20">কেনা ({currencySymbol})</th>
+                            <th className="p-2 w-20">পাইকারি ({currencySymbol})</th>
                             <th className="p-2 w-20">বিক্রি ({currencySymbol})</th>
-                            <th className="p-2 w-20">স্টক</th>
+                            <th className="p-2 w-20">{isThanUnit ? 'থান স্টক' : 'স্টক'}</th>
                             <th className="p-2 pr-3 text-center">মুছুন</th>
                           </tr>
                         </thead>
@@ -1554,6 +1889,15 @@ export default function AddProductModal({
                               <td className="p-2">
                                 <input
                                   type="number"
+                                  value={v.WholesalePrice !== undefined ? v.WholesalePrice : ''}
+                                  onChange={(e) => handleUpdateVariantField(idx, 'WholesalePrice', Number(e.target.value) || 0)}
+                                  className="w-full px-2 py-1 bg-slate-50 border border-indigo-200 rounded text-[11px] font-bold text-indigo-700"
+                                  placeholder="পাইকারি"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <input
+                                  type="number"
                                   value={v.SellingPrice}
                                   onChange={(e) => handleUpdateVariantField(idx, 'SellingPrice', Number(e.target.value) || 0)}
                                   className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-bold text-indigo-700"
@@ -1565,6 +1909,7 @@ export default function AddProductModal({
                                   value={v.StockQuantity}
                                   onChange={(e) => handleUpdateVariantField(idx, 'StockQuantity', Number(e.target.value) || 0)}
                                   className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-black text-emerald-700"
+                                  title={isThanUnit ? "এই কালার/অপশনের থান সংখ্যা" : "স্টক পরিমাণ"}
                                 />
                               </td>
                               <td className="p-2 pr-3 text-center">
@@ -2090,12 +2435,19 @@ export default function AddProductModal({
                   <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
                     <div>
                       <span className="text-[10px] text-slate-400 block font-medium">বিক্রয়মূল্য</span>
-                      <span className="text-lg font-black text-slate-900">
-                        {currencySymbol}{sell > 0 ? sell.toFixed(2) : '০.০০'}
-                      </span>
-                      <span className="text-[11px] text-slate-500 ml-1 font-medium">
-                        /{formData.unit}
-                      </span>
+                      <div className="flex items-baseline space-x-1">
+                        <span className="text-lg font-black text-slate-900">
+                          {currencySymbol}{sell > 0 ? sell.toFixed(2) : '০.০০'}
+                        </span>
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          /{formData.unit}
+                        </span>
+                      </div>
+                      {wholesale > 0 && (
+                        <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-200 block mt-0.5">
+                          পাইকারি: {currencySymbol}{wholesale.toFixed(2)}
+                        </span>
+                      )}
                     </div>
 
                     <button
@@ -2106,6 +2458,22 @@ export default function AddProductModal({
                       + কার্টে যোগ
                     </button>
                   </div>
+
+                  {/* কালার ভ্যারিয়েন্ট প্রিভিউ সামারি */}
+                  {variants.length > 0 && (
+                    <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px]">
+                      <span className="font-bold text-slate-700 block mb-1">
+                        🎨 কালার স্টক ({variants.length} টি ভ্যারিয়েন্ট):
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {variants.map((v, i) => (
+                          <span key={i} className="px-1.5 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 rounded font-medium">
+                            {v.Attributes?.Color || v.Attributes?.Option || Object.values(v.Attributes || {})[0] || `রঙ #${i+1}`}: {v.StockQuantity} {isThanUnit ? 'থান' : ''}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                 </div>
 

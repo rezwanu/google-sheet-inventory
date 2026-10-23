@@ -906,8 +906,8 @@ function ensureProductsHeaders(productsSheet) {
   if (productsSheet.getLastRow() === 0) {
     const defaultHeaders = [
       'ProductID', 'Barcode', 'ProductName', 'Category', 'SubCategory',
-      'CostPrice', 'MinSellingPrice', 'SellingPrice', 'StockQuantity', 'MinStockAlert', 
-      'Unit', 'ImageUrl', 'ImageCaption', 'ShortDescription', 'Description', 'Features', 
+      'CostPrice', 'WholesalePrice', 'MinSellingPrice', 'SellingPrice', 'StockQuantity', 'GodownStock', 'MinStockAlert', 
+      'Unit', 'YardsPerThan', 'ThanCount', 'TotalYards', 'ImageUrl', 'ImageCaption', 'ShortDescription', 'Description', 'Features', 
       'CreatedAt', 'UpdatedAt',
       'HasVariants', 'VariantsJSON', 'BatchNumber', 'ExpiryDate', 'MfgDate', 'IsBundle', 'BundleItemsJSON'
     ];
@@ -940,6 +940,18 @@ function ensureProductsHeaders(productsSheet) {
       productsSheet.getRange(1, targetIdx + 2).setValue('CostPrice');
     } else {
       productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('CostPrice');
+    }
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ২.০ WholesalePrice কলাম যুক্ত করা (পাইকারি বিক্রয়মূল্য)
+  if (findCol(headers, 'WholesalePrice', 'Wholesale', 'DealerPrice') === -1) {
+    const costIndex = findCol(headers, 'CostPrice', 'Cost', 'BuyPrice');
+    if (costIndex !== -1) {
+      productsSheet.insertColumnAfter(costIndex + 1);
+      productsSheet.getRange(1, costIndex + 2).setValue('WholesalePrice');
+    } else {
+      productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('WholesalePrice');
     }
     headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
   }
@@ -980,9 +992,21 @@ function ensureProductsHeaders(productsSheet) {
     headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
   }
 
+  // ৪.১ GodownStock কলাম যুক্ত করা (গোডাউন মজুদ স্টক)
+  if (findCol(headers, 'GodownStock', 'WarehouseStock', 'GodownQty') === -1) {
+    const stockIndex = findCol(headers, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity', 'Qty');
+    if (stockIndex !== -1) {
+      productsSheet.insertColumnAfter(stockIndex + 1);
+      productsSheet.getRange(1, stockIndex + 2).setValue('GodownStock');
+    } else {
+      productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('GodownStock');
+    }
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
   // ৫. MinStockAlert কলাম যুক্ত করা (যদি না থাকে)
   if (findCol(headers, 'MinStockAlert', 'MinStockAler', 'MinStock', 'Alert') === -1) {
-    const stockIndex = findCol(headers, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity', 'Qty');
+    const stockIndex = findCol(headers, 'GodownStock', 'StockQuantity', 'Stock', 'Quantity');
     if (stockIndex !== -1) {
       productsSheet.insertColumnAfter(stockIndex + 1);
       productsSheet.getRange(1, stockIndex + 2).setValue('MinStockAlert');
@@ -1000,6 +1024,42 @@ function ensureProductsHeaders(productsSheet) {
       productsSheet.getRange(1, alertIndex + 2).setValue('Unit');
     } else {
       productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('Unit');
+    }
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ৬.১ YardsPerThan কলাম যুক্ত করা (প্রতি থানে কত গজ)
+  if (findCol(headers, 'YardsPerThan', 'GojPerThan', 'YardsThan') === -1) {
+    const unitIndex = findCol(headers, 'Unit', 'UOM');
+    if (unitIndex !== -1) {
+      productsSheet.insertColumnAfter(unitIndex + 1);
+      productsSheet.getRange(1, unitIndex + 2).setValue('YardsPerThan');
+    } else {
+      productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('YardsPerThan');
+    }
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ৬.২ ThanCount কলাম যুক্ত করা (মোট থান সংখ্যা)
+  if (findCol(headers, 'ThanCount', 'TotalThan', 'ThanQty') === -1) {
+    const yptIndex = findCol(headers, 'YardsPerThan', 'GojPerThan', 'YardsThan');
+    if (yptIndex !== -1) {
+      productsSheet.insertColumnAfter(yptIndex + 1);
+      productsSheet.getRange(1, yptIndex + 2).setValue('ThanCount');
+    } else {
+      productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('ThanCount');
+    }
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ৬.৩ TotalYards কলাম যুক্ত করা (মোট গজ)
+  if (findCol(headers, 'TotalYards', 'TotalGoj', 'GojCount') === -1) {
+    const thanIndex = findCol(headers, 'ThanCount', 'TotalThan', 'ThanQty');
+    if (thanIndex !== -1) {
+      productsSheet.insertColumnAfter(thanIndex + 1);
+      productsSheet.getRange(1, thanIndex + 2).setValue('TotalYards');
+    } else {
+      productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('TotalYards');
     }
     headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
   }
@@ -2122,11 +2182,16 @@ function handleAddProduct(spreadsheet, payload) {
     const category = payload.category || payload.Category || 'General';
     const subCategory = payload.subCategory || payload.SubCategory || '';
     const costPrice = payload.costPrice !== undefined ? payload.costPrice : (payload.CostPrice !== undefined ? payload.CostPrice : 0);
+    const wholesalePrice = payload.wholesalePrice !== undefined ? payload.wholesalePrice : (payload.WholesalePrice !== undefined ? payload.WholesalePrice : 0);
     const minSellingPrice = payload.minSellingPrice !== undefined ? payload.minSellingPrice : (payload.MinSellingPrice !== undefined ? payload.MinSellingPrice : (payload.FloorPrice !== undefined ? payload.FloorPrice : costPrice));
     const sellingPrice = payload.sellingPrice !== undefined ? payload.sellingPrice : (payload.SellingPrice !== undefined ? payload.SellingPrice : 0);
     const initialStock = payload.initialStock !== undefined ? payload.initialStock : (payload.stockQuantity !== undefined ? payload.stockQuantity : (payload.StockQuantity !== undefined ? payload.StockQuantity : 0));
+    const godownStock = payload.godownStock !== undefined ? payload.godownStock : (payload.GodownStock !== undefined ? payload.GodownStock : (payload.initialGodownStock !== undefined ? payload.initialGodownStock : 0));
     const minStockAlert = payload.minStockAlert !== undefined ? payload.minStockAlert : (payload.MinStockAlert !== undefined ? payload.MinStockAlert : 5);
     const unit = payload.unit || payload.Unit || 'Pcs';
+    const yardsPerThan = payload.yardsPerThan !== undefined ? payload.yardsPerThan : (payload.YardsPerThan !== undefined ? payload.YardsPerThan : 0);
+    const thanCount = payload.thanCount !== undefined ? payload.thanCount : (payload.ThanCount !== undefined ? payload.ThanCount : (payload.initialGodownStock !== undefined ? payload.initialGodownStock : 0));
+    const totalYards = payload.totalYards !== undefined ? payload.totalYards : (payload.TotalYards !== undefined ? payload.TotalYards : ((Number(thanCount) || 0) * (Number(yardsPerThan) || 0)));
     let imageUrl = payload.imageUrl || payload.ImageUrl || '';
     const imageCaption = payload.imageCaption || payload.ImageCaption || '';
     const imageBase64 = payload.imageBase64 || payload.ImageBase64 || '';
@@ -2227,11 +2292,16 @@ function handleAddProduct(spreadsheet, payload) {
     setAt(findCol(headers, 'Category', 'Cat'), category || 'General');
     setAt(findCol(headers, 'SubCategory', 'SubCat'), subCategory || '');
     setAt(findCol(headers, 'CostPrice', 'Cost', 'BuyPrice'), cPrice);
+    setAt(findCol(headers, 'WholesalePrice', 'Wholesale', 'DealerPrice'), Number(wholesalePrice) || 0);
     setAt(findCol(headers, 'MinSellingPrice', 'FloorPrice', 'MinPrice'), Number(minSellingPrice) || cPrice);
     setAt(findCol(headers, 'SellingPrice', 'Price', 'SalePrice'), sPrice);
     setAt(findCol(headers, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity', 'Qty'), stockQty);
+    setAt(findCol(headers, 'GodownStock', 'WarehouseStock', 'GodownQty'), Number(godownStock) || 0);
     setAt(findCol(headers, 'MinStockAlert', 'MinStockAler', 'MinStock', 'Alert'), Number(minStockAlert) || 5);
     setAt(findCol(headers, 'Unit', 'UOM'), unit || 'Pcs');
+    setAt(findCol(headers, 'YardsPerThan', 'GojPerThan', 'YardsThan'), Number(yardsPerThan) || 0);
+    setAt(findCol(headers, 'ThanCount', 'TotalThan', 'ThanQty'), Number(thanCount) || 0);
+    setAt(findCol(headers, 'TotalYards', 'TotalGoj', 'GojCount'), Number(totalYards) || 0);
     setAt(findCol(headers, 'ImageUrl', 'Image', 'Photo', 'ImgUrl', 'Picture'), imageUrl || '');
     setAt(findCol(headers, 'ImageCaption', 'Caption', 'AltText', 'Alt'), imageCaption || '');
     setAt(findCol(headers, 'ShortDescription', 'ShortDesc'), shortDescription);
@@ -2340,11 +2410,16 @@ function handleUpdateProduct(spreadsheet, payload) {
   const category = payload.category || payload.Category;
   const subCategory = payload.subCategory !== undefined ? payload.subCategory : payload.SubCategory;
   const costPrice = payload.costPrice !== undefined ? Number(payload.costPrice) : (payload.CostPrice !== undefined ? Number(payload.CostPrice) : undefined);
+  const wholesalePrice = payload.wholesalePrice !== undefined ? Number(payload.wholesalePrice) : (payload.WholesalePrice !== undefined ? Number(payload.WholesalePrice) : undefined);
   const minSellingPrice = payload.minSellingPrice !== undefined ? Number(payload.minSellingPrice) : (payload.MinSellingPrice !== undefined ? Number(payload.MinSellingPrice) : (payload.FloorPrice !== undefined ? Number(payload.FloorPrice) : undefined));
   const sellingPrice = payload.sellingPrice !== undefined ? Number(payload.sellingPrice) : (payload.SellingPrice !== undefined ? Number(payload.SellingPrice) : undefined);
   const stockQuantity = payload.stockQuantity !== undefined ? Number(payload.stockQuantity) : (payload.StockQuantity !== undefined ? Number(payload.StockQuantity) : undefined);
+  const godownStock = payload.godownStock !== undefined ? Number(payload.godownStock) : (payload.GodownStock !== undefined ? Number(payload.GodownStock) : (payload.initialGodownStock !== undefined ? Number(payload.initialGodownStock) : undefined));
   const minStockAlert = payload.minStockAlert !== undefined ? Number(payload.minStockAlert) : (payload.MinStockAlert !== undefined ? Number(payload.MinStockAlert) : undefined);
   const unit = payload.unit || payload.Unit;
+  const yardsPerThan = payload.yardsPerThan !== undefined ? Number(payload.yardsPerThan) : (payload.YardsPerThan !== undefined ? Number(payload.YardsPerThan) : undefined);
+  const thanCount = payload.thanCount !== undefined ? Number(payload.thanCount) : (payload.ThanCount !== undefined ? Number(payload.ThanCount) : undefined);
+  const totalYards = payload.totalYards !== undefined ? Number(payload.totalYards) : (payload.TotalYards !== undefined ? Number(payload.TotalYards) : undefined);
   let imageUrl = payload.imageUrl !== undefined ? payload.imageUrl : payload.ImageUrl;
   const imageCaption = payload.imageCaption !== undefined ? payload.imageCaption : payload.ImageCaption;
   const imageBase64 = payload.imageBase64 || payload.ImageBase64 || '';
@@ -2414,11 +2489,16 @@ function handleUpdateProduct(spreadsheet, payload) {
   const catColIdx = findCol(headers, 'Category', 'Cat');
   const subCatColIdx = findCol(headers, 'SubCategory', 'SubCat');
   const costColIdx = findCol(headers, 'CostPrice', 'Cost', 'BuyPrice');
+  const wholesaleColIdx = findCol(headers, 'WholesalePrice', 'Wholesale', 'DealerPrice');
   const minSellColIdx = findCol(headers, 'MinSellingPrice', 'FloorPrice', 'MinPrice');
   const sellColIdx = findCol(headers, 'SellingPrice', 'Price', 'SalePrice');
   const stockColIdx = findCol(headers, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity', 'Qty');
+  const godownColIdx = findCol(headers, 'GodownStock', 'WarehouseStock', 'GodownQty');
   const alertColIdx = findCol(headers, 'MinStockAlert', 'MinStockAler', 'MinStock', 'Alert');
   const unitColIdx = findCol(headers, 'Unit', 'UOM');
+  const yardsPerThanColIdx = findCol(headers, 'YardsPerThan', 'GojPerThan', 'YardsThan');
+  const thanCountColIdx = findCol(headers, 'ThanCount', 'TotalThan', 'ThanQty');
+  const totalYardsColIdx = findCol(headers, 'TotalYards', 'TotalGoj', 'GojCount');
   const imgColIdx = findCol(headers, 'ImageUrl', 'Image', 'Photo', 'ImgUrl');
   const captionColIdx = findCol(headers, 'ImageCaption', 'Caption', 'AltText', 'Alt');
   const shortDescColIdx = findCol(headers, 'ShortDescription', 'ShortDesc');
@@ -2481,11 +2561,16 @@ function handleUpdateProduct(spreadsheet, payload) {
   updateIfDefined(catColIdx, category);
   updateIfDefined(subCatColIdx, subCategory);
   updateIfDefined(costColIdx, costPrice);
+  updateIfDefined(wholesaleColIdx, wholesalePrice);
   updateIfDefined(minSellColIdx, minSellingPrice);
   updateIfDefined(sellColIdx, sellingPrice);
   updateIfDefined(stockColIdx, stockQuantity);
+  updateIfDefined(godownColIdx, godownStock);
   updateIfDefined(alertColIdx, minStockAlert);
   updateIfDefined(unitColIdx, unit);
+  updateIfDefined(yardsPerThanColIdx, yardsPerThan);
+  updateIfDefined(thanCountColIdx, thanCount);
+  updateIfDefined(totalYardsColIdx, totalYards);
   updateIfDefined(imgColIdx, imageUrl);
   updateIfDefined(captionColIdx, imageCaption);
   updateIfDefined(shortDescColIdx, shortDescription);
