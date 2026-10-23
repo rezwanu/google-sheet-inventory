@@ -98,10 +98,11 @@ export default function AddProductModal({
     costPrice: '',
     minSellingPrice: '',
     sellingPrice: '',
-    initialStock: '10',
-    initialGodownStock: '20',
+    initialStock: '0',
+    initialGodownStock: '10',
     minStockAlert: '5',
-    unit: 'Pcs',
+    unit: 'থান',
+    yardsPerThan: '25',
     imageUrl: '',
     imageCaption: '',
     shortDescription: '',
@@ -289,14 +290,23 @@ export default function AddProductModal({
   // অনন্য পরিমাপক একক (Units) তালিকা বের করা
   const uniqueUnits = useMemo(() => {
     const list = new Set();
+    // অগ্রাধিকারভিত্তিক বস্ত্রালয় একক
+    list.add('থান');
+    list.add('গজ');
     units.forEach((u) => {
       const name = (u.ShortName || u.UnitName || '').trim();
       if (name) list.add(name);
     });
-    // ডিফল্ট মান নিশ্চিত করা
+    // ডিফল্ট অন্যান্য মান নিশ্চিত করা
     ['Pcs', 'Packet', 'Kg', 'gm', 'Ltr', 'ml', 'Box', 'Bottle', 'Dozen', 'Pair', 'Meter', 'Roll'].forEach(d => list.add(d));
     return Array.from(list);
   }, [units]);
+
+  // থান একক কি না তা যাচাই (কাপড়ের থান ও গজ পরিমাপক)
+  const isThanUnit = useMemo(() => {
+    const u = String(formData.unit || '').trim().toLowerCase();
+    return u === 'থান' || u.includes('than') || u.includes('থান') || u.includes('bolt');
+  }, [formData.unit]);
 
   // অনন্য প্রধান ক্যাটাগরি তালিকা বের করা
   const uniqueCategories = useMemo(() => {
@@ -344,9 +354,11 @@ export default function AddProductModal({
   const isFloorBelowCost = cost > 0 && minSell > 0 && minSell < cost;
   const isFloorAboveSell = sell > 0 && minSell > 0 && minSell > sell;
 
-  const totalStockInvestment = cost * initialStockNum;
-  const totalPotentialRevenue = sell * initialStockNum;
-  const totalPotentialProfit = netProfit * initialStockNum;
+  const godownStockNum = parseFloat(formData.initialGodownStock) || 0;
+  const totalCombinedStock = initialStockNum + godownStockNum;
+  const totalStockInvestment = cost * totalCombinedStock;
+  const totalPotentialRevenue = sell * totalCombinedStock;
+  const totalPotentialProfit = netProfit * totalCombinedStock;
 
   // সক্রিয় ছবির সোর্স
   const currentImageSource = imageUploadMode === 'upload' 
@@ -569,6 +581,10 @@ export default function AddProductModal({
       StockQuantity: Number(formData.initialStock) || 0
     };
 
+    const thanCount = Number(formData.initialGodownStock) || Number(formData.initialStock) || 0;
+    const yardsPerThan = Number(formData.yardsPerThan) || 0;
+    const totalYards = (Number(formData.initialStock || 0) + Number(formData.initialGodownStock || 0)) * yardsPerThan;
+
     setIsSubmitting(true);
     try {
       await onSubmitProduct({
@@ -581,6 +597,12 @@ export default function AddProductModal({
         godownStock: Number(formData.initialGodownStock) || 0,
         GodownStock: Number(formData.initialGodownStock) || 0,
         minStockAlert: Number(formData.minStockAlert) || 5,
+        yardsPerThan: yardsPerThan,
+        YardsPerThan: yardsPerThan,
+        thanCount: thanCount,
+        ThanCount: thanCount,
+        totalYards: totalYards,
+        TotalYards: totalYards,
         imageUrl: imageUploadMode === 'url' ? formData.imageUrl.trim() : '',
         imageCaption: formData.imageCaption.trim(),
         imageBase64: imageUploadMode === 'upload' ? imageBase64 : '',
@@ -609,9 +631,11 @@ export default function AddProductModal({
         costPrice: '',
         minSellingPrice: '',
         sellingPrice: '',
-        initialStock: '10',
+        initialStock: '0',
+        initialGodownStock: '10',
         minStockAlert: '5',
-        unit: uniqueUnits[0] || 'Pcs',
+        unit: 'থান',
+        yardsPerThan: '25',
         imageUrl: '',
         imageCaption: '',
         shortDescription: '',
@@ -1259,8 +1283,9 @@ export default function AddProductModal({
                 {/* ওপেনিং স্টক, সতর্কবার্তা লেভেল এবং ইউনিট */}
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                      🏬 দোকান স্টক
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span>🏬 দোকান স্টক</span>
+                      <span className="text-[10px] text-slate-400 font-normal">(শুরুতে ০)</span>
                     </label>
                     <input
                       type="number"
@@ -1274,8 +1299,9 @@ export default function AddProductModal({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                      🏭 গোডাউন স্টক
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span>🏭 গোডাউন স্টক</span>
+                      <span className="text-[10px] text-indigo-600 font-bold">(সরাসরি জমা)</span>
                     </label>
                     <input
                       type="number"
@@ -1361,6 +1387,76 @@ export default function AddProductModal({
                     )}
                   </div>
                 </div>
+
+                {/* থান ও গজ ক্যালকুলেটর (কাপড় পরিমাপ) */}
+                {isThanUnit && (
+                  <div className="bg-gradient-to-r from-amber-50/90 to-orange-50/90 border border-amber-200/90 rounded-2xl p-4 space-y-3 shadow-2xs mt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 bg-amber-500/10 rounded-lg text-amber-700">
+                          <Sparkles className="w-4 h-4 text-amber-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-amber-950">থান ও গজ ক্যালকুলেটর (কাপড় পরিমাপ)</h4>
+                          <p className="text-[10px] text-amber-800">প্রতি থানের দৈর্ঘ্য ও মোট গজের নিখুঁত হিসাব</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black bg-amber-200/70 text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-300">
+                        অটো-ক্যালকুলেশন
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-amber-950 mb-1">
+                          🏭 মোট থান সংখ্যা (গোডাউনে)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={formData.initialGodownStock}
+                          onChange={(e) => setFormData(prev => ({ ...prev, initialGodownStock: e.target.value }))}
+                          placeholder="যেমন: ১০"
+                          className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-black text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-amber-700">পণ্য যুক্ত হলে সরাসরি গোডাউনে ঢুকবে</span>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-amber-950 mb-1">
+                          📏 প্রতি থানে কত গজ?
+                        </label>
+                        <input
+                          type="number"
+                          min="0.1"
+                          step="any"
+                          name="yardsPerThan"
+                          value={formData.yardsPerThan}
+                          onChange={handleChange}
+                          placeholder="যেমন: ২৫"
+                          className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-black text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-amber-700">১ থানে মোট গজের পরিমাণ</span>
+                      </div>
+
+                      <div className="bg-amber-100/80 rounded-xl p-3 border border-amber-300/80 flex flex-col justify-center">
+                        <span className="text-[10px] font-black text-amber-800 uppercase tracking-wide">মোট কাপড়ের পরিমাণ</span>
+                        <span className="text-base font-black text-amber-950 block">
+                          {((Number(formData.initialGodownStock) || 0) + (Number(formData.initialStock) || 0)) * (Number(formData.yardsPerThan) || 0)} গজ
+                        </span>
+                        <span className="text-[10px] text-amber-800 font-semibold">
+                          ({(Number(formData.initialGodownStock) || 0) + (Number(formData.initialStock) || 0)} থান × {Number(formData.yardsPerThan) || 0} গজ/থান)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 bg-white/80 rounded-xl border border-amber-200/60 text-[11px] text-amber-900 flex items-start space-x-1.5">
+                      <span className="font-bold text-amber-700 shrink-0">💡 নিয়ম:</span>
+                      <span>নতুন কাপড় যোগ করার সাথে সাথে সরাসরি গোডাউন স্টকে জমা হবে এবং অনলাইন কাস্টমারদের জন্য "মজুদ আছে" দেখাবে। দোকানে বিক্রির জন্য 'গোডাউন থেকে দোকান চালান' করে আনা যাবে।</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Phase 6: ভ্যারিয়েন্ট কনফিগারেশন (Variable Product) */}
@@ -1918,19 +2014,15 @@ export default function AddProductModal({
                 {/* স্টোরফ্রন্ট কার্ড প্রিভিউ (ProductCatalog-এর সাথে হুবহু সামঞ্জস্যপূর্ণ) */}
                 <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/50 p-4 transition-all duration-300 relative overflow-hidden group">
                   
-                  {/* ফ্লোটিং স্টক ব্যাজ */}
+                  {/* ফ্লোটিং স্টক ব্যাজ (অনলাইন কাস্টমারদের জন্য গোডাউন স্টক থাকলেও মজুদ আছে দেখাবে) */}
                   <div className="absolute top-6 left-6 z-10">
-                    {initialStockNum <= 0 ? (
+                    {totalCombinedStock <= 0 ? (
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-xs">
                         স্টক নেই
                       </span>
-                    ) : initialStockNum <= minStockNum ? (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500 text-white shadow-xs">
-                        সীমিত স্টক ({initialStockNum} {formData.unit})
-                      </span>
                     ) : (
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-600 text-white shadow-xs">
-                        মজুদ আছে ({initialStockNum} {formData.unit})
+                        মজুদ আছে ({totalCombinedStock} {formData.unit}{isThanUnit && Number(formData.yardsPerThan) > 0 ? ` / ${totalCombinedStock * Number(formData.yardsPerThan)} গজ` : ''})
                       </span>
                     )}
                   </div>
@@ -2025,7 +2117,7 @@ export default function AddProductModal({
                       <span>ইনভেন্টরি ফাইন্যান্সিয়াল প্রজেকশন</span>
                     </span>
                     <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold border border-emerald-500/30">
-                      {formData.initialStock} {formData.unit} স্টক
+                      গোডাউন: {formData.initialGodownStock} | দোকান: {formData.initialStock} {formData.unit}
                     </span>
                   </div>
 

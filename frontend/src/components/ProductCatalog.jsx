@@ -91,10 +91,12 @@ export default function ProductCatalog({
 
     safeProducts.forEach((p) => {
       const stock = Number(p.StockQuantity || 0);
+      const godown = Number(p.GodownStock || 0);
+      const effectiveStock = isCustomer ? (stock + godown) : stock;
       const minAlert = Number(p.MinStockAlert || 5);
-      if (stock > 0) {
+      if (effectiveStock > 0) {
         inStock++;
-        if (stock <= minAlert) lowStock++;
+        if (effectiveStock <= minAlert) lowStock++;
       } else {
         outOfStock++;
       }
@@ -102,7 +104,7 @@ export default function ProductCatalog({
     });
 
     return { inStock, lowStock, outOfStock, withCoupon };
-  }, [safeProducts, activeCoupons]);
+  }, [safeProducts, activeCoupons, isCustomer]);
 
   // ডায়নামিক ক্যাটাগরি তালিকা (আইটেম কাউন্টসহ)
   const categoriesWithCounts = useMemo(() => {
@@ -141,11 +143,13 @@ export default function ProductCatalog({
 
       // ৩. স্টক ফিল্টার
       const stock = Number(p.StockQuantity || 0);
+      const godown = Number(p.GodownStock || 0);
+      const effectiveStock = isCustomer ? (stock + godown) : stock;
       const minAlert = Number(p.MinStockAlert || 5);
       let matchStock = true;
-      if (stockFilter === 'IN_STOCK') matchStock = stock > 0;
-      else if (stockFilter === 'LOW_STOCK') matchStock = stock > 0 && stock <= minAlert;
-      else if (stockFilter === 'OUT_OF_STOCK') matchStock = stock <= 0;
+      if (stockFilter === 'IN_STOCK') matchStock = effectiveStock > 0;
+      else if (stockFilter === 'LOW_STOCK') matchStock = effectiveStock > 0 && effectiveStock <= minAlert;
+      else if (stockFilter === 'OUT_OF_STOCK') matchStock = effectiveStock <= 0;
       else if (stockFilter === 'WITH_COUPON') matchStock = hasProductCoupon(p);
 
       return matchSearch && matchCategory && matchStock;
@@ -598,9 +602,13 @@ export default function ProductCatalog({
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4.5">
             {filteredProducts.map((product) => {
               const stock = Number(product.StockQuantity || 0);
+              const godownStock = Number(product.GodownStock || 0);
+              const totalStock = stock + godownStock;
               const minAlert = Number(product.MinStockAlert || 5);
-              const inStock = stock > 0;
-              const isLowStock = inStock && stock <= minAlert;
+              const inStock = isCustomer ? totalStock > 0 : stock > 0;
+              const isLowStock = isCustomer 
+                ? (totalStock > 0 && totalStock <= minAlert) 
+                : (stock > 0 && stock <= minAlert);
               const isOutOfStock = !inStock;
               const cartQty = getItemCartQuantity(product.ProductID);
               const hasCoupon = hasProductCoupon(product);
@@ -684,22 +692,20 @@ export default function ProductCatalog({
                       {/* ছবির ওপরে ভাসমান স্টক ব্যাজ */}
                       <div className="absolute bottom-2 left-2 z-10">
                         {isOutOfStock ? (
-                          Number(product.GodownStock || 0) > 0 ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-600/95 text-white backdrop-blur-md shadow-xs animate-pulse">
-                              {isCustomer ? 'সীমিত স্টক' : `দোকানে শেষ (গোডাউনে ${product.GodownStock})`}
-                            </span>
-                          ) : (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600/95 text-white backdrop-blur-md shadow-xs">
-                              স্টক শেষ
-                            </span>
-                          )
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600/95 text-white backdrop-blur-md shadow-xs">
+                            স্টক শেষ
+                          </span>
                         ) : isLowStock ? (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/95 text-white backdrop-blur-md shadow-xs animate-pulse">
-                            {isCustomer ? 'সীমিত স্টক' : `দোকান: ${stock} | গোডাউন: ${Number(product.GodownStock || 0)}`}
+                            {isCustomer 
+                              ? `সীমিত স্টক (${totalStock} ${product.Unit || 'Pcs'}${Number(product.YardsPerThan) > 0 ? ` / ${totalStock * Number(product.YardsPerThan)} গজ` : ''})` 
+                              : `দোকান: ${stock} | গোডাউন: ${godownStock}`}
                           </span>
                         ) : (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-900/80 text-white backdrop-blur-md shadow-2xs">
-                            {isCustomer ? 'মজুদ আছে' : (Number(product.GodownStock || 0) > 0 ? `দোকান: ${stock} | গোডাউন: ${product.GodownStock}` : `দোকান: ${stock} ${product.Unit || 'Pcs'}`)}
+                            {isCustomer 
+                              ? `মজুদ আছে (${totalStock} ${product.Unit || 'Pcs'}${Number(product.YardsPerThan) > 0 ? ` - ${totalStock * Number(product.YardsPerThan)} গজ` : ''})` 
+                              : (godownStock > 0 ? (stock === 0 ? `দোকানে ০ (গোডাউনে ${godownStock})` : `দোকান: ${stock} | গোডাউন: ${godownStock}`) : `দোকান: ${stock} ${product.Unit || 'Pcs'}`)}
                           </span>
                         )}
                       </div>
@@ -712,15 +718,15 @@ export default function ProductCatalog({
                       )}
                     </div>
 
-                    {/* ক্যাটাগরি ও সাব-ক্যাটাগরি */}
+                    {/* ক্যাটাগরি ও সাব-ক্যাটাগরি এবং থান/গজ তথ্য */}
                     <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1 gap-1">
-                      <span className="font-semibold text-slate-500 truncate max-w-[80%]">
+                      <span className="font-semibold text-slate-500 truncate max-w-[70%]">
                         {product.Category || 'General'}
                         {product.SubCategory && ` › ${product.SubCategory}`}
                       </span>
                       {product.Unit && (
-                        <span className="text-[10px] font-medium text-slate-400 shrink-0">
-                          /{product.Unit}
+                        <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 shrink-0">
+                          {product.Unit}{Number(product.YardsPerThan) > 0 ? ` (${product.YardsPerThan} গজ)` : ''}
                         </span>
                       )}
                     </div>
@@ -830,9 +836,13 @@ export default function ProductCatalog({
                 <tbody className="divide-y divide-slate-100">
                   {filteredProducts.map((product) => {
                     const stock = Number(product.StockQuantity || 0);
+                    const godownStock = Number(product.GodownStock || 0);
+                    const totalStock = stock + godownStock;
                     const minAlert = Number(product.MinStockAlert || 5);
-                    const inStock = stock > 0;
-                    const isLowStock = inStock && stock <= minAlert;
+                    const inStock = isCustomer ? totalStock > 0 : stock > 0;
+                    const isLowStock = isCustomer 
+                      ? (totalStock > 0 && totalStock <= minAlert) 
+                      : (stock > 0 && stock <= minAlert);
                     const cartQty = getItemCartQuantity(product.ProductID);
 
                     return (
@@ -891,18 +901,40 @@ export default function ProductCatalog({
                         </td>
 
                         <td className="py-3 px-3 text-center">
-                          {stock <= 0 ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                              স্টক শেষ
-                            </span>
-                          ) : isLowStock ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                              কম: {stock} {product.Unit || 'Pcs'}
-                            </span>
+                          {isCustomer ? (
+                            totalStock <= 0 ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                স্টক শেষ
+                              </span>
+                            ) : isLowStock ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                সীমিত: {totalStock} {product.Unit || 'Pcs'}{Number(product.YardsPerThan) > 0 ? ` (${totalStock * Number(product.YardsPerThan)} গজ)` : ''}
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                {totalStock} {product.Unit || 'Pcs'}{Number(product.YardsPerThan) > 0 ? ` (${totalStock * Number(product.YardsPerThan)} গজ)` : ''}
+                              </span>
+                            )
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              {stock} {product.Unit || 'Pcs'}
-                            </span>
+                            stock <= 0 ? (
+                              godownStock > 0 ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300" title="দোকানে শেষ কিন্তু গোডাউনে আছে">
+                                  দোকানে ০ (গোডাউনে {godownStock})
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                  স্টক শেষ
+                                </span>
+                              )
+                            ) : isLowStock ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                দোকান: {stock} | গোডাউন: {godownStock}
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                দোকান: {stock} | গোডাউন: {godownStock}
+                              </span>
+                            )
                           )}
                         </td>
 

@@ -1217,7 +1217,11 @@ export default function App() {
       return itemId === cartItemId;
     });
 
-    const availableStock = Number(product.StockQuantity) || 0;
+    const isCustomerUser = Boolean(!activeUser || activeUser.Role === 'Customer');
+    const godownStock = Number(product.GodownStock || 0);
+    const shopStock = Number(product.StockQuantity || 0);
+    // অনলাইন কাস্টমারদের জন্য গোডাউন ও দোকান মিলিয়ে মোট স্টক প্রযোজ্য; দোকানে কাউন্টার বিক্রয়ে দোকান স্টক প্রযোজ্য
+    const availableStock = isCustomerUser ? (shopStock + godownStock) : shopStock;
     const addQty = Math.max(0.001, Number(qtyToAdd) || 1);
     const displayName = `${product.ProductName}${variantName ? ` (${variantName})` : ''}`;
 
@@ -1241,7 +1245,11 @@ export default function App() {
       showToast(`'${displayName}' কার্টে যোগ হয়েছে (+${addQty})`, 'success');
     } else {
       if (availableStock <= 0) {
-        showToast(`'${displayName}' স্টক শেষ!`, 'error');
+        if (!isCustomerUser && godownStock > 0) {
+          showToast(`'${displayName}' দোকানে স্টক শেষ, তবে গোডাউনে ${godownStock} ${product.Unit || 'টি'} আছে। চালান করে দোকানে নিয়ে আসুন।`, 'warning');
+        } else {
+          showToast(`'${displayName}' স্টক শেষ!`, 'error');
+        }
         playWarningBeep();
         return;
       }
@@ -3446,6 +3454,12 @@ export default function App() {
       GodownStock: Number(productData.initialGodownStock !== undefined ? productData.initialGodownStock : (productData.godownStock || 0)),
       godownStock: Number(productData.initialGodownStock !== undefined ? productData.initialGodownStock : (productData.godownStock || 0)),
       TotalStock: (Number(productData.initialStock) || 0) + Number(productData.initialGodownStock !== undefined ? productData.initialGodownStock : (productData.godownStock || 0)),
+      YardsPerThan: Number(productData.yardsPerThan !== undefined ? productData.yardsPerThan : (productData.YardsPerThan || 0)),
+      yardsPerThan: Number(productData.yardsPerThan !== undefined ? productData.yardsPerThan : (productData.YardsPerThan || 0)),
+      ThanCount: Number(productData.thanCount !== undefined ? productData.thanCount : (productData.ThanCount || (Number(productData.initialGodownStock) || Number(productData.initialStock) || 0))),
+      thanCount: Number(productData.thanCount !== undefined ? productData.thanCount : (productData.ThanCount || (Number(productData.initialGodownStock) || Number(productData.initialStock) || 0))),
+      TotalYards: Number(productData.totalYards !== undefined ? productData.totalYards : (productData.TotalYards || ((Number(productData.thanCount) || (Number(productData.initialGodownStock) || Number(productData.initialStock) || 0)) * (Number(productData.yardsPerThan) || 0)))),
+      totalYards: Number(productData.totalYards !== undefined ? productData.totalYards : (productData.TotalYards || ((Number(productData.thanCount) || (Number(productData.initialGodownStock) || Number(productData.initialStock) || 0)) * (Number(productData.yardsPerThan) || 0)))),
       MinStockAlert: Number(productData.minStockAlert) || 5,
       Unit: productData.unit || 'Pcs',
       ShortDescription: productData.shortDescription || '',
@@ -3464,6 +3478,44 @@ export default function App() {
     const updatedList = [newProd, ...products];
     setProducts(updatedList);
     saveLocalProducts(updatedList);
+
+    // গোডাউন ও দোকান প্রাথমিক স্টক ট্র্যাকিং রেকর্ড সংরক্ষণ
+    const initialGodown = Number(newProd.GodownStock || 0);
+    if (initialGodown > 0) {
+      recordStockMovementLocally({
+        location: 'Godown',
+        type: 'ADJUSTMENT',
+        reasonBangla: `নতুন পণ্য গোডাউনে প্রাথমিক সংযোজন (${initialGodown} ${newProd.Unit}${newProd.YardsPerThan > 0 ? ` - ${initialGodown * newProd.YardsPerThan} গজ` : ''})`,
+        productId: newProd.ProductID,
+        productName: newProd.ProductName,
+        barcode: newProd.Barcode,
+        unit: newProd.Unit,
+        quantity: initialGodown,
+        previousStock: 0,
+        remainingStock: initialGodown,
+        referenceNo: `IN-GD-${Date.now().toString().slice(-6)}`,
+        operatorName: activeUser?.FullName || 'Admin',
+        notes: 'গোডাউনে প্রাথমিক আগমন'
+      });
+    }
+    const initialShop = Number(newProd.StockQuantity || 0);
+    if (initialShop > 0) {
+      recordStockMovementLocally({
+        location: 'Shop',
+        type: 'ADJUSTMENT',
+        reasonBangla: `নতুন পণ্য দোকানে প্রাথমিক স্টক (${initialShop} ${newProd.Unit})`,
+        productId: newProd.ProductID,
+        productName: newProd.ProductName,
+        barcode: newProd.Barcode,
+        unit: newProd.Unit,
+        quantity: initialShop,
+        previousStock: 0,
+        remainingStock: initialShop,
+        referenceNo: `IN-SH-${Date.now().toString().slice(-6)}`,
+        operatorName: activeUser?.FullName || 'Admin',
+        notes: 'দোকানে প্রাথমিক আগমন'
+      });
+    }
 
     // লোকাল ক্যাটাগরি তালিকায় না থাকলে স্বয়ংক্রিয়ভাবে লোকাল ক্যাটাগরিতেও যুক্ত করা
     if (productData.category) {

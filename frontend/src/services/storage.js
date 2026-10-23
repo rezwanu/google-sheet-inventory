@@ -354,6 +354,8 @@ export function saveLocalSettings(settings) {
 // প্রাথমিক পরিমাপক একক (Units) তালিকা (লাইভ বেসলাইন থেকে লোড)
 export const DEFAULT_UNITS = BASELINE_UNITS && BASELINE_UNITS.length > 0 ? BASELINE_UNITS : [
   { UnitID: 'UNIT-101', UnitName: 'Piece (পিস)', ShortName: 'Pcs', Description: 'একক পিস পণ্য', Status: 'Active' },
+  { UnitID: 'UNIT-108', UnitName: 'থান (Than / Bolt)', ShortName: 'থান', Description: 'কাপড়ের সম্পূর্ণ থান', Status: 'Active' },
+  { UnitID: 'UNIT-109', UnitName: 'গজ (Yard)', ShortName: 'গজ', Description: 'কাপড় পরিমাপক গজ', Status: 'Active' },
   { UnitID: 'UNIT-102', UnitName: 'Packet (প্যাকেট)', ShortName: 'Packet', Description: 'প্যাকেটজাত পণ্য', Status: 'Active' },
   { UnitID: 'UNIT-107', UnitName: 'Box (বক্স/কার্টন)', ShortName: 'Box', Description: 'কার্টন বা বক্স', Status: 'Active' },
 ];
@@ -425,6 +427,19 @@ export function getLocalUnits() {
     if (!data || !Array.isArray(data) || data.length === 0) {
       saveLocalUnits(DEFAULT_UNITS);
       return DEFAULT_UNITS;
+    }
+    // থান ও গজ একক বিদ্যমান না থাকলে ডিফল্ট থেকে মার্জ করা
+    const hasThan = data.some(u => String(u.UnitName || u.ShortName || '').includes('থান'));
+    const hasGoj = data.some(u => String(u.UnitName || u.ShortName || '').includes('গজ'));
+    if (!hasThan || !hasGoj) {
+      const merged = [...data];
+      DEFAULT_UNITS.forEach(defU => {
+        if (!merged.some(u => u.UnitID === defU.UnitID || u.ShortName === defU.ShortName || u.UnitName === defU.UnitName)) {
+          merged.push(defU);
+        }
+      });
+      saveLocalUnits(merged);
+      return merged;
     }
     return data;
   } catch (e) {
@@ -628,6 +643,21 @@ export function normalizeProduct(p) {
     SellingPrice: Number(bi.SellingPrice || bi.sellingPrice || 0),
   }));
 
+  // থান ও গজ সম্পর্কিত পরিমাপ (Fabric / Than / Bolt measurement)
+  const yardsPerThan = p.YardsPerThan !== undefined && p.YardsPerThan !== null && p.YardsPerThan !== ''
+    ? Number(p.YardsPerThan)
+    : (p.yardsPerThan !== undefined && p.yardsPerThan !== null && p.yardsPerThan !== '' ? Number(p.yardsPerThan) : 0);
+  const thanCount = p.ThanCount !== undefined && p.ThanCount !== null && p.ThanCount !== ''
+    ? Number(p.ThanCount)
+    : (p.thanCount !== undefined && p.thanCount !== null && p.thanCount !== '' 
+        ? Number(p.thanCount) 
+        : (String(unit).includes('থান') ? (isNaN(godownStock) ? 0 : Number(godownStock)) + (Number(stock) || 0) : 0));
+  const totalYards = p.TotalYards !== undefined && p.TotalYards !== null && p.TotalYards !== ''
+    ? Number(p.TotalYards)
+    : (p.totalYards !== undefined && p.totalYards !== null && p.totalYards !== '' 
+        ? Number(p.totalYards) 
+        : (thanCount * yardsPerThan));
+
   // সম্পূর্ণ খালি সারি বর্জন
   if (!name && !id && !barcode) {
     return null;
@@ -648,6 +678,12 @@ export function normalizeProduct(p) {
     GodownStock: isNaN(godownStock) ? 0 : Math.max(0, godownStock),
     godownStock: isNaN(godownStock) ? 0 : Math.max(0, godownStock),
     TotalStock: (Number(stock) || 0) + (isNaN(godownStock) ? 0 : Math.max(0, godownStock)),
+    YardsPerThan: yardsPerThan,
+    yardsPerThan: yardsPerThan,
+    ThanCount: thanCount,
+    thanCount: thanCount,
+    TotalYards: totalYards,
+    totalYards: totalYards,
     MinStockAlert: Number(minAlert) || 5,
     CostPrice: Number(cost) || 0,
     MinSellingPrice: Math.max(0, Number(minSellingPrice) >= 0 ? Number(minSellingPrice) : (Number(cost) || 0)),

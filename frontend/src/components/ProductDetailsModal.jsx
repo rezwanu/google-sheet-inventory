@@ -351,6 +351,56 @@ export default function ProductDetailsModal({
                 </div>
               </div>
 
+              {/* কাপড় পরিমাপ ও থান-গজ বিশদ বিবরণ */}
+              {(Number(product.YardsPerThan) > 0 || String(product.Unit || '').includes('থান')) && (
+                <div className="bg-amber-50/80 rounded-2xl p-3.5 border border-amber-200 mt-3 text-xs space-y-2">
+                  <div className="flex items-center justify-between text-amber-950 font-bold border-b border-amber-200/70 pb-1.5">
+                    <span className="flex items-center space-x-1.5">
+                      <span className="text-amber-600">📏</span>
+                      <span>কাপড় পরিমাপ (থান ও গজ বিশ্লেষণ)</span>
+                    </span>
+                    <span className="text-[10px] bg-amber-200/80 px-2 py-0.5 rounded-full text-amber-900 font-black">
+                      বস্ত্রালয় হিসাব
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-center pt-1">
+                    <div className="bg-white p-2 rounded-xl border border-amber-100">
+                      <span className="text-[10px] text-amber-800 font-bold block">প্রতি থানে গজ</span>
+                      <span className="text-sm font-black text-amber-950 block">
+                        {Number(product.YardsPerThan) || 0} গজ
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-2 rounded-xl border border-amber-100">
+                      <span className="text-[10px] text-amber-800 font-bold block">দোকানে গজ</span>
+                      <span className="text-sm font-black text-amber-950 block">
+                        {stock * (Number(product.YardsPerThan) || 0)} গজ
+                      </span>
+                      <span className="text-[9px] text-slate-500 font-medium">({stock} থান)</span>
+                    </div>
+
+                    <div className="bg-white p-2 rounded-xl border border-amber-100">
+                      <span className="text-[10px] text-amber-800 font-bold block">গোডাউনে গজ</span>
+                      <span className="text-sm font-black text-indigo-950 block">
+                        {(Number(product.GodownStock) || 0) * (Number(product.YardsPerThan) || 0)} গজ
+                      </span>
+                      <span className="text-[9px] text-slate-500 font-medium">({Number(product.GodownStock) || 0} থান)</span>
+                    </div>
+                  </div>
+
+                  <div className="p-2 bg-amber-100/70 rounded-xl border border-amber-200 flex items-center justify-between font-bold text-amber-950">
+                    <span className="text-[11px]">মোট কাপড়ের মজুদ (দোকান + গোডাউন):</span>
+                    <span className="text-sm font-black text-amber-950">
+                      {(stock + (Number(product.GodownStock) || 0)) * (Number(product.YardsPerThan) || 0)} গজ
+                      <span className="text-[10px] font-normal text-amber-800 ml-1">
+                        ({stock + (Number(product.GodownStock) || 0)} থান)
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              )}
+
             </div>
 
           </div>

@@ -280,6 +280,24 @@ export const BASELINE_UNITS = [
     "Status": "Active",
     "CreatedAt": "2026-10-12T05:13:45.603Z",
     "_rowIndex": 13
+  },
+  {
+    "UnitID": "UNIT-113",
+    "UnitName": "থান (Than / Bolt)",
+    "ShortName": "থান",
+    "Description": "কাপড়ের সম্পূর্ণ থান",
+    "Status": "Active",
+    "CreatedAt": "2026-10-23T00:00:00.000Z",
+    "_rowIndex": 14
+  },
+  {
+    "UnitID": "UNIT-114",
+    "UnitName": "গজ (Yard)",
+    "ShortName": "গজ",
+    "Description": "কাপড় পরিমাপক গজ",
+    "Status": "Active",
+    "CreatedAt": "2026-10-23T00:00:00.000Z",
+    "_rowIndex": 15
   }
 ];
 
