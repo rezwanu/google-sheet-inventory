@@ -121,17 +121,20 @@ export default function StockTransferModal({
     if (typeof vars === 'string') {
       try { vars = JSON.parse(vars); } catch { vars = []; }
     }
-    if ((!vars || !vars.length) && p.VariantsJSON) {
-      try { vars = JSON.parse(p.VariantsJSON); } catch { vars = []; }
+    if ((!vars || !vars.length) && (p.VariantsJSON || p.variantsJSON)) {
+      try { vars = JSON.parse(p.VariantsJSON || p.variantsJSON); } catch { vars = []; }
     }
     if (!Array.isArray(vars)) return [];
     return vars.map((v) => {
-      const gStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.StockQuantity !== undefined ? v.StockQuantity : 0)) || 0;
-      const sStock = Number(v.GodownStock !== undefined ? (v.StockQuantity !== undefined ? v.StockQuantity : 0) : 0) || 0;
+      const gStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0)) || 0;
+      const sStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : (v.ShopStock !== undefined ? v.ShopStock : 0))) || 0;
       return {
         ...v,
         GodownStock: gStock,
-        StockQuantity: sStock
+        godownStock: gStock,
+        StockQuantity: sStock,
+        stockQuantity: sStock,
+        TotalStock: gStock + sStock
       };
     });
   };
@@ -307,7 +310,7 @@ export default function StockTransferModal({
 
       if (vars.length > 0) {
         vars.forEach((v, vIdx) => {
-          const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
+          const vGStock = Number(v.GodownStock) || 0;
           const vSStock = Number(v.StockQuantity) || 0;
           list.push({
             parentProduct: p,
@@ -1517,7 +1520,7 @@ export default function StockTransferModal({
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100">
                                                   {vars.map((v, vIdx) => {
-                                                    const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
+                                                    const vGStock = Number(v.GodownStock) || 0;
                                                     const vSStock = Number(v.StockQuantity) || 0;
                                                     const vTotal = vGStock + vSStock;
                                                     const vColor = v.Attributes?.Color || v.Color || '';

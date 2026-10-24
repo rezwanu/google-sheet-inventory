@@ -291,7 +291,9 @@ export default function AddProductModal({
       updated[existingIdx] = {
         ...updated[existingIdx],
         GodownStock: prevGodown + qty,
-        StockQuantity: Number(updated[existingIdx].StockQuantity) || 0
+        godownStock: prevGodown + qty,
+        StockQuantity: Number(updated[existingIdx].StockQuantity) || 0,
+        stockQuantity: Number(updated[existingIdx].StockQuantity) || 0
       };
     } else {
       const varId = `VAR-${cleanName.replace(/\s+/g, '-').toUpperCase()}`;
@@ -304,7 +306,9 @@ export default function AddProductModal({
         MinSellingPrice: baseMinSell,
         SellingPrice: baseSell,
         GodownStock: qty,
-        StockQuantity: 0
+        godownStock: qty,
+        StockQuantity: 0,
+        stockQuantity: 0
       };
       updated = [...variants, newV];
     }
@@ -327,7 +331,9 @@ export default function AddProductModal({
     updated[idx] = { 
       ...updated[idx], 
       GodownStock: val,
-      StockQuantity: Number(updated[idx].StockQuantity) || 0
+      godownStock: val,
+      StockQuantity: Number(updated[idx].StockQuantity) || 0,
+      stockQuantity: Number(updated[idx].StockQuantity) || 0
     };
     setVariants(updated);
     const sumStock = updated.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0);

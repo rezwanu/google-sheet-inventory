@@ -909,8 +909,30 @@ export default function App() {
           .filter(p => !isDemoProduct(p))
           .map(normalizeProduct)
           .filter(Boolean);
-        setProducts(cleanList);
-        saveLocalProducts(cleanList);
+
+        // স্মার্ট প্রটেকশন: শিট রেসপন্সে যদি কোনো কারণে ইনকামিং ভ্যারিয়েন্ট স্টক ০ থাকে কিন্তু লোকাল স্টেটে সঠিক স্টক থাকে
+        setProducts(prevProducts => {
+          const currentList = Array.isArray(prevProducts) && prevProducts.length > 0 ? prevProducts : products;
+          const merged = cleanList.map(incomingP => {
+            const localP = currentList.find(lp => String(lp.ProductID || '').trim() === String(incomingP.ProductID || '').trim());
+            if (!localP) return incomingP;
+
+            const inVarGodown = (incomingP.Variants || []).reduce((s, v) => s + (Number(v.GodownStock) || 0), 0);
+            const localVarGodown = (localP.Variants || []).reduce((s, v) => s + (Number(v.GodownStock) || 0), 0);
+
+            if (localVarGodown > 0 && inVarGodown === 0 && Number(incomingP.GodownStock || 0) > 0) {
+              return {
+                ...incomingP,
+                Variants: localP.Variants,
+                VariantsJSON: localP.VariantsJSON || JSON.stringify(localP.Variants),
+                variantsJSON: localP.variantsJSON || JSON.stringify(localP.Variants)
+              };
+            }
+            return incomingP;
+          });
+          saveLocalProducts(merged);
+          return merged;
+        });
       }
 
       // ক্যাটাগরি আপডেট
@@ -3987,9 +4009,6 @@ export default function App() {
         const response = await postUpdateProduct(settings.apiUrl, payload);
         if (response && response.success) {
           showToast('গুগল শিট ডাটাবেসে ভ্যারিয়েন্ট স্টক সিঙ্ক সম্পন্ন হয়েছে!', 'success');
-          setTimeout(() => {
-            handleSync(false);
-          }, 300);
         } else {
           showToast(`সতর্কবার্তা: ${response?.message || 'শিট সিঙ্ক ব্যর্থ'}`, 'warning');
         }

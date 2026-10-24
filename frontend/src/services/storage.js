@@ -609,18 +609,99 @@ export function normalizeProduct(p) {
     }
   }
 
-  // প্রতিটি ভ্যারিয়েন্টের প্রোপার্টি স্ট্যান্ডার্ডাইজেশন
-  variants = variants.map((v, idx) => ({
-    VariantID: String(v.VariantID || v.variantId || `VAR-${idx + 1}`),
-    Attributes: v.Attributes || v.attributes || (v.Size || v.Color ? { Size: v.Size, Color: v.Color } : {}),
-    Barcode: String(v.Barcode || v.barcode || ''),
-    CostPrice: Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice || cost)),
-    WholesalePrice: Number(v.WholesalePrice !== undefined ? v.WholesalePrice : (v.wholesalePrice || wholesale || 0)),
-    wholesalePrice: Number(v.WholesalePrice !== undefined ? v.WholesalePrice : (v.wholesalePrice || wholesale || 0)),
-    MinSellingPrice: Number(v.MinSellingPrice !== undefined ? v.MinSellingPrice : (v.minSellingPrice || v.CostPrice || cost)),
-    SellingPrice: Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice || price)),
-    StockQuantity: Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)),
-  }));
+  // প্রতিটি ভ্যারিয়েন্টের প্রোপার্টি স্ট্যান্ডার্ডাইজেশন (গোডাউন ও দোকান স্টক অক্ষুণ্ণ রাখা)
+  variants = variants.map((v, idx) => {
+    const rawG = v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : undefined);
+    const rawS = v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : (v.ShopStock !== undefined ? v.ShopStock : (v.shopStock !== undefined ? v.shopStock : 0)));
+
+    let vGodown;
+    let vShop = Number(rawS) || 0;
+
+    if (rawG !== undefined && rawG !== null && rawG !== '') {
+      vGodown = Number(rawG) || 0;
+    } else {
+      // যদি ভ্যারিয়েন্টে পূর্বে আলাদা GodownStock না থাকে (যেমন পুরনো প্রোডাক্ট)
+      // এবং মূল পণ্যের গোডাউনে স্টক রয়েছে কিন্তু দোকানে নেই
+      if (godownStock > 0 && (!stock || Number(stock) === 0)) {
+        vGodown = Number(vShop) || 0;
+        vShop = 0;
+      } else {
+        vGodown = 0;
+      }
+    }
+    if (isNaN(vGodown)) vGodown = 0;
+    if (isNaN(vShop)) vShop = 0;
+
+    const vColor = v.Color || v.Attributes?.Color || '';
+    const vSize = v.Size || v.Attributes?.Size || '';
+    const attr = v.Attributes || v.attributes || (vSize || vColor ? { ...(vColor ? { Color: vColor } : {}), ...(vSize ? { Size: vSize } : {}) } : {});
+
+    return {
+      ...v,
+      VariantID: String(v.VariantID || v.variantId || `VAR-${idx + 1}`),
+      Attributes: attr,
+      Barcode: String(v.Barcode || v.barcode || ''),
+      CostPrice: Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice || cost)),
+      WholesalePrice: Number(v.WholesalePrice !== undefined ? v.WholesalePrice : (v.wholesalePrice || wholesale || 0)),
+      wholesalePrice: Number(v.WholesalePrice !== undefined ? v.WholesalePrice : (v.wholesalePrice || wholesale || 0)),
+      MinSellingPrice: Number(v.MinSellingPrice !== undefined ? v.MinSellingPrice : (v.minSellingPrice || v.CostPrice || cost)),
+      SellingPrice: Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice || price)),
+      GodownStock: vGodown,
+      godownStock: vGodown,
+      StockQuantity: vShop,
+      stockQuantity: vShop,
+      ShopStock: vShop,
+      shopStock: vShop,
+      TotalStock: vGodown + vShop,
+      totalStock: vGodown + vShop,
+      Color: vColor,
+      Size: vSize,
+    };
+  });
+
+  // স্বয়ংক্রিয় রিকভারি: যদি প্রোডাক্টে ভ্যারিয়েন্ট থাকে এবং সব ভ্যারিয়েন্টের স্টক ০ হয়ে গিয়ে থাকে,
+  // কিন্তু মূল পণ্যের গোডাউনে বা দোকানে স্টক বিদ্যমান থাকে (যেমন পূর্বের সিঙ্ক সমস্যার কারণে হারানো স্টক)
+  if (variants.length > 0) {
+    const sumG = variants.reduce((s, v) => s + (Number(v.GodownStock) || 0), 0);
+    const sumS = variants.reduce((s, v) => s + (Number(v.StockQuantity) || 0), 0);
+
+    const targetG = isNaN(godownStock) ? 0 : Math.max(0, godownStock);
+    const targetS = Number(stock) || 0;
+
+    if (sumG === 0 && targetG > 0) {
+      const count = variants.length;
+      const baseG = Math.floor(targetG / count);
+      const remG = targetG % count;
+      variants = variants.map((v, i) => {
+        const allocated = baseG + (i < remG ? 1 : 0);
+        return {
+          ...v,
+          GodownStock: allocated,
+          godownStock: allocated,
+          TotalStock: allocated + (Number(v.StockQuantity) || 0),
+          totalStock: allocated + (Number(v.StockQuantity) || 0)
+        };
+      });
+    }
+
+    if (sumS === 0 && targetS > 0) {
+      const count = variants.length;
+      const baseS = Math.floor(targetS / count);
+      const remS = targetS % count;
+      variants = variants.map((v, i) => {
+        const allocated = baseS + (i < remS ? 1 : 0);
+        return {
+          ...v,
+          StockQuantity: allocated,
+          stockQuantity: allocated,
+          ShopStock: allocated,
+          shopStock: allocated,
+          TotalStock: (Number(v.GodownStock) || 0) + allocated,
+          totalStock: (Number(v.GodownStock) || 0) + allocated
+        };
+      });
+    }
+  }
 
   const batchNumber = String(p.BatchNumber || p.batchNumber || p.Batch || p.batch || '').trim();
   const expiryDate = String(p.ExpiryDate || p.expiryDate || p.ExpDate || p.expDate || '').trim();
@@ -709,6 +790,8 @@ export function normalizeProduct(p) {
     Features: features,
     HasVariants: hasVariants,
     Variants: variants,
+    VariantsJSON: JSON.stringify(variants),
+    variantsJSON: JSON.stringify(variants),
     BatchNumber: batchNumber,
     ExpiryDate: expiryDate,
     MfgDate: mfgDate,

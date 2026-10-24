@@ -101,6 +101,9 @@ export async function postAddStock(apiUrl, stockData) {
   });
 
   const result = await response.json();
+  if (result && result.success) {
+    invalidateApiCache();
+  }
   return result;
 }
 
@@ -133,6 +136,9 @@ export async function postCreateSale(apiUrl, saleData) {
   });
 
   const result = await response.json();
+  if (result && result.success) {
+    invalidateApiCache();
+  }
   return result;
 }
 
@@ -189,6 +195,9 @@ export async function postAddProduct(apiUrl, productData) {
   });
 
   const result = await response.json();
+  if (result && result.success) {
+    invalidateApiCache();
+  }
   return result;
 }
 
@@ -250,6 +259,9 @@ export async function postUpdateProduct(apiUrl, productData) {
   });
 
   const result = await response.json();
+  if (result && result.success) {
+    invalidateApiCache();
+  }
   return result;
 }
 
@@ -285,6 +297,9 @@ export async function postDeleteProduct(apiUrl, productId, barcode = '') {
   });
 
   const result = await response.json();
+  if (result && result.success) {
+    invalidateApiCache();
+  }
   return result;
 }
 
