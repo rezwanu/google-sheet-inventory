@@ -4828,13 +4828,16 @@ export default function App() {
       />
 
       {/* ফেজ ৬: সাইজ/রং ভ্যারিয়েন্ট বাছাইকারী মডাল */}
-      <ProductVariantSelectModal
-        isOpen={Boolean(variantSelectModalProduct)}
-        onClose={() => setVariantSelectModalProduct(null)}
-        product={variantSelectModalProduct}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onAddToCart={handleAddToCart}
-      />
+      {Boolean(variantSelectModalProduct) && (
+        <ProductVariantSelectModal
+          isOpen={true}
+          onClose={() => setVariantSelectModalProduct(null)}
+          product={variantSelectModalProduct}
+          currencySymbol={settings.CurrencySymbol || '৳'}
+          onAddToCart={handleAddToCart}
+          cartItems={cart}
+        />
+      )}
 
       {/* গজ কাপড় ও থান কাটার জন্য গজ-গিরা নির্বাচন মডাল */}
       <FabricCutModal

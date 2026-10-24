@@ -46,15 +46,13 @@ export default function ProductVariantSelectModal({
     }
   }, [variants, isOpen]);
 
-  if (!isOpen || !product) return null;
-
   const currentVariant = variants.find((v) => v.VariantID === selectedVariantId) || variants[0];
   const variantStock = currentVariant ? Number(currentVariant.StockQuantity || 0) : 0;
-  const variantPrice = currentVariant ? Number(currentVariant.SellingPrice || product.SellingPrice || 0) : Number(product.SellingPrice || 0);
+  const variantPrice = currentVariant ? Number(currentVariant.SellingPrice || product?.SellingPrice || 0) : Number(product?.SellingPrice || 0);
 
-  // কার্টে অলরেডি এই ভ্যারিয়েন্ট কয়টি আছে
+  // কার্টে অলরেডি এই ভ্যারিয়েন্ট কয়টি আছে (সবসময় রেন্ডার হুক হিসেবে কল হবে)
   const alreadyInCartQty = useMemo(() => {
-    if (!currentVariant) return 0;
+    if (!currentVariant || !product) return 0;
     const match = (cartItems || []).find((ci) => ci.variantId === currentVariant.VariantID && ci.productId === product.ProductID);
     return match ? Number(match.quantity || 0) : 0;
   }, [cartItems, currentVariant, product]);
@@ -62,7 +60,7 @@ export default function ProductVariantSelectModal({
   const maxSelectable = Math.max(0, variantStock - alreadyInCartQty);
 
   const handleConfirmAddToCart = () => {
-    if (!currentVariant) return;
+    if (!currentVariant || !product) return;
     if (variantStock <= 0) return;
     if (effectiveQuantity > maxSelectable) return;
 
@@ -88,6 +86,9 @@ export default function ProductVariantSelectModal({
     }
     onClose();
   };
+
+  // সব হুক ও মেমো কল করার পর সেফ গার্ড রিটার্ন
+  if (!isOpen || !product) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
