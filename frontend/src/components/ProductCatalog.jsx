@@ -17,7 +17,8 @@ import {
   Camera,
   CalendarClock,
   Scissors,
-  PauseCircle
+  PauseCircle,
+  Trash2
 } from 'lucide-react';
 import BarcodeScannerModal from './BarcodeScannerModal';
 import { calculateExpiryStatus } from '../services/storage';
@@ -38,9 +39,12 @@ export default function ProductCatalog({
   onOpenVariantSelector,
   heldCartsCount = 0,
   onOpenHeldCartsModal,
+  onDeleteProduct,
 }) {
   const isAdmin = Boolean(activeUser && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier'));
   const isCustomer = !isAdmin;
+  const [deleteConfirmProduct, setDeleteConfirmProduct] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [stockFilter, setStockFilter] = useState('ALL'); // 'ALL' | 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'WITH_COUPON'
@@ -758,65 +762,81 @@ export default function ProductCatalog({
                       </div>
                     </div>
 
-                    {/* দ্রুত কার্ট বাটন অথবা ভ্যারিয়েন্ট বাছাই বাটন */}
-                    {inStock ? (
-                      product.HasVariants && product.Variants && product.Variants.length > 0 ? (
+                    {/* অ্যাকশন বাটনসমূহ: ডিলিট ও কার্ট/ভ্যারিয়েন্ট */}
+                    <div className="flex items-center space-x-1.5 shrink-0">
+                      {isAdmin && onDeleteProduct && (
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (onOpenVariantSelector) {
-                              onOpenVariantSelector(product);
-                            } else {
+                            setDeleteConfirmProduct(product);
+                          }}
+                          title={`'${product.ProductName}' মুছে ফেলুন (Delete)`}
+                          className="p-1.5 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-300 text-slate-400 hover:text-rose-600 transition-all cursor-pointer shadow-2xs"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      {inStock ? (
+                        product.HasVariants && product.Variants && product.Variants.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onOpenVariantSelector) {
+                                onOpenVariantSelector(product);
+                              } else {
+                                onAddToCart(product);
+                              }
+                            }}
+                            title="ভ্যারিয়েন্ট বাছাই করুন"
+                            className="px-2.5 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-bold active:scale-95 shadow-2xs cursor-pointer bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white border-purple-200"
+                          >
+                            <Layers className="w-3.5 h-3.5" />
+                            <span>বাছাই</span>
+                          </button>
+                        ) : isFabricUnit(product.Unit) ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               onAddToCart(product);
-                            }
-                          }}
-                          title="ভ্যারিয়েন্ট বাছাই করুন"
-                          className="px-2.5 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-bold active:scale-95 shadow-2xs cursor-pointer bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white border-purple-200"
-                        >
-                          <Layers className="w-3.5 h-3.5" />
-                          <span>বাছাই</span>
-                        </button>
-                      ) : isFabricUnit(product.Unit) ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onAddToCart(product);
-                          }}
-                          title="গজ ও গিরা পরিমাপ নির্বাচন করে কার্টে যোগ করুন"
-                          className={`px-2.5 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-black active:scale-95 shadow-2xs cursor-pointer ${
-                            cartQty > 0
-                              ? 'bg-amber-600 text-white border-amber-600 shadow-amber-600/20'
-                              : 'bg-amber-50 hover:bg-amber-600 text-amber-900 hover:text-white border-amber-300'
-                          }`}
-                        >
-                          <Scissors className="w-3.5 h-3.5" />
-                          <span>গজ-গিরা</span>
-                        </button>
+                            }}
+                            title="গজ ও গিরা পরিমাপ নির্বাচন করে কার্টে যোগ করুন"
+                            className={`px-2.5 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-black active:scale-95 shadow-2xs cursor-pointer ${
+                              cartQty > 0
+                                ? 'bg-amber-600 text-white border-amber-600 shadow-amber-600/20'
+                                : 'bg-amber-50 hover:bg-amber-600 text-amber-900 hover:text-white border-amber-300'
+                            }`}
+                          >
+                            <Scissors className="w-3.5 h-3.5" />
+                            <span>গজ-গিরা</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAddToCart(product);
+                            }}
+                            title="কার্টে যোগ করুন"
+                            className={`px-3 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-bold active:scale-95 shadow-2xs cursor-pointer ${
+                              cartQty > 0
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-600/20'
+                                : 'bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border-indigo-200/80'
+                            }`}
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">যোগ</span>
+                          </button>
+                        )
                       ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onAddToCart(product);
-                          }}
-                          title="কার্টে যোগ করুন"
-                          className={`px-3 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-bold active:scale-95 shadow-2xs cursor-pointer ${
-                            cartQty > 0
-                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-600/20'
-                              : 'bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border-indigo-200/80'
-                          }`}
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">যোগ</span>
-                        </button>
-                      )
-                    ) : (
-                      <span className="text-[11px] font-bold text-slate-400 px-2 py-1 bg-slate-100 rounded-lg">
-                        অনুপলব্ধ
-                      </span>
-                    )}
+                        <span className="text-[11px] font-bold text-slate-400 px-2 py-1 bg-slate-100 rounded-lg">
+                          অনুপলব্ধ
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                 </div>
@@ -1013,6 +1033,20 @@ export default function ProductCatalog({
                             ) : (
                               <span className="text-[10px] font-bold text-slate-400">অনুপলব্ধ</span>
                             )}
+
+                            {isAdmin && onDeleteProduct && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteConfirmProduct(product);
+                                }}
+                                title={`'${product.ProductName}' মুছে ফেলুন (Delete)`}
+                                className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-300 text-slate-400 hover:text-rose-600 transition-all cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1024,6 +1058,60 @@ export default function ProductCatalog({
           </div>
         )}
       </div>
+
+      {/* পণ্য ডিলিট নিশ্চিতকরণ মডাল (Delete Confirmation Modal) */}
+      {deleteConfirmProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center space-x-3 mb-4 text-rose-600">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center shrink-0 border border-rose-100">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">পণ্যটি মুছে ফেলতে চান?</h3>
+                <p className="text-xs text-slate-500">ডাটাবেস ও ফ্রন্টএন্ড উভয়েই আপডেট হবে</p>
+              </div>
+            </div>
+            
+            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 mb-5 text-xs text-slate-600 space-y-1.5">
+              <div className="font-bold text-slate-900 text-sm">{deleteConfirmProduct.ProductName}</div>
+              <div className="font-mono text-[11px] text-slate-500">আইডি: {deleteConfirmProduct.ProductID} {deleteConfirmProduct.Barcode ? `| #${deleteConfirmProduct.Barcode}` : ''}</div>
+              <p className="text-[11px] text-rose-600 font-semibold pt-1">
+                ⚠️ এই পণ্যটি মুছে ফেলার সাথে সাথে গুগল শিট ডাটাবেস থেকে স্থায়ীভাবে ডিলিট হয়ে যাবে এবং ফ্রন্টএন্ড স্বয়ংক্রিয়ভাবে সিঙ্ক হয়ে যাবে।
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end space-x-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDeleteConfirmProduct(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={async () => {
+                  setIsDeleting(true);
+                  try {
+                    const pId = deleteConfirmProduct.ProductID;
+                    setDeleteConfirmProduct(null);
+                    await onDeleteProduct(pId);
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs transition-all cursor-pointer flex items-center space-x-1.5 disabled:opacity-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isDeleting ? 'মুছে ফেলা হচ্ছে...' : 'হ্যাঁ, নিশ্চিত মুছে ফেলুন'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* মোবাইল ক্যামেরা বারকোড স্ক্যানার মডাল */}
       <BarcodeScannerModal

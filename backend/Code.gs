@@ -2680,10 +2680,11 @@ function handleUpdateProduct(spreadsheet, payload) {
  */
 function handleDeleteProduct(spreadsheet, payload) {
   const productId = String(payload.productId || payload.ProductID || '').trim();
-  if (!productId) {
+  const barcode = String(payload.barcode || payload.Barcode || '').trim();
+  if (!productId && !barcode) {
     return {
       success: false,
-      message: 'মুছে ফেলার জন্য পণ্যের আইডি (ProductID) দেওয়া আবশ্যক।'
+      message: 'মুছে ফেলার জন্য পণ্যের আইডি (ProductID) বা বারকোড দেওয়া আবশ্যক।'
     };
   }
 
@@ -2701,19 +2702,20 @@ function handleDeleteProduct(spreadsheet, payload) {
   const data = productsSheet.getRange(1, 1, lastRow, lastCol).getValues();
 
   const idColIdx = findCol(headers, 'ProductID', 'ProdID', 'ID');
-  if (idColIdx === -1) {
-    return {
-      success: false,
-      message: 'ProductID কলাম খুঁজে পাওয়া যায়নি।'
-    };
-  }
+  const barcodeColIdx = findCol(headers, 'Barcode', 'BarCode', 'ItemCode');
+  const nameColIdx = findCol(headers, 'ProductName', 'Name');
 
   let targetRow = -1;
   let deletedProductName = '';
   for (let r = 1; r < data.length; r++) {
-    if (String(data[r][idColIdx] || '').trim() === productId) {
+    const rowId = idColIdx !== -1 ? String(data[r][idColIdx] || '').trim() : '';
+    const rowBarcode = barcodeColIdx !== -1 ? String(data[r][barcodeColIdx] || '').trim() : '';
+
+    const isMatch = (productId && (rowId === productId || (barcodeColIdx !== -1 && rowBarcode === productId))) ||
+                    (barcode && rowBarcode === barcode);
+
+    if (isMatch) {
       targetRow = r + 1;
-      const nameColIdx = findCol(headers, 'ProductName', 'Name');
       if (nameColIdx !== -1) {
         deletedProductName = data[r][nameColIdx] || '';
       }
@@ -2724,7 +2726,7 @@ function handleDeleteProduct(spreadsheet, payload) {
   if (targetRow === -1) {
     return {
       success: false,
-      message: `আইডি '${productId}' বিশিষ্ট পণ্যটি ডাটাবেসে পাওয়া যায়নি।`
+      message: `আইডি '${productId || barcode}' বিশিষ্ট পণ্যটি ডাটাবেসে পাওয়া যায়নি।`
     };
   }
 
@@ -2733,9 +2735,9 @@ function handleDeleteProduct(spreadsheet, payload) {
 
   return {
     success: true,
-    message: `'${deletedProductName || productId}' পণ্যটি সফলভাবে মুছে ফেলা হয়েছে।`,
+    message: `'${deletedProductName || productId || barcode}' পণ্যটি ডাটাবেস থেকে সফলভাবে মুছে ফেলা হয়েছে।`,
     data: {
-      productId: productId
+      productId: productId || barcode
     }
   };
 }

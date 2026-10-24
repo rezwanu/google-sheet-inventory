@@ -57,7 +57,8 @@ export default function StockTransferModal({
   onAdjustLocationStock,
   initialTab = 'overview',
   initialTransferSubTab = 'new',
-  initialFilter = 'ALL'
+  initialFilter = 'ALL',
+  onDeleteProduct
 }) {
   // প্রধান ট্যাব নেভিগেশন: 'overview' | 'transfers' | 'godown_outflow' | 'shop_outflow'
   const [activeMainTab, setActiveMainTab] = useState(() => {
@@ -1231,6 +1232,20 @@ export default function StockTransferModal({
                                         >
                                           <SlidersHorizontal className="w-3.5 h-3.5" />
                                         </button>
+                                        {onDeleteProduct && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              if (window.confirm(`আপনি কি নিশ্চিত যে '${p.ProductName}' পণ্যটি ফ্রন্টএন্ড ও গুগল শিট ডাটাবেস থেকে স্থায়ীভাবে মুছে ফেলতে চান?\n\nমুছে ফেলার পর এটি উভয় স্থান থেকে মুছে যাবে এবং স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।`)) {
+                                                onDeleteProduct(p.ProductID);
+                                              }
+                                            }}
+                                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
+                                            title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        )}
                                       </div>
                                     </td>
                                   </tr>
@@ -1461,15 +1476,31 @@ export default function StockTransferModal({
                                     )}
                                   </td>
                                   <td className="py-3 px-4 text-right">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleInitiateQuickTransfer(item.parentProduct, item.variant)}
-                                      className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-bold inline-flex items-center space-x-1 shadow-2xs transition-all cursor-pointer"
-                                      title="গোডাউন থেকে এই ভ্যারিয়েন্ট দোকানে চালান করুন"
-                                    >
-                                      <Truck className="w-3 h-3" />
-                                      <span>দোকানে আনুন</span>
-                                    </button>
+                                    <div className="flex items-center justify-end space-x-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleInitiateQuickTransfer(item.parentProduct, item.variant)}
+                                        className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-bold inline-flex items-center space-x-1 shadow-2xs transition-all cursor-pointer"
+                                        title="গোডাউন থেকে এই ভ্যারিয়েন্ট দোকানে চালান করুন"
+                                      >
+                                        <Truck className="w-3 h-3" />
+                                        <span>দোকানে আনুন</span>
+                                      </button>
+                                      {onDeleteProduct && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (window.confirm(`আপনি কি নিশ্চিত যে '${item.productName}' পণ্যটি ফ্রন্টএন্ড ও গুগল শিট ডাটাবেস থেকে স্থায়ীভাবে মুছে ফেলতে চান?\n\nমুছে ফেলার পর এটি উভয় স্থান থেকে মুছে যাবে এবং স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।`)) {
+                                              onDeleteProduct(item.productId);
+                                            }
+                                          }}
+                                          className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
+                                          title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
                                   </td>
                                 </tr>
                               );

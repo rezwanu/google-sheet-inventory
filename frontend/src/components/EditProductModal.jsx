@@ -76,8 +76,10 @@ export default function EditProductModal({
   onAddUnit,
   products = [],
   activeUser = null,
-  settings = {}
+  settings = {},
+  onDeleteProduct
 }) {
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     productId: '',
     barcode: '',
@@ -383,6 +385,27 @@ export default function EditProductModal({
   const isFloorAboveSell = sell > 0 && minSell > 0 && minSell > sell;
 
   if (!isOpen || !product) return null;
+
+  const handleDeleteProduct = async () => {
+    if (!product || !onDeleteProduct) return;
+    const name = formData.productName || product.ProductName || product.ProductID;
+    const confirmed = window.confirm(
+      `আপনি কি নিশ্চিত যে '${name}' পণ্যটি ফ্রন্টএন্ড ও ডাটাবেস (গুগল শিট) থেকে স্থায়ীভাবে মুছে ফেলতে চান?\n\nমুছে ফেলার পর এটি স্বয়ংক্রিয়ভাবে ডাটাবেসের সাথে সিঙ্ক হয়ে যাবে।`
+    );
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    try {
+      const ok = await onDeleteProduct(product.ProductID);
+      if (ok !== false) {
+        onClose();
+      }
+    } catch (err) {
+      alert(`পণ্য মুছে ফেলা ব্যর্থ হয়েছে: ${err.message}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -1631,22 +1654,36 @@ export default function EditProductModal({
           </div>
 
           {/* অ্যাকশন বাটন */}
-          <div className="pt-3 border-t border-slate-200 flex justify-end space-x-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors"
-            >
-              বাতিল
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center space-x-1.5 disabled:opacity-50"
-            >
-              <Edit3 className="w-4 h-4" />
-              <span>{isSubmitting ? 'আপডেট হচ্ছে...' : 'হালনাগাদ সংরক্ষণ করুন'}</span>
-            </button>
+          <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
+            {onDeleteProduct ? (
+              <button
+                type="button"
+                onClick={handleDeleteProduct}
+                disabled={isSubmitting || isDeleting}
+                className="px-4 py-2 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg transition-colors flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
+              >
+                <Trash2 className="w-4 h-4 text-rose-600" />
+                <span>{isDeleting ? 'মুছে ফেলা হচ্ছে...' : 'পণ্যটি মুছে ফেলুন'}</span>
+              </button>
+            ) : <div />}
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || isDeleting}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>{isSubmitting ? 'আপডেট হচ্ছে...' : 'হালনাগাদ সংরক্ষণ করুন'}</span>
+              </button>
+            </div>
           </div>
 
         </form>

@@ -3834,39 +3834,64 @@ export default function App() {
     }
   };
 
-  // ৮.৫ পণ্য মুছে ফেলা (Delete/Remove Product)
+  // ৮.৫ পণ্য মুছে ফেলা ও ডাটাবেসের সাথে অটো-সিঙ্ক (Delete/Remove Product & Auto-sync)
   const handleDeleteProduct = async (productId) => {
-    const targetProduct = products.find(p => p.ProductID === productId);
-    const prodName = targetProduct?.ProductName || productId;
+    const cleanId = String(productId || '').trim();
+    if (!cleanId) return false;
 
-    const filteredProducts = products.filter(p => p.ProductID !== productId);
+    const targetProduct = products.find(
+      (p) => String(p.ProductID || '').trim() === cleanId || (p.Barcode && String(p.Barcode).trim() === cleanId)
+    );
+    const prodName = targetProduct?.ProductName || cleanId;
+    const resolvedId = targetProduct?.ProductID || cleanId;
+    const resolvedBarcode = targetProduct?.Barcode || '';
+
+    // ১. ফ্রন্টএন্ড প্রোডাক্ট তালিকা ও লোকালস্টোরেজ থেকে অপসারণ
+    const filteredProducts = products.filter(
+      (p) => String(p.ProductID || '').trim() !== resolvedId && (resolvedBarcode ? String(p.Barcode || '').trim() !== resolvedBarcode : true)
+    );
     setProducts(filteredProducts);
     saveLocalProducts(filteredProducts);
 
-    // কার্ট থেকে অপসারণ
-    const filteredCart = cart.filter(item => item.productId !== productId);
+    // ২. কার্ট থেকে অপসারণ
+    const filteredCart = cart.filter((item) => String(item.productId || '').trim() !== resolvedId);
     setCart(filteredCart);
     saveLocalCart(filteredCart);
 
-    // ডিটেইলস মডাল রিসেট
-    if (selectedProductForDetails && selectedProductForDetails.ProductID === productId) {
+    // ৩. ডিটেইলস ও এডিট মডাল বন্ধ করা
+    if (selectedProductForDetails && String(selectedProductForDetails.ProductID || '').trim() === resolvedId) {
       setSelectedProductForDetails(null);
       setIsProductDetailsOpen(false);
     }
+    if (selectedProductForEdit && String(selectedProductForEdit.ProductID || '').trim() === resolvedId) {
+      setSelectedProductForEdit(null);
+      setIsEditProductModalOpen(false);
+    }
 
-    showToast(`'${prodName}' পণ্যটি সফলভাবে মুছে ফেলা হয়েছে!`, 'success');
+    showToast(`'${prodName}' ফ্রন্টএন্ড থেকে মুছে ফেলা হয়েছে...`, 'info');
 
-    if (settings.apiUrl) {
+    // ৪. গুগল শিট ডাটাবেস থেকে রিমুভ ও অটো-সিঙ্ক
+    if (settings.apiUrl && settings.apiUrl.trim()) {
       try {
-        const response = await postDeleteProduct(settings.apiUrl, productId);
+        const response = await postDeleteProduct(settings.apiUrl, resolvedId, resolvedBarcode);
         if (response && response.success) {
-          showToast('গুগল শিট থেকেও পণ্যটি স্থায়ীভাবে মুছে ফেলা হয়েছে!', 'success');
+          showToast(`'${prodName}' গুগল শিট ডাটাবেস থেকে সফলভাবে মুছে ফেলা হয়েছে!`, 'success');
+          // ডাটাবেস ও ফ্রন্টএন্ড ১০০% মেলানোর জন্য স্বয়ংক্রিয় ব্যাকগ্রাউন্ড সিঙ্ক
+          setTimeout(() => {
+            handleSync(false);
+          }, 300);
+          return true;
         } else {
-          showToast(`সতর্কবার্তা: ${response?.message || 'শিট থেকে ডিলিট ব্যর্থ'}`, 'warning');
+          showToast(`সতর্কবার্তা: ${response?.message || 'গুগল শিট থেকে ডিলিট ব্যর্থ'}`, 'warning');
+          return false;
         }
       } catch (err) {
-        showToast('পণ্য লোকাল স্টোরেজ থেকে মুছে ফেলা হয়েছে (অফলাইন)।', 'info');
+        showToast('অফলাইন মোড: পণ্য লোকাল স্টোরেজ থেকে মুছে ফেলা হয়েছে। নেটওয়ার্ক পেলে সিঙ্ক হবে।', 'warning');
+        return true;
       }
+    } else {
+      showToast('অফলাইন মোড: পণ্য লোকাল স্টোরেজ থেকে সফলভাবে মুছে ফেলা হয়েছে।', 'success');
+      return true;
     }
   };
 
@@ -4046,6 +4071,7 @@ export default function App() {
                 cartItems={cart}
                 onOpenProductDetails={handleOpenProductDetails}
                 onOpenInvoiceLookup={handleOpenInvoiceLookup}
+                onDeleteProduct={handleDeleteProduct}
                 activeUser={activeUser}
                 apiUrl={settings.apiUrl}
                 onOpenSettings={() => setIsSettingsModalOpen(true)}
@@ -4212,6 +4238,7 @@ export default function App() {
               onSaveStockTransfer={handleSaveStockTransfer}
               onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
               onAdjustLocationStock={handleAdjustLocationStock}
+              onDeleteProduct={handleDeleteProduct}
               initialTab={
                 currentView === 'shop_stock'
                   ? 'shop_stock'
@@ -4589,6 +4616,7 @@ export default function App() {
         products={products}
         settings={settings}
         activeUser={activeUser}
+        onDeleteProduct={handleDeleteProduct}
       />
 
       {/* P&L লাভ-ক্ষতি অ্যানালিটিক্স ড্যাশবোর্ড মডাল */}
@@ -4954,6 +4982,7 @@ export default function App() {
         onSaveStockTransfer={handleSaveStockTransfer}
         onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
         onAdjustLocationStock={handleAdjustLocationStock}
+        onDeleteProduct={handleDeleteProduct}
         initialTab={stockTransferModalConfig.tab || 'overview'}
         initialTransferSubTab={stockTransferModalConfig.subTab || 'new'}
         initialFilter={stockTransferModalConfig.filter || 'ALL'}

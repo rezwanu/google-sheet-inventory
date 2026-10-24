@@ -258,7 +258,7 @@ export async function postUpdateProduct(apiUrl, productData) {
  * @param {string} apiUrl - Apps Script Web App URL
  * @param {string} productId - পণ্যের আইডি
  */
-export async function postDeleteProduct(apiUrl, productId) {
+export async function postDeleteProduct(apiUrl, productId, barcode = '') {
   if (!apiUrl || !apiUrl.trim()) {
     return {
       success: true,
@@ -271,6 +271,8 @@ export async function postDeleteProduct(apiUrl, productId) {
     action: 'deleteProduct',
     productId: productId,
     ProductID: productId,
+    barcode: barcode,
+    Barcode: barcode,
   };
 
   const response = await fetch(apiUrl.trim(), {
