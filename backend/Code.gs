@@ -180,6 +180,29 @@ function getSheetRowsAsObjects(sheetName) {
         rowObj.ImageCaption = rowObj.imagecaption !== undefined ? rowObj.imagecaption : (rowObj.Caption !== undefined ? rowObj.Caption : (rowObj['Image Caption'] !== undefined ? rowObj['Image Caption'] : ''));
       }
 
+      // Phase 6 ও 7 ভ্যারিয়েন্ট ও টেক্সটাইল ফিল্ড নর্মালাইজেশন
+      if (!rowObj.VariantsJSON) {
+        rowObj.VariantsJSON = rowObj.Variants || rowObj['Variants JSON'] || rowObj['variantsJSON'] || rowObj.variants || '';
+      }
+      if (rowObj.HasVariants === undefined) {
+        rowObj.HasVariants = rowObj.HasVariant !== undefined ? rowObj.HasVariant : (rowObj['Has Variants'] !== undefined ? rowObj['Has Variants'] : (Boolean(rowObj.VariantsJSON) ? 'TRUE' : 'FALSE'));
+      }
+      if (rowObj.GodownStock === undefined) {
+        rowObj.GodownStock = rowObj['Godown Stock'] !== undefined ? rowObj['Godown Stock'] : (rowObj.godownStock !== undefined ? rowObj.godownStock : (rowObj['Warehouse Stock'] !== undefined ? rowObj['Warehouse Stock'] : 0));
+      }
+      if (rowObj.WholesalePrice === undefined) {
+        rowObj.WholesalePrice = rowObj['Wholesale Price'] !== undefined ? rowObj['Wholesale Price'] : (rowObj.wholesalePrice !== undefined ? rowObj.wholesalePrice : 0);
+      }
+      if (rowObj.TotalThan === undefined) {
+        rowObj.TotalThan = rowObj['Total Than'] !== undefined ? rowObj['Total Than'] : (rowObj.ThanCount !== undefined ? rowObj.ThanCount : (rowObj['Than Count'] !== undefined ? rowObj['Than Count'] : 0));
+      }
+      if (rowObj.TotalGoj === undefined) {
+        rowObj.TotalGoj = rowObj['Total Goj'] !== undefined ? rowObj['Total Goj'] : (rowObj.TotalYards !== undefined ? rowObj.TotalYards : (rowObj['Total Yards'] !== undefined ? rowObj['Total Yards'] : 0));
+      }
+      if (rowObj.YardsPerThan === undefined) {
+        rowObj.YardsPerThan = rowObj['Yards Per Than'] !== undefined ? rowObj['Yards Per Than'] : (rowObj.yardsPerThan !== undefined ? rowObj.yardsPerThan : (rowObj.GojPerThan !== undefined ? rowObj.GojPerThan : 0));
+      }
+
       // সম্পূর্ণ খালি সারি উপেক্ষা করা
       if (!rowObj.ProductName && !rowObj.ProductID && !rowObj.Barcode) {
         continue;

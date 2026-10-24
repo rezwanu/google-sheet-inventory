@@ -620,6 +620,74 @@ function ensureProductsHeaders(productsSheet) {
     headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
   }
 
+  // ১৩. WholesalePrice কলাম যুক্ত করা
+  if (findCol(headers, 'WholesalePrice', 'Wholesale', 'DealerPrice') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('WholesalePrice');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৪. MinSellingPrice কলাম যুক্ত করা
+  if (findCol(headers, 'MinSellingPrice', 'FloorPrice', 'MinPrice') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('MinSellingPrice');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৫. GodownStock কলাম যুক্ত করা
+  if (findCol(headers, 'GodownStock', 'WarehouseStock', 'GodownQty') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('GodownStock');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৬. YardsPerThan, ThanCount, TotalYards কলাম যুক্ত করা
+  if (findCol(headers, 'YardsPerThan', 'GojPerThan') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('YardsPerThan');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+  if (findCol(headers, 'ThanCount', 'TotalThan') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('ThanCount');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+  if (findCol(headers, 'TotalYards', 'TotalGoj') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('TotalYards');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৭. HasVariants কলাম যুক্ত করা
+  if (findCol(headers, 'HasVariants', 'HasVariant') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('HasVariants');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৮. VariantsJSON কলাম যুক্ত করা
+  if (findCol(headers, 'VariantsJSON', 'Variants') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('VariantsJSON');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ১৯. BatchNumber, ExpiryDate, MfgDate কলাম যুক্ত করা
+  if (findCol(headers, 'BatchNumber', 'BatchNo') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('BatchNumber');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+  if (findCol(headers, 'ExpiryDate', 'ExpDate') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('ExpiryDate');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+  if (findCol(headers, 'MfgDate', 'Mfg') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('MfgDate');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
+  // ২০. IsBundle, BundleItemsJSON কলাম যুক্ত করা
+  if (findCol(headers, 'IsBundle', 'Bundle') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('IsBundle');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+  if (findCol(headers, 'BundleItemsJSON', 'BundleItems') === -1) {
+    productsSheet.getRange(1, productsSheet.getLastColumn() + 1).setValue('BundleItemsJSON');
+    headers = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+  }
+
   // ১০. হেডার বানানের ভুল স্বয়ংক্রিয়ভাবে সংশোধন (StockQuantit -> StockQuantity, MinStockAler -> MinStockAlert)
   const stockTypoIdx = headers.findIndex(h => String(h).trim().toLowerCase() === 'stockquantit');
   if (stockTypoIdx !== -1) {

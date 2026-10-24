@@ -30,6 +30,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Palette,
+  Edit3,
   ChevronDown,
   ChevronUp,
   ChevronRight,
@@ -62,7 +63,8 @@ export default function StockTransferModal({
   initialTransferSubTab = 'new',
   initialFilter = 'ALL',
   onDeleteProduct,
-  onUpdateProductVariants
+  onUpdateProductVariants,
+  onEditProduct
 }) {
   // প্রধান ট্যাব নেভিগেশন: 'overview' | 'transfers' | 'godown_outflow' | 'shop_outflow'
   const [activeMainTab, setActiveMainTab] = useState(() => {
@@ -202,6 +204,10 @@ export default function StockTransferModal({
   // নতুন কালার / ভ্যারিয়েন্ট যোগ সাব-মডাল স্টেট
   const [newColorModal, setNewColorModal] = useState(null);
   const [isSubmittingNewColor, setIsSubmittingNewColor] = useState(false);
+
+  // ভ্যারিয়েন্ট এডিট সাব-মডাল স্টেট
+  const [editVariantModal, setEditVariantModal] = useState(null);
+  const [isSubmittingEditVariant, setIsSubmittingEditVariant] = useState(false);
 
   // =========================================================================
   // পরিগণিত মেট্রিক্স ও ফিল্টারসমূহ
@@ -952,6 +958,90 @@ export default function StockTransferModal({
     }
   };
 
+  // ভ্যারিয়েন্ট এডিট মডাল ওপেন
+  const handleOpenEditVariant = (product, variant, variantIdx) => {
+    const colorVal = variant.Color || variant.color || variant.Attributes?.Color || variant.Attributes?.color || '';
+    setEditVariantModal({
+      product,
+      variant,
+      variantIdx,
+      colorName: colorVal,
+      barcode: variant.Barcode || variant.barcode || '',
+      godownStock: Number(variant.GodownStock !== undefined ? variant.GodownStock : variant.godownStock) || 0,
+      shopStock: Number(variant.StockQuantity !== undefined ? variant.StockQuantity : variant.stockQuantity) || 0,
+      costPrice: Number(variant.CostPrice !== undefined ? variant.CostPrice : (product.CostPrice || 0)),
+      sellingPrice: Number(variant.SellingPrice !== undefined ? variant.SellingPrice : (product.SellingPrice || 0)),
+      wholesalePrice: Number(variant.WholesalePrice !== undefined ? variant.WholesalePrice : (product.WholesalePrice || product.CostPrice || 0)),
+    });
+  };
+
+  // ভ্যারিয়েন্ট এডিট সংরক্ষণ ও ডাটাবেস সিঙ্ক
+  const handleSaveEditVariantSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!editVariantModal || !onUpdateProductVariants) return;
+    const { product, variantIdx, colorName, barcode, godownStock, shopStock, costPrice, sellingPrice, wholesalePrice } = editVariantModal;
+    const cleanColor = String(colorName || '').trim();
+    if (!cleanColor) {
+      alert('দয়া করে রঙের নাম উল্লেখ করুন।');
+      return;
+    }
+
+    const currentVariants = getVariantsOfProduct(product);
+    // অন্য কোনো ভ্যারিয়েন্টে একই নাম আছে কি না যাচাই
+    const isDuplicate = currentVariants.some((v, idx) => {
+      if (idx === variantIdx) return false;
+      const c = v.Color || v.color || v.Attributes?.Color || v.Attributes?.color || v.VariantID;
+      return String(c).trim().toLowerCase() === cleanColor.toLowerCase();
+    });
+    if (isDuplicate) {
+      alert(`'${cleanColor}' নামের আরেকটি ভ্যারিয়েন্ট ইতোমধ্যে এই পণ্যে বিদ্যমান রয়েছে!`);
+      return;
+    }
+
+    const gStock = Math.max(0, Number(godownStock) || 0);
+    const sStock = Math.max(0, Number(shopStock) || 0);
+
+    const updatedVariants = currentVariants.map((v, idx) => {
+      if (idx === variantIdx) {
+        return {
+          ...v,
+          Color: cleanColor,
+          Attributes: { ...(v.Attributes || {}), Color: cleanColor },
+          Barcode: barcode ? barcode.trim() : (v.Barcode || ''),
+          GodownStock: gStock,
+          godownStock: gStock,
+          StockQuantity: sStock,
+          stockQuantity: sStock,
+          TotalStock: gStock + sStock,
+          totalStock: gStock + sStock,
+          CostPrice: Number(costPrice) || 0,
+          SellingPrice: Number(sellingPrice) || 0,
+          WholesalePrice: Number(wholesalePrice) || 0
+        };
+      }
+      return v;
+    });
+
+    setIsSubmittingEditVariant(true);
+    try {
+      await onUpdateProductVariants(product.ProductID, updatedVariants, {
+        location: 'Godown',
+        type: 'ADJUSTMENT',
+        variantName: `রং: ${cleanColor}`,
+        qty: gStock,
+        prevStock: Number(editVariantModal.variant.GodownStock || 0),
+        newStock: gStock,
+        reason: `ভ্যারিয়েন্ট এডিট (${cleanColor})`,
+        notes: `ভ্যারিয়েন্ট তথ্য ও স্টক আপডেট: গোডাউন ${gStock}, দোকান ${sStock}`
+      });
+      setEditVariantModal(null);
+    } catch (err) {
+      alert(`ভ্যারিয়েন্ট আপডেট করতে সমস্যা হয়েছে: ${err.message}`);
+    } finally {
+      setIsSubmittingEditVariant(false);
+    }
+  };
+
   if (!isOpen && !embedded) return null;
 
   return (
@@ -1516,6 +1606,16 @@ export default function StockTransferModal({
                                         >
                                           <SlidersHorizontal className="w-3.5 h-3.5" />
                                         </button>
+                                        {onEditProduct && (
+                                          <button
+                                            type="button"
+                                            onClick={() => onEditProduct(p)}
+                                            className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs transition-all cursor-pointer border border-indigo-200"
+                                            title="পণ্য এডিট করুন (নাম, ক্যাটাগরি, দর ইত্যাদি)"
+                                          >
+                                            <Edit3 className="w-3.5 h-3.5" />
+                                          </button>
+                                        )}
                                         {onDeleteProduct && (
                                           <button
                                             type="button"
@@ -1724,6 +1824,14 @@ export default function StockTransferModal({
                                                             </button>
                                                             <button
                                                               type="button"
+                                                              onClick={() => handleOpenEditVariant(p, v, vIdx)}
+                                                              className="p-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded text-xs transition-all cursor-pointer"
+                                                              title="ভ্যারিয়েন্ট এডিট করুন (রং, বারকোড ও স্টক)"
+                                                            >
+                                                              <Edit3 className="w-3 h-3" />
+                                                            </button>
+                                                            <button
+                                                              type="button"
                                                               onClick={() => handleRemoveVariant(p, v, vIdx)}
                                                               className="p-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded text-xs transition-all cursor-pointer"
                                                               title="এই ভ্যারিয়েন্টটি স্থায়ীভাবে মুছে ফেলুন"
@@ -1890,6 +1998,14 @@ export default function StockTransferModal({
                                           </button>
                                           <button
                                             type="button"
+                                            onClick={() => handleOpenEditVariant(item.parentProduct, item.variant, item.variantIndex)}
+                                            className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs transition-all cursor-pointer"
+                                            title="ভ্যারিয়েন্ট এডিট করুন (রং, বারকোড ও স্টক)"
+                                          >
+                                            <Edit3 className="w-3.5 h-3.5" />
+                                          </button>
+                                          <button
+                                            type="button"
                                             onClick={() => handleRemoveVariant(item.parentProduct, item.variant, item.variantIndex)}
                                             className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
                                             title="এই ভ্যারিয়েন্টটি মুছে ফেলুন (Delete Variant)"
@@ -1898,20 +2014,32 @@ export default function StockTransferModal({
                                           </button>
                                         </>
                                       ) : (
-                                        onDeleteProduct && (
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              if (window.confirm(`আপনি কি নিশ্চিত যে '${item.productName}' পণ্যটি ফ্রন্টএন্ড ও গুগল শিট ডাটাবেস থেকে স্থায়ীভাবে মুছে ফেলতে চান?\n\nমুছে ফেলার পর এটি উভয় স্থান থেকে মুছে যাবে এবং স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।`)) {
-                                                onDeleteProduct(item.productId);
-                                              }
-                                            }}
-                                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
-                                            title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
-                                          >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                          </button>
-                                        )
+                                        <>
+                                          {onEditProduct && (
+                                            <button
+                                              type="button"
+                                              onClick={() => onEditProduct(item.parentProduct)}
+                                              className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs transition-all cursor-pointer border border-indigo-200"
+                                              title="পণ্য এডিট করুন"
+                                            >
+                                              <Edit3 className="w-3.5 h-3.5" />
+                                            </button>
+                                          )}
+                                          {onDeleteProduct && (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                if (window.confirm(`আপনি কি নিশ্চিত যে '${item.productName}' পণ্যটি ফ্রন্টএন্ড ও গুগল শিট ডাটাবেস থেকে স্থায়ীভাবে মুছে ফেলতে চান?\n\nমুছে ফেলার পর এটি উভয় স্থান থেকে মুছে যাবে এবং স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।`)) {
+                                                  onDeleteProduct(item.productId);
+                                                }
+                                              }}
+                                              className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
+                                              title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
+                                            >
+                                              <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                          )}
+                                        </>
                                       )}
                                     </div>
                                   </td>
@@ -3162,6 +3290,179 @@ export default function StockTransferModal({
                     >
                       <Check className="w-4 h-4" />
                       <span>{isSubmittingNewColor ? 'সংরক্ষণ হচ্ছে...' : 'নতুন কালার সংরক্ষণ করুন'}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ভ্যারিয়েন্ট তথ্য ও স্টক এডিট সাব-মডাল */}
+        {editVariantModal && (() => {
+          const prod = editVariantModal.product;
+          const isThan = Boolean(prod.TotalThan || prod.YardsPerThan || /than|থান/i.test(prod.Unit || ''));
+          const prodYardsPerThan = Number(prod.YardsPerThan) || 0;
+          const currentUnit = isThan ? 'থান' : (prod.Unit || 'পিস');
+
+          return (
+            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+              <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
+                
+                {/* মডাল হেডার */}
+                <div className="px-5 py-3.5 bg-gradient-to-r from-amber-600 via-amber-700 to-orange-700 text-white flex items-center justify-between">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                      <Edit3 className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black tracking-tight">ভ্যারিয়েন্ট এডিট ও স্টক আপডেট</h3>
+                      <p className="text-[11px] text-amber-100 font-medium truncate max-w-[280px]">
+                        {prod.ProductName} — {editVariantModal.colorName || 'ভ্যারিয়েন্ট'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditVariantModal(null)}
+                    className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* ফর্ম বডি */}
+                <form onSubmit={handleSaveEditVariantSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+                  {/* রঙের নাম */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      ভ্যারিয়েন্টের নাম / রং <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editVariantModal.colorName}
+                      onChange={(e) => setEditVariantModal(prev => ({ ...prev, colorName: e.target.value }))}
+                      placeholder="যেমন: লাল, নীল, কালো, White ইত্যাদি"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  {/* গোডাউন ও দোকান স্টক ইনপুট */}
+                  <div className="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/80 space-y-2.5">
+                    <div className="text-[11px] font-bold text-amber-900 flex items-center space-x-1.5">
+                      <Layers className="w-3.5 h-3.5 text-amber-700" />
+                      <span>মজুত সমন্বয় (একক: {currentUnit})</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-indigo-900 mb-1">
+                          🏭 গোডাউন স্টক ({currentUnit})
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          required
+                          value={editVariantModal.godownStock}
+                          onChange={(e) => setEditVariantModal(prev => ({ ...prev, godownStock: e.target.value }))}
+                          className="w-full px-3 py-2 bg-white border border-indigo-300 rounded-lg text-xs font-black text-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        {isThan && prodYardsPerThan > 0 && (
+                          <div className="text-[10px] text-indigo-700 font-bold mt-1">
+                            = {(Number(editVariantModal.godownStock) || 0) * prodYardsPerThan} গজ
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-emerald-900 mb-1">
+                          🏬 দোকান স্টক ({currentUnit})
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          required
+                          value={editVariantModal.shopStock}
+                          onChange={(e) => setEditVariantModal(prev => ({ ...prev, shopStock: e.target.value }))}
+                          className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-lg text-xs font-black text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                        {isThan && prodYardsPerThan > 0 && (
+                          <div className="text-[10px] text-emerald-700 font-bold mt-1">
+                            = {(Number(editVariantModal.shopStock) || 0) * prodYardsPerThan} গজ
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ক্রয়মূল্য, বিক্রয়মূল্য, পাইকারি মূল্য */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[10.5px] font-bold text-slate-600 mb-1">ক্রয়মূল্য</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={editVariantModal.costPrice}
+                        onChange={(e) => setEditVariantModal(prev => ({ ...prev, costPrice: e.target.value }))}
+                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10.5px] font-bold text-slate-600 mb-1">খুচরা বিক্রয়মূল্য</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={editVariantModal.sellingPrice}
+                        onChange={(e) => setEditVariantModal(prev => ({ ...prev, sellingPrice: e.target.value }))}
+                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-indigo-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10.5px] font-bold text-slate-600 mb-1">পাইকারি মূল্য</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={editVariantModal.wholesalePrice}
+                        onChange={(e) => setEditVariantModal(prev => ({ ...prev, wholesalePrice: e.target.value }))}
+                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-amber-800"
+                      />
+                    </div>
+                  </div>
+
+                  {/* বারকোড */}
+                  <div>
+                    <label className="block text-[10.5px] font-bold text-slate-600 mb-1">বারকোড</label>
+                    <input
+                      type="text"
+                      value={editVariantModal.barcode}
+                      onChange={(e) => setEditVariantModal(prev => ({ ...prev, barcode: e.target.value }))}
+                      placeholder="বারকোড বা খালি রাখলে আগের বারকোড বহাল থাকবে"
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-mono"
+                    />
+                  </div>
+
+                  {/* Footer buttons */}
+                  <div className="pt-3 border-t border-slate-200 flex items-center justify-end space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditVariantModal(null)}
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all cursor-pointer"
+                    >
+                      বাতিল
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingEditVariant}
+                      className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>{isSubmittingEditVariant ? 'সংরক্ষণ হচ্ছে...' : 'ভ্যারিয়েন্ট আপডেট সংরক্ষণ করুন'}</span>
                     </button>
                   </div>
                 </form>

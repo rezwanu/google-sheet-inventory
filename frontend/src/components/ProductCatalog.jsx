@@ -18,6 +18,7 @@ import {
   CalendarClock,
   Scissors,
   PauseCircle,
+  Edit3,
   Trash2
 } from 'lucide-react';
 import BarcodeScannerModal from './BarcodeScannerModal';
@@ -40,6 +41,7 @@ export default function ProductCatalog({
   heldCartsCount = 0,
   onOpenHeldCartsModal,
   onDeleteProduct,
+  onEditProduct,
 }) {
   const isAdmin = Boolean(activeUser && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier'));
   const isCustomer = !isAdmin;
@@ -762,8 +764,22 @@ export default function ProductCatalog({
                       </div>
                     </div>
 
-                    {/* অ্যাকশন বাটনসমূহ: ডিলিট ও কার্ট/ভ্যারিয়েন্ট */}
+                    {/* অ্যাকশন বাটনসমূহ: এডিট, ডিলিট ও কার্ট/ভ্যারিয়েন্ট */}
                     <div className="flex items-center space-x-1.5 shrink-0">
+                      {isAdmin && onEditProduct && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditProduct(product);
+                          }}
+                          title={`'${product.ProductName}' এডিট করুন (Edit Product)`}
+                          className="p-1.5 rounded-xl border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 hover:text-indigo-600 transition-all cursor-pointer shadow-2xs"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
                       {isAdmin && onDeleteProduct && (
                         <button
                           type="button"
@@ -1032,6 +1048,20 @@ export default function ProductCatalog({
                               )
                             ) : (
                               <span className="text-[10px] font-bold text-slate-400">অনুপলব্ধ</span>
+                            )}
+
+                            {isAdmin && onEditProduct && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEditProduct(product);
+                                }}
+                                title={`'${product.ProductName}' এডিট করুন (Edit Product)`}
+                                className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 hover:text-indigo-600 transition-all cursor-pointer"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
                             )}
 
                             {isAdmin && onDeleteProduct && (

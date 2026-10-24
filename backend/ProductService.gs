@@ -181,6 +181,17 @@ function handleAddProduct(spreadsheet, payload) {
     const stockQty = Number(initialStock) || 0;
     const cPrice = Number(costPrice) || 0;
     const sPrice = Number(sellingPrice) || 0;
+    const wholesalePrice = payload.wholesalePrice !== undefined ? Number(payload.wholesalePrice) : (payload.WholesalePrice !== undefined ? Number(payload.WholesalePrice) : 0);
+    const minSellingPrice = payload.minSellingPrice !== undefined ? Number(payload.minSellingPrice) : (payload.MinSellingPrice !== undefined ? Number(payload.MinSellingPrice) : cPrice);
+    const godownStock = payload.godownStock !== undefined ? Number(payload.godownStock) : (payload.GodownStock !== undefined ? Number(payload.GodownStock) : (payload.initialGodownStock !== undefined ? Number(payload.initialGodownStock) : 0));
+    const yardsPerThan = payload.yardsPerThan !== undefined ? Number(payload.yardsPerThan) : (payload.YardsPerThan !== undefined ? Number(payload.YardsPerThan) : 0);
+    const thanCount = payload.thanCount !== undefined ? Number(payload.thanCount) : (payload.ThanCount !== undefined ? Number(payload.ThanCount) : (payload.TotalThan !== undefined ? Number(payload.TotalThan) : 0));
+    const totalYards = payload.totalYards !== undefined ? Number(payload.totalYards) : (payload.TotalYards !== undefined ? Number(payload.TotalYards) : (payload.TotalGoj !== undefined ? Number(payload.TotalGoj) : 0));
+    const hasVariants = payload.hasVariants === true || payload.HasVariants === true || String(payload.hasVariants || '').toLowerCase() === 'true';
+    let variantsJSON = payload.variantsJSON || payload.VariantsJSON || payload.variants || payload.Variants || '';
+    if (typeof variantsJSON === 'object') {
+      try { variantsJSON = JSON.stringify(variantsJSON); } catch (e) { variantsJSON = ''; }
+    }
 
     let imageUploadError = null;
 
@@ -219,10 +230,16 @@ function handleAddProduct(spreadsheet, payload) {
     setAt(findCol(headers, 'Category', 'Cat'), category || 'General');
     setAt(findCol(headers, 'SubCategory', 'SubCat'), subCategory || '');
     setAt(findCol(headers, 'CostPrice', 'Cost', 'BuyPrice'), cPrice);
+    setAt(findCol(headers, 'WholesalePrice', 'Wholesale', 'DealerPrice'), wholesalePrice);
+    setAt(findCol(headers, 'MinSellingPrice', 'FloorPrice', 'MinPrice'), minSellingPrice);
     setAt(findCol(headers, 'SellingPrice', 'Price', 'SalePrice'), sPrice);
     setAt(findCol(headers, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity', 'Qty'), stockQty);
+    setAt(findCol(headers, 'GodownStock', 'WarehouseStock', 'GodownQty'), godownStock);
     setAt(findCol(headers, 'MinStockAlert', 'MinStockAler', 'MinStock', 'Alert'), Number(minStockAlert) || 5);
     setAt(findCol(headers, 'Unit', 'UOM'), unit || 'Pcs');
+    setAt(findCol(headers, 'YardsPerThan', 'GojPerThan', 'YardsThan'), yardsPerThan);
+    setAt(findCol(headers, 'ThanCount', 'TotalThan', 'ThanQty'), thanCount);
+    setAt(findCol(headers, 'TotalYards', 'TotalGoj', 'GojCount'), totalYards);
     setAt(findCol(headers, 'ImageUrl', 'Image', 'Photo', 'ImgUrl', 'Picture'), imageUrl || '');
     setAt(findCol(headers, 'ImageCaption', 'Caption', 'AltText', 'Alt'), imageCaption || '');
     setAt(findCol(headers, 'ShortDescription', 'ShortDesc'), shortDescription);
@@ -230,6 +247,8 @@ function handleAddProduct(spreadsheet, payload) {
     setAt(findCol(headers, 'Features', 'Feature', 'KeyFeatures'), features);
     setAt(findCol(headers, 'CreatedAt', 'Created', 'Date'), timestamp);
     setAt(findCol(headers, 'UpdatedAt', 'Updated'), timestamp);
+    setAt(findCol(headers, 'HasVariants', 'HasVariant'), hasVariants ? 'TRUE' : 'FALSE');
+    setAt(findCol(headers, 'VariantsJSON', 'Variants'), variantsJSON || '');
 
     productsSheet.appendRow(newRow);
 
@@ -321,10 +340,16 @@ function handleUpdateProduct(spreadsheet, payload) {
   const category = payload.category || payload.Category;
   const subCategory = payload.subCategory !== undefined ? payload.subCategory : payload.SubCategory;
   const costPrice = payload.costPrice !== undefined ? Number(payload.costPrice) : (payload.CostPrice !== undefined ? Number(payload.CostPrice) : undefined);
+  const wholesalePrice = payload.wholesalePrice !== undefined ? Number(payload.wholesalePrice) : (payload.WholesalePrice !== undefined ? Number(payload.WholesalePrice) : undefined);
+  const minSellingPrice = payload.minSellingPrice !== undefined ? Number(payload.minSellingPrice) : (payload.MinSellingPrice !== undefined ? Number(payload.MinSellingPrice) : (payload.FloorPrice !== undefined ? Number(payload.FloorPrice) : undefined));
   const sellingPrice = payload.sellingPrice !== undefined ? Number(payload.sellingPrice) : (payload.SellingPrice !== undefined ? Number(payload.SellingPrice) : undefined);
   const stockQuantity = payload.stockQuantity !== undefined ? Number(payload.stockQuantity) : (payload.StockQuantity !== undefined ? Number(payload.StockQuantity) : undefined);
+  const godownStock = payload.godownStock !== undefined ? Number(payload.godownStock) : (payload.GodownStock !== undefined ? Number(payload.GodownStock) : (payload.initialGodownStock !== undefined ? Number(payload.initialGodownStock) : undefined));
   const minStockAlert = payload.minStockAlert !== undefined ? Number(payload.minStockAlert) : (payload.MinStockAlert !== undefined ? Number(payload.MinStockAlert) : undefined);
   const unit = payload.unit || payload.Unit;
+  const yardsPerThan = payload.yardsPerThan !== undefined ? Number(payload.yardsPerThan) : (payload.YardsPerThan !== undefined ? Number(payload.YardsPerThan) : undefined);
+  const thanCount = payload.thanCount !== undefined ? Number(payload.thanCount) : (payload.ThanCount !== undefined ? Number(payload.ThanCount) : undefined);
+  const totalYards = payload.totalYards !== undefined ? Number(payload.totalYards) : (payload.TotalYards !== undefined ? Number(payload.TotalYards) : undefined);
   let imageUrl = payload.imageUrl !== undefined ? payload.imageUrl : payload.ImageUrl;
   const imageCaption = payload.imageCaption !== undefined ? payload.imageCaption : payload.ImageCaption;
   const imageBase64 = payload.imageBase64 || payload.ImageBase64 || '';
@@ -336,6 +361,21 @@ function handleUpdateProduct(spreadsheet, payload) {
     features = features.filter(f => f && String(f).trim()).join(' | ');
   } else if (features !== undefined) {
     features = String(features || '');
+  }
+
+  // Phase 6: ভ্যারিয়েন্ট, ব্যাচ, মেয়াদ ও কম্বো বান্ডেল আপডেট
+  const hasVariants = payload.hasVariants !== undefined ? (payload.hasVariants === true || String(payload.hasVariants).toLowerCase() === 'true' ? 'TRUE' : 'FALSE') : (payload.HasVariants !== undefined ? (payload.HasVariants === true || String(payload.HasVariants).toLowerCase() === 'true' ? 'TRUE' : 'FALSE') : undefined);
+  let variantsJSON = payload.variantsJSON !== undefined ? payload.variantsJSON : (payload.VariantsJSON !== undefined ? payload.VariantsJSON : (payload.variants !== undefined ? payload.variants : payload.Variants));
+  if (variantsJSON !== undefined && typeof variantsJSON === 'object') {
+    try { variantsJSON = JSON.stringify(variantsJSON); } catch (e) { variantsJSON = ''; }
+  }
+  const batchNumber = payload.batchNumber !== undefined ? String(payload.batchNumber).trim() : (payload.BatchNumber !== undefined ? String(payload.BatchNumber).trim() : undefined);
+  const expiryDate = payload.expiryDate !== undefined ? String(payload.expiryDate).trim() : (payload.ExpiryDate !== undefined ? String(payload.ExpiryDate).trim() : undefined);
+  const mfgDate = payload.mfgDate !== undefined ? String(payload.mfgDate).trim() : (payload.MfgDate !== undefined ? String(payload.MfgDate).trim() : undefined);
+  const isBundle = payload.isBundle !== undefined ? (payload.isBundle === true || String(payload.isBundle).toLowerCase() === 'true' ? 'TRUE' : 'FALSE') : (payload.IsBundle !== undefined ? (payload.IsBundle === true || String(payload.IsBundle).toLowerCase() === 'true' ? 'TRUE' : 'FALSE') : undefined);
+  let bundleItemsJSON = payload.bundleItemsJSON !== undefined ? payload.bundleItemsJSON : (payload.BundleItemsJSON !== undefined ? payload.BundleItemsJSON : (payload.bundleItems !== undefined ? payload.bundleItems : payload.BundleItems));
+  if (bundleItemsJSON !== undefined && typeof bundleItemsJSON === 'object') {
+    try { bundleItemsJSON = JSON.stringify(bundleItemsJSON); } catch (e) { bundleItemsJSON = ''; }
   }
 
   let imageUploadError = null;
@@ -379,16 +419,31 @@ function handleUpdateProduct(spreadsheet, payload) {
   const catColIdx = findCol(headers, 'Category', 'Cat');
   const subCatColIdx = findCol(headers, 'SubCategory', 'SubCat');
   const costColIdx = findCol(headers, 'CostPrice', 'Cost', 'BuyPrice');
+  const wholesaleColIdx = findCol(headers, 'WholesalePrice', 'Wholesale', 'DealerPrice');
+  const minSellColIdx = findCol(headers, 'MinSellingPrice', 'FloorPrice', 'MinPrice');
   const sellColIdx = findCol(headers, 'SellingPrice', 'Price', 'SalePrice');
   const stockColIdx = findCol(headers, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity', 'Qty');
+  const godownColIdx = findCol(headers, 'GodownStock', 'WarehouseStock', 'GodownQty');
   const alertColIdx = findCol(headers, 'MinStockAlert', 'MinStockAler', 'MinStock', 'Alert');
   const unitColIdx = findCol(headers, 'Unit', 'UOM');
+  const yardsPerThanColIdx = findCol(headers, 'YardsPerThan', 'GojPerThan', 'YardsThan');
+  const thanCountColIdx = findCol(headers, 'ThanCount', 'TotalThan', 'ThanQty');
+  const totalYardsColIdx = findCol(headers, 'TotalYards', 'TotalGoj', 'GojCount');
   const imgColIdx = findCol(headers, 'ImageUrl', 'Image', 'Photo', 'ImgUrl');
   const captionColIdx = findCol(headers, 'ImageCaption', 'Caption', 'AltText', 'Alt');
   const shortDescColIdx = findCol(headers, 'ShortDescription', 'ShortDesc');
   const descColIdx = findCol(headers, 'Description', 'Desc', 'Details');
   const featColIdx = findCol(headers, 'Features', 'Feature', 'KeyFeatures');
   const updatedColIdx = findCol(headers, 'UpdatedAt', 'Updated');
+
+  // Phase 6 কলাম ইনডেক্স
+  const hasVariantsColIdx = findCol(headers, 'HasVariants', 'HasVariant');
+  const variantsColIdx = findCol(headers, 'VariantsJSON', 'Variants');
+  const batchColIdx = findCol(headers, 'BatchNumber', 'BatchNo', 'Batch');
+  const expColIdx = findCol(headers, 'ExpiryDate', 'ExpDate', 'Expiry');
+  const mfgColIdx = findCol(headers, 'MfgDate', 'ManufactureDate', 'Mfg');
+  const isBundleColIdx = findCol(headers, 'IsBundle', 'Bundle', 'IsCombo');
+  const bundleItemsColIdx = findCol(headers, 'BundleItemsJSON', 'BundleItems', 'ComboItems');
 
   if (idColIdx === -1) {
     return {
@@ -436,16 +491,31 @@ function handleUpdateProduct(spreadsheet, payload) {
   updateIfDefined(catColIdx, category);
   updateIfDefined(subCatColIdx, subCategory);
   updateIfDefined(costColIdx, costPrice);
+  updateIfDefined(wholesaleColIdx, wholesalePrice);
+  updateIfDefined(minSellColIdx, minSellingPrice);
   updateIfDefined(sellColIdx, sellingPrice);
   updateIfDefined(stockColIdx, stockQuantity);
+  updateIfDefined(godownColIdx, godownStock);
   updateIfDefined(alertColIdx, minStockAlert);
   updateIfDefined(unitColIdx, unit);
+  updateIfDefined(yardsPerThanColIdx, yardsPerThan);
+  updateIfDefined(thanCountColIdx, thanCount);
+  updateIfDefined(totalYardsColIdx, totalYards);
   updateIfDefined(imgColIdx, imageUrl);
   updateIfDefined(captionColIdx, imageCaption);
   updateIfDefined(shortDescColIdx, shortDescription);
   updateIfDefined(descColIdx, description);
   updateIfDefined(featColIdx, features);
   updateIfDefined(updatedColIdx, new Date());
+
+  // Phase 6 মান আপডেট
+  updateIfDefined(hasVariantsColIdx, hasVariants);
+  updateIfDefined(variantsColIdx, variantsJSON);
+  updateIfDefined(batchColIdx, batchNumber);
+  updateIfDefined(expColIdx, expiryDate);
+  updateIfDefined(mfgColIdx, mfgDate);
+  updateIfDefined(isBundleColIdx, isBundle);
+  updateIfDefined(bundleItemsColIdx, bundleItemsJSON);
 
   SpreadsheetApp.flush();
 

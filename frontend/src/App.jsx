@@ -4196,6 +4196,7 @@ export default function App() {
                 onOpenProductDetails={handleOpenProductDetails}
                 onOpenInvoiceLookup={handleOpenInvoiceLookup}
                 onDeleteProduct={handleDeleteProduct}
+                onEditProduct={handleOpenEditProduct}
                 activeUser={activeUser}
                 apiUrl={settings.apiUrl}
                 onOpenSettings={() => setIsSettingsModalOpen(true)}
@@ -4364,6 +4365,7 @@ export default function App() {
               onAdjustLocationStock={handleAdjustLocationStock}
               onDeleteProduct={handleDeleteProduct}
               onUpdateProductVariants={handleUpdateProductVariants}
+              onEditProduct={handleOpenEditProduct}
               initialTab={
                 currentView === 'shop_stock'
                   ? 'shop_stock'
@@ -5109,6 +5111,7 @@ export default function App() {
         onAdjustLocationStock={handleAdjustLocationStock}
         onDeleteProduct={handleDeleteProduct}
         onUpdateProductVariants={handleUpdateProductVariants}
+        onEditProduct={handleOpenEditProduct}
         initialTab={stockTransferModalConfig.tab || 'overview'}
         initialTransferSubTab={stockTransferModalConfig.subTab || 'new'}
         initialFilter={stockTransferModalConfig.filter || 'ALL'}
