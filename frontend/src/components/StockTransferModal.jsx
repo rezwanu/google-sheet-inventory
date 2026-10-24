@@ -23,6 +23,7 @@ import {
   ShoppingBag,
   RotateCcw,
   SlidersHorizontal,
+  Package,
   PackageCheck,
   CheckCircle2,
   Clock,
