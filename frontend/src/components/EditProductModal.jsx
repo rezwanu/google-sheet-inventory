@@ -23,6 +23,8 @@ import {
   CalendarClock,
   Box,
   Sparkles,
+  Palette,
+  Plus,
   Trash2
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
@@ -133,6 +135,8 @@ export default function EditProductModal({
   const [variants, setVariants] = useState([]);
   const [attributeSizes, setAttributeSizes] = useState('');
   const [attributeColors, setAttributeColors] = useState('');
+  const [quickColorInput, setQuickColorInput] = useState('');
+  const [quickColorThans, setQuickColorThans] = useState(1);
 
   // কম্বো বান্ডেল স্টেট
   const [bundleItems, setBundleItems] = useState([]);
@@ -197,6 +201,49 @@ export default function EditProductModal({
     }
   };
 
+  const handleAddQuickColor = (colorName, thans = 1) => {
+    const cleanColor = String(colorName || quickColorInput || '').trim();
+    if (!cleanColor) return;
+    const isDuplicate = variants.some((v) => {
+      const c = v.Color || v.color || v.Attributes?.Color || v.Attributes?.color || v.VariantID;
+      return String(c).trim().toLowerCase() === cleanColor.toLowerCase();
+    });
+    if (isDuplicate) {
+      alert(`'${cleanColor}' রঙের ভ্যারিয়েন্ট ইতোমধ্যে বিদ্যমান রয়েছে!`);
+      return;
+    }
+
+    const thanQty = Math.max(0, Number(thans !== undefined ? thans : quickColorThans) || 1);
+    const baseBarcode = formData.barcode || `pb-${Date.now().toString().slice(-4)}`;
+    const newV = {
+      VariantID: `VAR-${cleanColor.toUpperCase()}-${Date.now().toString().slice(-4)}`,
+      Attributes: { Color: cleanColor },
+      Color: cleanColor,
+      Barcode: `${baseBarcode}-${cleanColor.toLowerCase().replace(/\s+/g, '-')}`,
+      CostPrice: Number(formData.costPrice) || 0,
+      MinSellingPrice: Number(formData.minSellingPrice) || Number(formData.costPrice) || 0,
+      SellingPrice: Number(formData.sellingPrice) || 0,
+      WholesalePrice: Number(formData.wholesalePrice) || Number(formData.costPrice) || 0,
+      GodownStock: thanQty,
+      godownStock: thanQty,
+      StockQuantity: 0,
+      stockQuantity: 0,
+      TotalStock: thanQty
+    };
+    const updated = [...variants, newV];
+    setVariants(updated);
+    setQuickColorInput('');
+
+    const sumG = updated.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0);
+    const sumS = updated.reduce((s, v) => s + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0);
+    setFormData((prev) => ({
+      ...prev,
+      godownStock: String(sumG),
+      stockQuantity: String(sumS),
+      totalStock: String(sumG + sumS)
+    }));
+  };
+
   const handleAddManualVariant = () => {
     const nextIdx = variants.length + 1;
     const newV = {
@@ -205,29 +252,49 @@ export default function EditProductModal({
       Barcode: `${formData.barcode || 'VAR'}-${nextIdx}`.toLowerCase(),
       CostPrice: Number(formData.costPrice) || 0,
       SellingPrice: Number(formData.sellingPrice) || 0,
-      StockQuantity: 10
+      GodownStock: 10,
+      godownStock: 10,
+      StockQuantity: 0,
+      stockQuantity: 0,
+      TotalStock: 10
     };
     const updated = [...variants, newV];
     setVariants(updated);
-    const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
-    setFormData((prev) => ({ ...prev, stockQuantity: String(sumStock) }));
+    const sumG = updated.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0);
+    const sumS = updated.reduce((s, v) => s + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0);
+    setFormData((prev) => ({
+      ...prev,
+      godownStock: String(sumG),
+      stockQuantity: String(sumS),
+      totalStock: String(sumG + sumS)
+    }));
   };
 
   const handleUpdateVariantField = (idx, field, value) => {
     const updated = [...variants];
     updated[idx] = { ...updated[idx], [field]: value };
     setVariants(updated);
-    if (field === 'StockQuantity') {
-      const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
-      setFormData((prev) => ({ ...prev, stockQuantity: String(sumStock) }));
-    }
+    const sumG = updated.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0);
+    const sumS = updated.reduce((s, v) => s + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0);
+    setFormData((prev) => ({
+      ...prev,
+      godownStock: String(sumG),
+      stockQuantity: String(sumS),
+      totalStock: String(sumG + sumS)
+    }));
   };
 
   const handleRemoveVariant = (idx) => {
     const updated = variants.filter((_, i) => i !== idx);
     setVariants(updated);
-    const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
-    setFormData((prev) => ({ ...prev, stockQuantity: String(sumStock) }));
+    const sumG = updated.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0);
+    const sumS = updated.reduce((s, v) => s + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0);
+    setFormData((prev) => ({
+      ...prev,
+      godownStock: String(sumG),
+      stockQuantity: String(sumS),
+      totalStock: String(sumG + sumS)
+    }));
   };
 
   const handleAddBundleItem = () => {
@@ -615,14 +682,35 @@ export default function EditProductModal({
 
     setIsSubmitting(true);
     try {
+      const safeVariants = productType === 'variable'
+        ? variants.map(v => {
+            const g = Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0;
+            const s = Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0;
+            return {
+              ...v,
+              GodownStock: g,
+              godownStock: g,
+              StockQuantity: s,
+              stockQuantity: s,
+              TotalStock: g + s
+            };
+          })
+        : [];
+      const varGodownTotal = safeVariants.reduce((sum, v) => sum + v.GodownStock, 0);
+      const varShopTotal = safeVariants.reduce((sum, v) => sum + v.StockQuantity, 0);
+
+      const effectiveGodownStock = productType === 'variable' && safeVariants.length > 0 ? varGodownTotal : (Number(formData.godownStock) || 0);
+      const effectiveShopStock = productType === 'variable' && safeVariants.length > 0 ? varShopTotal : (Number(formData.stockQuantity) || 0);
+
       await onSubmitUpdate({
         ...formData,
         productId: product.ProductID,
         costPrice: costNum,
         minSellingPrice: minSellNum,
         sellingPrice: sellNum,
-        stockQuantity: Number(formData.stockQuantity) || 0,
-        godownStock: Number(formData.godownStock) || 0,
+        stockQuantity: effectiveShopStock,
+        godownStock: effectiveGodownStock,
+        totalStock: effectiveGodownStock + effectiveShopStock,
         minStockAlert: Number(formData.minStockAlert) || 5,
         imageUrl: imageUploadMode === 'url' ? formData.imageUrl.trim() : (formData.imageUrl || ''),
         imageCaption: formData.imageCaption.trim(),
@@ -633,8 +721,8 @@ export default function EditProductModal({
         features: features,
         // Phase 6
         hasVariants: productType === 'variable',
-        variants: productType === 'variable' ? variants : [],
-        variantsJSON: productType === 'variable' ? JSON.stringify(variants) : '',
+        variants: safeVariants,
+        variantsJSON: productType === 'variable' ? JSON.stringify(safeVariants) : '',
         batchNumber: batchNumber.trim(),
         expiryDate: expiryDate.trim(),
         mfgDate: mfgDate.trim(),
@@ -1203,6 +1291,65 @@ export default function EditProductModal({
                 </div>
               </div>
 
+              {/* দ্রুত কালার ভ্যারিয়েন্ট যোগ */}
+              <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200/90 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-amber-950 flex items-center space-x-1.5">
+                    <Palette className="w-3.5 h-3.5 text-amber-600" />
+                    <span>দ্রুত কালার / রঙ ভ্যারিয়েন্ট যোগ:</span>
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    placeholder="রঙের নাম (যেমন: ফিরোজা, জলপাই, ম্যাজেন্টা)"
+                    value={quickColorInput}
+                    onChange={(e) => setQuickColorInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddQuickColor();
+                      }
+                    }}
+                    className="flex-1 px-3 py-1.5 bg-white border border-amber-200 rounded-lg text-xs font-bold text-amber-950 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  />
+                  <div className="flex items-center space-x-1 shrink-0">
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="গোডাউন"
+                      value={quickColorThans}
+                      onChange={(e) => setQuickColorThans(e.target.value)}
+                      className="w-16 px-2 py-1.5 bg-white border border-amber-200 rounded-lg text-xs font-black text-center text-amber-950 focus:outline-none"
+                    />
+                    <span className="text-[11px] font-bold text-amber-900">থান/পিস</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddQuickColor()}
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ কালার যোগ</span>
+                  </button>
+                </div>
+                {/* জনপ্রিয় কালার চিপস */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  <span className="text-[10px] font-bold text-amber-800 shrink-0">জনপ্রিয় কালার:</span>
+                  {['লাল', 'নীল', 'কালো', 'সাদা', 'সবুজ', 'হলুদ', 'গোলাপি', 'মেরুন', 'নেভি ব্লু', 'অফ-হোয়াইট', 'ছাই', 'বেগুনি', 'ফিরোজা', 'জলপাই'].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => handleAddQuickColor(c, quickColorThans || 1)}
+                      className="px-2 py-0.5 text-[10px] font-semibold bg-white hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-md transition-colors cursor-pointer"
+                    >
+                      + {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* ভ্যারিয়েন্ট তালিকা টেবিল */}
               {variants.length > 0 && (
                 <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-2xs">
@@ -1213,7 +1360,8 @@ export default function EditProductModal({
                         <th className="p-2">বারকোড</th>
                         <th className="p-2 w-16">কেনা</th>
                         <th className="p-2 w-16">বিক্রি</th>
-                        <th className="p-2 w-16">স্টক</th>
+                        <th className="p-2 w-16 text-indigo-700">গোডাউন</th>
+                        <th className="p-2 w-16 text-emerald-700">দোকান</th>
                         <th className="p-2 pr-3 text-center">মুছুন</th>
                       </tr>
                     </thead>
@@ -1222,7 +1370,7 @@ export default function EditProductModal({
                         <tr key={v.VariantID || idx} className="hover:bg-slate-50/60">
                           <td className="p-2 pl-3">
                             <span className="font-bold text-slate-800">
-                              {v.Attributes ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ') : v.VariantID}
+                              {v.Attributes ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ') : (v.Color || v.VariantID)}
                             </span>
                           </td>
                           <td className="p-2">
@@ -1253,9 +1401,23 @@ export default function EditProductModal({
                           <td className="p-2">
                             <input
                               type="number"
-                              value={v.StockQuantity}
+                              min="0"
+                              step="any"
+                              value={v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0)}
+                              onChange={(e) => handleUpdateVariantField(idx, 'GodownStock', Number(e.target.value) || 0)}
+                              className="w-full px-2 py-1 bg-indigo-50 border border-indigo-200 rounded text-[11px] font-black text-indigo-900"
+                              title="গোডাউন স্টক"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0)}
                               onChange={(e) => handleUpdateVariantField(idx, 'StockQuantity', Number(e.target.value) || 0)}
-                              className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-black text-emerald-700"
+                              className="w-full px-2 py-1 bg-emerald-50 border border-emerald-200 rounded text-[11px] font-black text-emerald-700"
+                              title="দোকান স্টক"
                             />
                           </td>
                           <td className="p-2 pr-3 text-center">

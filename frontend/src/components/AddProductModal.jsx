@@ -1724,7 +1724,7 @@ export default function AddProductModal({
                             <tbody className="divide-y divide-amber-100 font-medium">
                               {variants.map((v, idx) => {
                                 const colorTitle = v.Attributes?.Color || v.Attributes?.Option || Object.values(v.Attributes || {})[0] || v.VariantID;
-                                const thans = Number(v.StockQuantity) || 0;
+                                const thans = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
                                 const calculatedGoj = thans * (Number(formData.yardsPerThan) || 0);
                                 return (
                                   <tr key={v.VariantID || idx} className="hover:bg-amber-50/40">
@@ -1748,7 +1748,7 @@ export default function AddProductModal({
                                           type="number"
                                           min="0"
                                           step="any"
-                                          value={v.StockQuantity}
+                                          value={v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity}
                                           onChange={(e) => handleUpdateVariantStock(idx, e.target.value)}
                                           className="w-14 px-1 py-0.5 bg-slate-50 border border-slate-200 rounded text-center text-xs font-black text-amber-950"
                                         />

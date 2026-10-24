@@ -3927,10 +3927,10 @@ export default function App() {
 
     // ১. ভ্যারিয়েন্টগুলোর যোগফল বের করা
     const totalGodown = safeVariants.reduce(
-      (sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : (v.StockQuantity !== undefined ? v.StockQuantity : 0)) || 0), 0
+      (sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0)) || 0), 0
     );
     const totalShop = safeVariants.reduce(
-      (sum, v) => sum + (Number(v.StockQuantity !== undefined ? v.StockQuantity : 0) || 0), 0
+      (sum, v) => sum + (Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : (v.ShopStock !== undefined ? v.ShopStock : 0))) || 0), 0
     );
     const totalAll = totalGodown + totalShop;
     const isThan = Boolean(targetProduct.TotalThan || targetProduct.YardsPerThan || /than|থান/i.test(targetProduct.Unit || ''));
