@@ -3319,26 +3319,65 @@ export function exportShopOutflowExcelCSV(movements = []) {
  */
 export function exportLocationStockExcelCSV(products = []) {
   const safeProds = Array.isArray(products) && products.length > 0 ? products : getLocalProducts();
-  const headers = ['পণ্য কোড', 'বারকোড', 'পণ্যের নাম', 'ক্যাটাগরি', 'একক', 'গোডাউন স্টক (Godown)', 'দোকান স্টক (Shop)', 'মোট স্টক (Total)', 'ক্রয়মূল্য', 'বিক্রয়মূল্য', 'মোট পণ্যের আর্থিক মূল্য'];
-  const rows = safeProds.map((p) => {
+  const headers = ['পণ্য কোড', 'বারকোড', 'পণ্যের নাম', 'ভ্যারিয়েন্ট / বিবরণ', 'ক্যাটাগরি', 'একক', 'গোডাউন স্টক (Godown)', 'দোকান স্টক (Shop)', 'মোট স্টক (Total)', 'ক্রয়মূল্য', 'বিক্রয়মূল্য', 'মোট পণ্যের আর্থিক মূল্য'];
+  const rows = [];
+
+  safeProds.forEach((p) => {
     const gStock = Number(p.GodownStock || 0);
     const sStock = Number(p.StockQuantity || 0);
     const total = gStock + sStock;
     const cost = Number(p.CostPrice || 0);
-    return [
+    const sell = Number(p.SellingPrice || 0);
+
+    let vars = p.Variants || p.variants;
+    if (typeof vars === 'string') {
+      try { vars = JSON.parse(vars); } catch { vars = []; }
+    }
+    if ((!vars || !vars.length) && p.VariantsJSON) {
+      try { vars = JSON.parse(p.VariantsJSON); } catch { vars = []; }
+    }
+
+    // মূল পণ্য সারি
+    rows.push([
       p.ProductID || '',
       p.Barcode || '',
       p.ProductName || '',
+      vars && vars.length > 0 ? `মূল পণ্য (${vars.length}টি ভ্যারিয়েন্ট)` : 'স্ট্যান্ডার্ড',
       p.Category || '',
       p.Unit || 'Pcs',
       gStock,
       sStock,
       total,
       cost,
-      Number(p.SellingPrice || 0),
+      sell,
       Math.round(total * cost * 100) / 100
-    ];
+    ]);
+
+    // ভ্যারিয়েন্ট সারিগুলো
+    if (Array.isArray(vars) && vars.length > 0) {
+      vars.forEach((v) => {
+        const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
+        const vSStock = Number(v.StockQuantity) || 0;
+        const vTotal = vGStock + vSStock;
+        const vDesc = v.Attributes ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(' / ') : (v.VariantID || '');
+        rows.push([
+          v.VariantID || p.ProductID,
+          v.Barcode || p.Barcode || '',
+          `  ↳ [ভ্যারিয়েন্ট] ${p.ProductName}`,
+          vDesc,
+          p.Category || '',
+          p.Unit || 'Pcs',
+          vGStock,
+          vSStock,
+          vTotal,
+          Number(v.CostPrice || cost),
+          Number(v.SellingPrice || sell),
+          Math.round(vTotal * Number(v.CostPrice || cost) * 100) / 100
+        ]);
+      });
+    }
   });
+
   exportToCSV(`Location_Stock_Summary_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
 }
 

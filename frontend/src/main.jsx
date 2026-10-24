@@ -27,8 +27,14 @@ class ErrorBoundary extends React.Component {
       if (cust && !cust.trim().startsWith('[')) {
         localStorage.removeItem('pos_customers');
       }
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => caches.delete(name));
+        });
+      }
     } catch (e) {}
-    window.location.reload();
+    // ব্রাউজার ক্যাশ বাইপাস করে সম্পূর্ণ ফ্রেশ রিলোড
+    window.location.href = window.location.origin + window.location.pathname + '?ts=' + Date.now();
   };
 
   render() {

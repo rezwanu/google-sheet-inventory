@@ -3135,6 +3135,21 @@ export default function App() {
             target.godownStock = newGodown;
             target.TotalStock = (Number(target.StockQuantity) || 0) + newGodown;
 
+            if (variantId && Array.isArray(target.Variants)) {
+              const vIdx = target.Variants.findIndex(
+                (v) => String(v.VariantID || '').trim() === String(variantId).trim()
+              );
+              if (vIdx !== -1) {
+                const uVars = [...target.Variants];
+                const prevVG = Number(uVars[vIdx].GodownStock !== undefined ? uVars[vIdx].GodownStock : uVars[vIdx].StockQuantity) || 0;
+                uVars[vIdx] = {
+                  ...uVars[vIdx],
+                  GodownStock: Math.max(0, prevVG - qty)
+                };
+                target.Variants = uVars;
+              }
+            }
+
             recordStockMovementLocally({
               location: 'Godown',
               type: 'TRANSFER_OUT',
