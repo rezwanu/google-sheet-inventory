@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   X,
   Truck,
@@ -49,13 +49,19 @@ export default function StockTransferModal({
   storeSettings = {},
   onSaveStockTransfer,
   onUpdateStockTransferStatus,
-  onAdjustLocationStock
+  onAdjustLocationStock,
+  initialTab = 'overview',
+  initialTransferSubTab = 'new',
+  initialFilter = 'ALL'
 }) {
   // প্রধান ট্যাব নেভিগেশন: 'overview' | 'transfers' | 'godown_outflow' | 'shop_outflow'
-  const [activeMainTab, setActiveMainTab] = useState('overview');
+  const [activeMainTab, setActiveMainTab] = useState(() => {
+    if (initialTab === 'godown_stock' || initialTab === 'shop_stock') return 'overview';
+    return initialTab || 'overview';
+  });
 
   // ট্রান্সফার সাব-ট্যাব: 'new' | 'list'
-  const [transferSubTab, setTransferSubTab] = useState('new');
+  const [transferSubTab, setTransferSubTab] = useState(() => initialTransferSubTab || 'new');
 
   // =========================================================================
   // ১. চালান তৈরি স্টেটসমূহ
@@ -87,8 +93,28 @@ export default function StockTransferModal({
   // ২. লাইভ স্টক ওভারভিউ ফিল্টার স্টেট
   // =========================================================================
   const [overviewSearch, setOverviewSearch] = useState('');
-  const [overviewFilter, setOverviewFilter] = useState('ALL'); // 'ALL' | 'NEED_TRANSFER' | 'IN_GODOWN' | 'IN_SHOP' | 'OUT_OF_STOCK'
+  const [overviewFilter, setOverviewFilter] = useState(() => {
+    if (initialTab === 'godown_stock') return 'IN_GODOWN';
+    if (initialTab === 'shop_stock') return 'IN_SHOP';
+    return initialFilter || 'ALL';
+  });
   const [overviewCategory, setOverviewCategory] = useState('ALL');
+
+  useEffect(() => {
+    if (initialTab === 'godown_stock') {
+      setActiveMainTab('overview');
+      setOverviewFilter('IN_GODOWN');
+    } else if (initialTab === 'shop_stock') {
+      setActiveMainTab('overview');
+      setOverviewFilter('IN_SHOP');
+    } else if (initialTab) {
+      setActiveMainTab(initialTab);
+      if (initialFilter) setOverviewFilter(initialFilter);
+    }
+    if (initialTransferSubTab) {
+      setTransferSubTab(initialTransferSubTab);
+    }
+  }, [initialTab, initialTransferSubTab, initialFilter, isOpen]);
 
   // =========================================================================
   // ৩. গোডাউন ও দোকান নির্গমন খাতা ফিল্টার স্টেট
@@ -824,9 +850,16 @@ export default function StockTransferModal({
                       <button
                         type="button"
                         onClick={() => setOverviewFilter('IN_GODOWN')}
-                        className={`px-2.5 py-1 rounded-lg transition-all ${overviewFilter === 'IN_GODOWN' ? 'bg-white shadow-xs text-indigo-700' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`px-2.5 py-1 rounded-lg transition-all ${overviewFilter === 'IN_GODOWN' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                       >
                         🏭 গোডাউনে আছে
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOverviewFilter('IN_SHOP')}
+                        className={`px-2.5 py-1 rounded-lg transition-all ${overviewFilter === 'IN_SHOP' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                      >
+                        🏬 দোকানে আছে
                       </button>
                     </div>
 
@@ -880,6 +913,13 @@ export default function StockTransferModal({
                                   <div className="text-[10px] font-mono text-slate-400">
                                     ID: {p.ProductID} {p.Barcode ? `| #${p.Barcode}` : ''}
                                   </div>
+                                  {Boolean(p.TotalThan || p.YardsPerThan || /than|থান/i.test(p.Unit || '')) && (
+                                    <div className="text-[10.5px] text-indigo-700 font-bold mt-0.5 flex items-center space-x-1.5">
+                                      <span>থান: {p.TotalThan || 0}</span>
+                                      {p.YardsPerThan ? <span>• গজ/থান: {p.YardsPerThan}</span> : null}
+                                      {p.TotalGoj ? <span>• মোট: {p.TotalGoj} গজ</span> : null}
+                                    </div>
+                                  )}
                                 </td>
                                 <td className="py-3 px-3 text-slate-600 font-medium">
                                   {p.Category}

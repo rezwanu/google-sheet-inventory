@@ -380,6 +380,16 @@ export default function App() {
   });
   const [isSalesReturnModalOpen, setIsSalesReturnModalOpen] = useState(false);
   const [isStockTransferModalOpen, setIsStockTransferModalOpen] = useState(false);
+  const [stockTransferModalConfig, setStockTransferModalConfig] = useState({
+    tab: 'overview',
+    subTab: 'new',
+    filter: 'ALL'
+  });
+
+  const handleOpenStockTransferModalWithConfig = (tab = 'overview', subTab = 'new', filter = 'ALL') => {
+    setStockTransferModalConfig({ tab, subTab, filter });
+    setIsStockTransferModalOpen(true);
+  };
 
   // ফেজ ৮: আরএফএম গ্রাহক সেগমেন্টেশন ও টার্গেটেড এসএমএস ক্যাম্পেইন মডাল স্টেট
   const [isRFMCampaignModalOpen, setIsRFMCampaignModalOpen] = useState(false);
@@ -3909,7 +3919,13 @@ export default function App() {
             onOpenCashRegisterModal={() => setIsCashRegisterModalOpen(true)}
             onOpenAuditLogsModal={() => setIsAuditLogsModalOpen(true)}
             onOpenSalesReturnModal={() => setIsSalesReturnModalOpen(true)}
-            onOpenStockTransferModal={() => setIsStockTransferModalOpen(true)}
+            onOpenStockTransferModal={() => handleOpenStockTransferModalWithConfig('overview', 'new', 'ALL')}
+            onOpenShopStockModal={() => handleOpenStockTransferModalWithConfig('shop_stock', 'new', 'IN_SHOP')}
+            onOpenShopOutflowModal={() => handleOpenStockTransferModalWithConfig('shop_outflow', 'new', 'ALL')}
+            onOpenShopChallansModal={() => handleOpenStockTransferModalWithConfig('transfers', 'list', 'ALL')}
+            onOpenGodownStockModal={() => handleOpenStockTransferModalWithConfig('godown_stock', 'new', 'IN_GODOWN')}
+            onOpenGodownOutflowModal={() => handleOpenStockTransferModalWithConfig('godown_outflow', 'new', 'ALL')}
+            onOpenGodownTransferModal={() => handleOpenStockTransferModalWithConfig('transfers', 'new', 'ALL')}
             onOpenTailoringModal={() => {
               setTailoringPreloadData(null);
               setCurrentView('tailoring');
@@ -4102,7 +4118,13 @@ export default function App() {
             />
           )}
 
-          {currentView === 'stock_transfers' && (
+          {(currentView === 'stock_transfers' ||
+            currentView === 'shop_stock' ||
+            currentView === 'shop_outflow' ||
+            currentView === 'shop_challans' ||
+            currentView === 'godown_stock' ||
+            currentView === 'godown_outflow' ||
+            currentView === 'godown_transfer') && (
             <StockTransferModal
               embedded={true}
               isOpen={true}
@@ -4116,6 +4138,27 @@ export default function App() {
               onSaveStockTransfer={handleSaveStockTransfer}
               onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
               onAdjustLocationStock={handleAdjustLocationStock}
+              initialTab={
+                currentView === 'shop_stock'
+                  ? 'shop_stock'
+                  : currentView === 'shop_outflow'
+                  ? 'shop_outflow'
+                  : currentView === 'shop_challans'
+                  ? 'transfers'
+                  : currentView === 'godown_stock'
+                  ? 'godown_stock'
+                  : currentView === 'godown_outflow'
+                  ? 'godown_outflow'
+                  : currentView === 'godown_transfer'
+                  ? 'transfers'
+                  : 'overview'
+              }
+              initialTransferSubTab={
+                currentView === 'shop_challans' ? 'list' : currentView === 'godown_transfer' ? 'new' : 'new'
+              }
+              initialFilter={
+                currentView === 'shop_stock' ? 'IN_SHOP' : currentView === 'godown_stock' ? 'IN_GODOWN' : 'ALL'
+              }
             />
           )}
 
@@ -4834,6 +4877,9 @@ export default function App() {
         onSaveStockTransfer={handleSaveStockTransfer}
         onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
         onAdjustLocationStock={handleAdjustLocationStock}
+        initialTab={stockTransferModalConfig.tab || 'overview'}
+        initialTransferSubTab={stockTransferModalConfig.subTab || 'new'}
+        initialFilter={stockTransferModalConfig.filter || 'ALL'}
       />
 
       {/* ফেজ ৮: আরএফএম গ্রাহক সেগমেন্টেশন ও টার্গেটেড এসএমএস ক্যাম্পেইন মডাল */}

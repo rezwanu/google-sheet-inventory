@@ -26,6 +26,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Store,
+  Warehouse,
+  TrendingDown,
   Layers,
   CircleDollarSign,
   Wifi,
@@ -71,6 +73,12 @@ export default function Sidebar({
   onOpenAuditLogsModal,
   onOpenSalesReturnModal,
   onOpenStockTransferModal,
+  onOpenShopStockModal,
+  onOpenShopOutflowModal,
+  onOpenShopChallansModal,
+  onOpenGodownStockModal,
+  onOpenGodownOutflowModal,
+  onOpenGodownTransferModal,
   onOpenTailoringModal,
   tailoringOrdersCount = 0,
   onOpenFabricWastageModal,
@@ -102,25 +110,35 @@ export default function Sidebar({
 
   // ক্যাটাগরি ফোল্ডিং / অ্যাকর্ডিয়ন স্টেট (ডিফল্টভাবে সবগুলো সেকশন উন্মুক্ত ও দৃশ্যমান)
   const [openSections, setOpenSections] = useState(() => {
-    try {
-      const saved = localStorage.getItem('inventory_sidebar_sections_v3');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return {
+    const defaults = {
       sales: true,
-      inventory: true,
+      shop: true,
+      godown: true,
       procurement: true,
       crm: true,
       finance: true,
       system: true
     };
+    try {
+      const saved = localStorage.getItem('inventory_sidebar_sections_v4') || localStorage.getItem('inventory_sidebar_sections_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...defaults,
+          ...parsed,
+          shop: parsed.shop ?? true,
+          godown: parsed.godown ?? true
+        };
+      }
+    } catch {}
+    return defaults;
   });
 
   const toggleSection = (sectionKey) => {
     setOpenSections((prev) => {
       const next = { ...prev, [sectionKey]: !prev[sectionKey] };
       try {
-        localStorage.setItem('inventory_sidebar_sections_v3', JSON.stringify(next));
+        localStorage.setItem('inventory_sidebar_sections_v4', JSON.stringify(next));
       } catch {}
       return next;
     });
@@ -216,20 +234,104 @@ export default function Sidebar({
       ]
     },
     {
-      id: 'inventory',
-      title: 'ইনভেন্টরি ও গোডাউন',
-      shortTitle: 'স্টক',
-      icon: Layers,
+      id: 'shop',
+      title: 'দোকান স্টক ও পরিচালনা',
+      shortTitle: 'দোকান',
+      icon: Store,
       dotColor: 'bg-emerald-600',
       accentBorder: 'border-emerald-500',
-      tagColor: 'text-emerald-600 bg-emerald-50/80',
-      hasAlert: lowStockCount > 0 || expiringProductsCount > 0 || transfersInTransitCount > 0,
-      alertCount: lowStockCount + expiringProductsCount + transfersInTransitCount,
+      tagColor: 'text-emerald-700 bg-emerald-50/80',
+      hasAlert: lowStockCount > 0 || transfersInTransitCount > 0,
+      alertCount: lowStockCount + transfersInTransitCount,
       items: [
+        {
+          id: 'shop_stock',
+          title: 'দোকানের বর্তমান মজুত',
+          subTitle: 'দোকান ফ্লোর ও কাউন্টার মজুত',
+          icon: Store,
+          iconGradient: 'from-emerald-600 to-teal-700 text-white shadow-emerald-500/25',
+          isActive: currentView === 'shop_stock',
+          onClick: () => onNavigate ? onNavigate('shop_stock') : onOpenShopStockModal ? onOpenShopStockModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
+          badge: null
+        },
+        {
+          id: 'shop_outflow',
+          title: 'দোকান কমার খাতা',
+          subTitle: 'বিক্রি ও সার্ভিসে কমার হিসাব',
+          icon: TrendingDown,
+          iconGradient: 'from-emerald-500 to-green-600 text-white shadow-emerald-500/25',
+          isActive: currentView === 'shop_outflow',
+          onClick: () => onNavigate ? onNavigate('shop_outflow') : onOpenShopOutflowModal ? onOpenShopOutflowModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
+          badge: null
+        },
+        {
+          id: 'shop_challans',
+          title: 'দোকানে আসা চালান',
+          subTitle: 'গোডাউন থেকে চালান বুঝে নেওয়া',
+          icon: Truck,
+          iconGradient: transfersInTransitCount > 0 ? 'from-amber-500 to-orange-600 text-white shadow-amber-500/30' : 'from-slate-600 to-slate-800 text-white shadow-slate-600/25',
+          isActive: currentView === 'shop_challans',
+          onClick: () => onNavigate ? onNavigate('shop_challans') : onOpenShopChallansModal ? onOpenShopChallansModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
+          badge: transfersInTransitCount > 0 ? { text: `${transfersInTransitCount}টি পথে`, color: 'bg-amber-600 text-white animate-pulse shadow-xs font-bold' } : null
+        },
+        {
+          id: 'low_stock_alerts',
+          title: 'দোকানের কম স্টক সতর্কতা',
+          subTitle: 'জরুরি রি-অর্ডার ও রিস্টক প্রয়োজন',
+          icon: AlertTriangle,
+          iconGradient: lowStockCount > 0 ? 'from-rose-500 to-red-600 text-white shadow-rose-500/30' : 'from-slate-400 to-slate-600 text-white',
+          isAlertItem: lowStockCount > 0,
+          isActive: currentView === 'low_stock',
+          onClick: () => onNavigate ? onNavigate('low_stock') : onOpenLowStockModal && onOpenLowStockModal(),
+          badge: lowStockCount > 0 ? { text: `${lowStockCount}টি`, color: 'bg-rose-600 text-white animate-pulse shadow-xs' } : null
+        }
+      ]
+    },
+    {
+      id: 'godown',
+      title: 'গোডাউন ও কেন্দ্রীয় মজুত',
+      shortTitle: 'গোডাউন',
+      icon: Warehouse,
+      dotColor: 'bg-indigo-600',
+      accentBorder: 'border-indigo-500',
+      tagColor: 'text-indigo-700 bg-indigo-50/80',
+      hasAlert: expiringProductsCount > 0,
+      alertCount: expiringProductsCount,
+      items: [
+        {
+          id: 'godown_stock',
+          title: 'গোডাউন বর্তমান মজুত',
+          subTitle: 'গোডাউন থান, গজ ও স্টক খতিয়ান',
+          icon: Warehouse,
+          iconGradient: 'from-indigo-600 to-purple-700 text-white shadow-indigo-500/25',
+          isActive: currentView === 'godown_stock',
+          onClick: () => onNavigate ? onNavigate('godown_stock') : onOpenGodownStockModal ? onOpenGodownStockModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
+          badge: null
+        },
+        {
+          id: 'godown_outflow',
+          title: 'গোডাউন কমার খাতা',
+          subTitle: 'দোকানে চালান ও নির্গমনের খাতা',
+          icon: TrendingDown,
+          iconGradient: 'from-amber-600 to-orange-700 text-white shadow-amber-500/25',
+          isActive: currentView === 'godown_outflow',
+          onClick: () => onNavigate ? onNavigate('godown_outflow') : onOpenGodownOutflowModal ? onOpenGodownOutflowModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
+          badge: null
+        },
+        {
+          id: 'godown_transfer',
+          title: 'গোডাউন থেকে দোকান চালান',
+          subTitle: 'দোকানে মালামাল পাঠানোর চালান তৈরি',
+          icon: ArrowRightLeft,
+          iconGradient: 'from-blue-600 to-indigo-700 text-white shadow-blue-500/25',
+          isActive: currentView === 'godown_transfer',
+          onClick: () => onNavigate ? onNavigate('godown_transfer') : onOpenGodownTransferModal ? onOpenGodownTransferModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
+          badge: null
+        },
         {
           id: 'add_product',
           title: 'নতুন পণ্য তৈরি',
-          subTitle: 'ক্যাটালগ এন্ট্রি ও ভ্যারিয়েন্ট',
+          subTitle: 'সরাসরি গোডাউন স্টকে সংযোজন',
           icon: PackagePlus,
           iconGradient: 'from-slate-800 to-slate-950 text-white shadow-slate-900/25',
           isActive: currentView === 'add_product',
@@ -238,8 +340,8 @@ export default function Sidebar({
         },
         {
           id: 'stock_restock',
-          title: 'স্টক ইনপুট (রিস্টক)',
-          subTitle: 'মজুত সংখ্যা ও কেনা দাম বৃদ্ধি',
+          title: 'গোডাউন রিস্টক / লট বৃদ্ধি',
+          subTitle: 'নতুন লট আগমন ও কেনা দাম বৃদ্ধি',
           icon: PlusCircle,
           iconGradient: 'from-emerald-500 to-green-600 text-white shadow-emerald-500/25',
           isActive: currentView === 'stock_restock',
@@ -247,15 +349,14 @@ export default function Sidebar({
           badge: null
         },
         {
-          id: 'low_stock_alerts',
-          title: 'কম স্টক সতর্কতা',
-          subTitle: 'জরুরি রিস্টক প্রয়োজন',
-          icon: AlertTriangle,
-          iconGradient: lowStockCount > 0 ? 'from-rose-500 to-red-600 text-white shadow-rose-500/30' : 'from-slate-400 to-slate-600 text-white',
-          isAlertItem: lowStockCount > 0,
-          isActive: currentView === 'low_stock',
-          onClick: () => onNavigate ? onNavigate('low_stock') : onOpenLowStockModal && onOpenLowStockModal(),
-          badge: lowStockCount > 0 ? { text: `${lowStockCount}টি`, color: 'bg-rose-600 text-white animate-pulse shadow-xs' } : null
+          id: 'fabric_wastage',
+          title: 'কাপড়ের ছাঁট ও ড্যামেজ হিসাব',
+          subTitle: 'থানের টুকরা ও ক্ষতি ট্র্যাকার',
+          icon: Layers,
+          iconGradient: 'from-rose-500 to-pink-600 text-white shadow-rose-500/25',
+          isActive: currentView === 'fabric_wastage',
+          onClick: () => onNavigate ? onNavigate('fabric_wastage') : onOpenFabricWastageModal && onOpenFabricWastageModal(),
+          badge: null
         },
         {
           id: 'expiry_alerts',
@@ -269,16 +370,6 @@ export default function Sidebar({
           badge: expiringProductsCount > 0 ? { text: `${expiringProductsCount}টি`, color: 'bg-rose-600 text-white animate-pulse shadow-xs' } : null
         },
         {
-          id: 'stock_transfers',
-          title: 'গোডাউন ও দোকান স্টক',
-          subTitle: 'মজুত, চালান ও কমার খাতা',
-          icon: ArrowRightLeft,
-          iconGradient: transfersInTransitCount > 0 ? 'from-teal-500 to-emerald-600 text-white shadow-teal-500/25' : 'from-slate-400 to-slate-600 text-white',
-          isActive: currentView === 'stock_transfers',
-          onClick: () => onNavigate ? onNavigate('stock_transfers') : onOpenStockTransferModal && onOpenStockTransferModal(),
-          badge: transfersInTransitCount > 0 ? { text: `${transfersInTransitCount}টি পথে`, color: 'bg-teal-600 text-white animate-pulse shadow-xs' } : null
-        },
-        {
           id: 'barcode_print',
           title: 'বারকোড ও প্রাইস ট্যাগ',
           subTitle: 'থার্মাল স্টিকার প্রিন্টার',
@@ -286,16 +377,6 @@ export default function Sidebar({
           iconGradient: 'from-indigo-500 to-blue-600 text-white shadow-indigo-500/25',
           isActive: currentView === 'barcode_print',
           onClick: () => onNavigate ? onNavigate('barcode_print') : onOpenBarcodeModal && onOpenBarcodeModal(),
-          badge: null
-        },
-        {
-          id: 'fabric_wastage',
-          title: 'কাপড়ের ছাঁট ও ড্যামেজ হিসাব',
-          subTitle: 'থানের টুকরা ও ক্ষতি ট্র্যাকার',
-          icon: Layers,
-          iconGradient: 'from-rose-500 to-pink-600 text-white shadow-rose-500/25',
-          isActive: currentView === 'fabric_wastage',
-          onClick: () => onNavigate ? onNavigate('fabric_wastage') : onOpenFabricWastageModal && onOpenFabricWastageModal(),
           badge: null
         }
       ]
@@ -526,7 +607,21 @@ export default function Sidebar({
     expensesCount,
     currencySymbol,
     activeUser,
-    onOpenBackupModal
+    onOpenBackupModal,
+    onNavigate,
+    onOpenStockTransferModal,
+    onOpenShopStockModal,
+    onOpenShopOutflowModal,
+    onOpenShopChallansModal,
+    onOpenGodownStockModal,
+    onOpenGodownOutflowModal,
+    onOpenGodownTransferModal,
+    onOpenProductModal,
+    onOpenStockModal,
+    onOpenFabricWastageModal,
+    onOpenBarcodeModal,
+    onOpenExpiryAlertModal,
+    onOpenLowStockModal
   ]);
 
   return (
