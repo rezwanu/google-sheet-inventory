@@ -32,7 +32,10 @@ import {
   Palette,
   ChevronDown,
   ChevronUp,
-  ChevronRight
+  ChevronRight,
+  PlusCircle,
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import {
   exportGodownOutflowExcelCSV,
@@ -58,7 +61,8 @@ export default function StockTransferModal({
   initialTab = 'overview',
   initialTransferSubTab = 'new',
   initialFilter = 'ALL',
-  onDeleteProduct
+  onDeleteProduct,
+  onUpdateProductVariants
 }) {
   // প্রধান ট্যাব নেভিগেশন: 'overview' | 'transfers' | 'godown_outflow' | 'shop_outflow'
   const [activeMainTab, setActiveMainTab] = useState(() => {
@@ -110,7 +114,7 @@ export default function StockTransferModal({
   const [stockViewMode, setStockViewMode] = useState('grouped'); // 'grouped' | 'variants'
   const [expandedProductIds, setExpandedProductIds] = useState({});
 
-  // পণ্য থেকে ভ্যারিয়েন্ট তালিকা নিরাপদ এক্সট্র্যাক্ট
+  // পণ্য থেকে ভ্যারিয়েন্ট তালিকা নিরাপদ এক্সট্র্যাক্ট ও স্টক ফিল্ড স্বাভাবিকীকরণ
   const getVariantsOfProduct = (p) => {
     if (!p) return [];
     let vars = p.Variants || p.variants;
@@ -120,7 +124,16 @@ export default function StockTransferModal({
     if ((!vars || !vars.length) && p.VariantsJSON) {
       try { vars = JSON.parse(p.VariantsJSON); } catch { vars = []; }
     }
-    return Array.isArray(vars) ? vars : [];
+    if (!Array.isArray(vars)) return [];
+    return vars.map((v) => {
+      const gStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.StockQuantity !== undefined ? v.StockQuantity : 0)) || 0;
+      const sStock = Number(v.GodownStock !== undefined ? (v.StockQuantity !== undefined ? v.StockQuantity : 0) : 0) || 0;
+      return {
+        ...v,
+        GodownStock: gStock,
+        StockQuantity: sStock
+      };
+    });
   };
 
   const toggleExpandProduct = (prodId) => {
@@ -178,6 +191,10 @@ export default function StockTransferModal({
   const [adjustQty, setAdjustQty] = useState(1);
   const [adjustReason, setAdjustReason] = useState('নতুন লট গোডাউনে আগমন');
   const [adjustNotes, setAdjustNotes] = useState('');
+
+  // ভ্যারিয়েন্ট লেভেল রিস্টক ও স্টক সমন্বয় সাব-মডাল স্টেট
+  const [variantRestockModal, setVariantRestockModal] = useState(null);
+  const [isSubmittingVariantRestock, setIsSubmittingVariantRestock] = useState(false);
 
   // =========================================================================
   // পরিগণিত মেট্রিক্স ও ফিল্টারসমূহ
@@ -289,12 +306,13 @@ export default function StockTransferModal({
       const yardsPerThan = Number(p.YardsPerThan) || 0;
 
       if (vars.length > 0) {
-        vars.forEach((v) => {
+        vars.forEach((v, vIdx) => {
           const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
           const vSStock = Number(v.StockQuantity) || 0;
           list.push({
             parentProduct: p,
             variant: v,
+            variantIndex: vIdx,
             isVariant: true,
             productId: p.ProductID,
             productName: p.ProductName,
@@ -671,6 +689,174 @@ export default function StockTransferModal({
     setAdjustTargetProduct(null);
     setAdjustQty(1);
     setAdjustNotes('');
+  };
+
+  // =========================================================================
+  // ৪.১ ভ্যারিয়েন্ট লেভেল রিস্টক, লট বৃদ্ধি, অপসারন ও যোগফল সমন্বয় হ্যান্ডলারসমূহ
+  // =========================================================================
+
+  // ভ্যারিয়েন্ট রিস্টক মডাল ওপেন
+  const handleOpenVariantRestock = (product, variant, variantIdx, defaultLocation = 'Godown') => {
+    setVariantRestockModal({
+      product,
+      variant,
+      variantIdx,
+      location: defaultLocation, // 'Godown' | 'Shop'
+      action: 'ADD', // 'ADD' | 'DEDUCT' | 'SET'
+      quantity: 1,
+      reason: defaultLocation === 'Godown' ? 'নতুন লট গোডাউনে আগমন' : 'দোকান সেলফ বৃদ্ধি / সমন্বয়',
+      notes: ''
+    });
+  };
+
+  // ভ্যারিয়েন্ট রিস্টক / লট বৃদ্ধি ও সমন্বয় সাবমিট
+  const handleSaveVariantRestockSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!variantRestockModal || !onUpdateProductVariants) return;
+    const { product, variantIdx, location, action, quantity, reason, notes } = variantRestockModal;
+    const qty = Number(quantity);
+    if (isNaN(qty) || qty < 0 || (qty === 0 && action !== 'SET')) {
+      alert('সঠিক পরিমাণ উল্লেখ করুন।');
+      return;
+    }
+
+    const currentVariants = getVariantsOfProduct(product);
+    if (variantIdx < 0 || variantIdx >= currentVariants.length) return;
+
+    const targetVar = currentVariants[variantIdx];
+    const prevGStock = Number(targetVar.GodownStock || 0);
+    const prevSStock = Number(targetVar.StockQuantity || 0);
+
+    let newGStock = prevGStock;
+    let newSStock = prevSStock;
+
+    if (location === 'Godown') {
+      if (action === 'ADD') newGStock = prevGStock + qty;
+      else if (action === 'DEDUCT') newGStock = Math.max(0, prevGStock - qty);
+      else if (action === 'SET') newGStock = qty;
+    } else {
+      if (action === 'ADD') newSStock = prevSStock + qty;
+      else if (action === 'DEDUCT') newSStock = Math.max(0, prevSStock - qty);
+      else if (action === 'SET') newSStock = qty;
+    }
+
+    const updatedVariants = currentVariants.map((v, i) => {
+      if (i === variantIdx) {
+        return {
+          ...v,
+          GodownStock: newGStock,
+          StockQuantity: newSStock
+        };
+      }
+      return v;
+    });
+
+    setIsSubmittingVariantRestock(true);
+    try {
+      const varLabel = targetVar.Color ? `রং: ${targetVar.Color}` : targetVar.Size ? `সাইজ: ${targetVar.Size}` : (targetVar.VariantID || `#${variantIdx + 1}`);
+      await onUpdateProductVariants(product.ProductID, updatedVariants, {
+        location,
+        type: action === 'ADD' ? 'RESTOCK' : action === 'DEDUCT' ? 'OUTFLOW' : 'ADJUSTMENT',
+        variantName: varLabel,
+        qty: action === 'SET' ? Math.abs(newGStock - prevGStock) : qty,
+        prevStock: location === 'Godown' ? prevGStock : prevSStock,
+        newStock: location === 'Godown' ? newGStock : newSStock,
+        reason: reason || `ভ্যারিয়েন্ট রিস্টক (${varLabel})`,
+        notes: notes || `ভ্যারিয়েন্ট স্টক সমন্বয়: ${action} ${qty}`
+      });
+      setVariantRestockModal(null);
+    } catch (err) {
+      alert(`স্টক সংরক্ষণ করতে সমস্যা হয়েছে: ${err.message}`);
+    } finally {
+      setIsSubmittingVariantRestock(false);
+    }
+  };
+
+  // নির্দিষ্ট ভ্যারিয়েন্ট স্থায়ীভাবে অপসারণ (Remove Variant)
+  const handleRemoveVariant = async (product, variant, variantIdx) => {
+    if (!onUpdateProductVariants) return;
+    const varLabel = variant.Color ? `রং: ${variant.Color}` : variant.Size ? `সাইজ: ${variant.Size}` : (variant.VariantID || `#${variantIdx + 1}`);
+    const confirmMsg = `আপনি কি নিশ্চিত যে '${product.ProductName}' পণ্যের ভ্যারিয়েন্ট (${varLabel}) স্থায়ীভাবে মুছে ফেলতে চান?\n\nএটি মুছে ফেললে মোট স্টক স্বয়ংক্রিয়ভাবে পুনর্গণনা হয়ে ডাটাবেসে সেভ হবে।`;
+    if (!window.confirm(confirmMsg)) return;
+
+    const currentVariants = getVariantsOfProduct(product);
+    const updatedVariants = currentVariants.filter((_, i) => i !== variantIdx);
+
+    try {
+      await onUpdateProductVariants(product.ProductID, updatedVariants, {
+        location: 'Godown',
+        type: 'ADJUSTMENT',
+        variantName: varLabel,
+        qty: Number(variant.GodownStock || 0) + Number(variant.StockQuantity || 0),
+        prevStock: Number(variant.GodownStock || 0),
+        newStock: 0,
+        reason: `ভ্যারিয়েন্ট অপসারণ (${varLabel})`,
+        notes: 'ভ্যারিয়েন্ট মুছে ফেলা হয়েছে'
+      });
+    } catch (err) {
+      alert(`ভ্যারিয়েন্ট মুছে ফেলতে সমস্যা হয়েছে: ${err.message}`);
+    }
+  };
+
+  // মূল গোডাউন ও দোকান স্টক ভ্যারিয়েন্টে সমান বণ্টন
+  const handleDistributeParentStockToVariants = async (product) => {
+    if (!onUpdateProductVariants) return;
+    const currentVariants = getVariantsOfProduct(product);
+    if (currentVariants.length === 0) return;
+
+    const parentGodown = Number(product.GodownStock || 0);
+    const parentShop = Number(product.StockQuantity || 0);
+
+    const confirmMsg = `পণ্য '${product.ProductName}' এর মূল গোডাউন স্টক (${parentGodown}) এবং দোকান স্টক (${parentShop}) মোট ${currentVariants.length}টি ভ্যারিয়েন্টে সমানভাবে বণ্টন করতে চান?\n\nগোডাউন প্রতি ভ্যারিয়েন্টে: ${(parentGodown / currentVariants.length).toFixed(1)}\nদোকান প্রতি ভ্যারিয়েন্টে: ${(parentShop / currentVariants.length).toFixed(1)}\n\nএটি ডাটাবেস এবং ফ্রন্টএন্ডে অবিলম্বে সেভ হবে।`;
+    if (!window.confirm(confirmMsg)) return;
+
+    const count = currentVariants.length;
+    const baseG = Math.floor(parentGodown / count);
+    const remG = parentGodown % count;
+
+    const baseS = Math.floor(parentShop / count);
+    const remS = parentShop % count;
+
+    const updatedVariants = currentVariants.map((v, i) => ({
+      ...v,
+      GodownStock: baseG + (i < remG ? 1 : 0),
+      StockQuantity: baseS + (i < remS ? 1 : 0)
+    }));
+
+    await onUpdateProductVariants(product.ProductID, updatedVariants, {
+      location: 'Godown',
+      type: 'ADJUSTMENT',
+      variantName: 'সকল ভ্যারিয়েন্ট',
+      qty: parentGodown,
+      prevStock: 0,
+      newStock: parentGodown,
+      reason: 'মূল স্টক ভ্যারিয়েন্টে সমান বণ্টন',
+      notes: `গোডাউন ${parentGodown} ও দোকান ${parentShop} সমান বণ্টন`
+    });
+  };
+
+  // ভ্যারিয়েন্টগুলোর যোগফল দিয়ে মূল স্টক সিঙ্ক
+  const handleSyncParentFromVariants = async (product) => {
+    if (!onUpdateProductVariants) return;
+    const currentVariants = getVariantsOfProduct(product);
+    if (currentVariants.length === 0) return;
+
+    const sumG = currentVariants.reduce((sum, v) => sum + (Number(v.GodownStock || 0)), 0);
+    const sumS = currentVariants.reduce((sum, v) => sum + (Number(v.StockQuantity || 0)), 0);
+
+    const confirmMsg = `ভ্যারিয়েন্টগুলোর বর্তমান যোগফল অনুযায়ী পণ্যের মূল স্টক নির্ধারণ করতে চান?\n\nনূতন গোডাউন স্টক হবে: ${sumG}\nনূতন দোকান স্টক হবে: ${sumS}\n\nএটি ডাটাবেসে সেভ হবে ও ফ্রন্টএন্ড সিঙ্ক হবে।`;
+    if (!window.confirm(confirmMsg)) return;
+
+    await onUpdateProductVariants(product.ProductID, currentVariants, {
+      location: 'Godown',
+      type: 'ADJUSTMENT',
+      variantName: 'সকল ভ্যারিয়েন্ট',
+      qty: sumG,
+      prevStock: Number(product.GodownStock || 0),
+      newStock: sumG,
+      reason: 'ভ্যারিয়েন্ট যোগফল দিয়ে মূল স্টক সিঙ্ক',
+      notes: 'ভ্যারিয়েন্ট অনুযায়ী মোট স্টক সিঙ্ক'
+    });
   };
 
   if (!isOpen && !embedded) return null;
@@ -1254,120 +1440,194 @@ export default function StockTransferModal({
                                   {hasVars && isExpanded && (
                                     <tr className="bg-slate-50/90 border-y border-indigo-100">
                                       <td colSpan="8" className="p-3 pl-8 sm:pl-12">
-                                        <div className="bg-white rounded-xl border border-indigo-100 overflow-hidden shadow-xs">
-                                          <div className="px-3 py-2 bg-indigo-50/60 border-b border-indigo-100 flex items-center justify-between">
-                                            <span className="text-[11px] font-bold text-indigo-900 flex items-center space-x-1.5">
-                                              <Palette className="w-3.5 h-3.5 text-indigo-600" />
-                                              <span>{p.ProductName} — ভ্যারিয়েন্ট অনুযায়ী আলাদা মজুত</span>
-                                            </span>
-                                            <span className="text-[10px] text-indigo-700 font-semibold">
-                                              মোট {vars.length}টি ভ্যারিয়েন্ট
-                                            </span>
-                                          </div>
-                                          <table className="w-full text-xs text-left">
-                                            <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-100">
-                                              <tr>
-                                                <th className="py-2 px-3">ভ্যারিয়েন্ট বিবরণ (রং / সাইজ)</th>
-                                                <th className="py-2 px-3">বারকোড</th>
-                                                <th className="py-2 px-3 text-center bg-indigo-50/40 text-indigo-900">🏭 গোডাউন স্টক</th>
-                                                <th className="py-2 px-3 text-center bg-emerald-50/40 text-emerald-900">🏬 দোকান স্টক</th>
-                                                <th className="py-2 px-3 text-center">📦 মোট</th>
-                                                <th className="py-2 px-3 text-center">অবস্থা</th>
-                                                <th className="py-2 px-3 text-right">নির্দিষ্ট চালান</th>
-                                              </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                              {vars.map((v, vIdx) => {
-                                                const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
-                                                const vSStock = Number(v.StockQuantity) || 0;
-                                                const vTotal = vGStock + vSStock;
-                                                const vColor = v.Attributes?.Color || v.Color || '';
-                                                const vSize = v.Attributes?.Size || v.Size || '';
-                                                const isVZero = vSStock <= 0;
-                                                const isVLow = vSStock <= 2;
+                                        {(() => {
+                                          const sumVarGodown = vars.reduce((s, item) => s + (Number(item.GodownStock) || 0), 0);
+                                          const sumVarShop = vars.reduce((s, item) => s + (Number(item.StockQuantity) || 0), 0);
+                                          const pGodown = Number(p.GodownStock) || 0;
+                                          const pShop = Number(p.StockQuantity) || 0;
+                                          const isMismatch = (sumVarGodown !== pGodown) || (sumVarShop !== pShop);
 
-                                                return (
-                                                  <tr key={v.VariantID || vIdx} className="hover:bg-indigo-50/20">
-                                                    <td className="py-2 px-3">
-                                                      <div className="flex items-center space-x-1.5">
-                                                        {vColor && (
-                                                          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-200">
-                                                            রং: {vColor}
-                                                          </span>
-                                                        )}
-                                                        {vSize && (
-                                                          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                                            সাইজ: {vSize}
-                                                          </span>
-                                                        )}
-                                                        {v.Attributes && Object.entries(v.Attributes).map(([key, val]) => {
-                                                          if (key === 'Color' || key === 'Size') return null;
-                                                          return (
-                                                            <span key={key} className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600">
-                                                              {key}: {val}
-                                                            </span>
-                                                          );
-                                                        })}
-                                                      </div>
-                                                    </td>
-                                                    <td className="py-2 px-3 font-mono text-[10.5px] text-slate-500">
-                                                      {v.Barcode || p.Barcode || '—'}
-                                                    </td>
-                                                    <td className="py-2 px-3 text-center bg-indigo-50/20">
-                                                      <span className="font-mono font-bold text-indigo-700">
-                                                        {vGStock} {isThan ? 'থান' : (p.Unit || 'Pcs')}
-                                                      </span>
-                                                      {isThan && yardsPerThan > 0 && (
-                                                        <div className="text-[9.5px] text-indigo-500 font-semibold">
-                                                          ({vGStock * yardsPerThan} গজ)
-                                                        </div>
+                                          return (
+                                            <div className="bg-white rounded-xl border border-indigo-100 overflow-hidden shadow-xs">
+                                              <div className="px-3 py-2 bg-indigo-50/60 border-b border-indigo-100 flex flex-wrap items-center justify-between gap-2">
+                                                <div className="flex items-center space-x-1.5">
+                                                  <Palette className="w-3.5 h-3.5 text-indigo-600" />
+                                                  <span className="text-[11px] font-bold text-indigo-900">{p.ProductName} — ভ্যারিয়েন্ট অনুযায়ী আলাদা মজুত</span>
+                                                  <span className="text-[10px] text-indigo-700 font-semibold ml-2">
+                                                    (মোট {vars.length}টি ভ্যারিয়েন্ট)
+                                                  </span>
+                                                </div>
+                                                <div className="flex items-center space-x-2 text-[10.5px]">
+                                                  <span className="px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 font-semibold">
+                                                    ভ্যারিয়েন্ট গোডাউন মোট: <strong className="font-mono">{sumVarGodown}</strong> {isThan ? 'থান' : (p.Unit || 'Pcs')}
+                                                  </span>
+                                                  <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold">
+                                                    ভ্যারিয়েন্ট দোকান মোট: <strong className="font-mono">{sumVarShop}</strong> {isThan ? 'থান' : (p.Unit || 'Pcs')}
+                                                  </span>
+                                                </div>
+                                              </div>
+
+                                              {/* গরমিল নোটিশ ও ১-ক্লিক সমাধান বাটন */}
+                                              {isMismatch && (
+                                                <div className="px-3 py-2 bg-amber-50/95 border-b border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                                                  <div className="flex items-center space-x-2 text-amber-900">
+                                                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                                                    <div>
+                                                      <span className="font-bold">স্টক অমিল রয়েছে:</span>{' '}
+                                                      <span>মূল গোডাউন: <strong className="font-mono text-indigo-950">{pGodown}</strong> vs ভ্যারিয়েন্ট গোডাউন: <strong className="font-mono text-indigo-700">{sumVarGodown}</strong></span>
+                                                      {pShop !== sumVarShop && (
+                                                        <span className="ml-2 font-medium">| মূল দোকান: <strong className="font-mono text-emerald-950">{pShop}</strong> vs ভ্যারিয়েন্ট দোকান: <strong className="font-mono text-emerald-700">{sumVarShop}</strong></span>
                                                       )}
-                                                    </td>
-                                                    <td className="py-2 px-3 text-center bg-emerald-50/20">
-                                                      <span className={`font-mono font-bold ${isVZero ? 'text-rose-600' : isVLow ? 'text-amber-600' : 'text-emerald-700'}`}>
-                                                        {vSStock} {isThan ? 'থান' : (p.Unit || 'Pcs')}
-                                                      </span>
-                                                      {isThan && yardsPerThan > 0 && (
-                                                        <div className="text-[9.5px] text-emerald-600 font-semibold">
-                                                          ({vSStock * yardsPerThan} গজ)
-                                                        </div>
-                                                      )}
-                                                    </td>
-                                                    <td className="py-2 px-3 text-center font-mono font-bold text-slate-800">
-                                                      {vTotal}
-                                                    </td>
-                                                    <td className="py-2 px-3 text-center">
-                                                      {isVZero && vGStock > 0 ? (
-                                                        <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-100 text-amber-800">
-                                                          দোকানে নেই
-                                                        </span>
-                                                      ) : isVZero && vGStock <= 0 ? (
-                                                        <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-rose-100 text-rose-700">
-                                                          শেষ
-                                                        </span>
-                                                      ) : (
-                                                        <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-100 text-emerald-800">
-                                                          উপলব্ধ
-                                                        </span>
-                                                      )}
-                                                    </td>
-                                                    <td className="py-2 px-3 text-right">
-                                                      <button
-                                                        type="button"
-                                                        onClick={() => handleInitiateQuickTransfer(p, v)}
-                                                        className="px-2 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer shadow-xs"
-                                                        title="এই নির্দিষ্ট ভ্যারিয়েন্ট গোডাউন থেকে দোকানে আনুন"
-                                                      >
-                                                        <Truck className="w-2.5 h-2.5" />
-                                                        <span>দোকানে আনুন</span>
-                                                      </button>
-                                                    </td>
+                                                    </div>
+                                                  </div>
+                                                  <div className="flex items-center space-x-1.5 shrink-0">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleDistributeParentStockToVariants(p)}
+                                                      className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 cursor-pointer shadow-xs transition-all"
+                                                      title="মূল গোডাউন স্টক সকল ভ্যারিয়েন্টে সমানভাবে বণ্টন করুন"
+                                                    >
+                                                      <Sparkles className="w-3 h-3" />
+                                                      <span>ভ্যারিয়েন্টে সমান বণ্টন</span>
+                                                    </button>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleSyncParentFromVariants(p)}
+                                                      className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 cursor-pointer shadow-xs transition-all"
+                                                      title="ভ্যারিয়েন্টগুলোর বর্তমান যোগফল দিয়ে মূল পণ্যের স্টক আপডেট করুন"
+                                                    >
+                                                      <RefreshCw className="w-3 h-3" />
+                                                      <span>যোগফল দিয়ে সিঙ্ক</span>
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                              )}
+
+                                              <table className="w-full text-xs text-left">
+                                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-100">
+                                                  <tr>
+                                                    <th className="py-2 px-3">ভ্যারিয়েন্ট বিবরণ (রং / সাইজ)</th>
+                                                    <th className="py-2 px-3">বারকোড</th>
+                                                    <th className="py-2 px-3 text-center bg-indigo-50/40 text-indigo-900">🏭 গোডাউন স্টক</th>
+                                                    <th className="py-2 px-3 text-center bg-emerald-50/40 text-emerald-900">🏬 দোকান স্টক</th>
+                                                    <th className="py-2 px-3 text-center">📦 মোট</th>
+                                                    <th className="py-2 px-3 text-center">অবস্থা</th>
+                                                    <th className="py-2 px-3 text-right">কার্যক্রম / অ্যাকশন</th>
                                                   </tr>
-                                                );
-                                              })}
-                                            </tbody>
-                                          </table>
-                                        </div>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                  {vars.map((v, vIdx) => {
+                                                    const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
+                                                    const vSStock = Number(v.StockQuantity) || 0;
+                                                    const vTotal = vGStock + vSStock;
+                                                    const vColor = v.Attributes?.Color || v.Color || '';
+                                                    const vSize = v.Attributes?.Size || v.Size || '';
+                                                    const isVZero = vSStock <= 0;
+                                                    const isVLow = vSStock <= 2;
+
+                                                    return (
+                                                      <tr key={v.VariantID || vIdx} className="hover:bg-indigo-50/20">
+                                                        <td className="py-2 px-3">
+                                                          <div className="flex items-center space-x-1.5">
+                                                            {vColor && (
+                                                              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                                                                রং: {vColor}
+                                                              </span>
+                                                            )}
+                                                            {vSize && (
+                                                              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                                সাইজ: {vSize}
+                                                              </span>
+                                                            )}
+                                                            {v.Attributes && Object.entries(v.Attributes).map(([key, val]) => {
+                                                              if (key === 'Color' || key === 'Size') return null;
+                                                              return (
+                                                                <span key={key} className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600">
+                                                                  {key}: {val}
+                                                                </span>
+                                                              );
+                                                            })}
+                                                          </div>
+                                                        </td>
+                                                        <td className="py-2 px-3 font-mono text-[10.5px] text-slate-500">
+                                                          {v.Barcode || p.Barcode || '—'}
+                                                        </td>
+                                                        <td className="py-2 px-3 text-center bg-indigo-50/20">
+                                                          <span className="font-mono font-bold text-indigo-700">
+                                                            {vGStock} {isThan ? 'থান' : (p.Unit || 'Pcs')}
+                                                          </span>
+                                                          {isThan && yardsPerThan > 0 && (
+                                                            <div className="text-[9.5px] text-indigo-500 font-semibold">
+                                                              ({vGStock * yardsPerThan} গজ)
+                                                            </div>
+                                                          )}
+                                                        </td>
+                                                        <td className="py-2 px-3 text-center bg-emerald-50/20">
+                                                          <span className={`font-mono font-bold ${isVZero ? 'text-rose-600' : isVLow ? 'text-amber-600' : 'text-emerald-700'}`}>
+                                                            {vSStock} {isThan ? 'থান' : (p.Unit || 'Pcs')}
+                                                          </span>
+                                                          {isThan && yardsPerThan > 0 && (
+                                                            <div className="text-[9.5px] text-emerald-600 font-semibold">
+                                                              ({vSStock * yardsPerThan} গজ)
+                                                            </div>
+                                                          )}
+                                                        </td>
+                                                        <td className="py-2 px-3 text-center font-mono font-bold text-slate-800">
+                                                          {vTotal}
+                                                        </td>
+                                                        <td className="py-2 px-3 text-center">
+                                                          {isVZero && vGStock > 0 ? (
+                                                            <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-100 text-amber-800">
+                                                              দোকানে নেই
+                                                            </span>
+                                                          ) : isVZero && vGStock <= 0 ? (
+                                                            <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-rose-100 text-rose-700">
+                                                              শেষ
+                                                            </span>
+                                                          ) : (
+                                                            <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-100 text-emerald-800">
+                                                              উপলব্ধ
+                                                            </span>
+                                                          )}
+                                                        </td>
+                                                        <td className="py-2 px-3 text-right">
+                                                          <div className="flex items-center justify-end space-x-1">
+                                                            <button
+                                                              type="button"
+                                                              onClick={() => handleInitiateQuickTransfer(p, v)}
+                                                              className="px-2 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[10px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer shadow-xs"
+                                                              title="এই নির্দিষ্ট ভ্যারিয়েন্ট গোডাউন থেকে দোকানে আনুন"
+                                                            >
+                                                              <Truck className="w-2.5 h-2.5" />
+                                                              <span>দোকানে আনুন</span>
+                                                            </button>
+                                                            <button
+                                                              type="button"
+                                                              onClick={() => handleOpenVariantRestock(p, v, vIdx, 'Godown')}
+                                                              className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-[10px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                              title="এই ভ্যারিয়েন্টে রিস্টক বা স্টক সমন্বয় করুন"
+                                                            >
+                                                              <PlusCircle className="w-2.5 h-2.5" />
+                                                              <span>রিস্টক</span>
+                                                            </button>
+                                                            <button
+                                                              type="button"
+                                                              onClick={() => handleRemoveVariant(p, v, vIdx)}
+                                                              className="p-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded text-xs transition-all cursor-pointer"
+                                                              title="এই ভ্যারিয়েন্টটি স্থায়ীভাবে মুছে ফেলুন"
+                                                            >
+                                                              <Trash2 className="w-3 h-3" />
+                                                            </button>
+                                                          </div>
+                                                        </td>
+                                                      </tr>
+                                                    );
+                                                  })}
+                                                </tbody>
+                                              </table>
+                                            </div>
+                                          );
+                                        })()}
                                       </td>
                                     </tr>
                                   )}
@@ -1486,19 +1746,41 @@ export default function StockTransferModal({
                                         <Truck className="w-3 h-3" />
                                         <span>দোকানে আনুন</span>
                                       </button>
-                                      {onDeleteProduct && (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            if (window.confirm(`আপনি কি নিশ্চিত যে '${item.productName}' পণ্যটি ফ্রন্টএন্ড ও গুগল শিট ডাটাবেস থেকে স্থায়ীভাবে মুছে ফেলতে চান?\n\nমুছে ফেলার পর এটি উভয় স্থান থেকে মুছে যাবে এবং স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।`)) {
-                                              onDeleteProduct(item.productId);
-                                            }
-                                          }}
-                                          className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
-                                          title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
-                                        >
-                                          <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
+                                      {item.isVariant ? (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleOpenVariantRestock(item.parentProduct, item.variant, item.variantIndex, 'Godown')}
+                                            className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                            title="এই ভ্যারিয়েন্টে রিস্টক বা স্টক সমন্বয় করুন"
+                                          >
+                                            <PlusCircle className="w-3 h-3" />
+                                            <span>রিস্টক</span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRemoveVariant(item.parentProduct, item.variant, item.variantIndex)}
+                                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
+                                            title="এই ভ্যারিয়েন্টটি মুছে ফেলুন (Delete Variant)"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        </>
+                                      ) : (
+                                        onDeleteProduct && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              if (window.confirm(`আপনি কি নিশ্চিত যে '${item.productName}' পণ্যটি ফ্রন্টএন্ড ও গুগল শিট ডাটাবেস থেকে স্থায়ীভাবে মুছে ফেলতে চান?\n\nমুছে ফেলার পর এটি উভয় স্থান থেকে মুছে যাবে এবং স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।`)) {
+                                                onDeleteProduct(item.productId);
+                                              }
+                                            }}
+                                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
+                                            title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        )
                                       )}
                                     </div>
                                   </td>
@@ -2344,6 +2626,236 @@ export default function StockTransferModal({
             </div>
           </div>
         )}
+
+        {/* =============================================================== */}
+        {/* ৫. ভ্যারিয়েন্ট লেভেল রিস্টক ও সমন্বয় পপআপ মডাল */}
+        {/* =============================================================== */}
+        {variantRestockModal && (() => {
+          const prod = variantRestockModal.product;
+          const targetV = variantRestockModal.variant;
+          const isProdThan = Boolean(prod?.TotalThan || prod?.YardsPerThan || /than|থান/i.test(prod?.Unit || ''));
+          const prodYardsPerThan = Number(prod?.YardsPerThan) || 0;
+          const varLabel = targetV.Color ? `রং: ${targetV.Color}` : targetV.Size ? `সাইজ: ${targetV.Size}` : (targetV.VariantID || `#${variantRestockModal.variantIdx + 1}`);
+
+          return (
+            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+              <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
+                
+                {/* হেডার */}
+                <div className="px-5 py-4 bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-950 text-white flex items-center justify-between">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="p-2 bg-indigo-500/20 rounded-xl border border-indigo-400/30">
+                      <PlusCircle className="w-5 h-5 text-indigo-300" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">ভ্যারিয়েন্ট রিস্টক ও স্টক সমন্বয়</h3>
+                      <p className="text-[11px] text-indigo-200">
+                        {prod.ProductName} — <span className="font-semibold">{varLabel}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setVariantRestockModal(null)}
+                    className="text-indigo-300 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* ফর্ম কন্টেন্ট */}
+                <form onSubmit={handleSaveVariantRestockSubmit} className="p-5 space-y-4">
+                  
+                  {/* বর্তমান স্টক কার্ড */}
+                  <div className="p-3 bg-indigo-50/60 rounded-xl border border-indigo-100 flex items-center justify-between">
+                    <div className="text-center flex-1 border-r border-indigo-200/60">
+                      <span className="text-[10.5px] font-semibold text-slate-500 block">🏭 বর্তমান গোডাউন</span>
+                      <span className="text-sm font-black text-indigo-950 font-mono">
+                        {targetV.GodownStock || 0} {isProdThan ? 'থান' : (prod.Unit || 'Pcs')}
+                      </span>
+                      {isProdThan && prodYardsPerThan > 0 && (
+                        <span className="text-[9.5px] text-indigo-600 block font-semibold">
+                          ({(targetV.GodownStock || 0) * prodYardsPerThan} গজ)
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-center flex-1">
+                      <span className="text-[10.5px] font-semibold text-slate-500 block">🏬 বর্তমান দোকান</span>
+                      <span className="text-sm font-black text-emerald-950 font-mono">
+                        {targetV.StockQuantity || 0} {isProdThan ? 'থান' : (prod.Unit || 'Pcs')}
+                      </span>
+                      {isProdThan && prodYardsPerThan > 0 && (
+                        <span className="text-[9.5px] text-emerald-600 block font-semibold">
+                          ({(targetV.StockQuantity || 0) * prodYardsPerThan} গজ)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* অবস্থান বাছাই (গোডাউন নাকি দোকান) */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5">কোন অবস্থানে স্টক পরিবর্তন করবেন?</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setVariantRestockModal(prev => ({
+                          ...prev,
+                          location: 'Godown',
+                          reason: 'নতুন লট গোডাউনে আগমন'
+                        }))}
+                        className={`py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 border transition-all cursor-pointer ${
+                          variantRestockModal.location === 'Godown'
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        <Warehouse className="w-4 h-4" />
+                        <span>🏭 গোডাউন</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVariantRestockModal(prev => ({
+                          ...prev,
+                          location: 'Shop',
+                          reason: 'দোকান সেলফ বৃদ্ধি / সমন্বয়'
+                        }))}
+                        className={`py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 border transition-all cursor-pointer ${
+                          variantRestockModal.location === 'Shop'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        <Store className="w-4 h-4" />
+                        <span>🏬 দোকান</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* অ্যাকশন টাইপ (ADD, DEDUCT, SET) */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5">সমন্বয়ের ধরন</label>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setVariantRestockModal(prev => ({ ...prev, action: 'ADD' }))}
+                        className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
+                          variantRestockModal.action === 'ADD'
+                            ? 'bg-indigo-100 text-indigo-900 border-indigo-300'
+                            : 'bg-slate-50 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        ➕ যোগ (রিস্টক)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVariantRestockModal(prev => ({ ...prev, action: 'DEDUCT' }))}
+                        className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
+                          variantRestockModal.action === 'DEDUCT'
+                            ? 'bg-rose-100 text-rose-900 border-rose-300'
+                            : 'bg-slate-50 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        ➖ বিয়োগ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVariantRestockModal(prev => ({ ...prev, action: 'SET' }))}
+                        className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
+                          variantRestockModal.action === 'SET'
+                            ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                            : 'bg-slate-50 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        ✏️ সরাসরি সেট
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* পরিমাণ ইনপুট ও লাইভ গজ প্রিভিউ */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                      {variantRestockModal.action === 'SET' ? 'নতুন নির্ধারিত স্টক সংখ্যা' : 'সমন্বয়ের পরিমাণ / রিস্টক সংখ্যা'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        required
+                        value={variantRestockModal.quantity}
+                        onChange={(e) => setVariantRestockModal(prev => ({ ...prev, quantity: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm font-black font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                        placeholder="0"
+                      />
+                      <span className="absolute right-3 top-2.5 text-xs font-bold text-slate-400">
+                        {isProdThan ? 'থান' : (prod.Unit || 'Pcs')}
+                      </span>
+                    </div>
+                    {isProdThan && prodYardsPerThan > 0 && (
+                      <div className="mt-1.5 px-3 py-1.5 bg-indigo-50/50 rounded-lg border border-indigo-100 flex items-center justify-between text-xs text-indigo-900 font-semibold">
+                        <span>মোট গজ হিসাব ({prodYardsPerThan} গজ/থান):</span>
+                        <span className="font-bold font-mono">
+                          {(Number(variantRestockModal.quantity) || 0) * prodYardsPerThan} গজ
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* পরিবর্তনের কারণ */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5">পরিবর্তনের কারণ</label>
+                    <input
+                      type="text"
+                      value={variantRestockModal.reason}
+                      onChange={(e) => setVariantRestockModal(prev => ({ ...prev, reason: e.target.value }))}
+                      className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl"
+                      placeholder="যেমন: নতুন লট আগমন, গণনা ভুল সংশোধন..."
+                    />
+                  </div>
+
+                  {/* মন্তব্য (ঐচ্ছিক) */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5">মন্তব্য (ঐচ্ছিক)</label>
+                    <input
+                      type="text"
+                      value={variantRestockModal.notes}
+                      onChange={(e) => setVariantRestockModal(prev => ({ ...prev, notes: e.target.value }))}
+                      className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl"
+                      placeholder="চালান নম্বর বা অতিরিক্ত বিবরণ..."
+                    />
+                  </div>
+
+                  {/* অ্যাকশন বাটনসমূহ */}
+                  <div className="flex items-center space-x-2 pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSubmittingVariantRestock}
+                      className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-sm cursor-pointer transition-all flex items-center justify-center space-x-1.5"
+                    >
+                      {isSubmittingVariantRestock ? (
+                        <span>সংরক্ষণ ও সিঙ্ক হচ্ছে...</span>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>সংরক্ষণ ও ডাটাবেস সিঙ্ক</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSubmittingVariantRestock}
+                      onClick={() => setVariantRestockModal(null)}
+                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer"
+                    >
+                      বাতিল
+                    </button>
+                  </div>
+
+                </form>
+              </div>
+            </div>
+          );
+        })()}
 
       </div>
     </div>

@@ -202,14 +202,15 @@ export default function AddProductModal({
           WholesalePrice: baseWholesale,
           MinSellingPrice: baseMinSell,
           SellingPrice: baseSell,
-          StockQuantity: 10
+          GodownStock: 10,
+          StockQuantity: 0
         });
       });
     }
 
     if (generated.length > 0) {
       setVariants(generated);
-      const sumStock = generated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+      const sumStock = generated.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0);
       setFormData((prev) => ({ 
         ...prev, 
         initialGodownStock: String(sumStock),
@@ -230,11 +231,12 @@ export default function AddProductModal({
       CostPrice: baseCost,
       WholesalePrice: baseWholesale,
       SellingPrice: baseSell,
-      StockQuantity: 10
+      GodownStock: 10,
+      StockQuantity: 0
     };
     const updated = [...variants, newV];
     setVariants(updated);
-    const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+    const sumStock = updated.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0);
     setFormData((prev) => ({ 
       ...prev, 
       initialGodownStock: String(sumStock),
@@ -246,8 +248,8 @@ export default function AddProductModal({
     const updated = [...variants];
     updated[idx] = { ...updated[idx], [field]: value };
     setVariants(updated);
-    if (field === 'StockQuantity') {
-      const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+    if (field === 'GodownStock' || field === 'StockQuantity') {
+      const sumStock = updated.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0);
       setFormData((prev) => ({ 
         ...prev, 
         initialGodownStock: String(sumStock),
@@ -259,7 +261,7 @@ export default function AddProductModal({
   const handleRemoveVariant = (idx) => {
     const updated = variants.filter((_, i) => i !== idx);
     setVariants(updated);
-    const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+    const sumStock = updated.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0);
     setFormData((prev) => ({ 
       ...prev, 
       initialGodownStock: String(sumStock),
@@ -285,9 +287,11 @@ export default function AddProductModal({
     let updated = [];
     if (existingIdx !== -1) {
       updated = [...variants];
+      const prevGodown = Number(updated[existingIdx].GodownStock !== undefined ? updated[existingIdx].GodownStock : updated[existingIdx].StockQuantity) || 0;
       updated[existingIdx] = {
         ...updated[existingIdx],
-        StockQuantity: (Number(updated[existingIdx].StockQuantity) || 0) + qty
+        GodownStock: prevGodown + qty,
+        StockQuantity: Number(updated[existingIdx].StockQuantity) || 0
       };
     } else {
       const varId = `VAR-${cleanName.replace(/\s+/g, '-').toUpperCase()}`;
@@ -299,14 +303,15 @@ export default function AddProductModal({
         WholesalePrice: baseWholesale,
         MinSellingPrice: baseMinSell,
         SellingPrice: baseSell,
-        StockQuantity: qty
+        GodownStock: qty,
+        StockQuantity: 0
       };
       updated = [...variants, newV];
     }
 
     setVariants(updated);
     setProductType('variable');
-    const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+    const sumStock = updated.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0);
     setFormData(prev => ({
       ...prev,
       initialGodownStock: String(sumStock),
@@ -318,9 +323,14 @@ export default function AddProductModal({
 
   const handleUpdateVariantStock = (idx, newStock) => {
     const updated = [...variants];
-    updated[idx] = { ...updated[idx], StockQuantity: Math.max(0, Number(newStock) || 0) };
+    const val = Math.max(0, Number(newStock) || 0);
+    updated[idx] = { 
+      ...updated[idx], 
+      GodownStock: val,
+      StockQuantity: Number(updated[idx].StockQuantity) || 0
+    };
     setVariants(updated);
-    const sumStock = updated.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0);
+    const sumStock = updated.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0);
     setFormData(prev => ({
       ...prev,
       initialGodownStock: String(sumStock),

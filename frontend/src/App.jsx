@@ -3895,6 +3895,111 @@ export default function App() {
     }
   };
 
+  // ৮.৬ ভ্যারিয়েন্ট লেভেল রিস্টক ও ডিলিট হ্যান্ডলার (Variant-wise Restock & Remove with Auto Sum & DB Sync)
+  const handleUpdateProductVariants = async (productId, updatedVariants, changeMeta = null) => {
+    const cleanId = String(productId || '').trim();
+    const targetProduct = products.find((p) => String(p.ProductID || '').trim() === cleanId);
+    if (!targetProduct) return false;
+
+    const safeVariants = Array.isArray(updatedVariants) ? updatedVariants : [];
+
+    // ১. ভ্যারিয়েন্টগুলোর যোগফল বের করা
+    const totalGodown = safeVariants.reduce(
+      (sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : (v.StockQuantity !== undefined ? v.StockQuantity : 0)) || 0), 0
+    );
+    const totalShop = safeVariants.reduce(
+      (sum, v) => sum + (Number(v.StockQuantity !== undefined ? v.StockQuantity : 0) || 0), 0
+    );
+    const totalAll = totalGodown + totalShop;
+    const isThan = Boolean(targetProduct.TotalThan || targetProduct.YardsPerThan || /than|থান/i.test(targetProduct.Unit || ''));
+    const yardsPerThan = Number(targetProduct.YardsPerThan) || 0;
+
+    const updatedProd = {
+      ...targetProduct,
+      HasVariants: safeVariants.length > 0,
+      Variants: safeVariants,
+      VariantsJSON: JSON.stringify(safeVariants),
+      GodownStock: totalGodown,
+      godownStock: totalGodown,
+      StockQuantity: totalShop,
+      CurrentStock: totalShop,
+      ShopStock: totalShop,
+      TotalStock: totalAll,
+      TotalThan: isThan ? totalAll : targetProduct.TotalThan,
+      ThanCount: isThan ? totalAll : targetProduct.ThanCount,
+      TotalGoj: isThan ? (totalAll * yardsPerThan) : targetProduct.TotalGoj,
+      TotalYards: isThan ? (totalAll * yardsPerThan) : targetProduct.TotalYards,
+      UpdatedAt: new Date().toISOString()
+    };
+
+    const nextProducts = products.map((p) => String(p.ProductID || '').trim() === cleanId ? updatedProd : p);
+    setProducts(nextProducts);
+    saveLocalProducts(nextProducts);
+
+    // ডিটেইলস মডাল ওপেন থাকলে রিফ্রেশ
+    if (selectedProductForDetails && String(selectedProductForDetails.ProductID || '').trim() === cleanId) {
+      setSelectedProductForDetails(updatedProd);
+    }
+
+    // মুভমেন্ট হিস্ট্রি লগ
+    if (changeMeta) {
+      try {
+        recordStockMovementLocally({
+          location: changeMeta.location || 'Godown',
+          type: changeMeta.type || 'ADJUSTMENT',
+          reasonBangla: changeMeta.reason || `ভ্যারিয়েন্ট আপডেট (${changeMeta.variantName || 'সকল'})`,
+          productId: targetProduct.ProductID,
+          productName: targetProduct.ProductName,
+          barcode: targetProduct.Barcode,
+          unit: targetProduct.Unit || 'Pcs',
+          quantity: Number(changeMeta.qty || 0),
+          previousStock: Number(changeMeta.prevStock || 0),
+          remainingStock: Number(changeMeta.newStock || 0),
+          operatorName: activeUser?.FullName || 'Admin',
+          notes: changeMeta.notes || 'ভ্যারিয়েন্ট স্টক সমন্বয়'
+        });
+      } catch (e) {
+        console.warn('Stock movement logging error:', e);
+      }
+    }
+
+    showToast(`'${targetProduct.ProductName}' পণ্যের ভ্যারিয়েন্ট স্টক সফলভাবে সংরক্ষিত হয়েছে!`, 'success');
+
+    // গুগল শিট ডাটাবেসে সেভ ও অটো সিঙ্ক
+    if (settings.apiUrl && settings.apiUrl.trim()) {
+      try {
+        const payload = {
+          productId: targetProduct.ProductID,
+          productName: targetProduct.ProductName,
+          barcode: targetProduct.Barcode,
+          category: targetProduct.Category,
+          costPrice: targetProduct.CostPrice,
+          sellingPrice: targetProduct.SellingPrice,
+          godownStock: totalGodown,
+          stockQuantity: totalShop,
+          totalStock: totalAll,
+          thanCount: isThan ? totalAll : targetProduct.ThanCount,
+          totalYards: isThan ? (totalAll * yardsPerThan) : targetProduct.TotalYards,
+          hasVariants: safeVariants.length > 0,
+          variants: safeVariants,
+          variantsJSON: JSON.stringify(safeVariants)
+        };
+        const response = await postUpdateProduct(settings.apiUrl, payload);
+        if (response && response.success) {
+          showToast('গুগল শিট ডাটাবেসে ভ্যারিয়েন্ট স্টক সিঙ্ক সম্পন্ন হয়েছে!', 'success');
+          setTimeout(() => {
+            handleSync(false);
+          }, 300);
+        } else {
+          showToast(`সতর্কবার্তা: ${response?.message || 'শিট সিঙ্ক ব্যর্থ'}`, 'warning');
+        }
+      } catch (err) {
+        showToast('অফলাইন মোড: লোকাল স্টোরেজে সেভ হয়েছে।', 'info');
+      }
+    }
+    return true;
+  };
+
   // ৯. সেটিংস আপডেট হ্যান্ডলার - সংরক্ষণ করেই অবিলম্বে গুগল শিটের সাথে ডাটা সিঙ্ক
   const handleSaveSettings = async (newSettings) => {
     setSettings(newSettings);
@@ -4239,6 +4344,7 @@ export default function App() {
               onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
               onAdjustLocationStock={handleAdjustLocationStock}
               onDeleteProduct={handleDeleteProduct}
+              onUpdateProductVariants={handleUpdateProductVariants}
               initialTab={
                 currentView === 'shop_stock'
                   ? 'shop_stock'
@@ -4983,6 +5089,7 @@ export default function App() {
         onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
         onAdjustLocationStock={handleAdjustLocationStock}
         onDeleteProduct={handleDeleteProduct}
+        onUpdateProductVariants={handleUpdateProductVariants}
         initialTab={stockTransferModalConfig.tab || 'overview'}
         initialTransferSubTab={stockTransferModalConfig.subTab || 'new'}
         initialFilter={stockTransferModalConfig.filter || 'ALL'}
