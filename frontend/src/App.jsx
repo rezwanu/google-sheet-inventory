@@ -1723,27 +1723,83 @@ export default function App() {
     return true;
   };
 
-  // ৫. নতুন স্টক সাবমিট হ্যান্ডলার (Cumulative Stock Input)
+  // ৫. নতুন স্টক সাবমিট হ্যান্ডলার (Cumulative Stock Input with Variant & Location Support)
   const handleSubmitStock = async (stockPayload) => {
     const targetId = String(stockPayload.productId || '').trim();
     const incoming = Number(stockPayload.incomingQty) || 0;
+    const location = stockPayload.location || 'Godown';
+    const updatedVariants = stockPayload.updatedVariants || null;
+    const isThanUnit = Boolean(stockPayload.isThanUnit);
+    const inThans = Number(stockPayload.incomingThans) || (isThanUnit ? incoming : 0);
+    const inYards = Number(stockPayload.incomingYards) || 0;
 
     const updatedProducts = products.map((p) => {
       const isMatch = String(p.ProductID || '').trim() === targetId ||
                       (p.Barcode && String(p.Barcode).trim() === targetId);
 
       if (isMatch) {
-        const currentStock = Number(p.StockQuantity || p.StockQuantit || 0);
-        const newStock = currentStock + incoming;
-        const newCost = (stockPayload.unitCost !== '' && stockPayload.unitCost !== null && stockPayload.unitCost !== undefined)
+        const prevShopStock = Number(p.StockQuantity || p.StockQuantit || 0);
+        const prevGodownStock = Number(p.GodownStock !== undefined ? p.GodownStock : 0);
+
+        let newShopStock = prevShopStock;
+        let newGodownStock = prevGodownStock;
+
+        if (location === 'Godown') {
+          newGodownStock = prevGodownStock + incoming;
+        } else {
+          newShopStock = prevShopStock + incoming;
+        }
+
+        const prevCost = Number(p.CostPrice || 0);
+        const newLotCost = (stockPayload.unitCost !== '' && stockPayload.unitCost !== null && stockPayload.unitCost !== undefined)
           ? Number(stockPayload.unitCost)
-          : Number(p.CostPrice || 0);
+          : prevCost;
+
+        // ওয়েইটেড এভারেজ কস্ট (WAC) নির্ণয়
+        const targetPrevStock = location === 'Godown' ? prevGodownStock : prevShopStock;
+        const targetNewStock = location === 'Godown' ? newGodownStock : newShopStock;
+        let weightedCost = newLotCost;
+        if (targetNewStock > 0) {
+          weightedCost = parseFloat((((targetPrevStock * prevCost) + (incoming * newLotCost)) / targetNewStock).toFixed(2));
+        }
+
+        // থান ও গজ হিসাব
+        let newTotalThan = Number(p.TotalThan || p.ThanCount || 0);
+        let newTotalGoj = Number(p.TotalGoj || p.TotalYards || 0);
+        if (isThanUnit) {
+          newTotalThan += inThans;
+          newTotalGoj += inYards;
+        }
+
+        // লোকাল স্টক মুভমেন্ট লেজারে অডিট রেকর্ড
+        try {
+          recordStockMovementLocally({
+            location: location,
+            type: 'LOT_IN',
+            reasonBangla: `নতুন লট রিস্টক (${stockPayload.supplierName || 'সরবরাহকারী'})${isThanUnit ? ` - ${inThans} থান (${inYards} গজ)` : ''} [${stockPayload.notes || 'লট এন্ট্রি'}]`,
+            productId: p.ProductID,
+            productName: p.ProductName,
+            barcode: p.Barcode,
+            unit: isThanUnit ? 'থান' : (p.Unit || 'Pcs'),
+            quantity: incoming,
+            previousStock: targetPrevStock,
+            remainingStock: targetNewStock,
+          });
+        } catch (e) {
+          console.warn('Movement logging error:', e);
+        }
 
         return {
           ...p,
-          StockQuantity: newStock,
-          StockQuantit: newStock,
-          CostPrice: newCost,
+          StockQuantity: newShopStock,
+          StockQuantit: newShopStock,
+          GodownStock: newGodownStock,
+          CostPrice: weightedCost,
+          Variants: updatedVariants || p.Variants,
+          TotalThan: isThanUnit ? newTotalThan : p.TotalThan,
+          TotalGoj: isThanUnit ? newTotalGoj : p.TotalGoj,
+          ThanCount: isThanUnit ? newTotalThan : p.ThanCount,
+          TotalYards: isThanUnit ? newTotalGoj : p.TotalYards,
           UpdatedAt: new Date().toISOString(),
         };
       }
@@ -1761,6 +1817,9 @@ export default function App() {
           if (confirmedStock !== null) {
             const verifiedProducts = updatedProducts.map((p) => {
               if (String(p.ProductID || '').trim() === targetId || (p.Barcode && String(p.Barcode).trim() === targetId)) {
+                if (location === 'Godown') {
+                  return { ...p, GodownStock: confirmedStock };
+                }
                 return { ...p, StockQuantity: confirmedStock, StockQuantit: confirmedStock };
               }
               return p;
@@ -1768,7 +1827,7 @@ export default function App() {
             setProducts(verifiedProducts);
             saveLocalProducts(verifiedProducts);
           }
-          showToast(`নতুন স্টক সফলভাবে গুগল শিটে রেকর্ড করা হয়েছে! (বর্তমান মজুদ: ${confirmedStock ?? 'আপডেট সম্পন্ন'})`, 'success');
+          showToast(`নতুন স্টক সফলভাবে গুগল শিটে রেকর্ড হয়েছে! (${location === 'Godown' ? '🏭 গোডাউনে' : '🏬 দোকানে'} বর্তমান মজুদ: ${confirmedStock ?? 'আপডেট সম্পন্ন'})`, 'success');
         } else {
           showToast(`সতর্কবার্তা: ${res.message}`, 'warning');
         }
@@ -1776,7 +1835,7 @@ export default function App() {
         showToast('নেটওয়ার্ক সমস্যা: লোকাল স্টোরেজে সেভ হয়েছে, পরবর্তীতে সিঙ্ক হবে।', 'warning');
       }
     } else {
-      showToast('অফলাইন মোড: স্টক লোকাল স্টোরেজে আপডেট হয়েছে।', 'success');
+      showToast(`অফলাইন মোড: ${location === 'Godown' ? 'গোডাউনে' : 'দোকানে'} স্টক লোকাল স্টোরেজে আপডেট হয়েছে।`, 'success');
     }
   };
 

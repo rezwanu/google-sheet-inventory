@@ -1542,7 +1542,13 @@ function handleAddStock(spreadsheet, payload) {
     unitCost,
     supplierName,
     handledBy,
-    notes
+    notes,
+    location,
+    updatedVariants,
+    variants,
+    isThanUnit,
+    incomingThans,
+    incomingYards
   } = payload;
 
   // ইনপুট ভ্যালিডেশন
@@ -1566,10 +1572,13 @@ function handleAddStock(spreadsheet, payload) {
     };
   }
 
-  const previousStock = Number(product.StockQuantity) || 0;
+  const targetLocation = String(location || 'Godown').toLowerCase() === 'shop' ? 'Shop' : 'Godown';
+
+  const previousShopStock = Number(product.StockQuantity) || 0;
+  const previousGodownStock = Number(product.GodownStock !== undefined ? product.GodownStock : 0);
+  const previousStock = targetLocation === 'Godown' ? previousGodownStock : previousShopStock;
+
   const incomingNumber = Number(incomingQty);
-  
-  // কিউমুলেটিভ স্টক ট্র্যাকিং লজিক: পূর্বের স্টক + নতুন আসা স্টক
   const newStock = previousStock + incomingNumber;
 
   const currentCost = Number(product.CostPrice) || 0;
@@ -1578,7 +1587,6 @@ function handleAddStock(spreadsheet, payload) {
                       : currentCost;
 
   // ওয়েইটেড এভারেজ কস্ট (Weighted Average Cost) ক্যালকুলেশন:
-  // ফর্মুলা: ((পূর্বের স্টক * পূর্বের কেনা দাম) + (নতুন স্টক * নতুন কেনা দাম)) / নতুন মোট স্টক
   let weightedAverageCost = newUnitCost;
   if (newStock > 0) {
     const totalPreviousValue = previousStock * currentCost;
@@ -1599,6 +1607,11 @@ function handleAddStock(spreadsheet, payload) {
   if (stockColIdx === -1) {
     stockColIdx = headers.findIndex(h => /stock|qty|quant/i.test(String(h || '').trim()));
   }
+  let godownColIdx = findCol(headers, 'GodownStock', 'WarehouseStock', 'GodownQty');
+  let variantsColIdx = findCol(headers, 'VariantsJSON', 'Variants');
+  let thanColIdx = findCol(headers, 'ThanCount', 'TotalThan', 'ThanQuantity');
+  let yardsColIdx = findCol(headers, 'TotalYards', 'TotalGoj', 'YardsTotal');
+
   let updatedColIdx = findCol(headers, 'UpdatedAt', 'Updated');
   if (updatedColIdx === -1) {
     updatedColIdx = headers.findIndex(h => /update/i.test(String(h || '').trim()));
@@ -1607,9 +1620,38 @@ function handleAddStock(spreadsheet, payload) {
   if (costColIdx !== -1) {
     productsSheet.getRange(rowIndex, costColIdx + 1).setValue(weightedAverageCost);
   }
-  if (stockColIdx !== -1) {
-    productsSheet.getRange(rowIndex, stockColIdx + 1).setValue(newStock);
+
+  // লোকেশন অনুযায়ী স্টক আপডেট
+  if (targetLocation === 'Godown') {
+    if (godownColIdx !== -1) {
+      productsSheet.getRange(rowIndex, godownColIdx + 1).setValue(newStock);
+    }
+  } else {
+    if (stockColIdx !== -1) {
+      productsSheet.getRange(rowIndex, stockColIdx + 1).setValue(newStock);
+    }
   }
+
+  // ভ্যারিয়েন্ট আপডেট
+  const finalVariants = updatedVariants || variants;
+  if (finalVariants && variantsColIdx !== -1) {
+    const jsonStr = typeof finalVariants === 'string' ? finalVariants : JSON.stringify(finalVariants);
+    productsSheet.getRange(rowIndex, variantsColIdx + 1).setValue(jsonStr);
+  }
+
+  // থান ও গজ আপডেট
+  if (isThanUnit || incomingThans) {
+    const curThans = Number(product.ThanCount || product.TotalThan || 0);
+    const addedThans = Number(incomingThans) || incomingNumber;
+    if (thanColIdx !== -1) {
+      productsSheet.getRange(rowIndex, thanColIdx + 1).setValue(curThans + addedThans);
+    }
+    if (incomingYards && yardsColIdx !== -1) {
+      const curYards = Number(product.TotalYards || product.TotalGoj || 0);
+      productsSheet.getRange(rowIndex, yardsColIdx + 1).setValue(curYards + Number(incomingYards));
+    }
+  }
+
   if (updatedColIdx !== -1) {
     productsSheet.getRange(rowIndex, updatedColIdx + 1).setValue(timestamp);
   }
@@ -1629,7 +1671,7 @@ function handleAddStock(spreadsheet, payload) {
     supplierName || 'General Supplier',
     handledBy || 'Admin',
     'MANUAL_ENTRY',
-    notes || 'নতুন স্টক ইনপুট'
+    `[${targetLocation === 'Godown' ? 'গোডাউন' : 'দোকান'}] ${notes || 'নতুন স্টক ইনপুট'}`
   ]);
 
   // অবিলম্বে গুগল শিটে সমস্ত ডাটা ফ্লাশ ও নিশ্চিত করা
@@ -1637,10 +1679,11 @@ function handleAddStock(spreadsheet, payload) {
 
   return {
     success: true,
-    message: 'নতুন স্টক সফলভাবে যোগ ও রেকর্ড করা হয়েছে।',
+    message: `${targetLocation === 'Godown' ? 'গোডাউনে' : 'দোকানে'} নতুন স্টক সফলভাবে যোগ ও রেকর্ড করা হয়েছে।`,
     data: {
       productId: product.ProductID,
       productName: product.ProductName,
+      location: targetLocation,
       previousStock: previousStock,
       incomingQty: incomingNumber,
       newStock: newStock,
