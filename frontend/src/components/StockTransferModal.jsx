@@ -64,7 +64,9 @@ export default function StockTransferModal({
   initialFilter = 'ALL',
   onDeleteProduct,
   onUpdateProductVariants,
-  onEditProduct
+  onEditProduct,
+  variantAttributes = [],
+  onAddVariantOption
 }) {
   // প্রধান ট্যাব নেভিগেশন: 'overview' | 'transfers' | 'godown_outflow' | 'shop_outflow'
   const [activeMainTab, setActiveMainTab] = useState(() => {
@@ -879,12 +881,16 @@ export default function StockTransferModal({
     });
   };
 
-  // নতুন কালার / ভ্যারিয়েন্ট যোগ মডাল ওপেন
+  // নতুন ভ্যারিয়েন্ট যোগ মডাল ওপেন
   const handleOpenNewColor = (product) => {
     const isThan = Boolean(product.TotalThan || product.YardsPerThan || /than|থান/i.test(product.Unit || ''));
+    const isWeight = /kg|gm|কেজি|গ্রাম/i.test(product.Unit || '');
+    const defaultType = isThan ? 'Color' : (isWeight ? 'Weight' : 'Color');
     const prodBarcode = product.Barcode || `prod-${product.ProductID}`;
     setNewColorModal({
       product,
+      variantType: defaultType,
+      variantName: '',
       colorName: '',
       godownStock: 1, // ডিফল্ট ১ থান বা ১ পিস
       shopStock: 0,
@@ -895,36 +901,55 @@ export default function StockTransferModal({
     });
   };
 
-  // নতুন কালার / ভ্যারিয়েন্ট ডাটাবেস ও প্রোডাক্টে যোগ ও সিঙ্ক
+  // নতুন ভ্যারিয়েন্ট ডাটাবেস ও প্রোডাক্টে যোগ ও সিঙ্ক
   const handleSaveNewColorSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!newColorModal || !onUpdateProductVariants) return;
-    const { product, colorName, godownStock, shopStock, costPrice, sellingPrice, wholesalePrice, barcode } = newColorModal;
-    const cleanColor = String(colorName || '').trim();
-    if (!cleanColor) {
-      alert('দয়া করে রঙের নাম লিখুন অথবা দ্রুত বাছাই তালিকা থেকে নির্বাচন করুন।');
+    const { product, variantType, variantName, colorName, godownStock, shopStock, costPrice, sellingPrice, wholesalePrice, barcode } = newColorModal;
+    const vType = variantType || 'Color';
+    const cleanVarName = String(variantName || colorName || '').trim();
+    if (!cleanVarName) {
+      alert(`দয়া করে ${vType === 'Color' ? 'রঙের' : vType === 'Size' ? 'সাইজের' : 'ভ্যারিয়েন্টের'} নাম ড্রপডাউন থেকে নির্বাচন করুন অথবা লিখুন।`);
       return;
     }
 
     const currentVariants = getVariantsOfProduct(product);
     const isDuplicate = currentVariants.some((v) => {
-      const c = v.Color || v.color || v.Attributes?.Color || v.Attributes?.color || v.VariantID;
-      return String(c).trim().toLowerCase() === cleanColor.toLowerCase();
+      const c = v.Attributes?.[vType] || v[vType] || v.Color || v.color || v.Attributes?.Color || v.VariantID;
+      return String(c || '').trim().toLowerCase() === cleanVarName.toLowerCase();
     });
     if (isDuplicate) {
-      alert(`'${cleanColor}' নামের একটি কালার ইতোমধ্যে এই পণ্যে বিদ্যমান রয়েছে!`);
+      alert(`'${cleanVarName}' নামের একটি ভ্যারিয়েন্ট ইতোমধ্যে এই পণ্যে বিদ্যমান রয়েছে!`);
       return;
+    }
+
+    // নতুন অপশন ডাটাবেসে সেভ (যদি আগে ডাটাবেসে না থাকে)
+    if (onAddVariantOption) {
+      const existsInDb = (variantAttributes || []).some((va) => {
+        const t = String(va.Type || va.type || va.AttributeType || va.attributeType || 'Color').trim().toLowerCase();
+        const n = String(va.Name || va.name || va.OptionName || va.optionName || '').trim().toLowerCase();
+        return t === vType.toLowerCase() && n === cleanVarName.toLowerCase();
+      });
+      if (!existsInDb) {
+        try {
+          await onAddVariantOption({ type: vType, name: cleanVarName });
+        } catch (dbErr) {
+          console.warn('Could not auto-add variant to DB:', dbErr);
+        }
+      }
     }
 
     const gStock = Math.max(0, Number(godownStock) || 0);
     const sStock = Math.max(0, Number(shopStock) || 0);
     const baseBarcode = product.Barcode || `pb-${product.ProductID}`;
-    const finalBarcode = barcode ? barcode.trim() : `${baseBarcode}-${cleanColor.toLowerCase().replace(/\s+/g, '-')}`;
+    const finalBarcode = barcode ? barcode.trim() : `${baseBarcode}-${cleanVarName.toLowerCase().replace(/\s+/g, '-')}`;
 
     const newVariantObj = {
-      VariantID: `VAR-${Date.now().toString().slice(-6)}-${cleanColor.toUpperCase()}`,
-      Attributes: { Color: cleanColor },
-      Color: cleanColor,
+      VariantID: `VAR-${vType.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-4)}-${cleanVarName.toUpperCase().replace(/\s+/g, '_')}`,
+      Attributes: { [vType]: cleanVarName },
+      Color: vType === 'Color' ? cleanVarName : (product.Color || ''),
+      Size: vType === 'Size' ? cleanVarName : '',
+      Weight: vType === 'Weight' ? cleanVarName : '',
       Barcode: finalBarcode,
       CostPrice: Number(costPrice) || Number(product.CostPrice) || 0,
       SellingPrice: Number(sellingPrice) || Number(product.SellingPrice) || 0,
@@ -943,16 +968,16 @@ export default function StockTransferModal({
       await onUpdateProductVariants(product.ProductID, updatedVariants, {
         location: 'Godown',
         type: 'NEW_VARIANT',
-        variantName: `রং: ${cleanColor}`,
+        variantName: `${vType === 'Color' ? 'রং' : vType === 'Size' ? 'সাইজ' : 'ভ্যারিয়েন্ট'}: ${cleanVarName}`,
         qty: gStock,
         prevStock: 0,
         newStock: gStock,
-        reason: `নতুন কালার ভ্যারিয়েন্ট যোগ (${cleanColor})`,
-        notes: `নতুন ভ্যারিয়েন্ট যোগ: গোডাউন ${gStock}, দোকান ${sStock}`
+        reason: `নতুন ভ্যারিয়েন্ট যোগ ও রিস্টক (${cleanVarName})`,
+        notes: `নতুন ভ্যারিয়েন্ট (${vType}): গোডাউন ${gStock}, দোকান ${sStock}`
       });
       setNewColorModal(null);
     } catch (err) {
-      alert(`নতুন কালার সংরক্ষণ করতে সমস্যা হয়েছে: ${err.message}`);
+      alert(`নতুন ভ্যারিয়েন্ট সংরক্ষণ করতে সমস্যা হয়েছে: ${err.message}`);
     } finally {
       setIsSubmittingNewColor(false);
     }
@@ -1666,10 +1691,10 @@ export default function StockTransferModal({
                                                     type="button"
                                                     onClick={() => handleOpenNewColor(p)}
                                                     className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold inline-flex items-center space-x-1 shadow-xs cursor-pointer transition-all shrink-0"
-                                                    title="এই পণ্যে নতুন একটি কালার ভ্যারিয়েন্ট যোগ করুন"
+                                                    title="এই পণ্যে নতুন একটি ভ্যারিয়েন্ট যোগ করুন"
                                                   >
                                                     <Plus className="w-3 h-3" />
-                                                    <span>নতুন কালার যোগ</span>
+                                                    <span>নতুন ভ্যারিয়েন্ট যোগ</span>
                                                   </button>
                                                 </div>
                                               </div>
@@ -1853,7 +1878,7 @@ export default function StockTransferModal({
                                                         className="w-full py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-dashed border-indigo-300 rounded-lg text-xs font-bold inline-flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
                                                       >
                                                         <Plus className="w-3.5 h-3.5" />
-                                                        <span>+ এই পণ্যে নতুন কালার / ভ্যারিয়েন্ট যোগ করুন</span>
+                                                        <span>+ নতুন ভ্যারিয়েন্ট যোগ করুন</span>
                                                       </button>
                                                     </td>
                                                   </tr>
@@ -3084,9 +3109,9 @@ export default function StockTransferModal({
                     />
                   </div>
 
-                  {/* নতুন কালার স্টক যোগ করার শর্টকাট */}
+                  {/* নতুন ভ্যারিয়েন্ট স্টক যোগ করার শর্টকাট */}
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span className="text-slate-500 text-[11px]">অন্য নতুন কোনো কালারের স্টক বাড়াতে চান?</span>
+                    <span className="text-slate-500 text-[11px]">অন্য নতুন কোনো ভ্যারিয়েন্টের স্টক বাড়াতে চান?</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -3097,7 +3122,7 @@ export default function StockTransferModal({
                       className="text-indigo-600 hover:text-indigo-800 font-bold inline-flex items-center space-x-1 cursor-pointer transition-colors"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>+ নতুন কালার স্টক যোগ করুন</span>
+                      <span>+ নতুন ভ্যারিয়েন্ট স্টক যোগ করুন</span>
                     </button>
                   </div>
 
@@ -3133,12 +3158,29 @@ export default function StockTransferModal({
           );
         })()}
 
-        {/* নতুন কালার / ভ্যারিয়েন্ট যোগ সাব-মডাল */}
+        {/* নতুন ভ্যারিয়েন্ট যোগ ও গোডাউন রিস্টক সাব-মডাল */}
         {newColorModal && (() => {
           const prod = newColorModal.product;
           const isThan = Boolean(prod.TotalThan || prod.YardsPerThan || /than|থান/i.test(prod.Unit || ''));
           const prodYardsPerThan = Number(prod.YardsPerThan) || 0;
-          const popularColors = ['লাল', 'নীল', 'কালো', 'সাদা', 'সবুজ', 'হলুদ', 'গোলাপি', 'মেরুন', 'নেভি ব্লু', 'অফ-হোয়াইট', 'ছাই', 'বেগুনি', 'ফিরোজা', 'জলপাই', 'কমলা', 'ম্যাজেন্টা', 'বাসন্তী', 'লাল খয়েরি'];
+          const currentType = newColorModal.variantType || 'Color';
+
+          // ডাটাবেস থেকে নির্বাচিত টাইপের ভ্যারিয়েন্ট তালিকা ফিল্টার
+          const dbOptionsForType = (variantAttributes || [])
+            .filter((va) => {
+              const t = String(va.Type || va.type || va.AttributeType || va.attributeType || 'Color').trim().toLowerCase();
+              return t === currentType.toLowerCase();
+            })
+            .map((va) => String(va.Name || va.name || va.OptionName || va.optionName || '').trim())
+            .filter(Boolean);
+
+          const fallbackOptions = currentType === 'Color' 
+            ? ['লাল', 'নীল', 'কালো', 'সাদা', 'সবুজ', 'হলুদ', 'গোলাপি', 'মেরুন', 'নেভি ব্লু', 'অফ-হোয়াইট', 'ছাই', 'বেগুনি', 'ফিরোজা', 'জলপাই', 'কমলা', 'ম্যাজেন্টা', 'বাসন্তী', 'লাল খয়েরি']
+            : currentType === 'Size'
+            ? ['S', 'M', 'L', 'XL', '2XL', '3XL', '38', '40', '42', '44', 'Free']
+            : ['500gm', '1kg', '2kg', '5kg', '10kg', '25kg', '50kg'];
+
+          const displayOptions = dbOptionsForType.length > 0 ? dbOptionsForType : fallbackOptions;
 
           return (
             <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
@@ -3146,9 +3188,9 @@ export default function StockTransferModal({
                 {/* Header */}
                 <div className="px-5 py-3.5 bg-gradient-to-r from-indigo-700 to-indigo-800 text-white flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Palette className="w-5 h-5 text-indigo-200" />
+                    <Layers className="w-5 h-5 text-indigo-200" />
                     <div>
-                      <h3 className="text-sm font-bold">নতুন কালার / ভ্যারিয়েন্ট যোগ করুন</h3>
+                      <h3 className="text-sm font-bold">নতুন ভ্যারিয়েন্ট যোগ ও গোডাউন রিস্টক</h3>
                       <p className="text-[11px] text-indigo-200">{prod.ProductName} ({prod.Category || 'পণ্য'})</p>
                     </div>
                   </div>
@@ -3163,42 +3205,93 @@ export default function StockTransferModal({
 
                 {/* Body */}
                 <form onSubmit={handleSaveNewColorSubmit} className="p-5 overflow-y-auto space-y-4 text-xs">
-                  {/* কালারের নাম ইনপুট */}
+                  {/* ১. ভ্যারিয়েন্টের ধরণ নির্বাচন (Variant Type) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        ১. ভ্যারিয়েন্টের ধরণ নির্বাচন করুন <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        value={currentType}
+                        onChange={(e) => setNewColorModal(prev => ({ 
+                          ...prev, 
+                          variantType: e.target.value,
+                          variantName: '',
+                          colorName: ''
+                        }))}
+                        className="w-full px-3 py-2 bg-indigo-50/50 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                      >
+                        <option value="Color">🎨 রঙ / কালার (Color)</option>
+                        <option value="Size">📏 সাইজ / মাপ (Size)</option>
+                        <option value="Weight">⚖️ ওজন / পরিমাপ (Weight)</option>
+                      </select>
+                    </div>
+
+                    {/* ২. ডাটাবেসের ভ্যারিয়েন্ট ড্রপডাউন লিস্ট */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        ২. ডাটাবেসের তালিকা ({dbOptionsForType.length}টি সংরক্ষিত):
+                      </label>
+                      <select
+                        value={newColorModal.variantName || newColorModal.colorName || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewColorModal(prev => ({ ...prev, variantName: val, colorName: val }));
+                        }}
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                      >
+                        <option value="">
+                          -- {currentType === 'Color' ? 'রং নির্বাচন করুন' : currentType === 'Size' ? 'সাইজ নির্বাচন করুন' : 'ওজন নির্বাচন করুন'} --
+                        </option>
+                        {dbOptionsForType.map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* ৩. ভ্যারিয়েন্টের নাম ইনপুট */}
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      রঙ / কালারের নাম <span className="text-rose-500">*</span>
+                      ৩. {currentType === 'Color' ? 'রঙের' : currentType === 'Size' ? 'সাইজের' : 'ভ্যারিয়েন্টের'} নাম <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="যেমন: ফিরোজা, ম্যাজেন্টা, জলপাই..."
-                      value={newColorModal.colorName}
-                      onChange={(e) => setNewColorModal(prev => ({ ...prev, colorName: e.target.value }))}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                      placeholder={`যেমন: ${currentType === 'Color' ? 'ফিরোজা, ম্যাজেন্টা, জলপাই...' : currentType === 'Size' ? 'XL, XXL, 42...' : '1kg, 500gm, 25kg...'}`}
+                      value={newColorModal.variantName || newColorModal.colorName || ''}
+                      onChange={(e) => setNewColorModal(prev => ({ ...prev, variantName: e.target.value, colorName: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
                     />
                   </div>
 
-                  {/* ১-ক্লিক জনপ্রিয় কালার চিপস */}
+                  {/* ১-ক্লিক দ্রুত বাছাই চিপস */}
                   <div>
-                    <div className="text-[10.5px] font-bold text-slate-600 mb-1.5 flex items-center space-x-1">
-                      <Sparkles className="w-3 h-3 text-indigo-600" />
-                      <span>১-ক্লিকে দ্রুত বাছাই:</span>
+                    <div className="text-[10.5px] font-bold text-slate-600 mb-1.5 flex items-center justify-between">
+                      <div className="flex items-center space-x-1">
+                        <Sparkles className="w-3 h-3 text-indigo-600" />
+                        <span>১-ক্লিকে দ্রুত বাছাই ({currentType} তালিকা):</span>
+                      </div>
+                      <span className="text-[10px] text-indigo-600 font-semibold">{displayOptions.length}টি অপশন</span>
                     </div>
-                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 bg-slate-50 rounded-lg border border-slate-200">
-                      {popularColors.map(c => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => setNewColorModal(prev => ({ ...prev, colorName: c }))}
-                          className={`px-2 py-0.5 text-[10px] font-semibold rounded-md transition-colors cursor-pointer border ${
-                            newColorModal.colorName === c
-                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                              : 'bg-white hover:bg-indigo-50 text-slate-700 border-slate-200'
-                          }`}
-                        >
-                          + {c}
-                        </button>
-                      ))}
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 bg-slate-50 rounded-xl border border-slate-200">
+                      {displayOptions.map(c => {
+                        const isSelected = (newColorModal.variantName || newColorModal.colorName) === c;
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setNewColorModal(prev => ({ ...prev, variantName: c, colorName: c }))}
+                            className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-colors cursor-pointer border ${
+                              isSelected
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                                : 'bg-white hover:bg-indigo-50 text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            + {c}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -3306,7 +3399,7 @@ export default function StockTransferModal({
                       className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
                     >
                       <Check className="w-4 h-4" />
-                      <span>{isSubmittingNewColor ? 'সংরক্ষণ হচ্ছে...' : 'নতুন কালার সংরক্ষণ করুন'}</span>
+                      <span>{isSubmittingNewColor ? 'সংরক্ষণ হচ্ছে...' : 'নতুন ভ্যারিয়েন্ট সংরক্ষণ করুন'}</span>
                     </button>
                   </div>
                 </form>

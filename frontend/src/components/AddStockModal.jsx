@@ -171,15 +171,24 @@ export default function AddStockModal({
 
   const hasVariants = allVariants.length > 0 || isVariantRestockEnabled;
 
-  // মাস্টার ভ্যারিয়েন্ট ডাটাবেস থেকে রঙের তালিকা এক্সট্র্যাক্ট (কুইক চিপস)
-  const allColorOptions = useMemo(() => {
+  // মাস্টার ভ্যারিয়েন্ট ডাটাবেস থেকে নির্বাচিত টাইপের তালিকা (কুইক চিপস ও ড্রপডাউন)
+  const activeTypeDbOptions = useMemo(() => {
     const list = (variantAttributes || [])
-      .filter((va) => !va.AttributeType || va.AttributeType.toLowerCase() === 'color' || va.attributeType?.toLowerCase() === 'color')
-      .map((va) => va.OptionName || va.optionName || va.Name || '')
+      .filter((va) => {
+        const t = String(va.Type || va.type || va.AttributeType || va.attributeType || 'Color').trim().toLowerCase();
+        return t === newColorType.toLowerCase();
+      })
+      .map((va) => String(va.OptionName || va.optionName || va.Name || va.name || '').trim())
       .filter(Boolean);
-    const defaults = ['লাল', 'কালো', 'সাদা', 'নীল', 'সবুজ', 'হলুদ', 'গোলাপী', 'মেরুন', 'আকাশি', 'বেগুনি', 'কমলা', 'ধূসর', 'ফিরোজা', 'বাসন্তী', 'ম্যাজেন্টা', 'অফ-হোয়াইট', 'নেভি ব্লু'];
+    const defaults = newColorType === 'Color'
+      ? ['লাল', 'কালো', 'সাদা', 'নীল', 'সবুজ', 'হলুদ', 'গোলাপী', 'মেরুন', 'আকাশি', 'বেগুনি', 'কমলা', 'ধূসর', 'ফিরোজা', 'বাসন্তী', 'ম্যাজেন্টা', 'অফ-হোয়াইট', 'নেভি ব্লু']
+      : newColorType === 'Size'
+      ? ['S', 'M', 'L', 'XL', '2XL', '3XL', '38', '40', '42', '44', 'Free']
+      : ['500gm', '1kg', '2kg', '5kg', '10kg', '25kg', '50kg'];
     return Array.from(new Set([...list, ...defaults]));
-  }, [variantAttributes]);
+  }, [variantAttributes, newColorType]);
+
+  const allColorOptions = activeTypeDbOptions;
 
   // থান একক কিনা ও প্রতি থানে গজ
   const isThanUnit = useMemo(() => {
@@ -800,14 +809,14 @@ export default function AddStockModal({
                       </div>
                     </div>
 
-                    {/* নতুন কালার / ভ্যারিয়েন্ট যোগ করার টগল বাটন */}
+                    {/* নতুন ভ্যারিয়েন্ট যোগ করার টগল বাটন */}
                     <div className="flex items-center justify-between bg-teal-50/60 p-2.5 rounded-xl border border-teal-200/80">
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-bold text-slate-800">
-                          লটে নতুন কোনো কালার এসেছে?
+                          লটে নতুন কোনো ভ্যারিয়েন্ট এসেছে?
                         </span>
                         <span className="text-[10px] text-teal-800 bg-teal-100 px-2 py-0.5 rounded-full font-bold">
-                          নতুন কালার রিস্টক
+                          নতুন ভ্যারিয়েন্ট রিস্টক
                         </span>
                       </div>
                       <button
@@ -827,30 +836,75 @@ export default function AddStockModal({
                         ) : (
                           <>
                             <Plus className="w-3.5 h-3.5" />
-                            <span>+ নতুন কালার যোগ করুন</span>
+                            <span>+ নতুন ভ্যারিয়েন্ট যোগ করুন</span>
                           </>
                         )}
                       </button>
                     </div>
 
-                    {/* নতুন কালার যোগ করার ফর্ম কার্ড */}
+                    {/* নতুন ভ্যারিয়েন্ট যোগ করার ফর্ম কার্ড */}
                     {isAddingNewColorOpen && (
                       <div className="p-3.5 bg-gradient-to-br from-white via-teal-50/40 to-indigo-50/30 border-2 border-teal-300 rounded-2xl shadow-sm space-y-3 animate-in fade-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between pb-2 border-b border-teal-200">
                           <div className="flex items-center space-x-1.5 text-xs font-black text-teal-900">
                             <Palette className="w-4 h-4 text-teal-600" />
-                            <span>নতুন কালার / ভ্যারিয়েন্টের স্টক যোগ করুন</span>
+                            <span>নতুন ভ্যারিয়েন্টের স্টক যোগ করুন</span>
                           </div>
                           <span className="text-[10px] font-bold text-slate-500">
                             লটের সাথে সরাসরি যুক্ত হবে
                           </span>
                         </div>
 
-                        {/* কুইক কালার চিপস */}
+                        {/* ১. ভ্যারিয়েন্টের ধরণ ও ডাটাবেস ড্রপডাউন লিস্ট */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                              ১. ভ্যারিয়েন্টের ধরণ নির্বাচন করুন <span className="text-rose-500">*</span>
+                            </label>
+                            <select
+                              value={newColorType}
+                              onChange={(e) => {
+                                setNewColorType(e.target.value);
+                                setNewColorName('');
+                              }}
+                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                            >
+                              <option value="Color">🎨 রঙ / কালার (Color)</option>
+                              <option value="Size">📏 সাইজ / মাপ (Size)</option>
+                              <option value="Weight">⚖️ ওজন / পরিমাপ (Weight)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                              ২. ডাটাবেসের তালিকা ({allColorOptions.length}টি সংরক্ষিত):
+                            </label>
+                            <select
+                              value={newColorName}
+                              onChange={(e) => setNewColorName(e.target.value)}
+                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                            >
+                              <option value="">
+                                -- {newColorType === 'Color' ? 'রং নির্বাচন করুন' : newColorType === 'Size' ? 'সাইজ নির্বাচন করুন' : 'ওজন নির্বাচন করুন'} --
+                              </option>
+                              {allColorOptions.map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* কুইক চিপস */}
                         <div>
-                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                            দ্রুত কালার সিলেক্ট করুন (ক্লিক করুন):
-                          </label>
+                          <div className="text-[10.5px] font-bold text-slate-600 mb-1 flex items-center justify-between">
+                            <span className="flex items-center space-x-1">
+                              <Sparkles className="w-3 h-3 text-teal-600" />
+                              <span>১-ক্লিকে দ্রুত বাছাই ({newColorType}):</span>
+                            </span>
+                            <span className="text-[10px] text-teal-700 font-semibold">{allColorOptions.length}টি অপশন</span>
+                          </div>
                           <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 bg-white/80 rounded-xl border border-slate-200">
                             {allColorOptions.map((c) => (
                               <button
@@ -873,13 +927,13 @@ export default function AddStockModal({
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                           <div>
                             <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                              কালার / ভ্যারিয়েন্টের নাম *
+                              ৩. {newColorType === 'Color' ? 'রঙের' : newColorType === 'Size' ? 'সাইজের' : 'ভ্যারিয়েন্টের'} নাম <span className="text-rose-500">*</span>
                             </label>
                             <input
                               type="text"
                               value={newColorName}
                               onChange={(e) => setNewColorName(e.target.value)}
-                              placeholder="যেমন: ফিরোজা বা রয়্যাল ব্লু"
+                              placeholder={`যেমন: ${newColorType === 'Color' ? 'ফিরোজা বা রয়্যাল ব্লু' : newColorType === 'Size' ? 'XL বা 42' : '1kg বা 500gm'}`}
                               className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold focus:ring-2 focus:ring-teal-500"
                             />
                           </div>
@@ -926,7 +980,7 @@ export default function AddStockModal({
                             className="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold inline-flex items-center space-x-1 cursor-pointer shadow-sm transition-all"
                           >
                             <Check className="w-3.5 h-3.5" />
-                            <span>এই কালারটি লটে যোগ করুন</span>
+                            <span>এই ভ্যারিয়েন্টটি লটে যোগ করুন</span>
                           </button>
                         </div>
                       </div>
@@ -1006,7 +1060,7 @@ export default function AddStockModal({
                                         {v.isNewVariant && (
                                           <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 inline-flex items-center space-x-0.5">
                                             <Sparkles className="w-2.5 h-2.5 text-amber-600" />
-                                            <span>নতুন কালার</span>
+                                            <span>নতুন ভ্যারিয়েন্ট</span>
                                           </span>
                                         )}
                                         {v.isNewVariant && (
@@ -1014,7 +1068,7 @@ export default function AddStockModal({
                                             type="button"
                                             onClick={() => handleRemoveCustomVariant(v.VariantID)}
                                             className="p-0.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer transition-colors"
-                                            title="এই নতুন কালারটি তালিকা থেকে বাদ দিন"
+                                            title="এই নতুন ভ্যারিয়েন্টটি তালিকা থেকে বাদ দিন"
                                           >
                                             <Trash2 className="w-3.5 h-3.5" />
                                           </button>

@@ -4431,6 +4431,8 @@ export default function App() {
               onDeleteProduct={handleDeleteProduct}
               onUpdateProductVariants={handleUpdateProductVariants}
               onEditProduct={handleOpenEditProduct}
+              variantAttributes={variantAttributes}
+              onAddVariantOption={handleAddVariantOption}
               initialTab={
                 currentView === 'shop_stock'
                   ? 'shop_stock'
@@ -5187,6 +5189,8 @@ export default function App() {
         onDeleteProduct={handleDeleteProduct}
         onUpdateProductVariants={handleUpdateProductVariants}
         onEditProduct={handleOpenEditProduct}
+        variantAttributes={variantAttributes}
+        onAddVariantOption={handleAddVariantOption}
         initialTab={stockTransferModalConfig.tab || 'overview'}
         initialTransferSubTab={stockTransferModalConfig.subTab || 'new'}
         initialFilter={stockTransferModalConfig.filter || 'ALL'}
