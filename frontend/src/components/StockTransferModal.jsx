@@ -65,6 +65,7 @@ export default function StockTransferModal({
   onDeleteProduct,
   onUpdateProductVariants,
   onEditProduct,
+  onDirectGodownToShopTransfer,
   variantAttributes = [],
   onAddVariantOption
 }) {
@@ -210,6 +211,10 @@ export default function StockTransferModal({
   // ভ্যারিয়েন্ট এডিট সাব-মডাল স্টেট
   const [editVariantModal, setEditVariantModal] = useState(null);
   const [isSubmittingEditVariant, setIsSubmittingEditVariant] = useState(false);
+
+  // গোডাউন থেকে দোকানে সরাসরি পণ্য স্থানান্তর সাব-মডাল স্টেট
+  const [directTransferModal, setDirectTransferModal] = useState(null);
+  const [isSubmittingDirectTransfer, setIsSubmittingDirectTransfer] = useState(false);
 
   // =========================================================================
   // পরিগণিত মেট্রিক্স ও ফিল্টারসমূহ
@@ -516,6 +521,174 @@ export default function StockTransferModal({
     setActiveMainTab('transfers');
     setTransferSubTab('new');
     setPrintableChallan(null);
+  };
+
+  // গোডাউন থেকে দোকানে পণ্য নিয়ে যাওয়ার জন্য ডেডিকেটেড ডিরেক্ট ট্রান্সফার মডাল ওপেন
+  const handleOpenDirectTransfer = (product, targetVariant = null) => {
+    const vars = getVariantsOfProduct(product);
+    let initialVariantId = '';
+    let initialVariant = null;
+
+    if (targetVariant) {
+      initialVariant = targetVariant;
+      initialVariantId = targetVariant.VariantID || targetVariant.variantId || '';
+    } else if (Array.isArray(vars) && vars.length > 0) {
+      // স্টক আছে এমন ভ্যারিয়েন্ট খুঁজুন অথবা প্রথমটি
+      const withStock = vars.find((v) => Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) > 0);
+      initialVariant = withStock || vars[0];
+      initialVariantId = initialVariant.VariantID || initialVariant.variantId || '';
+    }
+
+    const availableGodown = initialVariant
+      ? Number(initialVariant.GodownStock !== undefined ? initialVariant.GodownStock : 0)
+      : Number(product.GodownStock || 0);
+
+    const initialBulk = {};
+    if (Array.isArray(vars)) {
+      vars.forEach((v) => {
+        const vId = v.VariantID || v.variantId;
+        const gStk = Number(v.GodownStock !== undefined ? v.GodownStock : 0);
+        initialBulk[vId] = (initialVariantId === vId && gStk > 0) ? 1 : 0;
+      });
+    }
+
+    setDirectTransferModal({
+      product,
+      mode: 'single', // 'single' | 'all'
+      selectedVariantId: initialVariantId,
+      quantity: availableGodown > 0 ? 1 : 0,
+      bulkQuantities: initialBulk,
+      notes: ''
+    });
+  };
+
+  // গোডাউন থেকে সরাসরি দোকানে স্থানান্তর সাবমিট (ডাটাবেস ও স্টোরেজ সিঙ্ক)
+  const handleConfirmDirectTransferSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!directTransferModal || isSubmittingDirectTransfer) return;
+
+    const { product, mode, selectedVariantId, quantity, bulkQuantities, notes } = directTransferModal;
+    const vars = getVariantsOfProduct(product);
+    const hasVariants = Array.isArray(vars) && vars.length > 0;
+
+    let itemsToTransfer = [];
+
+    if (!hasVariants) {
+      const qty = Number(quantity) || 0;
+      const gStk = Number(product.GodownStock || 0);
+      if (qty <= 0) {
+        alert('অনুগ্রহ করে সঠিক পরিমাণ (কমপক্ষে ১) উল্লেখ করুন!');
+        return;
+      }
+      if (qty > gStk) {
+        alert(`গোডাউনে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${gStk} ${product.Unit || 'Pcs'} আছে।`);
+        return;
+      }
+      itemsToTransfer.push({
+        variantId: null,
+        variantName: '',
+        quantity: qty
+      });
+    } else if (mode === 'single') {
+      const targetVar = vars.find((v) => String(v.VariantID || v.variantId) === String(selectedVariantId));
+      if (!targetVar) {
+        alert('অনুগ্রহ করে একটি ভ্যারিয়েন্ট নির্বাচন করুন!');
+        return;
+      }
+      const qty = Number(quantity) || 0;
+      const vGStk = Number(targetVar.GodownStock !== undefined ? targetVar.GodownStock : 0);
+      if (qty <= 0) {
+        alert('অনুগ্রহ করে সঠিক পরিমাণ (কমপক্ষে ১) উল্লেখ করুন!');
+        return;
+      }
+      if (qty > vGStk) {
+        alert(`এই ভ্যারিয়েন্টের গোডাউনে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${vGStk} ${product.Unit || 'Pcs'} আছে।`);
+        return;
+      }
+      const attrs = targetVar.Attributes || {};
+      const vName = Object.values(attrs).filter(Boolean).join(' / ') || targetVar.Color || targetVar.Size || targetVar.VariantID;
+      itemsToTransfer.push({
+        variantId: targetVar.VariantID || targetVar.variantId,
+        variantName: vName,
+        quantity: qty
+      });
+    } else {
+      // Bulk mode: all variants
+      for (const v of vars) {
+        const vId = v.VariantID || v.variantId;
+        const qty = Number(bulkQuantities[vId]) || 0;
+        const vGStk = Number(v.GodownStock !== undefined ? v.GodownStock : 0);
+        if (qty > 0) {
+          if (qty > vGStk) {
+            const vName = v.Color || v.Size || vId;
+            alert(`ভ্যারিয়েন্ট '${vName}'-এর গোডাউন স্টক (${vGStk}) অতিক্রম করেছে!`);
+            return;
+          }
+          const attrs = v.Attributes || {};
+          const vName = Object.values(attrs).filter(Boolean).join(' / ') || v.Color || v.Size || vId;
+          itemsToTransfer.push({
+            variantId: vId,
+            variantName: vName,
+            quantity: qty
+          });
+        }
+      }
+
+      if (itemsToTransfer.length === 0) {
+        alert('কমপক্ষে একটি ভ্যারিয়েন্টে স্থানান্তরের পরিমাণ বসান!');
+        return;
+      }
+    }
+
+    setIsSubmittingDirectTransfer(true);
+    try {
+      if (onDirectGodownToShopTransfer) {
+        await onDirectGodownToShopTransfer({
+          product,
+          items: itemsToTransfer,
+          notes: notes || 'গোডাউন থেকে সরাসরি দোকানে স্থানান্তর',
+          operatorName: activeUser?.FullName || 'Admin'
+        });
+      } else if (onSaveStockTransfer) {
+        const challanNo = `TRF-${Date.now().toString().slice(-6)}`;
+        const payload = {
+          challanNo,
+          fromLocation: 'Main Warehouse',
+          toLocation: 'Main Shop',
+          driverName: 'সরাসরি স্থানান্তর',
+          notes: notes || 'গোডাউন থেকে সরাসরি দোকানে স্থানান্তর',
+          items: itemsToTransfer.map((itm) => ({
+            productId: product.ProductID,
+            productName: product.ProductName,
+            variantId: itm.variantId,
+            variantName: itm.variantName,
+            quantity: itm.quantity,
+            unit: product.Unit || 'Pcs',
+            costPrice: Number(product.CostPrice) || 0
+          })),
+          status: 'Received',
+          createdBy: activeUser?.FullName || 'Admin'
+        };
+        await onSaveStockTransfer(payload);
+      }
+
+      setDirectTransferModal(null);
+    } catch (err) {
+      alert(`স্থানান্তর ব্যর্থ হয়েছে: ${err.message}`);
+    } finally {
+      setIsSubmittingDirectTransfer(false);
+    }
+  };
+
+  // ডিরেক্ট মডাল থেকে চালান (In-Transit) মোডে সুইচ করা
+  const handleSwitchToChallanFromDirectModal = () => {
+    if (!directTransferModal) return;
+    const { product, selectedVariantId } = directTransferModal;
+    handleInitiateQuickTransfer(
+      product,
+      selectedVariantId ? { VariantID: selectedVariantId } : null
+    );
+    setDirectTransferModal(null);
   };
 
   // পণ্য সিলেক্ট করা
@@ -1607,13 +1780,13 @@ export default function StockTransferModal({
                                         <button
                                           type="button"
                                           disabled={gStock <= 0}
-                                          onClick={() => handleInitiateQuickTransfer(p)}
+                                          onClick={() => handleOpenDirectTransfer(p)}
                                           className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center space-x-1 shadow-2xs transition-all ${
                                             gStock <= 0
                                               ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none'
                                               : 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer'
                                           }`}
-                                          title={gStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে দোকানে চালান করুন'}
+                                          title={gStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে দোকানে পণ্য আনুন'}
                                         >
                                           <Truck className="w-3 h-3" />
                                           <span>দোকানে আনুন</span>
@@ -1827,7 +2000,7 @@ export default function StockTransferModal({
                                                             <button
                                                               type="button"
                                                               disabled={vGStock <= 0}
-                                                              onClick={() => handleInitiateQuickTransfer(p, v)}
+                                                              onClick={() => handleOpenDirectTransfer(p, v)}
                                                               className={`px-2 py-0.5 rounded text-[10px] font-bold inline-flex items-center space-x-1 transition-all shadow-xs ${
                                                                 vGStock <= 0
                                                                   ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none'
@@ -1999,13 +2172,13 @@ export default function StockTransferModal({
                                       <button
                                         type="button"
                                         disabled={item.godownStock <= 0}
-                                        onClick={() => handleInitiateQuickTransfer(item.parentProduct, item.variant)}
+                                        onClick={() => handleOpenDirectTransfer(item.parentProduct, item.variant)}
                                         className={`px-2.5 py-1 rounded-lg text-[11px] font-bold inline-flex items-center space-x-1 shadow-2xs transition-all ${
                                           item.godownStock <= 0
                                             ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none'
                                             : 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer'
                                         }`}
-                                        title={item.godownStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে এই ভ্যারিয়েন্ট দোকানে চালান করুন'}
+                                        title={item.godownStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে এই ভ্যারিয়েন্ট সরাসরি দোকানে আনুন'}
                                       >
                                         <Truck className="w-3 h-3" />
                                         <span>দোকানে আনুন</span>
@@ -3574,6 +3747,484 @@ export default function StockTransferModal({
                       <Check className="w-4 h-4" />
                       <span>{isSubmittingEditVariant ? 'সংরক্ষণ হচ্ছে...' : 'ভ্যারিয়েন্ট আপডেট সংরক্ষণ করুন'}</span>
                     </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ========================================================================= */}
+        {/* ৪.৪ গোডাউন থেকে দোকানে সরাসরি পণ্য নিয়ে যাওয়ার ডেডিকেটেড ইন-ডেপথ মডাল */}
+        {/* ========================================================================= */}
+        {directTransferModal && (() => {
+          const prod = directTransferModal.product;
+          if (!prod) return null;
+          const vars = getVariantsOfProduct(prod);
+          const hasVars = Array.isArray(vars) && vars.length > 0;
+          const isThan = Boolean(prod.TotalThan || prod.YardsPerThan || /than|থান/i.test(prod.Unit || ''));
+          const prodYardsPerThan = Number(prod.YardsPerThan) || 0;
+          const unitLabel = isThan ? 'থান' : (prod.Unit || 'Pcs');
+
+          const currentTargetVar = hasVars
+            ? vars.find((v) => String(v.VariantID || v.variantId) === String(directTransferModal.selectedVariantId)) || vars[0]
+            : null;
+
+          const currentAvailableGodown = currentTargetVar
+            ? Number(currentTargetVar.GodownStock !== undefined ? currentTargetVar.GodownStock : 0)
+            : Number(prod.GodownStock || 0);
+
+          const currentShopStock = currentTargetVar
+            ? Number(currentTargetVar.StockQuantity !== undefined ? currentTargetVar.StockQuantity : 0)
+            : Number(prod.StockQuantity || 0);
+
+          const transferQty = Math.max(0, Number(directTransferModal.quantity) || 0);
+
+          // বালক মোডে মোট পরিমাণ
+          const bulkTotalQty = Object.values(directTransferModal.bulkQuantities || {}).reduce(
+            (sum, q) => sum + (Number(q) || 0), 0
+          );
+
+          const effectiveTransferQty = directTransferModal.mode === 'all' ? bulkTotalQty : transferQty;
+          const effectiveYards = isThan ? (effectiveTransferQty * prodYardsPerThan) : 0;
+
+          return (
+            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+              <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden flex flex-col max-h-[92vh]">
+                {/* Header */}
+                <div className="px-5 py-3.5 bg-gradient-to-r from-indigo-700 via-indigo-800 to-teal-800 text-white flex items-center justify-between">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="p-2 bg-white/10 rounded-xl">
+                      <Truck className="w-5 h-5 text-indigo-200" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold flex items-center space-x-1.5">
+                        <span>গোডাউন থেকে দোকানে পণ্য আনুন</span>
+                        <span className="text-[10px] bg-teal-500/30 text-teal-200 border border-teal-400/40 px-2 py-0.5 rounded-full font-mono">
+                          স্টক স্থানান্তর
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-indigo-200">
+                        {prod.ProductName} {prod.Category ? `• ${prod.Category}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDirectTransferModal(null)}
+                    className="p-1.5 text-indigo-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Form Body */}
+                <form onSubmit={handleConfirmDirectTransferSubmit} className="p-5 overflow-y-auto space-y-4 text-xs">
+                  {/* প্রোডাক্ট পরিচিতি ও একক কার্ড */}
+                  <div className="p-3 bg-gradient-to-br from-indigo-50/70 to-teal-50/50 rounded-xl border border-indigo-100 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <span className="text-[11px] font-bold text-slate-700 block">
+                        পণ্য: <strong className="text-indigo-950 font-black">{prod.ProductName}</strong>
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        আইডি: {prod.ProductID} {prod.Barcode ? `| বারকোড: #${prod.Barcode}` : ''}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="px-2.5 py-1 bg-white rounded-lg border border-indigo-200 text-indigo-800 text-xs font-bold shadow-2xs">
+                        একক: {unitLabel}
+                      </span>
+                      {isThan && prodYardsPerThan > 0 && (
+                        <span className="px-2.5 py-1 bg-amber-50 rounded-lg border border-amber-200 text-amber-900 text-xs font-bold">
+                          {prodYardsPerThan} গজ / থান
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* যদি পণ্যে একাধিক ভ্যারিয়েন্ট থাকে */}
+                  {hasVars && (
+                    <div className="space-y-3">
+                      {/* মোড নির্বাচন: একক ভ্যারিয়েন্ট বনাম সকল ভ্যারিয়েন্ট */}
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <label className="text-xs font-bold text-slate-800">
+                          ভ্যারিয়েন্ট স্থানান্তর মোড:
+                        </label>
+                        <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-[11px] font-bold">
+                          <button
+                            type="button"
+                            onClick={() => setDirectTransferModal(prev => ({ ...prev, mode: 'single' }))}
+                            className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                              directTransferModal.mode === 'single'
+                                ? 'bg-white text-indigo-700 shadow-2xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            একক ভ্যারিয়েন্ট
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDirectTransferModal(prev => ({ ...prev, mode: 'all' }))}
+                            className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                              directTransferModal.mode === 'all'
+                                ? 'bg-white text-indigo-700 shadow-2xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            সকল ভ্যারিয়েন্ট ({vars.length}টি)
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* মোড ১: একক ভ্যারিয়েন্ট নির্বাচন */}
+                      {directTransferModal.mode === 'single' && (
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                              ১. কোন ভ্যারিয়েন্টটি আনতে চান? <span className="text-rose-500">*</span>
+                            </label>
+                            <select
+                              value={directTransferModal.selectedVariantId}
+                              onChange={(e) => {
+                                const newVId = e.target.value;
+                                const match = vars.find(v => String(v.VariantID || v.variantId) === newVId);
+                                const avail = match ? Number(match.GodownStock !== undefined ? match.GodownStock : 0) : 0;
+                                setDirectTransferModal(prev => ({
+                                  ...prev,
+                                  selectedVariantId: newVId,
+                                  quantity: avail > 0 ? 1 : 0
+                                }));
+                              }}
+                              className="w-full px-3 py-2 bg-indigo-50/40 border border-indigo-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                            >
+                              {vars.map((v) => {
+                                const vId = v.VariantID || v.variantId;
+                                const attrs = v.Attributes || {};
+                                const vName = Object.values(attrs).filter(Boolean).join(' / ') || v.Color || v.Size || vId;
+                                const gStk = Number(v.GodownStock !== undefined ? v.GodownStock : 0);
+                                const sStk = Number(v.StockQuantity !== undefined ? v.StockQuantity : 0);
+                                return (
+                                  <option key={vId} value={vId}>
+                                    {vName} — (গোডাউনে আছে: {gStk} {unitLabel} | দোকানে: {sStk} {unitLabel})
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          </div>
+
+                          {/* স্টক স্ট্যাটাস ও দ্রুত পরিমাণ নির্ধারণ */}
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <div className="p-3 bg-indigo-50/80 rounded-xl border border-indigo-200 text-center">
+                              <span className="text-[10.5px] font-bold text-indigo-700 block">🏭 গোডাউন বর্তমান স্টক</span>
+                              <span className="text-lg font-black font-mono text-indigo-950">
+                                {currentAvailableGodown} <span className="text-xs font-bold">{unitLabel}</span>
+                              </span>
+                            </div>
+                            <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-center">
+                              <span className="text-[10.5px] font-bold text-emerald-700 block">🏬 দোকান বর্তমান স্টক</span>
+                              <span className="text-lg font-black font-mono text-emerald-950">
+                                {currentShopStock} <span className="text-xs font-bold">{unitLabel}</span>
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* স্থানান্তরের পরিমাণ */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="text-[11px] font-bold text-slate-700">
+                                ২. দোকানে আনার পরিমাণ ({unitLabel}) <span className="text-rose-500">*</span>
+                              </label>
+                              <span className="text-[10px] text-slate-500">
+                                সর্বোচ্চ গোডাউন থেকে: <strong className="font-mono text-indigo-700">{currentAvailableGodown}</strong>
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="number"
+                                min="1"
+                                max={currentAvailableGodown}
+                                value={directTransferModal.quantity}
+                                onChange={(e) => setDirectTransferModal(prev => ({ ...prev, quantity: e.target.value }))}
+                                className="flex-1 px-3 py-2 text-base font-black font-mono text-indigo-900 bg-white border border-slate-300 rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="1"
+                              />
+                              <div className="flex items-center space-x-1">
+                                {[1, 2, 5, 10].map((step) => (
+                                  <button
+                                    key={step}
+                                    type="button"
+                                    disabled={step > currentAvailableGodown}
+                                    onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: step }))}
+                                    className="px-2 py-2 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 rounded-lg text-xs font-bold transition-all disabled:opacity-40 cursor-pointer"
+                                  >
+                                    +{step}
+                                  </button>
+                                ))}
+                                <button
+                                  type="button"
+                                  disabled={currentAvailableGodown <= 0}
+                                  onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: currentAvailableGodown }))}
+                                  className="px-2.5 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 rounded-lg text-xs font-black transition-all disabled:opacity-40 cursor-pointer"
+                                  title="সম্পূর্ণ গোডাউন স্টক দোকানে আনুন"
+                                >
+                                  সব
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* স্থানান্তরের পর ফলাফল প্রিভিউ */}
+                          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                            <span className="text-[11px] font-bold text-slate-600">স্থানান্তরের পর অবস্থা:</span>
+                            <div className="flex items-center space-x-3 text-[11px]">
+                              <span>
+                                গোডাউনে থাকবে: <strong className="font-mono text-rose-600 font-bold">{Math.max(0, currentAvailableGodown - transferQty)}</strong>
+                              </span>
+                              <span>➔</span>
+                              <span>
+                                দোকানে হবে: <strong className="font-mono text-emerald-600 font-bold">{currentShopStock + transferQty}</strong>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* মোড ২: সকল ভ্যারিয়েন্ট একসাথে (বাল্ক) */}
+                      {directTransferModal.mode === 'all' && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between pb-1 text-[11px]">
+                            <span className="font-bold text-slate-700">প্রতিটি ভ্যারিয়েন্টের পরিমাণ বসান:</span>
+                            <div className="flex items-center space-x-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const fill = {};
+                                  vars.forEach(v => {
+                                    const g = Number(v.GodownStock !== undefined ? v.GodownStock : 0);
+                                    fill[v.VariantID || v.variantId] = g > 0 ? 1 : 0;
+                                  });
+                                  setDirectTransferModal(prev => ({ ...prev, bulkQuantities: fill }));
+                                }}
+                                className="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded text-[10.5px] font-bold cursor-pointer"
+                              >
+                                সবগুলোতে ১ দিন
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const fill = {};
+                                  vars.forEach(v => {
+                                    fill[v.VariantID || v.variantId] = Number(v.GodownStock !== undefined ? v.GodownStock : 0);
+                                  });
+                                  setDirectTransferModal(prev => ({ ...prev, bulkQuantities: fill }));
+                                }}
+                                className="px-2 py-0.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded text-[10.5px] font-bold cursor-pointer"
+                              >
+                                সম্পূর্ণ স্টক
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const fill = {};
+                                  vars.forEach(v => { fill[v.VariantID || v.variantId] = 0; });
+                                  setDirectTransferModal(prev => ({ ...prev, bulkQuantities: fill }));
+                                }}
+                                className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[10.5px] font-bold cursor-pointer"
+                              >
+                                রিসেট
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="max-h-56 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100">
+                            {vars.map((v) => {
+                              const vId = v.VariantID || v.variantId;
+                              const attrs = v.Attributes || {};
+                              const vName = Object.values(attrs).filter(Boolean).join(' / ') || v.Color || v.Size || vId;
+                              const gStk = Number(v.GodownStock !== undefined ? v.GodownStock : 0);
+                              const sStk = Number(v.StockQuantity !== undefined ? v.StockQuantity : 0);
+                              const currentVal = directTransferModal.bulkQuantities[vId] !== undefined ? directTransferModal.bulkQuantities[vId] : 0;
+
+                              return (
+                                <div key={vId} className="p-2.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                  <div className="min-w-0 flex-1 pr-2">
+                                    <span className="font-bold text-slate-800 text-xs block truncate">{vName}</span>
+                                    <span className="text-[10px] text-slate-500 font-mono">
+                                      গোডাউন: <strong className="text-indigo-700 font-bold">{gStk}</strong> | দোকান: <strong className="text-emerald-700 font-bold">{sStk}</strong>
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-1.5 shrink-0">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max={gStk}
+                                      value={currentVal}
+                                      disabled={gStk <= 0}
+                                      onChange={(e) => {
+                                        const val = Math.max(0, Math.min(gStk, Number(e.target.value) || 0));
+                                        setDirectTransferModal(prev => ({
+                                          ...prev,
+                                          bulkQuantities: { ...prev.bulkQuantities, [vId]: val }
+                                        }));
+                                      }}
+                                      className="w-16 px-2 py-1 text-xs font-bold text-center font-mono border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:opacity-40"
+                                      placeholder="0"
+                                    />
+                                    <span className="text-[10px] font-bold text-slate-400">{unitLabel}</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="p-2.5 bg-indigo-50 rounded-xl border border-indigo-200 flex items-center justify-between text-xs">
+                            <span className="font-bold text-indigo-900">মোট নির্বাচিত পরিমাণ:</span>
+                            <span className="font-black font-mono text-indigo-950 text-sm">
+                              {bulkTotalQty} {unitLabel} {isThan && prodYardsPerThan > 0 ? `(${effectiveYards} গজ)` : ''}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* পণ্য যদি সাধারণ (কোনো ভ্যারিয়েন্ট ছাড়া) হয় */}
+                  {!hasVars && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div className="p-3 bg-indigo-50/80 rounded-xl border border-indigo-200 text-center">
+                          <span className="text-[10.5px] font-bold text-indigo-700 block">🏭 গোডাউন বর্তমান স্টক</span>
+                          <span className="text-lg font-black font-mono text-indigo-950">
+                            {currentAvailableGodown} <span className="text-xs font-bold">{unitLabel}</span>
+                          </span>
+                        </div>
+                        <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-center">
+                          <span className="text-[10.5px] font-bold text-emerald-700 block">🏬 দোকান বর্তমান স্টক</span>
+                          <span className="text-lg font-black font-mono text-emerald-950">
+                            {currentShopStock} <span className="text-xs font-bold">{unitLabel}</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] font-bold text-slate-700">
+                            দোকানে আনার পরিমাণ ({unitLabel}) <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-[10px] text-slate-500">
+                            সর্বোচ্চ: <strong className="font-mono text-indigo-700">{currentAvailableGodown}</strong>
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="number"
+                            min="1"
+                            max={currentAvailableGodown}
+                            value={directTransferModal.quantity}
+                            onChange={(e) => setDirectTransferModal(prev => ({ ...prev, quantity: e.target.value }))}
+                            className="flex-1 px-3 py-2 text-base font-black font-mono text-indigo-900 bg-white border border-slate-300 rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="1"
+                          />
+                          <div className="flex items-center space-x-1">
+                            {[1, 2, 5, 10].map((step) => (
+                              <button
+                                key={step}
+                                type="button"
+                                disabled={step > currentAvailableGodown}
+                                onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: step }))}
+                                className="px-2 py-2 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 rounded-lg text-xs font-bold transition-all disabled:opacity-40 cursor-pointer"
+                              >
+                                +{step}
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              disabled={currentAvailableGodown <= 0}
+                              onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: currentAvailableGodown }))}
+                              className="px-2.5 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 rounded-lg text-xs font-black transition-all disabled:opacity-40 cursor-pointer"
+                            >
+                              সব
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                        <span className="text-[11px] font-bold text-slate-600">স্থানান্তরের পর অবস্থা:</span>
+                        <div className="flex items-center space-x-3 text-[11px]">
+                          <span>
+                            গোডাউনে থাকবে: <strong className="font-mono text-rose-600 font-bold">{Math.max(0, currentAvailableGodown - transferQty)}</strong>
+                          </span>
+                          <span>➔</span>
+                          <span>
+                            দোকানে হবে: <strong className="font-mono text-emerald-600 font-bold">{currentShopStock + transferQty}</strong>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* থান কাপড়ের জন্য গজ সারাংশ */}
+                  {isThan && prodYardsPerThan > 0 && effectiveTransferQty > 0 && (
+                    <div className="p-2.5 bg-amber-50/90 rounded-xl border border-amber-200 text-amber-900 flex items-center justify-between text-xs">
+                      <span className="font-bold flex items-center space-x-1">
+                        <Scissors className="w-3.5 h-3.5 text-amber-600" />
+                        <span>স্থানান্তরিত মোট কাপড়:</span>
+                      </span>
+                      <strong className="font-mono font-bold text-amber-950 text-sm">
+                        {effectiveYards} গজ ({effectiveTransferQty} থান × {prodYardsPerThan} গজ/থান)
+                      </strong>
+                    </div>
+                  )}
+
+                  {/* মন্তব্য (ঐচ্ছিক) */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                      স্থানান্তর সংক্রান্ত নোট বা বিবরণ (ঐচ্ছিক):
+                    </label>
+                    <input
+                      type="text"
+                      value={directTransferModal.notes}
+                      onChange={(e) => setDirectTransferModal(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="যেমন: আজকের কাস্টমার চাহিদার জন্য বা সেলফে তোলার জন্য..."
+                      className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                    />
+                  </div>
+
+                  {/* অ্যাকশন বাটনসমূহ */}
+                  <div className="pt-3 border-t border-slate-200 space-y-2">
+                    <button
+                      type="submit"
+                      disabled={isSubmittingDirectTransfer || effectiveTransferQty <= 0}
+                      className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-md cursor-pointer transition-all flex items-center justify-center space-x-2"
+                    >
+                      {isSubmittingDirectTransfer ? (
+                        <span>স্থানান্তর ও ডাটাবেসে সেভ হচ্ছে...</span>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>⚡ সরাসরি দোকানে যোগ করুন ({effectiveTransferQty} {unitLabel})</span>
+                        </>
+                      )}
+                    </button>
+
+                    <div className="flex items-center justify-between text-xs pt-1">
+                      <button
+                        type="button"
+                        onClick={handleSwitchToChallanFromDirectModal}
+                        className="text-indigo-600 hover:text-indigo-800 font-bold inline-flex items-center space-x-1 cursor-pointer transition-colors"
+                      >
+                        <Truck className="w-3.5 h-3.5" />
+                        <span>ড্রাইভার চালান তৈরি করুন (ইন-ট্রানজিট)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDirectTransferModal(null)}
+                        className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg cursor-pointer"
+                      >
+                        বাতিল
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>
