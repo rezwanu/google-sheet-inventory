@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
   PRODUCTS: 'pos_products',
   CATEGORIES: 'pos_categories',
   UNITS: 'pos_units',
+  VARIANTS: 'pos_variants',
   CART: 'pos_cart',
   SALES_HISTORY: 'pos_sales_history',
   CUSTOMERS: 'pos_customers',
@@ -449,6 +450,57 @@ export function getLocalUnits() {
 
 export function saveLocalUnits(units) {
   setSecureStorageItem(STORAGE_KEYS.UNITS, units);
+}
+
+// ডিফল্ট ভ্যারিয়েন্ট অপশন তালিকা (রঙ, সাইজ, ইত্যাদি)
+export const DEFAULT_VARIANTS = [
+  // রঙ (Color)
+  { VariantID: 'VAR-COL-101', Type: 'Color', Name: 'লাল', Value: '#EF4444', Status: 'Active' },
+  { VariantID: 'VAR-COL-102', Type: 'Color', Name: 'নীল', Value: '#3B82F6', Status: 'Active' },
+  { VariantID: 'VAR-COL-103', Type: 'Color', Name: 'কালো', Value: '#000000', Status: 'Active' },
+  { VariantID: 'VAR-COL-104', Type: 'Color', Name: 'সাদা', Value: '#FFFFFF', Status: 'Active' },
+  { VariantID: 'VAR-COL-105', Type: 'Color', Name: 'সবুজ', Value: '#10B981', Status: 'Active' },
+  { VariantID: 'VAR-COL-106', Type: 'Color', Name: 'হলুদ', Value: '#F59E0B', Status: 'Active' },
+  { VariantID: 'VAR-COL-107', Type: 'Color', Name: 'গোলাপি', Value: '#EC4899', Status: 'Active' },
+  { VariantID: 'VAR-COL-108', Type: 'Color', Name: 'মেরুন', Value: '#881337', Status: 'Active' },
+  { VariantID: 'VAR-COL-109', Type: 'Color', Name: 'নেভি ব্লু', Value: '#1E3A8A', Status: 'Active' },
+  { VariantID: 'VAR-COL-110', Type: 'Color', Name: 'অফ-হোয়াইট', Value: '#FAF7F2', Status: 'Active' },
+  { VariantID: 'VAR-COL-111', Type: 'Color', Name: 'ছাই', Value: '#64748B', Status: 'Active' },
+  { VariantID: 'VAR-COL-112', Type: 'Color', Name: 'বেগুনি', Value: '#8B5CF6', Status: 'Active' },
+  { VariantID: 'VAR-COL-113', Type: 'Color', Name: 'ফিরোজা', Value: '#06B6D4', Status: 'Active' },
+  { VariantID: 'VAR-COL-114', Type: 'Color', Name: 'জলপাই', Value: '#4D7C0F', Status: 'Active' },
+  { VariantID: 'VAR-COL-115', Type: 'Color', Name: 'কমলা', Value: '#F97316', Status: 'Active' },
+  { VariantID: 'VAR-COL-116', Type: 'Color', Name: 'ম্যাজেন্টা', Value: '#D946EF', Status: 'Active' },
+  { VariantID: 'VAR-COL-117', Type: 'Color', Name: 'বাসন্তী', Value: '#EAB308', Status: 'Active' },
+  { VariantID: 'VAR-COL-118', Type: 'Color', Name: 'লাল খয়েরি', Value: '#78350F', Status: 'Active' },
+
+  // সাইজ (Size)
+  { VariantID: 'VAR-SIZ-101', Type: 'Size', Name: 'S', Value: 'S', Status: 'Active' },
+  { VariantID: 'VAR-SIZ-102', Type: 'Size', Name: 'M', Value: 'M', Status: 'Active' },
+  { VariantID: 'VAR-SIZ-103', Type: 'Size', Name: 'L', Value: 'L', Status: 'Active' },
+  { VariantID: 'VAR-SIZ-104', Type: 'Size', Name: 'XL', Value: 'XL', Status: 'Active' },
+  { VariantID: 'VAR-SIZ-105', Type: 'Size', Name: 'XXL', Value: 'XXL', Status: 'Active' },
+  { VariantID: 'VAR-SIZ-106', Type: 'Size', Name: '38', Value: '38', Status: 'Active' },
+  { VariantID: 'VAR-SIZ-107', Type: 'Size', Name: '40', Value: '40', Status: 'Active' },
+  { VariantID: 'VAR-SIZ-108', Type: 'Size', Name: '42', Value: '42', Status: 'Active' },
+  { VariantID: 'VAR-SIZ-109', Type: 'Size', Name: '44', Value: '44', Status: 'Active' }
+];
+
+export function getLocalVariants() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.VARIANTS);
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      saveLocalVariants(DEFAULT_VARIANTS);
+      return DEFAULT_VARIANTS;
+    }
+    return data;
+  } catch (e) {
+    return DEFAULT_VARIANTS;
+  }
+}
+
+export function saveLocalVariants(variants) {
+  setSecureStorageItem(STORAGE_KEYS.VARIANTS, variants);
 }
 
 // প্রোডাক্ট অবজেক্টের বিভিন্ন ফিল্ড ভ্যারিয়েশন (যেমন: StockQuantit vs StockQuantity) নর্মালাইজ করা

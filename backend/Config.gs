@@ -15,7 +15,8 @@ const SHEETS = {
   STOCK_LOGS: 'StockLogs',
   USERS: 'Users',
   CUSTOMERS: 'Customers',
-  COUPONS: 'Coupons'
+  COUPONS: 'Coupons',
+  VARIANTS: 'Variants'
 };
 
 /**
@@ -435,6 +436,42 @@ function ensureCouponsSheet(spreadsheet) {
 }
 
 /**
+ * Variants (ভ্যারিয়েন্ট ডাটাবেস) শিট নিশ্চিত করা (না থাকলে তৈরি এবং প্রারম্ভিক রঙ ও সাইজগুলো যোগ করা)
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} Variants শিট অবজেক্ট
+ */
+function ensureVariantsSheet(spreadsheet) {
+  let variantsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.VARIANTS);
+  if (!variantsSheet) {
+    variantsSheet = spreadsheet.insertSheet(SHEETS.VARIANTS);
+  }
+
+  if (variantsSheet.getLastRow() === 0) {
+    variantsSheet.appendRow([
+      'VariantID', 'Type', 'Name', 'Value', 'Description', 'Status', 'CreatedAt'
+    ]);
+    const now = new Date();
+    // ডিফল্ট রঙ (Color)
+    const defaultColors = [
+      'লাল', 'নীল', 'কালো', 'সাদা', 'সবুজ', 'হলুদ', 'গোলাপি', 'মেরুন', 
+      'নেভি ব্লু', 'অফ-হোয়াইট', 'ছাই', 'বেগুনি', 'ফিরোজা', 'জলপাই', 'কমলা', 
+      'ম্যাজেন্টা', 'বাসন্তী', 'লাল খয়েরি'
+    ];
+    defaultColors.forEach((color, idx) => {
+      variantsSheet.appendRow([`VAR-COL-${100 + idx}`, 'Color', color, '', 'রঙ ভ্যারিয়েন্ট', 'Active', now]);
+    });
+
+    // ডিফল্ট সাইজ (Size)
+    const defaultSizes = ['S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '44'];
+    defaultSizes.forEach((size, idx) => {
+      variantsSheet.appendRow([`VAR-SIZ-${100 + idx}`, 'Size', size, '', 'সাইজ ভ্যারিয়েন্ট', 'Active', now]);
+    });
+  }
+
+  return variantsSheet;
+}
+
+/**
  * Customers শিট থেকে পূর্বে তৈরি হওয়া সমস্ত ডামি/নমুনা গ্রাহক সারি মুছে ফেলা
  * @param {Sheet} customersSheet - Customers শিট অবজেক্ট
  */
@@ -758,6 +795,9 @@ function ensureDatabaseSchema(spreadsheet) {
 
   // ২.২ Coupons (কুপন ডাটাবেস) শিট নিশ্চিত করা
   ensureCouponsSheet(spreadsheet);
+
+  // ২.৩ Variants (ভ্যারিয়েন্ট ডাটাবেস) শিট নিশ্চিত করা
+  ensureVariantsSheet(spreadsheet);
 
   // ৩. Products শিটের সকল কলাম (SellingPrice সহ) নিশ্চিত করা
   const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);

@@ -70,6 +70,8 @@ import {
   saveLocalCategories,
   getLocalUnits,
   saveLocalUnits,
+  getLocalVariants,
+  saveLocalVariants,
   getLocalCart,
   saveLocalCart,
   getLocalHeldCarts,
@@ -193,6 +195,7 @@ import {
   postDeleteProduct,
   postAddCategory,
   postAddUnit,
+  postAddVariantOption,
   postUpdateSettings,
   postCreateOrder,
   postUpdateOrderStatus,
@@ -227,6 +230,7 @@ export default function App() {
   const [products, setProducts] = useState(getLocalProducts);
   const [categories, setCategories] = useState(getLocalCategories);
   const [units, setUnits] = useState(getLocalUnits);
+  const [variantAttributes, setVariantAttributes] = useState(getLocalVariants);
   const [cart, setCart] = useState(getLocalCart);
   const [salesHistory, setSalesHistory] = useState(getLocalSalesHistory);
   const [orders, setOrders] = useState(getLocalOrders);
@@ -945,6 +949,12 @@ export default function App() {
       if (data && data.units && Array.isArray(data.units) && data.units.length > 0) {
         setUnits(data.units);
         saveLocalUnits(data.units);
+      }
+
+      // ভ্যারিয়েন্ট অপশন (Variants) আপডেট
+      if (data && data.variants && Array.isArray(data.variants) && data.variants.length > 0) {
+        setVariantAttributes(data.variants);
+        saveLocalVariants(data.variants);
       }
 
       // সেলস হিস্ট্রি আপডেট (গুগল শিট থেকে ক্লাউড ডাটা)
@@ -3742,6 +3752,53 @@ export default function App() {
     }
   };
 
+  // ৮.২.১ ভ্যারিয়েন্ট অপশন (রং, সাইজ ইত্যাদি) ডাটাবেসে যোগ
+  const handleAddVariantOption = async (optionData) => {
+    const type = optionData.type || optionData.Type || 'Color';
+    const name = String(optionData.name || optionData.Name || '').trim();
+    if (!name) return null;
+
+    const newId = `VAR-${type.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+    const newOption = {
+      VariantID: newId,
+      Type: type,
+      Name: name,
+      Value: optionData.value || '',
+      Status: 'Active',
+      CreatedAt: new Date().toISOString()
+    };
+
+    let wasAdded = false;
+    setVariantAttributes(prev => {
+      const exists = prev.some(v => 
+        String(v.Type || 'Color').toLowerCase() === type.toLowerCase() && 
+        String(v.Name || '').trim().toLowerCase() === name.toLowerCase()
+      );
+      if (exists) return prev;
+      wasAdded = true;
+      const updated = [...prev, newOption];
+      saveLocalVariants(updated);
+      return updated;
+    });
+
+    if (settings.apiUrl) {
+      try {
+        const response = await postAddVariantOption(settings.apiUrl, { type, name, value: optionData.value || '' });
+        if (response && response.success) {
+          showToast(`'${name}' ভ্যারিয়েন্ট ডাটাবেসে সংরক্ষিত হয়েছে!`, 'success');
+        } else {
+          showToast(`ভ্যারিয়েন্ট লোকাল স্টোরেজে সংরক্ষিত হয়েছে (${response?.message || 'অফলাইন'})`, 'info');
+        }
+      } catch (err) {
+        showToast('ভ্যারিয়েন্ট লোকাল স্টোরেজে সংরক্ষিত হয়েছে (অফলাইন)।', 'info');
+      }
+    } else {
+      showToast(`'${name}' ভ্যারিয়েন্ট লোকাল ডাটাবেসে যুক্ত হয়েছে!`, 'success');
+    }
+
+    return newOption;
+  };
+
   // ৮.৩ পণ্য সম্পাদনা মডাল ওপেন
   const handleOpenEditProduct = (product) => {
     setSelectedProductForEdit(product);
@@ -4058,6 +4115,10 @@ export default function App() {
     if (data.units && Array.isArray(data.units)) {
       setUnits(data.units);
       saveLocalUnits(data.units);
+    }
+    if (data.variants && Array.isArray(data.variants)) {
+      setVariantAttributes(data.variants);
+      saveLocalVariants(data.variants);
     }
     setSyncStatus('online');
     return true;
@@ -4591,6 +4652,8 @@ export default function App() {
               onAddCategory={handleAddCategory}
               units={units}
               onAddUnit={handleAddUnit}
+              variantAttributes={variantAttributes}
+              onAddVariantOption={handleAddVariantOption}
               products={products}
               settings={settings}
             />
@@ -4740,6 +4803,8 @@ export default function App() {
         onAddCategory={handleAddCategory}
         units={units}
         onAddUnit={handleAddUnit}
+        variantAttributes={variantAttributes}
+        onAddVariantOption={handleAddVariantOption}
         products={products}
         settings={settings}
         activeUser={activeUser}
@@ -4806,6 +4871,8 @@ export default function App() {
         onAddCategory={handleAddCategory}
         units={units}
         onAddUnit={handleAddUnit}
+        variantAttributes={variantAttributes}
+        onAddVariantOption={handleAddVariantOption}
         products={products}
         settings={settings}
       />

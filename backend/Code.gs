@@ -3071,6 +3071,73 @@ function handleAddUnit(spreadsheet, payload) {
   };
 }
 
+/**
+ * নতুন ভ্যারিয়েন্ট অপশন (Variant Attribute Option) যোগ করার হ্যান্ডলার
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @param {Object} payload - ভ্যারিয়েন্টের বিবরণ { type, name, value, description }
+ * @return {Object} রেসপন্স অবজেক্ট
+ */
+function handleAddVariantOption(spreadsheet, payload) {
+  let variantsSheet = ensureVariantsSheet(spreadsheet);
+
+  const type = payload.type || payload.Type || 'Color';
+  const name = payload.name || payload.Name || '';
+  const value = payload.value || payload.Value || '';
+  const description = payload.description || payload.Description || '';
+
+  if (!name.toString().trim()) {
+    return {
+      success: false,
+      message: 'ভ্যারিয়েন্টের নাম দেওয়া আবশ্যক।'
+    };
+  }
+
+  // ইতোমধ্যে একই টাইপ ও নামের ভ্যারিয়েন্ট আছে কিনা যাচাই
+  const existingVariants = getSheetRowsAsObjects(SHEETS.VARIANTS);
+  const duplicate = existingVariants.find(v => 
+    (v.Type && v.Type.toString().trim().toLowerCase() === type.toString().trim().toLowerCase()) &&
+    (v.Name && v.Name.toString().trim().toLowerCase() === name.toString().trim().toLowerCase())
+  );
+
+  if (duplicate) {
+    return {
+      success: true,
+      message: 'এই ভ্যারিয়েন্ট অপশনটি ইতিমধ্যে ডাটাবেসে বিদ্যমান রয়েছে।',
+      data: duplicate
+    };
+  }
+
+  const prefix = type.toString().toUpperCase().startsWith('COL') ? 'VAR-COL' : 'VAR-SIZ';
+  const variantId = generateUniqueId(prefix);
+  const timestamp = new Date();
+
+  variantsSheet.appendRow([
+    variantId,
+    type,
+    name.toString().trim(),
+    value.toString().trim(),
+    description || '',
+    'Active',
+    timestamp
+  ]);
+
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: 'নতুন ভ্যারিয়েন্ট ডাটাবেসে সফলভাবে যুক্ত হয়েছে।',
+    data: {
+      VariantID: variantId,
+      Type: type,
+      Name: name.toString().trim(),
+      Value: value.toString().trim(),
+      Description: description,
+      Status: 'Active',
+      CreatedAt: timestamp
+    }
+  };
+}
+
 
 
 
@@ -3116,6 +3183,7 @@ function doGet(e) {
       const products = getSheetRowsAsObjects(SHEETS.PRODUCTS);
       const categories = getSheetRowsAsObjects(SHEETS.CATEGORIES);
       const units = getSheetRowsAsObjects(SHEETS.UNITS);
+      const variants = getSheetRowsAsObjects(SHEETS.VARIANTS);
       const customers = getSheetRowsAsObjects(SHEETS.CUSTOMERS);
       const coupons = getSheetRowsAsObjects(SHEETS.COUPONS);
       const sales = getSheetRowsAsObjects(SHEETS.SALES);
@@ -3176,6 +3244,7 @@ function doGet(e) {
           salesReturns: salesReturns,
           stockTransfers: stockTransfers,
           auditLogs: auditLogs,
+          variants: variants,
           coupons: coupons,
           sales: sales,
           orders: orders,
@@ -3197,6 +3266,15 @@ function doGet(e) {
       return createJsonResponse({
         success: true,
         data: units
+      });
+    }
+
+    // ১.১.১ শুধুমাত্র ভ্যারিয়েন্ট (Variants) তালিকা আনা
+    if (action === 'getVariants') {
+      const variants = getSheetRowsAsObjects(SHEETS.VARIANTS);
+      return createJsonResponse({
+        success: true,
+        data: variants
       });
     }
 
@@ -3422,6 +3500,11 @@ function doPost(e) {
 
       case 'addUnit':
         result = handleAddUnit(spreadsheet, payload);
+        break;
+
+      case 'addVariant':
+      case 'addVariantOption':
+        result = handleAddVariantOption(spreadsheet, payload);
         break;
 
       case 'addCustomer':

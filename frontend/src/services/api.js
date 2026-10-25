@@ -470,6 +470,40 @@ export async function postAddUnit(apiUrl, unitData) {
   return result;
 }
 
+export async function postAddVariantOption(apiUrl, variantData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: ভ্যারিয়েন্ট শুধুমাত্র লোকাল স্টোরেজে যুক্ত হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'addVariant',
+    type: variantData.type || variantData.Type || 'Color',
+    Type: variantData.type || variantData.Type || 'Color',
+    name: variantData.name || variantData.Name || '',
+    Name: variantData.name || variantData.Name || '',
+    value: variantData.value || variantData.Value || '',
+    Value: variantData.value || variantData.Value || '',
+    description: variantData.description || variantData.Description || '',
+    Description: variantData.description || variantData.Description || '',
+  };
+
+  const response = await fetch(apiUrl.trim(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  });
+
+  const resJson = await response.json();
+  return resJson;
+}
+
 /**
  * গুগল শিট থেকে সম্পূর্ণ বিক্রয় হিস্ট্রি লোড করার API কল (action: 'getSales')
  * @param {string} apiUrl - Apps Script Web App URL

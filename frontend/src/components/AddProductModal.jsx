@@ -90,7 +90,9 @@ export default function AddProductModal({
   units = [],
   onAddUnit,
   products = [],
-  settings = {}
+  settings = {},
+  variantAttributes = [],
+  onAddVariantOption
 }) {
   const [formData, setFormData] = useState({
     barcode: '',
@@ -146,6 +148,92 @@ export default function AddProductModal({
   const [variants, setVariants] = useState([]);
   const [attributeSizes, setAttributeSizes] = useState('');
   const [attributeColors, setAttributeColors] = useState('');
+
+  // ভ্যারিয়েন্ট ড্রপডাউন ও ডাটাবেস সিলেকশন স্টেট
+  const [selectedAttributeType, setSelectedAttributeType] = useState('Color'); // 'Color' | 'Size' | 'Weight'
+  const [selectedOptionDropdown, setSelectedOptionDropdown] = useState('');
+  const [newVariantInput, setNewVariantInput] = useState('');
+
+  // নির্বাচিত টাইপ অনুযায়ী ডাটাবেসের অপশন তালিকা ফিল্টার
+  const activeTypeOptions = useMemo(() => {
+    const list = Array.isArray(variantAttributes) ? variantAttributes : [];
+    return list.filter(v => 
+      String(v.Type || 'Color').trim().toLowerCase() === selectedAttributeType.toLowerCase()
+    );
+  }, [variantAttributes, selectedAttributeType]);
+
+  // কাপড় বা অন্যান্য ব্যবহারের জন্য সকল রঙের তালিকা
+  const allColorOptions = useMemo(() => {
+    const list = Array.isArray(variantAttributes) ? variantAttributes : [];
+    return list.filter(v => 
+      String(v.Type || 'Color').trim().toLowerCase() === 'color'
+    );
+  }, [variantAttributes]);
+
+  // ড্রপডাউন বা চিপস থেকে বিদ্যমান ভ্যারিয়েন্ট পণ্যে যোগ করা
+  const handleAddOptionToVariants = (optionName) => {
+    const cleanName = String(optionName || '').trim();
+    if (!cleanName) return;
+
+    // একই অপশন ইতিমধ্যে এই পণ্যে আছে কিনা চেক
+    const isDuplicate = variants.some(v => {
+      const attrVal = v.Attributes ? (v.Attributes[selectedAttributeType] || v.Attributes.Option || v.Attributes.Color || v.Attributes.Size) : null;
+      return String(attrVal || v.VariantID || '').trim().toLowerCase() === cleanName.toLowerCase();
+    });
+
+    if (isDuplicate) {
+      alert(`'${cleanName}' ভ্যারিয়েন্টটি ইতিমধ্যে এই পণ্যে যোগ করা হয়েছে!`);
+      return;
+    }
+
+    const baseCost = Number(formData.costPrice) || 0;
+    const baseWholesale = Number(formData.wholesalePrice) || 0;
+    const baseSell = Number(formData.sellingPrice) || 0;
+    const baseMinSell = formData.minSellingPrice !== '' ? Number(formData.minSellingPrice) : baseCost;
+    const defaultQty = isThanUnit ? 1 : 10;
+
+    const newVar = {
+      VariantID: `VAR-${selectedAttributeType.slice(0, 3).toUpperCase()}-${cleanName.toUpperCase().replace(/\s+/g, '_')}`,
+      Attributes: { [selectedAttributeType]: cleanName },
+      Barcode: `${formData.barcode || 'VAR'}-${cleanName}`.toLowerCase(),
+      CostPrice: baseCost,
+      WholesalePrice: baseWholesale,
+      MinSellingPrice: baseMinSell,
+      SellingPrice: baseSell,
+      GodownStock: defaultQty,
+      StockQuantity: 0
+    };
+
+    const updated = [...variants, newVar];
+    setVariants(updated);
+    const sumStock = updated.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0);
+    setFormData(prev => ({
+      ...prev,
+      initialGodownStock: String(sumStock),
+      initialStock: '0'
+    }));
+  };
+
+  // ফর্ম থেকে নতুন ভ্যারিয়েন্ট ডাটাবেসে সেভ এবং পণ্যে নির্বাচন করা
+  const handleAddNewVariantOptionSubmit = async (e) => {
+    if (e) e.preventDefault();
+    const cleanName = String(newVariantInput || '').trim();
+    if (!cleanName) {
+      alert(`দয়া করে নতুন ${selectedAttributeType === 'Color' ? 'রঙের' : 'সাইজের'} নাম লিখুন!`);
+      return;
+    }
+
+    if (onAddVariantOption) {
+      await onAddVariantOption({
+        type: selectedAttributeType,
+        name: cleanName,
+        value: ''
+      });
+    }
+
+    handleAddOptionToVariants(cleanName);
+    setNewVariantInput('');
+  };
 
   // কম্বো বান্ডেল স্টেট
   const [bundleItems, setBundleItems] = useState([]);
@@ -273,6 +361,16 @@ export default function AddProductModal({
   const handleAddQuickColor = (colorInput, thansInput) => {
     const cleanName = String(colorInput || quickColorName).trim();
     if (!cleanName) return;
+
+    if (onAddVariantOption) {
+      const existsInDb = (variantAttributes || []).some(v => 
+        String(v.Type || 'Color').toLowerCase() === 'color' && 
+        String(v.Name || '').toLowerCase() === cleanName.toLowerCase()
+      );
+      if (!existsInDb) {
+        onAddVariantOption({ type: 'Color', name: cleanName });
+      }
+    }
     const qty = Math.max(0.1, Number(thansInput || quickColorThans) || 1);
     const baseCost = Number(formData.costPrice) || 0;
     const baseWholesale = Number(formData.wholesalePrice) || 0;
@@ -1696,8 +1794,8 @@ export default function AddProductModal({
 
                       {/* দ্রুত নির্বাচন চিপস */}
                       <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                        <span className="text-[10px] font-bold text-amber-800 shrink-0">জনপ্রিয় কালার:</span>
-                        {['লাল', 'নীল', 'কালো', 'সাদা', 'সবুজ', 'হলুদ', 'গোলাপি', 'মেরুন', 'নেভি ব্লু', 'অফ-হোয়াইট', 'ছাই', 'বেগুনি'].map((c) => (
+                        <span className="text-[10px] font-bold text-amber-800 shrink-0">ডাটাবেসের কালার:</span>
+                        {(allColorOptions.length > 0 ? allColorOptions.map(c => c.Name) : ['লাল', 'নীল', 'কালো', 'সাদা', 'সবুজ', 'হলুদ', 'গোলাপি', 'মেরুন', 'নেভি ব্লু', 'অফ-হোয়াইট', 'ছাই', 'বেগুনি']).map((c) => (
                           <button
                             key={c}
                             type="button"
@@ -1822,44 +1920,157 @@ export default function AddProductModal({
                     </span>
                   </div>
 
-                  {/* স্বয়ংক্রিয় ভ্যারিয়েন্ট জেনারেটর ফর্ম */}
-                  <div className="p-3 bg-white rounded-xl border border-indigo-100 space-y-2.5">
-                    <div className="text-[11px] font-bold text-slate-700">
-                      অটো জেনারেটর (কমা দিয়ে একাধিক মান লিখুন):
+                  {/* ভ্যারিয়েন্ট ডাটাবেস ড্রপডাউন ও নির্বাচন কার্ড */}
+                  <div className="p-4 bg-white rounded-xl border border-indigo-200/80 shadow-xs space-y-3.5">
+                    
+                    {/* ১. ভ্যারিয়েন্ট ধরণ নির্বাচন (Color / Size / Weight) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                      <div>
+                        <label className="block text-xs font-bold text-indigo-950 mb-1">
+                          ১. ভ্যারিয়েন্টের ধরণ নির্বাচন করুন (Variant Type):
+                        </label>
+                        <select
+                          value={selectedAttributeType}
+                          onChange={(e) => {
+                            setSelectedAttributeType(e.target.value);
+                            setSelectedOptionDropdown('');
+                          }}
+                          className="w-full px-3 py-2 bg-indigo-50/50 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        >
+                          <option value="Color">🎨 রঙ / কালার (Color)</option>
+                          <option value="Size">📏 সাইজ / মাপ (Size)</option>
+                          <option value="Weight">⚖️ ওজন / পরিমাপ (Weight)</option>
+                        </select>
+                      </div>
+
+                      {/* ২. ড্রপডাউন লিস্ট থেকে মান নির্বাচন */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          ২. {selectedAttributeType === 'Color' ? 'রঙের' : selectedAttributeType === 'Size' ? 'সাইজের' : 'ওজনের'} তালিকা ({activeTypeOptions.length}টি ডাটাবেসে উপলব্ধ):
+                        </label>
+                        <select
+                          value={selectedOptionDropdown}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val) {
+                              handleAddOptionToVariants(val);
+                              setSelectedOptionDropdown('');
+                            }
+                          }}
+                          className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        >
+                          <option value="">
+                            -- {selectedAttributeType === 'Color' ? 'রঙ নির্বাচন করুন' : selectedAttributeType === 'Size' ? 'সাইজ নির্বাচন করুন' : 'অপশন বেছে নিন'} --
+                          </option>
+                          {activeTypeOptions.map((opt) => (
+                            <option key={opt.VariantID || opt.Name} value={opt.Name}>
+                              {opt.Name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+                    {/* ক্লিক করে দ্রুত যোগ করার চিপস তালিকা */}
+                    <div className="space-y-1.5 pt-1 border-t border-slate-100">
+                      <div className="text-[11px] font-bold text-slate-600 flex items-center justify-between">
+                        <span>ক্লিক করে পণ্যে যোগ করুন:</span>
+                        <span className="text-[10px] text-indigo-600 font-semibold">{selectedAttributeType} তালিকা</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-wrap max-h-28 overflow-y-auto p-1.5 bg-slate-50/60 rounded-lg border border-slate-200">
+                        {activeTypeOptions.length === 0 ? (
+                          <span className="text-xs text-slate-400 py-1 px-2">এই ক্যাটাগরিতে এখনো কোনো ডাটা নেই। নিচের ঘর থেকে নতুন যোগ করুন।</span>
+                        ) : (
+                          activeTypeOptions.map((opt) => {
+                            const isAlreadyAdded = variants.some(v => {
+                              const attrVal = v.Attributes ? (v.Attributes[selectedAttributeType] || v.Attributes.Option || v.Attributes.Color || v.Attributes.Size) : null;
+                              return String(attrVal || v.VariantID || '').trim().toLowerCase() === String(opt.Name).trim().toLowerCase();
+                            });
+                            return (
+                              <button
+                                key={opt.VariantID || opt.Name}
+                                type="button"
+                                onClick={() => handleAddOptionToVariants(opt.Name)}
+                                className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center space-x-1 ${
+                                  isAlreadyAdded
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300 opacity-60'
+                                    : 'bg-white hover:bg-indigo-50 text-slate-800 hover:text-indigo-700 border-slate-200 shadow-2xs'
+                                }`}
+                                title={isAlreadyAdded ? 'ইতোমধ্যে যুক্ত হয়েছে' : 'পণ্যের ভ্যারিয়েন্ট তালিকায় যোগ করুন'}
+                              >
+                                {isAlreadyAdded ? <Check className="w-3 h-3 text-emerald-600" /> : <Plus className="w-3 h-3 text-indigo-600" />}
+                                <span>{opt.Name}</span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ৩. নতুন ভ্যারিয়েন্ট ডাটাবেসে যোগ করার ইনলাইন ফর্ম */}
+                    <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      <div className="flex items-center space-x-1.5 text-xs font-bold text-amber-900 shrink-0">
+                        <Sparkles className="w-4 h-4 text-amber-600" />
+                        <span>নতুন {selectedAttributeType === 'Color' ? 'রং' : selectedAttributeType === 'Size' ? 'সাইজ' : 'ভ্যারিয়েন্ট'} ডাটাবেসে যোগ:</span>
+                      </div>
                       <input
                         type="text"
-                        placeholder="সাইজ / ওজন (যেমন: S, M, L, XL অথবা 500g, 1kg)"
-                        value={attributeSizes}
-                        onChange={(e) => setAttributeSizes(e.target.value)}
-                        className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        placeholder={`যেমন: ${selectedAttributeType === 'Color' ? 'পেস্তা, সি-গ্রিন, বাদামী' : selectedAttributeType === 'Size' ? '3XL, 46, Free' : '1.5kg'}`}
+                        value={newVariantInput}
+                        onChange={(e) => setNewVariantInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddNewVariantOptionSubmit();
+                          }
+                        }}
+                        className="flex-1 px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
                       />
-                      <input
-                        type="text"
-                        placeholder="রঙ / কালার (যেমন: Black, Navy, White)"
-                        value={attributeColors}
-                        onChange={(e) => setAttributeColors(e.target.value)}
-                        className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between pt-1">
                       <button
                         type="button"
-                        onClick={handleAutoGenerateVariants}
-                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
+                        onClick={handleAddNewVariantOptionSubmit}
+                        className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-1 cursor-pointer shrink-0"
                       >
-                        <Wand2 className="w-3.5 h-3.5" />
-                        <span>স্বয়ংক্রিয় তৈরি করুন</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAddManualVariant}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                      >
-                        + ম্যানুয়াল রো যোগ
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>ডাটাবেসে সেভ ও নির্বাচন করুন</span>
                       </button>
                     </div>
+
+                    {/* ৪. বিকল্প: কমা দিয়ে একাধিক মান অটো জেনারেটর (পূর্বের সুবিধাও বহাল রাখা) */}
+                    <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <span className="text-[11px] font-semibold text-slate-500">বিকল্প কমা-সেপারেটেড মান:</span>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          placeholder="সাইজ (S, M, L...)"
+                          value={attributeSizes}
+                          onChange={(e) => setAttributeSizes(e.target.value)}
+                          className="w-28 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px]"
+                        />
+                        <input
+                          type="text"
+                          placeholder="রং (লাল, নীল...)"
+                          value={attributeColors}
+                          onChange={(e) => setAttributeColors(e.target.value)}
+                          className="w-28 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px]"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAutoGenerateVariants}
+                          className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded text-[11px] font-bold cursor-pointer"
+                        >
+                          জেনারেট
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAddManualVariant}
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-bold cursor-pointer"
+                        >
+                          + ফাঁকা রো
+                        </button>
+                      </div>
+                    </div>
+
                   </div>
 
                   {/* ভ্যারিয়েন্ট তালিকা টেবিল */}
