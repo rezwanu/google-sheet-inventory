@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   X,
   PackagePlus,
@@ -29,7 +29,12 @@ import {
   Printer,
   CalendarClock,
   Palette,
-  Plus
+  Plus,
+  Calculator,
+  Scale,
+  Ruler,
+  Package,
+  Droplets
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';
@@ -170,6 +175,51 @@ export default function AddProductModal({
     );
   }, [variantAttributes]);
 
+  // পরিমাপক এককের ক্যাটাগরি বিশ্লেষণ (than, weight, dozen, box, length, liquid, piece)
+  const unitCategory = useMemo(() => {
+    const u = String(formData.unit || '').trim().toLowerCase();
+    if (u === 'থান' || u.includes('than') || u.includes('bolt')) return 'than';
+    if (['কেজি', 'গ্রাম', 'kg', 'gm', 'gram', 'মন', 'টন', 'বস্তা', 'bag', 'sack'].some(k => u.includes(k))) return 'weight';
+    if (['ডজন', 'হালি', 'জোড়া', 'dozen', 'hali', 'pair', 'dzn'].some(k => u.includes(k))) return 'dozen';
+    if (['বক্স', 'কার্টুন', 'প্যাকেট', 'box', 'carton', 'packet', 'ctn', 'pkt'].some(k => u.includes(k))) return 'box';
+    if (['গজ', 'মিটার', 'রোল', 'yard', 'meter', 'roll', 'yd', 'mtr'].some(k => u.includes(k))) return 'length';
+    if (['লিটার', 'মিলি', 'বোতল', 'ltr', 'liter', 'litre', 'ml', 'bottle', 'can'].some(k => u.includes(k))) return 'liquid';
+    return 'piece';
+  }, [formData.unit]);
+
+  // থান একক কি না তা যাচাই (কাপড়ের থান ও গজ পরিমাপক)
+  const isThanUnit = useMemo(() => unitCategory === 'than', [unitCategory]);
+
+  // সাব-ক্যালকুলেটর স্টেট (পরিমাপক একক অনুযায়ী ইনপুট ও কনভার্টার)
+  const [calcValues, setCalcValues] = useState({
+    weightBags: '10',
+    weightPerBag: '50',
+    dozenCount: '5',
+    dozenPerPack: '12',
+    boxCount: '5',
+    boxPerPack: '24',
+    lengthRolls: '5',
+    lengthPerRoll: '50',
+    liquidCases: '5',
+    liquidPerCase: '12',
+  });
+
+  // পরিমাপক একক পরিবর্তনের সাথে সাব-ক্যালকুলেটর ডিফল্ট মান আপডেট
+  useEffect(() => {
+    const u = String(formData.unit || '').trim().toLowerCase();
+    if (u.includes('হালি')) {
+      setCalcValues(prev => ({ ...prev, dozenPerPack: '4' }));
+    } else if (u.includes('জোড়া') || u.includes('pair')) {
+      setCalcValues(prev => ({ ...prev, dozenPerPack: '2' }));
+    } else if (u.includes('ডজন') || u.includes('dozen')) {
+      setCalcValues(prev => ({ ...prev, dozenPerPack: '12' }));
+    } else if (u.includes('গ্রাম') || u.includes('gm') || u.includes('gram')) {
+      setCalcValues(prev => ({ ...prev, weightPerBag: '500' }));
+    } else if (u.includes('কেজি') || u.includes('kg')) {
+      setCalcValues(prev => ({ ...prev, weightPerBag: '50' }));
+    }
+  }, [formData.unit]);
+
   // ড্রপডাউন বা চিপস থেকে বিদ্যমান ভ্যারিয়েন্ট পণ্যে যোগ করা
   const handleAddOptionToVariants = (optionName) => {
     const cleanName = String(optionName || '').trim();
@@ -190,7 +240,7 @@ export default function AddProductModal({
     const baseWholesale = Number(formData.wholesalePrice) || 0;
     const baseSell = Number(formData.sellingPrice) || 0;
     const baseMinSell = formData.minSellingPrice !== '' ? Number(formData.minSellingPrice) : baseCost;
-    const defaultQty = isThanUnit ? 1 : 10;
+    const defaultQty = isThanUnit ? 1 : (unitCategory === 'weight' ? 5 : (unitCategory === 'dozen' ? 12 : 10));
 
     const newVar = {
       VariantID: `VAR-${selectedAttributeType.slice(0, 3).toUpperCase()}-${cleanName.toUpperCase().replace(/\s+/g, '_')}`,
@@ -509,12 +559,6 @@ export default function AddProductModal({
     ['Pcs', 'Packet', 'Kg', 'gm', 'Ltr', 'ml', 'Box', 'Bottle', 'Dozen', 'Pair', 'Meter', 'Roll'].forEach(d => list.add(d));
     return Array.from(list);
   }, [units]);
-
-  // থান একক কি না তা যাচাই (কাপড়ের থান ও গজ পরিমাপক)
-  const isThanUnit = useMemo(() => {
-    const u = String(formData.unit || '').trim().toLowerCase();
-    return u === 'থান' || u.includes('than') || u.includes('থান') || u.includes('bolt');
-  }, [formData.unit]);
 
   // অনন্য প্রধান ক্যাটাগরি তালিকা বের করা
   const uniqueCategories = useMemo(() => {
@@ -1557,7 +1601,7 @@ export default function AddProductModal({
                   <div>
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                       <span>🏬 দোকান স্টক</span>
-                      <span className="text-[10px] text-slate-400 font-normal">(শুরুতে ০)</span>
+                      <span className="text-[10px] text-slate-400 font-normal">({formData.unit || 'পিস'})</span>
                     </label>
                     <input
                       type="number"
@@ -1566,6 +1610,7 @@ export default function AddProductModal({
                       name="initialStock"
                       value={formData.initialStock}
                       onChange={handleChange}
+                      placeholder="যেমন: ০"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
                     />
                   </div>
@@ -1573,7 +1618,9 @@ export default function AddProductModal({
                   <div>
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                       <span>🏭 গোডাউন স্টক</span>
-                      <span className="text-[10px] text-indigo-600 font-bold">(সরাসরি জমা)</span>
+                      <span className={`text-[10px] font-bold ${variants.length > 0 ? 'text-indigo-600' : 'text-slate-400'}`}>
+                        {variants.length > 0 ? '(ভ্যারিয়েন্ট যোগফল)' : `(${formData.unit || 'পিস'})`}
+                      </span>
                     </label>
                     <input
                       type="number"
@@ -1582,13 +1629,21 @@ export default function AddProductModal({
                       name="initialGodownStock"
                       value={formData.initialGodownStock}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                      readOnly={variants.length > 0}
+                      placeholder="যেমন: ১০"
+                      className={`w-full px-3 py-2 border rounded-xl text-xs font-bold shadow-2xs focus:outline-none focus:ring-2 ${
+                        variants.length > 0 
+                          ? 'bg-indigo-50/60 border-indigo-300 text-indigo-950 cursor-not-allowed'
+                          : 'bg-white border-slate-300 text-slate-800 focus:ring-indigo-500'
+                      }`}
+                      title={variants.length > 0 ? "ভ্যারিয়েন্ট থাকায় নিচের ভ্যারিয়েন্টগুলোর যোগফল স্বয়ংক্রিয়ভাবে এখানে আসছে" : "মোট গোডাউন স্টক লিখুন"}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                      কম স্টক এলার্ট
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span>কম স্টক এলার্ট</span>
+                      <span className="text-[10px] text-slate-400 font-normal">({formData.unit || 'পিস'})</span>
                     </label>
                     <input
                       type="number"
@@ -1660,8 +1715,8 @@ export default function AddProductModal({
                   </div>
                 </div>
 
-                {/* থান ও গজ ক্যালকুলেটর (কাপড় পরিমাপ) */}
-                {isThanUnit && (
+                {/* পরিমাপক একক ভিত্তিক ডাইনামিক স্টক ক্যালকুলেটর */}
+                {unitCategory === 'than' && (
                   <div className="bg-gradient-to-r from-amber-50/90 to-orange-50/90 border border-amber-200/90 rounded-2xl p-4 space-y-3.5 shadow-2xs mt-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -1735,44 +1790,541 @@ export default function AddProductModal({
                         </span>
                       </div>
                     </div>
+                  </div>
+                )}
 
-                    {/* কালার ভিত্তিক থান স্টক এন্ট্রি এর পরিবর্তে ভ্যারিয়েন্ট ম্যানেজার সক্রিয় করার কল-টু-অ্যাকশন */}
-                    {productType !== 'variable' ? (
-                      <div className="bg-white/95 rounded-xl p-3.5 border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-                        <div className="flex items-center space-x-2">
-                          <div className="p-1.5 bg-indigo-50 rounded-lg text-indigo-700">
-                            <Layers className="w-4 h-4 text-indigo-600" />
-                          </div>
-                          <div>
-                            <span className="text-xs font-bold text-slate-800">কালার বা সাইজ অনুযায়ী আলাদা থান স্টক রাখতে চান?</span>
-                            <p className="text-[10px] text-slate-500">ভ্যারিয়েন্ট ম্যানেজার চালু করে রঙ/সাইজ ভিত্তিক থান ও গজের স্টক স্বয়ংক্রিয়ভাবে হিসাব করুন।</p>
-                          </div>
+                {unitCategory === 'weight' && (
+                  <div className="bg-gradient-to-r from-emerald-50/90 to-teal-50/90 border border-emerald-200/90 rounded-2xl p-4 space-y-3.5 shadow-2xs mt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-700">
+                          <Scale className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-emerald-950">ওজন ও বস্তা/প্যাকেট ক্যালকুলেটর ({formData.unit})</h4>
+                          <p className="text-[10px] text-emerald-800">মোট বস্তা/ব্যাগ এবং প্রতিটির ওজন থেকে মোট মজুত হিসাব করুন</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black bg-emerald-200/70 text-emerald-900 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                        ওজন কনভার্টার
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-emerald-950 mb-1">
+                          📦 মোট বস্তা / ব্যাগ সংখ্যা
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={calcValues.weightBags}
+                          onChange={(e) => setCalcValues(prev => ({ ...prev, weightBags: e.target.value }))}
+                          placeholder="যেমন: ১০"
+                          className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-black text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-emerald-700">গোডাউনে আগত বস্তা/প্যাক সংখ্যা</span>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-emerald-950 mb-1">
+                          ⚖️ প্রতি বস্তায় কত {formData.unit}?
+                        </label>
+                        <input
+                          type="number"
+                          min="0.1"
+                          step="any"
+                          value={calcValues.weightPerBag}
+                          onChange={(e) => setCalcValues(prev => ({ ...prev, weightPerBag: e.target.value }))}
+                          placeholder="যেমন: ৫০"
+                          className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-black text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-emerald-700">১ বস্তা বা ব্যাগের গড় ওজন</span>
+                      </div>
+
+                      <div className="bg-emerald-100/80 rounded-xl p-3 border border-emerald-300/80 flex flex-col justify-between">
+                        <div>
+                          <span className="text-[10px] font-black text-emerald-800 uppercase tracking-wide">হিসাবকৃত মোট ওজন</span>
+                          <span className="text-base font-black text-emerald-950 block">
+                            {(Number(calcValues.weightBags) || 0) * (Number(calcValues.weightPerBag) || 0)} {formData.unit}
+                          </span>
                         </div>
                         <button
                           type="button"
+                          disabled={variants.length > 0}
                           onClick={() => {
-                            setProductType('variable');
-                            setSelectedAttributeType('Color');
+                            const tot = (Number(calcValues.weightBags) || 0) * (Number(calcValues.weightPerBag) || 0);
+                            setFormData(prev => ({ ...prev, initialGodownStock: String(tot) }));
                           }}
-                          className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer shrink-0"
+                          className={`mt-1.5 py-1 px-2.5 rounded-lg text-[10.5px] font-bold transition-all flex items-center justify-center space-x-1 ${
+                            variants.length > 0 
+                              ? 'bg-emerald-200/60 text-emerald-800/60 cursor-not-allowed'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs'
+                          }`}
+                          title={variants.length > 0 ? 'ভ্যারিয়েন্ট থাকায় স্টক ভ্যারিয়েন্ট যোগফল থেকে আসছে' : 'হিসাবকৃত মোট ওজন গোডাউন স্টকে বসান'}
                         >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>ভ্যারিয়েন্ট ম্যানেজার চালু করুন</span>
+                          <Check className="w-3 h-3" />
+                          <span>গোডাউন স্টকে বসান</span>
                         </button>
                       </div>
-                    ) : (
-                      <div className="p-3 bg-amber-100/70 rounded-xl border border-amber-200/90 flex items-center justify-between">
-                        <div className="flex items-center space-x-2 text-amber-950 font-bold text-xs">
-                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-                          <span>ভ্যারিয়েন্ট ম্যানেজার সক্রিয় রয়েছে: নিচের ভ্যারিয়েন্ট ম্যানেজার থেকে প্রতিটি রঙ বা সাইজের আলাদা থান ও গজ নির্ধারণ করুন</span>
-                        </div>
-                        <span className="text-[10px] bg-amber-200/90 text-amber-950 px-2.5 py-0.5 rounded-full font-black border border-amber-300 shrink-0">
-                          {variants.length} টি ভ্যারিয়েন্ট
-                        </span>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 )}
+
+                {unitCategory === 'dozen' && (
+                  <div className="bg-gradient-to-r from-purple-50/90 to-fuchsia-50/90 border border-purple-200/90 rounded-2xl p-4 space-y-3.5 shadow-2xs mt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 bg-purple-500/10 rounded-lg text-purple-700">
+                          <Calculator className="w-4 h-4 text-purple-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-purple-950">ডজন / হালি / জোড়া রূপান্তর ক্যালকুলেটর ({formData.unit})</h4>
+                          <p className="text-[10px] text-purple-800">মোট {formData.unit} থেকে মোট পিস সংখ্যা হিসাব করুন</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black bg-purple-200/70 text-purple-900 px-2.5 py-0.5 rounded-full border border-purple-300">
+                        পিস কনভার্টার
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-purple-950 mb-1">
+                          📦 মোট {formData.unit} সংখ্যা
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={calcValues.dozenCount}
+                          onChange={(e) => setCalcValues(prev => ({ ...prev, dozenCount: e.target.value }))}
+                          placeholder="যেমন: ৫"
+                          className="w-full px-3 py-2 bg-white border border-purple-300 rounded-xl text-xs font-black text-purple-950 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-purple-700">গোডাউনে আগত {formData.unit} সংখ্যা</span>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-purple-950 mb-1">
+                          🔢 প্রতি {formData.unit}-এ কত পিস?
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={calcValues.dozenPerPack}
+                          onChange={(e) => setCalcValues(prev => ({ ...prev, dozenPerPack: e.target.value }))}
+                          placeholder="যেমন: ১২"
+                          className="w-full px-3 py-2 bg-white border border-purple-300 rounded-xl text-xs font-black text-purple-950 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-purple-700">ডজন=১২, হালি=৪, জোড়া=২</span>
+                      </div>
+
+                      <div className="bg-purple-100/80 rounded-xl p-3 border border-purple-300/80 flex flex-col justify-between">
+                        <div>
+                          <span className="text-[10px] font-black text-purple-800 uppercase tracking-wide">হিসাবকৃত মোট পরিমাণ</span>
+                          <span className="text-base font-black text-purple-950 block">
+                            {(Number(calcValues.dozenCount) || 0) * (Number(calcValues.dozenPerPack) || 0)} পিস
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={variants.length > 0}
+                          onClick={() => {
+                            const tot = (Number(calcValues.dozenCount) || 0) * (Number(calcValues.dozenPerPack) || 0);
+                            setFormData(prev => ({ ...prev, initialGodownStock: String(tot) }));
+                          }}
+                          className={`mt-1.5 py-1 px-2.5 rounded-lg text-[10.5px] font-bold transition-all flex items-center justify-center space-x-1 ${
+                            variants.length > 0 
+                              ? 'bg-purple-200/60 text-purple-800/60 cursor-not-allowed'
+                              : 'bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-xs'
+                          }`}
+                          title={variants.length > 0 ? 'ভ্যারিয়েন্ট থাকায় স্টক ভ্যারিয়েন্ট যোগফল থেকে আসছে' : 'হিসাবকৃত পরিমাণ গোডাউন স্টকে বসান'}
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>গোডাউন স্টকে বসান</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {unitCategory === 'box' && (
+                  <div className="bg-gradient-to-r from-blue-50/90 to-sky-50/90 border border-blue-200/90 rounded-2xl p-4 space-y-3.5 shadow-2xs mt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 bg-blue-500/10 rounded-lg text-blue-700">
+                          <Package className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-blue-950">বক্স / কার্টুন ও পিস ক্যালকুলেটর ({formData.unit})</h4>
+                          <p className="text-[10px] text-blue-800">মোট কার্টুন/বক্স এবং প্রতি বক্সে পিস সংখ্যা থেকে মোট মজুত হিসাব করুন</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black bg-blue-200/70 text-blue-900 px-2.5 py-0.5 rounded-full border border-blue-300">
+                        বক্স কনভার্টার
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-blue-950 mb-1">
+                          📦 মোট {formData.unit} সংখ্যা
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={calcValues.boxCount}
+                          onChange={(e) => setCalcValues(prev => ({ ...prev, boxCount: e.target.value }))}
+                          placeholder="যেমন: ৫"
+                          className="w-full px-3 py-2 bg-white border border-blue-300 rounded-xl text-xs font-black text-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-blue-700">গোডাউনে আগত কার্টুন/বক্স সংখ্যা</span>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-blue-950 mb-1">
+                          🔢 প্রতি {formData.unit}-এ কত পিস?
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={calcValues.boxPerPack}
+                          onChange={(e) => setCalcValues(prev => ({ ...prev, boxPerPack: e.target.value }))}
+                          placeholder="যেমন: ২৪"
+                          className="w-full px-3 py-2 bg-white border border-blue-300 rounded-xl text-xs font-black text-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-blue-700">১ বক্স বা কার্টুনে পিস সংখ্যা</span>
+                      </div>
+
+                      <div className="bg-blue-100/80 rounded-xl p-3 border border-blue-300/80 flex flex-col justify-between">
+                        <div>
+                          <span className="text-[10px] font-black text-blue-800 uppercase tracking-wide">হিসাবকৃত মোট পিস</span>
+                          <span className="text-base font-black text-blue-950 block">
+                            {(Number(calcValues.boxCount) || 0) * (Number(calcValues.boxPerPack) || 0)} পিস
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={variants.length > 0}
+                          onClick={() => {
+                            const tot = (Number(calcValues.boxCount) || 0) * (Number(calcValues.boxPerPack) || 0);
+                            setFormData(prev => ({ ...prev, initialGodownStock: String(tot) }));
+                          }}
+                          className={`mt-1.5 py-1 px-2.5 rounded-lg text-[10.5px] font-bold transition-all flex items-center justify-center space-x-1 ${
+                            variants.length > 0 
+                              ? 'bg-blue-200/60 text-blue-800/60 cursor-not-allowed'
+                              : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs'
+                          }`}
+                          title={variants.length > 0 ? 'ভ্যারিয়েন্ট থাকায় স্টক ভ্যারিয়েন্ট যোগফল থেকে আসছে' : 'হিসাবকৃত মোট পিস গোডাউন স্টকে বসান'}
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>গোডাউন স্টকে বসান</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {unitCategory === 'length' && (
+                  <div className="bg-gradient-to-r from-cyan-50/90 to-sky-50/90 border border-cyan-200/90 rounded-2xl p-4 space-y-3.5 shadow-2xs mt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 bg-cyan-500/10 rounded-lg text-cyan-700">
+                          <Ruler className="w-4 h-4 text-cyan-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-cyan-950">দৈর্ঘ্য ও রোল/বান্ডিল ক্যালকুলেটর ({formData.unit})</h4>
+                          <p className="text-[10px] text-cyan-800">মোট রোল বা বান্ডিল ও প্রতি রোলের দৈর্ঘ্য থেকে মোট পরিমাপ হিসাব করুন</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black bg-cyan-200/70 text-cyan-900 px-2.5 py-0.5 rounded-full border border-cyan-300">
+                        দৈর্ঘ্য কনভার্টার
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-cyan-950 mb-1">
+                          📜 মোট রোল / বান্ডিল সংখ্যা
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={calcValues.lengthRolls}
+                          onChange={(e) => setCalcValues(prev => ({ ...prev, lengthRolls: e.target.value }))}
+                          placeholder="যেমন: ৫"
+                          className="w-full px-3 py-2 bg-white border border-cyan-300 rounded-xl text-xs font-black text-cyan-950 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-cyan-700">গোডাউনে আগত রোল বা বান্ডিল সংখ্যা</span>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-cyan-950 mb-1">
+                          📏 প্রতি রোলে কত {formData.unit}?
+                        </label>
+                        <input
+                          type="number"
+                          min="0.1"
+                          step="any"
+                          value={calcValues.lengthPerRoll}
+                          onChange={(e) => setCalcValues(prev => ({ ...prev, lengthPerRoll: e.target.value }))}
+                          placeholder="যেমন: ৫০"
+                          className="w-full px-3 py-2 bg-white border border-cyan-300 rounded-xl text-xs font-black text-cyan-950 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-cyan-700">১ রোল বা বান্ডিলে মোট দৈর্ঘ্য</span>
+                      </div>
+
+                      <div className="bg-cyan-100/80 rounded-xl p-3 border border-cyan-300/80 flex flex-col justify-between">
+                        <div>
+                          <span className="text-[10px] font-black text-cyan-800 uppercase tracking-wide">হিসাবকৃত মোট দৈর্ঘ্য</span>
+                          <span className="text-base font-black text-cyan-950 block">
+                            {(Number(calcValues.lengthRolls) || 0) * (Number(calcValues.lengthPerRoll) || 0)} {formData.unit}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={variants.length > 0}
+                          onClick={() => {
+                            const tot = (Number(calcValues.lengthRolls) || 0) * (Number(calcValues.lengthPerRoll) || 0);
+                            setFormData(prev => ({ ...prev, initialGodownStock: String(tot) }));
+                          }}
+                          className={`mt-1.5 py-1 px-2.5 rounded-lg text-[10.5px] font-bold transition-all flex items-center justify-center space-x-1 ${
+                            variants.length > 0 
+                              ? 'bg-cyan-200/60 text-cyan-800/60 cursor-not-allowed'
+                              : 'bg-cyan-600 hover:bg-cyan-700 text-white cursor-pointer shadow-xs'
+                          }`}
+                          title={variants.length > 0 ? 'ভ্যারিয়েন্ট থাকায় স্টক ভ্যারিয়েন্ট যোগফল থেকে আসছে' : 'হিসাবকৃত মোট দৈর্ঘ্য গোডাউন স্টকে বসান'}
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>গোডাউন স্টকে বসান</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {unitCategory === 'liquid' && (
+                  <div className="bg-gradient-to-r from-violet-50/90 to-indigo-50/90 border border-violet-200/90 rounded-2xl p-4 space-y-3.5 shadow-2xs mt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 bg-violet-500/10 rounded-lg text-violet-700">
+                          <Droplets className="w-4 h-4 text-violet-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-violet-950">তরল ও কেস/বোতল ক্যালকুলেটর ({formData.unit})</h4>
+                          <p className="text-[10px] text-violet-800">মোট কেস বা পেটি ও প্রতি কেসে বোতল সংখ্যা থেকে মোট মজুত হিসাব করুন</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black bg-violet-200/70 text-violet-900 px-2.5 py-0.5 rounded-full border border-violet-300">
+                        তরল পরিমাপক
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-violet-950 mb-1">
+                          🍾 মোট কেস / পেটি সংখ্যা
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={calcValues.liquidCases}
+                          onChange={(e) => setCalcValues(prev => ({ ...prev, liquidCases: e.target.value }))}
+                          placeholder="যেমন: ৫"
+                          className="w-full px-3 py-2 bg-white border border-violet-300 rounded-xl text-xs font-black text-violet-950 focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-violet-700">গোডাউনে আগত কেস বা পেটি</span>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-violet-950 mb-1">
+                          🥛 প্রতি কেসে কত বোতল?
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={calcValues.liquidPerCase}
+                          onChange={(e) => setCalcValues(prev => ({ ...prev, liquidPerCase: e.target.value }))}
+                          placeholder="যেমন: ১২"
+                          className="w-full px-3 py-2 bg-white border border-violet-300 rounded-xl text-xs font-black text-violet-950 focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-violet-700">১ কেসে মোট বোতল সংখ্যা</span>
+                      </div>
+
+                      <div className="bg-violet-100/80 rounded-xl p-3 border border-violet-300/80 flex flex-col justify-between">
+                        <div>
+                          <span className="text-[10px] font-black text-violet-800 uppercase tracking-wide">হিসাবকৃত মোট বোতল</span>
+                          <span className="text-base font-black text-violet-950 block">
+                            {(Number(calcValues.liquidCases) || 0) * (Number(calcValues.liquidPerCase) || 0)} বোতল
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={variants.length > 0}
+                          onClick={() => {
+                            const tot = (Number(calcValues.liquidCases) || 0) * (Number(calcValues.liquidPerCase) || 0);
+                            setFormData(prev => ({ ...prev, initialGodownStock: String(tot) }));
+                          }}
+                          className={`mt-1.5 py-1 px-2.5 rounded-lg text-[10.5px] font-bold transition-all flex items-center justify-center space-x-1 ${
+                            variants.length > 0 
+                              ? 'bg-violet-200/60 text-violet-800/60 cursor-not-allowed'
+                              : 'bg-violet-600 hover:bg-violet-700 text-white cursor-pointer shadow-xs'
+                          }`}
+                          title={variants.length > 0 ? 'ভ্যারিয়েন্ট থাকায় স্টক ভ্যারিয়েন্ট যোগফল থেকে আসছে' : 'হিসাবকৃত মোট বোতল গোডাউন স্টকে বসান'}
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>গোডাউন স্টকে বসান</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {unitCategory === 'piece' && (
+                  <div className="bg-gradient-to-r from-slate-100/90 to-emerald-50/70 border border-slate-200/90 rounded-2xl p-4 space-y-3.5 shadow-2xs mt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-700">
+                          <Box className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900">পিস ও সাধারণ একক স্টক সারসংক্ষেপ ({formData.unit || 'টি'})</h4>
+                          <p className="text-[10px] text-slate-500">দোকান ও গোডাউনের সাধারণ পিস গণনা ও মজুত ব্যবস্থাপনা</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        মোট স্টক: {totalCombinedStock} {formData.unit || 'টি'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10.5px] text-slate-500 font-semibold block">🏬 দোকান মজুত</span>
+                          <span className="text-sm font-black text-slate-800">{formData.initialStock || 0} {formData.unit || 'টি'}</span>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">শুরুতে ০</span>
+                      </div>
+
+                      <div className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10.5px] text-indigo-600 font-semibold block">🏭 গোডাউন মজুত</span>
+                          <span className="text-sm font-black text-indigo-950">{formData.initialGodownStock || 0} {formData.unit || 'টি'}</span>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">
+                          {variants.length > 0 ? `${variants.length}টি ভ্যারিয়েন্ট` : 'মূল স্টক'}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10.5px] text-emerald-800 font-bold block">📦 সর্বমোট মজুত</span>
+                          <span className="text-sm font-black text-emerald-950">{totalCombinedStock} {formData.unit || 'টি'}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            type="button"
+                            disabled={variants.length > 0}
+                            onClick={() => setFormData(prev => ({ ...prev, initialGodownStock: String((Number(prev.initialGodownStock) || 0) + 10) }))}
+                            className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold cursor-pointer disabled:opacity-40 transition-colors"
+                            title="+১০ পিস বাড়ান"
+                          >
+                            +১০
+                          </button>
+                          <button
+                            type="button"
+                            disabled={variants.length > 0}
+                            onClick={() => setFormData(prev => ({ ...prev, initialGodownStock: String((Number(prev.initialGodownStock) || 0) + 50) }))}
+                            className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold cursor-pointer disabled:opacity-40 transition-colors"
+                            title="+৫০ পিস বাড়ান"
+                          >
+                            +৫০
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ভ্যারিয়েন্ট ম্যানেজার অপশন (ঐচ্ছিক চালু / বন্ধ) */}
+                <div className="bg-white/95 rounded-2xl p-4 border border-slate-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs mt-3">
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-2.5 rounded-xl transition-all ${
+                      productType === 'variable' 
+                        ? 'bg-indigo-600 text-white shadow-xs' 
+                        : 'bg-indigo-50 text-indigo-700'
+                    }`}>
+                      <Layers className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-bold text-slate-800">
+                          এই পণ্যের কি একাধিক ভ্যারিয়েন্ট রয়েছে? (সাইজ, রঙ, ওজন বা প্যাকিং)
+                        </span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
+                          productType === 'variable' 
+                            ? 'bg-indigo-100 text-indigo-900 border-indigo-200' 
+                            : 'bg-slate-100 text-slate-600 border-slate-200'
+                        }`}>
+                          {productType === 'variable' ? `${variants.length}টি ভ্যারিয়েন্ট সক্রিয়` : 'অপশনাল / ঐচ্ছিক'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        {productType === 'variable'
+                          ? 'ভ্যারিয়েন্ট ম্যানেজার সক্রিয় রয়েছে: রঙ, সাইজ বা ওজন অনুযায়ী গোডাউন মজুত নিচের তালিকা থেকে নিয়ন্ত্রণ করুন।'
+                          : 'ভ্যারিয়েন্ট না থাকলে এটি সাধারণ পণ্য হিসেবে সেভ হবে। আর বিভিন্ন রঙ, সাইজ বা ওজনের আলাদা মজুত রাখতে ভ্যারিয়েন্ট ম্যানেজার চালু করুন।'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 shrink-0">
+                    {productType === 'variable' ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (variants.length > 0) {
+                            if (window.confirm('ভ্যারিয়েন্ট বন্ধ করলে ভ্যারিয়েন্ট তালিকা মুছে পণ্যটি সাধারণ পণ্যে রূপান্তরিত হবে। আপনি কি নিশ্চিত?')) {
+                              setProductType('simple');
+                              setVariants([]);
+                            }
+                          } else {
+                            setProductType('simple');
+                          }
+                        }}
+                        className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>ভ্যারিয়েন্ট বন্ধ করুন</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProductType('variable');
+                          if (unitCategory === 'than' || unitCategory === 'length') {
+                            setSelectedAttributeType('Color');
+                          } else if (unitCategory === 'weight') {
+                            setSelectedAttributeType('Weight');
+                          } else {
+                            setSelectedAttributeType('Color');
+                          }
+                        }}
+                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>+ ভ্যারিয়েন্ট ম্যানেজার চালু করুন</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Phase 6: ভ্যারিয়েন্ট কনফিগারেশন (Variable Product) */}
@@ -1947,7 +2499,7 @@ export default function AddProductModal({
                       <table className="w-full text-left text-xs">
                         <thead className="bg-indigo-50/80 border-b border-indigo-200 text-indigo-950 font-bold">
                           <tr>
-                            <th className="p-2.5 pl-3">{isThanUnit ? 'রং / বৈশিষ্ট্য' : 'বৈশিষ্ট্য (Attributes)'}</th>
+                            <th className="p-2.5 pl-3">{isThanUnit ? 'রং / বৈশিষ্ট্য' : (selectedAttributeType === 'Weight' ? 'ওজন / মাপ' : selectedAttributeType === 'Color' ? 'রং / কালার' : 'সাইজ / বৈশিষ্ট্য')}</th>
                             <th className="p-2.5">বারকোড</th>
                             {isThanUnit ? (
                               <>
@@ -1960,7 +2512,7 @@ export default function AddProductModal({
                                 <th className="p-2.5 w-24">কেনা ({currencySymbol})</th>
                                 <th className="p-2.5 w-24">পাইকারি ({currencySymbol})</th>
                                 <th className="p-2.5 w-24">বিক্রি ({currencySymbol})</th>
-                                <th className="p-2.5 w-28 text-center">গোডাউন স্টক</th>
+                                <th className="p-2.5 w-32 text-center">গোডাউন স্টক ({formData.unit || 'টি'})</th>
                               </>
                             )}
                             <th className="p-2.5 pr-3 text-center w-14">মুছুন</th>
@@ -2089,6 +2641,7 @@ export default function AddProductModal({
                                         >
                                           +
                                         </button>
+                                        <span className="text-[10px] text-slate-500 font-bold ml-0.5">{formData.unit || 'টি'}</span>
                                       </div>
                                     </td>
                                   </>
@@ -2670,18 +3223,21 @@ export default function AddProductModal({
                     </button>
                   </div>
 
-                  {/* কালার ভ্যারিয়েন্ট প্রিভিউ সামারি */}
+                  {/* ভ্যারিয়েন্ট প্রিভিউ সামারি */}
                   {variants.length > 0 && (
                     <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px]">
                       <span className="font-bold text-slate-700 block mb-1">
-                        🎨 কালার স্টক ({variants.length} টি ভ্যারিয়েন্ট):
+                        🎨 ভ্যারিয়েন্ট মজুত ({variants.length} টি ভ্যারিয়েন্ট):
                       </span>
                       <div className="flex flex-wrap gap-1">
-                        {variants.map((v, i) => (
-                          <span key={i} className="px-1.5 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 rounded font-medium">
-                            {v.Attributes?.Color || v.Attributes?.Option || Object.values(v.Attributes || {})[0] || `রঙ #${i+1}`}: {v.StockQuantity} {isThanUnit ? 'থান' : ''}
-                          </span>
-                        ))}
+                        {variants.map((v, i) => {
+                          const valStock = v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity;
+                          return (
+                            <span key={i} className="px-1.5 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 rounded font-medium">
+                              {v.Attributes?.Color || v.Attributes?.Option || Object.values(v.Attributes || {})[0] || `ভ্যারিয়েন্ট #${i+1}`}: {valStock} {formData.unit || (isThanUnit ? 'থান' : 'টি')}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
