@@ -275,6 +275,16 @@ export default function Sidebar({
           badge: transfersInTransitCount > 0 ? { text: `${transfersInTransitCount}টি পথে`, color: 'bg-amber-600 text-white animate-pulse shadow-xs font-bold' } : null
         },
         {
+          id: 'fabric_wastage',
+          title: 'কাপড়ের ছাঁট ও ড্যামেজ হিসাব',
+          subTitle: 'থানের টুকরা ও ক্ষতি ট্র্যাকার',
+          icon: Layers,
+          iconGradient: 'from-rose-500 to-pink-600 text-white shadow-rose-500/25',
+          isActive: currentView === 'fabric_wastage',
+          onClick: () => onNavigate ? onNavigate('fabric_wastage') : onOpenFabricWastageModal && onOpenFabricWastageModal(),
+          badge: null
+        },
+        {
           id: 'low_stock_alerts',
           title: 'দোকানের কম স্টক সতর্কতা',
           subTitle: 'জরুরি রি-অর্ডার ও রিস্টক প্রয়োজন',
@@ -346,16 +356,6 @@ export default function Sidebar({
           iconGradient: 'from-emerald-500 to-green-600 text-white shadow-emerald-500/25',
           isActive: currentView === 'stock_restock',
           onClick: () => onNavigate ? onNavigate('stock_restock') : onOpenStockModal && onOpenStockModal(),
-          badge: null
-        },
-        {
-          id: 'fabric_wastage',
-          title: 'কাপড়ের ছাঁট ও ড্যামেজ হিসাব',
-          subTitle: 'থানের টুকরা ও ক্ষতি ট্র্যাকার',
-          icon: Layers,
-          iconGradient: 'from-rose-500 to-pink-600 text-white shadow-rose-500/25',
-          isActive: currentView === 'fabric_wastage',
-          onClick: () => onNavigate ? onNavigate('fabric_wastage') : onOpenFabricWastageModal && onOpenFabricWastageModal(),
           badge: null
         },
         {
