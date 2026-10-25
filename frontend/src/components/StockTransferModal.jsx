@@ -115,6 +115,9 @@ export default function StockTransferModal({
   });
   const [overviewCategory, setOverviewCategory] = useState('ALL');
 
+  // দোকানে বর্তমান মজুদ ভিউ মোড কিনা
+  const isShopStockView = overviewFilter === 'IN_SHOP';
+
   // ভ্যারিয়েন্ট স্টক এক্সপ্যান্ড ও ভিউ মোড স্টেট
   const [stockViewMode, setStockViewMode] = useState('grouped'); // 'grouped' | 'variants'
   const [expandedProductIds, setExpandedProductIds] = useState({});
@@ -1791,42 +1794,46 @@ export default function StockTransferModal({
                                           <Truck className="w-3 h-3" />
                                           <span>দোকানে আনুন</span>
                                         </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setAdjustTargetProduct(p);
-                                            setAdjustLocation('Godown');
-                                            setAdjustAction('ADD');
-                                            setAdjustQty(1);
-                                          }}
-                                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs transition-all cursor-pointer"
-                                          title="স্টক সংশোধন বা সমন্বয়"
-                                        >
-                                          <SlidersHorizontal className="w-3.5 h-3.5" />
-                                        </button>
-                                        {onEditProduct && (
-                                          <button
-                                            type="button"
-                                            onClick={() => onEditProduct(p)}
-                                            className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs transition-all cursor-pointer border border-indigo-200"
-                                            title="পণ্য এডিট করুন (নাম, ক্যাটাগরি, দর ইত্যাদি)"
-                                          >
-                                            <Edit3 className="w-3.5 h-3.5" />
-                                          </button>
-                                        )}
-                                        {onDeleteProduct && (
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              if (window.confirm(`আপনি কি নিশ্চিত যে '${p.ProductName}' পণ্যটি ফ্রন্টএন্ড ও গুগল শিট ডাটাবেস থেকে স্থায়ীভাবে মুছে ফেলতে চান?\n\nমুছে ফেলার পর এটি উভয় স্থান থেকে মুছে যাবে এবং স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।`)) {
-                                                onDeleteProduct(p.ProductID);
-                                              }
-                                            }}
-                                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
-                                            title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
-                                          >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                          </button>
+                                        {!isShopStockView && (
+                                          <>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setAdjustTargetProduct(p);
+                                                setAdjustLocation('Godown');
+                                                setAdjustAction('ADD');
+                                                setAdjustQty(1);
+                                              }}
+                                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs transition-all cursor-pointer"
+                                              title="স্টক সংশোধন বা সমন্বয়"
+                                            >
+                                              <SlidersHorizontal className="w-3.5 h-3.5" />
+                                            </button>
+                                            {onEditProduct && (
+                                              <button
+                                                type="button"
+                                                onClick={() => onEditProduct(p)}
+                                                className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs transition-all cursor-pointer border border-indigo-200"
+                                                title="পণ্য এডিট করুন (নাম, ক্যাটাগরি, দর ইত্যাদি)"
+                                              >
+                                                <Edit3 className="w-3.5 h-3.5" />
+                                              </button>
+                                            )}
+                                            {onDeleteProduct && (
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  if (window.confirm(`আপনি কি নিশ্চিত যে '${p.ProductName}' পণ্যটি ফ্রন্টএন্ড ও গুগল শিট ডাটাবেস থেকে স্থায়ীভাবে মুছে ফেলতে চান?\n\nমুছে ফেলার পর এটি উভয় স্থান থেকে মুছে যাবে এবং স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।`)) {
+                                                    onDeleteProduct(p.ProductID);
+                                                  }
+                                                }}
+                                                className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
+                                                title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
+                                              >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                              </button>
+                                            )}
+                                          </>
                                         )}
                                       </div>
                                     </td>
@@ -1860,15 +1867,17 @@ export default function StockTransferModal({
                                                   <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold">
                                                     ভ্যারিয়েন্ট দোকান মোট: <strong className="font-mono">{sumVarShop}</strong> {isThan ? 'থান' : (p.Unit || 'Pcs')}
                                                   </span>
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => handleOpenNewColor(p)}
-                                                    className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold inline-flex items-center space-x-1 shadow-xs cursor-pointer transition-all shrink-0"
-                                                    title="এই পণ্যে নতুন একটি ভ্যারিয়েন্ট যোগ করুন"
-                                                  >
-                                                    <Plus className="w-3 h-3" />
-                                                    <span>নতুন ভ্যারিয়েন্ট যোগ</span>
-                                                  </button>
+                                                  {!isShopStockView && (
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleOpenNewColor(p)}
+                                                      className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold inline-flex items-center space-x-1 shadow-xs cursor-pointer transition-all shrink-0"
+                                                      title="এই পণ্যে নতুন একটি ভ্যারিয়েন্ট যোগ করুন"
+                                                    >
+                                                      <Plus className="w-3 h-3" />
+                                                      <span>নতুন ভ্যারিয়েন্ট যোগ</span>
+                                                    </button>
+                                                  )}
                                                 </div>
                                               </div>
 
@@ -1917,7 +1926,7 @@ export default function StockTransferModal({
                                                     <th className="py-2 px-3 text-center bg-emerald-50/40 text-emerald-900">🏬 দোকান স্টক</th>
                                                     <th className="py-2 px-3 text-center">📦 মোট</th>
                                                     <th className="py-2 px-3 text-center">অবস্থা</th>
-                                                    <th className="py-2 px-3 text-right">কার্যক্রম / অ্যাকশন</th>
+                                                    <th className="py-2 px-3 text-right">{isShopStockView ? 'নির্দিষ্ট চালান' : 'কার্যক্রম / অ্যাকশন'}</th>
                                                   </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100">
@@ -2011,51 +2020,57 @@ export default function StockTransferModal({
                                                               <Truck className="w-2.5 h-2.5" />
                                                               <span>দোকানে আনুন</span>
                                                             </button>
-                                                            <button
-                                                              type="button"
-                                                              onClick={() => handleOpenVariantRestock(p, v, vIdx, 'Godown')}
-                                                              className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-[10px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
-                                                              title="এই ভ্যারিয়েন্টে রিস্টক বা স্টক সমন্বয় করুন"
-                                                            >
-                                                              <PlusCircle className="w-2.5 h-2.5" />
-                                                              <span>রিস্টক</span>
-                                                            </button>
-                                                            <button
-                                                              type="button"
-                                                              onClick={() => handleOpenEditVariant(p, v, vIdx)}
-                                                              className="p-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded text-xs transition-all cursor-pointer"
-                                                              title="ভ্যারিয়েন্ট এডিট করুন (রং, বারকোড ও স্টক)"
-                                                            >
-                                                              <Edit3 className="w-3 h-3" />
-                                                            </button>
-                                                            <button
-                                                              type="button"
-                                                              onClick={() => handleRemoveVariant(p, v, vIdx)}
-                                                              className="p-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded text-xs transition-all cursor-pointer"
-                                                              title="এই ভ্যারিয়েন্টটি স্থায়ীভাবে মুছে ফেলুন"
-                                                            >
-                                                              <Trash2 className="w-3 h-3" />
-                                                            </button>
+                                                            {!isShopStockView && (
+                                                              <>
+                                                                <button
+                                                                  type="button"
+                                                                  onClick={() => handleOpenVariantRestock(p, v, vIdx, 'Godown')}
+                                                                  className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-[10px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                                  title="এই ভ্যারিয়েন্টে রিস্টক বা স্টক সমন্বয় করুন"
+                                                                >
+                                                                  <PlusCircle className="w-2.5 h-2.5" />
+                                                                  <span>রিস্টক</span>
+                                                                </button>
+                                                                <button
+                                                                  type="button"
+                                                                  onClick={() => handleOpenEditVariant(p, v, vIdx)}
+                                                                  className="p-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded text-xs transition-all cursor-pointer"
+                                                                  title="ভ্যারিয়েন্ট এডিট করুন (রং, বারকোড ও স্টক)"
+                                                                >
+                                                                  <Edit3 className="w-3 h-3" />
+                                                                </button>
+                                                                <button
+                                                                  type="button"
+                                                                  onClick={() => handleRemoveVariant(p, v, vIdx)}
+                                                                  className="p-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded text-xs transition-all cursor-pointer"
+                                                                  title="এই ভ্যারিয়েন্টটি স্থায়ীভাবে মুছে ফেলুন"
+                                                                >
+                                                                  <Trash2 className="w-3 h-3" />
+                                                                </button>
+                                                              </>
+                                                            )}
                                                           </div>
                                                         </td>
                                                       </tr>
                                                     );
                                                   })}
                                                 </tbody>
-                                                <tfoot className="bg-slate-50 border-t border-indigo-100">
-                                                  <tr>
-                                                    <td colSpan="7" className="py-2 px-3 text-center">
-                                                      <button
-                                                        type="button"
-                                                        onClick={() => handleOpenNewColor(p)}
-                                                        className="w-full py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-dashed border-indigo-300 rounded-lg text-xs font-bold inline-flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
-                                                      >
-                                                        <Plus className="w-3.5 h-3.5" />
-                                                        <span>+ নতুন ভ্যারিয়েন্ট যোগ করুন</span>
-                                                      </button>
-                                                    </td>
-                                                  </tr>
-                                                </tfoot>
+                                                {!isShopStockView && (
+                                                  <tfoot className="bg-slate-50 border-t border-indigo-100">
+                                                    <tr>
+                                                      <td colSpan="7" className="py-2 px-3 text-center">
+                                                        <button
+                                                          type="button"
+                                                          onClick={() => handleOpenNewColor(p)}
+                                                          className="w-full py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-dashed border-indigo-300 rounded-lg text-xs font-bold inline-flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
+                                                        >
+                                                          <Plus className="w-3.5 h-3.5" />
+                                                          <span>+ নতুন ভ্যারিয়েন্ট যোগ করুন</span>
+                                                        </button>
+                                                      </td>
+                                                    </tr>
+                                                  </tfoot>
+                                                )}
                                               </table>
                                             </div>
                                           );
@@ -2185,57 +2200,65 @@ export default function StockTransferModal({
                                       </button>
                                       {item.isVariant ? (
                                         <>
-                                          <button
-                                            type="button"
-                                            onClick={() => handleOpenVariantRestock(item.parentProduct, item.variant, item.variantIndex, 'Godown')}
-                                            className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
-                                            title="এই ভ্যারিয়েন্টে রিস্টক বা স্টক সমন্বয় করুন"
-                                          >
-                                            <PlusCircle className="w-3 h-3" />
-                                            <span>রিস্টক</span>
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => handleOpenEditVariant(item.parentProduct, item.variant, item.variantIndex)}
-                                            className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs transition-all cursor-pointer"
-                                            title="ভ্যারিয়েন্ট এডিট করুন (রং, বারকোড ও স্টক)"
-                                          >
-                                            <Edit3 className="w-3.5 h-3.5" />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => handleRemoveVariant(item.parentProduct, item.variant, item.variantIndex)}
-                                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
-                                            title="এই ভ্যারিয়েন্টটি মুছে ফেলুন (Delete Variant)"
-                                          >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                          </button>
+                                          {!isShopStockView && (
+                                            <>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleOpenVariantRestock(item.parentProduct, item.variant, item.variantIndex, 'Godown')}
+                                                className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                title="এই ভ্যারিয়েন্টে রিস্টক বা স্টক সমন্বয় করুন"
+                                              >
+                                                <PlusCircle className="w-3 h-3" />
+                                                <span>রিস্টক</span>
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleOpenEditVariant(item.parentProduct, item.variant, item.variantIndex)}
+                                                className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs transition-all cursor-pointer"
+                                                title="ভ্যারিয়েন্ট এডিট করুন (রং, বারকোড ও স্টক)"
+                                              >
+                                                <Edit3 className="w-3.5 h-3.5" />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleRemoveVariant(item.parentProduct, item.variant, item.variantIndex)}
+                                                className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
+                                                title="এই ভ্যারিয়েন্টটি মুছে ফেলুন (Delete Variant)"
+                                              >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                              </button>
+                                            </>
+                                          )}
                                         </>
                                       ) : (
                                         <>
-                                          {onEditProduct && (
-                                            <button
-                                              type="button"
-                                              onClick={() => onEditProduct(item.parentProduct)}
-                                              className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs transition-all cursor-pointer border border-indigo-200"
-                                              title="পণ্য এডিট করুন"
-                                            >
-                                              <Edit3 className="w-3.5 h-3.5" />
-                                            </button>
-                                          )}
-                                          {onDeleteProduct && (
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                if (window.confirm(`আপনি কি নিশ্চিত যে '${item.productName}' পণ্যটি ফ্রন্টএন্ড ও গুগল শিট ডাটাবেস থেকে স্থায়ীভাবে মুছে ফেলতে চান?\n\nমুছে ফেলার পর এটি উভয় স্থান থেকে মুছে যাবে এবং স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।`)) {
-                                                  onDeleteProduct(item.productId);
-                                                }
-                                              }}
-                                              className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
-                                              title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
-                                            >
-                                              <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
+                                          {!isShopStockView && (
+                                            <>
+                                              {onEditProduct && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => onEditProduct(item.parentProduct)}
+                                                  className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs transition-all cursor-pointer border border-indigo-200"
+                                                  title="পণ্য এডিট করুন"
+                                                >
+                                                  <Edit3 className="w-3.5 h-3.5" />
+                                                </button>
+                                              )}
+                                              {onDeleteProduct && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    if (window.confirm(`আপনি কি নিশ্চিত যে '${item.productName}' পণ্যটি ফ্রন্টএন্ড ও গুগল শিট ডাটাবেস থেকে স্থায়ীভাবে মুছে ফেলতে চান?\n\nমুছে ফেলার পর এটি উভয় স্থান থেকে মুছে যাবে এবং স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।`)) {
+                                                      onDeleteProduct(item.productId);
+                                                    }
+                                                  }}
+                                                  className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-all cursor-pointer border border-rose-200"
+                                                  title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
+                                                >
+                                                  <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                              )}
+                                            </>
                                           )}
                                         </>
                                       )}
