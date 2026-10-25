@@ -3225,7 +3225,12 @@ export function recordStockMovementLocally({
   remainingStock = 0,
   referenceNo = '',
   operatorName = 'Admin',
-  notes = ''
+  notes = '',
+  variantId = '',
+  variantName = '',
+  color = '',
+  size = '',
+  category = ''
 }) {
   const movements = getLocalStockMovements();
   const now = new Date().toISOString();
@@ -3245,7 +3250,12 @@ export function recordStockMovementLocally({
     remainingStock: remainingStock !== '-' && remainingStock !== null ? Math.round(Number(remainingStock || 0) * 10000) / 10000 : '-',
     referenceNo: String(referenceNo || '').trim(),
     operatorName: String(operatorName || 'Admin').trim(),
-    notes: String(notes || '').trim()
+    notes: String(notes || '').trim(),
+    variantId: String(variantId || '').trim(),
+    variantName: String(variantName || '').trim(),
+    color: String(color || '').trim(),
+    size: String(size || '').trim(),
+    category: String(category || '').trim()
   };
 
   movements.unshift(entry);
@@ -3403,13 +3413,55 @@ export function syncHistoricalStockMovements() {
 }
 
 /**
- * গোডাউন থেকে কী কী স্টক কমেছে তার খাতা
+ * গোডাউন থেকে কী কী স্টক কমেছে তার খাতা (ভ্যারিয়েন্ট ভিত্তিক ও সমৃদ্ধ বিবরণসহ)
  */
-export function getGodownOutflowLedger(movements = []) {
+export function getGodownOutflowLedger(movements = [], products = []) {
   const safeMovements = Array.isArray(movements) && movements.length > 0 ? movements : getLocalStockMovements();
-  return safeMovements.filter(
-    (m) => m.location === 'Godown' && (m.type === 'TRANSFER_OUT' || m.type === 'DAMAGE' || m.type === 'ADJUSTMENT_OUT' || m.type === 'ADJUSTMENT')
+  const safeProducts = Array.isArray(products) && products.length > 0 ? products : getLocalProducts();
+
+  const filtered = safeMovements.filter(
+    (m) => m.location === 'Godown' && (
+      m.type === 'TRANSFER_OUT' ||
+      m.type === 'DAMAGE' ||
+      m.type === 'ADJUSTMENT_OUT' ||
+      m.type === 'ADJUSTMENT' ||
+      m.type === 'OUTFLOW' ||
+      (m.reasonBangla && (m.reasonBangla.includes('স্থানান্তর') || m.reasonBangla.includes('ড্যামেজ') || m.reasonBangla.includes('কমার') || m.reasonBangla.includes('নির্গমন')))
+    )
   );
+
+  return filtered.map((m) => {
+    let variantName = m.variantName || '';
+    let color = m.color || '';
+    let size = m.size || '';
+    let category = m.category || '';
+    let unit = m.unit || 'Pcs';
+
+    if ((!variantName || !color || !size || !category) && Array.isArray(safeProducts) && safeProducts.length > 0) {
+      const prod = safeProducts.find((p) => String(p.ProductID || '').trim() === String(m.productId || '').trim());
+      if (prod) {
+        if (!category && prod.Category) category = prod.Category;
+        if (!unit && prod.Unit) unit = prod.Unit;
+        if (m.variantId && Array.isArray(prod.Variants)) {
+          const matchedV = prod.Variants.find((v) => String(v.VariantID || '').trim() === String(m.variantId || '').trim());
+          if (matchedV) {
+            if (!variantName) variantName = matchedV.VariantName || matchedV.Color || matchedV.Size || matchedV.VariantID;
+            if (!color && matchedV.Color) color = matchedV.Color;
+            if (!size && matchedV.Size) size = matchedV.Size;
+          }
+        }
+      }
+    }
+
+    return {
+      ...m,
+      variantName,
+      color,
+      size,
+      category,
+      unit
+    };
+  });
 }
 
 /**
@@ -3423,14 +3475,34 @@ export function getShopOutflowLedger(movements = []) {
 }
 
 /**
- * গোডাউন স্টক কমার এক্সেল (CSV) এক্সপোর্ট
+ * গোডাউন স্টক কমার ভ্যারিয়েন্ট ভিত্তিক এক্সেল (CSV) এক্সপোর্ট
  */
-export function exportGodownOutflowExcelCSV(movements = []) {
-  const outflow = getGodownOutflowLedger(movements);
-  const headers = ['তারিখ ও সময়', 'পণ্যের নাম', 'বারকোড/কোড', 'কমার কারণ', 'রেফারেন্স / চালান নং', 'পরিমাণ', 'একক', 'পূর্বের গোডাউন স্টক', 'অবশিষ্ট গোডাউন স্টক', 'অনুমোদনকারী/চালক', 'মন্তব্য'];
+export function exportGodownOutflowExcelCSV(movements = [], products = []) {
+  const outflow = getGodownOutflowLedger(movements, products);
+  const headers = [
+    'তারিখ ও সময়',
+    'পণ্যের নাম',
+    'ভ্যারিয়েন্ট বিবরণ',
+    'রং',
+    'সাইজ',
+    'ক্যাটাগরি',
+    'বারকোড/কোড',
+    'কমার কারণ',
+    'রেফারেন্স / চালান নং',
+    'কমার পরিমাণ',
+    'একক',
+    'পূর্বের গোডাউন স্টক',
+    'অবশিষ্ট গোডাউন স্টক',
+    'অনুমোদনকারী/চালক',
+    'মন্তব্য'
+  ];
   const rows = outflow.map((m) => [
     new Date(m.timestamp).toLocaleString('bn-BD'),
     m.productName || '',
+    m.variantName || (m.color ? `রং: ${m.color}` : '') || (m.size ? `সাইজ: ${m.size}` : '') || 'সাধারণ',
+    m.color || '-',
+    m.size || '-',
+    m.category || '-',
     m.barcode || m.productId || '',
     m.reasonBangla || '',
     m.referenceNo || '',
@@ -3438,10 +3510,10 @@ export function exportGodownOutflowExcelCSV(movements = []) {
     m.unit || 'Pcs',
     m.previousStock,
     m.remainingStock,
-    m.operatorName || '',
+    m.operatorName || 'Admin',
     m.notes || ''
   ]);
-  exportToCSV(`Godown_Outflow_Report_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+  exportToCSV(`Godown_Variant_Outflow_Report_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
 }
 
 /**

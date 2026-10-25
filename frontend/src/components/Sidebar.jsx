@@ -320,8 +320,8 @@ export default function Sidebar({
         },
         {
           id: 'godown_outflow',
-          title: 'গোডাউন কমার খাতা',
-          subTitle: 'দোকানে চালান ও নির্গমনের খাতা',
+          title: 'গোডাউন কমার খাতা (ভ্যারিয়েন্ট)',
+          subTitle: 'ভ্যারিয়েন্ট ভিত্তিক স্টক কমার তালিকা ও PDF',
           icon: TrendingDown,
           iconGradient: 'from-amber-600 to-orange-700 text-white shadow-amber-500/25',
           isActive: currentView === 'godown_outflow',

@@ -106,6 +106,7 @@ export default function StockTransferModal({
 
   // প্রিন্ট প্রিভিউ
   const [printableChallan, setPrintableChallan] = useState(null);
+  const [isPrintableGodownOutflow, setIsPrintableGodownOutflow] = useState(false);
 
   // চালান তালিকা ফিল্টার
   const [listSearch, setListSearch] = useState('');
@@ -565,9 +566,9 @@ export default function StockTransferModal({
     });
   }, [stockTransfers, listSearch, statusFilter]);
 
-  // গোডাউন স্টক কমার খাতা
+  // গোডাউন স্টক কমার খাতা (ভ্যারিয়েন্ট অনুযায়ী সমৃদ্ধ ফিল্টার)
   const godownOutflowData = useMemo(() => {
-    const list = getGodownOutflowLedger(stockMovements);
+    const list = getGodownOutflowLedger(stockMovements, products);
     const now = new Date();
 
     return list.filter((m) => {
@@ -575,8 +576,14 @@ export default function StockTransferModal({
       const matchSearch =
         !q ||
         String(m.productName || '').toLowerCase().includes(q) ||
+        String(m.variantName || '').toLowerCase().includes(q) ||
+        String(m.color || '').toLowerCase().includes(q) ||
+        String(m.size || '').toLowerCase().includes(q) ||
+        String(m.category || '').toLowerCase().includes(q) ||
         String(m.barcode || '').toLowerCase().includes(q) ||
-        String(m.referenceNo || '').toLowerCase().includes(q);
+        String(m.referenceNo || '').toLowerCase().includes(q) ||
+        String(m.reasonBangla || '').toLowerCase().includes(q) ||
+        String(m.notes || '').toLowerCase().includes(q);
 
       const matchReason = godownReasonFilter === 'ALL' || m.type === godownReasonFilter;
 
@@ -591,7 +598,35 @@ export default function StockTransferModal({
 
       return matchSearch && matchReason && matchDate;
     });
-  }, [stockMovements, godownSearch, godownReasonFilter, godownDateFilter]);
+  }, [stockMovements, products, godownSearch, godownReasonFilter, godownDateFilter]);
+
+  // গোডাউন স্টক কমার সারসংক্ষেপ হিসাব (KPIs)
+  const godownOutflowSummary = useMemo(() => {
+    let totalQty = 0;
+    let transferQty = 0;
+    let damageQty = 0;
+    let adjustQty = 0;
+
+    godownOutflowData.forEach((m) => {
+      const q = Number(m.quantity) || 0;
+      totalQty += q;
+      if (m.type === 'TRANSFER_OUT') {
+        transferQty += q;
+      } else if (m.type === 'DAMAGE') {
+        damageQty += q;
+      } else {
+        adjustQty += q;
+      }
+    });
+
+    return {
+      count: godownOutflowData.length,
+      totalQty: Math.round(totalQty * 100) / 100,
+      transferQty: Math.round(transferQty * 100) / 100,
+      damageQty: Math.round(damageQty * 100) / 100,
+      adjustQty: Math.round(adjustQty * 100) / 100
+    };
+  }, [godownOutflowData]);
 
   // দোকান স্টক কমার খাতা
   const shopOutflowData = useMemo(() => {
@@ -1458,7 +1493,7 @@ export default function StockTransferModal({
             <div className="bg-slate-800/90 p-1 rounded-xl flex items-center border border-slate-700/60 overflow-x-auto">
               <button
                 type="button"
-                onClick={() => { setActiveMainTab('overview'); setPrintableChallan(null); }}
+                onClick={() => { setActiveMainTab('overview'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap ${
                   activeMainTab === 'overview'
                     ? 'bg-indigo-600 text-white shadow-xs'
@@ -1471,7 +1506,7 @@ export default function StockTransferModal({
 
               <button
                 type="button"
-                onClick={() => { setActiveMainTab('transfers'); setPrintableChallan(null); }}
+                onClick={() => { setActiveMainTab('transfers'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap ${
                   activeMainTab === 'transfers'
                     ? 'bg-indigo-600 text-white shadow-xs'
@@ -1489,7 +1524,7 @@ export default function StockTransferModal({
 
               <button
                 type="button"
-                onClick={() => { setActiveMainTab('godown_outflow'); setPrintableChallan(null); }}
+                onClick={() => { setActiveMainTab('godown_outflow'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap ${
                   activeMainTab === 'godown_outflow'
                     ? 'bg-indigo-600 text-white shadow-xs'
@@ -1502,7 +1537,7 @@ export default function StockTransferModal({
 
               <button
                 type="button"
-                onClick={() => { setActiveMainTab('shop_outflow'); setPrintableChallan(null); }}
+                onClick={() => { setActiveMainTab('shop_outflow'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap ${
                   activeMainTab === 'shop_outflow'
                     ? 'bg-indigo-600 text-white shadow-xs'
@@ -1540,7 +1575,7 @@ export default function StockTransferModal({
         {/* =================================================================== */}
         {printableChallan ? (
           <div className="flex-1 overflow-y-auto p-6 bg-slate-100 flex flex-col items-center">
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg border border-slate-200 p-8 print:p-0 print:border-none print:shadow-none">
+            <div id="printable-challan-container" className="w-full max-w-2xl bg-white rounded-2xl shadow-lg border border-slate-200 p-8 print:p-0 print:border-none print:shadow-none">
               <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-6 print:hidden">
                 <span className="text-xs font-bold text-slate-600">ডেলিভারি চালান ও গেটপাস প্রিন্ট ভিউ</span>
                 <div className="flex items-center space-x-2">
@@ -1651,6 +1686,193 @@ export default function StockTransferModal({
                     <span className="block font-medium">প্রাপক / দোকান রিসিভার স্বাক্ষর</span>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        ) : isPrintableGodownOutflow ? (
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex flex-col items-center">
+            <div id="printable-godown-outflow-container" className="w-full max-w-4xl bg-white rounded-2xl shadow-lg border border-slate-200 p-6 sm:p-8 print:p-0 print:border-none print:shadow-none print:max-w-none">
+              
+              {/* অ্যাকশন কন্ট্রোল বার (প্রিন্টে লুকানো থাকবে) */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-6 print:hidden">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                    <Printer className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-800">গোডাউন স্টক কমার ভ্যারিয়েন্ট খতিয়ান (A4 পিডিএফ প্রিন্ট ভিউ)</h4>
+                    <p className="text-[11px] text-slate-500">ব্রাউজারের প্রিন্ট ডায়ালগ থেকে 'Save as PDF' নির্বাচন করে সরাসরি ডাউনলোড করুন</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>প্রিন্ট / PDF ডাউনলোড</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => exportGodownOutflowExcelCSV(stockMovements, products)}
+                    className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-all"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span>এক্সেল CSV</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsPrintableGodownOutflow(false)}
+                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+                  >
+                    বন্ধ করুন
+                  </button>
+                </div>
+              </div>
+
+              {/* অফিশিয়াল রিপোর্ট ফরম্যাট */}
+              <div className="space-y-6 text-slate-800 text-xs">
+                {/* শপ হেডার */}
+                <div className="text-center pb-4 border-b-2 border-slate-900">
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                    {storeSettings?.StoreName || 'Pabna Bostraloy'}
+                  </h2>
+                  <p className="text-xs text-slate-600 mt-0.5">{storeSettings?.Address || 'Bosila, Mohammadpur, Dhaka'}</p>
+                  <p className="text-xs text-slate-500">ফোন: {storeSettings?.Phone || '01675934919'}</p>
+                  
+                  <div className="inline-block mt-3 px-5 py-1.5 bg-slate-900 text-white rounded-full text-xs font-black uppercase tracking-wider">
+                    গোডাউন ভ্যারিয়েন্ট অনুযায়ী স্টক হ্রাস / কমার খতিয়ান ও অডিট রিপোর্ট
+                  </div>
+                </div>
+
+                {/* ফিল্টার ও মেটা তথ্য বার */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-[11px]">
+                  <div>
+                    <span className="text-slate-500 block font-medium">রিপোর্ট তৈরির সময়:</span>
+                    <span className="font-bold text-slate-800">{new Date().toLocaleString('bn-BD')}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block font-medium">সময়কাল / ফিল্টার:</span>
+                    <span className="font-bold text-slate-800">
+                      {godownDateFilter === 'TODAY' ? 'আজকের' : godownDateFilter === '7DAYS' ? 'বিগত ৭ দিন' : godownDateFilter === '30DAYS' ? 'বিগত ৩০ দিন' : 'সকল সময়'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block font-medium">মোট কমার ঘটনা:</span>
+                    <span className="font-bold font-mono text-slate-900">{godownOutflowData.length}টি এন্ট্রি</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block font-medium">মোট হ্রাসকৃত পরিমাণ:</span>
+                    <span className="font-black font-mono text-rose-700 text-sm">
+                      {godownOutflowSummary.totalQty}
+                    </span>
+                  </div>
+                </div>
+
+                {/* অডিট টেবিল */}
+                <table className="w-full text-xs text-left border-collapse border border-slate-300">
+                  <thead>
+                    <tr className="border-b-2 border-slate-300 text-slate-800 bg-slate-100 font-bold">
+                      <th className="py-2 px-2.5 border border-slate-300 text-center w-10">ক্রমিক</th>
+                      <th className="py-2 px-3 border border-slate-300">তারিখ ও সময়</th>
+                      <th className="py-2 px-3 border border-slate-300">পণ্যের বিবরণ</th>
+                      <th className="py-2 px-3 border border-slate-300">ভ্যারিয়েন্ট (রং / সাইজ)</th>
+                      <th className="py-2 px-3 border border-slate-300">কমার কারণ ও চালান নং</th>
+                      <th className="py-2 px-2.5 border border-slate-300 text-center">একক</th>
+                      <th className="py-2 px-3 border border-slate-300 text-right text-rose-900 bg-rose-50/50">কমেছে</th>
+                      <th className="py-2 px-2.5 border border-slate-300 text-center">পূর্বে</th>
+                      <th className="py-2 px-2.5 border border-slate-300 text-center">অবশিষ্ট</th>
+                      <th className="py-2 px-3 border border-slate-300">অনুমোদক / চালক</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {godownOutflowData.length === 0 ? (
+                      <tr>
+                        <td colSpan="10" className="py-8 text-center text-slate-400 font-medium border border-slate-200">
+                          নির্বাচিত ফিল্টারে কোনো গোডাউন স্টক কমার রেকর্ড নেই।
+                        </td>
+                      </tr>
+                    ) : (
+                      godownOutflowData.map((m, idx) => (
+                        <tr key={m.id || idx} className="hover:bg-slate-50/50">
+                          <td className="py-2 px-2.5 text-center font-mono text-slate-500 border border-slate-200">{idx + 1}</td>
+                          <td className="py-2 px-3 text-slate-600 whitespace-nowrap border border-slate-200">
+                            {new Date(m.timestamp).toLocaleString('bn-BD')}
+                          </td>
+                          <td className="py-2 px-3 border border-slate-200">
+                            <strong className="text-slate-900 block">{m.productName}</strong>
+                            {m.category && <span className="text-[10px] text-slate-500 block">{m.category}</span>}
+                          </td>
+                          <td className="py-2 px-3 border border-slate-200">
+                            {m.variantName || m.color || m.size ? (
+                              <div>
+                                {m.color && <span className="font-bold text-pink-700 block">রং: {m.color}</span>}
+                                {m.size && <span className="font-bold text-indigo-700 block">সাইজ: {m.size}</span>}
+                                {m.variantName && !m.color && !m.size && <span className="font-bold text-purple-700 block">{m.variantName}</span>}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400">সাধারণ</span>
+                            )}
+                          </td>
+                          <td className="py-2 px-3 border border-slate-200">
+                            <span className="font-medium text-slate-800 block">{m.reasonBangla}</span>
+                            {m.referenceNo && (
+                              <span className="text-[10px] font-mono text-indigo-600 font-bold block">
+                                চালান: {m.referenceNo}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2 px-2.5 text-center text-slate-600 border border-slate-200">{m.unit || 'Pcs'}</td>
+                          <td className="py-2 px-3 text-right font-black font-mono text-rose-700 text-sm bg-rose-50/30 border border-slate-200">
+                            -{m.quantity}
+                          </td>
+                          <td className="py-2 px-2.5 text-center font-mono text-slate-500 border border-slate-200">
+                            {m.previousStock !== '-' ? m.previousStock : '-'}
+                          </td>
+                          <td className="py-2 px-2.5 text-center font-mono font-bold text-slate-900 border border-slate-200">
+                            {m.remainingStock !== '-' ? m.remainingStock : '-'}
+                          </td>
+                          <td className="py-2 px-3 text-slate-700 border border-slate-200">
+                            <span className="block font-medium">{m.operatorName || 'Admin'}</span>
+                            {m.notes && <span className="text-[10px] text-slate-400 block truncate max-w-[120px]">{m.notes}</span>}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                  {godownOutflowData.length > 0 && (
+                    <tfoot>
+                      <tr className="border-t-2 border-slate-900 bg-slate-100 font-bold">
+                        <td colSpan="6" className="py-2.5 px-3 text-right uppercase border border-slate-300">
+                          সর্বমোট কমার পরিমাণ:
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-black text-sm font-mono text-rose-800 border border-slate-300">
+                          {godownOutflowSummary.totalQty}
+                        </td>
+                        <td colSpan="3" className="border border-slate-300"></td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+
+                {/* স্বাক্ষর ও ভেরিফিকেশন ব্লক */}
+                <div className="grid grid-cols-3 gap-8 pt-12 text-center text-xs text-slate-500">
+                  <div className="border-t border-slate-300 pt-2">
+                    <span className="block font-bold text-slate-800">রিপোর্ট প্রস্তুতকারক</span>
+                    <span className="text-[10px] text-slate-400">{activeUser?.FullName || 'অপারেটর'}</span>
+                  </div>
+                  <div className="border-t border-slate-300 pt-2">
+                    <span className="block font-bold text-slate-800">গোডাউন ইনচার্জ স্বাক্ষর</span>
+                    <span className="text-[10px] text-slate-400">স্টক যাচাইকারী</span>
+                  </div>
+                  <div className="border-t border-slate-300 pt-2">
+                    <span className="block font-bold text-slate-800">অনুমোদনকারী / স্বত্বাধিকারী</span>
+                    <span className="text-[10px] text-slate-400">কর্তৃপক্ষ সিল ও স্বাক্ষর</span>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -2968,33 +3190,86 @@ export default function StockTransferModal({
             )}
 
             {/* =============================================================== */}
-            {/* ট্যাব ৩: 🏭 গোডাউন স্টক কমার খাতা */}
+            {/* ট্যাব ৩: 🏭 গোডাউন স্টক কমার খাতা (ভ্যারিয়েন্ট ভিত্তিক ও পিডিএফ রিপোর্ট) */}
             {/* =============================================================== */}
             {activeMainTab === 'godown_outflow' && (
               <div className="space-y-4">
                 
                 {/* পরিচিতি ব্যানার */}
-                <div className="p-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent rounded-2xl border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="p-4 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent rounded-2xl border border-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                   <div className="flex items-center space-x-3">
-                    <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                    <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs">
                       <TrendingDown className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-black text-amber-950">গোডাউনে কী কী স্টক কমেছে তার খাতা</h3>
-                      <p className="text-xs text-amber-800">
-                        গোডাউন থেকে দোকানে চালান স্থানান্তর, ড্যামেজ বা অন্য কারণে স্টক কমার পৃথক খতিয়ান
+                      <h3 className="text-sm font-black text-amber-950 flex items-center space-x-2">
+                        <span>গোডাউনে ভ্যারিয়েন্ট অনুযায়ী স্টক কমার খাতা</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-900 font-bold border border-amber-300">
+                          ভ্যারিয়েন্ট অডিট
+                        </span>
+                      </h3>
+                      <p className="text-xs text-amber-850 mt-0.5">
+                        দোকানে চালান স্থানান্তর, গোডাউন ড্যামেজ বা অন্য কারণে কোন কোন ভ্যারিয়েন্টের স্টক কমেছে তার বিশদ হিসাব
                       </p>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => exportGodownOutflowExcelCSV(stockMovements)}
-                    className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer self-start sm:self-auto"
-                  >
-                    <FileSpreadsheet className="w-4 h-4" />
-                    <span>গোডাউন কমার এক্সেল রিপোর্ট</span>
-                  </button>
+                  <div className="flex items-center space-x-2 flex-wrap gap-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsPrintableGodownOutflow(true)}
+                      className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-all"
+                    >
+                      <Printer className="w-4 h-4" />
+                      <span>পিডিএফ ডাউনলোড / প্রিন্ট</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => exportGodownOutflowExcelCSV(stockMovements, products)}
+                      className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-all"
+                    >
+                      <FileSpreadsheet className="w-4 h-4" />
+                      <span>গোডাউন কমার এক্সেল রিপোর্ট</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* সারসংক্ষেপ কেপিআই কার্ডস */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                    <span className="text-[11px] font-bold text-slate-500 block mb-0.5">মোট কমার ঘটনা</span>
+                    <div className="flex items-baseline space-x-1">
+                      <span className="text-lg font-black font-mono text-slate-900">{godownOutflowSummary.count}</span>
+                      <span className="text-xs text-slate-500">টি এন্ট্রি</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 bg-rose-50/60 rounded-xl border border-rose-200/80 shadow-2xs">
+                    <span className="text-[11px] font-bold text-rose-800 block mb-0.5">মোট হ্রাসকৃত স্টক</span>
+                    <div className="flex items-baseline space-x-1">
+                      <span className="text-lg font-black font-mono text-rose-700">-{godownOutflowSummary.totalQty}</span>
+                      <span className="text-xs text-rose-600 font-medium">(থান/গজ/পিস)</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-200/80 shadow-2xs">
+                    <span className="text-[11px] font-bold text-indigo-800 block mb-0.5">চালানে স্থানান্তর</span>
+                    <div className="flex items-baseline space-x-1">
+                      <span className="text-lg font-black font-mono text-indigo-700">-{godownOutflowSummary.transferQty}</span>
+                      <span className="text-xs text-indigo-600 font-medium">দোকানে পাঠানো</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/80 shadow-2xs">
+                    <span className="text-[11px] font-bold text-amber-800 block mb-0.5">ড্যামেজ ও সমন্বয় হ্রাস</span>
+                    <div className="flex items-baseline space-x-1">
+                      <span className="text-lg font-black font-mono text-amber-700">
+                        -{Math.round((godownOutflowSummary.damageQty + godownOutflowSummary.adjustQty) * 100) / 100}
+                      </span>
+                      <span className="text-xs text-amber-600 font-medium">গোডাউন হ্রাস</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* ফিল্টার বার */}
@@ -3005,7 +3280,7 @@ export default function StockTransferModal({
                       type="text"
                       value={godownSearch}
                       onChange={(e) => setGodownSearch(e.target.value)}
-                      placeholder="পণ্য, চালান নং বা কোড দিয়ে খুঁজুন..."
+                      placeholder="পণ্য, ভ্যারিয়েন্ট, রঙ, সাইজ বা চালান নং দিয়ে খুঁজুন..."
                       className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
                     />
                   </div>
@@ -3017,9 +3292,9 @@ export default function StockTransferModal({
                       className="px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-medium text-slate-700"
                     >
                       <option value="ALL">সকল কারণ</option>
-                      <option value="TRANSFER_OUT">দোকানে স্থানান্তর</option>
+                      <option value="TRANSFER_OUT">দোকানে স্থানান্তর চালান</option>
                       <option value="DAMAGE">গোডাউন ড্যামেজ</option>
-                      <option value="ADJUSTMENT">স্টক সমন্বয়</option>
+                      <option value="ADJUSTMENT">স্টক সমন্বয় / কর্তন</option>
                     </select>
 
                     <select
@@ -3043,8 +3318,9 @@ export default function StockTransferModal({
                         <tr>
                           <th className="py-3 px-4">তারিখ ও সময়</th>
                           <th className="py-3 px-4">পণ্যের বিবরণ</th>
+                          <th className="py-3 px-4">ভ্যারিয়েন্ট বিবরণ (রং / সাইজ)</th>
                           <th className="py-3 px-3">কমার কারণ ও চালান নং</th>
-                          <th className="py-3 px-3 text-center text-amber-900 bg-amber-50/60 font-black">কমেছে (পরিমাণ)</th>
+                          <th className="py-3 px-3 text-center text-rose-900 bg-rose-50/60 font-black">কমেছে (পরিমাণ)</th>
                           <th className="py-3 px-3 text-center">পূর্বে গোডাউনে</th>
                           <th className="py-3 px-3 text-center">অবশিষ্ট গোডাউনে</th>
                           <th className="py-3 px-4">অনুমোদনকারী/চালক</th>
@@ -3053,8 +3329,8 @@ export default function StockTransferModal({
                       <tbody className="divide-y divide-slate-100">
                         {godownOutflowData.length === 0 ? (
                           <tr>
-                            <td colSpan="7" className="py-12 text-center text-slate-400 font-medium">
-                              গোডাউন থেকে কমার কোনো রেকর্ড পাওয়া যায়নি।
+                            <td colSpan="8" className="py-12 text-center text-slate-400 font-medium">
+                              নির্বাচিত সময়ে গোডাউন থেকে ভ্যারিয়েন্ট স্টক কমার কোনো রেকর্ড পাওয়া যায়নি।
                             </td>
                           </tr>
                         ) : (
@@ -3065,7 +3341,41 @@ export default function StockTransferModal({
                               </td>
                               <td className="py-3 px-4">
                                 <strong className="text-slate-900 block">{m.productName}</strong>
-                                {m.barcode && <span className="text-[10px] text-slate-400 font-mono">#{m.barcode}</span>}
+                                <div className="flex items-center space-x-2 mt-0.5">
+                                  {m.category && <span className="text-[10px] text-slate-500 font-medium">{m.category}</span>}
+                                  {m.barcode && <span className="text-[10px] text-slate-400 font-mono">#{m.barcode}</span>}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                {m.variantName || m.color || m.size ? (
+                                  <div className="flex flex-col space-y-1">
+                                    <div className="flex items-center space-x-1.5 flex-wrap gap-1">
+                                      {m.color && (
+                                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-pink-50 text-pink-700 border border-pink-200">
+                                          <span className="w-2 h-2 rounded-full bg-pink-500 inline-block"></span>
+                                          <span>রং: {m.color}</span>
+                                        </span>
+                                      )}
+                                      {m.size && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                          সাইজ: {m.size}
+                                        </span>
+                                      )}
+                                      {m.variantName && !m.color && !m.size && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                          {m.variantName}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {m.variantId && (
+                                      <span className="text-[10px] text-slate-400 font-mono">আইডি: {m.variantId}</span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="inline-block px-2 py-0.5 rounded text-[11px] text-slate-500 bg-slate-100 font-medium">
+                                    সাধারণ / নন-ভ্যারিয়েন্ট
+                                  </span>
+                                )}
                               </td>
                               <td className="py-3 px-3">
                                 <span className="font-semibold text-slate-800 block">{m.reasonBangla}</span>
@@ -3075,8 +3385,8 @@ export default function StockTransferModal({
                                   </span>
                                 )}
                               </td>
-                              <td className="py-3 px-3 text-center bg-amber-50/30">
-                                <span className="font-mono font-black text-amber-700 text-sm">
+                              <td className="py-3 px-3 text-center bg-rose-50/40">
+                                <span className="font-mono font-black text-rose-700 text-sm">
                                   -{m.quantity} {m.unit}
                                 </span>
                               </td>

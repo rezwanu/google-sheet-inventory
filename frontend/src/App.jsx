@@ -3171,6 +3171,13 @@ export default function App() {
           const prevGodown = Number(target.GodownStock || 0);
           const prevShop = Number(target.StockQuantity || 0);
 
+          let matchedVariant = null;
+          if (variantId && Array.isArray(target.Variants)) {
+            matchedVariant = target.Variants.find(
+              (v) => String(v.VariantID || '').trim() === String(variantId).trim()
+            ) || null;
+          }
+
           if (isFromWarehouse) {
             // গোডাউন থেকে স্টক কর্তন
             const newGodown = Math.max(0, prevGodown - qty);
@@ -3192,8 +3199,13 @@ export default function App() {
                 };
                 target.Variants = uVars;
                 target.VariantsJSON = JSON.stringify(uVars);
+                matchedVariant = uVars[vIdx];
               }
             }
+
+            const varName = itm.variantName || matchedVariant?.VariantName || (matchedVariant?.Color ? `রং: ${matchedVariant.Color}` : '') || (matchedVariant?.Size ? `সাইজ: ${matchedVariant.Size}` : '');
+            const varColor = itm.color || matchedVariant?.Color || '';
+            const varSize = itm.size || matchedVariant?.Size || '';
 
             recordStockMovementLocally({
               location: 'Godown',
@@ -3208,7 +3220,12 @@ export default function App() {
               remainingStock: newGodown,
               referenceNo: transferPayload.challanNo,
               operatorName: activeUser?.FullName || 'Admin',
-              notes: transferPayload.notes || ''
+              notes: transferPayload.notes || '',
+              variantId: variantId || '',
+              variantName: varName,
+              color: varColor,
+              size: varSize,
+              category: target.Category || ''
             });
           } else if (isFromShop) {
             // দোকান থেকে স্টক কর্তন
@@ -3230,8 +3247,13 @@ export default function App() {
                 };
                 target.Variants = uVars;
                 target.VariantsJSON = JSON.stringify(uVars);
+                matchedVariant = uVars[vIdx];
               }
             }
+
+            const varName = itm.variantName || matchedVariant?.VariantName || (matchedVariant?.Color ? `রং: ${matchedVariant.Color}` : '') || (matchedVariant?.Size ? `সাইজ: ${matchedVariant.Size}` : '');
+            const varColor = itm.color || matchedVariant?.Color || '';
+            const varSize = itm.size || matchedVariant?.Size || '';
 
             recordStockMovementLocally({
               location: 'Shop',
@@ -3246,7 +3268,12 @@ export default function App() {
               remainingStock: newShop,
               referenceNo: transferPayload.challanNo,
               operatorName: activeUser?.FullName || 'Admin',
-              notes: transferPayload.notes || ''
+              notes: transferPayload.notes || '',
+              variantId: variantId || '',
+              variantName: varName,
+              color: varColor,
+              size: varSize,
+              category: target.Category || ''
             });
           }
 
@@ -3274,8 +3301,13 @@ export default function App() {
                 };
                 target.Variants = uVars;
                 target.VariantsJSON = JSON.stringify(uVars);
+                matchedVariant = uVars[vIdx];
               }
             }
+
+            const varName = itm.variantName || matchedVariant?.VariantName || (matchedVariant?.Color ? `রং: ${matchedVariant.Color}` : '') || (matchedVariant?.Size ? `সাইজ: ${matchedVariant.Size}` : '');
+            const varColor = itm.color || matchedVariant?.Color || '';
+            const varSize = itm.size || matchedVariant?.Size || '';
 
             recordStockMovementLocally({
               location: 'Shop',
@@ -3290,7 +3322,12 @@ export default function App() {
               remainingStock: newShop,
               referenceNo: transferPayload.challanNo,
               operatorName: activeUser?.FullName || 'Admin',
-              notes: transferPayload.notes || ''
+              notes: transferPayload.notes || '',
+              variantId: variantId || '',
+              variantName: varName,
+              color: varColor,
+              size: varSize,
+              category: target.Category || ''
             });
           }
 
@@ -3763,7 +3800,7 @@ export default function App() {
   };
 
   // গোডাউন ও দোকান সরাসরি স্টক অ্যাডজাস্টমেন্ট হ্যান্ডলার
-  const handleAdjustLocationStock = ({ productId, location = 'Godown', actionType = 'ADD', quantity = 1, reason = '', notes = '' }) => {
+  const handleAdjustLocationStock = ({ productId, variantId = null, location = 'Godown', actionType = 'ADD', quantity = 1, reason = '', notes = '' }) => {
     try {
       let updatedProducts = [...products];
       const idx = updatedProducts.findIndex(p => p.ProductID === productId || p.Barcode === productId);
@@ -3776,6 +3813,26 @@ export default function App() {
 
       let prevStock = 0;
       let newStock = 0;
+
+      let matchedVariant = null;
+      if (variantId && Array.isArray(prod.Variants)) {
+        const vIdx = prod.Variants.findIndex(v => String(v.VariantID || '').trim() === String(variantId).trim());
+        if (vIdx !== -1) {
+          const uVars = [...prod.Variants];
+          matchedVariant = uVars[vIdx];
+          const prevVG = Number(uVars[vIdx].GodownStock !== undefined ? uVars[vIdx].GodownStock : 0) || 0;
+          const prevVS = Number(uVars[vIdx].StockQuantity !== undefined ? uVars[vIdx].StockQuantity : 0) || 0;
+          if (location === 'Godown') {
+            const newVG = actionType === 'ADD' ? prevVG + numQty : actionType === 'DEDUCT' ? Math.max(0, prevVG - numQty) : numQty;
+            uVars[vIdx] = { ...uVars[vIdx], GodownStock: newVG, godownStock: newVG };
+          } else {
+            const newVS = actionType === 'ADD' ? prevVS + numQty : actionType === 'DEDUCT' ? Math.max(0, prevVS - numQty) : numQty;
+            uVars[vIdx] = { ...uVars[vIdx], StockQuantity: newVS, CurrentStock: newVS };
+          }
+          prod.Variants = uVars;
+          prod.VariantsJSON = JSON.stringify(uVars);
+        }
+      }
 
       if (location === 'Godown') {
         prevStock = Number(prod.GodownStock || 0);
@@ -3801,6 +3858,7 @@ export default function App() {
       saveLocalProducts(updatedProducts);
 
       const moveType = actionType === 'DEDUCT' ? (reason?.includes('ড্যামেজ') ? 'DAMAGE' : 'ADJUSTMENT') : 'ADJUSTMENT';
+      const varName = matchedVariant?.VariantName || (matchedVariant?.Color ? `রং: ${matchedVariant.Color}` : '') || (matchedVariant?.Size ? `সাইজ: ${matchedVariant.Size}` : '');
       const { entry, movements } = recordStockMovementLocally({
         location,
         type: moveType,
@@ -3814,7 +3872,12 @@ export default function App() {
         remainingStock: newStock,
         referenceNo: `ADJ-${Date.now().toString().slice(-6)}`,
         operatorName: activeUser?.FullName || 'Admin',
-        notes: notes || ''
+        notes: notes || '',
+        variantId: variantId || '',
+        variantName: varName,
+        color: matchedVariant?.Color || '',
+        size: matchedVariant?.Size || '',
+        category: prod.Category || ''
       });
       setStockMovements(movements);
       showToast(`${location === 'Godown' ? 'গোডাউন' : 'দোকান'} স্টক সফলভাবে আপডেট হয়েছে!`, 'success');
@@ -4376,7 +4439,12 @@ export default function App() {
           previousStock: Number(changeMeta.prevStock || 0),
           remainingStock: Number(changeMeta.newStock || 0),
           operatorName: activeUser?.FullName || 'Admin',
-          notes: changeMeta.notes || 'ভ্যারিয়েন্ট স্টক সমন্বয়'
+          notes: changeMeta.notes || 'ভ্যারিয়েন্ট স্টক সমন্বয়',
+          variantId: changeMeta.variantId || '',
+          variantName: changeMeta.variantName || '',
+          color: changeMeta.color || '',
+          size: changeMeta.size || '',
+          category: targetProduct.Category || ''
         });
       } catch (e) {
         console.warn('Stock movement logging error:', e);

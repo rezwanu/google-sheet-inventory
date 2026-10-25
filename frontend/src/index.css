@@ -51,20 +51,26 @@
     display: none !important;
   }
 
-  /* শুধুমাত্র ইনভয়েস কন্টেইনার, P&L অ্যানালিটিক্স কন্টেইনার এবং বারকোড স্টিকার কন্টেইনার প্রদর্শন */
+  /* শুধুমাত্র ইনভয়েস, P&L অ্যানালিটিক্স, বারকোড স্টিকার, ডেলিভারি চালান ও গোডাউন কমার খতিয়ান প্রদর্শন */
   #printable-invoice-container,
   #printable-invoice-container *,
   #printable-analytics-container,
   #printable-analytics-container *,
   #printable-barcode-stickers,
-  #printable-barcode-stickers * {
+  #printable-barcode-stickers *,
+  #printable-challan-container,
+  #printable-challan-container *,
+  #printable-godown-outflow-container,
+  #printable-godown-outflow-container * {
     visibility: visible !important;
   }
 
   /* পৃষ্ঠার শীর্ষবামে পজিশন করা */
   #printable-invoice-container,
   #printable-analytics-container,
-  #printable-barcode-stickers {
+  #printable-barcode-stickers,
+  #printable-challan-container,
+  #printable-godown-outflow-container {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
