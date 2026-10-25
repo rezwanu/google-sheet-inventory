@@ -3254,6 +3254,7 @@ function doGet(e) {
       const expenses = getSheetRowsAsObjects(SHEETS.EXPENSES);
       const cashRegisters = getSheetRowsAsObjects(SHEETS.CASH_REGISTER);
       const salesReturns = getSheetRowsAsObjects(SHEETS.SALES_RETURNS);
+      ensureStockTransfersSheet(spreadsheet);
       const stockTransfers = getSheetRowsAsObjects(SHEETS.STOCK_TRANSFERS);
       const rawAuditLogs = getSheetRowsAsObjects(SHEETS.AUDIT_LOGS);
       // সর্বশেষ ৫০০টি অডিট লগ রিটার্ন করা যেন রেসপন্স দ্রুত থাকে
@@ -3726,6 +3727,10 @@ function doPost(e) {
 
       case 'updateStockTransferStatus':
         result = handleUpdateStockTransferStatus(spreadsheet, payload);
+        break;
+
+      case 'deleteStockTransfer':
+        result = handleDeleteStockTransfer(spreadsheet, payload);
         break;
 
       case 'sendBulkTargetedSms':
@@ -6989,6 +6994,147 @@ function handleUpdateStockTransferStatus(spreadsheet, payload) {
   }
 
   return { success: false, message: `ট্রান্সফার রেকর্ড '${targetId}' খুঁজে পাওয়া যায়নি।` };
+}
+
+/**
+ * স্টক ট্রান্সফার চালান মুছে ফেলা (handleDeleteStockTransfer)
+ * যদি চালানটি এখনও In Transit বা Pending থাকে (দোকানে রিসিভ হয়নি), তবে গোডাউনে স্টক ফিরিয়ে দেওয়া হবে।
+ */
+function handleDeleteStockTransfer(spreadsheet, payload) {
+  const transferSheet = ensureStockTransfersSheet(spreadsheet);
+  const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
+  const stockLogsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.STOCK_LOGS);
+  const now = new Date();
+  const timestampStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  const targetId = String(payload.transferId || payload.TransferID || payload.challanNo || payload.ChallanNo || '').trim();
+  if (!targetId) {
+    return { success: false, message: 'ট্রান্সফার আইডি বা চালান নম্বর প্রদান করুন।' };
+  }
+
+  const headers = transferSheet.getRange(1, 1, 1, transferSheet.getLastColumn()).getValues()[0];
+  const trfIdIdx = findCol(headers, 'TransferID');
+  const challanIdx = findCol(headers, 'ChallanNo');
+  const statusIdx = findCol(headers, 'Status');
+  const fromLocIdx = findCol(headers, 'FromLocation');
+  const itemsIdx = findCol(headers, 'ItemsJSON', 'Items');
+
+  const data = transferSheet.getDataRange().getValues();
+  for (let r = 1; r < data.length; r++) {
+    const rowId = String(data[r][trfIdIdx] || '').trim();
+    const rowChallan = String(data[r][challanIdx] || '').trim();
+
+    if (rowId === targetId || rowChallan === targetId) {
+      const currentStatus = String(data[r][statusIdx] || '').trim();
+      const fromLoc = String(data[r][fromLocIdx] || '').trim();
+      const isFromWarehouse = /warehouse|godown|গোডাউন/i.test(fromLoc) || !/shop|store|counter|দোকান/i.test(fromLoc);
+      const rawItems = data[r][itemsIdx];
+      let items = [];
+      try {
+        items = typeof rawItems === 'string' ? JSON.parse(rawItems) : (rawItems || []);
+      } catch (e) { items = []; }
+
+      // যদি চালানটি এখনও In Transit বা Pending থাকে (দোকানে রিসিভ হয়নি), তবে গোডাউনে স্টক ফেরত দেওয়া
+      if (currentStatus === 'In Transit' || currentStatus === 'Pending') {
+        if (productsSheet && items.length > 0) {
+          const prodHeaders = productsSheet.getRange(1, 1, 1, productsSheet.getLastColumn()).getValues()[0];
+          const stockColIdx = findCol(prodHeaders, 'StockQuantity', 'StockQuantit', 'Stock', 'Quantity');
+          const godownColIdx = findCol(prodHeaders, 'GodownStock', 'WarehouseStock', 'GodownQty');
+          const prodIdColIdx = findCol(prodHeaders, 'ProductID', 'ID');
+          const barcodeColIdx = findCol(prodHeaders, 'Barcode');
+          const variantsColIdx = findCol(prodHeaders, 'VariantsJSON', 'Variants');
+          const totalStockColIdx = findCol(prodHeaders, 'TotalStock');
+          const allProdData = productsSheet.getDataRange().getValues();
+
+          items.forEach(itm => {
+            const pid = String(itm.productId || itm.ProductID || '').trim();
+            const variantId = itm.variantId || itm.VariantID || null;
+            const qty = Number(itm.quantity || itm.Quantity || 0);
+            if (qty <= 0) return;
+
+            for (let pr = 1; pr < allProdData.length; pr++) {
+              const pIdVal = String(allProdData[pr][prodIdColIdx] || '').trim();
+              const pBarcode = barcodeColIdx !== -1 ? String(allProdData[pr][barcodeColIdx] || '').trim() : '';
+
+              if (pIdVal === pid || (pBarcode && pBarcode === pid)) {
+                let currentGodownStock = godownColIdx !== -1 ? (Number(allProdData[pr][godownColIdx]) || 0) : 0;
+                let currentShopStock = stockColIdx !== -1 ? (Number(allProdData[pr][stockColIdx]) || 0) : 0;
+                let newGodownStock = currentGodownStock;
+
+                if (isFromWarehouse) {
+                  newGodownStock = currentGodownStock + qty;
+                  if (godownColIdx !== -1) {
+                    productsSheet.getRange(pr + 1, godownColIdx + 1).setValue(newGodownStock);
+                    allProdData[pr][godownColIdx] = newGodownStock;
+                  }
+                }
+
+                if (totalStockColIdx !== -1) {
+                  productsSheet.getRange(pr + 1, totalStockColIdx + 1).setValue(currentShopStock + newGodownStock);
+                }
+
+                if (variantsColIdx !== -1 && variantId) {
+                  try {
+                    const rawV = productsSheet.getRange(pr + 1, variantsColIdx + 1).getValue();
+                    if (rawV) {
+                      const parsedV = typeof rawV === 'string' ? JSON.parse(rawV) : rawV;
+                      if (Array.isArray(parsedV)) {
+                        const vIdx = parsedV.findIndex(v => String(v.VariantID || v.variantId || '').trim() === String(variantId).trim());
+                        if (vIdx !== -1) {
+                          if (isFromWarehouse) {
+                            const prevVG = Number(parsedV[vIdx].GodownStock !== undefined ? parsedV[vIdx].GodownStock : (parsedV[vIdx].godownStock || 0)) || 0;
+                            parsedV[vIdx].GodownStock = prevVG + qty;
+                            parsedV[vIdx].godownStock = parsedV[vIdx].GodownStock;
+                          }
+                          productsSheet.getRange(pr + 1, variantsColIdx + 1).setValue(JSON.stringify(parsedV));
+                        }
+                      }
+                    }
+                  } catch (e) {}
+                }
+
+                if (stockLogsSheet) {
+                  stockLogsSheet.appendRow([
+                    generateUniqueId('LOG'),
+                    timestampStr,
+                    pIdVal,
+                    allProdData[pr][findCol(prodHeaders, 'ProductName')] || itm.productName,
+                    'RESTORE_ON_DELETE',
+                    qty,
+                    currentGodownStock,
+                    newGodownStock,
+                    `চালান #${rowChallan} মুছে ফেলায় গোডাউনে স্টক ফেরত`
+                  ]);
+                }
+                break;
+              }
+            }
+          });
+        }
+      }
+
+      // ট্রান্সফার শিট থেকে নির্দিষ্ট রো মুছে ফেলা
+      transferSheet.deleteRow(r + 1);
+      SpreadsheetApp.flush();
+
+      handleLogAuditEvent(spreadsheet, {
+        userId: payload.deletedBy || 'Admin',
+        userName: payload.deletedBy || 'Admin',
+        userRole: 'Admin',
+        actionType: 'STOCK_TRANSFER_DELETE',
+        module: 'StockTransfers',
+        description: `স্টক ট্রান্সফার চালান #${rowChallan} স্থায়ীভাবে ডাটাবেস থেকে মুছে ফেলা হয়েছে।`,
+        details: { transferId: rowId, challanNo: rowChallan }
+      });
+
+      return {
+        success: true,
+        message: `চালান #${rowChallan} সফলভাবে ডাটাবেস থেকে মুছে ফেলা হয়েছে!`
+      };
+    }
+  }
+
+  return { success: false, message: `চালান '${targetId}' ডাটাবেসে খুঁজে পাওয়া যায়নি।` };
 }
 
 /**

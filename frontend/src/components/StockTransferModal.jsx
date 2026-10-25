@@ -58,6 +58,7 @@ export default function StockTransferModal({
   storeSettings = {},
   onSaveStockTransfer,
   onUpdateStockTransferStatus,
+  onDeleteStockTransfer,
   onAdjustLocationStock,
   initialTab = 'overview',
   initialTransferSubTab = 'new',
@@ -82,6 +83,10 @@ export default function StockTransferModal({
   // ১. চালান তৈরি স্টেটসমূহ
   // =========================================================================
   const [challanNo, setChallanNo] = useState(() => `CHL-${Date.now().toString().slice(-6)}`);
+  const [transferDate, setTransferDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [fromLocation, setFromLocation] = useState('Main Warehouse');
   const [toLocation, setToLocation] = useState('Main Shop');
   const [driverName, setDriverName] = useState('');
@@ -89,7 +94,9 @@ export default function StockTransferModal({
   const [vehicleNo, setVehicleNo] = useState('');
   const [notes, setNotes] = useState('');
 
-  // চালান আইটেম পিকার
+  // চালান আইটেম পিকার ও ড্রপডাউন স্টেট
+  const [selectedItemKey, setSelectedItemKey] = useState('');
+  const [dropdownSearch, setDropdownSearch] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedVariantId, setSelectedVariantId] = useState('');
@@ -399,6 +406,105 @@ export default function StockTransferModal({
       .slice(0, 8);
   }, [products, productSearch]);
 
+  // গোডাউনে মজুত থাকা ভ্যারিয়েন্ট ও পণ্যসমূহের ড্রপডাউন তালিকা (ডাটাবেস ভিত্তিক)
+  const godownAvailableItems = useMemo(() => {
+    const list = [];
+    products.forEach((p) => {
+      const vars = getVariantsOfProduct(p);
+      const isThan = Boolean(p.TotalThan || p.YardsPerThan || /than|থান/i.test(p.Unit || ''));
+      const yardsPerThan = Number(p.YardsPerThan) || 0;
+      const unit = p.Unit || 'Pcs';
+
+      if (vars.length > 0) {
+        vars.forEach((v, vIdx) => {
+          const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
+          const vSStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+          const vColor = v.Attributes?.Color || v.Color || '';
+          const vSize = v.Attributes?.Size || v.Size || '';
+          const otherAttrs = v.Attributes
+            ? Object.entries(v.Attributes)
+                .filter(([k]) => k !== 'Color' && k !== 'Size')
+                .map(([k, val]) => `${k}: ${val}`)
+                .join(', ')
+            : '';
+          const vLabelParts = [vColor && `রং: ${vColor}`, vSize && `সাইজ: ${vSize}`, otherAttrs].filter(Boolean);
+          const vName = vLabelParts.length > 0 ? vLabelParts.join(' / ') : `ভ্যারিয়েন্ট #${vIdx + 1}`;
+
+          list.push({
+            key: `${p.ProductID}:::${v.VariantID || vIdx}`,
+            productId: p.ProductID,
+            productName: p.ProductName,
+            variantId: v.VariantID || v.variantId || String(vIdx),
+            variantName: vName,
+            color: vColor,
+            size: vSize,
+            otherAttrs,
+            godownStock: vGStock,
+            shopStock: vSStock,
+            unit: isThan ? 'থান' : unit,
+            isThan,
+            yardsPerThan,
+            costPrice: Number(v.CostPrice || p.CostPrice || 0),
+            barcode: v.Barcode || p.Barcode || '',
+            parentProduct: p,
+            variant: v
+          });
+        });
+      } else {
+        const gStock = Number(p.GodownStock || 0);
+        const sStock = Number(p.StockQuantity || 0);
+        list.push({
+          key: `${p.ProductID}:::SIMPLE`,
+          productId: p.ProductID,
+          productName: p.ProductName,
+          variantId: null,
+          variantName: '',
+          color: '',
+          size: '',
+          otherAttrs: '',
+          godownStock: gStock,
+          shopStock: sStock,
+          unit: isThan ? 'থান' : unit,
+          isThan,
+          yardsPerThan,
+          costPrice: Number(p.CostPrice || 0),
+          barcode: p.Barcode || '',
+          parentProduct: p,
+          variant: null
+        });
+      }
+    });
+
+    // সাজানো: গোডাউন স্টক বেশি থাকা আইটেমগুলো উপরে ও বর্ণানুক্রমিক
+    return list.sort((a, b) => {
+      if (a.godownStock > 0 && b.godownStock <= 0) return -1;
+      if (a.godownStock <= 0 && b.godownStock > 0) return 1;
+      return a.productName.localeCompare(b.productName);
+    });
+  }, [products]);
+
+  // ফিল্টার করা ড্রপডাউন আইটেম (সার্চ ফিল্টারের জন্য)
+  const filteredDropdownItems = useMemo(() => {
+    if (!dropdownSearch.trim()) return godownAvailableItems;
+    const q = dropdownSearch.trim().toLowerCase();
+    return godownAvailableItems.filter((item) => {
+      return (
+        String(item.productName || '').toLowerCase().includes(q) ||
+        String(item.variantName || '').toLowerCase().includes(q) ||
+        String(item.color || '').toLowerCase().includes(q) ||
+        String(item.size || '').toLowerCase().includes(q) ||
+        String(item.barcode || '').toLowerCase().includes(q) ||
+        String(item.productId || '').toLowerCase().includes(q)
+      );
+    });
+  }, [godownAvailableItems, dropdownSearch]);
+
+  // বর্তমানে নির্বাচিত ড্রপডাউন আইটেম
+  const selectedGodownItem = useMemo(() => {
+    if (!selectedItemKey) return null;
+    return godownAvailableItems.find((it) => it.key === selectedItemKey) || null;
+  }, [godownAvailableItems, selectedItemKey]);
+
   // নির্বাচিত পণ্যের ভ্যারিয়েন্ট তালিকা
   const productVariants = useMemo(() => {
     if (!selectedProduct) return [];
@@ -415,20 +521,29 @@ export default function StockTransferModal({
 
   // নির্বাচিত পণ্যের প্রেরক স্থানে উপলব্ধ স্টক
   const availableSourceStock = useMemo(() => {
+    if (selectedGodownItem) {
+      const isFromWarehouse = /warehouse|godown|গোডাউন/i.test(fromLocation);
+      return isFromWarehouse ? Number(selectedGodownItem.godownStock || 0) : Number(selectedGodownItem.shopStock || 0);
+    }
     if (!selectedProduct) return 0;
     const isFromWarehouse = /warehouse|godown|গোডাউন/i.test(fromLocation);
-    if (isFromWarehouse) {
-      return Number(selectedProduct.GodownStock || 0);
+    if (selectedVariantId && productVariants.length > 0) {
+      const v = productVariants.find((vr) => String(vr.VariantID || vr.variantId) === String(selectedVariantId));
+      if (v) {
+        return isFromWarehouse
+          ? Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0))
+          : Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0));
+      }
     }
-    return Number(selectedProduct.StockQuantity || 0);
-  }, [selectedProduct, fromLocation]);
+    return isFromWarehouse ? Number(selectedProduct.GodownStock || 0) : Number(selectedProduct.StockQuantity || 0);
+  }, [selectedGodownItem, selectedProduct, selectedVariantId, productVariants, fromLocation]);
 
   // চালানের মোট পরিমাণ
   const totalChallanQty = challanItems.reduce((sum, itm) => sum + itm.quantity, 0);
 
-  // চালান তালিকা ফিল্টার
+  // চালান তালিকা ফিল্টার ও তারিখ অনুযায়ী সাজানো (Newest Date first)
   const filteredChallans = useMemo(() => {
-    return stockTransfers.filter((t) => {
+    const list = stockTransfers.filter((t) => {
       const q = listSearch.trim().toLowerCase();
       const matchSearch =
         !q ||
@@ -441,6 +556,12 @@ export default function StockTransferModal({
         statusFilter === 'ALL' || String(t.Status || '').toUpperCase() === statusFilter;
 
       return matchSearch && matchStatus;
+    });
+
+    return list.sort((a, b) => {
+      const timeA = new Date(a.TransferDate || a.CreatedAt || 0).getTime();
+      const timeB = new Date(b.TransferDate || b.CreatedAt || 0).getTime();
+      return timeB - timeA;
     });
   }, [stockTransfers, listSearch, statusFilter]);
 
@@ -694,22 +815,52 @@ export default function StockTransferModal({
     setDirectTransferModal(null);
   };
 
-  // পণ্য সিলেক্ট করা
+  // ড্রপডাউন থেকে গোডাউনে থাকা নির্দিষ্ট ভ্যারিয়েন্ট বা পণ্য সিলেক্ট করা
+  const handleSelectItemFromDropdown = (key) => {
+    setSelectedItemKey(key);
+    if (!key) {
+      setSelectedProduct(null);
+      setSelectedVariantId('');
+      setTransferQty(1);
+      return;
+    }
+    const chosen = godownAvailableItems.find((it) => it.key === key);
+    if (chosen) {
+      setSelectedProduct(chosen.parentProduct);
+      setSelectedVariantId(chosen.variantId || '');
+      setTransferQty(1);
+    }
+  };
+
+  // পণ্য সিলেক্ট করা (সার্চ ড্রপডাউন থেকে)
   const handleSelectProduct = (p) => {
     setSelectedProduct(p);
     setProductSearch('');
     const vars = p.Variants || p.variants || [];
     if (Array.isArray(vars) && vars.length > 0) {
-      setSelectedVariantId(vars[0].VariantID || vars[0].variantId || '');
+      // গোডাউন স্টক থাকা প্রথম ভ্যারিয়েন্ট আগে সিলেক্ট করা
+      const firstWithStock = vars.find(v => Number(v.GodownStock || v.godownStock || 0) > 0);
+      const chosenVar = firstWithStock || vars[0];
+      const vId = chosenVar.VariantID || chosenVar.variantId || '';
+      setSelectedVariantId(vId);
+      setSelectedItemKey(`${p.ProductID}:::${vId}`);
     } else {
       setSelectedVariantId('');
+      setSelectedItemKey(`${p.ProductID}:::SIMPLE`);
     }
     setTransferQty(1);
   };
 
   // চালানে আইটেম যোগ
   const handleAddItemToChallan = () => {
-    if (!selectedProduct) return;
+    const targetItem = selectedGodownItem;
+    const targetProduct = selectedProduct || (targetItem ? targetItem.parentProduct : null);
+
+    if (!targetProduct && !targetItem) {
+      alert('অনুগ্রহ করে গোডাউনে থাকা একটি পণ্য বা ভ্যারিয়েন্ট ড্রপডাউন থেকে নির্বাচন করুন।');
+      return;
+    }
+
     const qty = Number(transferQty) || 0;
     if (qty <= 0) {
       alert('সঠিক স্থানান্তর পরিমাণ উল্লেখ করুন।');
@@ -717,19 +868,19 @@ export default function StockTransferModal({
     }
 
     if (qty > availableSourceStock) {
-      alert(`প্রেরক স্থানে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${availableSourceStock} ${selectedProduct.Unit || 'Pcs'} মজুত আছে।`);
+      alert(`প্রেরক স্থানে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${availableSourceStock} ${targetItem?.unit || targetProduct?.Unit || 'Pcs'} মজুত আছে।`);
       return;
     }
 
-    const pid = selectedProduct.ProductID || selectedProduct.id;
-    const pName = selectedProduct.ProductName || selectedProduct.productName;
-    const unit = selectedProduct.Unit || selectedProduct.unit || 'Pcs';
+    const pid = targetProduct?.ProductID || targetItem?.productId;
+    const pName = targetProduct?.ProductName || targetItem?.productName;
+    const unit = targetItem?.unit || targetProduct?.Unit || 'Pcs';
+    const variantId = targetItem?.variantId || selectedVariantId || null;
+    let variantName = targetItem?.variantName || '';
+    let costPrice = targetItem?.costPrice || Number(targetProduct?.CostPrice || 0);
 
-    let variantName = '';
-    let costPrice = Number(selectedProduct.CostPrice || selectedProduct.costPrice || 0);
-
-    if (selectedVariantId && productVariants.length > 0) {
-      const v = productVariants.find((vr) => String(vr.VariantID || vr.variantId) === String(selectedVariantId));
+    if (!variantName && variantId && productVariants.length > 0) {
+      const v = productVariants.find((vr) => String(vr.VariantID || vr.variantId) === String(variantId));
       if (v) {
         const attrs = v.Attributes || v.attributes || {};
         variantName = Object.values(attrs).filter(Boolean).join(' / ') || v.VariantID;
@@ -739,11 +890,15 @@ export default function StockTransferModal({
 
     // ডুপ্লিকেট আইটেম চেক
     const existingIdx = challanItems.findIndex(
-      (item) => item.productId === pid && String(item.variantId || '') === String(selectedVariantId || '')
+      (item) => item.productId === pid && String(item.variantId || '') === String(variantId || '')
     );
 
     if (existingIdx !== -1) {
       const updated = [...challanItems];
+      if (updated[existingIdx].quantity + qty > availableSourceStock) {
+        alert(`মোট যোগ করা পরিমাণ (${updated[existingIdx].quantity + qty}) গোডাউনের মজুত (${availableSourceStock}) অতিক্রম করেছে!`);
+        return;
+      }
       updated[existingIdx].quantity += qty;
       setChallanItems(updated);
     } else {
@@ -752,15 +907,18 @@ export default function StockTransferModal({
         {
           productId: pid,
           productName: pName,
-          variantId: selectedVariantId || null,
+          variantId: variantId,
           variantName: variantName,
           quantity: qty,
           unit: unit,
-          costPrice: costPrice
+          costPrice: costPrice,
+          isThan: targetItem?.isThan || false,
+          yardsPerThan: targetItem?.yardsPerThan || 0
         }
       ]);
     }
 
+    setSelectedItemKey('');
     setSelectedProduct(null);
     setSelectedVariantId('');
     setTransferQty(1);
@@ -785,12 +943,13 @@ export default function StockTransferModal({
     try {
       const transferPayload = {
         challanNo: challanNo.trim() || `CHL-${Date.now().toString().slice(-6)}`,
+        transferDate: transferDate || new Date().toISOString().split('T')[0],
         fromLocation,
         toLocation,
         driverName: `${driverName.trim()} ${driverPhone.trim() ? `(${driverPhone.trim()})` : ''} ${vehicleNo.trim() ? `[${vehicleNo.trim()}]` : ''}`.trim(),
         notes: notes.trim(),
         items: challanItems,
-        status: 'In Transit', // ডিফল্ট স্ট্যাটাস পথে আছে
+        status: 'In Transit', // ডিফল্ট স্ট্যাটাস পথে আছে (কখনও অটো রিসিভ হবে না)
         createdBy: activeUser?.FullName || activeUser?.UserName || 'Admin'
       };
 
@@ -814,6 +973,12 @@ export default function StockTransferModal({
 
   const handleResetChallan = () => {
     setChallanNo(`CHL-${Date.now().toString().slice(-6)}`);
+    setTransferDate(new Date().toISOString().split('T')[0]);
+    setSelectedItemKey('');
+    setDropdownSearch('');
+    setProductSearch('');
+    setSelectedProduct(null);
+    setSelectedVariantId('');
     setChallanItems([]);
     setDriverName('');
     setDriverPhone('');
@@ -822,7 +987,7 @@ export default function StockTransferModal({
     setPrintableChallan(null);
   };
 
-  // চালান রিসিভ ও স্টকে যোগ হ্যান্ডলার
+  // চালান রিসিভ ও স্টকে যোগ হ্যান্ডলার (কখনও অটো রিসিভ হবে না, বাটন প্রেস করতে হবে)
   const handleReceiveChallan = async (challan) => {
     const cNo = challan.ChallanNo || challan.challanNo;
     const confirmMsg = `আপনি কি নিশ্চিত যে চালান #${cNo}-এর সকল পণ্য (${challan.TotalQuantity || challan.totalQuantity} পিস/গজ) বুঝে পেয়েছেন?\n\nএটি স্বয়ংক্রিয়ভাবে আপনার দোকানের স্টকে পণ্য যোগ করবে এবং রিসিভিং খতিয়ানে রেকর্ড করবে।`;
@@ -854,6 +1019,24 @@ export default function StockTransferModal({
       alert(`চালান #${cNo} বাতিল করা হয়েছে এবং গোডাউনে স্টক ফেরত দেওয়া হয়েছে।`);
     } catch (e) {
       alert(`চালান বাতিল করতে সমস্যা হয়েছে: ${e.message}`);
+    }
+  };
+
+  // চালান মুছে ফেলা হ্যান্ডলার (ডাটাবেস ও লোকাল স্টোরেজ থেকে রিমুভ)
+  const handleDeleteChallan = async (challan) => {
+    const cNo = challan.ChallanNo || challan.challanNo;
+    const trfId = challan.TransferID || challan.transferId || cNo;
+    const isTransit = challan.Status === 'In Transit' || challan.Status === 'Pending';
+    const confirmMsg = `আপনি কি নিশ্চিত যে চালান #${cNo} মুছে ফেলতে চান?\n\nএটি ডাটাবেস থেকেও মুছে ফেলা হবে।${isTransit ? '\n(যেহেতু চালানটি এখনও দোকানে রিসিভ করা হয়নি, তাই পণ্যের স্টক গোডাউনে স্বয়ংক্রিয়ভাবে ফেরত যুক্ত হবে)' : ''}`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      if (onDeleteStockTransfer) {
+        await onDeleteStockTransfer({ transferId: trfId, challanNo: cNo });
+      }
+    } catch (e) {
+      alert(`চালান মুছতে সমস্যা হয়েছে: ${e.message}`);
     }
   };
 
@@ -2289,27 +2472,29 @@ export default function StockTransferModal({
                     <button
                       type="button"
                       onClick={() => setTransferSubTab('new')}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                         transferSubTab === 'new'
                           ? 'bg-indigo-600 text-white shadow-xs'
                           : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                       }`}
                     >
-                      নতুন চালান তৈরি
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>গোডাউন থেকে চালান তৈরি</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setTransferSubTab('list')}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                         transferSubTab === 'list'
                           ? 'bg-indigo-600 text-white shadow-xs'
                           : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                       }`}
                     >
-                      <span>চালান তালিকা ও ট্র্যাকিং</span>
-                      {stockTransfers.length > 0 && (
-                        <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-slate-200 text-slate-800 font-mono">
-                          {stockTransfers.length}
+                      <Truck className="w-3.5 h-3.5" />
+                      <span>দোকানে আসা চালান ও ট্র্যাকিং</span>
+                      {stockTransfers.filter(t => t.Status === 'In Transit' || t.Status === 'Pending').length > 0 && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-mono font-bold animate-pulse shadow-xs">
+                          {stockTransfers.filter(t => t.Status === 'In Transit' || t.Status === 'Pending').length}টি পথে
                         </span>
                       )}
                     </button>
@@ -2322,7 +2507,7 @@ export default function StockTransferModal({
                     
                     {/* চালান ফরম */}
                     <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                         <div>
                           <label className="text-xs font-bold text-slate-700 block mb-1">চালান নম্বর</label>
                           <input
@@ -2330,6 +2515,16 @@ export default function StockTransferModal({
                             value={challanNo}
                             onChange={(e) => setChallanNo(e.target.value)}
                             className="w-full px-3 py-2 text-xs font-mono font-bold border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-slate-700 block mb-1">চালানের তারিখ</label>
+                          <input
+                            type="date"
+                            value={transferDate}
+                            onChange={(e) => setTransferDate(e.target.value)}
+                            className="w-full px-3 py-2 text-xs font-bold border border-slate-300 rounded-xl bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         </div>
 
@@ -2360,85 +2555,106 @@ export default function StockTransferModal({
 
                       {/* আইটেম পিকার বক্স */}
                       <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-                        <span className="text-xs font-bold text-slate-800 block">চালানে পণ্য যোগ করুন</span>
-
-                        <div className="relative">
-                          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                          <input
-                            type="text"
-                            value={productSearch}
-                            onChange={(e) => setProductSearch(e.target.value)}
-                            placeholder="পণ্য অনুসন্ধান করুন..."
-                            className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                          />
-
-                          {filteredChallanSuggestions.length > 0 && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 z-20 max-h-48 overflow-y-auto divide-y divide-slate-100">
-                              {filteredChallanSuggestions.map((p) => (
-                                <button
-                                  key={p.ProductID}
-                                  type="button"
-                                  onClick={() => handleSelectProduct(p)}
-                                  className="w-full text-left p-2.5 hover:bg-indigo-50 transition-colors flex items-center justify-between text-xs"
-                                >
-                                  <div>
-                                    <strong className="text-slate-900 block">{p.ProductName}</strong>
-                                    <span className="text-[10px] text-slate-400 font-mono">
-                                      গোডাউন: {p.GodownStock || 0} | দোকান: {p.StockQuantity || 0} {p.Unit || 'Pcs'}
-                                    </span>
-                                  </div>
-                                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">বাছাই</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+                            <Package className="w-3.5 h-3.5 text-indigo-600" />
+                            <span>চালানে পণ্য ও ভ্যারিয়েন্ট যোগ করুন</span>
+                          </span>
+                          <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                            গোডাউনে মোট {godownAvailableItems.filter((i) => i.godownStock > 0).length}টি আইটেম মজুত আছে
+                          </span>
                         </div>
 
-                        {selectedProduct && (
-                          <div className="p-3 bg-white rounded-xl border border-indigo-200 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-slate-900 text-xs">{selectedProduct.ProductName}</span>
-                              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">
-                                প্রেরক স্থানে মজুত: {availableSourceStock} {selectedProduct.Unit || 'Pcs'}
-                              </span>
+                        {/* ড্রপডাউন সার্চ ফিল্টার (ঐচ্ছিক দ্রুত ফিল্টার) */}
+                        <div className="relative">
+                          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input
+                            type="text"
+                            value={dropdownSearch}
+                            onChange={(e) => setDropdownSearch(e.target.value)}
+                            placeholder="ড্রপডাউনে পণ্য বা রঙের নাম দিয়ে দ্রুত খুঁজুন..."
+                            className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* মূল ডাটাবেস ড্রপডাউন সিলেক্টর */}
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                            গোডাউনে মজুদ থাকা ভ্যারিয়েন্ট তালিকা থেকে নির্বাচন করুন:
+                          </label>
+                          <select
+                            value={selectedItemKey}
+                            onChange={(e) => handleSelectItemFromDropdown(e.target.value)}
+                            className="w-full px-3 py-2 text-xs border-2 border-indigo-300 rounded-xl bg-white font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                          >
+                            <option value="">-- গোডাউনে মজুত থাকা ভ্যারিয়েন্ট বা পণ্য বেছে নিন --</option>
+                            {filteredDropdownItems.map((item) => {
+                              const isOut = item.godownStock <= 0;
+                              return (
+                                <option
+                                  key={item.key}
+                                  value={item.key}
+                                  disabled={isOut}
+                                  className={isOut ? 'text-slate-400 bg-slate-100' : 'text-slate-900 font-semibold'}
+                                >
+                                  {item.productName} {item.variantName ? `➔ [ভ্যারিয়েন্ট: ${item.variantName}]` : '➔ [সাধারণ পণ্য]'} — 🏭 গোডাউন মজুত: {item.godownStock} {item.unit} {isOut ? '(মজুত শূন্য)' : ''}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
+
+                        {/* নির্বাচিত পণ্যের প্রিভিউ ও পরিমাণ নির্ধারণ */}
+                        {selectedGodownItem && (
+                          <div className="p-3 bg-white rounded-xl border border-indigo-200 space-y-2 shadow-xs">
+                            <div className="flex flex-wrap items-center justify-between gap-1">
+                              <div>
+                                <span className="font-black text-slate-900 text-xs block">
+                                  {selectedGodownItem.productName}
+                                </span>
+                                {selectedGodownItem.variantName && (
+                                  <span className="text-[11px] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-block mt-0.5">
+                                    ভ্যারিয়েন্ট: {selectedGodownItem.variantName}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-200 inline-block font-mono">
+                                  🏭 গোডাউনে মজুত: {selectedGodownItem.godownStock} {selectedGodownItem.unit}
+                                </span>
+                                {selectedGodownItem.isThan && selectedGodownItem.yardsPerThan > 0 && (
+                                  <span className="text-[10px] text-indigo-500 block font-semibold mt-0.5">
+                                    ({selectedGodownItem.godownStock * selectedGodownItem.yardsPerThan} গজ)
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
-                            {productVariants.length > 0 && (
-                              <div>
-                                <label className="text-[10px] font-bold text-slate-500 block mb-1">ভ্যারিয়েন্ট নির্বাচন</label>
-                                <select
-                                  value={selectedVariantId}
-                                  onChange={(e) => setSelectedVariantId(e.target.value)}
-                                  className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg bg-white"
-                                >
-                                  {productVariants.map((v) => (
-                                    <option key={v.VariantID} value={v.VariantID}>
-                                      {Object.values(v.Attributes || {}).filter(Boolean).join(' / ') || v.VariantID} (মজুত: {v.StockQuantity || 0})
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            )}
-
-                            <div className="flex items-center space-x-2 pt-1">
+                            <div className="flex items-center space-x-2 pt-1 border-t border-slate-100">
                               <div className="flex-1">
-                                <label className="text-[10px] font-bold text-slate-500 block mb-1">স্থানান্তর পরিমাণ</label>
+                                <label className="text-[10px] font-bold text-slate-500 block mb-1">
+                                  চালানের পরিমাণ ({selectedGodownItem.unit}) — সর্বোচ্চ: {selectedGodownItem.godownStock}
+                                </label>
                                 <input
                                   type="number"
                                   min="1"
-                                  max={availableSourceStock}
+                                  max={selectedGodownItem.godownStock}
                                   value={transferQty}
-                                  onChange={(e) => setTransferQty(Math.max(1, Number(e.target.value) || 1))}
-                                  className="w-full px-3 py-1.5 text-xs font-bold border border-slate-300 rounded-lg text-slate-900"
+                                  onChange={(e) => {
+                                    const val = Number(e.target.value) || 1;
+                                    setTransferQty(Math.max(1, Math.min(selectedGodownItem.godownStock || 1, val)));
+                                  }}
+                                  className="w-full px-3 py-1.5 text-xs font-mono font-bold border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-500"
                                 />
                               </div>
                               <button
                                 type="button"
+                                disabled={selectedGodownItem.godownStock <= 0}
                                 onClick={handleAddItemToChallan}
-                                className="mt-4 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg flex items-center space-x-1 shadow-xs cursor-pointer"
+                                className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg flex items-center space-x-1.5 shadow-xs cursor-pointer"
                               >
                                 <Plus className="w-3.5 h-3.5" />
-                                <span>যোগ করুন</span>
+                                <span>চালানে যোগ করুন</span>
                               </button>
                             </div>
                           </div>
@@ -2594,46 +2810,121 @@ export default function StockTransferModal({
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {filteredChallans.map((ch) => {
-                          const isInTransit = ch.Status === 'In Transit';
+                          const isInTransit = ch.Status === 'In Transit' || ch.Status === 'Pending';
                           const isReceived = ch.Status === 'Received';
                           const isCancelled = ch.Status === 'Cancelled';
-                          const items = Array.isArray(ch.Items) ? ch.Items : [];
+
+                          const rawItems = ch.Items || ch.items || ch.ItemsJSON;
+                          let items = [];
+                          if (Array.isArray(rawItems)) {
+                            items = rawItems;
+                          } else if (typeof rawItems === 'string') {
+                            try { items = JSON.parse(rawItems); } catch { items = []; }
+                          }
+
+                          const formattedDate = ch.TransferDate 
+                            ? new Date(ch.TransferDate).toLocaleDateString('bn-BD', { year: 'numeric', month: 'short', day: 'numeric' })
+                            : (ch.CreatedAt ? new Date(ch.CreatedAt).toLocaleDateString('bn-BD', { year: 'numeric', month: 'short', day: 'numeric' }) : 'তারিখহীন');
 
                           return (
-                            <div key={ch.TransferID || ch.ChallanNo} className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3">
-                              <div className="flex items-center justify-between">
+                            <div key={ch.TransferID || ch.ChallanNo} className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3 hover:shadow-xs transition-shadow">
+                              {/* কার্ড হেডার: চালান নং, তারিখ, স্ট্যাটাস ও রিমুভ আইকন */}
+                              <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
                                 <div>
-                                  <span className="font-mono font-black text-sm text-indigo-700">#{ch.ChallanNo}</span>
-                                  <span className="text-[10px] text-slate-400 block font-medium">
-                                    {new Date(ch.TransferDate || ch.CreatedAt).toLocaleString('bn-BD')}
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-mono font-black text-sm text-indigo-700">#{ch.ChallanNo}</span>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                                      isInTransit ? 'bg-amber-100 text-amber-800 border border-amber-200 animate-pulse' :
+                                      isReceived ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                                      'bg-slate-100 text-slate-600'
+                                    }`}>
+                                      {isInTransit ? '🚚 পথে আছে (অপেক্ষমাণ)' : isReceived ? '✅ দোকানে রিসিভড' : '❌ বাতিল'}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">
+                                    📅 চালানের তারিখ: {formattedDate}
                                   </span>
                                 </div>
-                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
-                                  isInTransit ? 'bg-amber-100 text-amber-800 border border-amber-200 animate-pulse' :
-                                  isReceived ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                                  'bg-slate-100 text-slate-600'
-                                }`}>
-                                  {isInTransit ? 'পথে আছে' : isReceived ? 'দোকানে রিসিভড' : 'বাতিল'}
-                                </span>
+
+                                <div className="flex items-center space-x-1 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteChallan(ch)}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                                    title="চালানটি ডাটাবেস থেকে মুছে ফেলুন (Delete Challan)"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
                               </div>
 
+                              {/* রুট ও বাহক বিবরণ */}
                               <div className="p-2.5 bg-slate-50 rounded-xl text-xs space-y-1">
                                 <div className="flex items-center justify-between">
                                   <span className="text-slate-500">প্রেরক ➔ প্রাপক:</span>
                                   <strong className="text-slate-800">{ch.FromLocation} ➔ {ch.ToLocation}</strong>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-slate-500">মোট আইটেম ও পরিমাণ:</span>
-                                  <span className="font-mono font-bold text-slate-900">{items.length} আইটেম ({ch.TotalQuantity} একক)</span>
-                                </div>
                                 {ch.DriverName && (
                                   <div className="text-[11px] text-slate-500 truncate">
-                                    বাহক: {ch.DriverName}
+                                    বাহক: <span className="font-semibold text-slate-700">{ch.DriverName}</span>
+                                  </div>
+                                )}
+                                {ch.Notes && (
+                                  <div className="text-[10.5px] text-slate-500 italic truncate">
+                                    নোট: {ch.Notes}
                                   </div>
                                 )}
                               </div>
 
-                              <div className="flex items-center justify-between pt-1">
+                              {/* কী কী প্রোডাক্ট ও ভ্যারিয়েন্ট দোকানে পাঠানো হয়েছে তার বিস্তারিত তালিকা */}
+                              <div className="bg-slate-50/90 rounded-xl border border-slate-200 overflow-hidden text-xs">
+                                <div className="px-3 py-1.5 bg-slate-100/90 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-700">
+                                  <span className="flex items-center space-x-1">
+                                    <Package className="w-3 h-3 text-indigo-600" />
+                                    <span>চালানের পণ্য ও ভ্যারিয়েন্ট বিস্তারিত ({items.length}টি)</span>
+                                  </span>
+                                  <span className="font-mono text-indigo-700 font-black">
+                                    মোট: {ch.TotalQuantity} {items[0]?.unit || 'একক'}
+                                  </span>
+                                </div>
+                                <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                                  {items.length === 0 ? (
+                                    <div className="p-3 text-center text-slate-400 text-[11px]">
+                                      কোনো পণ্যের বিবরণ পাওয়া যায়নি।
+                                    </div>
+                                  ) : (
+                                    items.map((itm, itmIdx) => (
+                                      <div key={itmIdx} className="px-3 py-2 flex items-center justify-between hover:bg-white transition-colors">
+                                        <div className="flex-1 pr-2">
+                                          <strong className="text-slate-900 block font-bold text-xs">
+                                            {itm.productName || itm.ProductName}
+                                          </strong>
+                                          <div className="flex items-center space-x-1 mt-0.5 flex-wrap">
+                                            {itm.variantName && (
+                                              <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                                                ভ্যারিয়েন্ট: {itm.variantName}
+                                              </span>
+                                            )}
+                                            {itm.variantId && !itm.variantName && (
+                                              <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-100 text-slate-600">
+                                                ID: {itm.variantId}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                          <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-black bg-indigo-50 text-indigo-800 border border-indigo-200">
+                                            {itm.quantity || itm.Quantity} {itm.unit || itm.Unit || 'Pcs'}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* কার্ড ফুটার বাটনসমূহ */}
+                              <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                                 <button
                                   type="button"
                                   onClick={() => setPrintableChallan(ch)}
@@ -2648,7 +2939,8 @@ export default function StockTransferModal({
                                     <button
                                       type="button"
                                       onClick={() => handleReceiveChallan(ch)}
-                                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-xs cursor-pointer"
+                                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-xs cursor-pointer transition-all"
+                                      title="দোকানে পণ্য বুঝে নিন এবং দোকানের স্টকে যুক্ত করুন"
                                     >
                                       <CheckCircle2 className="w-3.5 h-3.5" />
                                       <span>দোকানে রিসিভ করুন</span>
@@ -2656,8 +2948,8 @@ export default function StockTransferModal({
                                     <button
                                       type="button"
                                       onClick={() => handleCancelChallan(ch)}
-                                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
-                                      title="চালান বাতিল"
+                                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-all"
+                                      title="চালান বাতিল (গোডাউনে স্টক ফেরত)"
                                     >
                                       <X className="w-4 h-4" />
                                     </button>

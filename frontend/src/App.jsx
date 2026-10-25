@@ -148,6 +148,7 @@ import {
   saveLocalStockTransfers,
   saveStockTransferLocally,
   updateStockTransferStatusLocally,
+  deleteStockTransferLocally,
   saveCampaignLocally,
   getLocalTailoringOrders,
   saveLocalTailoringOrders,
@@ -221,6 +222,7 @@ import {
   postRedeemStoreCredit,
   postCreateStockTransfer,
   postUpdateStockTransferStatus,
+  postDeleteStockTransfer,
   postSendBulkTargetedSms
 } from './services/api';
 
@@ -3571,6 +3573,149 @@ export default function App() {
     }
   };
 
+  const handleDeleteStockTransfer = async ({ transferId, challanNo }) => {
+    try {
+      const targetId = transferId || challanNo;
+      const targetChallan = stockTransfers.find((t) => 
+        String(t.TransferID).trim() === String(targetId).trim() ||
+        String(t.ChallanNo).trim() === String(targetId).trim()
+      );
+
+      // যদি চালানটি রিসিভ না হয়ে থাকে (In Transit বা Pending), তবে গোডাউনে স্টক ফিরিয়ে দেওয়া হবে
+      if (targetChallan && (targetChallan.Status === 'In Transit' || targetChallan.Status === 'Pending')) {
+        let updatedProducts = [...products];
+        const rawItems = targetChallan.Items || targetChallan.items || [];
+        const transferItems = Array.isArray(rawItems) ? rawItems : (typeof rawItems === 'string' ? JSON.parse(rawItems || '[]') : []);
+        let hasRestored = false;
+        const modifiedProductIds = new Set();
+
+        transferItems.forEach((itm) => {
+          const qty = Number(itm.quantity || itm.Quantity || 0);
+          const pid = String(itm.productId || itm.ProductID || '').trim();
+          const variantId = itm.variantId || itm.VariantID || null;
+
+          const prodIdx = updatedProducts.findIndex(
+            (p) => String(p.ProductID || '').trim() === pid || String(p.Barcode || '').trim() === pid
+          );
+
+          if (prodIdx !== -1) {
+            hasRestored = true;
+            modifiedProductIds.add(updatedProducts[prodIdx].ProductID);
+            const target = { ...updatedProducts[prodIdx] };
+            const prevGodown = Number(target.GodownStock || 0);
+            const newGodown = prevGodown + qty;
+            target.GodownStock = newGodown;
+            target.godownStock = newGodown;
+            target.TotalStock = (Number(target.StockQuantity) || 0) + newGodown;
+
+            if (variantId && Array.isArray(target.Variants)) {
+              const vIdx = target.Variants.findIndex(
+                (v) => String(v.VariantID || '').trim() === String(variantId).trim()
+              );
+              if (vIdx !== -1) {
+                const uVars = [...target.Variants];
+                const prevVG = Number(uVars[vIdx].GodownStock !== undefined ? uVars[vIdx].GodownStock : (uVars[vIdx].godownStock || 0)) || 0;
+                uVars[vIdx] = {
+                  ...uVars[vIdx],
+                  GodownStock: prevVG + qty,
+                  godownStock: prevVG + qty
+                };
+                target.Variants = uVars;
+                target.VariantsJSON = JSON.stringify(uVars);
+              }
+            }
+
+            recordStockMovementLocally({
+              location: 'Godown',
+              type: 'RESTORE_ON_DELETE',
+              reasonBangla: `চালান #${targetChallan.ChallanNo || targetId} মুছে ফেলায় গোডাউনে স্টক ফেরত`,
+              productId: target.ProductID,
+              productName: target.ProductName,
+              barcode: target.Barcode,
+              unit: target.Unit || 'Pcs',
+              quantity: qty,
+              previousStock: prevGodown,
+              remainingStock: newGodown,
+              referenceNo: targetChallan.ChallanNo || targetId,
+              operatorName: activeUser?.FullName || 'Admin',
+              notes: 'চালান মুছে ফেলা হয়েছে'
+            });
+
+            updatedProducts[prodIdx] = target;
+          }
+        });
+
+        if (hasRestored) {
+          setProducts(updatedProducts);
+          saveLocalProducts(updatedProducts);
+          setStockMovements(getLocalStockMovements());
+
+          // গুগল শিটে রিস্টোর হওয়া স্টক সিঙ্ক
+          if (settings.apiUrl && settings.apiUrl.trim()) {
+            modifiedProductIds.forEach((pid) => {
+              const prod = updatedProducts.find((p) => p.ProductID === pid);
+              if (prod) {
+                const isThan = Boolean(prod.TotalThan || prod.YardsPerThan || /than|থান/i.test(prod.Unit || ''));
+                const yardsPerThan = Number(prod.YardsPerThan) || 0;
+                const totalStock = (Number(prod.GodownStock) || 0) + (Number(prod.StockQuantity) || 0);
+
+                postUpdateProduct(settings.apiUrl, {
+                  productId: prod.ProductID,
+                  productName: prod.ProductName,
+                  barcode: prod.Barcode,
+                  category: prod.Category,
+                  costPrice: prod.CostPrice,
+                  sellingPrice: prod.SellingPrice,
+                  godownStock: Number(prod.GodownStock) || 0,
+                  stockQuantity: Number(prod.StockQuantity) || 0,
+                  totalStock: totalStock,
+                  thanCount: isThan ? totalStock : prod.ThanCount,
+                  totalYards: isThan ? (totalStock * yardsPerThan) : prod.TotalYards,
+                  hasVariants: Array.isArray(prod.Variants) && prod.Variants.length > 0,
+                  variants: prod.Variants || [],
+                  variantsJSON: JSON.stringify(prod.Variants || [])
+                }).catch((e) => console.warn('Product sync after transfer delete failed:', e));
+              }
+            });
+          }
+        }
+      }
+
+      // লোকাল স্টোরেজ থেকে চালান মুছে ফেলা
+      const { removedRecord, transfers } = deleteStockTransferLocally(targetId);
+      setStockTransfers(transfers);
+
+      // গুগল শিট ডাটাবেস থেকে মুছে ফেলা
+      if (settings.apiUrl && settings.apiUrl.trim()) {
+        postDeleteStockTransfer(settings.apiUrl, {
+          transferId: targetId,
+          deletedBy: activeUser?.FullName || 'Admin'
+        }).catch((e) => console.warn('Delete transfer backend sync failed:', e));
+      }
+
+      // অডিট লগ
+      const logEntry = logAuditEventLocally({
+        userId: activeUser?.UserID || 'ADMIN',
+        userName: activeUser?.FullName || 'Admin',
+        userRole: activeUser?.Role || 'Admin',
+        actionType: 'TRANSFER_DELETE',
+        module: 'StockTransfers',
+        description: `স্টক স্থানান্তর চালান #${targetChallan?.ChallanNo || targetId} মুছে ফেলা হয়েছে`,
+        details: { targetId }
+      });
+      setAuditLogs(getLocalAuditLogs());
+      if (settings.apiUrl) {
+        postLogAuditEvent(settings.apiUrl, logEntry).catch(() => {});
+      }
+
+      showToast(`চালান #${targetChallan?.ChallanNo || targetId} সফলভাবে মুছে ফেলা হয়েছে!`, 'success');
+      return { success: true, transfers };
+    } catch (err) {
+      showToast(`চালান মুছতে সমস্যা হয়েছে: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
   // গোডাউন থেকে দোকানে সরাসরি তাৎক্ষণিক পণ্য আনা (ইন-ডেপথ ও ডাটাবেস অটো-সেভ)
   const handleDirectGodownToShopTransfer = async ({
     product,
@@ -4619,6 +4764,7 @@ export default function App() {
               storeSettings={settings}
               onSaveStockTransfer={handleSaveStockTransfer}
               onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
+              onDeleteStockTransfer={handleDeleteStockTransfer}
               onAdjustLocationStock={handleAdjustLocationStock}
               onDeleteProduct={handleDeleteProduct}
               onUpdateProductVariants={handleUpdateProductVariants}
@@ -5378,6 +5524,7 @@ export default function App() {
         storeSettings={settings}
         onSaveStockTransfer={handleSaveStockTransfer}
         onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
+        onDeleteStockTransfer={handleDeleteStockTransfer}
         onAdjustLocationStock={handleAdjustLocationStock}
         onDeleteProduct={handleDeleteProduct}
         onUpdateProductVariants={handleUpdateProductVariants}

@@ -1992,6 +1992,43 @@ export async function postUpdateStockTransferStatus(apiUrl, { transferId, status
 }
 
 /**
+ * স্টক ট্রান্সফার চালান ডাটাবেস থেকে মুছে ফেলা (action: 'deleteStockTransfer')
+ */
+export async function postDeleteStockTransfer(apiUrl, { transferId, deletedBy = 'Admin' }) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: চালান লোকাল স্টোরেজ থেকে মুছে ফেলা হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'deleteStockTransfer',
+    transferId,
+    deletedBy,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `চালান মুছে ফেলা ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
  * ============================================================================
  * Phase 8: টার্গেটেড বাল্ক এসএমএস রি-অ্যাক্টিভেশন ক্যাম্পেইন API (action: 'sendBulkTargetedSms')
  * ============================================================================

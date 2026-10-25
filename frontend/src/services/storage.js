@@ -3170,6 +3170,23 @@ export function updateStockTransferStatusLocally(transferId, newStatus, received
   return { record: null, transfers };
 }
 
+export function deleteStockTransferLocally(transferId) {
+  if (!transferId) return { removedRecord: null, transfers: getLocalStockTransfers() };
+  const transfers = getLocalStockTransfers();
+  const idx = transfers.findIndex(t => 
+    String(t.TransferID).trim() === String(transferId).trim() ||
+    String(t.ChallanNo).trim() === String(transferId).trim()
+  );
+
+  if (idx !== -1) {
+    const [removedRecord] = transfers.splice(idx, 1);
+    saveLocalStockTransfers(transfers);
+    return { removedRecord, transfers };
+  }
+
+  return { removedRecord: null, transfers };
+}
+
 /**
  * ============================================================================
  * মাল্টি-লোকেশন ইনভেন্টরি ও স্টক মুভমেন্ট খতিয়ান (Stock Movements & Outflows)
