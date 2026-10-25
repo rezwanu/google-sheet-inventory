@@ -3177,6 +3177,9 @@ function doGet(e) {
       // ভারী স্কিমা চেক শুধুমাত্র সেটআপ বা ম্যানুয়াল রিকোয়েস্টে চলবে (প্রতিটি রিড কলে নয়)
       if (e && e.parameter && e.parameter.forceSchema === 'true') {
         ensureDatabaseSchema(spreadsheet);
+      } else {
+        // Variants শিট না থাকলে স্বয়ংক্রিয়ভাবে তৈরি ও ডিফল্ট ডাটা নিশ্চিত করা
+        ensureVariantsSheet(spreadsheet);
       }
 
       const settings = getSheetRowsAsObjects(SHEETS.SETTINGS);
@@ -3271,9 +3274,23 @@ function doGet(e) {
 
     // ১.১.১ শুধুমাত্র ভ্যারিয়েন্ট (Variants) তালিকা আনা
     if (action === 'getVariants') {
+      const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+      ensureVariantsSheet(spreadsheet);
       const variants = getSheetRowsAsObjects(SHEETS.VARIANTS);
       return createJsonResponse({
         success: true,
+        data: variants
+      });
+    }
+
+    // ১.১.২ Variants শিট তাৎক্ষণিক তৈরি ও যাচাই
+    if (action === 'ensureVariants' || action === 'createVariantsTab') {
+      const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+      ensureVariantsSheet(spreadsheet);
+      const variants = getSheetRowsAsObjects(SHEETS.VARIANTS);
+      return createJsonResponse({
+        success: true,
+        message: 'Variants শিট সফলভাবে তৈরি ও আপডেট হয়েছে।',
         data: variants
       });
     }

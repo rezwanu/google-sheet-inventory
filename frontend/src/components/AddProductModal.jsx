@@ -201,7 +201,9 @@ export default function AddProductModal({
       MinSellingPrice: baseMinSell,
       SellingPrice: baseSell,
       GodownStock: defaultQty,
-      StockQuantity: 0
+      godownStock: defaultQty,
+      StockQuantity: 0,
+      stockQuantity: 0
     };
 
     const updated = [...variants, newVar];
@@ -1734,175 +1736,41 @@ export default function AddProductModal({
                       </div>
                     </div>
 
-                    {/* কালার ভিত্তিক থান ও গজ স্টক বণ্টন (User Request) */}
-                    <div className="bg-white/95 rounded-xl p-3.5 border border-amber-200/90 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1.5">
-                          <Palette className="w-4 h-4 text-amber-700" />
-                          <span className="text-xs font-black text-amber-950">কালার ভিত্তিক থান স্টক এন্ট্রি (Color-wise Thans)</span>
-                        </div>
-                        <span className="text-[10px] text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full font-bold border border-amber-200">
-                          {variants.length} টি কালার ভ্যারিয়েন্ট
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-600">
-                        কাপড়ের বিভিন্ন কালার অনুযায়ী থান সংখ্যা দিন। প্রতিটি কালারের থান সংখ্যা স্বয়ংক্রিয়ভাবে মোট গোডাউন থান ও গজে যোগ হবে।
-                      </p>
-
-                      {/* দ্রুত কালার এন্ট্রি ইনপুট বার */}
-                      <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-                        <input
-                          type="text"
-                          placeholder="কালার / রঙের নাম (যেমন: লাল, নেভি ব্লু)"
-                          value={quickColorName}
-                          onChange={(e) => setQuickColorName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddQuickColor();
-                            }
-                          }}
-                          className="flex-1 min-w-[140px] px-3 py-1.5 bg-slate-50 border border-amber-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                        />
-                        <div className="flex items-center space-x-1 shrink-0">
-                          <input
-                            type="number"
-                            min="0.5"
-                            step="any"
-                            placeholder="থান সংখ্যা"
-                            value={quickColorThans}
-                            onChange={(e) => setQuickColorThans(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleAddQuickColor();
-                              }
-                            }}
-                            className="w-20 px-2.5 py-1.5 bg-slate-50 border border-amber-200 rounded-lg text-xs font-black text-amber-950 text-center focus:outline-none focus:ring-1 focus:ring-amber-500"
-                          />
-                          <span className="text-[11px] font-bold text-amber-900">থান</span>
+                    {/* কালার ভিত্তিক থান স্টক এন্ট্রি এর পরিবর্তে ভ্যারিয়েন্ট ম্যানেজার সক্রিয় করার কল-টু-অ্যাকশন */}
+                    {productType !== 'variable' ? (
+                      <div className="bg-white/95 rounded-xl p-3.5 border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                        <div className="flex items-center space-x-2">
+                          <div className="p-1.5 bg-indigo-50 rounded-lg text-indigo-700">
+                            <Layers className="w-4 h-4 text-indigo-600" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-slate-800">কালার বা সাইজ অনুযায়ী আলাদা থান স্টক রাখতে চান?</span>
+                            <p className="text-[10px] text-slate-500">ভ্যারিয়েন্ট ম্যানেজার চালু করে রঙ/সাইজ ভিত্তিক থান ও গজের স্টক স্বয়ংক্রিয়ভাবে হিসাব করুন।</p>
+                          </div>
                         </div>
                         <button
                           type="button"
-                          onClick={() => handleAddQuickColor()}
-                          className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-colors shadow-xs flex items-center space-x-1 cursor-pointer shrink-0"
+                          onClick={() => {
+                            setProductType('variable');
+                            setSelectedAttributeType('Color');
+                          }}
+                          className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer shrink-0"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          <span>+ কালার যোগ</span>
+                          <span>ভ্যারিয়েন্ট ম্যানেজার চালু করুন</span>
                         </button>
                       </div>
-
-                      {/* দ্রুত নির্বাচন চিপস */}
-                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                        <span className="text-[10px] font-bold text-amber-800 shrink-0">ডাটাবেসের কালার:</span>
-                        {(allColorOptions.length > 0 ? allColorOptions.map(c => c.Name) : ['লাল', 'নীল', 'কালো', 'সাদা', 'সবুজ', 'হলুদ', 'গোলাপি', 'মেরুন', 'নেভি ব্লু', 'অফ-হোয়াইট', 'ছাই', 'বেগুনি']).map((c) => (
-                          <button
-                            key={c}
-                            type="button"
-                            onClick={() => handleAddQuickColor(c, quickColorThans || 1)}
-                            className="px-2 py-0.5 text-[10px] font-semibold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-md transition-colors cursor-pointer"
-                          >
-                            + {c}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* কালার ভিত্তিক স্টকের তালিকা টেবিল */}
-                      {variants.length > 0 && (
-                        <div className="mt-2 border border-amber-200 rounded-xl overflow-hidden bg-white shadow-2xs">
-                          <table className="w-full text-left text-xs">
-                            <thead className="bg-amber-100/60 border-b border-amber-200 text-amber-950 font-bold">
-                              <tr>
-                                <th className="p-2 pl-3">রঙ / কালার</th>
-                                <th className="p-2 w-32 text-center">থান সংখ্যা</th>
-                                <th className="p-2 w-28 text-center">গজ হিসাব</th>
-                                <th className="p-2 pr-3 w-14 text-center">মুছুন</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-amber-100 font-medium">
-                              {variants.map((v, idx) => {
-                                const colorTitle = v.Attributes?.Color || v.Attributes?.Option || Object.values(v.Attributes || {})[0] || v.VariantID;
-                                const thans = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
-                                const calculatedGoj = thans * (Number(formData.yardsPerThan) || 0);
-                                return (
-                                  <tr key={v.VariantID || idx} className="hover:bg-amber-50/40">
-                                    <td className="p-2 pl-3">
-                                      <div className="flex items-center space-x-1.5">
-                                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
-                                        <span className="font-bold text-slate-900">{colorTitle}</span>
-                                      </div>
-                                    </td>
-                                    <td className="p-2 text-center">
-                                      <div className="flex items-center justify-center space-x-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleUpdateVariantStock(idx, Math.max(0, thans - 1))}
-                                          className="w-5 h-5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-black flex items-center justify-center cursor-pointer"
-                                          title="১ থান কমান"
-                                        >
-                                          -
-                                        </button>
-                                        <input
-                                          type="number"
-                                          min="0"
-                                          step="any"
-                                          value={v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity}
-                                          onChange={(e) => handleUpdateVariantStock(idx, e.target.value)}
-                                          className="w-14 px-1 py-0.5 bg-slate-50 border border-slate-200 rounded text-center text-xs font-black text-amber-950"
-                                        />
-                                        <button
-                                          type="button"
-                                          onClick={() => handleUpdateVariantStock(idx, thans + 1)}
-                                          className="w-5 h-5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-black flex items-center justify-center cursor-pointer"
-                                          title="১ থান বাড়ান"
-                                        >
-                                          +
-                                        </button>
-                                        <span className="text-[10px] text-slate-500 font-medium">থান</span>
-                                      </div>
-                                    </td>
-                                    <td className="p-2 text-center">
-                                      <span className="font-black text-amber-950 text-xs">
-                                        {calculatedGoj} গজ
-                                      </span>
-                                    </td>
-                                    <td className="p-2 pr-3 text-center">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRemoveVariant(idx)}
-                                        className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
-                                        title="এই কালার বাদ দিন"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                            <tfoot className="bg-amber-100/70 border-t border-amber-200 text-amber-950 font-black">
-                              <tr>
-                                <td className="p-2 pl-3">
-                                  মোট: {variants.length} টি কালার
-                                </td>
-                                <td className="p-2 text-center text-amber-900">
-                                  {variants.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0)} থান (গোডাউন)
-                                </td>
-                                <td className="p-2 text-center text-amber-950">
-                                  {variants.reduce((sum, v) => sum + (Number(v.StockQuantity) || 0), 0) * (Number(formData.yardsPerThan) || 0)} গজ
-                                </td>
-                                <td className="p-2 pr-3 text-center"></td>
-                              </tr>
-                            </tfoot>
-                          </table>
+                    ) : (
+                      <div className="p-3 bg-amber-100/70 rounded-xl border border-amber-200/90 flex items-center justify-between">
+                        <div className="flex items-center space-x-2 text-amber-950 font-bold text-xs">
+                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span>ভ্যারিয়েন্ট ম্যানেজার সক্রিয় রয়েছে: নিচের ভ্যারিয়েন্ট ম্যানেজার থেকে প্রতিটি রঙ বা সাইজের আলাদা থান ও গজ নির্ধারণ করুন</span>
                         </div>
-                      )}
-                    </div>
-
-                    <div className="p-2.5 bg-white/80 rounded-xl border border-amber-200/60 text-[11px] text-amber-900 flex items-start space-x-1.5">
-                      <span className="font-bold text-amber-700 shrink-0">💡 নিয়ম:</span>
-                      <span>নতুন কাপড় যোগ করার সাথে সাথে সরাসরি গোডাউন স্টকে জমা হবে এবং অনলাইন কাস্টমারদের জন্য "মজুদ আছে" দেখাবে। দোকানে বিক্রির জন্য 'গোডাউন থেকে দোকান চালান' করে আনা যাবে।</span>
-                    </div>
+                        <span className="text-[10px] bg-amber-200/90 text-amber-950 px-2.5 py-0.5 rounded-full font-black border border-amber-300 shrink-0">
+                          {variants.length} টি ভ্যারিয়েন্ট
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -2073,85 +1941,201 @@ export default function AddProductModal({
 
                   </div>
 
-                  {/* ভ্যারিয়েন্ট তালিকা টেবিল */}
+                  {/* ভ্যারিয়েন্ট তালিকা টেবিল (একক ভিত্তিক অ্যাডাপ্টিভ) */}
                   {variants.length > 0 && (
-                    <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-2xs">
+                    <div className="overflow-x-auto border border-indigo-200/90 rounded-xl bg-white shadow-2xs">
                       <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                        <thead className="bg-indigo-50/80 border-b border-indigo-200 text-indigo-950 font-bold">
                           <tr>
-                            <th className="p-2 pl-3">বৈশিষ্ট্য (Attributes)</th>
-                            <th className="p-2">বারকোড</th>
-                            <th className="p-2 w-20">কেনা ({currencySymbol})</th>
-                            <th className="p-2 w-20">পাইকারি ({currencySymbol})</th>
-                            <th className="p-2 w-20">বিক্রি ({currencySymbol})</th>
-                            <th className="p-2 w-20">{isThanUnit ? 'থান স্টক' : 'স্টক'}</th>
-                            <th className="p-2 pr-3 text-center">মুছুন</th>
+                            <th className="p-2.5 pl-3">{isThanUnit ? 'রং / বৈশিষ্ট্য' : 'বৈশিষ্ট্য (Attributes)'}</th>
+                            <th className="p-2.5">বারকোড</th>
+                            {isThanUnit ? (
+                              <>
+                                <th className="p-2.5 w-36 text-center">গোডাউন থান</th>
+                                <th className="p-2.5 w-28 text-center">গজ হিসাব</th>
+                                <th className="p-2.5 w-24">দর ({currencySymbol})</th>
+                              </>
+                            ) : (
+                              <>
+                                <th className="p-2.5 w-24">কেনা ({currencySymbol})</th>
+                                <th className="p-2.5 w-24">পাইকারি ({currencySymbol})</th>
+                                <th className="p-2.5 w-24">বিক্রি ({currencySymbol})</th>
+                                <th className="p-2.5 w-28 text-center">গোডাউন স্টক</th>
+                              </>
+                            )}
+                            <th className="p-2.5 pr-3 text-center w-14">মুছুন</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 font-medium">
-                          {variants.map((v, idx) => (
-                            <tr key={v.VariantID || idx} className="hover:bg-slate-50/60">
-                              <td className="p-2 pl-3">
-                                <span className="font-bold text-slate-800">
-                                  {v.Attributes ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ') : v.VariantID}
-                                </span>
-                              </td>
-                              <td className="p-2">
-                                <input
-                                  type="text"
-                                  value={v.Barcode || ''}
-                                  onChange={(e) => handleUpdateVariantField(idx, 'Barcode', e.target.value)}
-                                  className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-mono"
-                                  placeholder="বারকোড"
-                                />
-                              </td>
-                              <td className="p-2">
-                                <input
-                                  type="number"
-                                  value={v.CostPrice}
-                                  onChange={(e) => handleUpdateVariantField(idx, 'CostPrice', Number(e.target.value) || 0)}
-                                  className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-bold"
-                                />
-                              </td>
-                              <td className="p-2">
-                                <input
-                                  type="number"
-                                  value={v.WholesalePrice !== undefined ? v.WholesalePrice : ''}
-                                  onChange={(e) => handleUpdateVariantField(idx, 'WholesalePrice', Number(e.target.value) || 0)}
-                                  className="w-full px-2 py-1 bg-slate-50 border border-indigo-200 rounded text-[11px] font-bold text-indigo-700"
-                                  placeholder="পাইকারি"
-                                />
-                              </td>
-                              <td className="p-2">
-                                <input
-                                  type="number"
-                                  value={v.SellingPrice}
-                                  onChange={(e) => handleUpdateVariantField(idx, 'SellingPrice', Number(e.target.value) || 0)}
-                                  className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-bold text-indigo-700"
-                                />
-                              </td>
-                              <td className="p-2">
-                                <input
-                                  type="number"
-                                  value={v.StockQuantity}
-                                  onChange={(e) => handleUpdateVariantField(idx, 'StockQuantity', Number(e.target.value) || 0)}
-                                  className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-black text-emerald-700"
-                                  title={isThanUnit ? "এই কালার/অপশনের থান সংখ্যা" : "স্টক পরিমাণ"}
-                                />
-                              </td>
-                              <td className="p-2 pr-3 text-center">
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveVariant(idx)}
-                                  className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
-                                  title="মুছুন"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
+                          {variants.map((v, idx) => {
+                            const attrTitle = v.Attributes ? Object.entries(v.Attributes).map(([k, val]) => `${val}`).join(', ') : v.VariantID;
+                            const thans = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
+                            const calculatedGoj = thans * (Number(formData.yardsPerThan) || 0);
+
+                            return (
+                              <tr key={v.VariantID || idx} className="hover:bg-indigo-50/30 transition-colors">
+                                <td className="p-2.5 pl-3">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0"></span>
+                                    <span className="font-bold text-slate-900">{attrTitle}</span>
+                                  </div>
+                                </td>
+                                <td className="p-2.5">
+                                  <input
+                                    type="text"
+                                    value={v.Barcode || ''}
+                                    onChange={(e) => handleUpdateVariantField(idx, 'Barcode', e.target.value)}
+                                    className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-mono"
+                                    placeholder="বারকোড"
+                                  />
+                                </td>
+                                {isThanUnit ? (
+                                  <>
+                                    <td className="p-2.5 text-center">
+                                      <div className="flex items-center justify-center space-x-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateVariantStock(idx, Math.max(0, thans - 1))}
+                                          className="w-6 h-6 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-black flex items-center justify-center cursor-pointer transition-colors"
+                                          title="১ থান কমান"
+                                        >
+                                          -
+                                        </button>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          step="any"
+                                          value={v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity}
+                                          onChange={(e) => handleUpdateVariantStock(idx, e.target.value)}
+                                          className="w-16 px-1.5 py-1 bg-amber-50/70 border border-amber-300 rounded text-center text-xs font-black text-amber-950 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateVariantStock(idx, thans + 1)}
+                                          className="w-6 h-6 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-black flex items-center justify-center cursor-pointer transition-colors"
+                                          title="১ থান বাড়ান"
+                                        >
+                                          +
+                                        </button>
+                                        <span className="text-[10px] text-slate-500 font-bold">থান</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-2.5 text-center">
+                                      <span className="font-black text-amber-950 text-xs block">
+                                        {calculatedGoj} গজ
+                                      </span>
+                                      <span className="text-[9.5px] text-slate-400 font-semibold block">
+                                        ({thans} × {Number(formData.yardsPerThan) || 0})
+                                      </span>
+                                    </td>
+                                    <td className="p-2.5">
+                                      <input
+                                        type="number"
+                                        value={v.SellingPrice}
+                                        onChange={(e) => handleUpdateVariantField(idx, 'SellingPrice', Number(e.target.value) || 0)}
+                                        className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-xs font-bold text-indigo-700"
+                                        placeholder="বিক্রি দর"
+                                      />
+                                    </td>
+                                  </>
+                                ) : (
+                                  <>
+                                    <td className="p-2.5">
+                                      <input
+                                        type="number"
+                                        value={v.CostPrice}
+                                        onChange={(e) => handleUpdateVariantField(idx, 'CostPrice', Number(e.target.value) || 0)}
+                                        className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-bold"
+                                      />
+                                    </td>
+                                    <td className="p-2.5">
+                                      <input
+                                        type="number"
+                                        value={v.WholesalePrice !== undefined ? v.WholesalePrice : ''}
+                                        onChange={(e) => handleUpdateVariantField(idx, 'WholesalePrice', Number(e.target.value) || 0)}
+                                        className="w-full px-2 py-1 bg-slate-50 border border-indigo-200 rounded text-[11px] font-bold text-indigo-700"
+                                        placeholder="পাইকারি"
+                                      />
+                                    </td>
+                                    <td className="p-2.5">
+                                      <input
+                                        type="number"
+                                        value={v.SellingPrice}
+                                        onChange={(e) => handleUpdateVariantField(idx, 'SellingPrice', Number(e.target.value) || 0)}
+                                        className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-bold text-indigo-700"
+                                      />
+                                    </td>
+                                    <td className="p-2.5 text-center">
+                                      <div className="flex items-center justify-center space-x-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateVariantStock(idx, Math.max(0, thans - 1))}
+                                          className="w-6 h-6 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-black flex items-center justify-center cursor-pointer transition-colors"
+                                        >
+                                          -
+                                        </button>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          step="any"
+                                          value={v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity}
+                                          onChange={(e) => handleUpdateVariantStock(idx, e.target.value)}
+                                          className="w-16 px-1.5 py-1 bg-slate-50 border border-slate-200 rounded text-center text-xs font-black text-emerald-700"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateVariantStock(idx, thans + 1)}
+                                          className="w-6 h-6 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-black flex items-center justify-center cursor-pointer transition-colors"
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </>
+                                )}
+                                <td className="p-2.5 pr-3 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveVariant(idx)}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                                    title="মুছুন"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
+                        <tfoot className="bg-indigo-50/70 border-t border-indigo-200 text-indigo-950 font-black">
+                          <tr>
+                            <td className="p-2.5 pl-3">
+                              মোট: {variants.length} টি ভ্যারিয়েন্ট
+                            </td>
+                            <td></td>
+                            {isThanUnit ? (
+                              <>
+                                <td className="p-2.5 text-center text-amber-900 font-black">
+                                  {variants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0)} থান (গোডাউন)
+                                </td>
+                                <td className="p-2.5 text-center text-amber-950 font-black">
+                                  {variants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0) * (Number(formData.yardsPerThan) || 0)} গজ
+                                </td>
+                                <td></td>
+                              </>
+                            ) : (
+                              <>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td className="p-2.5 text-center text-emerald-800 font-black">
+                                  {variants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0)} {formData.unit || 'টি'}
+                                </td>
+                              </>
+                            )}
+                            <td></td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                   )}

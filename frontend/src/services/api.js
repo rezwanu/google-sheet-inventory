@@ -505,6 +505,25 @@ export async function postAddVariantOption(apiUrl, variantData) {
 }
 
 /**
+ * গুগল স্প্রেডশিটে Variants শিট তৈরি ও নিশ্চিতকরণ API কল
+ * @param {string} apiUrl - Apps Script Web App URL
+ */
+export async function ensureVariantsSheetAPI(apiUrl) {
+  if (!apiUrl || !apiUrl.trim()) return { success: false, message: 'API URL missing' };
+  try {
+    const sep = apiUrl.includes('?') ? '&' : '?';
+    const response = await fetch(`${apiUrl.trim()}${sep}action=ensureVariants&force=true`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+    return await response.json();
+  } catch (err) {
+    console.error('ensureVariantsSheetAPI error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
  * গুগল শিট থেকে সম্পূর্ণ বিক্রয় হিস্ট্রি লোড করার API কল (action: 'getSales')
  * @param {string} apiUrl - Apps Script Web App URL
  * @param {number} limit - কতটি রেকর্ড লোড হবে (ডিফল্ট ১০০০)

@@ -462,10 +462,18 @@ function ensureVariantsSheet(spreadsheet) {
     });
 
     // ডিফল্ট সাইজ (Size)
-    const defaultSizes = ['S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '44'];
+    const defaultSizes = ['S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '44', '28', '30', '32', '34', '36'];
     defaultSizes.forEach((size, idx) => {
       variantsSheet.appendRow([`VAR-SIZ-${100 + idx}`, 'Size', size, '', 'সাইজ ভ্যারিয়েন্ট', 'Active', now]);
     });
+
+    // ডিফল্ট ওজন (Weight)
+    const defaultWeights = ['100gm', '250gm', '500gm', '1kg', '2kg', '5kg'];
+    defaultWeights.forEach((w, idx) => {
+      variantsSheet.appendRow([`VAR-WGT-${100 + idx}`, 'Weight', w, '', 'ওজন ভ্যারিয়েন্ট', 'Active', now]);
+    });
+
+    SpreadsheetApp.flush();
   }
 
   return variantsSheet;
