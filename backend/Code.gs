@@ -26,7 +26,8 @@ const SHEETS = {
   CASH_REGISTER: 'CashRegister',
   AUDIT_LOGS: 'AuditLogs',
   SALES_RETURNS: 'SalesReturns',
-  STOCK_TRANSFERS: 'StockTransfers'
+  STOCK_TRANSFERS: 'StockTransfers',
+  VARIANTS: 'Variants'
 };
 
 /**
@@ -837,6 +838,50 @@ function ensureCouponsSheet(spreadsheet) {
 }
 
 /**
+ * Variants (ভ্যারিয়েন্ট ডাটাবেস) শিট নিশ্চিত করা (না থাকলে তৈরি এবং প্রয়োজনীয় রঙ, সাইজ ও ওজন যুক্ত করা)
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} Variants শিট অবজেক্ট
+ */
+function ensureVariantsSheet(spreadsheet) {
+  let variantsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.VARIANTS);
+  if (!variantsSheet) {
+    variantsSheet = spreadsheet.insertSheet(SHEETS.VARIANTS);
+  }
+
+  if (variantsSheet.getLastRow() === 0) {
+    variantsSheet.appendRow([
+      'VariantID', 'Type', 'Name', 'Value', 'Description', 'Status', 'CreatedAt'
+    ]);
+    const now = new Date();
+    // ডিফল্ট রঙ (Color)
+    const defaultColors = [
+      'লাল', 'নীল', 'কালো', 'সাদা', 'সবুজ', 'হলুদ', 'গোলাপি', 'মেরুন', 
+      'নেভি ব্লু', 'অফ-হোয়াইট', 'ছাই', 'বেগুনি', 'ফিরোজা', 'জলপাই', 'কমলা', 
+      'ম্যাজেন্টা', 'বাসন্তী', 'লাল খয়েরি'
+    ];
+    defaultColors.forEach((color, idx) => {
+      variantsSheet.appendRow([`VAR-COL-${100 + idx}`, 'Color', color, '', 'রঙ ভ্যারিয়েন্ট', 'Active', now]);
+    });
+
+    // ডিফল্ট সাইজ (Size)
+    const defaultSizes = ['S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '44', '28', '30', '32', '34', '36'];
+    defaultSizes.forEach((size, idx) => {
+      variantsSheet.appendRow([`VAR-SIZ-${100 + idx}`, 'Size', size, '', 'সাইজ ভ্যারিয়েন্ট', 'Active', now]);
+    });
+
+    // ডিফল্ট ওজন (Weight)
+    const defaultWeights = ['100gm', '250gm', '500gm', '1kg', '2kg', '5kg'];
+    defaultWeights.forEach((w, idx) => {
+      variantsSheet.appendRow([`VAR-WGT-${100 + idx}`, 'Weight', w, '', 'ওজন ভ্যারিয়েন্ট', 'Active', now]);
+    });
+
+    SpreadsheetApp.flush();
+  }
+
+  return variantsSheet;
+}
+
+/**
  * Users (ব্যবহারকারী ও স্টাফ ডাটাবেস) শিট নিশ্চিত করা
  * (না থাকলে তৈরি এবং সাইনআপ ও ইউজার ম্যানেজমেন্টের জন্য প্রয়োজনীয় সকল কলাম হেডার নিশ্চিত করা)
  * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
@@ -1254,6 +1299,9 @@ function ensureDatabaseSchema(spreadsheet) {
   // ২.২ Coupons (কুপন ডাটাবেস) শিট নিশ্চিত করা
   ensureCouponsSheet(spreadsheet);
 
+  // ২.২.১ Variants (ভ্যারিয়েন্ট ডাটাবেস) শিট নিশ্চিত করা
+  ensureVariantsSheet(spreadsheet);
+
   // ২.৩ Users (ব্যবহারকারী ও স্টাফ ডাটাবেস) শিট নিশ্চিত করা
   ensureUsersSheet(spreadsheet);
 
@@ -1461,6 +1509,9 @@ function setupDatabase() {
 
   // ৮. Coupons (কুপন ও অফার ডাটাবেস) শিট তৈরি ও কলাম হেডার ইনিশিয়ালাইজেশন
   ensureCouponsSheet(spreadsheet);
+
+  // ৯. Variants (ভ্যারিয়েন্ট ডাটাবেস) শিট তৈরি ও ইনিশিয়ালাইজেশন
+  ensureVariantsSheet(spreadsheet);
 
   return 'সবগুলো শিট এবং হেডার সফলভাবে তৈরি করা হয়েছে!';
 }
