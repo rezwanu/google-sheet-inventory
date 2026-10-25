@@ -3084,6 +3084,23 @@ export default function StockTransferModal({
                     />
                   </div>
 
+                  {/* নতুন কালার স্টক যোগ করার শর্টকাট */}
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-slate-500 text-[11px]">অন্য নতুন কোনো কালারের স্টক বাড়াতে চান?</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const prod = variantRestockModal.product;
+                        setVariantRestockModal(null);
+                        handleOpenNewColor(prod);
+                      }}
+                      className="text-indigo-600 hover:text-indigo-800 font-bold inline-flex items-center space-x-1 cursor-pointer transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ নতুন কালার স্টক যোগ করুন</span>
+                    </button>
+                  </div>
+
                   {/* অ্যাকশন বাটনসমূহ */}
                   <div className="flex items-center space-x-2 pt-2">
                     <button

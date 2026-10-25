@@ -2,6 +2,8 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   X,
   PlusCircle,
+  Plus,
+  Trash2,
   Calculator,
   Package,
   UserCheck,
@@ -44,7 +46,9 @@ export default function AddStockModal({
   activeUser,
   onSubmitStock,
   initialProductId = '',
-  settings = {}
+  settings = {},
+  variantAttributes = [],
+  onAddVariantOption
 }) {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [barcodeSearchQuery, setBarcodeSearchQuery] = useState('');
@@ -65,6 +69,17 @@ export default function AddStockModal({
   const [selectedSingleVariantId, setSelectedSingleVariantId] = useState('');
   const [singleVariantQty, setSingleVariantQty] = useState('');
   const [bulkVariantQty, setBulkVariantQty] = useState(''); // সব ভ্যারিয়েন্টে এক ক্লিকে সংখ্যা বসানোর জন্য
+
+  // রিস্টকে সরাসরি নতুন কালার / ভ্যারিয়েন্ট যোগ করার স্টেট
+  const [customAddedVariants, setCustomAddedVariants] = useState([]);
+  const [isAddingNewColorOpen, setIsAddingNewColorOpen] = useState(false);
+  const [isVariantRestockEnabled, setIsVariantRestockEnabled] = useState(false);
+  const [newColorName, setNewColorName] = useState('');
+  const [newColorStock, setNewColorStock] = useState('1');
+  const [newColorType, setNewColorType] = useState('Color'); // 'Color' | 'Size' | 'Weight'
+  const [newColorBarcode, setNewColorBarcode] = useState('');
+  const [newColorCostPrice, setNewColorCostPrice] = useState('');
+  const [newColorSellingPrice, setNewColorSellingPrice] = useState('');
 
   // ক্যামেরা স্ক্যান ও স্টিকার স্টেট
   const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
@@ -105,6 +120,14 @@ export default function AddStockModal({
       setSupplierName('');
       setNotes('');
       setMobileTab('form');
+      setCustomAddedVariants([]);
+      setIsAddingNewColorOpen(false);
+      setIsVariantRestockEnabled(false);
+      setNewColorName('');
+      setNewColorStock('1');
+      setNewColorBarcode('');
+      setNewColorCostPrice('');
+      setNewColorSellingPrice('');
     }
   }, [isOpen, initialProductId, products]);
 
@@ -131,9 +154,9 @@ export default function AddStockModal({
         list = [];
       }
     }
-    if ((!list || !list.length) && selectedProduct.VariantsJSON) {
+    if ((!list || !list.length) && (selectedProduct.VariantsJSON || selectedProduct.variantsJSON)) {
       try {
-        list = JSON.parse(selectedProduct.VariantsJSON);
+        list = JSON.parse(selectedProduct.VariantsJSON || selectedProduct.variantsJSON);
       } catch (e) {
         list = [];
       }
@@ -141,7 +164,22 @@ export default function AddStockModal({
     return Array.isArray(list) ? list : [];
   }, [selectedProduct]);
 
-  const hasVariants = productVariants.length > 0;
+  // পণ্যের মূল ভ্যারিয়েন্টের সাথে রিস্টকে সরাসরি নতুন যুক্ত কালার ভ্যারিয়েন্ট মার্জ করা
+  const allVariants = useMemo(() => {
+    return [...productVariants, ...customAddedVariants];
+  }, [productVariants, customAddedVariants]);
+
+  const hasVariants = allVariants.length > 0 || isVariantRestockEnabled;
+
+  // মাস্টার ভ্যারিয়েন্ট ডাটাবেস থেকে রঙের তালিকা এক্সট্র্যাক্ট (কুইক চিপস)
+  const allColorOptions = useMemo(() => {
+    const list = (variantAttributes || [])
+      .filter((va) => !va.AttributeType || va.AttributeType.toLowerCase() === 'color' || va.attributeType?.toLowerCase() === 'color')
+      .map((va) => va.OptionName || va.optionName || va.Name || '')
+      .filter(Boolean);
+    const defaults = ['লাল', 'কালো', 'সাদা', 'নীল', 'সবুজ', 'হলুদ', 'গোলাপী', 'মেরুন', 'আকাশি', 'বেগুনি', 'কমলা', 'ধূসর', 'ফিরোজা', 'বাসন্তী', 'ম্যাজেন্টা', 'অফ-হোয়াইট', 'নেভি ব্লু'];
+    return Array.from(new Set([...list, ...defaults]));
+  }, [variantAttributes]);
 
   // থান একক কিনা ও প্রতি থানে গজ
   const isThanUnit = useMemo(() => {
@@ -158,11 +196,94 @@ export default function AddStockModal({
       setVariantQuantities({});
       setBulkVariantQty('');
       setSingleVariantQty('');
-      if (productVariants.length > 0) {
-        setSelectedSingleVariantId(productVariants[0].VariantID || '');
+      setCustomAddedVariants([]);
+      setIsAddingNewColorOpen(false);
+      setIsVariantRestockEnabled(false);
+      if (allVariants.length > 0) {
+        setSelectedSingleVariantId(allVariants[0].VariantID || '');
       }
     }
-  }, [selectedProductId, productVariants]);
+  }, [selectedProductId]);
+
+  // রিস্টকে সরাসরি নতুন কালার / ভ্যারিয়েন্ট যোগ করার হ্যান্ডলার
+  const handleAddNewColorVariant = async (e) => {
+    if (e) e.preventDefault();
+    const cleanName = String(newColorName || '').trim();
+    if (!cleanName) {
+      alert(`অনুগ্রহ করে ${newColorType === 'Color' ? 'কালার / রঙের' : 'ভ্যারিয়েন্টের'} নাম লিখুন!`);
+      return;
+    }
+
+    const exists = allVariants.some((v) => {
+      const c = v.Color || v.color || v.Attributes?.Color || v.Attributes?.color || v.Attributes?.[newColorType];
+      return String(c || '').trim().toLowerCase() === cleanName.toLowerCase();
+    });
+
+    if (exists) {
+      alert(`'${cleanName}' নামের একটি ভ্যারিয়েন্ট ইতিমধ্যে এই তালিকায় বিদ্যমান!`);
+      return;
+    }
+
+    const baseCost = newColorCostPrice !== '' ? Number(newColorCostPrice) : (Number(selectedProduct?.CostPrice) || 0);
+    const baseSell = newColorSellingPrice !== '' ? Number(newColorSellingPrice) : (Number(selectedProduct?.SellingPrice) || 0);
+    const stockQty = Math.max(0, Number(newColorStock) || (isThanUnit ? 1 : 10));
+    const generatedVarId = `VAR-${Date.now().toString().slice(-5)}-${cleanName.replace(/\s+/g, '_')}`;
+    const baseBarcode = selectedProduct?.Barcode || `PB-${selectedProduct?.ProductID || 'PROD'}`;
+    const generatedBarcode = newColorBarcode.trim() || `${baseBarcode}-${cleanName.toLowerCase().replace(/\s+/g, '-')}`;
+
+    const newVar = {
+      VariantID: generatedVarId,
+      VariantId: generatedVarId,
+      Attributes: { [newColorType]: cleanName },
+      Color: newColorType === 'Color' ? cleanName : '',
+      Size: newColorType === 'Size' ? cleanName : '',
+      Barcode: generatedBarcode,
+      barcode: generatedBarcode,
+      CostPrice: baseCost,
+      SellingPrice: baseSell,
+      WholesalePrice: Number(selectedProduct?.WholesalePrice || 0),
+      GodownStock: targetLocation === 'Godown' ? 0 : 0,
+      godownStock: targetLocation === 'Godown' ? 0 : 0,
+      StockQuantity: targetLocation === 'Shop' ? 0 : 0,
+      stockQuantity: targetLocation === 'Shop' ? 0 : 0,
+      ShopStock: 0,
+      isNewVariant: true
+    };
+
+    setCustomAddedVariants((prev) => [...prev, newVar]);
+    setVariantQuantities((prev) => ({
+      ...prev,
+      [generatedVarId]: stockQty
+    }));
+
+    if (onAddVariantOption) {
+      try {
+        await onAddVariantOption({
+          attributeType: newColorType,
+          optionName: cleanName,
+          status: 'Active'
+        });
+      } catch (err) {
+        console.warn('Could not auto-add to master variants tab:', err);
+      }
+    }
+
+    setNewColorName('');
+    setNewColorStock(isThanUnit ? '1' : '10');
+    setNewColorBarcode('');
+    setNewColorCostPrice('');
+    setNewColorSellingPrice('');
+    setIsAddingNewColorOpen(false);
+  };
+
+  const handleRemoveCustomVariant = (varId) => {
+    setCustomAddedVariants((prev) => prev.filter((v) => v.VariantID !== varId));
+    setVariantQuantities((prev) => {
+      const copy = { ...prev };
+      delete copy[varId];
+      return copy;
+    });
+  };
 
   // কার্যকর আগমনী পরিমাণ (ভ্যারিয়েন্ট থাকলে ভ্যারিয়েন্টগুলোর যোগফল, না থাকলে সরাসরি ইনপুট)
   const effectiveIncomingQty = useMemo(() => {
@@ -189,7 +310,7 @@ export default function AddStockModal({
       return;
     }
     const nextMap = {};
-    productVariants.forEach((v) => {
+    allVariants.forEach((v) => {
       nextMap[v.VariantID] = val;
     });
     setVariantQuantities(nextMap);
@@ -343,8 +464,8 @@ export default function AddStockModal({
 
     // ভ্যারিয়েন্ট স্টক গণনা
     let updatedVariants = null;
-    if (hasVariants) {
-      updatedVariants = productVariants.map((v) => {
+    if (hasVariants && allVariants.length > 0) {
+      updatedVariants = allVariants.map((v) => {
         const vId = v.VariantID;
         let incomingForV = 0;
         if (variantRestockMode === 'single') {
@@ -356,12 +477,15 @@ export default function AddStockModal({
         }
 
         const prevVStock = Number(v.StockQuantity || 0);
-        const prevVGodown = Number(v.GodownStock !== undefined ? v.GodownStock : prevVStock);
+        const prevVGodown = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : prevVStock));
 
         return {
           ...v,
           StockQuantity: targetLocation === 'Shop' ? (prevVStock + incomingForV) : prevVStock,
+          stockQuantity: targetLocation === 'Shop' ? (prevVStock + incomingForV) : prevVStock,
           GodownStock: targetLocation === 'Godown' ? (prevVGodown + incomingForV) : prevVGodown,
+          godownStock: targetLocation === 'Godown' ? (prevVGodown + incomingForV) : prevVGodown,
+          TotalStock: (targetLocation === 'Shop' ? (prevVStock + incomingForV) : prevVStock) + (targetLocation === 'Godown' ? (prevVGodown + incomingForV) : prevVGodown),
         };
       });
     }
@@ -641,7 +765,7 @@ export default function AddStockModal({
                         <Palette className="w-4 h-4 text-teal-600" />
                         <div>
                           <h5 className="text-xs font-black text-slate-900">
-                            ভ্যারিয়েন্ট অনুযায়ী রিস্টক এন্ট্রি ({productVariants.length}টি ভ্যারিয়েন্ট)
+                            ভ্যারিয়েন্ট অনুযায়ী রিস্টক এন্ট্রি ({allVariants.length}টি ভ্যারিয়েন্ট)
                           </h5>
                           <p className="text-[10px] text-slate-500">
                             {isThanUnit ? 'প্রতিটি কালারের জন্য পৃথক থান সংখ্যা প্রদান করুন' : 'রং বা সাইজ অনুযায়ী পৃথক স্টক প্রদান করুন'}
@@ -675,6 +799,138 @@ export default function AddStockModal({
                         </button>
                       </div>
                     </div>
+
+                    {/* নতুন কালার / ভ্যারিয়েন্ট যোগ করার টগল বাটন */}
+                    <div className="flex items-center justify-between bg-teal-50/60 p-2.5 rounded-xl border border-teal-200/80">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-bold text-slate-800">
+                          লটে নতুন কোনো কালার এসেছে?
+                        </span>
+                        <span className="text-[10px] text-teal-800 bg-teal-100 px-2 py-0.5 rounded-full font-bold">
+                          নতুন কালার রিস্টক
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingNewColorOpen((prev) => !prev)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center space-x-1.5 shadow-xs ${
+                          isAddingNewColorOpen
+                            ? 'bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300'
+                            : 'bg-teal-600 hover:bg-teal-700 text-white'
+                        }`}
+                      >
+                        {isAddingNewColorOpen ? (
+                          <>
+                            <X className="w-3.5 h-3.5" />
+                            <span>ফর্ম বন্ধ করুন</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>+ নতুন কালার যোগ করুন</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* নতুন কালার যোগ করার ফর্ম কার্ড */}
+                    {isAddingNewColorOpen && (
+                      <div className="p-3.5 bg-gradient-to-br from-white via-teal-50/40 to-indigo-50/30 border-2 border-teal-300 rounded-2xl shadow-sm space-y-3 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between pb-2 border-b border-teal-200">
+                          <div className="flex items-center space-x-1.5 text-xs font-black text-teal-900">
+                            <Palette className="w-4 h-4 text-teal-600" />
+                            <span>নতুন কালার / ভ্যারিয়েন্টের স্টক যোগ করুন</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-slate-500">
+                            লটের সাথে সরাসরি যুক্ত হবে
+                          </span>
+                        </div>
+
+                        {/* কুইক কালার চিপস */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            দ্রুত কালার সিলেক্ট করুন (ক্লিক করুন):
+                          </label>
+                          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 bg-white/80 rounded-xl border border-slate-200">
+                            {allColorOptions.map((c) => (
+                              <button
+                                key={c}
+                                type="button"
+                                onClick={() => setNewColorName(c)}
+                                className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer border ${
+                                  newColorName === c
+                                    ? 'bg-teal-600 text-white border-teal-700 shadow-xs ring-1 ring-teal-400'
+                                    : 'bg-white hover:bg-teal-50 text-slate-700 border-slate-200'
+                                }`}
+                              >
+                                {c}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* ইনপুট গ্রিড */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                              কালার / ভ্যারিয়েন্টের নাম *
+                            </label>
+                            <input
+                              type="text"
+                              value={newColorName}
+                              onChange={(e) => setNewColorName(e.target.value)}
+                              placeholder="যেমন: ফিরোজা বা রয়্যাল ব্লু"
+                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold focus:ring-2 focus:ring-teal-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                              লটে আগত পরিমাণ ({isThanUnit ? 'থান' : selectedProduct?.Unit || 'Pcs'}) *
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={newColorStock}
+                              onChange={(e) => setNewColorStock(e.target.value)}
+                              placeholder={isThanUnit ? '1' : '10'}
+                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-black text-teal-800 text-center focus:ring-2 focus:ring-teal-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                              বারকোড (ঐচ্ছিক)
+                            </label>
+                            <input
+                              type="text"
+                              value={newColorBarcode}
+                              onChange={(e) => setNewColorBarcode(e.target.value)}
+                              placeholder="স্বয়ংক্রিয় তৈরি হবে"
+                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-mono text-slate-600 focus:ring-2 focus:ring-teal-500"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-end space-x-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingNewColorOpen(false)}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold cursor-pointer"
+                          >
+                            বাতিল
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleAddNewColorVariant}
+                            className="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold inline-flex items-center space-x-1 cursor-pointer shadow-sm transition-all"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>এই কালারটি লটে যোগ করুন</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* সকল ভ্যারিয়েন্ট তালিকা মোড */}
                     {variantRestockMode === 'all' ? (
@@ -718,18 +974,18 @@ export default function AddStockModal({
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 bg-white">
-                              {productVariants.map((v) => {
+                              {allVariants.map((v) => {
                                 const vId = v.VariantID;
                                 const currentStock = targetLocation === 'Godown'
-                                  ? (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0)
-                                  : (Number(v.StockQuantity) || 0);
+                                  ? (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : v.StockQuantity)) || 0)
+                                  : (Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0)) || 0);
                                 const incomingForV = Number(variantQuantities[vId]) || 0;
                                 const newVStock = currentStock + incomingForV;
                                 const vColor = v.Attributes?.Color || v.Color || '';
                                 const vSize = v.Attributes?.Size || v.Size || '';
 
                                 return (
-                                  <tr key={vId} className="hover:bg-teal-50/30 transition-colors">
+                                  <tr key={vId} className={`hover:bg-teal-50/30 transition-colors ${v.isNewVariant ? 'bg-amber-50/40' : ''}`}>
                                     <td className="p-2 sm:px-3">
                                       <div className="flex items-center space-x-1.5 flex-wrap">
                                         {vColor && (
@@ -746,6 +1002,22 @@ export default function AddStockModal({
                                           <span className="font-semibold text-slate-800 text-xs">
                                             {v.Attributes ? Object.values(v.Attributes).join(' / ') : vId}
                                           </span>
+                                        )}
+                                        {v.isNewVariant && (
+                                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 inline-flex items-center space-x-0.5">
+                                            <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                                            <span>নতুন কালার</span>
+                                          </span>
+                                        )}
+                                        {v.isNewVariant && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRemoveCustomVariant(v.VariantID)}
+                                            className="p-0.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer transition-colors"
+                                            title="এই নতুন কালারটি তালিকা থেকে বাদ দিন"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
                                         )}
                                       </div>
                                       {v.Barcode && (
@@ -822,16 +1094,16 @@ export default function AddStockModal({
                             onChange={(e) => setSelectedSingleVariantId(e.target.value)}
                             className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-500"
                           >
-                            {productVariants.map((v) => {
+                            {allVariants.map((v) => {
                               const cur = targetLocation === 'Godown'
-                                ? (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0)
-                                : (Number(v.StockQuantity) || 0);
+                                ? (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : v.StockQuantity)) || 0)
+                                : (Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0)) || 0);
                               const label = v.Attributes
                                 ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ')
-                                : v.VariantID;
+                                : (v.Color || v.Size || v.VariantID);
                               return (
                                 <option key={v.VariantID} value={v.VariantID}>
-                                  {label} (মজুদ: {cur})
+                                  {v.isNewVariant ? '✨ [নতুন] ' : ''}{label} (মজুদ: {cur})
                                 </option>
                               );
                             })}
@@ -864,89 +1136,119 @@ export default function AddStockModal({
                   </div>
                 ) : (
                   /* সাধারণ পণ্য (ভ্যারিয়েন্ট ছাড়া) */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    {/* নতুন স্টক পরিমাণ */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                        <span>নতুন আসা পরিমাণ (Incoming Qty) *</span>
-                        {selectedProduct && (
-                          <span className="text-[10px] text-slate-400 font-medium">
-                            বর্তমান মজুদ: {targetLocation === 'Godown' ? (selectedProduct.GodownStock || 0) : (selectedProduct.StockQuantity || 0)}
-                          </span>
-                        )}
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5 text-xs font-bold text-teal-600">
-                          +
-                        </span>
-                        <input
-                          ref={incomingQtyInputRef}
-                          type="number"
-                          min="1"
-                          required
-                          placeholder="যেমন: 50"
-                          value={incomingQty}
-                          onChange={(e) => setIncomingQty(e.target.value)}
-                          className="w-full pl-7 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all shadow-2xs"
-                        />
-                      </div>
-
-                      {/* দ্রুত সংখ্যা প্রিসেট বাটন */}
-                      <div className="flex items-center space-x-1.5 mt-2">
-                        <span className="text-[10px] text-slate-400 font-medium">কুইক অ্যাড:</span>
-                        {QUANTITY_PRESETS.map((amt) => (
-                          <button
-                            key={amt}
-                            type="button"
-                            onClick={() => handleAddPresetQty(amt)}
-                            className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white hover:bg-teal-50 text-slate-600 hover:text-teal-700 border border-slate-200 hover:border-teal-300 transition-all shadow-2xs active:scale-95 cursor-pointer"
-                          >
-                            +{amt}
-                          </button>
-                        ))}
-                      </div>
-
-                      {isThanUnit && yardsPerThan > 0 && incomingQty && (
-                        <div className="mt-2 p-2 bg-teal-50 rounded-lg border border-teal-200 text-xs font-bold text-teal-800">
-                          মোট গজ: {Number(incomingQty) * yardsPerThan} গজ ({incomingQty} থান × {yardsPerThan} গজ/থান)
+                  <div className="space-y-3">
+                    {/* অপশন: সাধারণ পণ্যকে কালার ভিত্তিক রিস্টক এন্ট্রি করার বাটন */}
+                    {selectedProduct && (
+                      <div className="p-3 bg-gradient-to-r from-indigo-50/90 via-teal-50/70 to-emerald-50/50 border border-teal-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
+                        <div className="flex items-center space-x-2 text-teal-900">
+                          <Palette className="w-4 h-4 text-teal-600 shrink-0" />
+                          <div>
+                            <span className="text-xs font-bold block">
+                              কালার বা সাইজ ভিত্তিক লট রিস্টক করতে চান?
+                            </span>
+                            <span className="text-[10px] text-slate-500 block">
+                              কালার অপশন চালু করে প্রতিটি রঙের আলাদা থান/পিস স্টক এন্ট্রি করুন
+                            </span>
+                          </div>
                         </div>
-                      )}
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsVariantRestockEnabled(true);
+                            setIsAddingNewColorOpen(true);
+                          }}
+                          className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs inline-flex items-center space-x-1.5 shrink-0 self-start sm:self-auto"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>+ কালার ভিত্তিক রিস্টক চালু করুন</span>
+                        </button>
+                      </div>
+                    )}
 
-                    {/* ক্রয়মূল্য ইনপুট */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                        <span>প্রতি ইউনিটের কেনা দাম (Unit Cost) *</span>
-                        {selectedProduct && (
-                          <button
-                            type="button"
-                            onClick={() => setUnitCost(selectedProduct.CostPrice || '')}
-                            className="text-[10px] text-teal-600 hover:text-teal-800 font-bold hover:underline"
-                            title="পূর্বের কেনা দাম ফিরিয়ে আনুন"
-                          >
-                            আগের দাম: {currencySymbol}{Number(selectedProduct.CostPrice || 0).toFixed(2)}
-                          </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {/* নতুন স্টক পরিমাণ */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                          <span>নতুন আসা পরিমাণ (Incoming Qty) *</span>
+                          {selectedProduct && (
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              বর্তমান মজুদ: {targetLocation === 'Godown' ? (selectedProduct.GodownStock || 0) : (selectedProduct.StockQuantity || 0)}
+                            </span>
+                          )}
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-xs font-bold text-teal-600">
+                            +
+                          </span>
+                          <input
+                            ref={incomingQtyInputRef}
+                            type="number"
+                            min="1"
+                            required
+                            placeholder="যেমন: 50"
+                            value={incomingQty}
+                            onChange={(e) => setIncomingQty(e.target.value)}
+                            className="w-full pl-7 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all shadow-2xs"
+                          />
+                        </div>
+
+                        {/* দ্রুত সংখ্যা প্রিসেট বাটন */}
+                        <div className="flex items-center space-x-1.5 mt-2">
+                          <span className="text-[10px] text-slate-400 font-medium">কুইক অ্যাড:</span>
+                          {QUANTITY_PRESETS.map((amt) => (
+                            <button
+                              key={amt}
+                              type="button"
+                              onClick={() => handleAddPresetQty(amt)}
+                              className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white hover:bg-teal-50 text-slate-600 hover:text-teal-700 border border-slate-200 hover:border-teal-300 transition-all shadow-2xs active:scale-95 cursor-pointer"
+                            >
+                              +{amt}
+                            </button>
+                          ))}
+                        </div>
+
+                        {isThanUnit && yardsPerThan > 0 && incomingQty && (
+                          <div className="mt-2 p-2 bg-teal-50 rounded-lg border border-teal-200 text-xs font-bold text-teal-800">
+                            মোট গজ: {Number(incomingQty) * yardsPerThan} গজ ({incomingQty} থান × {yardsPerThan} গজ/থান)
+                          </div>
                         )}
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">
-                          {currencySymbol}
-                        </span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          required
-                          placeholder="যেমন: 450.00"
-                          value={unitCost}
-                          onChange={(e) => setUnitCost(e.target.value)}
-                          className="w-full pl-7 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all shadow-2xs"
-                        />
                       </div>
 
-                      <p className="text-[10px] text-slate-400 mt-2">
-                        দাম পরিবর্তন হলে স্বয়ংক্রিয়ভাবে ওয়েইটেড এভারেজ কস্ট (WAC) নির্ণয় হবে
-                      </p>
+                      {/* ক্রয়মূল্য ইনপউট */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                          <span>প্রতি ইউনিটের কেনা দাম (Unit Cost) *</span>
+                          {selectedProduct && (
+                            <button
+                              type="button"
+                              onClick={() => setUnitCost(selectedProduct.CostPrice || '')}
+                              className="text-[10px] text-teal-600 hover:text-teal-800 font-bold hover:underline"
+                              title="পূর্বের কেনা দাম ফিরিয়ে আনুন"
+                            >
+                              আগের দাম: {currencySymbol}{Number(selectedProduct.CostPrice || 0).toFixed(2)}
+                            </button>
+                          )}
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">
+                            {currencySymbol}
+                          </span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            required
+                            placeholder="যেমন: 450.00"
+                            value={unitCost}
+                            onChange={(e) => setUnitCost(e.target.value)}
+                            className="w-full pl-7 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all shadow-2xs"
+                          />
+                        </div>
+
+                        <p className="text-[10px] text-slate-400 mt-2">
+                          দাম পরিবর্তন হলে স্বয়ংক্রিয়ভাবে ওয়েইটেড এভারেজ কস্ট (WAC) নির্ণয় হবে
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}

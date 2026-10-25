@@ -1828,6 +1828,10 @@ export default function App() {
           GodownStock: newGodownStock,
           CostPrice: weightedCost,
           Variants: updatedVariants || p.Variants,
+          variants: updatedVariants || p.variants || p.Variants,
+          VariantsJSON: updatedVariants ? JSON.stringify(updatedVariants) : (p.VariantsJSON || ''),
+          HasVariants: (updatedVariants && updatedVariants.length > 0) ? 'TRUE' : p.HasVariants,
+          hasVariants: (updatedVariants && updatedVariants.length > 0) ? true : p.hasVariants,
           TotalThan: isThanUnit ? newTotalThan : p.TotalThan,
           TotalGoj: isThanUnit ? newTotalGoj : p.TotalGoj,
           ThanCount: isThanUnit ? newTotalThan : p.ThanCount,
@@ -4673,6 +4677,8 @@ export default function App() {
               onSubmitStock={handleSubmitStock}
               initialProductId={quickRestockProductId}
               settings={settings}
+              variantAttributes={variantAttributes}
+              onAddVariantOption={handleAddVariantOption}
             />
           )}
 
@@ -4860,6 +4866,8 @@ export default function App() {
         onSubmitStock={handleSubmitStock}
         initialProductId={quickRestockProductId}
         settings={settings}
+        variantAttributes={variantAttributes}
+        onAddVariantOption={handleAddVariantOption}
       />
 
       <AddProductModal

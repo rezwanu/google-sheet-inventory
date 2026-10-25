@@ -1711,6 +1711,10 @@ function handleAddStock(spreadsheet, payload) {
   if (finalVariants && variantsColIdx !== -1) {
     const jsonStr = typeof finalVariants === 'string' ? finalVariants : JSON.stringify(finalVariants);
     productsSheet.getRange(rowIndex, variantsColIdx + 1).setValue(jsonStr);
+    const hasVariantsColIdx = findCol(headers, 'HasVariants', 'HasVariant');
+    if (hasVariantsColIdx !== -1) {
+      productsSheet.getRange(rowIndex, hasVariantsColIdx + 1).setValue('TRUE');
+    }
   }
 
   // থান ও গজ আপডেট
