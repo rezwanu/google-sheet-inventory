@@ -20,6 +20,7 @@ import {
   Box,
   AlertCircle,
   Eye,
+  EyeOff,
   CheckCircle2,
   Coins,
   UploadCloud,
@@ -973,7 +974,7 @@ export default function AddProductModal({
 
   return (
     <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 sm:py-6 animate-in fade-in duration-200"}>
-      <div className={embedded ? "bg-white rounded-2xl shadow-sm border border-slate-200/80 w-full flex-1 min-h-[calc(100vh-6.5rem)] overflow-hidden flex flex-col transition-all" : "bg-white rounded-3xl shadow-2xl border border-slate-200/80 max-w-6xl w-full overflow-hidden flex flex-col max-h-[94vh] transition-all animate-in zoom-in-95 duration-200"}>
+      <div className={embedded ? "bg-white rounded-2xl shadow-sm border border-slate-200/80 w-full flex-1 min-h-[calc(100vh-6.5rem)] overflow-hidden flex flex-col transition-all" : `bg-white rounded-3xl shadow-2xl border border-slate-200/80 ${showLivePreview ? 'max-w-6xl' : 'max-w-4xl'} w-full overflow-hidden flex flex-col max-h-[94vh] transition-all duration-300 animate-in zoom-in-95`}>
         
         {/* মডাল হেডার (Header Bar) */}
         <div className="px-5 sm:px-8 py-4 sm:py-5 border-b border-slate-200/80 flex items-center justify-between bg-gradient-to-r from-slate-50 via-emerald-50/20 to-white relative select-none">
@@ -1008,7 +1009,11 @@ export default function AddProductModal({
               }`}
               title="ডানপাশের লাইভ প্রিভিউ প্যানেল প্রদর্শন বা গোপন করুন"
             >
-              <Eye className="w-3.5 h-3.5 text-emerald-600" />
+              {showLivePreview ? (
+                <Eye className="w-3.5 h-3.5 text-emerald-600" />
+              ) : (
+                <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+              )}
               <span>{showLivePreview ? 'লাইভ প্রিভিউ: চালু' : 'লাইভ প্রিভিউ: বন্ধ'}</span>
             </button>
 
@@ -1172,10 +1177,10 @@ export default function AddProductModal({
 
         {/* প্রধান কনটেন্ট এরিয়া (2-কলাম গ্রিড লেআউট) */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80">
+          <div className={`grid grid-cols-1 ${showLivePreview ? 'lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80' : ''}`}>
             
             {/* বাম কলাম: ফর্ম ইনপুটসমূহ */}
-            <div className={`${showLivePreview ? 'lg:col-span-7 xl:col-span-8' : 'lg:col-span-12'} p-5 sm:p-7 space-y-6 ${mobileTab === 'preview' ? 'hidden lg:block' : 'block'}`}>
+            <div className={`${showLivePreview ? 'lg:col-span-7 xl:col-span-8' : 'w-full max-w-4xl mx-auto'} p-5 sm:p-7 space-y-6 ${mobileTab === 'preview' ? 'hidden lg:block' : 'block'}`}>
               
               {/* ধাপ ১: প্রাথমিক তথ্য ও বারকোড */}
               {activeFormTab === 'basic' && (
@@ -3335,7 +3340,7 @@ export default function AddProductModal({
         </div>
 
             {/* ডান কলাম: লাইভ ক্যাটালগ কার্ড প্রিভিউ ও ফাইন্যান্সিয়াল ইনসাইটস */}
-            <div className={`${showLivePreview ? 'lg:col-span-5 xl:col-span-4' : 'hidden'} p-5 sm:p-7 bg-gradient-to-b from-slate-50/60 to-white space-y-6 ${mobileTab === 'form' ? 'hidden lg:block' : 'block'}`}>
+            <div className={`${showLivePreview ? 'lg:col-span-5 xl:col-span-4 lg:block' : 'lg:hidden'} p-5 sm:p-7 bg-gradient-to-b from-slate-50/60 to-white space-y-6 ${mobileTab === 'form' ? 'hidden' : 'block'}`}>
               
               <div className="sticky top-4 space-y-5">
                 
