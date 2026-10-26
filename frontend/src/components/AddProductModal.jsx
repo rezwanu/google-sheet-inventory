@@ -640,6 +640,13 @@ export default function AddProductModal({
         category: value,
         subCategory: subs.length > 0 ? subs[0].SubCategoryName : ''
       }));
+    } else if (name === 'unit') {
+      const isThan = /than|থান/i.test(value);
+      setFormData((prev) => ({
+        ...prev,
+        unit: value,
+        yardsPerThan: isThan ? (prev.yardsPerThan && prev.yardsPerThan !== '0' ? prev.yardsPerThan : '25') : '0',
+      }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -845,13 +852,16 @@ export default function AddProductModal({
       StockQuantity: Number(formData.initialStock) || 0
     };
 
+    const effectiveUnit = (formData.unit || (unitCategory === 'than' ? 'থান' : 'Pcs')).trim();
+    const isThan = unitCategory === 'than' || /than|থান/i.test(effectiveUnit);
+    const yardsPerThan = isThan ? (Number(formData.yardsPerThan) || 0) : 0;
+    const thanCount = isThan ? (Number(formData.initialGodownStock) || Number(formData.initialStock) || 0) : 0;
+    const totalYards = isThan
+      ? ((Number(formData.initialStock || 0) + Number(formData.initialGodownStock || 0)) * yardsPerThan)
+      : (unitCategory === 'length' && /গজ|yard/i.test(effectiveUnit) ? (Number(formData.initialGodownStock) || 0) : 0);
+
     const hasVar = productType === 'variable' || variants.length > 0;
     const effectiveVariants = hasVar ? variants : [];
-    const thanCount = Number(formData.initialGodownStock) || Number(formData.initialStock) || 0;
-    const yardsPerThan = Number(formData.yardsPerThan) || 0;
-    const totalYards = (Number(formData.initialStock || 0) + Number(formData.initialGodownStock || 0)) * yardsPerThan;
-
-    const effectiveUnit = (formData.unit || (unitCategory === 'than' ? 'থান' : 'Pcs')).trim();
 
     setIsSubmitting(true);
     try {
@@ -2497,6 +2507,42 @@ export default function AddProductModal({
 
                   </div>
 
+                  {/* ভ্যারিয়েন্ট গোডাউন স্টক ও মোট মূল্য সারসংক্ষেপ বার */}
+                  {variants.length > 0 && (() => {
+                    const totalGStock = variants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0);
+                    const totalGoj = isThanUnit ? (totalGStock * (Number(formData.yardsPerThan) || 0)) : (/গজ|yard/i.test(formData.unit) ? totalGStock : 0);
+                    const totalCostVal = variants.reduce((sum, v) => {
+                      const qty = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
+                      const price = Number(v.CostPrice || formData.costPrice || 0);
+                      return sum + (qty * price);
+                    }, 0);
+
+                    return (
+                      <div className="p-3 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-emerald-50/80 rounded-xl border border-indigo-200/90 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-indigo-950 shadow-2xs mb-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2.5 py-1 bg-white rounded-lg border border-indigo-200 text-indigo-900 shadow-2xs">
+                            🏭 গোডাউন মোট: <strong className="font-mono text-indigo-950 font-black">{totalGStock}</strong> {formData.unit || (isThanUnit ? 'থান' : 'Pcs')}
+                          </span>
+                          {isThanUnit && Number(formData.yardsPerThan) > 0 && (
+                            <span className="px-2.5 py-1 bg-amber-50 rounded-lg border border-amber-300 text-amber-900">
+                              📏 মোট গজ: <strong className="font-mono font-black">{totalGoj}</strong> গজ ({totalGStock} থান × {Number(formData.yardsPerThan)} গজ/থান)
+                            </span>
+                          )}
+                          {!isThanUnit && /গজ|yard/i.test(formData.unit) && (
+                            <span className="px-2.5 py-1 bg-amber-50 rounded-lg border border-amber-300 text-amber-900">
+                              📏 মোট গজ: <strong className="font-mono font-black">{totalGStock}</strong> গজ
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="px-2.5 py-1 bg-emerald-50 rounded-lg border border-emerald-300 text-emerald-950 font-black">
+                            💰 মোট পণ্য ক্রয়মূল্য: {currencySymbol}{Math.round(totalCostVal).toLocaleString('bn-BD')}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* ভ্যারিয়েন্ট তালিকা টেবিল (একক ভিত্তিক অ্যাডাপ্টিভ) */}
                   {variants.length > 0 && (
                     <div className="overflow-x-auto border border-indigo-200/90 rounded-xl bg-white shadow-2xs">
@@ -2678,13 +2724,15 @@ export default function AddProductModal({
                                 <td className="p-2.5 text-center text-amber-950 font-black">
                                   {variants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0) * (Number(formData.yardsPerThan) || 0)} গজ
                                 </td>
-                                <td></td>
+                                <td className="p-2.5 text-right font-mono text-emerald-800 font-bold" title="মোট পণ্য ক্রয়মূল্য">
+                                  {currencySymbol}{Math.round(variants.reduce((sum, v) => sum + ((Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0) * (Number(v.CostPrice || formData.costPrice || 0))), 0)).toLocaleString('bn-BD')}
+                                </td>
                               </>
                             ) : (
                               <>
-                                <td></td>
-                                <td></td>
-                                <td></td>
+                                <td className="p-2.5 font-mono text-emerald-800 font-bold" colSpan={3} title="মোট পণ্য ক্রয়মূল্য">
+                                  মোট ক্রয়মূল্য: {currencySymbol}{Math.round(variants.reduce((sum, v) => sum + ((Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0) * (Number(v.CostPrice || formData.costPrice || 0))), 0)).toLocaleString('bn-BD')}
+                                </td>
                                 <td className="p-2.5 text-center text-emerald-800 font-black">
                                   {variants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0)} {formData.unit || 'টি'}
                                 </td>

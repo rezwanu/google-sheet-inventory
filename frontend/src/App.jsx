@@ -3958,6 +3958,17 @@ export default function App() {
 
   // ৮. নতুন পণ্য তৈরির হ্যান্ডলার
   const handleSubmitProduct = async (productData) => {
+    const effectiveUnit = getProductDisplayUnit({
+      Unit: productData.unit || productData.Unit,
+      Category: productData.category,
+    });
+    const isThan = /than|থান/i.test(effectiveUnit);
+    const yardsPerThan = isThan ? Number(productData.yardsPerThan !== undefined ? productData.yardsPerThan : (productData.YardsPerThan || 25)) : 0;
+    const thanCount = isThan ? (Number(productData.thanCount !== undefined ? productData.thanCount : (productData.initialGodownStock || productData.initialStock || 0))) : 0;
+    const totalYards = isThan
+      ? (thanCount * yardsPerThan)
+      : (/গজ|yard/i.test(effectiveUnit) ? (Number(productData.initialGodownStock || 0) + Number(productData.initialStock || 0)) : 0);
+
     const newProd = {
       ProductID: `PROD-${Date.now().toString().slice(-4)}`,
       Barcode: productData.barcode || '',
@@ -3977,27 +3988,17 @@ export default function App() {
       GodownStock: Number(productData.initialGodownStock !== undefined ? productData.initialGodownStock : (productData.godownStock || 0)),
       godownStock: Number(productData.initialGodownStock !== undefined ? productData.initialGodownStock : (productData.godownStock || 0)),
       TotalStock: (Number(productData.initialStock) || 0) + Number(productData.initialGodownStock !== undefined ? productData.initialGodownStock : (productData.godownStock || 0)),
-      YardsPerThan: Number(productData.yardsPerThan !== undefined ? productData.yardsPerThan : (productData.YardsPerThan || 0)),
-      yardsPerThan: Number(productData.yardsPerThan !== undefined ? productData.yardsPerThan : (productData.YardsPerThan || 0)),
-      ThanCount: Number(productData.thanCount !== undefined ? productData.thanCount : (productData.ThanCount || (Number(productData.initialGodownStock) || Number(productData.initialStock) || 0))),
-      thanCount: Number(productData.thanCount !== undefined ? productData.thanCount : (productData.ThanCount || (Number(productData.initialGodownStock) || Number(productData.initialStock) || 0))),
-      TotalYards: Number(productData.totalYards !== undefined ? productData.totalYards : (productData.TotalYards || ((Number(productData.thanCount) || (Number(productData.initialGodownStock) || Number(productData.initialStock) || 0)) * (Number(productData.yardsPerThan) || 0)))),
-      totalYards: Number(productData.totalYards !== undefined ? productData.totalYards : (productData.TotalYards || ((Number(productData.thanCount) || (Number(productData.initialGodownStock) || Number(productData.initialStock) || 0)) * (Number(productData.yardsPerThan) || 0)))),
+      YardsPerThan: yardsPerThan,
+      yardsPerThan: yardsPerThan,
+      ThanCount: thanCount,
+      thanCount: thanCount,
+      TotalThan: isThan ? thanCount : 0,
+      totalThan: isThan ? thanCount : 0,
+      TotalYards: totalYards,
+      totalYards: totalYards,
       MinStockAlert: Number(productData.minStockAlert) || 5,
-      Unit: getProductDisplayUnit({
-        Unit: productData.unit || productData.Unit,
-        Category: productData.category,
-        YardsPerThan: productData.yardsPerThan || productData.YardsPerThan,
-        ThanCount: productData.thanCount || productData.ThanCount,
-        TotalThan: productData.thanCount || productData.ThanCount,
-      }),
-      unit: getProductDisplayUnit({
-        Unit: productData.unit || productData.Unit,
-        Category: productData.category,
-        YardsPerThan: productData.yardsPerThan || productData.YardsPerThan,
-        ThanCount: productData.thanCount || productData.ThanCount,
-        TotalThan: productData.thanCount || productData.ThanCount,
-      }),
+      Unit: effectiveUnit,
+      unit: effectiveUnit,
       ShortDescription: productData.shortDescription || '',
       Description: productData.description || '',
       Features: Array.isArray(productData.features) ? productData.features : [],
@@ -4228,6 +4229,17 @@ export default function App() {
     const pId = productData.productId || productData.ProductID;
     const updatedList = products.map((p) => {
       if (p.ProductID === pId) {
+        const effectiveUnit = getProductDisplayUnit({
+          Unit: productData.unit || productData.Unit || p.Unit,
+          Category: productData.category || p.Category,
+        });
+        const isThan = /than|থান/i.test(effectiveUnit);
+        const yardsPerThan = isThan ? Number(productData.yardsPerThan !== undefined ? productData.yardsPerThan : (p.YardsPerThan || 25)) : 0;
+        const thanCount = isThan ? Number(productData.thanCount !== undefined ? productData.thanCount : (p.ThanCount || (Number(productData.godownStock !== undefined ? productData.godownStock : p.GodownStock || 0) + Number(productData.stockQuantity !== undefined ? productData.stockQuantity : p.StockQuantity || 0)))) : 0;
+        const totalYards = isThan
+          ? (thanCount * yardsPerThan)
+          : (/গজ|yard/i.test(effectiveUnit) ? (Number(productData.stockQuantity || 0) + (productData.godownStock !== undefined ? Number(productData.godownStock) : Number(p.GodownStock || 0))) : 0);
+
         return {
           ...p,
           Barcode: productData.barcode || '',
@@ -4247,27 +4259,17 @@ export default function App() {
           GodownStock: productData.godownStock !== undefined ? Number(productData.godownStock) : Number(p.GodownStock || 0),
           godownStock: productData.godownStock !== undefined ? Number(productData.godownStock) : Number(p.GodownStock || 0),
           TotalStock: (Number(productData.stockQuantity) || 0) + (productData.godownStock !== undefined ? Number(productData.godownStock) : Number(p.GodownStock || 0)),
-          YardsPerThan: productData.yardsPerThan !== undefined ? Number(productData.yardsPerThan) : Number(p.YardsPerThan || 0),
-          yardsPerThan: productData.yardsPerThan !== undefined ? Number(productData.yardsPerThan) : Number(p.YardsPerThan || 0),
-          ThanCount: productData.thanCount !== undefined ? Number(productData.thanCount) : Number(p.ThanCount || 0),
-          thanCount: productData.thanCount !== undefined ? Number(productData.thanCount) : Number(p.ThanCount || 0),
-          TotalYards: productData.totalYards !== undefined ? Number(productData.totalYards) : Number(p.TotalYards || 0),
-          totalYards: productData.totalYards !== undefined ? Number(productData.totalYards) : Number(p.TotalYards || 0),
+          YardsPerThan: yardsPerThan,
+          yardsPerThan: yardsPerThan,
+          ThanCount: thanCount,
+          thanCount: thanCount,
+          TotalThan: isThan ? thanCount : 0,
+          totalThan: isThan ? thanCount : 0,
+          TotalYards: totalYards,
+          totalYards: totalYards,
           MinStockAlert: Number(productData.minStockAlert) || 5,
-          Unit: getProductDisplayUnit({
-            Unit: productData.unit || productData.Unit || p.Unit,
-            Category: productData.category || p.Category,
-            YardsPerThan: productData.yardsPerThan !== undefined ? productData.yardsPerThan : p.YardsPerThan,
-            ThanCount: productData.thanCount !== undefined ? productData.thanCount : p.ThanCount,
-            TotalThan: productData.thanCount !== undefined ? productData.thanCount : p.ThanCount,
-          }),
-          unit: getProductDisplayUnit({
-            Unit: productData.unit || productData.Unit || p.Unit,
-            Category: productData.category || p.Category,
-            YardsPerThan: productData.yardsPerThan !== undefined ? productData.yardsPerThan : p.YardsPerThan,
-            ThanCount: productData.thanCount !== undefined ? productData.thanCount : p.ThanCount,
-            TotalThan: productData.thanCount !== undefined ? productData.thanCount : p.ThanCount,
-          }),
+          Unit: effectiveUnit,
+          unit: effectiveUnit,
           ShortDescription: productData.shortDescription || '',
           Description: productData.description || '',
           Features: Array.isArray(productData.features) ? productData.features : [],

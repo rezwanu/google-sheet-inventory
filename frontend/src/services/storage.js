@@ -513,24 +513,28 @@ export function getProductDisplayUnit(product) {
   if (!product) return 'Pcs';
   const raw = (product.Unit || product.unit || product['Unit'] || product['Unit Name'] || product.UOM || '').toString().trim();
   
-  // যদি ইউজার ইতিমধ্যে কোনো নির্দিষ্ট একক সিলেক্ট করে থাকেন (যেমন: কেজি, গজ, মিটার, ডজন, থান ইত্যাদি) এবং তা 'Pcs' না হয়
-  if (raw && raw !== 'Pcs') {
+  if (raw) {
+    // যদি ইউনিট pcs বা অন্য কোনো নির্দিষ্ট একক হয়
+    if (/^(pcs|pc|piece|পিস)$/i.test(raw)) {
+      return raw;
+    }
+    if (/^(than|থান)$/i.test(raw)) {
+      return 'থান';
+    }
     return raw;
   }
   
-  // যদি একক ফাঁকা থাকে বা সিস্টেম ডিফল্ট 'Pcs' হয়ে থাকে কিন্তু পণ্যটিতে থান বা বস্ত্রালয় কাপড়ের পরিমাপক রয়েছে
+  // যদি একক ফাঁকা থাকে তবেই শুধুমাত্র থান শনাক্তকরণ
   const hasThanProp = Boolean(
-    Number(product.YardsPerThan || product.yardsPerThan || 0) > 0 ||
     Number(product.ThanCount || product.thanCount || product.TotalThan || product.totalThan || 0) > 0 ||
-    /than|থান/i.test(raw) ||
-    /fabric|কাপড়|বস্ত্র/i.test(String(product.Category || product.category || ''))
+    /than|থান/i.test(String(product.ProductName || product.name || ''))
   );
 
   if (hasThanProp) {
     return 'থান';
   }
 
-  return raw || 'Pcs';
+  return 'Pcs';
 }
 
 // প্রোডাক্ট অবজেক্টের বিভিন্ন ফিল্ড ভ্যারিয়েশন (যেমন: StockQuantit vs StockQuantity) নর্মালাইজ করা
@@ -815,34 +819,37 @@ export function normalizeProduct(p) {
     SellingPrice: Number(bi.SellingPrice || bi.sellingPrice || 0),
   }));
 
-  // থান ও গজ সম্পর্কিত পরিমাপ (Fabric / Than / Bolt measurement)
-  const yardsPerThan = p.YardsPerThan !== undefined && p.YardsPerThan !== null && p.YardsPerThan !== ''
-    ? Number(p.YardsPerThan)
-    : (p.yardsPerThan !== undefined && p.yardsPerThan !== null && p.yardsPerThan !== '' ? Number(p.yardsPerThan) : 0);
-  const thanCount = p.ThanCount !== undefined && p.ThanCount !== null && p.ThanCount !== ''
-    ? Number(p.ThanCount)
-    : (p.thanCount !== undefined && p.thanCount !== null && p.thanCount !== '' 
-        ? Number(p.thanCount) 
-        : (String(unit).includes('থান') ? (isNaN(godownStock) ? 0 : Number(godownStock)) + (Number(stock) || 0) : 0));
-  const totalYards = p.TotalYards !== undefined && p.TotalYards !== null && p.TotalYards !== ''
-    ? Number(p.TotalYards)
-    : (p.totalYards !== undefined && p.totalYards !== null && p.totalYards !== '' 
-        ? Number(p.totalYards) 
-        : (thanCount * yardsPerThan));
+  // থান ও গজ সম্পর্কিত পরিমাপ (শুধুমাত্র যদি একক 'থান' হয়)
+  let yardsPerThan = 0;
+  let thanCount = 0;
+  let totalYards = 0;
 
-  // পরিমাপক এককের শুদ্ধতা ও থান কাপড় অগ্রাধিকার যাচাই
-  const isThanProduct = Boolean(
-    yardsPerThan > 0 ||
-    thanCount > 0 ||
-    /than|থান/i.test(unit) ||
-    /fabric|কাপড়|বস্ত্র/i.test(String(category))
-  );
+  const isExplicitNonThan = /^(pcs|pc|piece|পিস|packet|kg|gm|কেজি|গ্রাম|ltr|ml|box|বক্স|bottle|dozen|ডজন|pair|জোড়া)$/i.test(unit);
+  const isThanProduct = !isExplicitNonThan && (/than|থান/i.test(unit) || Boolean(p.TotalThan));
 
-  if ((!unit || unit === 'Pcs') && isThanProduct) {
+  if (isThanProduct) {
     unit = 'থান';
-  }
-  if (!unit) {
-    unit = 'Pcs';
+    yardsPerThan = p.YardsPerThan !== undefined && p.YardsPerThan !== null && p.YardsPerThan !== ''
+      ? Number(p.YardsPerThan)
+      : (p.yardsPerThan !== undefined && p.yardsPerThan !== null && p.yardsPerThan !== '' ? Number(p.yardsPerThan) : 25);
+    if (yardsPerThan === 0) yardsPerThan = 25;
+    thanCount = p.ThanCount !== undefined && p.ThanCount !== null && p.ThanCount !== ''
+      ? Number(p.ThanCount)
+      : (p.thanCount !== undefined && p.thanCount !== null && p.thanCount !== '' 
+          ? Number(p.thanCount) 
+          : ((isNaN(godownStock) ? 0 : Number(godownStock)) + (Number(stock) || 0)));
+    totalYards = p.TotalYards !== undefined && p.TotalYards !== null && p.TotalYards !== ''
+      ? Number(p.TotalYards)
+      : (p.totalYards !== undefined && p.totalYards !== null && p.totalYards !== '' 
+          ? Number(p.totalYards) 
+          : (thanCount * yardsPerThan));
+  } else if (/গজ|yard/i.test(unit)) {
+    totalYards = (isNaN(godownStock) ? 0 : Number(godownStock)) + (Number(stock) || 0);
+  } else {
+    // pcs, কেজি, ইত্যাদি নন-থান পণ্যের জন্য কোনো গজ বা থান হিসাব থাকবে না
+    yardsPerThan = 0;
+    thanCount = 0;
+    totalYards = 0;
   }
 
   // সম্পূর্ণ খালি সারি বর্জন
@@ -869,6 +876,8 @@ export function normalizeProduct(p) {
     yardsPerThan: yardsPerThan,
     ThanCount: thanCount,
     thanCount: thanCount,
+    TotalThan: isThanProduct ? thanCount : 0,
+    totalThan: isThanProduct ? thanCount : 0,
     TotalYards: totalYards,
     totalYards: totalYards,
     MinStockAlert: Number(minAlert) || 5,
