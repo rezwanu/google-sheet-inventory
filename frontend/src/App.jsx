@@ -13,6 +13,7 @@ import InvoiceModal from './components/InvoiceModal';
 import InvoiceLookupModal from './components/InvoiceLookupModal';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import LowStockModal from './components/LowStockModal';
+import GodownStockAlertView from './components/GodownStockAlertView';
 import ProductDetailsModal from './components/ProductDetailsModal';
 import EditProductModal from './components/EditProductModal';
 import AuthModal from './components/AuthModal';
@@ -425,7 +426,7 @@ export default function App() {
 
   const handleSecureNavigate = useCallback((view) => {
     if (view === 'godown_low_stock') {
-      handleOpenStockTransferModalWithConfig('godown_stock', 'new', 'LOW_GODOWN');
+      setCurrentView('godown_low_stock');
       return;
     }
     if (view === 'analytics') {
@@ -1859,10 +1860,10 @@ export default function App() {
           VariantsJSON: updatedVariants ? JSON.stringify(updatedVariants) : (p.VariantsJSON || ''),
           HasVariants: (updatedVariants && updatedVariants.length > 0) ? 'TRUE' : p.HasVariants,
           hasVariants: (updatedVariants && updatedVariants.length > 0) ? true : p.hasVariants,
-          TotalThan: isThanUnit ? newTotalThan : p.TotalThan,
-          TotalGoj: isThanUnit ? newTotalGoj : p.TotalGoj,
-          ThanCount: isThanUnit ? newTotalThan : p.ThanCount,
-          TotalYards: isThanUnit ? newTotalGoj : p.TotalYards,
+          TotalThan: isThanUnit ? newTotalThan : 0,
+          TotalGoj: isThanUnit ? newTotalGoj : (/গজ|yard/i.test(p.Unit) ? targetNewStock : 0),
+          ThanCount: isThanUnit ? newTotalThan : 0,
+          TotalYards: isThanUnit ? newTotalGoj : (/গজ|yard/i.test(p.Unit) ? targetNewStock : 0),
           UpdatedAt: new Date().toISOString(),
         };
       }
@@ -3370,8 +3371,9 @@ export default function App() {
           modifiedProductIds.forEach((pid) => {
             const prod = updatedProducts.find((p) => p.ProductID === pid);
             if (prod) {
-              const isThan = Boolean(prod.TotalThan || prod.YardsPerThan || /than|থান/i.test(prod.Unit || ''));
-              const yardsPerThan = Number(prod.YardsPerThan) || 0;
+              const pUnit = getProductDisplayUnit(prod);
+              const isThan = /than|থান/i.test(pUnit);
+              const yardsPerThan = isThan ? (Number(prod.YardsPerThan || prod.yardsPerThan || 0) || 25) : 0;
               const totalStock = (Number(prod.GodownStock) || 0) + (Number(prod.StockQuantity) || 0);
 
               postUpdateProduct(settings.apiUrl, {
@@ -3384,8 +3386,8 @@ export default function App() {
                 godownStock: Number(prod.GodownStock) || 0,
                 stockQuantity: Number(prod.StockQuantity) || 0,
                 totalStock: totalStock,
-                thanCount: isThan ? totalStock : prod.ThanCount,
-                totalYards: isThan ? (totalStock * yardsPerThan) : prod.TotalYards,
+                thanCount: isThan ? totalStock : 0,
+                totalYards: isThan ? (totalStock * yardsPerThan) : (/গজ|yard/i.test(pUnit) ? totalStock : 0),
                 hasVariants: Array.isArray(prod.Variants) && prod.Variants.length > 0,
                 variants: prod.Variants || [],
                 variantsJSON: JSON.stringify(prod.Variants || [])
@@ -3504,8 +3506,9 @@ export default function App() {
               const pid = String(itm.productId || '').trim();
               const prod = updatedProducts.find((p) => p.ProductID === pid);
               if (prod) {
-                const isThan = Boolean(prod.TotalThan || prod.YardsPerThan || /than|থান/i.test(prod.Unit || ''));
-                const yardsPerThan = Number(prod.YardsPerThan) || 0;
+                const pUnit = getProductDisplayUnit(prod);
+                const isThan = /than|থান/i.test(pUnit);
+                const yardsPerThan = isThan ? (Number(prod.YardsPerThan || prod.yardsPerThan || 0) || 25) : 0;
                 const totalStock = (Number(prod.GodownStock) || 0) + (Number(prod.StockQuantity) || 0);
 
                 postUpdateProduct(settings.apiUrl, {
@@ -3518,8 +3521,8 @@ export default function App() {
                   godownStock: Number(prod.GodownStock) || 0,
                   stockQuantity: Number(prod.StockQuantity) || 0,
                   totalStock: totalStock,
-                  thanCount: isThan ? totalStock : prod.ThanCount,
-                  totalYards: isThan ? (totalStock * yardsPerThan) : prod.TotalYards,
+                  thanCount: isThan ? totalStock : 0,
+                  totalYards: isThan ? (totalStock * yardsPerThan) : (/গজ|yard/i.test(pUnit) ? totalStock : 0),
                   hasVariants: Array.isArray(prod.Variants) && prod.Variants.length > 0,
                   variants: prod.Variants || [],
                   variantsJSON: JSON.stringify(prod.Variants || [])
@@ -3579,8 +3582,9 @@ export default function App() {
               const pid = String(itm.productId || '').trim();
               const prod = updatedProducts.find((p) => p.ProductID === pid);
               if (prod) {
-                const isThan = Boolean(prod.TotalThan || prod.YardsPerThan || /than|থান/i.test(prod.Unit || ''));
-                const yardsPerThan = Number(prod.YardsPerThan) || 0;
+                const pUnit = getProductDisplayUnit(prod);
+                const isThan = /than|থান/i.test(pUnit);
+                const yardsPerThan = isThan ? (Number(prod.YardsPerThan || prod.yardsPerThan || 0) || 25) : 0;
                 const totalStock = (Number(prod.GodownStock) || 0) + (Number(prod.StockQuantity) || 0);
 
                 postUpdateProduct(settings.apiUrl, {
@@ -3593,8 +3597,8 @@ export default function App() {
                   godownStock: Number(prod.GodownStock) || 0,
                   stockQuantity: Number(prod.StockQuantity) || 0,
                   totalStock: totalStock,
-                  thanCount: isThan ? totalStock : prod.ThanCount,
-                  totalYards: isThan ? (totalStock * yardsPerThan) : prod.TotalYards,
+                  thanCount: isThan ? totalStock : 0,
+                  totalYards: isThan ? (totalStock * yardsPerThan) : (/গজ|yard/i.test(pUnit) ? totalStock : 0),
                   hasVariants: Array.isArray(prod.Variants) && prod.Variants.length > 0,
                   variants: prod.Variants || [],
                   variantsJSON: JSON.stringify(prod.Variants || [])
@@ -3717,8 +3721,9 @@ export default function App() {
             modifiedProductIds.forEach((pid) => {
               const prod = updatedProducts.find((p) => p.ProductID === pid);
               if (prod) {
-                const isThan = Boolean(prod.TotalThan || prod.YardsPerThan || /than|থান/i.test(prod.Unit || ''));
-                const yardsPerThan = Number(prod.YardsPerThan) || 0;
+                const pUnit = getProductDisplayUnit(prod);
+                const isThan = /than|থান/i.test(pUnit);
+                const yardsPerThan = isThan ? (Number(prod.YardsPerThan || prod.yardsPerThan || 0) || 25) : 0;
                 const totalStock = (Number(prod.GodownStock) || 0) + (Number(prod.StockQuantity) || 0);
 
                 postUpdateProduct(settings.apiUrl, {
@@ -3731,8 +3736,8 @@ export default function App() {
                   godownStock: Number(prod.GodownStock) || 0,
                   stockQuantity: Number(prod.StockQuantity) || 0,
                   totalStock: totalStock,
-                  thanCount: isThan ? totalStock : prod.ThanCount,
-                  totalYards: isThan ? (totalStock * yardsPerThan) : prod.TotalYards,
+                  thanCount: isThan ? totalStock : 0,
+                  totalYards: isThan ? (totalStock * yardsPerThan) : (/গজ|yard/i.test(pUnit) ? totalStock : 0),
                   hasVariants: Array.isArray(prod.Variants) && prod.Variants.length > 0,
                   variants: prod.Variants || [],
                   variantsJSON: JSON.stringify(prod.Variants || [])
@@ -4447,11 +4452,14 @@ export default function App() {
       (sum, v) => sum + (Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : (v.ShopStock !== undefined ? v.ShopStock : 0))) || 0), 0
     );
     const totalAll = totalGodown + totalShop;
-    const isThan = Boolean(targetProduct.TotalThan || targetProduct.YardsPerThan || /than|থান/i.test(targetProduct.Unit || ''));
-    const yardsPerThan = Number(targetProduct.YardsPerThan) || 0;
+    const pUnit = getProductDisplayUnit(targetProduct);
+    const isThan = /than|থান/i.test(pUnit);
+    const yardsPerThan = isThan ? (Number(targetProduct.YardsPerThan || targetProduct.yardsPerThan || 0) || 25) : 0;
 
     const updatedProd = {
       ...targetProduct,
+      Unit: pUnit,
+      unit: pUnit,
       HasVariants: safeVariants.length > 0,
       Variants: safeVariants,
       VariantsJSON: JSON.stringify(safeVariants),
@@ -4461,10 +4469,15 @@ export default function App() {
       CurrentStock: totalShop,
       ShopStock: totalShop,
       TotalStock: totalAll,
-      TotalThan: isThan ? totalAll : targetProduct.TotalThan,
-      ThanCount: isThan ? totalAll : targetProduct.ThanCount,
-      TotalGoj: isThan ? (totalAll * yardsPerThan) : targetProduct.TotalGoj,
-      TotalYards: isThan ? (totalAll * yardsPerThan) : targetProduct.TotalYards,
+      YardsPerThan: isThan ? yardsPerThan : 0,
+      yardsPerThan: isThan ? yardsPerThan : 0,
+      TotalThan: isThan ? totalAll : 0,
+      totalThan: isThan ? totalAll : 0,
+      ThanCount: isThan ? totalAll : 0,
+      thanCount: isThan ? totalAll : 0,
+      TotalGoj: isThan ? (totalAll * yardsPerThan) : (/গজ|yard/i.test(pUnit) ? totalAll : 0),
+      TotalYards: isThan ? (totalAll * yardsPerThan) : (/গজ|yard/i.test(pUnit) ? totalAll : 0),
+      totalYards: isThan ? (totalAll * yardsPerThan) : (/গজ|yard/i.test(pUnit) ? totalAll : 0),
       UpdatedAt: new Date().toISOString()
     };
 
@@ -4651,7 +4664,7 @@ export default function App() {
             onOpenAnalyticsModal={() => executeAdminAction(() => setIsAnalyticsModalOpen(true), 'লাভ-ক্ষতি ও P&L অ্যানালিটিক্স রিপোর্ট দেখতে')}
             onOpenBackupModal={() => executeAdminAction(() => setIsBackupModalOpen(true), '১-ক্লিক সম্পূর্ণ ডাটা ব্যাকআপ ও এক্সেল ডাউনলোড করতে')}
             onOpenLowStockModal={() => setIsLowStockModalOpen(true)}
-            onOpenGodownLowStockModal={() => handleOpenStockTransferModalWithConfig('godown_stock', 'new', 'LOW_GODOWN')}
+            onOpenGodownLowStockModal={() => setCurrentView('godown_low_stock')}
             onOpenExpiryAlertModal={() => setIsExpiryAlertModalOpen(true)}
             expiringProductsCount={expiringProductsSummary.totalAlerts}
             onOpenCustomersModal={() => setIsCustomersModalOpen(true)}
@@ -5064,6 +5077,16 @@ export default function App() {
               currencySymbol={settings.CurrencySymbol || '৳'}
               onQuickRestock={handleQuickRestock}
               onAddToCart={handleAddToCart}
+            />
+          )}
+
+          {currentView === 'godown_low_stock' && (
+            <GodownStockAlertView
+              onClose={() => setCurrentView('pos')}
+              products={products}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              settings={settings}
+              onQuickRestock={handleQuickRestock}
             />
           )}
 

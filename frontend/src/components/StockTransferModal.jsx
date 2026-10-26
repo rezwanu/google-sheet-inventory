@@ -252,7 +252,7 @@ export default function StockTransferModal({
       const minAlert = Number(p.MinStockAlert || 5);
       const unit = getProductDisplayUnit(p);
       const isThan = /than|থান/i.test(unit);
-      const yardsPerThan = isThan ? (Number(p.YardsPerThan) || 0) : 0;
+      const yardsPerThan = isThan ? (Number(p.YardsPerThan || p.yardsPerThan || 0) || 25) : 0;
 
       totalGodown += gStock;
       totalShop += sStock;
@@ -435,7 +435,7 @@ export default function StockTransferModal({
       const vars = getVariantsOfProduct(p);
       const unit = getProductDisplayUnit(p);
       const isThan = /than|থান/i.test(unit);
-      const yardsPerThan = isThan ? (Number(p.YardsPerThan) || 0) : 0;
+      const yardsPerThan = isThan ? (Number(p.YardsPerThan || p.yardsPerThan || 0) || 25) : 0;
 
       if (vars.length > 0) {
         vars.forEach((v, vIdx) => {
@@ -3812,8 +3812,9 @@ export default function StockTransferModal({
         {variantRestockModal && (() => {
           const prod = variantRestockModal.product;
           const targetV = variantRestockModal.variant;
-          const isProdThan = Boolean(prod?.TotalThan || prod?.YardsPerThan || /than|থান/i.test(prod?.Unit || ''));
-          const prodYardsPerThan = Number(prod?.YardsPerThan) || 0;
+          const prodUnit = getProductDisplayUnit(prod);
+          const isProdThan = /than|থান/i.test(prodUnit);
+          const prodYardsPerThan = isProdThan ? (Number(prod?.YardsPerThan || prod?.yardsPerThan || 0) || 25) : 0;
           const varLabel = targetV.Color ? `রং: ${targetV.Color}` : targetV.Size ? `সাইজ: ${targetV.Size}` : (targetV.VariantID || `#${variantRestockModal.variantIdx + 1}`);
 
           return (
