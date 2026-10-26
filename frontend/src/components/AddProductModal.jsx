@@ -2513,8 +2513,9 @@ export default function AddProductModal({
                     const totalGoj = isThanUnit ? (totalGStock * (Number(formData.yardsPerThan) || 0)) : (/গজ|yard/i.test(formData.unit) ? totalGStock : 0);
                     const totalCostVal = variants.reduce((sum, v) => {
                       const qty = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
+                      const effectiveUnits = isThanUnit ? (qty * (Number(formData.yardsPerThan) || 0)) : qty;
                       const price = Number(v.CostPrice || formData.costPrice || 0);
-                      return sum + (qty * price);
+                      return sum + (effectiveUnits * price);
                     }, 0);
 
                     return (
@@ -2536,7 +2537,7 @@ export default function AddProductModal({
                         </div>
                         <div className="flex items-center space-x-2">
                           <span className="px-2.5 py-1 bg-emerald-50 rounded-lg border border-emerald-300 text-emerald-950 font-black">
-                            💰 মোট পণ্য ক্রয়মূল্য: {currencySymbol}{Math.round(totalCostVal).toLocaleString('bn-BD')}
+                            💰 মোট পণ্য ক্রয়মূল্য: {currencySymbol}{Math.round(totalCostVal).toLocaleString('bn-BD')} {isThanUnit && <span className="text-[10px] font-normal text-emerald-800">({totalGoj} গজ এর হিসাব)</span>}
                           </span>
                         </div>
                       </div>
@@ -2724,8 +2725,13 @@ export default function AddProductModal({
                                 <td className="p-2.5 text-center text-amber-950 font-black">
                                   {variants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0) * (Number(formData.yardsPerThan) || 0)} গজ
                                 </td>
-                                <td className="p-2.5 text-right font-mono text-emerald-800 font-bold" title="মোট পণ্য ক্রয়মূল্য">
-                                  {currencySymbol}{Math.round(variants.reduce((sum, v) => sum + ((Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0) * (Number(v.CostPrice || formData.costPrice || 0))), 0)).toLocaleString('bn-BD')}
+                                <td className="p-2.5 text-right font-mono text-emerald-800 font-bold" title="মোট পণ্য ক্রয়মূল্য (গজ অনুযায়ী)">
+                                  {currencySymbol}{Math.round(variants.reduce((sum, v) => {
+                                    const thans = Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0;
+                                    const goj = thans * (Number(formData.yardsPerThan) || 0);
+                                    const price = Number(v.CostPrice || formData.costPrice || 0);
+                                    return sum + (goj * price);
+                                  }, 0)).toLocaleString('bn-BD')}
                                 </td>
                               </>
                             ) : (

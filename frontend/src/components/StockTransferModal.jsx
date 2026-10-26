@@ -2113,13 +2113,24 @@ export default function StockTransferModal({
                               const effectiveGStock = hasVars && varGStockSum > 0 ? varGStockSum : gStock;
                               const totalGoj = isThan ? (effectiveGStock * yardsPerThan) : (isGoj ? effectiveGStock : 0);
                               const unitCost = Number(p.CostPrice || p.costPrice || p.PurchasePrice || p.purchasePrice || p.Cost || p.cost || p.BuyingPrice || p.BuyPrice || 0);
-                              const totalGodownCost = hasVars
-                                ? vars.reduce((sum, v) => {
-                                    const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0));
-                                    const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
-                                    return sum + (vGStock * vCost);
-                                  }, 0)
-                                : (effectiveGStock * unitCost);
+                              const totalGodownCost = isThan
+                                ? (hasVars
+                                    ? vars.reduce((sum, v) => {
+                                        const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0));
+                                        const vGoj = vGStock * yardsPerThan;
+                                        const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+                                        return sum + (vGoj * vCost);
+                                      }, 0)
+                                    : (totalGoj * unitCost))
+                                : isGoj
+                                ? (totalGoj * unitCost)
+                                : (hasVars
+                                    ? vars.reduce((sum, v) => {
+                                        const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0));
+                                        const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+                                        return sum + (vGStock * vCost);
+                                      }, 0)
+                                    : (effectiveGStock * unitCost));
 
                               return (
                                 <React.Fragment key={p.ProductID}>
@@ -2432,8 +2443,8 @@ export default function StockTransferModal({
                                                             </div>
                                                           )}
                                                           {vCost > 0 && vGStock > 0 && (
-                                                            <div className="text-[9px] text-purple-700 font-bold">
-                                                              ৳{Math.round(vGStock * vCost).toLocaleString('bn-BD')}
+                                                            <div className="text-[9px] text-purple-700 font-bold" title="ভ্যারিয়েন্ট গোডাউন মোট মূল্য">
+                                                              ৳{Math.round((isThan ? (vGStock * yardsPerThan) : vGStock) * vCost).toLocaleString('bn-BD')}
                                                             </div>
                                                           )}
                                                         </td>
@@ -2593,7 +2604,7 @@ export default function StockTransferModal({
                                       <div className="text-[10px] text-indigo-700 font-bold mt-0.5 flex items-center space-x-1.5 flex-wrap">
                                         <span>গজ/থান: {item.yardsPerThan}</span>
                                         <span>• গোডাউন: {item.godownYards} গজ</span>
-                                        <span>• মোট স্টক মূল্য: ৳{Math.round(item.godownStock * (item.costPrice || 0)).toLocaleString('bn-BD')}</span>
+                                        <span>• মোট স্টক মূল্য: ৳{Math.round((item.godownYards || item.godownStock) * (item.costPrice || 0)).toLocaleString('bn-BD')}</span>
                                       </div>
                                     ) : (
                                       <div className="text-[10px] text-slate-700 font-bold mt-0.5 flex items-center space-x-1.5 flex-wrap">
