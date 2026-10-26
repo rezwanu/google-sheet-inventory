@@ -118,6 +118,7 @@ export default function StockTransferModal({
   // =========================================================================
   const [overviewSearch, setOverviewSearch] = useState('');
   const [overviewFilter, setOverviewFilter] = useState(() => {
+    if (initialTab === 'godown_low_stock' || initialFilter === 'LOW_GODOWN') return 'LOW_GODOWN';
     if (initialTab === 'godown_stock') return 'IN_GODOWN';
     if (initialTab === 'shop_stock') return 'IN_SHOP';
     return initialFilter || 'ALL';
@@ -176,9 +177,12 @@ export default function StockTransferModal({
   };
 
   useEffect(() => {
-    if (initialTab === 'godown_stock') {
+    if (initialTab === 'godown_low_stock') {
       setActiveMainTab('overview');
-      setOverviewFilter('IN_GODOWN');
+      setOverviewFilter('LOW_GODOWN');
+    } else if (initialTab === 'godown_stock') {
+      setActiveMainTab('overview');
+      setOverviewFilter(initialFilter === 'LOW_GODOWN' ? 'LOW_GODOWN' : 'IN_GODOWN');
     } else if (initialTab === 'shop_stock') {
       setActiveMainTab('overview');
       setOverviewFilter('IN_SHOP');
@@ -237,6 +241,7 @@ export default function StockTransferModal({
     let totalGodown = 0;
     let totalShop = 0;
     let needTransferCount = 0;
+    let godownLowCount = 0;
     let totalVariants = 0;
     let fabricGodownYards = 0;
     let fabricShopYards = 0;
@@ -265,6 +270,11 @@ export default function StockTransferModal({
       if (sStock <= minAlert && gStock > 0) {
         needTransferCount++;
       }
+
+      const hasLowVar = vars.length > 0 && vars.some(v => (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0) <= 2);
+      if (gStock <= minAlert || hasLowVar) {
+        godownLowCount++;
+      }
     });
 
     const inTransitChallans = stockTransfers.filter((t) => t.Status === 'In Transit').length;
@@ -274,6 +284,7 @@ export default function StockTransferModal({
       totalShop,
       totalAll: totalGodown + totalShop,
       needTransferCount,
+      godownLowCount,
       inTransitChallans,
       totalVariants,
       fabricGodownYards,
@@ -318,6 +329,9 @@ export default function StockTransferModal({
       let matchFilter = true;
       if (overviewFilter === 'NEED_TRANSFER') {
         matchFilter = sStock <= minAlert && gStock > 0;
+      } else if (overviewFilter === 'LOW_GODOWN' || overviewFilter === 'GODOWN_ALERT') {
+        const hasLowVar = vars.length > 0 && vars.some(v => (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0) <= 2);
+        matchFilter = gStock <= minAlert || hasLowVar;
       } else if (overviewFilter === 'IN_GODOWN') {
         matchFilter = gStock > 0;
       } else if (overviewFilter === 'IN_SHOP') {
@@ -1984,6 +1998,13 @@ export default function StockTransferModal({
                           className={`px-2.5 py-1 rounded-lg transition-all ${overviewFilter === 'NEED_TRANSFER' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                         >
                           ⚠️ দোকানে কম ({stockKpis.needTransferCount})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOverviewFilter('LOW_GODOWN')}
+                          className={`px-2.5 py-1 rounded-lg transition-all ${overviewFilter === 'LOW_GODOWN' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                        >
+                          🚨 গোডাউনে কম ({stockKpis.godownLowCount || 0})
                         </button>
                         <button
                           type="button"

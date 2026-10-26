@@ -57,6 +57,7 @@ export default function Sidebar({
   pendingOrdersCount = 0,
   currencySymbol = '৳',
   lowStockCount = 0,
+  godownLowStockCount = 0,
   customers = [],
   suppliersCount = 0,
   pendingPOCount = 0,
@@ -77,6 +78,7 @@ export default function Sidebar({
   onOpenShopOutflowModal,
   onOpenShopChallansModal,
   onOpenGodownStockModal,
+  onOpenGodownLowStockModal,
   onOpenGodownOutflowModal,
   onOpenGodownTransferModal,
   onOpenTailoringModal,
@@ -305,8 +307,8 @@ export default function Sidebar({
       dotColor: 'bg-indigo-600',
       accentBorder: 'border-indigo-500',
       tagColor: 'text-indigo-700 bg-indigo-50/80',
-      hasAlert: expiringProductsCount > 0,
-      alertCount: expiringProductsCount,
+      hasAlert: expiringProductsCount > 0 || godownLowStockCount > 0,
+      alertCount: expiringProductsCount + godownLowStockCount,
       items: [
         {
           id: 'godown_stock',
@@ -317,6 +319,17 @@ export default function Sidebar({
           isActive: currentView === 'godown_stock',
           onClick: () => onNavigate ? onNavigate('godown_stock') : onOpenGodownStockModal ? onOpenGodownStockModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
           badge: null
+        },
+        {
+          id: 'godown_low_stock',
+          title: 'গোডাউন স্টক অ্যালার্ট',
+          subTitle: 'গোডাউনে ঘাটতি ও কম স্টক সতর্কতা',
+          icon: AlertTriangle,
+          iconGradient: godownLowStockCount > 0 ? 'from-rose-500 to-amber-600 text-white shadow-rose-500/30' : 'from-slate-400 to-slate-600 text-white',
+          isAlertItem: godownLowStockCount > 0,
+          isActive: currentView === 'godown_low_stock',
+          onClick: () => onNavigate ? onNavigate('godown_low_stock') : onOpenGodownLowStockModal ? onOpenGodownLowStockModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
+          badge: godownLowStockCount > 0 ? { text: `${godownLowStockCount}টি`, color: 'bg-rose-600 text-white animate-pulse shadow-xs' } : null
         },
         {
           id: 'godown_outflow',
@@ -621,7 +634,9 @@ export default function Sidebar({
     onOpenFabricWastageModal,
     onOpenBarcodeModal,
     onOpenExpiryAlertModal,
-    onOpenLowStockModal
+    onOpenLowStockModal,
+    godownLowStockCount,
+    onOpenGodownLowStockModal
   ]);
 
   return (

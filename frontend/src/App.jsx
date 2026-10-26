@@ -424,6 +424,10 @@ export default function App() {
   }, [activeUser, isPinAuthorizedSession]);
 
   const handleSecureNavigate = useCallback((view) => {
+    if (view === 'godown_low_stock') {
+      handleOpenStockTransferModalWithConfig('godown_stock', 'new', 'LOW_GODOWN');
+      return;
+    }
     if (view === 'analytics') {
       executeAdminAction(() => setCurrentView('analytics'), 'লাভ-ক্ষতি ও P&L অ্যানালিটিক্স রিপোর্ট দেখতে');
       return;
@@ -618,12 +622,32 @@ export default function App() {
     setIsProductDetailsOpen(true);
   };
 
-  // কম স্টকের পণ্যের মোট সংখ্যা
+  // কম স্টকের পণ্যের মোট সংখ্যা (দোকান)
   const lowStockCount = React.useMemo(() => {
     return products.filter((p) => {
       const stock = Number(p.StockQuantity || 0);
       const minAlert = Number(p.MinStockAlert || 5);
       return stock <= minAlert;
+    }).length;
+  }, [products]);
+
+  // গোডাউনে কম স্টকের পণ্যের মোট সংখ্যা (গোডাউন)
+  const godownLowStockCount = React.useMemo(() => {
+    return products.filter((p) => {
+      const vars = Array.isArray(p.Variants) && p.Variants.length > 0
+        ? p.Variants
+        : (typeof p.VariantsJSON === 'string' && p.VariantsJSON.trim() ? (() => { try { return JSON.parse(p.VariantsJSON); } catch (e) { return []; } })() : []);
+      const minAlert = Number(p.MinStockAlert || 5);
+      if (vars.length > 0) {
+        const gStock = vars.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0), 0);
+        const hasLowVariant = vars.some((v) => {
+          const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0));
+          return vGStock <= 2;
+        });
+        return gStock <= minAlert || hasLowVariant;
+      }
+      const gStock = Number(p.GodownStock || 0);
+      return gStock <= minAlert;
     }).length;
   }, [products]);
 
@@ -4617,6 +4641,7 @@ export default function App() {
             cartTotal={Array.isArray(cart) ? cart.reduce((a, b) => a + (Number(b.sellingPrice) || 0) * (Number(b.quantity) || 0), 0) : 0}
             currencySymbol={settings.CurrencySymbol || '৳'}
             lowStockCount={lowStockCount}
+            godownLowStockCount={godownLowStockCount}
             pendingOrdersCount={pendingOrdersCount}
             onOpenStockModal={() => {
               setQuickRestockProductId('');
@@ -4626,6 +4651,7 @@ export default function App() {
             onOpenAnalyticsModal={() => executeAdminAction(() => setIsAnalyticsModalOpen(true), 'লাভ-ক্ষতি ও P&L অ্যানালিটিক্স রিপোর্ট দেখতে')}
             onOpenBackupModal={() => executeAdminAction(() => setIsBackupModalOpen(true), '১-ক্লিক সম্পূর্ণ ডাটা ব্যাকআপ ও এক্সেল ডাউনলোড করতে')}
             onOpenLowStockModal={() => setIsLowStockModalOpen(true)}
+            onOpenGodownLowStockModal={() => handleOpenStockTransferModalWithConfig('godown_stock', 'new', 'LOW_GODOWN')}
             onOpenExpiryAlertModal={() => setIsExpiryAlertModalOpen(true)}
             expiringProductsCount={expiringProductsSummary.totalAlerts}
             onOpenCustomersModal={() => setIsCustomersModalOpen(true)}
