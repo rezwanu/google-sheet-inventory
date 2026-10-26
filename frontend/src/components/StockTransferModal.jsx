@@ -2189,21 +2189,47 @@ export default function StockTransferModal({
                                             ID: {p.ProductID} {p.Barcode ? `| #${p.Barcode}` : ''}
                                           </div>
                                           {isThan ? (
-                                            <div className="text-[10.5px] text-indigo-700 font-bold mt-0.5 flex items-center space-x-1.5 flex-wrap">
-                                              <span>গোডাউন থান: {gStock}</span>
-                                              {yardsPerThan > 0 && <span>• গজ/থান: {yardsPerThan}</span>}
-                                              {yardsPerThan > 0 && <span>• মোট: {gStock * yardsPerThan} গজ</span>}
-                                              {totalGodownCost > 0 && <span>• মোট স্টক মূল্য: {currencySymbol}{Math.round(totalGodownCost).toLocaleString('bn-BD')}</span>}
+                                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10.5px] font-bold">
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs">
+                                                🏭 গোডাউন থান: {gStock}
+                                              </span>
+                                              {yardsPerThan > 0 && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs">
+                                                  📏 গজ/থান: {yardsPerThan}
+                                                </span>
+                                              )}
+                                              {yardsPerThan > 0 && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 shadow-2xs">
+                                                  ✨ মোট: {gStock * yardsPerThan} গজ
+                                                </span>
+                                              )}
+                                              {totalGodownCost > 0 && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-purple-50 text-purple-900 border border-purple-200 shadow-2xs">
+                                                  💰 মোট স্টক মূল্য: {currencySymbol}{Math.round(totalGodownCost).toLocaleString('bn-BD')}
+                                                </span>
+                                              )}
                                             </div>
                                           ) : isGoj ? (
-                                            <div className="text-[10.5px] text-emerald-700 font-bold mt-0.5 flex items-center space-x-1.5 flex-wrap">
-                                              <span>গোডাউন মজুত: {gStock} গজ</span>
-                                              {totalGodownCost > 0 && <span>• মোট স্টক মূল্য: {currencySymbol}{Math.round(totalGodownCost).toLocaleString('bn-BD')}</span>}
+                                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10.5px] font-bold">
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 shadow-2xs">
+                                                🏭 গোডাউন মজুত: {gStock} গজ
+                                              </span>
+                                              {totalGodownCost > 0 && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-purple-50 text-purple-900 border border-purple-200 shadow-2xs">
+                                                  💰 মোট স্টক মূল্য: {currencySymbol}{Math.round(totalGodownCost).toLocaleString('bn-BD')}
+                                                </span>
+                                              )}
                                             </div>
                                           ) : (
-                                            <div className="text-[10.5px] text-slate-700 font-bold mt-0.5 flex items-center space-x-1.5 flex-wrap">
-                                              <span>গোডাউন মজুত: {gStock} {unit}</span>
-                                              {totalGodownCost > 0 && <span>• মোট স্টক মূল্য: {currencySymbol}{Math.round(totalGodownCost).toLocaleString('bn-BD')}</span>}
+                                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10.5px] font-bold">
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-sky-50 text-sky-800 border border-sky-200 shadow-2xs">
+                                                🏭 গোডাউন মজুত: {gStock} {unit}
+                                              </span>
+                                              {totalGodownCost > 0 && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-purple-50 text-purple-900 border border-purple-200 shadow-2xs">
+                                                  💰 মোট স্টক মূল্য: {currencySymbol}{Math.round(totalGodownCost).toLocaleString('bn-BD')}
+                                                </span>
+                                              )}
                                             </div>
                                           )}
                                         </div>
@@ -2448,9 +2474,9 @@ export default function StockTransferModal({
                                                             </div>
                                                           )}
                                                           {vCost > 0 && vGStock > 0 && (
-                                                            <div className="text-[9px] text-purple-700 font-bold" title="ভ্যারিয়েন্ট গোডাউন মোট মূল্য">
+                                                            <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200 text-[9px] font-bold" title="ভ্যারিয়েন্ট গোডাউন মোট মূল্য">
                                                               {currencySymbol}{Math.round((isThan ? (vGStock * yardsPerThan) : vGStock) * vCost).toLocaleString('bn-BD')}
-                                                            </div>
+                                                            </span>
                                                           )}
                                                         </td>
                                                         <td className="py-2 px-3 text-center bg-emerald-50/20">
@@ -2606,15 +2632,29 @@ export default function StockTransferModal({
                                       ID: {item.productId} {item.barcode ? `| #${item.barcode}` : ''}
                                     </div>
                                     {item.isThanUnit ? (
-                                      <div className="text-[10px] text-indigo-700 font-bold mt-0.5 flex items-center space-x-1.5 flex-wrap">
-                                        <span>গজ/থান: {item.yardsPerThan}</span>
-                                        <span>• গোডাউন: {item.godownYards} গজ</span>
-                                        <span>• মোট স্টক মূল্য: {currencySymbol}{Math.round((item.godownYards || item.godownStock) * (item.costPrice || 0)).toLocaleString('bn-BD')}</span>
+                                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200">
+                                          📏 গজ/থান: {item.yardsPerThan}
+                                        </span>
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                          🏭 গোডাউন: {item.godownYards} গজ
+                                        </span>
+                                        {Number(item.costPrice || 0) > 0 && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200">
+                                            💰 মোট স্টক মূল্য: {currencySymbol}{Math.round((item.godownYards || item.godownStock) * (item.costPrice || 0)).toLocaleString('bn-BD')}
+                                          </span>
+                                        )}
                                       </div>
                                     ) : (
-                                      <div className="text-[10px] text-slate-700 font-bold mt-0.5 flex items-center space-x-1.5 flex-wrap">
-                                        <span>গোডাউন মজুত: {item.godownStock} {item.unit}</span>
-                                        <span>• মোট স্টক মূল্য: {currencySymbol}{Math.round(item.godownStock * (item.costPrice || 0)).toLocaleString('bn-BD')}</span>
+                                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200">
+                                          🏭 গোডাউন মজুত: {item.godownStock} {item.unit}
+                                        </span>
+                                        {Number(item.costPrice || 0) > 0 && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200">
+                                            💰 মোট স্টক মূল্য: {currencySymbol}{Math.round(item.godownStock * (item.costPrice || 0)).toLocaleString('bn-BD')}
+                                          </span>
+                                        )}
                                       </div>
                                     )}
                                   </td>
