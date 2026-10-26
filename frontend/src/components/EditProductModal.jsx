@@ -31,6 +31,7 @@ import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';
 import BarcodeStickerModal from './BarcodeStickerModal';
 import { canViewCostPrice } from '../utils/permissionUtils';
+import { getProductDisplayUnit } from '../services/storage';
 
 // ছবি কম্প্রেস ও অপটিমাইজ ফাংশন (যাতে দ্রুত ড্রাইভে আপলোড হয়)
 const compressImageForUpload = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
@@ -350,7 +351,7 @@ export default function EditProductModal({
         stockQuantity: product.StockQuantity !== undefined ? String(product.StockQuantity) : '0',
         godownStock: product.GodownStock !== undefined ? String(product.GodownStock) : '0',
         minStockAlert: product.MinStockAlert !== undefined ? String(product.MinStockAlert) : '5',
-        unit: product.Unit || 'Pcs',
+        unit: getProductDisplayUnit(product),
         imageUrl: product.ImageUrl || '',
         imageCaption: product.ImageCaption || '',
         shortDescription: product.ShortDescription || '',
@@ -396,6 +397,8 @@ export default function EditProductModal({
   // অনন্য পরিমাপক একক (Units) তালিকা বের করা
   const uniqueUnits = useMemo(() => {
     const list = new Set();
+    list.add('থান');
+    list.add('গজ');
     units.forEach((u) => {
       const name = (u.ShortName || u.UnitName || '').trim();
       if (name) list.add(name);
@@ -704,6 +707,8 @@ export default function EditProductModal({
 
       await onSubmitUpdate({
         ...formData,
+        unit: formData.unit,
+        Unit: formData.unit,
         productId: product.ProductID,
         costPrice: costNum,
         minSellingPrice: minSellNum,
@@ -1209,6 +1214,9 @@ export default function EditProductModal({
                       {u}
                     </option>
                   ))}
+                  {formData.unit && !uniqueUnits.includes(formData.unit) && (
+                    <option value={formData.unit}>{formData.unit}</option>
+                  )}
                 </select>
               ) : (
                 <div className="space-y-1.5 p-2 bg-indigo-50/50 rounded-lg border border-indigo-100">

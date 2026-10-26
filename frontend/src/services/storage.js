@@ -503,6 +503,36 @@ export function saveLocalVariants(variants) {
   setSecureStorageItem(STORAGE_KEYS.VARIANTS, variants);
 }
 
+/**
+ * পণ্যের সঠিক পরিমাপক একক (Unit) নির্ধারণ করার কেন্দ্রীয় নির্ভরযোগ্য ফাংশন
+ * থান, গজ, মিটার, কেজি ইত্যাদি যেকোনো পরিমাপক একক নিখুঁতভাবে প্রদর্শন নিশ্চিত করে
+ * @param {Object} product
+ * @returns {string}
+ */
+export function getProductDisplayUnit(product) {
+  if (!product) return 'Pcs';
+  const raw = (product.Unit || product.unit || product['Unit'] || product['Unit Name'] || product.UOM || '').toString().trim();
+  
+  // যদি ইউজার ইতিমধ্যে কোনো নির্দিষ্ট একক সিলেক্ট করে থাকেন (যেমন: কেজি, গজ, মিটার, ডজন, থান ইত্যাদি) এবং তা 'Pcs' না হয়
+  if (raw && raw !== 'Pcs') {
+    return raw;
+  }
+  
+  // যদি একক ফাঁকা থাকে বা সিস্টেম ডিফল্ট 'Pcs' হয়ে থাকে কিন্তু পণ্যটিতে থান বা বস্ত্রালয় কাপড়ের পরিমাপক রয়েছে
+  const hasThanProp = Boolean(
+    Number(product.YardsPerThan || product.yardsPerThan || 0) > 0 ||
+    Number(product.ThanCount || product.thanCount || product.TotalThan || product.totalThan || 0) > 0 ||
+    /than|থান/i.test(raw) ||
+    /fabric|কাপড়|বস্ত্র/i.test(String(product.Category || product.category || ''))
+  );
+
+  if (hasThanProp) {
+    return 'থান';
+  }
+
+  return raw || 'Pcs';
+}
+
 // প্রোডাক্ট অবজেক্টের বিভিন্ন ফিল্ড ভ্যারিয়েশন (যেমন: StockQuantit vs StockQuantity) নর্মালাইজ করা
 // প্রোডাক্ট অবজেক্টের বিভিন্ন ফিল্ড ভ্যারিয়েশন ও হেডার কেসিং নর্মালাইজ করা
 export function normalizeProduct(p) {
@@ -623,7 +653,7 @@ export function normalizeProduct(p) {
                     : (p['Min Selling Price'] || p['Min Price'] || cost)))));
 
   // একক (Unit)
-  const unit = p.Unit || p.unit || p['Unit'] || p['Unit Name'] || p.UOM || 'Pcs';
+  let unit = (p.Unit || p.unit || p['Unit'] || p['Unit Name'] || p.UOM || '').toString().trim();
 
   // ছবি ও ক্যাপশন
   const img = p.ImageUrl || p.imageUrl || p.imageurl || p['Image Url'] || p['Image URL'] || p.Image || p.image || p.Photo || p.photo || '';
@@ -800,6 +830,21 @@ export function normalizeProduct(p) {
         ? Number(p.totalYards) 
         : (thanCount * yardsPerThan));
 
+  // পরিমাপক এককের শুদ্ধতা ও থান কাপড় অগ্রাধিকার যাচাই
+  const isThanProduct = Boolean(
+    yardsPerThan > 0 ||
+    thanCount > 0 ||
+    /than|থান/i.test(unit) ||
+    /fabric|কাপড়|বস্ত্র/i.test(String(category))
+  );
+
+  if ((!unit || unit === 'Pcs') && isThanProduct) {
+    unit = 'থান';
+  }
+  if (!unit) {
+    unit = 'Pcs';
+  }
+
   // সম্পূর্ণ খালি সারি বর্জন
   if (!name && !id && !barcode) {
     return null;
@@ -834,6 +879,7 @@ export function normalizeProduct(p) {
     minSellingPrice: Math.max(0, Number(minSellingPrice) >= 0 ? Number(minSellingPrice) : (Number(cost) || 0)),
     SellingPrice: Number(price) || 0,
     Unit: String(unit),
+    unit: String(unit),
     ImageUrl: formatImageUrl(String(img)),
     imageUrl: formatImageUrl(String(img)),
     ImageCaption: String(caption),
@@ -3568,7 +3614,7 @@ export function exportLocationStockExcelCSV(products = []) {
       p.ProductName || '',
       vars && vars.length > 0 ? `মূল পণ্য (${vars.length}টি ভ্যারিয়েন্ট)` : 'স্ট্যান্ডার্ড',
       p.Category || '',
-      p.Unit || 'Pcs',
+      getProductDisplayUnit(p),
       gStock,
       sStock,
       total,
@@ -3590,7 +3636,7 @@ export function exportLocationStockExcelCSV(products = []) {
           `  ↳ [ভ্যারিয়েন্ট] ${p.ProductName}`,
           vDesc,
           p.Category || '',
-          p.Unit || 'Pcs',
+          getProductDisplayUnit(p),
           vGStock,
           vSStock,
           vTotal,

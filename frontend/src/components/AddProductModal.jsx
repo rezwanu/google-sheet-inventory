@@ -851,10 +851,14 @@ export default function AddProductModal({
     const yardsPerThan = Number(formData.yardsPerThan) || 0;
     const totalYards = (Number(formData.initialStock || 0) + Number(formData.initialGodownStock || 0)) * yardsPerThan;
 
+    const effectiveUnit = (formData.unit || (unitCategory === 'than' ? 'থান' : 'Pcs')).trim();
+
     setIsSubmitting(true);
     try {
       await onSubmitProduct({
         ...formData,
+        unit: effectiveUnit,
+        Unit: effectiveUnit,
         costPrice: costNum,
         wholesalePrice: Number(formData.wholesalePrice) || 0,
         WholesalePrice: Number(formData.wholesalePrice) || 0,

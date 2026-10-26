@@ -43,7 +43,8 @@ import {
   exportShopOutflowExcelCSV,
   exportLocationStockExcelCSV,
   getGodownOutflowLedger,
-  getShopOutflowLedger
+  getShopOutflowLedger,
+  getProductDisplayUnit
 } from '../services/storage';
 
 export default function StockTransferModal({
@@ -353,7 +354,7 @@ export default function StockTransferModal({
             otherAttrs: v.Attributes ? Object.entries(v.Attributes).filter(([k]) => k !== 'Color' && k !== 'Size').map(([k, val]) => `${k}: ${val}`).join(', ') : '',
             barcode: v.Barcode || p.Barcode || '',
             category: p.Category,
-            unit: p.Unit || 'Pcs',
+            unit: getProductDisplayUnit(p),
             isThanUnit: isThan,
             yardsPerThan: yardsPerThan,
             godownStock: vGStock,
@@ -379,7 +380,7 @@ export default function StockTransferModal({
           otherAttrs: '',
           barcode: p.Barcode || '',
           category: p.Category,
-          unit: p.Unit || 'Pcs',
+          unit: getProductDisplayUnit(p),
           isThanUnit: isThan,
           yardsPerThan: yardsPerThan,
           godownStock: gStock,
@@ -414,7 +415,7 @@ export default function StockTransferModal({
       const vars = getVariantsOfProduct(p);
       const isThan = Boolean(p.TotalThan || p.YardsPerThan || /than|থান/i.test(p.Unit || ''));
       const yardsPerThan = Number(p.YardsPerThan) || 0;
-      const unit = p.Unit || 'Pcs';
+      const unit = getProductDisplayUnit(p);
 
       if (vars.length > 0) {
         vars.forEach((v, vIdx) => {
@@ -442,7 +443,7 @@ export default function StockTransferModal({
             otherAttrs,
             godownStock: vGStock,
             shopStock: vSStock,
-            unit: isThan ? 'থান' : unit,
+            unit: unit,
             isThan,
             yardsPerThan,
             costPrice: Number(v.CostPrice || p.CostPrice || 0),
@@ -465,7 +466,7 @@ export default function StockTransferModal({
           otherAttrs: '',
           godownStock: gStock,
           shopStock: sStock,
-          unit: isThan ? 'থান' : unit,
+          unit: unit,
           isThan,
           yardsPerThan,
           costPrice: Number(p.CostPrice || 0),
@@ -740,7 +741,7 @@ export default function StockTransferModal({
         return;
       }
       if (qty > gStk) {
-        alert(`গোডাউনে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${gStk} ${product.Unit || 'Pcs'} আছে।`);
+        alert(`গোডাউনে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${gStk} ${getProductDisplayUnit(product)} আছে।`);
         return;
       }
       itemsToTransfer.push({
@@ -761,7 +762,7 @@ export default function StockTransferModal({
         return;
       }
       if (qty > vGStk) {
-        alert(`এই ভ্যারিয়েন্টের গোডাউনে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${vGStk} ${product.Unit || 'Pcs'} আছে।`);
+        alert(`এই ভ্যারিয়েন্টের গোডাউনে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${vGStk} ${getProductDisplayUnit(product)} আছে।`);
         return;
       }
       const attrs = targetVar.Attributes || {};
@@ -822,7 +823,7 @@ export default function StockTransferModal({
             variantId: itm.variantId,
             variantName: itm.variantName,
             quantity: itm.quantity,
-            unit: product.Unit || 'Pcs',
+            unit: getProductDisplayUnit(product),
             costPrice: Number(product.CostPrice) || 0
           })),
           status: 'Received',
@@ -903,13 +904,13 @@ export default function StockTransferModal({
     }
 
     if (qty > availableSourceStock) {
-      alert(`প্রেরক স্থানে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${availableSourceStock} ${targetItem?.unit || targetProduct?.Unit || 'Pcs'} মজুত আছে।`);
+      alert(`প্রেরক স্থানে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${availableSourceStock} ${targetItem?.unit || getProductDisplayUnit(targetProduct)} মজুত আছে।`);
       return;
     }
 
     const pid = targetProduct?.ProductID || targetItem?.productId;
     const pName = targetProduct?.ProductName || targetItem?.productName;
-    const unit = targetItem?.unit || targetProduct?.Unit || 'Pcs';
+    const unit = targetItem?.unit || getProductDisplayUnit(targetProduct);
     const variantId = targetItem?.variantId || selectedVariantId || null;
     let variantName = targetItem?.variantName || '';
     let costPrice = targetItem?.costPrice || Number(targetProduct?.CostPrice || 0);
@@ -2148,8 +2149,10 @@ export default function StockTransferModal({
                                     <td className="py-3 px-3 text-slate-600 font-medium">
                                       {p.Category}
                                     </td>
-                                    <td className="py-3 px-3 text-center font-medium text-slate-500">
-                                      {p.Unit || 'Pcs'}
+                                    <td className="py-3 px-3 text-center">
+                                      <span className="inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold border border-slate-200">
+                                        {getProductDisplayUnit(p)}
+                                      </span>
                                     </td>
                                     <td className="py-3 px-4 text-center bg-indigo-50/30">
                                       <span className={`text-sm font-black font-mono ${gStock > 0 ? 'text-indigo-700' : 'text-slate-300'}`}>
@@ -2267,10 +2270,10 @@ export default function StockTransferModal({
                                                 </div>
                                                 <div className="flex items-center space-x-2 text-[10.5px]">
                                                   <span className="px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 font-semibold">
-                                                    ভ্যারিয়েন্ট গোডাউন মোট: <strong className="font-mono">{sumVarGodown}</strong> {isThan ? 'থান' : (p.Unit || 'Pcs')}
+                                                    ভ্যারিয়েন্ট গোডাউন মোট: <strong className="font-mono">{sumVarGodown}</strong> {isThan ? 'থান' : getProductDisplayUnit(p)}
                                                   </span>
                                                   <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold">
-                                                    ভ্যারিয়েন্ট দোকান মোট: <strong className="font-mono">{sumVarShop}</strong> {isThan ? 'থান' : (p.Unit || 'Pcs')}
+                                                    ভ্যারিয়েন্ট দোকান মোট: <strong className="font-mono">{sumVarShop}</strong> {isThan ? 'থান' : getProductDisplayUnit(p)}
                                                   </span>
                                                   {!isShopStockView && (
                                                     <button
@@ -2373,7 +2376,7 @@ export default function StockTransferModal({
                                                         </td>
                                                         <td className="py-2 px-3 text-center bg-indigo-50/20">
                                                           <span className="font-mono font-bold text-indigo-700">
-                                                            {vGStock} {isThan ? 'থান' : (p.Unit || 'Pcs')}
+                                                            {vGStock} {isThan ? 'থান' : getProductDisplayUnit(p)}
                                                           </span>
                                                           {isThan && yardsPerThan > 0 && (
                                                             <div className="text-[9.5px] text-indigo-500 font-semibold">
@@ -2383,7 +2386,7 @@ export default function StockTransferModal({
                                                         </td>
                                                         <td className="py-2 px-3 text-center bg-emerald-50/20">
                                                           <span className={`font-mono font-bold ${isVZero ? 'text-rose-600' : isVLow ? 'text-amber-600' : 'text-emerald-700'}`}>
-                                                            {vSStock} {isThan ? 'থান' : (p.Unit || 'Pcs')}
+                                                            {vSStock} {isThan ? 'থান' : getProductDisplayUnit(p)}
                                                           </span>
                                                           {isThan && yardsPerThan > 0 && (
                                                             <div className="text-[9.5px] text-emerald-600 font-semibold">
@@ -2542,8 +2545,10 @@ export default function StockTransferModal({
                                   <td className="py-3 px-3 text-slate-600 font-medium">
                                     {item.category}
                                   </td>
-                                  <td className="py-3 px-3 text-center font-medium text-slate-500">
-                                    {item.unit}
+                                  <td className="py-3 px-3 text-center">
+                                    <span className="inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold border border-slate-200">
+                                      {item.unit || getProductDisplayUnit(item.parentProduct)}
+                                    </span>
                                   </td>
                                   <td className="py-3 px-4 text-center bg-indigo-50/30">
                                     <span className={`text-sm font-black font-mono ${item.godownStock > 0 ? 'text-indigo-700' : 'text-slate-300'}`}>
@@ -3753,7 +3758,7 @@ export default function StockTransferModal({
                     <div className="text-center flex-1 border-r border-indigo-200/60">
                       <span className="text-[10.5px] font-semibold text-slate-500 block">🏭 বর্তমান গোডাউন</span>
                       <span className="text-sm font-black text-indigo-950 font-mono">
-                        {targetV.GodownStock || 0} {isProdThan ? 'থান' : (prod.Unit || 'Pcs')}
+                        {targetV.GodownStock || 0} {isProdThan ? 'থান' : getProductDisplayUnit(prod)}
                       </span>
                       {isProdThan && prodYardsPerThan > 0 && (
                         <span className="text-[9.5px] text-indigo-600 block font-semibold">
@@ -3764,7 +3769,7 @@ export default function StockTransferModal({
                     <div className="text-center flex-1">
                       <span className="text-[10.5px] font-semibold text-slate-500 block">🏬 বর্তমান দোকান</span>
                       <span className="text-sm font-black text-emerald-950 font-mono">
-                        {targetV.StockQuantity || 0} {isProdThan ? 'থান' : (prod.Unit || 'Pcs')}
+                        {targetV.StockQuantity || 0} {isProdThan ? 'থান' : getProductDisplayUnit(prod)}
                       </span>
                       {isProdThan && prodYardsPerThan > 0 && (
                         <span className="text-[9.5px] text-emerald-600 block font-semibold">
@@ -3870,7 +3875,7 @@ export default function StockTransferModal({
                         placeholder="0"
                       />
                       <span className="absolute right-3 top-2.5 text-xs font-bold text-slate-400">
-                        {isProdThan ? 'থান' : (prod.Unit || 'Pcs')}
+                        {isProdThan ? 'থান' : getProductDisplayUnit(prod)}
                       </span>
                     </div>
                     {isProdThan && prodYardsPerThan > 0 && (
@@ -4097,7 +4102,7 @@ export default function StockTransferModal({
                   <div className="grid grid-cols-2 gap-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
                     <div>
                       <label className="block text-[11px] font-bold text-indigo-900 mb-1">
-                        গোডাউন স্টক ({isThan ? 'থান' : (prod.Unit || 'Pcs')})
+                        গোডাউন স্টক ({isThan ? 'থান' : getProductDisplayUnit(prod)})
                       </label>
                       <input
                         type="number"
@@ -4116,7 +4121,7 @@ export default function StockTransferModal({
 
                     <div>
                       <label className="block text-[11px] font-bold text-emerald-900 mb-1">
-                        দোকান স্টক ({isThan ? 'থান' : (prod.Unit || 'Pcs')})
+                        দোকান স্টক ({isThan ? 'থান' : getProductDisplayUnit(prod)})
                       </label>
                       <input
                         type="number"
@@ -4389,7 +4394,7 @@ export default function StockTransferModal({
           const hasVars = Array.isArray(vars) && vars.length > 0;
           const isThan = Boolean(prod.TotalThan || prod.YardsPerThan || /than|থান/i.test(prod.Unit || ''));
           const prodYardsPerThan = Number(prod.YardsPerThan) || 0;
-          const unitLabel = isThan ? 'থান' : (prod.Unit || 'Pcs');
+          const unitLabel = isThan ? 'থান' : getProductDisplayUnit(prod);
 
           const currentTargetVar = hasVars
             ? vars.find((v) => String(v.VariantID || v.variantId) === String(directTransferModal.selectedVariantId)) || vars[0]
