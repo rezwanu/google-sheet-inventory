@@ -34,7 +34,9 @@ import {
   Scale,
   Ruler,
   Package,
-  Droplets
+  Droplets,
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';
@@ -542,6 +544,10 @@ export default function AddProductModal({
   const [newUnitName, setNewUnitName] = useState('');
   const [newUnitShortName, setNewUnitShortName] = useState('');
 
+  // আধুনিক স্টেপ/ট্যাব স্টেট (প্রাথমিক তথ্য, মূল্য ও স্টক, ভ্যারিয়েন্ট ও ছবি)
+  const [activeFormTab, setActiveFormTab] = useState('basic'); // 'basic' | 'pricing' | 'variants'
+  const [showLivePreview, setShowLivePreview] = useState(true); // ডেস্কটপে প্রিভিউ প্যানেল টগল
+
   // মোবাইল ভিউতে ট্যাব সুইচ (ফর্ম vs প্রিভিউ)
   const [mobileTab, setMobileTab] = useState('form'); // 'form' | 'preview'
 
@@ -818,8 +824,14 @@ export default function AddProductModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.productName.trim() || !formData.sellingPrice) {
-      alert('পণ্যের নাম এবং বিক্রয়মূল্য দেওয়া আবশ্যক।');
+    if (!formData.productName.trim()) {
+      setActiveFormTab('basic');
+      alert('অনুগ্রহ করে পণ্যের পূর্ণ নাম লিখুন।');
+      return;
+    }
+    if (!formData.sellingPrice) {
+      setActiveFormTab('pricing');
+      alert('অনুগ্রহ করে পণ্যের বিক্রয়মূল্য (MRP) নির্ধারণ করুন।');
       return;
     }
 
@@ -985,6 +997,21 @@ export default function AddProductModal({
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* ডেস্কটপ মোডে লাইভ প্রিভিউ প্যানেল টগল বাটন */}
+            <button
+              type="button"
+              onClick={() => setShowLivePreview(!showLivePreview)}
+              className={`hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer mr-1 ${
+                showLivePreview
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs hover:bg-emerald-100'
+                  : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+              }`}
+              title="ডানপাশের লাইভ প্রিভিউ প্যানেল প্রদর্শন বা গোপন করুন"
+            >
+              <Eye className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{showLivePreview ? 'লাইভ প্রিভিউ: চালু' : 'লাইভ প্রিভিউ: বন্ধ'}</span>
+            </button>
+
             {/* মোবাইল মোডে ট্যাব সুইচ বাটন */}
             <div className="flex lg:hidden bg-slate-100 p-1 rounded-xl text-xs font-semibold mr-1">
               <button
@@ -1033,54 +1060,126 @@ export default function AddProductModal({
           </div>
         </div>
 
+        {/* আধুনিক স্টেপ / ট্যাব নেভিগেশন বার */}
+        <div className="bg-slate-100/90 px-4 sm:px-8 py-2.5 border-b border-slate-200/90 flex flex-wrap items-center justify-between gap-3 select-none">
+          {/* ৩টি প্রধান ফর্ম ট্যাব */}
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
+            <button
+              type="button"
+              onClick={() => setActiveFormTab('basic')}
+              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+                activeFormTab === 'basic'
+                  ? 'bg-white text-emerald-800 shadow-sm border border-emerald-300 ring-2 ring-emerald-500/10'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              }`}
+            >
+              <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-black ${
+                activeFormTab === 'basic' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
+              }`}>
+                ১
+              </span>
+              <span>প্রাথমিক তথ্য</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveFormTab('pricing')}
+              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+                activeFormTab === 'pricing'
+                  ? 'bg-white text-emerald-800 shadow-sm border border-emerald-300 ring-2 ring-emerald-500/10'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              }`}
+            >
+              <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-black ${
+                activeFormTab === 'pricing' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
+              }`}>
+                ২
+              </span>
+              <span>মূল্য ও স্টক</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveFormTab('variants')}
+              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+                activeFormTab === 'variants'
+                  ? 'bg-white text-indigo-800 shadow-sm border border-indigo-300 ring-2 ring-indigo-500/10'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              }`}
+            >
+              <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-black ${
+                activeFormTab === 'variants' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'
+              }`}>
+                ৩
+              </span>
+              <span>ভ্যারিয়েন্ট ও ছবি</span>
+              {productType === 'variable' && variants.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-indigo-100 text-indigo-800 font-black">
+                  {variants.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* ডানে পণ্য ধরন নির্বাচন (সাধারণ / ভ্যারিয়েন্ট / বান্ডেল) */}
+          <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setProductType('simple')}
+              className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                productType === 'simple'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Box className="w-3.5 h-3.5" />
+              <span>সাধারণ পণ্য</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setProductType('variable');
+                setActiveFormTab('variants');
+              }}
+              className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                productType === 'variable'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>ভ্যারিয়েন্ট পণ্য</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setProductType('bundle');
+                setActiveFormTab('variants');
+              }}
+              className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                productType === 'bundle'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>কম্বো বান্ডেল</span>
+            </button>
+          </div>
+        </div>
+
         {/* প্রধান কনটেন্ট এরিয়া (2-কলাম গ্রিড লেআউট) */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80">
             
-            {/* বাম কলাম: ফর্ম ইনপুটসমূহ (৭ কলাম) */}
-            <div className={`lg:col-span-7 p-5 sm:p-7 space-y-6 ${mobileTab === 'preview' ? 'hidden lg:block' : 'block'}`}>
+            {/* বাম কলাম: ফর্ম ইনপুটসমূহ */}
+            <div className={`${showLivePreview ? 'lg:col-span-7 xl:col-span-8' : 'lg:col-span-12'} p-5 sm:p-7 space-y-6 ${mobileTab === 'preview' ? 'hidden lg:block' : 'block'}`}>
               
-              {/* পণ্য ধরন নির্বাচন (সাধারণ পণ্য vs ভ্যারিয়েন্ট vs কম্বো বান্ডেল) */}
-              <div className="bg-slate-100/90 p-1.5 rounded-2xl flex items-center space-x-1.5 border border-slate-200 shadow-2xs">
-                <button
-                  type="button"
-                  onClick={() => setProductType('simple')}
-                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
-                    productType === 'simple'
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'text-slate-600 hover:bg-white'
-                  }`}
-                >
-                  <Box className="w-3.5 h-3.5" />
-                  <span>সাধারণ পণ্য</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setProductType('variable')}
-                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
-                    productType === 'variable'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:bg-white'
-                  }`}
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>ভ্যারিয়েন্ট পণ্য</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setProductType('bundle')}
-                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
-                    productType === 'bundle'
-                      ? 'bg-amber-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:bg-white'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>কম্বো বান্ডেল</span>
-                </button>
-              </div>
+              {/* ধাপ ১: প্রাথমিক তথ্য ও বারকোড */}
+              {activeFormTab === 'basic' && (
+                <div className="space-y-6 animate-in fade-in duration-150">
 
               {/* সেকশন ১: মৌলিক তথ্য */}
               <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
@@ -1100,7 +1199,6 @@ export default function AddProductModal({
                   <input
                     type="text"
                     name="productName"
-                    required
                     placeholder="যেমন: প্রিমিয়াম চিনিগুঁড়া সুগন্ধি চাল ১ কেজি প্যাকেট"
                     value={formData.productName}
                     onChange={handleChange}
@@ -1415,17 +1513,33 @@ export default function AddProductModal({
                 </div>
               </div>
 
-              {/* সেকশন ২: মূল্য নির্ধারণ ও স্টক লেভেল */}
-              <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
-                  <span className="text-xs font-bold text-slate-800 flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                    <span>২. মূল্য ও ইনভেন্টরি স্টক</span>
-                  </span>
-                  <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-bold">
-                    রিয়েল-টাইম মার্জিন ক্যালকুলেটর
-                  </span>
+                {/* ধাপ ১ সমাপ্তি ও ধাপ ২-এ যাওয়ার বাটন */}
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveFormTab('pricing')}
+                    className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center space-x-2 cursor-pointer active:scale-95"
+                  >
+                    <span>পরবর্তী ধাপ: মূল্য ও স্টক নির্ধারণ</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
                 </div>
+              </div>
+            )}
+
+            {/* ধাপ ২: মূল্য নির্ধারণ ও স্টক লেভেল */}
+            {activeFormTab === 'pricing' && (
+              <div className="space-y-6 animate-in fade-in duration-150">
+                <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                    <span className="text-xs font-bold text-slate-800 flex items-center space-x-2">
+                      <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                      <span>২. মূল্য ও ইনভেন্টরি স্টক</span>
+                    </span>
+                    <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-bold">
+                      রিয়েল-টাইম মার্জিন ক্যালকুলেটর
+                    </span>
+                  </div>
 
                 {/* আর্থিক তথ্য: ক্রয়মূল্য, পাইকারি দর, ফ্লোর প্রাইস (নূন্যতম বিক্রয়মূল্য) ও বিক্রয়মূল্য */}
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -1524,7 +1638,6 @@ export default function AddProductModal({
                         type="number"
                         step="0.01"
                         min="0"
-                        required
                         name="sellingPrice"
                         placeholder="120.00"
                         value={formData.sellingPrice}
@@ -2341,7 +2454,52 @@ export default function AddProductModal({
                 </div>
               </div>
 
-              {/* Phase 6: ভ্যারিয়েন্ট কনফিগারেশন (Variable Product) */}
+                {/* ধাপ ২ নেভিগেশন বাটন */}
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveFormTab('basic')}
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>পূর্ববর্তী: প্রাথমিক তথ্য</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveFormTab('variants')}
+                    className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center space-x-2 cursor-pointer active:scale-95"
+                  >
+                    <span>পরবর্তী ধাপ: ভ্যারিয়েন্ট ও ছবি</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ধাপ ৩: ভ্যারিয়েন্ট, বান্ডেল ও মিডিয়া */}
+            {activeFormTab === 'variants' && (
+              <div className="space-y-6 animate-in fade-in duration-150">
+                {productType === 'simple' && (
+                  <div className="p-4 bg-gradient-to-r from-slate-50 to-indigo-50/40 border border-slate-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 font-bold shrink-0">
+                        <Box className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <strong className="block text-slate-900 font-bold">সাধারণ পণ্য নির্বাচিত</strong>
+                        <span className="text-[11px] text-slate-500">এই পণ্যের কোনো আলাদা রং বা সাইজ ভ্যারিয়েন্ট নেই। ভ্যারিয়েন্ট যোগ করতে চাইলে বাটন চাপুন।</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setProductType('variable')}
+                      className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center space-x-1 shrink-0 cursor-pointer"
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>ভ্যারিয়েন্ট তৈরি করুন</span>
+                    </button>
+                  </div>
+                )}
               {productType === 'variable' && (
                 <div className="bg-indigo-50/50 border border-indigo-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
                   <div className="flex items-center justify-between pb-2 border-b border-indigo-100">
@@ -3157,10 +3315,27 @@ export default function AddProductModal({
                 </div>
               </div>
 
+              {/* ধাপ ৩ নেভিগেশন বাটন */}
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveFormTab('pricing')}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>পূর্ববর্তী: মূল্য ও স্টক</span>
+                </button>
+                <span className="text-xs text-slate-400 font-medium hidden sm:inline">
+                  সব তথ্য যাচাই করে নিচে 'ডাটাবেসে পণ্য যোগ করুন' চাপুন
+                </span>
+              </div>
             </div>
+          )}
 
-            {/* ডান কলাম: লাইভ ক্যাটালগ কার্ড প্রিভিউ ও ফাইন্যান্সিয়াল ইনসাইটস (৫ কলাম) */}
-            <div className={`lg:col-span-5 p-5 sm:p-7 bg-gradient-to-b from-slate-50/60 to-white space-y-6 ${mobileTab === 'form' ? 'hidden lg:block' : 'block'}`}>
+        </div>
+
+            {/* ডান কলাম: লাইভ ক্যাটালগ কার্ড প্রিভিউ ও ফাইন্যান্সিয়াল ইনসাইটস */}
+            <div className={`${showLivePreview ? 'lg:col-span-5 xl:col-span-4' : 'hidden'} p-5 sm:p-7 bg-gradient-to-b from-slate-50/60 to-white space-y-6 ${mobileTab === 'form' ? 'hidden lg:block' : 'block'}`}>
               
               <div className="sticky top-4 space-y-5">
                 
@@ -3360,15 +3535,26 @@ export default function AddProductModal({
           </div>
 
           {/* মডাল ফুটার একশন বার (Sticky Bottom) */}
-          <div className="p-4 sm:px-8 sm:py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-            <div className="text-xs text-slate-500 hidden sm:block">
+          <div className="p-3 sm:px-8 sm:py-3.5 bg-slate-50/95 backdrop-blur-md border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs text-slate-600 flex items-center space-x-2 flex-wrap gap-y-1">
               {formData.productName.trim() ? (
-                <span className="text-emerald-700 font-semibold flex items-center space-x-1.5">
-                  <Check className="w-3.5 h-3.5" />
-                  <span>পণ্য প্রস্তুত: <strong>{formData.productName.trim()}</strong></span>
-                </span>
+                <>
+                  <span className="text-emerald-800 font-bold flex items-center space-x-1">
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{formData.productName.trim()}</span>
+                  </span>
+                  {formData.sellingPrice && (
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[11px]">
+                      বিক্রি: {currencySymbol}{formData.sellingPrice}
+                    </span>
+                  )}
+                  <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200 font-bold text-[11px]">
+                    গোডাউন: {variants.length > 0 ? variants.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0) : formData.initialGodownStock} {formData.unit}
+                    {isThanUnit && Number(formData.yardsPerThan) > 0 ? ` (${(variants.length > 0 ? variants.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : v.StockQuantity) || 0), 0) : Number(formData.initialGodownStock || 0)) * Number(formData.yardsPerThan)} গজ)` : ''}
+                  </span>
+                </>
               ) : (
-                <span>* আবশ্যক ফিল্ডসমূহ পূরণ করুন</span>
+                <span className="text-slate-400 font-medium">* পণ্যের নাম ও বিক্রয়মূল্য নির্ধারণ করুন</span>
               )}
             </div>
 
