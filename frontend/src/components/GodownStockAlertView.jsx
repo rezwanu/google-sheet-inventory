@@ -8,9 +8,14 @@ import {
   PackageX,
   CheckCircle2,
   AlertCircle,
-  RefreshCw,
-  Palette
+  ChevronDown,
+  ChevronRight,
+  Palette,
+  CornerDownRight,
+  Package,
+  Layers
 } from 'lucide-react';
+import { getProductDisplayUnit } from '../services/storage';
 
 export default function GodownStockAlertView({
   onClose,
@@ -21,7 +26,7 @@ export default function GodownStockAlertView({
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'OUT_OF_STOCK' | 'LOW_STOCK'
-  const [isPrintMode, setIsPrintMode] = useState(false);
+  const [expandedProductIds, setExpandedProductIds] = useState({});
 
   // পণ্য থেকে ভ্যারিয়েন্ট তালিকা নিরাপদ এক্সট্র্যাক্ট
   const getVariants = (p) => {
@@ -40,15 +45,20 @@ export default function GodownStockAlertView({
     return [];
   };
 
-  // গোডাউনে কম স্টক বা স্টক শেষ থাকা সকল ভ্যারিয়েন্ট ও সাধারণ পণ্যের তালিকা প্রস্তুতকরণ
-  const alertList = useMemo(() => {
+  // গোডাউনে কম স্টক বা স্টক শেষ থাকা পণ্য ও তাদের ভ্যারিয়েন্ট তালিকা গ্রুপড আকারে প্রস্তুতকরণ
+  const groupedAlertProducts = useMemo(() => {
     const list = [];
 
     products.forEach((p) => {
       const vars = getVariants(p);
       const minAlert = Number(p.MinStockAlert || 5);
+      const unit = getProductDisplayUnit(p);
+      const isThan = /than|থান/i.test(unit);
+      const yardsPerThan = isThan ? (Number(p.YardsPerThan || p.yardsPerThan || 0) || 25) : 0;
+      const hasVars = vars.length > 0;
 
-      if (vars.length > 0) {
+      if (hasVars) {
+        const alertingVariants = [];
         vars.forEach((v, vIdx) => {
           const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0));
           const vColor = v.Attributes?.Color || v.Color || '';
@@ -68,23 +78,43 @@ export default function GodownStockAlertView({
 
           if (isOut || isLow) {
             const neededQty = Math.max(10, (minAlert * 2) - vGStock);
-            list.push({
+            alertingVariants.push({
               key: `${p.ProductID}_${v.VariantID || vIdx}`,
-              productId: p.ProductID,
-              productName: p.ProductName,
-              isVariant: true,
+              variantId: v.VariantID || `var-${vIdx}`,
               variantDesc,
+              color: vColor,
+              size: vSize,
               barcode: v.Barcode || p.Barcode || '—',
               currentQty: vGStock,
               isOut,
               isLow,
               alertStatusText: isOut ? '🚨 সম্পূর্ণ স্টক শেষ' : '⚠️ সংকটজনক কম',
               recommendedRestockQty: `+${neededQty}`,
-              parentProduct: p,
-              variant: v
+              rawVariant: v
             });
           }
         });
+
+        if (alertingVariants.length > 0) {
+          const totalGodownStock = vars.reduce(
+            (sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0),
+            0
+          );
+          list.push({
+            productId: p.ProductID,
+            productName: p.ProductName,
+            category: p.Category || '',
+            unit,
+            isThan,
+            yardsPerThan,
+            barcode: p.Barcode || '—',
+            hasVariants: true,
+            totalVariantsCount: vars.length,
+            alertVariants: alertingVariants,
+            totalGodownStock,
+            parentProduct: p
+          });
+        }
       } else {
         const gStock = Number(p.GodownStock || 0);
         const isOut = gStock <= 0;
@@ -93,19 +123,23 @@ export default function GodownStockAlertView({
         if (isOut || isLow) {
           const neededQty = Math.max(10, (minAlert * 2) - gStock);
           list.push({
-            key: `${p.ProductID}_single`,
             productId: p.ProductID,
             productName: p.ProductName,
-            isVariant: false,
-            variantDesc: 'সাধারণ পণ্য (ভ্যারিয়েন্ট নেই)',
+            category: p.Category || '',
+            unit,
+            isThan,
+            yardsPerThan,
             barcode: p.Barcode || '—',
+            hasVariants: false,
+            totalVariantsCount: 0,
+            alertVariants: [],
+            totalGodownStock: gStock,
             currentQty: gStock,
             isOut,
             isLow,
             alertStatusText: isOut ? '🚨 সম্পূর্ণ স্টক শেষ' : '⚠️ সংকটজনক কম',
             recommendedRestockQty: `+${neededQty}`,
-            parentProduct: p,
-            variant: null
+            parentProduct: p
           });
         }
       }
@@ -114,54 +148,141 @@ export default function GodownStockAlertView({
     return list;
   }, [products]);
 
+  // ফিল্টার ও সার্চ অনুযায়ী প্রদর্শিত তালিকা
+  const filteredProducts = useMemo(() => {
+    return groupedAlertProducts.map((prod) => {
+      if (prod.hasVariants) {
+        // ফিল্টার অনুযায়ী ভ্যারিয়েন্ট ফিল্টার করা
+        const filteredVars = prod.alertVariants.filter((v) => {
+          if (filterType === 'OUT_OF_STOCK' && !v.isOut) return false;
+          if (filterType === 'LOW_STOCK' && !v.isLow) return false;
+
+          if (!searchQuery.trim()) return true;
+          const q = searchQuery.trim().toLowerCase();
+          return (
+            (prod.productName && prod.productName.toLowerCase().includes(q)) ||
+            (v.variantDesc && v.variantDesc.toLowerCase().includes(q)) ||
+            (v.barcode && v.barcode.toLowerCase().includes(q)) ||
+            (prod.productId && prod.productId.toLowerCase().includes(q))
+          );
+        });
+
+        if (filteredVars.length === 0) return null;
+        return {
+          ...prod,
+          alertVariants: filteredVars
+        };
+      } else {
+        // সাধারণ পণ্য
+        if (filterType === 'OUT_OF_STOCK' && !prod.isOut) return null;
+        if (filterType === 'LOW_STOCK' && !prod.isLow) return null;
+
+        if (!searchQuery.trim()) return prod;
+        const q = searchQuery.trim().toLowerCase();
+        const matches = (
+          (prod.productName && prod.productName.toLowerCase().includes(q)) ||
+          (prod.barcode && prod.barcode.toLowerCase().includes(q)) ||
+          (prod.productId && prod.productId.toLowerCase().includes(q))
+        );
+        return matches ? prod : null;
+      }
+    }).filter(Boolean);
+  }, [groupedAlertProducts, filterType, searchQuery]);
+
   // পরিসংখ্যান
   const stats = useMemo(() => {
     let outCount = 0;
     let lowCount = 0;
-    alertList.forEach((item) => {
-      if (item.isOut) outCount++;
-      else lowCount++;
+    let totalItems = 0;
+
+    groupedAlertProducts.forEach((p) => {
+      if (p.hasVariants) {
+        p.alertVariants.forEach((v) => {
+          totalItems++;
+          if (v.isOut) outCount++;
+          else lowCount++;
+        });
+      } else {
+        totalItems++;
+        if (p.isOut) outCount++;
+        else lowCount++;
+      }
     });
+
     return {
-      totalAlerts: alertList.length,
+      totalAlertProducts: groupedAlertProducts.length,
+      totalAlertItems: totalItems,
       outCount,
       lowCount
     };
-  }, [alertList]);
+  }, [groupedAlertProducts]);
 
-  // ফিল্টার ও সার্চ অনুযায়ী প্রদর্শিত তালিকা
-  const filteredList = useMemo(() => {
-    return alertList.filter((item) => {
-      if (filterType === 'OUT_OF_STOCK' && !item.isOut) return false;
-      if (filterType === 'LOW_STOCK' && !item.isLow) return false;
+  // বিস্তার ও সংক্ষেপ টগল
+  const toggleExpand = (productId) => {
+    setExpandedProductIds((prev) => ({
+      ...prev,
+      [productId]: prev[productId] === undefined ? false : !prev[productId]
+    }));
+  };
 
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.trim().toLowerCase();
-      return (
-        (item.productName && item.productName.toLowerCase().includes(q)) ||
-        (item.variantDesc && item.variantDesc.toLowerCase().includes(q)) ||
-        (item.barcode && item.barcode.toLowerCase().includes(q)) ||
-        (item.productId && item.productId.toLowerCase().includes(q))
-      );
+  const isExpanded = (productId) => {
+    // ডিফল্টভাবে true (সবসময় বিস্তার করা থাকবে যেন সরাসরি ভ্যারিয়েন্টগুলো দেখা যায়)
+    return expandedProductIds[productId] !== false;
+  };
+
+  const expandAll = () => {
+    const all = {};
+    filteredProducts.forEach((p) => {
+      if (p.hasVariants) all[p.productId] = true;
     });
-  }, [alertList, filterType, searchQuery]);
+    setExpandedProductIds(all);
+  };
+
+  const collapseAll = () => {
+    const all = {};
+    filteredProducts.forEach((p) => {
+      if (p.hasVariants) all[p.productId] = false;
+    });
+    setExpandedProductIds(all);
+  };
 
   // এক্সেল/সিএসভি ডাউনলোড
   const handleExportCSV = () => {
-    if (filteredList.length === 0) {
+    if (filteredProducts.length === 0) {
       alert('এক্সপোর্ট করার মতো কোনো ডাটা নেই!');
       return;
     }
-    const headers = ['ক্রমিক', 'পণ্যের নাম', 'ভ্যারিয়েন্ট বিবরণ', 'বারকোড', 'বর্তমান পরিমাণ', 'সতর্কতা / ঘাটতি বিবরণ', 'প্রয়োজনীয় রিস্টক সংখ্যা'];
-    const rows = filteredList.map((item, idx) => [
-      idx + 1,
-      `"${item.productName.replace(/"/g, '""')}"`,
-      `"${item.variantDesc.replace(/"/g, '""')}"`,
-      `"${item.barcode}"`,
-      item.currentQty,
-      `"${item.alertStatusText}"`,
-      `"${item.recommendedRestockQty}"`
-    ]);
+    const headers = ['ক্রমিক', 'মূল পণ্যের নাম', 'পণ্যের ধরন', 'ভ্যারিয়েন্ট বিবরণ', 'বারকোড', 'বর্তমান গোডাউন পরিমাণ', 'অবস্থা', 'প্রয়োজনীয় রিস্টক'];
+    const rows = [];
+    let rowNum = 1;
+
+    filteredProducts.forEach((p) => {
+      if (p.hasVariants) {
+        p.alertVariants.forEach((v) => {
+          rows.push([
+            rowNum++,
+            `"${p.productName.replace(/"/g, '""')}"`,
+            '"ভ্যারিয়েন্ট পণ্য"',
+            `"${v.variantDesc.replace(/"/g, '""')}"`,
+            `"${v.barcode}"`,
+            `${v.currentQty} ${p.unit}`,
+            `"${v.alertStatusText}"`,
+            `"${v.recommendedRestockQty} ${p.unit}"`
+          ]);
+        });
+      } else {
+        rows.push([
+          rowNum++,
+          `"${p.productName.replace(/"/g, '""')}"`,
+          '"সাধারণ পণ্য"',
+          '"—"',
+          `"${p.barcode}"`,
+          `${p.currentQty} ${p.unit}`,
+          `"${p.alertStatusText}"`,
+          `"${p.recommendedRestockQty} ${p.unit}"`
+        ]);
+      }
+    });
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -204,11 +325,11 @@ export default function GodownStockAlertView({
                   গোডাউন স্টক অ্যালার্ট
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 animate-pulse">
-                  {stats.totalAlerts}টি সতর্কতা
+                  {stats.totalAlertItems}টি ঘাটতি ({stats.totalAlertProducts}টি পণ্যে)
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1 font-medium">
-                গোডাউনে যেসব পণ্য বা ভ্যারিয়েন্টের মজুত কমে গেছে বা শেষ হয়ে গেছে তাদের তালিকা
+                গোডাউনে যেসব পণ্যের মূল নামের অধীনে ভ্যারিয়েন্টগুলোর মজুত শেষ বা কমে গেছে তাদের তালিকা
               </p>
             </div>
           </div>
@@ -246,13 +367,13 @@ export default function GodownStockAlertView({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-600">মোট সতর্কতা</span>
+              <span className="text-xs font-bold text-slate-600">মোট ঘাটতি আইটেম</span>
               <span className="p-2 rounded-xl bg-indigo-100 text-indigo-700">
                 <AlertTriangle className="w-4 h-4" />
               </span>
             </div>
             <div className="text-2xl font-black text-indigo-950 mt-2 font-mono">
-              {stats.totalAlerts.toLocaleString('bn-BD')} <span className="text-xs font-normal text-slate-500">টি আইটেম</span>
+              {stats.totalAlertItems.toLocaleString('bn-BD')} <span className="text-xs font-normal text-slate-500">টি আইটেম ({stats.totalAlertProducts}টি মূল পণ্যে)</span>
             </div>
           </div>
 
@@ -303,133 +424,283 @@ export default function GodownStockAlertView({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="পণ্য, ভ্যারিয়েন্ট, রং বা বারকোড দিয়ে খুঁজুন..."
+              placeholder="মূল পণ্য, ভ্যারিয়েন্ট, রং, সাইজ বা বারকোড দিয়ে খুঁজুন..."
               className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
-          <div className="flex items-center space-x-1.5 w-full sm:w-auto justify-end flex-wrap gap-y-1">
-            <button
-              type="button"
-              onClick={() => setFilterType('ALL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                filterType === 'ALL'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              সকল ({stats.totalAlerts})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterType('OUT_OF_STOCK')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                filterType === 'OUT_OF_STOCK'
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-              }`}
-            >
-              🚨 শেষ ({stats.outCount})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterType('LOW_STOCK')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                filterType === 'LOW_STOCK'
-                  ? 'bg-amber-600 text-white shadow-xs'
-                  : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
-              }`}
-            >
-              ⚠️ কম ({stats.lowCount})
-            </button>
+          <div className="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap gap-y-2">
+            {/* বিস্তার ও সংক্ষেপ টগল বাটন */}
+            <div className="flex items-center space-x-1 text-xs">
+              <button
+                type="button"
+                onClick={expandAll}
+                className="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold transition-all flex items-center space-x-1 cursor-pointer"
+                title="সকল ভ্যারিয়েন্ট বিস্তার করে দেখুন"
+              >
+                <span>সব বিস্তার</span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={collapseAll}
+                className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-all flex items-center space-x-1 cursor-pointer"
+                title="ভ্যারিয়েন্টগুলো সংক্ষেপ করুন"
+              >
+                <span>সংক্ষেপ</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* ফিল্টার সুইচ বাটন */}
+            <div className="flex items-center space-x-1.5">
+              <button
+                type="button"
+                onClick={() => setFilterType('ALL')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  filterType === 'ALL'
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                সকল ({stats.totalAlertItems})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterType('OUT_OF_STOCK')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  filterType === 'OUT_OF_STOCK'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                }`}
+              >
+                🚨 শেষ ({stats.outCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterType('LOW_STOCK')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  filterType === 'LOW_STOCK'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                }`}
+              >
+                ⚠️ কম ({stats.lowCount})
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* ভ্যারিয়েন্ট ভিত্তিক ঘাটতি খতিয়ান টেবিল (ব্যবহারকারীর নির্দিষ্ট রুল অনুযায়ী কোনো অপ্রয়োজনীয় কলাম নেই) */}
+        {/* পণ্য ভিত্তিক ও ভ্যারিয়েন্ট খতিয়ান টেবিল (প্যারেন্ট প্রডাক্ট নামের অধীনে ভ্যারিয়েন্ট তালিকা) */}
         <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold uppercase tracking-wider">
                 <tr>
-                  <th className="py-3 px-4 w-12 text-center">ক্রমিক</th>
-                  <th className="py-3 px-4">পণ্যের নাম</th>
-                  <th className="py-3 px-4">ভ্যারিয়েন্ট বিবরণ</th>
+                  <th className="py-3 px-4 w-14 text-center">ক্রমিক</th>
+                  <th className="py-3 px-4">পণ্য ও ভ্যারিয়েন্ট বিবরণ</th>
                   <th className="py-3 px-4">বারকোড</th>
                   <th className="py-3 px-4 text-center bg-rose-50/70 text-rose-950 font-black">বর্তমান পরিমাণ</th>
-                  <th className="py-3 px-4 text-center">সতর্কতা / ঘাটতি বিবরণ</th>
-                  <th className="py-3 px-4 text-center">প্রয়োজনীয় রিস্টক সংখ্যা</th>
+                  <th className="py-3 px-4 text-center">সতর্কতা / অবস্থা</th>
+                  <th className="py-3 px-4 text-center">প্রয়োজনীয় রিস্টক</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredList.length === 0 ? (
+                {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="py-12 text-center text-slate-400 font-medium">
+                    <td colSpan="6" className="py-12 text-center text-slate-400 font-medium">
                       <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
                       <p className="font-bold text-slate-700 text-sm">গোডাউনে কোনো ঘাটতি বা কম স্টক পণ্য নেই!</p>
                       <p className="text-xs text-slate-400 mt-0.5">সবগুলো ভ্যারিয়েন্ট ও পণ্য পর্যাপ্ত মজুতে রয়েছে।</p>
                     </td>
                   </tr>
                 ) : (
-                  filteredList.map((item, idx) => (
-                    <tr
-                      key={item.key}
-                      className={`hover:bg-slate-50/80 transition-colors ${
-                        item.isOut ? 'bg-rose-50/30' : 'bg-white'
-                      }`}
-                    >
-                      <td className="py-3 px-4 text-center font-mono font-bold text-slate-500">
-                        {idx + 1}
-                      </td>
-                      <td className="py-3 px-4 font-bold text-slate-900">
-                        <div className="flex items-center space-x-2">
-                          <span>{item.productName}</span>
-                          {item.isVariant && (
-                            <span className="p-0.5 rounded text-indigo-600 bg-indigo-50 border border-indigo-200 text-[10px]">
-                              <Palette className="w-3 h-3" />
+                  filteredProducts.map((p, idx) => {
+                    const expanded = isExpanded(p.productId);
+
+                    if (p.hasVariants) {
+                      return (
+                        <React.Fragment key={p.productId}>
+                          {/* মূল প্যারেন্ট পণ্য রো */}
+                          <tr className="bg-slate-50/90 hover:bg-slate-100 border-t border-slate-200 transition-colors">
+                            <td className="py-3 px-4 text-center font-mono font-bold text-slate-600">
+                              {idx + 1}
+                            </td>
+                            <td className="py-3 px-4 font-bold text-slate-900">
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpand(p.productId)}
+                                  className="p-1 rounded-md text-indigo-600 hover:bg-indigo-100 transition-all cursor-pointer"
+                                  title={expanded ? 'সংক্ষেপ করুন' : 'ভ্যারিয়েন্ট তালিকা বিস্তার করুন'}
+                                >
+                                  {expanded ? (
+                                    <ChevronDown className="w-4 h-4 stroke-[2.5]" />
+                                  ) : (
+                                    <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+                                  )}
+                                </button>
+                                <span className="text-sm font-black text-slate-900 tracking-tight">
+                                  {p.productName}
+                                </span>
+                                <span
+                                  onClick={() => toggleExpand(p.productId)}
+                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 cursor-pointer shadow-2xs"
+                                >
+                                  <Palette className="w-2.5 h-2.5 mr-1" />
+                                  {p.alertVariants.length}টি ভ্যারিয়েন্ট ঘাটতি
+                                  {p.totalVariantsCount > p.alertVariants.length ? ` (মোট ${p.totalVariantsCount}টির মধ্যে)` : ''}
+                                </span>
+                                {p.category && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] bg-slate-200/80 text-slate-700 font-medium">
+                                    {p.category}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] font-mono text-slate-400 mt-0.5 ml-7">
+                                ID: {p.productId} {p.barcode && p.barcode !== '—' ? `| #${p.barcode}` : ''}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 font-mono text-slate-400 text-center text-xs">
+                              —
+                            </td>
+                            <td className="py-3 px-4 text-center bg-rose-50/20">
+                              <span className="text-xs font-mono font-bold text-slate-700">
+                                মোট গোডাউন: {p.totalGodownStock} {p.unit}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                                p.alertVariants.some(v => v.isOut)
+                                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                  : 'bg-amber-100 text-amber-800 border border-amber-200'
+                              }`}>
+                                {p.alertVariants.some(v => v.isOut)
+                                  ? '🚨 কিছু ভ্যারিয়েন্টে স্টক শেষ'
+                                  : '⚠️ কিছু ভ্যারিয়েন্টে কম স্টক'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-center text-slate-400 text-xs font-bold">
+                              নিচে বিস্তারিত দেখুন ↓
+                            </td>
+                          </tr>
+
+                          {/* প্যারেন্ট পণ্যের নামের অধীনে প্রতিটি ভ্যারিয়েন্ট সাব-রো */}
+                          {expanded && p.alertVariants.map((v, vIdx) => (
+                            <tr
+                              key={v.key}
+                              className={`hover:bg-indigo-50/40 transition-colors border-t border-slate-100 ${
+                                v.isOut ? 'bg-rose-50/20' : 'bg-white'
+                              }`}
+                            >
+                              <td className="py-2.5 px-4 text-center text-slate-400 font-mono text-[11px]">
+                                {idx + 1}.{vIdx + 1}
+                              </td>
+                              <td className="py-2.5 px-4 pl-10">
+                                <div className="flex items-center space-x-2">
+                                  <CornerDownRight className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-indigo-50/90 text-indigo-900 border border-indigo-200/80 font-bold text-xs shadow-2xs">
+                                    <Palette className="w-3 h-3 text-indigo-600 mr-1.5" />
+                                    {v.variantDesc}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-2.5 px-4 font-mono font-bold text-slate-600 text-xs">
+                                {v.barcode}
+                              </td>
+                              <td className="py-2.5 px-4 text-center bg-rose-50/30">
+                                <span
+                                  className={`inline-block px-2.5 py-0.5 rounded-lg font-mono font-black text-xs ${
+                                    v.isOut
+                                      ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                                      : 'bg-amber-100 text-amber-800 border border-amber-300'
+                                  }`}
+                                >
+                                  {v.currentQty} {p.unit}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-4 text-center">
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                                    v.isOut
+                                      ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                      : 'bg-amber-100 text-amber-800 border border-amber-200'
+                                  }`}
+                                >
+                                  {v.alertStatusText}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-4 text-center font-mono font-bold text-indigo-700">
+                                <span className="px-2.5 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs shadow-2xs">
+                                  {v.recommendedRestockQty} {p.unit}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </React.Fragment>
+                      );
+                    }
+
+                    // সাধারণ পণ্য (কোনো ভ্যারিয়েন্ট নেই)
+                    return (
+                      <tr
+                        key={p.productId}
+                        className={`hover:bg-slate-50/80 transition-colors border-t border-slate-200 ${
+                          p.isOut ? 'bg-rose-50/30' : 'bg-white'
+                        }`}
+                      >
+                        <td className="py-3 px-4 text-center font-mono font-bold text-slate-600">
+                          {idx + 1}
+                        </td>
+                        <td className="py-3 px-4 font-bold text-slate-900">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-black text-slate-900">{p.productName}</span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                              সাধারণ পণ্য
                             </span>
-                          )}
-                        </div>
-                        <div className="text-[10px] font-mono text-slate-400 mt-0.5">
-                          ID: {item.productId}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-medium text-slate-700">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200 font-bold inline-block text-[11px]">
-                          {item.variantDesc}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 font-mono text-slate-500">
-                        {item.barcode}
-                      </td>
-                      <td className="py-3 px-4 text-center bg-rose-50/40">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded-md font-mono font-black text-xs ${
-                            item.isOut
-                              ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                              : 'bg-amber-100 text-amber-800 border border-amber-300'
-                          }`}
-                        >
-                          {item.currentQty}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                            item.isOut
-                              ? 'bg-rose-100 text-rose-800 border border-rose-200'
-                              : 'bg-amber-100 text-amber-800 border border-amber-200'
-                          }`}
-                        >
-                          {item.alertStatusText}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center font-mono font-bold text-indigo-700">
-                        <span className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-800">
-                          {item.recommendedRestockQty}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
+                            {p.category && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] bg-slate-200/80 text-slate-700 font-medium">
+                                {p.category}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                            ID: {p.productId}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-slate-600 text-xs">
+                          {p.barcode}
+                        </td>
+                        <td className="py-3 px-4 text-center bg-rose-50/40">
+                          <span
+                            className={`inline-block px-2.5 py-0.5 rounded-lg font-mono font-black text-xs ${
+                              p.isOut
+                                ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                                : 'bg-amber-100 text-amber-800 border border-amber-300'
+                            }`}
+                          >
+                            {p.currentQty} {p.unit}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                              p.isOut
+                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                : 'bg-amber-100 text-amber-800 border border-amber-200'
+                            }`}
+                          >
+                            {p.alertStatusText}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center font-mono font-bold text-indigo-700">
+                          <span className="px-2.5 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs shadow-2xs">
+                            {p.recommendedRestockQty} {p.unit}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -461,4 +732,3 @@ export default function GodownStockAlertView({
     </div>
   );
 }
-
