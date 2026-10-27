@@ -101,6 +101,7 @@ export default function AddProductModal({
   units = [],
   onAddUnit,
   suppliers = [],
+  onSaveSupplier,
   products = [],
   settings = {},
   variantAttributes = [],
@@ -565,7 +566,8 @@ export default function AddProductModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newSubCategoryName, setNewSubCategoryName] = useState('');
+  const [isChildCategoryEnabled, setIsChildCategoryEnabled] = useState(false);
+  const [childCategoryList, setChildCategoryList] = useState(['']);
 
   // নতুন পরিমাপক একক (Unit) তৈরি স্টেট
   const [isAddingNewUnit, setIsAddingNewUnit] = useState(false);
@@ -665,8 +667,8 @@ export default function AddProductModal({
 
   if (!isOpen) return null;
 
-  // নতুন সাপ্লায়ার তৈরি ও সরাসরি নির্বাচন
-  const handleCreateSupplier = () => {
+  // নতুন সাপ্লায়ার তৈরি ও সরাসরি নির্বাচন (ডাটাবেস ও শিট সিঙ্ক সহ)
+  const handleCreateSupplier = async () => {
     const comp = newSupplierCompany.trim();
     const contact = newSupplierContact.trim();
     const phone = newSupplierPhone.trim();
@@ -679,14 +681,27 @@ export default function AddProductModal({
       SupplierID: `SUP-${Date.now().toString().slice(-6)}`,
       CompanyName: comp || contact,
       ContactPerson: contact,
-      Phone: phone,
-      Address: newSupplierAddress.trim()
+      Phone: phone, // হোয়াটসঅ্যাপ নম্বর
+      Address: newSupplierAddress.trim(),
+      TotalPurchased: 0,
+      TotalPaid: 0,
+      CurrentPayable: 0
     };
 
+    // ১. লোকাল স্টোরেজে সংরক্ষণ ও ড্রপডাউন সাথে সাথে আপডেট
     const updated = saveOrUpdateSupplierLocally(newSupData);
     setLocalSuppliersList(updated);
 
-    // ফর্মে স্বয়ংক্রিয় নির্বাচন
+    // ২. মূল অ্যাপ ও ব্যাকএন্ড ডাটাবেস (গুগল শিট) সিঙ্ক
+    if (onSaveSupplier) {
+      try {
+        await onSaveSupplier(newSupData);
+      } catch (err) {
+        console.warn('onSaveSupplier sync error:', err);
+      }
+    }
+
+    // ৩. ফর্মে স্বয়ংক্রিয় নির্বাচন
     setFormData(prev => ({
       ...prev,
       supplierId: newSupData.SupplierID,
@@ -799,31 +814,47 @@ export default function AddProductModal({
     }
   };
 
-  // নতুন ক্যাটাগরি অন-দ্য-ফ্লাই যোগ করার হ্যান্ডলার
+  // নতুন ক্যাটাগরি ও চাইল্ড ক্যাটাগরি অন-দ্য-ফ্লাই যোগ করার হ্যান্ডলার
   const handleCreateCategory = async (e) => {
-    e.preventDefault();
-    if (!newCategoryName.trim()) {
-      alert('অনুগ্রহ করে ক্যাটাগরির নাম লিখুন।');
+    if (e && e.preventDefault) e.preventDefault();
+    const parentName = newCategoryName.trim();
+    if (!parentName) {
+      alert('অনুগ্রহ করে প্যারেন্ট ক্যাটাগরির নাম লিখুন।');
       return;
     }
 
+    const validChildren = isChildCategoryEnabled
+      ? childCategoryList.map((c) => c.trim()).filter(Boolean)
+      : [];
+
     try {
       if (onAddCategory) {
-        await onAddCategory({
-          categoryName: newCategoryName.trim(),
-          subCategoryName: newSubCategoryName.trim(),
-          description: 'ম্যানুয়াল তৈরি'
-        });
+        if (validChildren.length > 0) {
+          for (const child of validChildren) {
+            await onAddCategory({
+              categoryName: parentName,
+              subCategoryName: child,
+              description: 'ম্যানুয়াল তৈরি'
+            });
+          }
+        } else {
+          await onAddCategory({
+            categoryName: parentName,
+            subCategoryName: '',
+            description: 'ম্যানুয়াল তৈরি'
+          });
+        }
       }
 
       setFormData((prev) => ({
         ...prev,
-        category: newCategoryName.trim(),
-        subCategory: newSubCategoryName.trim()
+        category: parentName,
+        subCategory: validChildren[0] || ''
       }));
 
       setNewCategoryName('');
-      setNewSubCategoryName('');
+      setChildCategoryList(['']);
+      setIsChildCategoryEnabled(false);
       setIsAddingNewCategory(false);
     } catch (err) {
       alert(`ক্যাটাগরি যুক্ত করা যায়নি: ${err.message}`);
@@ -1326,43 +1357,120 @@ export default function AddProductModal({
 
                   {/* অন-দ্য-ফ্লাই নতুন ক্যাটাগরি ড্রয়ার */}
                   {isAddingNewCategory ? (
-                    <div className="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-3 animate-in fade-in slide-in-from-top-1 duration-200 shadow-2xs">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-emerald-900">
-                          নতুন ক্যাটাগরি ডাটাবেসে তৈরি করুন:
+                        <span className="text-xs font-bold text-emerald-950 flex items-center space-x-1.5">
+                          <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>নতুন ক্যাটাগরি তৈরি (প্যারেন্ট ও চাইল্ড):</span>
                         </span>
                         <span className="text-[10px] text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full font-medium">
-                          Categories ট্যাবে সেভ হবে
+                          ডাটাবেসে সেভ হবে
                         </span>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+                      {/* ১. প্যারেন্ট ক্যাটাগরি ইনপুট */}
+                      <div className="space-y-1">
+                        <label className="block text-[11px] font-bold text-slate-700">
+                          প্যারেন্ট ক্যাটাগরি *
+                        </label>
                         <input
                           type="text"
-                          placeholder="প্রধান ক্যাটাগরি (যেমন: Beverages)"
+                          placeholder="প্যারেন্ট ক্যাটাগরির নাম লিখুন (যেমন: শাড়ি, ফেব্রিক্স, থ্রি-পিস...)"
                           value={newCategoryName}
                           onChange={(e) => setNewCategoryName(e.target.value)}
-                          className="px-3 py-1.5 bg-white border border-emerald-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="সাব-ক্যাটাগরি (যেমন: Juice & Drinks)"
-                          value={newSubCategoryName}
-                          onChange={(e) => setNewSubCategoryName(e.target.value)}
-                          className="px-3 py-1.5 bg-white border border-emerald-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
                         />
                       </div>
+
+                      {/* ২. চাইল্ড ক্যাটাগরি বাটন ও ইনপুট সেকশন */}
+                      {!isChildCategoryEnabled ? (
+                        <div className="pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsChildCategoryEnabled(true);
+                              if (childCategoryList.length === 0) setChildCategoryList(['']);
+                            }}
+                            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-100/80 hover:bg-emerald-200/90 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold transition-all shadow-2xs hover:shadow cursor-pointer"
+                          >
+                            <PlusCircle className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Add New Child Category</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-white/95 border border-emerald-200 rounded-xl space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-150 shadow-2xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-emerald-950 flex items-center space-x-1.5">
+                              <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>চাইল্ড ক্যাটাগরি / সাব-ক্যাটাগরি সমূহ:</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setChildCategoryList(prev => [...prev, ''])}
+                              className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-100/80 hover:bg-emerald-200 px-2 py-0.5 rounded-md flex items-center space-x-1 transition-colors cursor-pointer"
+                            >
+                              <PlusCircle className="w-3 h-3" />
+                              <span>Add New Child Category</span>
+                            </button>
+                          </div>
+
+                          {childCategoryList.map((child, idx) => (
+                            <div key={idx} className="flex items-center space-x-2">
+                              <div className="relative flex-1">
+                                <span className="absolute left-2.5 top-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                  #{idx + 1}
+                                </span>
+                                <input
+                                  type="text"
+                                  placeholder={"চাইল্ড ক্যাটাগরি #" + (idx + 1) + " (যেমন: কাতান শাড়ি, জর্জেট, সুতি...)"}
+                                  value={child}
+                                  onChange={(e) => {
+                                    const updated = [...childCategoryList];
+                                    updated[idx] = e.target.value;
+                                    setChildCategoryList(updated);
+                                  }}
+                                  className="w-full pl-10 pr-3 py-1.5 bg-slate-50/70 border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = childCategoryList.filter((_, i) => i !== idx);
+                                  if (updated.length === 0) {
+                                    setChildCategoryList(['']);
+                                    setIsChildCategoryEnabled(false);
+                                  } else {
+                                    setChildCategoryList(updated);
+                                  }
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                title="মুছে ফেলুন"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* অ্যাকশন বাটনসমূহ */}
                       <div className="flex space-x-2 pt-1">
                         <button
                           type="button"
                           onClick={handleCreateCategory}
-                          className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all"
+                          className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all cursor-pointer"
                         >
-                          সংরক্ষণ করুন
+                          ক্যাটাগরি সংরক্ষণ ও নির্বাচন করুন
                         </button>
                         <button
                           type="button"
-                          onClick={() => setIsAddingNewCategory(false)}
-                          className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-lg transition-colors"
+                          onClick={() => {
+                            setIsAddingNewCategory(false);
+                            setIsChildCategoryEnabled(false);
+                            setNewCategoryName('');
+                            setChildCategoryList(['']);
+                          }}
+                          className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                         >
                           বাতিল
                         </button>
@@ -1443,27 +1551,43 @@ export default function AddProductModal({
                         </span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <input
-                          type="text"
-                          placeholder="প্রতিষ্ঠান / মিলের নাম * (যেমন: মেসার্স রহিম টেক্সটাইল)"
-                          value={newSupplierCompany}
-                          onChange={(e) => setNewSupplierCompany(e.target.value)}
-                          className="px-3 py-1.5 bg-white border border-indigo-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="প্রতিনিধি / মালিকের নাম"
-                          value={newSupplierContact}
-                          onChange={(e) => setNewSupplierContact(e.target.value)}
-                          className="px-3 py-1.5 bg-white border border-indigo-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="মোবাইল নম্বর (যেমন: 01711...)"
-                          value={newSupplierPhone}
-                          onChange={(e) => setNewSupplierPhone(e.target.value)}
-                          className="px-3 py-1.5 bg-white border border-indigo-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
+                            প্রতিষ্ঠান / মিলের নাম *
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="যেমন: মেসার্স রহিম টেক্সটাইল"
+                            value={newSupplierCompany}
+                            onChange={(e) => setNewSupplierCompany(e.target.value)}
+                            className="w-full px-3 py-1.5 bg-white border border-indigo-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
+                            প্রতিনিধি / মালিকের নাম
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="যেমন: মোঃ রহিম উল্লাহ"
+                            value={newSupplierContact}
+                            onChange={(e) => setNewSupplierContact(e.target.value)}
+                            className="w-full px-3 py-1.5 bg-white border border-indigo-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-emerald-800 mb-0.5 flex items-center space-x-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                            <span>হোয়াটসঅ্যাপ নম্বর (WhatsApp) *</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="হোয়াটসঅ্যাপ নম্বর (যেমন: 017XXXXXXXX)"
+                            value={newSupplierPhone}
+                            onChange={(e) => setNewSupplierPhone(e.target.value)}
+                            className="w-full px-3 py-1.5 bg-white border border-emerald-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                        </div>
                       </div>
                       <input
                         type="text"

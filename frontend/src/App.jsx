@@ -5147,6 +5147,7 @@ export default function App() {
               units={units}
               onAddUnit={handleAddUnit}
               suppliers={suppliers}
+              onSaveSupplier={handleSaveSupplier}
               variantAttributes={variantAttributes}
               onAddVariantOption={handleAddVariantOption}
               products={products}
@@ -5371,6 +5372,7 @@ export default function App() {
         units={units}
         onAddUnit={handleAddUnit}
         suppliers={suppliers}
+        onSaveSupplier={handleSaveSupplier}
         variantAttributes={variantAttributes}
         onAddVariantOption={handleAddVariantOption}
         products={products}

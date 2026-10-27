@@ -369,7 +369,10 @@ export default function SuppliersModal({
                         {sup.Phone && (
                           <div className="flex items-center space-x-2">
                             <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span>{sup.Phone}</span>
+                            <span className="font-mono">{sup.Phone}</span>
+                            <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-1.5 py-0.2 rounded font-semibold">
+                              WhatsApp
+                            </span>
                           </div>
                         )}
                         {sup.Email && (
@@ -519,15 +522,16 @@ export default function SuppliersModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    মোবাইল নম্বর *
+                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                    <span>হোয়াটসঅ্যাপ / মোবাইল নম্বর *</span>
+                    <span className="text-[10px] text-emerald-600 font-semibold">হোয়াটসঅ্যাপ সমর্থিত</span>
                   </label>
                   <input
                     type="tel"
                     required
                     value={supplierForm.Phone}
                     onChange={(e) => setSupplierForm({ ...supplierForm, Phone: e.target.value })}
-                    placeholder="017XXXXXXXX"
+                    placeholder="017XXXXXXXX (হোয়াটসঅ্যাপ নম্বর)"
                     className="w-full px-3 py-2 text-xs font-medium border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                   />
                 </div>
