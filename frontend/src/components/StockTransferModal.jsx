@@ -2190,21 +2190,21 @@ export default function StockTransferModal({
                                           </div>
                                           {isThan ? (
                                             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10.5px] font-bold">
-                                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs">
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs whitespace-nowrap">
                                                 🏭 গোডাউন থান: {gStock}
                                               </span>
                                               {yardsPerThan > 0 && (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs whitespace-nowrap">
                                                   📏 গজ/থান: {yardsPerThan}
                                                 </span>
                                               )}
                                               {yardsPerThan > 0 && (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 shadow-2xs">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 shadow-2xs whitespace-nowrap">
                                                   ✨ মোট: {gStock * yardsPerThan} গজ
                                                 </span>
                                               )}
                                               {totalGodownCost > 0 && (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-purple-50 text-purple-900 border border-purple-200 shadow-2xs">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-purple-50 text-purple-900 border border-purple-200 shadow-2xs whitespace-nowrap">
                                                   💰 মোট স্টক মূল্য: {currencySymbol}{Math.round(totalGodownCost).toLocaleString('bn-BD')}
                                                 </span>
                                               )}
@@ -2222,7 +2222,7 @@ export default function StockTransferModal({
                                             </div>
                                           ) : (
                                             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10.5px] font-bold">
-                                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-sky-50 text-sky-800 border border-sky-200 shadow-2xs">
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-sky-50 text-sky-800 border border-sky-200 shadow-2xs whitespace-nowrap">
                                                 🏭 গোডাউন মজুত: {gStock} {unit}
                                               </span>
                                               {totalGodownCost > 0 && (
@@ -2633,25 +2633,25 @@ export default function StockTransferModal({
                                     </div>
                                     {item.isThanUnit ? (
                                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 whitespace-nowrap">
                                           📏 গজ/থান: {item.yardsPerThan}
                                         </span>
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 whitespace-nowrap">
                                           🏭 গোডাউন: {item.godownYards} গজ
                                         </span>
                                         {Number(item.costPrice || 0) > 0 && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200">
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200 whitespace-nowrap">
                                             💰 মোট স্টক মূল্য: {currencySymbol}{Math.round((item.godownYards || item.godownStock) * (item.costPrice || 0)).toLocaleString('bn-BD')}
                                           </span>
                                         )}
                                       </div>
                                     ) : (
                                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200 whitespace-nowrap">
                                           🏭 গোডাউন মজুত: {item.godownStock} {item.unit}
                                         </span>
                                         {Number(item.costPrice || 0) > 0 && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200">
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200 whitespace-nowrap">
                                             💰 মোট স্টক মূল্য: {currencySymbol}{Math.round(item.godownStock * (item.costPrice || 0)).toLocaleString('bn-BD')}
                                           </span>
                                         )}
