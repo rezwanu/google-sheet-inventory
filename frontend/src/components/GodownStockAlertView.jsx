@@ -13,7 +13,11 @@ import {
   Palette,
   CornerDownRight,
   Package,
-  Layers
+  Layers,
+  FileText,
+  Download,
+  Eye,
+  X
 } from 'lucide-react';
 import { getProductDisplayUnit } from '../services/storage';
 
@@ -27,6 +31,7 @@ export default function GodownStockAlertView({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'OUT_OF_STOCK' | 'LOW_STOCK'
   const [expandedProductIds, setExpandedProductIds] = useState({});
+  const [isPdfPreviewMode, setIsPdfPreviewMode] = useState(false);
 
   // পণ্য থেকে ভ্যারিয়েন্ট তালিকা নিরাপদ এক্সট্র্যাক্ট
   const getVariants = (p) => {
@@ -72,7 +77,7 @@ export default function GodownStockAlertView({
           const varLabelParts = [vColor && `রং: ${vColor}`, vSize && `সাইজ: ${vSize}`, otherAttrs].filter(Boolean);
           const variantDesc = varLabelParts.length > 0 ? varLabelParts.join(' • ') : `ভ্যারিয়েন্ট #${vIdx + 1}`;
 
-          // ভ্যারিয়েন্ট গোডাউন স্টক যদি ০ হয় অথবা ২ বা তার কম হয় (অথবা মূল alert লিমিটের কম)
+          // ভ্যারিয়েন্ট গোডাউন স্টক যদি ০ হয় অথবা ৩ বা তার কম হয় (অথবা মূল alert লিমিটের কম)
           const isOut = vGStock <= 0;
           const isLow = vGStock > 0 && vGStock <= Math.min(minAlert, 3);
 
@@ -294,11 +299,608 @@ export default function GodownStockAlertView({
     URL.revokeObjectURL(url);
   };
 
-  // প্রিন্ট হ্যান্ডলার
+  // সরাসরি পপআপ উইন্ডো খুলে নিখুঁত A4 সাইজের PDF জেনারেট ও প্রিন্ট
+  const handleDirectPDFWindow = () => {
+    if (filteredProducts.length === 0) {
+      alert('পিডিএফ তৈরির জন্য কোনো ডাটা নেই!');
+      return;
+    }
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('পপআপ উইন্ডো ব্লক করা রয়েছে। অনুগ্রহ করে ব্রাউজারের পপআপ অ্যালাউ করুন।');
+      return;
+    }
+
+    const storeName = settings?.StoreName || 'পাবনা বস্ত্রালয়';
+    const storeAddress = settings?.Address || 'বসিলা রোড, মোহাম্মদপুর, ঢাকা';
+    const storePhone = settings?.Phone || '০১৬৭৫৯৩৪৯১৯';
+    const dateStr = new Date().toLocaleString('bn-BD');
+
+    let tableRowsHtml = '';
+    let rowNumber = 1;
+
+    filteredProducts.forEach((p) => {
+      if (p.hasVariants) {
+        // Parent row
+        tableRowsHtml += `
+          <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1;">
+            <td style="text-align: center; padding: 7px 6px;">${rowNumber++}</td>
+            <td style="padding: 7px 10px;">
+              <div style="font-size: 13px; font-weight: 900; color: #0f172a;">${p.productName}</div>
+              <div style="font-size: 10px; color: #64748b; font-weight: normal; margin-top: 2px;">ID: ${p.productId} ${p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ভ্যারিয়েন্ট ঘাটতি: ${p.alertVariants.length}টি</div>
+            </td>
+            <td style="text-align: center; color: #94a3b8; font-size: 11px;">—</td>
+            <td style="text-align: center; font-size: 11px; color: #334155; font-weight: bold;">মোট: ${p.totalGodownStock} ${p.unit}</td>
+            <td style="text-align: center; font-size: 11px; font-weight: bold; color: ${p.alertVariants.some(v => v.isOut) ? '#b91c1c' : '#b45309'};">
+              ${p.alertVariants.some(v => v.isOut) ? '🚨 কিছু ভ্যারিয়েন্টে স্টক শেষ' : '⚠️ কিছু ভ্যারিয়েন্টে কম'}
+            </td>
+            <td style="text-align: center; font-size: 10px; color: #64748b;">নিচে বিস্তারিত দেখুন ↓</td>
+          </tr>
+        `;
+        // Child variant rows
+        p.alertVariants.forEach((v, vIdx) => {
+          const bg = v.isOut ? '#fff1f2' : '#ffffff';
+          tableRowsHtml += `
+            <tr style="background-color: ${bg}; border-top: 1px solid #e2e8f0;">
+              <td style="text-align: center; font-size: 10px; color: #94a3b8; padding: 5px;">${rowNumber - 1}.${vIdx + 1}</td>
+              <td style="padding: 5px 10px 5px 22px;">
+                <span style="display: inline-block; padding: 2px 8px; background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; border-radius: 6px; font-size: 11px; font-weight: bold;">
+                  🎨 ${v.variantDesc}
+                </span>
+              </td>
+              <td style="text-align: center; font-family: monospace; font-size: 11px; color: #475569;">${v.barcode}</td>
+              <td style="text-align: center; padding: 5px;">
+                <span style="display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; background: ${v.isOut ? '#fee2e2' : '#fef3c7'}; color: ${v.isOut ? '#991b1b' : '#92400e'}; border: 1px solid ${v.isOut ? '#fca5a5' : '#fde68a'};">
+                  ${v.currentQty} ${p.unit}
+                </span>
+              </td>
+              <td style="text-align: center; font-size: 11px; font-weight: bold; color: ${v.isOut ? '#b91c1c' : '#b45309'};">
+                ${v.alertStatusText}
+              </td>
+              <td style="text-align: center; padding: 5px;">
+                <span style="display: inline-block; padding: 2px 8px; background: #e0e7ff; color: #3730a3; border-radius: 6px; font-weight: bold; font-size: 11px;">
+                  ${v.recommendedRestockQty} ${p.unit}
+                </span>
+              </td>
+            </tr>
+          `;
+        });
+      } else {
+        const bg = p.isOut ? '#fff1f2' : '#ffffff';
+        tableRowsHtml += `
+          <tr style="background-color: ${bg}; border-top: 1px solid #cbd5e1;">
+            <td style="text-align: center; padding: 7px 6px; font-weight: bold;">${rowNumber++}</td>
+            <td style="padding: 7px 10px;">
+              <div style="font-size: 13px; font-weight: 900; color: #0f172a;">${p.productName} <span style="font-size: 10px; font-weight: normal; background: #e2e8f0; padding: 1px 6px; border-radius: 4px;">সাধারণ পণ্য</span></div>
+              <div style="font-size: 10px; color: #64748b; margin-top: 2px;">ID: ${p.productId} ${p.category ? `| ক্যাটাগরি: ${p.category}` : ''}</div>
+            </td>
+            <td style="text-align: center; font-family: monospace; font-size: 11px; color: #475569;">${p.barcode}</td>
+            <td style="text-align: center; padding: 7px;">
+              <span style="display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; background: ${p.isOut ? '#fee2e2' : '#fef3c7'}; color: ${p.isOut ? '#991b1b' : '#92400e'}; border: 1px solid ${p.isOut ? '#fca5a5' : '#fde68a'};">
+                ${p.currentQty} ${p.unit}
+              </span>
+            </td>
+            <td style="text-align: center; font-size: 11px; font-weight: bold; color: ${p.isOut ? '#b91c1c' : '#b45309'};">
+              ${p.alertStatusText}
+            </td>
+            <td style="text-align: center; padding: 7px;">
+              <span style="display: inline-block; padding: 2px 8px; background: #e0e7ff; color: #3730a3; border-radius: 6px; font-weight: bold; font-size: 11px;">
+                ${p.recommendedRestockQty} ${p.unit}
+              </span>
+            </td>
+          </tr>
+        `;
+      }
+    });
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="bn">
+        <head>
+          <meta charset="utf-8" />
+          <title>গোডাউন স্টক অ্যালার্ট ও ঘাটতি রিপোর্ট - ${dateStr}</title>
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 10mm 10mm 15mm 10mm;
+            }
+            body {
+              font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+              color: #0f172a;
+              background: #fff;
+              margin: 0;
+              padding: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .report-header {
+              text-align: center;
+              border-bottom: 2px solid #0f172a;
+              padding-bottom: 10px;
+              margin-bottom: 14px;
+            }
+            .store-name {
+              font-size: 22px;
+              font-weight: 900;
+              color: #0f172a;
+              margin: 0;
+            }
+            .store-meta {
+              font-size: 11px;
+              color: #475569;
+              margin-top: 3px;
+            }
+            .report-badge {
+              display: inline-block;
+              margin-top: 8px;
+              padding: 3px 14px;
+              background: #0f172a;
+              color: #ffffff;
+              border-radius: 9999px;
+              font-size: 11px;
+              font-weight: bold;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .meta-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 8px;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 8px 12px;
+              font-size: 11px;
+              margin-bottom: 14px;
+            }
+            .meta-item span {
+              display: block;
+              color: #64748b;
+              font-size: 10px;
+            }
+            .meta-item strong {
+              color: #0f172a;
+              font-size: 11.5px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 11px;
+            }
+            th {
+              background: #f1f5f9;
+              color: #334155;
+              font-weight: 800;
+              border: 1px solid #cbd5e1;
+              padding: 7px 6px;
+              text-align: left;
+            }
+            td {
+              border: 1px solid #e2e8f0;
+            }
+            tr {
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            .summary-box {
+              margin-top: 14px;
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 12px;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              font-size: 11px;
+              font-weight: bold;
+            }
+            .signatures {
+              margin-top: 36px;
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 40px;
+              text-align: center;
+              font-size: 11px;
+              color: #475569;
+            }
+            .signature-line {
+              border-top: 1px dashed #64748b;
+              padding-top: 6px;
+              font-weight: bold;
+            }
+          </style>
+        </head>
+        <body onload="window.print();">
+          <div class="report-header">
+            <h1 class="store-name">${storeName}</h1>
+            <div class="store-meta">${storeAddress} • মোবাইল: ${storePhone}</div>
+            <div class="report-badge">গোডাউন স্টক অ্যালার্ট ও ঘাটতি খতিয়ান রিপোর্ট (A4 PDF)</div>
+          </div>
+
+          <div class="meta-grid">
+            <div class="meta-item">
+              <span>রিপোর্ট তৈরির সময়:</span>
+              <strong>${dateStr}</strong>
+            </div>
+            <div class="meta-item">
+              <span>ফিল্টার স্ট্যাটাস:</span>
+              <strong>${filterType === 'ALL' ? 'সকল ঘাটতি' : filterType === 'OUT_OF_STOCK' ? 'সম্পূর্ণ স্টক শেষ' : 'সংকটজনক কম'}</strong>
+            </div>
+            <div class="meta-item">
+              <span>মোট ঘাটতি পণ্য:</span>
+              <strong>${stats.totalAlertProducts}টি মূল পণ্য</strong>
+            </div>
+            <div class="meta-item">
+              <span>মোট ঘাটতি আইটেম:</span>
+              <strong style="color: #b91c1c;">${stats.totalAlertItems}টি (শেষ: ${stats.outCount}, কম: ${stats.lowCount})</strong>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">ক্রমিক</th>
+                <th>মূল পণ্য ও ভ্যারিয়েন্ট বিবরণ</th>
+                <th style="width: 95px; text-align: center;">বারকোড</th>
+                <th style="width: 90px; text-align: center;">গোডাউন পরিমাণ</th>
+                <th style="width: 120px; text-align: center;">ঘাটতি অবস্থা</th>
+                <th style="width: 95px; text-align: center;">প্রয়োজনীয় রিস্টক</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRowsHtml}
+            </tbody>
+          </table>
+
+          <div class="summary-box">
+            <span>সর্বমোট ঘাটতি আইটেম: ${stats.totalAlertItems}টি</span>
+            <span style="color: #b91c1c;">🚨 সম্পূর্ণ স্টক শেষ: ${stats.outCount}টি</span>
+            <span style="color: #b45309;">⚠️ সংকটজনক কম স্টক: ${stats.lowCount}টি</span>
+            <span>সিস্টেম অডিট কপি</span>
+          </div>
+
+          <div class="signatures">
+            <div>
+              <div class="signature-line">গোডাউন ইনচার্জ / অডিটর স্বাক্ষর</div>
+            </div>
+            <div>
+              <div class="signature-line">ম্যানেজার / স্বত্বাধিকারী স্বাক্ষর</div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  // ব্রাউজার প্রিন্ট হ্যান্ডলার (A4 ফরম্যাট)
   const handlePrint = () => {
     window.print();
   };
 
+  // ==========================================
+  // ১. A4 PDF প্রিভিউ মোড (যদি সক্রিয় থাকে)
+  // ==========================================
+  if (isPdfPreviewMode) {
+    const storeName = settings?.StoreName || 'পাবনা বস্ত্রালয়';
+    const storeAddress = settings?.Address || 'বসিলা রোড, মোহাম্মদপুর, ঢাকা';
+    const storePhone = settings?.Phone || '০১৬৭৫৯৩৪৯১৯';
+
+    return (
+      <div className="flex-1 bg-slate-200 min-h-screen p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200 select-none">
+        <div className="max-w-4xl mx-auto space-y-4">
+
+          {/* পিডিএফ কন্ট্রোল বার (প্রিন্টে অদৃশ্য) */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-300 shadow-md flex flex-wrap items-center justify-between gap-3 print:hidden">
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={() => setIsPdfPreviewMode(false)}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                title="সাধারণ তালিকায় ফিরে যান"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <h3 className="text-sm font-black text-slate-900 flex items-center space-x-1.5">
+                  <FileText className="w-4 h-4 text-rose-600" />
+                  <span>গোডাউন স্টক অ্যালার্ট - A4 PDF প্রিভিউ</span>
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  ব্রাউজারের প্রিন্ট ডায়ালগ থেকে সরাসরি <strong className="text-slate-800">"Save as PDF"</strong> নির্বাচন করে ডাউনলোড করুন
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black inline-flex items-center space-x-1.5 shadow-md shadow-rose-600/20 transition-all cursor-pointer active:scale-95"
+                title="PDF আকারে সেভ বা প্রিন্ট করুন"
+              >
+                <Printer className="w-4 h-4" />
+                <span>প্রিন্ট / PDF ডাউনলোড</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDirectPDFWindow}
+                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer"
+                title="নতুন ট্যাবে সরাসরি PDF উইন্ডো খুলুন"
+              >
+                <FileText className="w-4 h-4" />
+                <span>নতুন ট্যাবে PDF</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer"
+                title="এক্সেল সিএসভি ফাইল ডাউনলোড করুন"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>এক্সেল</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsPdfPreviewMode(false)}
+                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+              >
+                বন্ধ করুন
+              </button>
+            </div>
+          </div>
+
+          {/* বাস্তব A4 কাগজের মতো দৃশ্যমান শীট (A4 Printable Document Container) */}
+          <div
+            id="godown-alert-a4-sheet"
+            className="bg-white rounded-2xl shadow-xl border border-slate-300 p-6 sm:p-10 mx-auto print:p-0 print:border-none print:shadow-none print:m-0 print:rounded-none"
+            style={{ minHeight: '297mm' }}
+          >
+            {/* অফিশিয়াল রিপোর্ট হেডার */}
+            <div className="text-center pb-4 border-b-2 border-slate-900 mb-5">
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                {storeName}
+              </h1>
+              <p className="text-xs text-slate-600 mt-1">{storeAddress} • মোবাইল: {storePhone}</p>
+              <div className="inline-block mt-3 px-5 py-1.5 bg-slate-900 text-white rounded-full text-xs font-black uppercase tracking-wider">
+                গোডাউন স্টক অ্যালার্ট ও ঘাটতি খতিয়ান অডিট রিপোর্ট
+              </div>
+            </div>
+
+            {/* রিপোর্ট মেটা ইনফো গ্রিড */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs mb-5">
+              <div>
+                <span className="text-slate-500 block text-[10.5px]">রিপোর্ট তৈরির সময়:</span>
+                <span className="font-bold text-slate-800 font-mono">{new Date().toLocaleString('bn-BD')}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[10.5px]">ফিল্টার স্ট্যাটাস:</span>
+                <span className="font-bold text-slate-800">
+                  {filterType === 'ALL' ? 'সকল ঘাটতি পণ্য' : filterType === 'OUT_OF_STOCK' ? 'সম্পূর্ণ স্টক শেষ' : 'সংকটজনক কম স্টক'}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[10.5px]">আক্রান্ত মূল পণ্য:</span>
+                <span className="font-bold text-slate-800">{stats.totalAlertProducts}টি মূল পণ্য</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[10.5px]">মোট ঘাটতি আইটেম:</span>
+                <span className="font-bold text-rose-700 font-mono">
+                  {stats.totalAlertItems}টি (শেষ: {stats.outCount}, কম: {stats.lowCount})
+                </span>
+              </div>
+            </div>
+
+            {/* প্যারেন্ট-চাইল্ড অনুক্রম টেবিল */}
+            <div className="border border-slate-300 rounded-xl overflow-hidden mb-6">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead className="bg-slate-100 text-slate-800 font-bold uppercase text-[11px] border-b border-slate-300">
+                  <tr>
+                    <th className="py-2.5 px-3 w-12 text-center border-r border-slate-200">ক্রমিক</th>
+                    <th className="py-2.5 px-3 border-r border-slate-200">মূল পণ্য ও ভ্যারিয়েন্ট বিবরণ</th>
+                    <th className="py-2.5 px-3 w-28 text-center border-r border-slate-200">বারকোড</th>
+                    <th className="py-2.5 px-3 w-28 text-center bg-rose-50/80 border-r border-slate-200">গোডাউন পরিমাণ</th>
+                    <th className="py-2.5 px-3 w-32 text-center border-r border-slate-200">ঘাটতি অবস্থা</th>
+                    <th className="py-2.5 px-3 w-28 text-center">প্রয়োজনীয় রিস্টক</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filteredProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="py-8 text-center text-slate-400 font-bold">
+                        কোনো ঘাটতি বা স্টক সতর্কতা পাওয়া যায়নি।
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredProducts.map((p, idx) => {
+                      if (p.hasVariants) {
+                        return (
+                          <React.Fragment key={p.productId}>
+                            {/* প্যারেন্ট পণ্য রো */}
+                            <tr className="bg-slate-100/90 font-bold border-t-2 border-slate-300">
+                              <td className="py-2.5 px-3 text-center text-slate-700 font-mono border-r border-slate-200">
+                                {idx + 1}
+                              </td>
+                              <td className="py-2.5 px-3 border-r border-slate-200">
+                                <div className="text-sm font-black text-slate-900">{p.productName}</div>
+                                <div className="text-[10px] text-slate-500 font-normal">
+                                  ID: {p.productId} {p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ভ্যারিয়েন্ট ঘাটতি: {p.alertVariants.length}টি
+                                </div>
+                              </td>
+                              <td className="py-2.5 px-3 text-center text-slate-400 font-mono border-r border-slate-200">
+                                —
+                              </td>
+                              <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-800 bg-slate-50 border-r border-slate-200">
+                                মোট: {p.totalGodownStock} {p.unit}
+                              </td>
+                              <td className="py-2.5 px-3 text-center border-r border-slate-200">
+                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  p.alertVariants.some(v => v.isOut)
+                                    ? 'bg-rose-100 text-rose-800'
+                                    : 'bg-amber-100 text-amber-800'
+                                }`}>
+                                  {p.alertVariants.some(v => v.isOut) ? '🚨 কিছুতে স্টক শেষ' : '⚠️ কিছুতে কম'}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-center text-[10.5px] text-slate-400">
+                                বিস্তারিত নিচে ↓
+                              </td>
+                            </tr>
+
+                            {/* অধীনস্থ ভ্যারিয়েন্ট রো */}
+                            {p.alertVariants.map((v, vIdx) => (
+                              <tr key={v.key} className={v.isOut ? 'bg-rose-50/30' : 'bg-white'}>
+                                <td className="py-2 px-3 text-center text-slate-400 font-mono text-[10.5px] border-r border-slate-200">
+                                  {idx + 1}.{vIdx + 1}
+                                </td>
+                                <td className="py-2 px-3 pl-8 border-r border-slate-200">
+                                  <div className="flex items-center space-x-1.5">
+                                    <span className="text-indigo-400 text-xs">↳</span>
+                                    <span className="inline-block px-2 py-0.5 rounded bg-indigo-50 text-indigo-900 border border-indigo-200 font-bold text-[11px]">
+                                      {v.variantDesc}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="py-2 px-3 text-center font-mono text-slate-600 text-xs border-r border-slate-200">
+                                  {v.barcode}
+                                </td>
+                                <td className="py-2 px-3 text-center border-r border-slate-200">
+                                  <span className={`inline-block px-2 py-0.5 rounded font-mono font-black text-xs ${
+                                    v.isOut
+                                      ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                                      : 'bg-amber-100 text-amber-800 border border-amber-300'
+                                  }`}>
+                                    {v.currentQty} {p.unit}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 text-center border-r border-slate-200">
+                                  <span className={`text-[10.5px] font-bold ${v.isOut ? 'text-rose-700' : 'text-amber-700'}`}>
+                                    {v.alertStatusText}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 text-center font-mono font-bold text-indigo-700 text-xs">
+                                  <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-800">
+                                    {v.recommendedRestockQty} {p.unit}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        );
+                      }
+
+                      // সাধারণ পণ্য (ভ্যারিয়েন্ট ছাড়া)
+                      return (
+                        <tr key={p.productId} className={p.isOut ? 'bg-rose-50/30' : 'bg-white'}>
+                          <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-700 border-r border-slate-200">
+                            {idx + 1}
+                          </td>
+                          <td className="py-2.5 px-3 border-r border-slate-200">
+                            <span className="text-sm font-black text-slate-900">{p.productName}</span>
+                            <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 border border-slate-200">
+                              সাধারণ পণ্য
+                            </span>
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              ID: {p.productId} {p.category ? `| ক্যাটাগরি: ${p.category}` : ''}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-mono text-slate-600 text-xs border-r border-slate-200">
+                            {p.barcode}
+                          </td>
+                          <td className="py-2.5 px-3 text-center border-r border-slate-200">
+                            <span className={`inline-block px-2 py-0.5 rounded font-mono font-black text-xs ${
+                              p.isOut
+                                ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                                : 'bg-amber-100 text-amber-800 border border-amber-300'
+                            }`}>
+                              {p.currentQty} {p.unit}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-center border-r border-slate-200">
+                            <span className={`text-[10.5px] font-bold ${p.isOut ? 'text-rose-700' : 'text-amber-700'}`}>
+                              {p.alertStatusText}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-mono font-bold text-indigo-700 text-xs">
+                            <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-800">
+                              {p.recommendedRestockQty} {p.unit}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* সামারি ফুটার বক্স */}
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-slate-700 mb-8">
+              <span>সর্বমোট ঘাটতি আইটেম: <strong className="text-slate-900 font-mono">{stats.totalAlertItems}টি</strong></span>
+              <span className="text-rose-700">🚨 সম্পূর্ণ স্টক শেষ: <strong className="font-mono">{stats.outCount}টি</strong></span>
+              <span className="text-amber-700">⚠️ সংকটজনক কম স্টক: <strong className="font-mono">{stats.lowCount}টি</strong></span>
+              <span className="text-slate-400 font-normal">সিস্টেম স্বয়ংক্রিয় অডিট কপি</span>
+            </div>
+
+            {/* অফিশিয়াল স্বাক্ষর ব্লক */}
+            <div className="grid grid-cols-2 gap-16 pt-10 text-center text-xs text-slate-600">
+              <div>
+                <div className="border-t border-dashed border-slate-400 pt-2 font-bold text-slate-800">
+                  গোডাউন ইনচার্জ / অডিটর স্বাক্ষর
+                </div>
+                <span className="text-[10px] text-slate-400 mt-0.5 block">তারিখ সহ</span>
+              </div>
+              <div>
+                <div className="border-t border-dashed border-slate-400 pt-2 font-bold text-slate-800">
+                  স্টোর ম্যানেজার / প্রোপ্রাইটর স্বাক্ষর
+                </div>
+                <span className="text-[10px] text-slate-400 mt-0.5 block">অনুমোদন সীল সহ</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* প্রিন্ট উপযোগী স্টাইল */}
+        <style>{`
+          @media print {
+            body {
+              background: #ffffff !important;
+              color: #000000 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .print\\:hidden {
+              display: none !important;
+            }
+            #godown-alert-a4-sheet {
+              border: none !important;
+              box-shadow: none !important;
+              padding: 0 !important;
+              margin: 0 !important;
+              width: 100% !important;
+              max-width: 100% !important;
+            }
+            tr {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+            }
+            @page {
+              size: A4 portrait;
+              margin: 10mm 10mm 15mm 10mm;
+            }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // ২. সাধারণ ড্যাশবোর্ড মোড (স্বাভাবিক ভিউ)
+  // ==========================================
   return (
     <div className="flex-1 bg-slate-50 min-h-screen p-3 sm:p-6 select-none animate-in fade-in duration-200">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -329,12 +931,35 @@ export default function GodownStockAlertView({
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1 font-medium">
-                গোডাউনে যেসব পণ্যের মূল নামের অধীনে ভ্যারিয়েন্টগুলোর মজুত শেষ বা কমে গেছে তাদের তালিকা
+                গোডাউনে যেসব পণ্যের মূল নামের অধীনে ভ্যারিয়েন্টগুলোর মজুত শেষ বা কমে গেছে তাদের খতিয়ান
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 shrink-0">
+          <div className="flex items-center space-x-2 shrink-0 flex-wrap gap-y-1">
+            {/* পিডিএফ জেনারেট বাটন */}
+            <button
+              type="button"
+              onClick={() => setIsPdfPreviewMode(true)}
+              className="px-3.5 py-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white rounded-xl text-xs font-black inline-flex items-center space-x-1.5 shadow-md shadow-rose-600/20 transition-all cursor-pointer active:scale-95"
+              title="A4 পিডিএফ রিপোর্ট তৈরি ও প্রিভিউ দেখুন"
+            >
+              <FileText className="w-4 h-4" />
+              <span>পিডিএফ রিপোর্ট তৈরি</span>
+            </button>
+
+            {/* সরাসরি পপআপ উইন্ডো PDF বাটন */}
+            <button
+              type="button"
+              onClick={handleDirectPDFWindow}
+              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 transition-colors cursor-pointer"
+              title="নতুন ট্যাবে সরাসরি PDF ডাউনলোড ডায়ালগ খুলুন"
+            >
+              <Printer className="w-4 h-4 text-slate-600" />
+              <span className="hidden sm:inline">দ্রুত প্রিন্ট / PDF</span>
+            </button>
+
+            {/* এক্সেল ডাউনলোড */}
             <button
               type="button"
               onClick={handleExportCSV}
@@ -342,16 +967,7 @@ export default function GodownStockAlertView({
               title="এক্সেল বা সিএসভি ফাইল ডাউনলোড করুন"
             >
               <FileSpreadsheet className="w-4 h-4" />
-              <span>এক্সেল ডাউনলোড</span>
-            </button>
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer"
-              title="রিপোর্ট প্রিন্ট বা PDF আকারে সংরক্ষণ করুন"
-            >
-              <Printer className="w-4 h-4" />
-              <span>প্রিন্ট / PDF</span>
+              <span>এক্সেল</span>
             </button>
           </div>
         </div>
@@ -708,27 +1324,6 @@ export default function GodownStockAlertView({
         </div>
 
       </div>
-
-      {/* প্রিন্ট উপযোগী স্টাইল (শুধুমাত্র প্রিন্টের সময় কার্যকর) */}
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .max-w-7xl, .max-w-7xl * {
-            visibility: visible;
-          }
-          .max-w-7xl {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          button, input, select {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
