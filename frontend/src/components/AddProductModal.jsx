@@ -39,12 +39,22 @@ import {
   Building2,
   Droplets,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Scissors,
+  Store
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';
 import BarcodeStickerModal from './BarcodeStickerModal';
 import { getLocalSuppliers, saveOrUpdateSupplierLocally } from '../services/storage';
+import {
+  calculateThanBreakdown,
+  calculateInitialShopYards,
+  parseGojGira,
+  formatFabricQuantity,
+  isFabricUnit,
+  isThanUnit
+} from '../utils/fabricUtils';
 
 // ছবি কম্প্রেস ও অপটিমাইজ ফাংশন (যাতে দ্রুত গুগল ড্রাইভে আপলোড হয়)
 const compressImageForUpload = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
@@ -121,6 +131,10 @@ export default function AddProductModal({
     minStockAlert: '5',
     unit: 'থান',
     yardsPerThan: '25',
+    initialShopFullThans: '0',
+    initialShopCutGoj: '0',
+    initialShopCutGira: '0',
+    remnantThreshold: '2',
     supplierId: '',
     supplierName: '',
     imageUrl: '',
@@ -250,6 +264,24 @@ export default function AddProductModal({
       setCalcValues(prev => ({ ...prev, weightPerBag: '50' }));
     }
   }, [formData.unit]);
+
+  // থান কাপড়ের ক্ষেত্রে দোকানের প্রারম্ভিক গজ ও স্টক স্বয়ংক্রিয় সিঙ্ক
+  useEffect(() => {
+    if (unitCategory === 'than' || /than|থান/i.test(formData.unit)) {
+      const fullThans = parseInt(formData.initialShopFullThans, 10) || 0;
+      const cutG = parseInt(formData.initialShopCutGoj, 10) || 0;
+      const cutGi = parseInt(formData.initialShopCutGira, 10) || 0;
+      const ypt = parseFloat(formData.yardsPerThan) || 25;
+      
+      if (fullThans > 0 || cutG > 0 || cutGi > 0) {
+        const totalShopYards = calculateInitialShopYards(fullThans, cutG, cutGi, ypt);
+        setFormData(prev => ({
+          ...prev,
+          initialStock: String(totalShopYards)
+        }));
+      }
+    }
+  }, [formData.initialShopFullThans, formData.initialShopCutGoj, formData.initialShopCutGira, formData.yardsPerThan, unitCategory, formData.unit]);
 
   // ড্রপডাউন বা চিপস থেকে বিদ্যমান ভ্যারিয়েন্ট পণ্যে যোগ করা
   const handleAddOptionToVariants = (optionName) => {
@@ -988,10 +1020,18 @@ export default function AddProductModal({
     const effectiveUnit = (formData.unit || (unitCategory === 'than' ? 'থান' : 'Pcs')).trim();
     const isThan = unitCategory === 'than' || /than|থান/i.test(effectiveUnit);
     const yardsPerThan = isThan ? (Number(formData.yardsPerThan) || 0) : 0;
-    const thanCount = isThan ? (Number(formData.initialGodownStock) || Number(formData.initialStock) || 0) : 0;
+
+    // কাপড়ের ক্ষেত্রে দোকানে প্রারম্ভিক মোট গজ
+    const hasDetailedShopFabric = (Number(formData.initialShopFullThans) || 0) > 0 || (Number(formData.initialShopCutGoj) || 0) > 0 || (Number(formData.initialShopCutGira) || 0) > 0;
+    const computedShopYards = (isThan && hasDetailedShopFabric)
+      ? calculateInitialShopYards(formData.initialShopFullThans, formData.initialShopCutGoj, formData.initialShopCutGira, yardsPerThan)
+      : (Number(formData.initialStock) || 0);
+
+    const thanCount = isThan ? (Number(formData.initialGodownStock) || 0) : 0;
+    const godownYards = isThan ? (Number(formData.initialGodownStock || 0) * yardsPerThan) : 0;
     const totalYards = isThan
-      ? ((Number(formData.initialStock || 0) + Number(formData.initialGodownStock || 0)) * yardsPerThan)
-      : (unitCategory === 'length' && /গজ|yard/i.test(effectiveUnit) ? (Number(formData.initialGodownStock) || 0) : 0);
+      ? (godownYards + computedShopYards)
+      : (unitCategory === 'length' && /গজ|yard/i.test(effectiveUnit) ? (Number(formData.initialGodownStock || 0) + Number(formData.initialStock || 0)) : 0);
 
     const hasVar = productType === 'variable' || variants.length > 0;
     const effectiveVariants = hasVar ? variants : [];
@@ -1012,7 +1052,8 @@ export default function AddProductModal({
         WholesalePrice: Number(formData.wholesalePrice) || 0,
         minSellingPrice: minSellNum,
         sellingPrice: sellNum,
-        initialStock: Number(formData.initialStock) || 0,
+        initialStock: computedShopYards,
+        StockQuantity: computedShopYards,
         initialGodownStock: Number(formData.initialGodownStock) || 0,
         godownStock: Number(formData.initialGodownStock) || 0,
         GodownStock: Number(formData.initialGodownStock) || 0,
@@ -1023,6 +1064,11 @@ export default function AddProductModal({
         ThanCount: thanCount,
         totalYards: totalYards,
         TotalYards: totalYards,
+        remnantThreshold: Number(formData.remnantThreshold) || 2,
+        RemnantThreshold: Number(formData.remnantThreshold) || 2,
+        initialShopFullThans: Number(formData.initialShopFullThans) || 0,
+        initialShopCutGoj: Number(formData.initialShopCutGoj) || 0,
+        initialShopCutGira: Number(formData.initialShopCutGira) || 0,
         imageUrl: imageUploadMode === 'url' ? formData.imageUrl.trim() : '',
         imageCaption: formData.imageCaption.trim(),
         imageBase64: imageUploadMode === 'upload' ? imageBase64 : '',
@@ -2212,11 +2258,12 @@ export default function AddProductModal({
                       </span>
                     </div>
 
+                    {/* রো ১: গোডাউন থান, প্রতি থানে গজ ও ছাঁট সতর্কতা সীমা */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <label className="block text-[11px] font-bold text-amber-950">
-                            🏭 মোট থান (গোডাউনে)
+                            🏭 গোডাউনে মোট থান
                           </label>
                           {variants.length > 0 && (
                             <span className="text-[9px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded border border-amber-300">
@@ -2238,7 +2285,7 @@ export default function AddProductModal({
                           title={variants.length > 0 ? "কালার ভ্যারিয়েন্ট থাকায় নিচের কালার থানগুলোর যোগফল স্বয়ংক্রিয়ভাবে এখানে আসছে" : "মোট থান সংখ্যা লিখুন"}
                         />
                         <span className="text-[10px] text-amber-700">
-                          {variants.length > 0 ? '✓ কালার ভ্যারিয়েন্ট থেকে অটো আপডেট হচ্ছে' : 'পণ্য যুক্ত হলে সরাসরি গোডাউনে ঢুকবে'}
+                          {variants.length > 0 ? '✓ কালার ভ্যারিয়েন্ট থেকে অটো আপডেট হচ্ছে' : 'গোডাউনে প্রাথমিক আস্ত থান সংখ্যা'}
                         </span>
                       </div>
 
@@ -2259,15 +2306,119 @@ export default function AddProductModal({
                         <span className="text-[10px] text-amber-700">১ থানে মোট গজের পরিমাণ</span>
                       </div>
 
-                      <div className="bg-amber-100/80 rounded-xl p-3 border border-amber-300/80 flex flex-col justify-center">
-                        <span className="text-[10px] font-black text-amber-800 uppercase tracking-wide">মোট কাপড়ের পরিমাণ</span>
-                        <span className="text-base font-black text-amber-950 block">
-                          {((Number(formData.initialGodownStock) || 0) + (Number(formData.initialStock) || 0)) * (Number(formData.yardsPerThan) || 0)} গজ
-                        </span>
-                        <span className="text-[10px] text-amber-800 font-semibold">
-                          ({(Number(formData.initialGodownStock) || 0) + (Number(formData.initialStock) || 0)} থান × {Number(formData.yardsPerThan) || 0} গজ/থান)
+                      <div>
+                        <label className="block text-[11px] font-bold text-amber-950 mb-1 flex items-center justify-between">
+                          <span>✂️ শেষ ছাঁট সীমা (গজ)</span>
+                          <span className="text-[9px] text-rose-700 font-bold bg-rose-100 px-1.5 py-0.2 rounded">অটো-অ্যালার্ট</span>
+                        </label>
+                        <input
+                          type="number"
+                          min="0.1"
+                          step="0.0625"
+                          name="remnantThreshold"
+                          value={formData.remnantThreshold}
+                          onChange={handleChange}
+                          placeholder="যেমন: ২.০০"
+                          className="w-full px-3 py-2 bg-white border border-rose-300 rounded-xl text-xs font-black text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+                        />
+                        <span className="text-[10px] text-amber-700">এর নিচে নামলে ছাঁট খাতা ও রিস্টক অ্যালার্ট</span>
+                      </div>
+                    </div>
+
+                    {/* রো ২: দোকানে পূর্বের মজুত এন্ট্রি (আস্ত থান ও রানিং কাটা থানের গজ-গিরা) */}
+                    <div className="bg-white/80 p-3.5 rounded-xl border border-amber-300/80 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1.5">
+                          <Store className="w-3.5 h-3.5 text-amber-800" />
+                          <span className="text-xs font-black text-amber-950">
+                            🏬 দোকানে পূর্বের মজুত (কাউন্টার ও ডিসপ্লে ফ্লোর কাপড়)
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200">
+                          শুরুর স্টক ইনপুট
                         </span>
                       </div>
+                      <p className="text-[10.5px] text-amber-900 leading-relaxed">
+                        দোকানে যদি আগে থেকেই আস্ত থান বা ইতিমধ্যে খোলা রানিং থান থাকে, তবে নিচের ঘরে থান সংখ্যা ও কাটা থানের গজ-গিরা লিখুন:
+                      </p>
+
+                      <div className="grid grid-cols-3 gap-2.5">
+                        <div>
+                          <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                            আস্ত থান সংখ্যা
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            name="initialShopFullThans"
+                            value={formData.initialShopFullThans}
+                            onChange={handleChange}
+                            placeholder="০"
+                            className="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                            খোলা থানের গজ
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            name="initialShopCutGoj"
+                            value={formData.initialShopCutGoj}
+                            onChange={handleChange}
+                            placeholder="০"
+                            className="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                            খোলা থানের গিরা (০-১৫)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="15"
+                            step="1"
+                            name="initialShopCutGira"
+                            value={formData.initialShopCutGira}
+                            onChange={handleChange}
+                            placeholder="০"
+                            className="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* লাইভ সামারি স্ট্রিপ */}
+                      {(() => {
+                        const sThans = parseInt(formData.initialShopFullThans, 10) || 0;
+                        const sCutG = parseInt(formData.initialShopCutGoj, 10) || 0;
+                        const sCutGi = parseInt(formData.initialShopCutGira, 10) || 0;
+                        const ypt = parseFloat(formData.yardsPerThan) || 25;
+                        const gThans = Number(formData.initialGodownStock) || 0;
+                        const totalShopYds = calculateInitialShopYards(sThans, sCutG, sCutGi, ypt);
+                        const totalGodownYds = gThans * ypt;
+                        const totalCombinedYds = totalGodownYds + totalShopYds;
+
+                        return (
+                          <div className="mt-2 pt-2 border-t border-amber-200/80 flex flex-wrap items-center justify-between text-xs gap-2">
+                            <span className="text-amber-950 font-bold">
+                              🏬 দোকানে মোট শুরুর মজুত:{' '}
+                              <strong className="text-emerald-700 font-mono font-black">
+                                {totalShopYds.toLocaleString('bn-BD')} গজ
+                              </strong>{' '}
+                              <span className="text-[11px] text-slate-600 font-normal">
+                                ({sThans > 0 ? `${sThans}টি আস্ত থান` : ''}{sThans > 0 && (sCutG > 0 || sCutGi > 0) ? ' + ' : ''}{(sCutG > 0 || sCutGi > 0) ? `${sCutG} গজ ${sCutGi} গিরা` : (sThans === 0 ? '০ গজ' : '')})
+                              </span>
+                            </span>
+                            <span className="text-slate-600 font-medium">
+                              🌐 মোট কাপড়: <strong className="text-indigo-950 font-bold font-mono">{totalCombinedYds.toLocaleString('bn-BD')} গজ</strong> ({gThans} থান গোডাউন + {sThans} থান দোকান)
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}

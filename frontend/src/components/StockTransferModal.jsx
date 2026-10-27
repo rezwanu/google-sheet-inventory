@@ -41,6 +41,14 @@ import {
 } from 'lucide-react';
 import BarcodeStickerModal from './BarcodeStickerModal';
 import {
+  calculateThanBreakdown,
+  calculateInitialShopYards,
+  parseGojGira,
+  formatFabricQuantity,
+  isFabricUnit,
+  isThanUnit
+} from '../utils/fabricUtils';
+import {
   exportGodownOutflowExcelCSV,
   exportShopOutflowExcelCSV,
   exportLocationStockExcelCSV,
@@ -163,7 +171,9 @@ export default function StockTransferModal({
     'SHOP_ZERO_IN_GODOWN',
     'LOW_SHOP',
     'SHOP_FABRIC',
-    'SHOP_SUFFICIENT'
+    'SHOP_SUFFICIENT',
+    'SHOP_REMNANT',
+    'SHOP_NEED_BOLT'
   ].includes(overviewFilter);
 
   // ভ্যারিয়েন্ট স্টক এক্সপ্যান্ড ও ভিউ মোড স্টেট
@@ -289,6 +299,10 @@ export default function StockTransferModal({
     let shopLowCount = 0;
     let shopZeroInGodownCount = 0;
     let fabricShopThanCount = 0;
+    let fabricShopFullThans = 0;
+    let fabricShopRunningCutYards = 0;
+    let fabricShopRemnantsCount = 0;
+    let fabricShopNeedsRestockCount = 0;
     let shopProductCount = 0;
 
     products.forEach((p) => {
@@ -310,14 +324,25 @@ export default function StockTransferModal({
 
       if (isThan && yardsPerThan > 0) {
         fabricGodownYards += (gStock * yardsPerThan);
-        fabricShopYards += (sStock * yardsPerThan);
-        fabricShopThanCount += sStock;
+        const remTh = Number(p.RemnantThreshold || p.remnantThreshold || 2);
+        const bd = calculateThanBreakdown(sStock, yardsPerThan, remTh);
+        fabricShopYards += sStock;
+        fabricShopFullThans += bd.fullThans;
+        fabricShopRunningCutYards += bd.runningCutYards;
+        fabricShopThanCount += (bd.fullThans + (bd.runningCutYards > 0 ? 1 : 0));
+        if (bd.isRemnant) fabricShopRemnantsCount++;
+        if (bd.needsRestock && gStock > 0) fabricShopNeedsRestockCount++;
+
         totalGodownValuation += (gStock * yardsPerThan * unitCost);
-        totalShopCostValuation += (sStock * yardsPerThan * unitCost);
-        totalShopSellingValuation += (sStock * yardsPerThan * sellingPrice);
+        totalShopCostValuation += (sStock * unitCost);
+        totalShopSellingValuation += (sStock * sellingPrice);
       } else if (!isThan && /গজ|yard/i.test(unit)) {
         fabricGodownYards += gStock;
         fabricShopYards += sStock;
+        const remTh = Number(p.RemnantThreshold || p.remnantThreshold || 2);
+        if (sStock > 0 && sStock <= remTh) fabricShopRemnantsCount++;
+        if (sStock <= remTh && gStock > 0) fabricShopNeedsRestockCount++;
+
         totalGodownValuation += (gStock * unitCost);
         totalShopCostValuation += (sStock * unitCost);
         totalShopSellingValuation += (sStock * sellingPrice);
@@ -379,6 +404,10 @@ export default function StockTransferModal({
       shopLowCount,
       shopZeroInGodownCount,
       fabricShopThanCount,
+      fabricShopFullThans,
+      fabricShopRunningCutYards,
+      fabricShopRemnantsCount,
+      fabricShopNeedsRestockCount,
       shopProductCount
     };
   }, [products, stockTransfers]);
@@ -443,6 +472,20 @@ export default function StockTransferModal({
         matchFilter = (sStock <= minAlert && sStock > 0) || hasLowShopVar;
       } else if (overviewFilter === 'SHOP_FABRIC') {
         matchFilter = (/than|থান|গজ|yard/i.test(unit)) && sStock > 0;
+      } else if (overviewFilter === 'SHOP_REMNANT') {
+        const isFab = /than|থান|গজ|yard/i.test(unit);
+        if (!isFab) return false;
+        const ypt = Number(p.YardsPerThan || p.yardsPerThan || 0) || 25;
+        const remTh = Number(p.RemnantThreshold || p.remnantThreshold || 2);
+        const bd = calculateThanBreakdown(sStock, ypt, remTh);
+        matchFilter = bd.isRemnant;
+      } else if (overviewFilter === 'SHOP_NEED_BOLT') {
+        const isFab = /than|থান|গজ|yard/i.test(unit);
+        if (!isFab) return false;
+        const ypt = Number(p.YardsPerThan || p.yardsPerThan || 0) || 25;
+        const remTh = Number(p.RemnantThreshold || p.remnantThreshold || 2);
+        const bd = calculateThanBreakdown(sStock, ypt, remTh);
+        matchFilter = bd.needsRestock && gStock > 0;
       } else if (overviewFilter === 'SHOP_SUFFICIENT') {
         matchFilter = sStock > minAlert;
       } else if (overviewFilter === 'OUT_OF_STOCK') {
@@ -2192,10 +2235,18 @@ export default function StockTransferModal({
                             </td>
                             <td className="py-2 px-2 text-center text-slate-600 border border-slate-200">{unit}</td>
                             <td className="py-2 px-3 text-center font-black font-mono text-emerald-800 bg-emerald-50/30 border border-slate-200">
-                              {sStock} {isThan ? `থান (${sStock * yardsPerThan} গজ)` : ''}
+                              {(() => {
+                                if (isThan) {
+                                  const bd = calculateThanBreakdown(sStock, yardsPerThan, p.RemnantThreshold || 2);
+                                  return (
+                                    <span>{bd.displayText} <span className="text-[10px] text-slate-500 font-normal">({bd.totalYards} গজ)</span></span>
+                                  );
+                                }
+                                return `${sStock} ${unit}`;
+                              })()}
                             </td>
-                            <td className="py-2 px-3 border border-slate-200 bg-white text-center font-mono">
-                              <div className="h-4 border-b border-dashed border-slate-300"></div>
+                            <td className="py-2 px-3 border border-slate-200 bg-white text-center font-mono text-[10px] text-slate-400">
+                              {isThan ? '[   ] থান + [   ] গজ [   ] গিরা' : <div className="h-4 border-b border-dashed border-slate-300"></div>}
                             </td>
                             <td className="py-2 px-3 border border-slate-200 text-center font-mono">
                               <div className="h-4 border-b border-dashed border-slate-300"></div>
@@ -2296,8 +2347,13 @@ export default function StockTransferModal({
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-2">
                         <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
-                          🧵 {stockKpis.fabricShopThanCount.toLocaleString('bn-BD')} থান উপস্থিত
+                          📦 {stockKpis.fabricShopFullThans || 0}টি আস্ত থান
                         </span>
+                        {stockKpis.fabricShopRemnantsCount > 0 && (
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-amber-50 text-amber-900 border border-amber-200/80 animate-pulse">
+                            ✂️ শেষ ছাঁট: {stockKpis.fabricShopRemnantsCount}টি
+                          </span>
+                        )}
                         <span className="text-[10.5px] font-semibold text-slate-500">
                           ফ্লোর কাটিং মজুত
                         </span>
@@ -2350,6 +2406,11 @@ export default function StockTransferModal({
                         {stockKpis.shopZeroInGodownCount > 0 && (
                           <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-rose-100 text-rose-800 border border-rose-200 animate-pulse">
                             🚨 শেষ (গোডাউনে আছে): {stockKpis.shopZeroInGodownCount}
+                          </span>
+                        )}
+                        {stockKpis.fabricShopNeedsRestockCount > 0 && (
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-rose-50 text-rose-700 border border-rose-200 animate-pulse">
+                            🧵 নতুন থান প্রয়োজন: {stockKpis.fabricShopNeedsRestockCount}
                           </span>
                         )}
                         <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80">
@@ -2551,6 +2612,28 @@ export default function StockTransferModal({
                             }`}
                           >
                             <span>🧵 শুধু থান ও গজ কাপড়</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOverviewFilter('SHOP_REMNANT')}
+                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
+                              overviewFilter === 'SHOP_REMNANT'
+                                ? 'bg-amber-600 text-white shadow-xs font-black'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            <span>✂️ শেষ ছাঁট কাপড় ({stockKpis.fabricShopRemnantsCount || 0})</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOverviewFilter('SHOP_NEED_BOLT')}
+                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
+                              overviewFilter === 'SHOP_NEED_BOLT'
+                                ? 'bg-rose-700 text-white shadow-xs font-black'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            <span>🚨 নতুন থান প্রয়োজন ({stockKpis.fabricShopNeedsRestockCount || 0})</span>
                           </button>
                           <button
                             type="button"
@@ -2850,14 +2933,50 @@ export default function StockTransferModal({
                                           {/* বাটনের মতো কালারফুল ব্যাচ সারি */}
                                           {isShopStockView ? (
                                             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 shadow-2xs whitespace-nowrap transition-colors">
-                                                <Store className="w-3 h-3 text-emerald-600 shrink-0" />
-                                                <span>দোকানে: {sStock} {isThan ? 'থান' : unit}</span>
-                                              </span>
-                                              {isThan && yardsPerThan > 0 && (
-                                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 shadow-2xs whitespace-nowrap transition-colors">
-                                                  <CheckCircle2 className="w-3 h-3 text-indigo-600 shrink-0" />
-                                                  <span>ফ্লোরে: {(sStock * yardsPerThan).toLocaleString('bn-BD')} গজ</span>
+                                              {isThan ? (
+                                                <>
+                                                  {(() => {
+                                                    const ypt = yardsPerThan || 25;
+                                                    const remTh = Number(p.RemnantThreshold || p.remnantThreshold || 2);
+                                                    const bd = calculateThanBreakdown(sStock, ypt, remTh);
+                                                    return (
+                                                      <>
+                                                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-black bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-200 shadow-2xs whitespace-nowrap transition-colors" title="দোকানের মোট গজ">
+                                                          <Store className="w-3 h-3 text-emerald-600 shrink-0" />
+                                                          <span>দোকানে: {bd.totalYards.toLocaleString('bn-BD')} গজ</span>
+                                                        </span>
+                                                        {bd.fullThans > 0 && (
+                                                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 shadow-2xs whitespace-nowrap transition-colors" title="দোকানে অক্ষত আস্ত থান">
+                                                            <Package className="w-3 h-3 text-indigo-600 shrink-0" />
+                                                            <span>{bd.fullThans}টি আস্ত থান</span>
+                                                          </span>
+                                                        )}
+                                                        {bd.runningCutYards > 0 && !bd.isRemnant && (
+                                                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 shadow-2xs whitespace-nowrap transition-colors" title="কাউন্টার টেবিলে রানিং কাটা থান">
+                                                            <Scissors className="w-3 h-3 text-teal-600 shrink-0" />
+                                                            <span>কাটা থানে: {formatFabricQuantity(bd.runningCutYards, 'গজ', false)}</span>
+                                                          </span>
+                                                        )}
+                                                        {bd.isRemnant && (
+                                                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-black bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 shadow-2xs whitespace-nowrap transition-colors animate-pulse" title="থানের শেষ ছাঁট (কাউন্টার টুকরা হিসেবে বিক্রয়যোগ্য)">
+                                                            <Scissors className="w-3 h-3 text-amber-800 shrink-0" />
+                                                            <span>✂️ শেষ ছাঁট: {formatFabricQuantity(bd.runningCutYards, 'গজ', false)} [বিক্রয়যোগ্য]</span>
+                                                          </span>
+                                                        )}
+                                                        {bd.needsRestock && gStock > 0 && (
+                                                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-black bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 shadow-2xs whitespace-nowrap transition-colors animate-pulse" title="কাউন্টারের থান শেষ বা ছাঁট সীমার নিচে! গোডাউন থেকে নতুন থান আনুন">
+                                                            <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" />
+                                                            <span>🚨 নতুন থান চালান প্রয়োজন</span>
+                                                          </span>
+                                                        )}
+                                                      </>
+                                                    );
+                                                  })()}
+                                                </>
+                                              ) : (
+                                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 shadow-2xs whitespace-nowrap transition-colors">
+                                                  <Store className="w-3 h-3 text-emerald-600 shrink-0" />
+                                                  <span>দোকানে: {sStock} {unit}</span>
                                                 </span>
                                               )}
                                               {totalShopCost > 0 && (
@@ -3418,12 +3537,44 @@ export default function StockTransferModal({
                                     </div>
                                     {isShopStockView ? (
                                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200 whitespace-nowrap">
-                                          🏬 দোকানে: {item.shopStock} {item.unit || 'থান'}
-                                        </span>
-                                        {item.isThanUnit && item.shopYards > 0 && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 whitespace-nowrap">
-                                            📏 ফ্লোরে: {item.shopYards} গজ
+                                        {item.isThanUnit ? (
+                                          <>
+                                            {(() => {
+                                              const ypt = item.yardsPerThan || 25;
+                                              const remTh = Number(item.parentProduct?.RemnantThreshold || item.parentProduct?.remnantThreshold || 2);
+                                              const bd = calculateThanBreakdown(item.shopStock, ypt, remTh);
+                                              return (
+                                                <>
+                                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200 whitespace-nowrap">
+                                                    🏬 মোট: {bd.totalYards} গজ
+                                                  </span>
+                                                  {bd.fullThans > 0 && (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 whitespace-nowrap">
+                                                      📦 {bd.fullThans}টি আস্ত থান
+                                                    </span>
+                                                  )}
+                                                  {bd.runningCutYards > 0 && !bd.isRemnant && (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-200 whitespace-nowrap">
+                                                      ✂️ কাটা থানে: {formatFabricQuantity(bd.runningCutYards, 'গজ', false)}
+                                                    </span>
+                                                  )}
+                                                  {bd.isRemnant && (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 border border-amber-300 whitespace-nowrap font-bold animate-pulse">
+                                                      ✂️ শেষ ছাঁট: {formatFabricQuantity(bd.runningCutYards, 'গজ', false)} [বিক্রয়যোগ্য]
+                                                    </span>
+                                                  )}
+                                                  {bd.needsRestock && item.godownStock > 0 && (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300 whitespace-nowrap font-bold animate-pulse">
+                                                      🚨 নতুন থান প্রয়োজন
+                                                    </span>
+                                                  )}
+                                                </>
+                                              );
+                                            })()}
+                                          </>
+                                        ) : (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200 whitespace-nowrap">
+                                            🏬 দোকানে: {item.shopStock} {item.unit || 'পিস'}
                                           </span>
                                         )}
                                         {Number(item.costPrice || 0) > 0 && (

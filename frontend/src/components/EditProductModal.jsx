@@ -25,13 +25,22 @@ import {
   Sparkles,
   Palette,
   Plus,
-  Trash2
+  Trash2,
+  Scissors
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';
 import BarcodeStickerModal from './BarcodeStickerModal';
 import { canViewCostPrice } from '../utils/permissionUtils';
 import { getProductDisplayUnit } from '../services/storage';
+import {
+  calculateThanBreakdown,
+  calculateInitialShopYards,
+  parseGojGira,
+  formatFabricQuantity,
+  isFabricUnit,
+  isThanUnit
+} from '../utils/fabricUtils';
 
 // ছবি কম্প্রেস ও অপটিমাইজ ফাংশন (যাতে দ্রুত ড্রাইভে আপলোড হয়)
 const compressImageForUpload = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
@@ -95,6 +104,8 @@ export default function EditProductModal({
     stockQuantity: '',
     minStockAlert: '5',
     unit: 'Pcs',
+    yardsPerThan: '25',
+    remnantThreshold: '2',
     imageUrl: '',
     imageCaption: '',
     shortDescription: '',
@@ -352,6 +363,8 @@ export default function EditProductModal({
         godownStock: product.GodownStock !== undefined ? String(product.GodownStock) : '0',
         minStockAlert: product.MinStockAlert !== undefined ? String(product.MinStockAlert) : '5',
         unit: getProductDisplayUnit(product),
+        yardsPerThan: product.YardsPerThan !== undefined ? String(product.YardsPerThan) : (product.yardsPerThan !== undefined ? String(product.yardsPerThan) : '25'),
+        remnantThreshold: product.RemnantThreshold !== undefined ? String(product.RemnantThreshold) : (product.remnantThreshold !== undefined ? String(product.remnantThreshold) : '2'),
         imageUrl: product.ImageUrl || '',
         imageCaption: product.ImageCaption || '',
         shortDescription: product.ShortDescription || '',
@@ -717,6 +730,10 @@ export default function EditProductModal({
         godownStock: effectiveGodownStock,
         totalStock: effectiveGodownStock + effectiveShopStock,
         minStockAlert: Number(formData.minStockAlert) || 5,
+        yardsPerThan: Number(formData.yardsPerThan) || 25,
+        YardsPerThan: Number(formData.yardsPerThan) || 25,
+        remnantThreshold: Number(formData.remnantThreshold) || 2,
+        RemnantThreshold: Number(formData.remnantThreshold) || 2,
         imageUrl: imageUploadMode === 'url' ? formData.imageUrl.trim() : (formData.imageUrl || ''),
         imageCaption: formData.imageCaption.trim(),
         imageBase64: imageUploadMode === 'upload' ? imageBase64 : '',
@@ -1245,6 +1262,90 @@ export default function EditProductModal({
               )}
             </div>
           </div>
+
+          {/* বস্ত্রালয় থান ও গজ কাপড় সেটিংস ও রিমন্যান্ট ছাঁট সীমা */}
+          {(isThanUnit(formData.unit) || isFabricUnit(formData.unit)) && (
+            <div className="bg-gradient-to-r from-amber-50/90 to-orange-50/90 border border-amber-200/90 rounded-2xl p-4 space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="p-1.5 bg-amber-500/10 rounded-lg text-amber-700">
+                    <Scissors className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-amber-950">থান, গজ ও শেষ ছাঁট সেটিংস (বস্ত্রালয়)</h4>
+                    <p className="text-[10px] text-amber-800">প্রতি থানের দৈর্ঘ্য ও শেষ ছাঁট সতর্কতার সীমানা নির্ধারণ</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-black bg-amber-200/70 text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-300">
+                  টেক্সটাইল মেজারমেন্ট
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-amber-950 mb-1">
+                    📏 প্রতি থানে কত গজ?
+                  </label>
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="any"
+                    name="yardsPerThan"
+                    value={formData.yardsPerThan}
+                    onChange={handleChange}
+                    placeholder="যেমন: ২৫"
+                    className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-black text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                  />
+                  <span className="text-[10px] text-amber-700">১ থানে মোট গজের পরিমাণ</span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-amber-950 mb-1 flex items-center justify-between">
+                    <span>✂️ থানের শেষ ছাঁট সীমা (গজ)</span>
+                    <span className="text-[9px] text-rose-700 font-bold bg-rose-100 px-1.5 py-0.2 rounded">অটো-অ্যালার্ট</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.0625"
+                    name="remnantThreshold"
+                    value={formData.remnantThreshold}
+                    onChange={handleChange}
+                    placeholder="যেমন: ২.০০"
+                    className="w-full px-3 py-2 bg-white border border-rose-300 rounded-xl text-xs font-black text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+                  />
+                  <span className="text-[10px] text-amber-700">এর নিচে নামলে ছাঁট খাতা ও নতুন থান চালানের অ্যালার্ট</span>
+                </div>
+              </div>
+
+              {/* বর্তমান স্টকের লাইভ অ্যানালাইসিস */}
+              {(() => {
+                const sStock = Number(formData.stockQuantity) || 0;
+                const ypt = Number(formData.yardsPerThan) || 25;
+                const remTh = Number(formData.remnantThreshold) || 2;
+                const breakdown = calculateThanBreakdown(sStock, ypt, remTh);
+
+                return (
+                  <div className="bg-white/80 p-3 rounded-xl border border-amber-300/80 text-xs text-amber-950 space-y-1">
+                    <div className="font-bold flex items-center justify-between">
+                      <span>🏬 দোকানে বর্তমান ফ্লোর মজুত বিশ্লেষণ:</span>
+                      <strong className="text-emerald-700 font-mono font-black">{sStock.toLocaleString('bn-BD')} গজ</strong>
+                    </div>
+                    <div className="text-[11px] text-slate-700 flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="px-2 py-0.5 bg-amber-100 text-amber-900 rounded font-bold">
+                        {breakdown.displayText}
+                      </span>
+                      {breakdown.isRemnant && (
+                        <span className="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-bold border border-rose-200">
+                          ⚠️ রানিং থানটি ছাঁট সীমায় নেমে এসেছে!
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
 
           {/* Phase 6: ভ্যারিয়েন্ট কনফিগারেশন (Variable Product) */}
           {productType === 'variable' && (

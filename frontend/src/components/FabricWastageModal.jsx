@@ -17,9 +17,11 @@ import {
   TrendingDown,
   CheckCircle2,
   FileSpreadsheet,
-  AlertOctagon
+  AlertOctagon,
+  Store,
+  Truck
 } from 'lucide-react';
-import { calculateTotalYards, formatFabricQuantity, parseGojGira } from '../utils/fabricUtils';
+import { calculateTotalYards, formatFabricQuantity, parseGojGira, calculateThanBreakdown } from '../utils/fabricUtils';
 import { playCashChime, playWarningBeep } from '../utils/soundEffects';
 
 export default function FabricWastageModal({
@@ -57,6 +59,26 @@ export default function FabricWastageModal({
       return u.includes('গজ') || u.includes('yard') || cat.includes('থান') || cat.includes('কাপড়');
     });
   }, [products]);
+
+  // দোকানে বর্তমানে সক্রিয় শেষ ছাঁট কাপড়ের তালিকা (যা দোকানের ফ্লোরে বিক্রয়যোগ্য হিসেবে সক্রিয় আছে)
+  const liveShopRemnants = useMemo(() => {
+    return fabricProducts.map((p) => {
+      const u = String(p.Unit || p.unit || '');
+      const isThan = /than|থান/i.test(u);
+      const ypt = Number(p.YardsPerThan || p.yardsPerThan || 0) || 25;
+      const remTh = Number(p.RemnantThreshold || p.remnantThreshold || 2);
+      const sStock = Number(p.StockQuantity || 0);
+      const bd = calculateThanBreakdown(sStock, ypt, remTh);
+      if (bd.isRemnant) {
+        return {
+          product: p,
+          breakdown: bd,
+          remnantYards: bd.runningCutYards
+        };
+      }
+      return null;
+    }).filter(Boolean);
+  }, [fabricProducts]);
 
   // নির্বাচিত প্রোডাক্ট অবজেক্ট
   const selectedProduct = useMemo(() => {
@@ -209,6 +231,22 @@ export default function FabricWastageModal({
             <div className="bg-slate-800/80 p-1 rounded-xl flex items-center border border-slate-700/60 text-xs font-bold">
               <button
                 type="button"
+                onClick={() => setActiveTab('live_remnants')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                  activeTab === 'live_remnants'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <span>🏬 দোকানের সক্রিয় ছাঁট</span>
+                {liveShopRemnants.length > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-400 text-slate-950 font-bold animate-pulse">
+                    {liveShopRemnants.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
                 onClick={() => setActiveTab('list')}
                 className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
                   activeTab === 'list'
@@ -216,7 +254,7 @@ export default function FabricWastageModal({
                     : 'text-slate-300 hover:text-white'
                 }`}
               >
-                <span>ছাঁট ও ক্ষতি তালিকা</span>
+                <span>রেকর্ড খাতা</span>
                 {fabricWastageList.length > 0 && (
                   <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-rose-400/30 text-white">
                     {fabricWastageList.length}
@@ -233,7 +271,7 @@ export default function FabricWastageModal({
                 }`}
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>নতুন ছাঁট/ড্যামেজ এন্ট্রি</span>
+                <span>নতুন এন্ট্রি</span>
               </button>
             </div>
 
@@ -249,6 +287,113 @@ export default function FabricWastageModal({
 
         {/* ================= ২. মূল কনটেন্ট এরিয়া ================= */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/60 space-y-5">
+          {/* ট্যাব: দোকানের সক্রিয় কাউন্টার ছাঁট কাপড় */}
+          {activeTab === 'live_remnants' && (
+            <div className="space-y-4">
+              <div className="p-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent rounded-2xl border border-amber-200 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2.5 bg-amber-500/20 text-amber-900 rounded-xl">
+                    <Scissors className="w-5 h-5 text-amber-700" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-amber-950">
+                      দোকানে চলমান থানের শেষ ছাঁট কাপড়ের খতিয়ান
+                    </h3>
+                    <p className="text-xs text-amber-900 mt-0.5">
+                      কাউন্টার টেবিলে যে থানগুলোর কাপড় ছাঁট সতর্কতার সীমার নিচে নেমে এসেছে—এগুলো এখনও <strong>দোকানের মজুতেই সক্রিয় আছে</strong> এবং খুচরা টুকরা হিসেবে বিক্রয়যোগ্য।
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-bold text-amber-800">মোট সক্রিয় ছাঁট:</span>
+                  <div className="text-xl font-black text-amber-950 font-mono">
+                    {liveShopRemnants.length}টি থান
+                  </div>
+                </div>
+              </div>
+
+              {liveShopRemnants.length === 0 ? (
+                <div className="bg-white rounded-3xl p-10 text-center border border-slate-200/80 shadow-xs space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center">
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-base font-black text-slate-800">দোকানে কোনো শেষ ছাঁট কাপড় নেই</h3>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    দোকানের প্রতিটি থান কাপড়ে পর্যাপ্ত গজ অবশিষ্ট রয়েছে অথবা কোনো থানের কাপড় ছাঁট সীমার নিচে নামেনি।
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {liveShopRemnants.map(({ product: p, breakdown: bd, remnantYards }) => {
+                    const gStock = Number(p.GodownStock || 0);
+                    return (
+                      <div key={p.ProductID} className="bg-white p-4 rounded-2xl border border-amber-200/90 shadow-xs hover:shadow-md transition-all space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 uppercase tracking-wide">
+                              {p.Category || 'গজ কাপড়'}
+                            </span>
+                            <h4 className="text-xs font-black text-slate-900 mt-1 line-clamp-1">
+                              {p.ProductName}
+                            </h4>
+                            <span className="text-[10px] font-mono text-slate-400">
+                              #{p.Barcode || p.ProductID}
+                            </span>
+                          </div>
+                          <span className="p-1.5 bg-amber-50 text-amber-700 rounded-lg">
+                            <Scissors className="w-4 h-4" />
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 bg-amber-50/70 rounded-xl border border-amber-200/60 space-y-1">
+                          <div className="flex items-center justify-between text-xs font-bold text-amber-950">
+                            <span>✂️ থানের শেষ ছাঁট:</span>
+                            <span className="text-amber-900 font-mono font-black text-sm">
+                              {formatFabricQuantity(remnantYards, 'গজ', false)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium pt-1 border-t border-amber-200/50">
+                            <span>দোকানে মোট গজ:</span>
+                            <span className="font-mono font-bold text-slate-900">{p.StockQuantity || 0} গজ</span>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
+                            <span>ছাঁট সতর্কতা সীমা:</span>
+                            <span className="font-mono text-slate-800">{p.RemnantThreshold || p.remnantThreshold || 2} গজ</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5 pt-1">
+                          {bd.needsRestock && (
+                            <div className="p-2 bg-rose-50 text-rose-800 rounded-xl border border-rose-200 text-[10.5px] font-bold flex items-center space-x-1.5">
+                              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                              <span>কাটার মতো আস্ত থান নেই! গোডাউনে আছে: {gStock} থান</span>
+                            </div>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedProductId(p.ProductID);
+                              setEntryType('Remnant');
+                              setGoj(bd.runningCutGojGira.goj);
+                              setGira(bd.runningCutGojGira.gira);
+                              setReason('থানের শেষ ছাঁট (End-of-bolt Remnant)');
+                              setActiveTab('new');
+                            }}
+                            className="w-full py-1.5 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 shadow-xs cursor-pointer"
+                          >
+                            <Tag className="w-3.5 h-3.5" />
+                            <span>ছাঁট হিসেবে রেকর্ড বা বান্ডেল তৈরি</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ট্যাব ১: হিস্ট্রি ও সামারি */}
           {activeTab === 'list' && (
             <div className="space-y-5">

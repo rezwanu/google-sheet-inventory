@@ -44,7 +44,7 @@ import FabricWastageModal from './components/FabricWastageModal';
 import BackupRestoreModal from './components/BackupRestoreModal';
 import AdminPinModal from './components/AdminPinModal';
 import { isAdminUser } from './utils/permissionUtils';
-import { isFabricUnit } from './utils/fabricUtils';
+import { isFabricUnit, calculateThanBreakdown, formatFabricQuantity } from './utils/fabricUtils';
 import {
   playBarcodeBeep,
   playCashChime,
@@ -3305,8 +3305,13 @@ export default function App() {
 
           // যদি সরাসরি দোকানে গ্রহণ করা হয় (Direct Transfer / Received):
           if (isReceived && isToShop) {
+            const pUnit = getProductDisplayUnit(target);
+            const isThan = /than|থান/i.test(pUnit);
+            const yardsPerThan = isThan ? (Number(target.YardsPerThan || target.yardsPerThan || 0) || 25) : 0;
+            const shopIncrease = (isThan && yardsPerThan > 0) ? (qty * yardsPerThan) : qty;
+
             const currentShop = Number(target.StockQuantity || 0);
-            const newShop = currentShop + qty;
+            const newShop = currentShop + shopIncrease;
             target.StockQuantity = newShop;
             target.CurrentStock = newShop;
             target.ShopStock = newShop;
@@ -3321,9 +3326,9 @@ export default function App() {
                 const prevVS = Number(uVars[vIdx].StockQuantity !== undefined ? uVars[vIdx].StockQuantity : 0) || 0;
                 uVars[vIdx] = {
                   ...uVars[vIdx],
-                  StockQuantity: prevVS + qty,
-                  CurrentStock: prevVS + qty,
-                  ShopStock: prevVS + qty
+                  StockQuantity: prevVS + shopIncrease,
+                  CurrentStock: prevVS + shopIncrease,
+                  ShopStock: prevVS + shopIncrease
                 };
                 target.Variants = uVars;
                 target.VariantsJSON = JSON.stringify(uVars);
@@ -3455,8 +3460,13 @@ export default function App() {
           if (prodIdx !== -1) {
             hasRestocked = true;
             const target = { ...updatedProducts[prodIdx] };
+            const pUnit = getProductDisplayUnit(target);
+            const isThan = /than|থান/i.test(pUnit);
+            const yardsPerThan = isThan ? (Number(target.YardsPerThan || target.yardsPerThan || 0) || 25) : 0;
+            const shopIncrease = (isThan && yardsPerThan > 0) ? (qty * yardsPerThan) : qty;
+
             const prevShop = Number(target.StockQuantity) || 0;
-            const newShop = prevShop + qty;
+            const newShop = prevShop + shopIncrease;
             target.StockQuantity = newShop;
             target.CurrentStock = newShop;
             target.TotalStock = newShop + (Number(target.GodownStock) || 0);
@@ -3469,7 +3479,7 @@ export default function App() {
                 const uVars = [...target.Variants];
                 uVars[vIdx] = {
                   ...uVars[vIdx],
-                  StockQuantity: (Number(uVars[vIdx].StockQuantity) || 0) + qty
+                  StockQuantity: (Number(uVars[vIdx].StockQuantity) || 0) + shopIncrease
                 };
                 target.Variants = uVars;
               }
