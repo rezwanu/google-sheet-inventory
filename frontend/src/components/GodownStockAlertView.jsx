@@ -319,74 +319,47 @@ export default function GodownStockAlertView({
     let tableRowsHtml = '';
     let rowNumber = 1;
 
-    filteredProducts.forEach((p) => {
+    filteredProducts.forEach((p, idx) => {
+      const rowNum = idx + 1;
       if (p.hasVariants) {
-        // Parent row
+        const variantListStr = p.alertVariants.map(v => v.variantDesc).join(', ');
+        const vBarcodes = Array.from(new Set(p.alertVariants.map(v => v.barcode).filter(b => b && b !== '—')));
+        const barcodeText = vBarcodes.length > 0 
+          ? vBarcodes.join(', ') 
+          : (p.barcode && p.barcode !== '—' ? p.barcode : '—');
+
         tableRowsHtml += `
-          <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1;">
-            <td style="text-align: center; padding: 7px 6px;">${rowNumber++}</td>
-            <td style="padding: 7px 10px;">
+          <tr style="border-top: 1px solid #cbd5e1;">
+            <td style="text-align: center; padding: 8px 6px; font-weight: bold; color: #334155; font-size: 11px;">${rowNum}</td>
+            <td style="padding: 8px 12px;">
               <div style="font-size: 13px; font-weight: 900; color: #0f172a;">${p.productName}</div>
-              <div style="font-size: 10px; color: #64748b; font-weight: normal; margin-top: 2px;">ID: ${p.productId} ${p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ভ্যারিয়েন্ট ঘাটতি: ${p.alertVariants.length}টি</div>
+              <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                ID: ${p.productId} ${p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ভ্যারিয়েন্ট ঘাটতি: ${p.alertVariants.length}টি
+              </div>
+              <div style="margin-top: 5px; font-size: 11px; color: #1e293b; line-height: 1.5;">
+                <strong style="color: #4338ca;">ভ্যারিয়েন্ট:</strong> ${variantListStr}
+              </div>
             </td>
-            <td style="text-align: center; color: #94a3b8; font-size: 11px;">—</td>
-            <td style="text-align: center; font-size: 11px; color: #334155; font-weight: bold;">মোট: ${p.totalGodownStock} ${p.unit}</td>
-            <td style="text-align: center; font-size: 11px; font-weight: bold; color: ${p.alertVariants.some(v => v.isOut) ? '#b91c1c' : '#b45309'};">
-              ${p.alertVariants.some(v => v.isOut) ? '🚨 কিছু ভ্যারিয়েন্টে স্টক শেষ' : '⚠️ কিছু ভ্যারিয়েন্টে কম'}
+            <td style="text-align: center; font-family: monospace; font-size: 11px; color: #334155; padding: 8px 10px; word-break: break-word;">
+              ${barcodeText}
             </td>
-            <td style="text-align: center; font-size: 10px; color: #64748b;">নিচে বিস্তারিত দেখুন ↓</td>
           </tr>
         `;
-        // Child variant rows
-        p.alertVariants.forEach((v, vIdx) => {
-          const bg = v.isOut ? '#fff1f2' : '#ffffff';
-          tableRowsHtml += `
-            <tr style="background-color: ${bg}; border-top: 1px solid #e2e8f0;">
-              <td style="text-align: center; font-size: 10px; color: #94a3b8; padding: 5px;">${rowNumber - 1}.${vIdx + 1}</td>
-              <td style="padding: 5px 10px 5px 22px;">
-                <span style="display: inline-block; padding: 2px 8px; background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; border-radius: 6px; font-size: 11px; font-weight: bold;">
-                  🎨 ${v.variantDesc}
-                </span>
-              </td>
-              <td style="text-align: center; font-family: monospace; font-size: 11px; color: #475569;">${v.barcode}</td>
-              <td style="text-align: center; padding: 5px;">
-                <span style="display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; background: ${v.isOut ? '#fee2e2' : '#fef3c7'}; color: ${v.isOut ? '#991b1b' : '#92400e'}; border: 1px solid ${v.isOut ? '#fca5a5' : '#fde68a'};">
-                  ${v.currentQty} ${p.unit}
-                </span>
-              </td>
-              <td style="text-align: center; font-size: 11px; font-weight: bold; color: ${v.isOut ? '#b91c1c' : '#b45309'};">
-                ${v.alertStatusText}
-              </td>
-              <td style="text-align: center; padding: 5px;">
-                <span style="display: inline-block; padding: 2px 8px; background: #e0e7ff; color: #3730a3; border-radius: 6px; font-weight: bold; font-size: 11px;">
-                  ${v.recommendedRestockQty} ${p.unit}
-                </span>
-              </td>
-            </tr>
-          `;
-        });
       } else {
-        const bg = p.isOut ? '#fff1f2' : '#ffffff';
         tableRowsHtml += `
-          <tr style="background-color: ${bg}; border-top: 1px solid #cbd5e1;">
-            <td style="text-align: center; padding: 7px 6px; font-weight: bold;">${rowNumber++}</td>
-            <td style="padding: 7px 10px;">
-              <div style="font-size: 13px; font-weight: 900; color: #0f172a;">${p.productName} <span style="font-size: 10px; font-weight: normal; background: #e2e8f0; padding: 1px 6px; border-radius: 4px;">সাধারণ পণ্য</span></div>
-              <div style="font-size: 10px; color: #64748b; margin-top: 2px;">ID: ${p.productId} ${p.category ? `| ক্যাটাগরি: ${p.category}` : ''}</div>
+          <tr style="border-top: 1px solid #cbd5e1;">
+            <td style="text-align: center; padding: 8px 6px; font-weight: bold; color: #334155; font-size: 11px;">${rowNum}</td>
+            <td style="padding: 8px 12px;">
+              <div style="font-size: 13px; font-weight: 900; color: #0f172a;">
+                ${p.productName} 
+                <span style="font-size: 9.5px; font-weight: normal; background: #f1f5f9; color: #475569; padding: 1px 6px; border-radius: 4px; border: 1px solid #e2e8f0; margin-left: 6px;">সাধারণ পণ্য</span>
+              </div>
+              <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                ID: ${p.productId} ${p.category ? `| ক্যাটাগরি: ${p.category}` : ''}
+              </div>
             </td>
-            <td style="text-align: center; font-family: monospace; font-size: 11px; color: #475569;">${p.barcode}</td>
-            <td style="text-align: center; padding: 7px;">
-              <span style="display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; background: ${p.isOut ? '#fee2e2' : '#fef3c7'}; color: ${p.isOut ? '#991b1b' : '#92400e'}; border: 1px solid ${p.isOut ? '#fca5a5' : '#fde68a'};">
-                ${p.currentQty} ${p.unit}
-              </span>
-            </td>
-            <td style="text-align: center; font-size: 11px; font-weight: bold; color: ${p.isOut ? '#b91c1c' : '#b45309'};">
-              ${p.alertStatusText}
-            </td>
-            <td style="text-align: center; padding: 7px;">
-              <span style="display: inline-block; padding: 2px 8px; background: #e0e7ff; color: #3730a3; border-radius: 6px; font-weight: bold; font-size: 11px;">
-                ${p.recommendedRestockQty} ${p.unit}
-              </span>
+            <td style="text-align: center; font-family: monospace; font-size: 11px; color: #334155; padding: 8px 10px; word-break: break-word;">
+              ${p.barcode || '—'}
             </td>
           </tr>
         `;
@@ -538,12 +511,9 @@ export default function GodownStockAlertView({
           <table>
             <thead>
               <tr>
-                <th style="width: 40px; text-align: center;">ক্রমিক</th>
+                <th style="width: 45px; text-align: center;">ক্রমিক</th>
                 <th>মূল পণ্য ও ভ্যারিয়েন্ট বিবরণ</th>
-                <th style="width: 95px; text-align: center;">বারকোড</th>
-                <th style="width: 90px; text-align: center;">গোডাউন পরিমাণ</th>
-                <th style="width: 120px; text-align: center;">ঘাটতি অবস্থা</th>
-                <th style="width: 95px; text-align: center;">প্রয়োজনীয় রিস্টক</th>
+                <th style="width: 140px; text-align: center;">বারকোড</th>
               </tr>
             </thead>
             <tbody>
@@ -693,140 +663,74 @@ export default function GodownStockAlertView({
               </div>
             </div>
 
-            {/* প্যারেন্ট-চাইল্ড অনুক্রম টেবিল */}
+            {/* ৩ কলাম বিশিষ্ট স্টক অ্যালার্ট টেবিল */}
             <div className="border border-slate-300 rounded-xl overflow-hidden mb-6">
               <table className="w-full text-xs text-left border-collapse">
                 <thead className="bg-slate-100 text-slate-800 font-bold uppercase text-[11px] border-b border-slate-300">
                   <tr>
-                    <th className="py-2.5 px-3 w-12 text-center border-r border-slate-200">ক্রমিক</th>
-                    <th className="py-2.5 px-3 border-r border-slate-200">মূল পণ্য ও ভ্যারিয়েন্ট বিবরণ</th>
-                    <th className="py-2.5 px-3 w-28 text-center border-r border-slate-200">বারকোড</th>
-                    <th className="py-2.5 px-3 w-28 text-center bg-rose-50/80 border-r border-slate-200">গোডাউন পরিমাণ</th>
-                    <th className="py-2.5 px-3 w-32 text-center border-r border-slate-200">ঘাটতি অবস্থা</th>
-                    <th className="py-2.5 px-3 w-28 text-center">প্রয়োজনীয় রিস্টক</th>
+                    <th className="py-2.5 px-3 w-14 text-center border-r border-slate-200">ক্রমিক</th>
+                    <th className="py-2.5 px-4 border-r border-slate-200">মূল পণ্য ও ভ্যারিয়েন্ট বিবরণ</th>
+                    <th className="py-2.5 px-3 w-40 text-center">বারকোড</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {filteredProducts.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="py-8 text-center text-slate-400 font-bold">
+                      <td colSpan="3" className="py-8 text-center text-slate-400 font-bold">
                         কোনো ঘাটতি বা স্টক সতর্কতা পাওয়া যায়নি।
                       </td>
                     </tr>
                   ) : (
                     filteredProducts.map((p, idx) => {
+                      const rowNum = idx + 1;
                       if (p.hasVariants) {
-                        return (
-                          <React.Fragment key={p.productId}>
-                            {/* প্যারেন্ট পণ্য রো */}
-                            <tr className="bg-slate-100/90 font-bold border-t-2 border-slate-300">
-                              <td className="py-2.5 px-3 text-center text-slate-700 font-mono border-r border-slate-200">
-                                {idx + 1}
-                              </td>
-                              <td className="py-2.5 px-3 border-r border-slate-200">
-                                <div className="text-sm font-black text-slate-900">{p.productName}</div>
-                                <div className="text-[10px] text-slate-500 font-normal">
-                                  ID: {p.productId} {p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ভ্যারিয়েন্ট ঘাটতি: {p.alertVariants.length}টি
-                                </div>
-                              </td>
-                              <td className="py-2.5 px-3 text-center text-slate-400 font-mono border-r border-slate-200">
-                                —
-                              </td>
-                              <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-800 bg-slate-50 border-r border-slate-200">
-                                মোট: {p.totalGodownStock} {p.unit}
-                              </td>
-                              <td className="py-2.5 px-3 text-center border-r border-slate-200">
-                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                                  p.alertVariants.some(v => v.isOut)
-                                    ? 'bg-rose-100 text-rose-800'
-                                    : 'bg-amber-100 text-amber-800'
-                                }`}>
-                                  {p.alertVariants.some(v => v.isOut) ? '🚨 কিছুতে স্টক শেষ' : '⚠️ কিছুতে কম'}
-                                </span>
-                              </td>
-                              <td className="py-2.5 px-3 text-center text-[10.5px] text-slate-400">
-                                বিস্তারিত নিচে ↓
-                              </td>
-                            </tr>
+                        const variantListStr = p.alertVariants.map(v => v.variantDesc).join(', ');
+                        const vBarcodes = Array.from(new Set(p.alertVariants.map(v => v.barcode).filter(b => b && b !== '—')));
+                        const barcodeText = vBarcodes.length > 0 
+                          ? vBarcodes.join(', ') 
+                          : (p.barcode && p.barcode !== '—' ? p.barcode : '—');
 
-                            {/* অধীনস্থ ভ্যারিয়েন্ট রো */}
-                            {p.alertVariants.map((v, vIdx) => (
-                              <tr key={v.key} className={v.isOut ? 'bg-rose-50/30' : 'bg-white'}>
-                                <td className="py-2 px-3 text-center text-slate-400 font-mono text-[10.5px] border-r border-slate-200">
-                                  {idx + 1}.{vIdx + 1}
-                                </td>
-                                <td className="py-2 px-3 pl-8 border-r border-slate-200">
-                                  <div className="flex items-center space-x-1.5">
-                                    <span className="text-indigo-400 text-xs">↳</span>
-                                    <span className="inline-block px-2 py-0.5 rounded bg-indigo-50 text-indigo-900 border border-indigo-200 font-bold text-[11px]">
-                                      {v.variantDesc}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="py-2 px-3 text-center font-mono text-slate-600 text-xs border-r border-slate-200">
-                                  {v.barcode}
-                                </td>
-                                <td className="py-2 px-3 text-center border-r border-slate-200">
-                                  <span className={`inline-block px-2 py-0.5 rounded font-mono font-black text-xs ${
-                                    v.isOut
-                                      ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                                      : 'bg-amber-100 text-amber-800 border border-amber-300'
-                                  }`}>
-                                    {v.currentQty} {p.unit}
-                                  </span>
-                                </td>
-                                <td className="py-2 px-3 text-center border-r border-slate-200">
-                                  <span className={`text-[10.5px] font-bold ${v.isOut ? 'text-rose-700' : 'text-amber-700'}`}>
-                                    {v.alertStatusText}
-                                  </span>
-                                </td>
-                                <td className="py-2 px-3 text-center font-mono font-bold text-indigo-700 text-xs">
-                                  <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-800">
-                                    {v.recommendedRestockQty} {p.unit}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </React.Fragment>
+                        return (
+                          <tr key={p.productId} className="bg-white hover:bg-slate-50 border-t border-slate-200">
+                            <td className="py-3 px-3 text-center text-slate-700 font-mono font-bold border-r border-slate-200">
+                              {rowNum}
+                            </td>
+                            <td className="py-3 px-4 border-r border-slate-200">
+                              <div className="text-sm font-black text-slate-900">{p.productName}</div>
+                              <div className="text-[10px] text-slate-500 font-normal mt-0.5">
+                                ID: {p.productId} {p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ভ্যারিয়েন্ট ঘাটতি: {p.alertVariants.length}টি
+                              </div>
+                              <div className="mt-2 text-xs text-slate-800 leading-relaxed">
+                                <span className="font-bold text-indigo-700">ভ্যারিয়েন্ট: </span>
+                                <span className="font-medium text-slate-700">{variantListStr}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-3 text-center font-mono text-slate-700 text-xs break-all">
+                              {barcodeText}
+                            </td>
+                          </tr>
                         );
                       }
 
                       // সাধারণ পণ্য (ভ্যারিয়েন্ট ছাড়া)
                       return (
-                        <tr key={p.productId} className={p.isOut ? 'bg-rose-50/30' : 'bg-white'}>
-                          <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-700 border-r border-slate-200">
-                            {idx + 1}
+                        <tr key={p.productId} className="bg-white hover:bg-slate-50 border-t border-slate-200">
+                          <td className="py-3 px-3 text-center text-slate-700 font-mono font-bold border-r border-slate-200">
+                            {rowNum}
                           </td>
-                          <td className="py-2.5 px-3 border-r border-slate-200">
-                            <span className="text-sm font-black text-slate-900">{p.productName}</span>
-                            <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 border border-slate-200">
-                              সাধারণ পণ্য
-                            </span>
-                            <div className="text-[10px] text-slate-500 mt-0.5">
+                          <td className="py-3 px-4 border-r border-slate-200">
+                            <div className="text-sm font-black text-slate-900 flex items-center space-x-2">
+                              <span>{p.productName}</span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-normal bg-slate-100 text-slate-600 border border-slate-200">
+                                সাধারণ পণ্য
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 font-normal mt-0.5">
                               ID: {p.productId} {p.category ? `| ক্যাটাগরি: ${p.category}` : ''}
                             </div>
                           </td>
-                          <td className="py-2.5 px-3 text-center font-mono text-slate-600 text-xs border-r border-slate-200">
-                            {p.barcode}
-                          </td>
-                          <td className="py-2.5 px-3 text-center border-r border-slate-200">
-                            <span className={`inline-block px-2 py-0.5 rounded font-mono font-black text-xs ${
-                              p.isOut
-                                ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                                : 'bg-amber-100 text-amber-800 border border-amber-300'
-                            }`}>
-                              {p.currentQty} {p.unit}
-                            </span>
-                          </td>
-                          <td className="py-2.5 px-3 text-center border-r border-slate-200">
-                            <span className={`text-[10.5px] font-bold ${p.isOut ? 'text-rose-700' : 'text-amber-700'}`}>
-                              {p.alertStatusText}
-                            </span>
-                          </td>
-                          <td className="py-2.5 px-3 text-center font-mono font-bold text-indigo-700 text-xs">
-                            <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-800">
-                              {p.recommendedRestockQty} {p.unit}
-                            </span>
+                          <td className="py-3 px-3 text-center font-mono text-slate-700 text-xs break-all">
+                            {p.barcode || '—'}
                           </td>
                         </tr>
                       );
