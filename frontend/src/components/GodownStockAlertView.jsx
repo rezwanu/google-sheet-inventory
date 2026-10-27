@@ -50,6 +50,85 @@ export default function GodownStockAlertView({
     return [];
   };
 
+  // ভ্যারিয়েন্ট টাইপ ও মান কমা দিয়ে সাজানো (যেমন: রং: নীল, কালো, সাদা...)
+  const getVariantTypeAndValues = (alertVariants = []) => {
+    if (!alertVariants || alertVariants.length === 0) return { type: '', text: '' };
+
+    const colors = alertVariants
+      .map(v => v.color?.trim() || v.rawVariant?.Color?.trim() || v.rawVariant?.Attributes?.Color?.trim())
+      .filter(Boolean);
+
+    const sizes = alertVariants
+      .map(v => v.size?.trim() || v.rawVariant?.Size?.trim() || v.rawVariant?.Attributes?.Size?.trim())
+      .filter(Boolean);
+
+    // ১. শুধুমাত্র রং থাকলে (যেমন কাপড়/পোশাকের কালার)
+    if (colors.length > 0 && sizes.length === 0) {
+      return {
+        type: 'রং',
+        text: colors.join(', ')
+      };
+    }
+
+    // ২. শুধুমাত্র সাইজ থাকলে
+    if (sizes.length > 0 && colors.length === 0) {
+      return {
+        type: 'সাইজ',
+        text: sizes.join(', ')
+      };
+    }
+
+    // ৩. রং ও সাইজ উভয়ই থাকলে (যেমন: নীল (XL), কালো (L))
+    if (colors.length > 0 && sizes.length > 0) {
+      const combined = alertVariants.map(v => {
+        const c = v.color?.trim() || v.rawVariant?.Color?.trim() || '';
+        const s = v.size?.trim() || v.rawVariant?.Size?.trim() || '';
+        if (c && s) return `${c} (${s})`;
+        return c || s || v.variantDesc;
+      }).filter(Boolean);
+
+      return {
+        type: 'রং (সাইজ)',
+        text: combined.join(', ')
+      };
+    }
+
+    // ৪. অন্যান্য কাস্টম অ্যাট্রিবিউট থাকলে
+    const otherKeys = new Set();
+    alertVariants.forEach(v => {
+      const attrs = v.rawVariant?.Attributes;
+      if (attrs && typeof attrs === 'object') {
+        Object.keys(attrs).forEach(k => {
+          if (k !== 'Color' && k !== 'Size') otherKeys.add(k);
+        });
+      }
+    });
+
+    if (otherKeys.size > 0) {
+      const key = Array.from(otherKeys)[0];
+      const keyLabel = key === 'Weight' ? 'ওজন' : key === 'Fabric' ? 'কাপড়' : key;
+      const vals = alertVariants.map(v => v.rawVariant?.Attributes?.[key]).filter(Boolean);
+      if (vals.length > 0) {
+        return {
+          type: keyLabel,
+          text: vals.join(', ')
+        };
+      }
+    }
+
+    // ৫. ফলব্যাক
+    const cleanVals = alertVariants.map(v => {
+      let desc = v.variantDesc || '';
+      desc = desc.replace(/^(রং|সাইজ|ভ্যারিয়েন্ট|কালার):\s*/i, '').trim();
+      return desc;
+    }).filter(Boolean);
+
+    return {
+      type: 'বিবরণ',
+      text: cleanVals.join(', ')
+    };
+  };
+
   // গোডাউনে কম স্টক বা স্টক শেষ থাকা পণ্য ও তাদের ভ্যারিয়েন্ট তালিকা গ্রুপড আকারে প্রস্তুতকরণ
   const groupedAlertProducts = useMemo(() => {
     const list = [];
@@ -322,7 +401,7 @@ export default function GodownStockAlertView({
     filteredProducts.forEach((p, idx) => {
       const rowNum = idx + 1;
       if (p.hasVariants) {
-        const variantListStr = p.alertVariants.map(v => v.variantDesc).join(', ');
+        const variantData = getVariantTypeAndValues(p.alertVariants);
         const vBarcodes = Array.from(new Set(p.alertVariants.map(v => v.barcode).filter(b => b && b !== '—')));
         const barcodeText = vBarcodes.length > 0 
           ? vBarcodes.join(', ') 
@@ -334,10 +413,10 @@ export default function GodownStockAlertView({
             <td style="padding: 8px 12px;">
               <div style="font-size: 13px; font-weight: 900; color: #0f172a;">${p.productName}</div>
               <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
-                ID: ${p.productId} ${p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ভ্যারিয়েন্ট ঘাটতি: ${p.alertVariants.length}টি
+                ID: ${p.productId} ${p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ঘাটতি: ${p.alertVariants.length}টি
               </div>
               <div style="margin-top: 5px; font-size: 11px; color: #1e293b; line-height: 1.5;">
-                <strong style="color: #4338ca;">ভ্যারিয়েন্ট:</strong> ${variantListStr}
+                <strong style="color: #4338ca;">${variantData.type}:</strong> ${variantData.text}
               </div>
             </td>
             <td style="text-align: center; font-family: monospace; font-size: 11px; color: #334155; padding: 8px 10px; word-break: break-word;">
@@ -684,7 +763,7 @@ export default function GodownStockAlertView({
                     filteredProducts.map((p, idx) => {
                       const rowNum = idx + 1;
                       if (p.hasVariants) {
-                        const variantListStr = p.alertVariants.map(v => v.variantDesc).join(', ');
+                        const variantData = getVariantTypeAndValues(p.alertVariants);
                         const vBarcodes = Array.from(new Set(p.alertVariants.map(v => v.barcode).filter(b => b && b !== '—')));
                         const barcodeText = vBarcodes.length > 0 
                           ? vBarcodes.join(', ') 
@@ -698,11 +777,11 @@ export default function GodownStockAlertView({
                             <td className="py-3 px-4 border-r border-slate-200">
                               <div className="text-sm font-black text-slate-900">{p.productName}</div>
                               <div className="text-[10px] text-slate-500 font-normal mt-0.5">
-                                ID: {p.productId} {p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ভ্যারিয়েন্ট ঘাটতি: {p.alertVariants.length}টি
+                                ID: {p.productId} {p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ঘাটতি: {p.alertVariants.length}টি
                               </div>
                               <div className="mt-2 text-xs text-slate-800 leading-relaxed">
-                                <span className="font-bold text-indigo-700">ভ্যারিয়েন্ট: </span>
-                                <span className="font-medium text-slate-700">{variantListStr}</span>
+                                <span className="font-bold text-indigo-700">{variantData.type}: </span>
+                                <span className="font-medium text-slate-700">{variantData.text}</span>
                               </div>
                             </td>
                             <td className="py-3 px-3 text-center font-mono text-slate-700 text-xs break-all">
