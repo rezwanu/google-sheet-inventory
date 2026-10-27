@@ -5169,6 +5169,8 @@ export default function App() {
               onSubmitStock={handleSubmitStock}
               initialProductId={quickRestockProductId}
               settings={settings}
+              suppliers={suppliers}
+              onSaveSupplier={handleSaveSupplier}
               variantAttributes={variantAttributes}
               onAddVariantOption={handleAddVariantOption}
             />
@@ -5358,6 +5360,8 @@ export default function App() {
         onSubmitStock={handleSubmitStock}
         initialProductId={quickRestockProductId}
         settings={settings}
+        suppliers={suppliers}
+        onSaveSupplier={handleSaveSupplier}
         variantAttributes={variantAttributes}
         onAddVariantOption={handleAddVariantOption}
       />
