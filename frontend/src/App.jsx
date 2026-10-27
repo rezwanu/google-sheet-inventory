@@ -4004,6 +4004,9 @@ export default function App() {
       ProductName: productData.productName,
       Category: productData.category || 'General',
       SubCategory: productData.subCategory || '',
+      SupplierID: productData.supplierId || productData.SupplierID || '',
+      SupplierName: productData.supplierName || productData.SupplierName || productData.supplier || '',
+      Supplier: productData.supplierName || productData.SupplierName || productData.supplier || '',
       ImageUrl: productData.imageUrl || productData.imageBase64 || '',
       ImageCaption: productData.imageCaption || '',
       CostPrice: Number(productData.costPrice) || 0,
@@ -5143,6 +5146,7 @@ export default function App() {
               onAddCategory={handleAddCategory}
               units={units}
               onAddUnit={handleAddUnit}
+              suppliers={suppliers}
               variantAttributes={variantAttributes}
               onAddVariantOption={handleAddVariantOption}
               products={products}
@@ -5366,6 +5370,7 @@ export default function App() {
         onAddCategory={handleAddCategory}
         units={units}
         onAddUnit={handleAddUnit}
+        suppliers={suppliers}
         variantAttributes={variantAttributes}
         onAddVariantOption={handleAddVariantOption}
         products={products}
