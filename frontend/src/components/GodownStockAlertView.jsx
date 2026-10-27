@@ -400,12 +400,10 @@ export default function GodownStockAlertView({
 
     filteredProducts.forEach((p, idx) => {
       const rowNum = idx + 1;
+      const parentBarcode = (p.barcode && p.barcode !== '—') ? p.barcode : (p.parentProduct?.Barcode || p.parentProduct?.barcode || '—');
+
       if (p.hasVariants) {
         const variantData = getVariantTypeAndValues(p.alertVariants);
-        const vBarcodes = Array.from(new Set(p.alertVariants.map(v => v.barcode).filter(b => b && b !== '—')));
-        const barcodeText = vBarcodes.length > 0 
-          ? vBarcodes.join(', ') 
-          : (p.barcode && p.barcode !== '—' ? p.barcode : '—');
 
         tableRowsHtml += `
           <tr style="border-top: 1px solid #cbd5e1;">
@@ -420,7 +418,7 @@ export default function GodownStockAlertView({
               </div>
             </td>
             <td style="text-align: center; font-family: monospace; font-size: 11px; color: #334155; padding: 8px 10px; word-break: break-word;">
-              ${barcodeText}
+              ${parentBarcode}
             </td>
           </tr>
         `;
@@ -762,12 +760,10 @@ export default function GodownStockAlertView({
                   ) : (
                     filteredProducts.map((p, idx) => {
                       const rowNum = idx + 1;
+                      const parentBarcode = (p.barcode && p.barcode !== '—') ? p.barcode : (p.parentProduct?.Barcode || p.parentProduct?.barcode || '—');
+
                       if (p.hasVariants) {
                         const variantData = getVariantTypeAndValues(p.alertVariants);
-                        const vBarcodes = Array.from(new Set(p.alertVariants.map(v => v.barcode).filter(b => b && b !== '—')));
-                        const barcodeText = vBarcodes.length > 0 
-                          ? vBarcodes.join(', ') 
-                          : (p.barcode && p.barcode !== '—' ? p.barcode : '—');
 
                         return (
                           <tr key={p.productId} className="bg-white hover:bg-slate-50 border-t border-slate-200">
@@ -785,7 +781,7 @@ export default function GodownStockAlertView({
                               </div>
                             </td>
                             <td className="py-3 px-3 text-center font-mono text-slate-700 text-xs break-all">
-                              {barcodeText}
+                              {parentBarcode}
                             </td>
                           </tr>
                         );
