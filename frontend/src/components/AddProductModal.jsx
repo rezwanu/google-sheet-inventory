@@ -134,7 +134,7 @@ export default function AddProductModal({
     initialShopFullThans: '0',
     initialShopCutGoj: '0',
     initialShopCutGira: '0',
-    remnantThreshold: '2',
+    remnantThreshold: '',
     supplierId: '',
     supplierName: '',
     imageUrl: '',
@@ -1064,8 +1064,8 @@ export default function AddProductModal({
         ThanCount: thanCount,
         totalYards: totalYards,
         TotalYards: totalYards,
-        remnantThreshold: Number(formData.remnantThreshold) || 2,
-        RemnantThreshold: Number(formData.remnantThreshold) || 2,
+        remnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0,
+        RemnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0,
         initialShopFullThans: Number(formData.initialShopFullThans) || 0,
         initialShopCutGoj: Number(formData.initialShopCutGoj) || 0,
         initialShopCutGira: Number(formData.initialShopCutGira) || 0,
@@ -2313,12 +2313,12 @@ export default function AddProductModal({
                         </label>
                         <input
                           type="number"
-                          min="0.1"
-                          step="0.0625"
+                          min="0"
+                          step="any"
                           name="remnantThreshold"
                           value={formData.remnantThreshold}
                           onChange={handleChange}
-                          placeholder="যেমন: ২.০০"
+                          placeholder="যেমন: ২ বা ০"
                           className="w-full px-3 py-2 bg-white border border-rose-300 rounded-xl text-xs font-black text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
                         />
                         <span className="text-[10px] text-amber-700">এর নিচে নামলে ছাঁট খাতা ও রিস্টক অ্যালার্ট</span>

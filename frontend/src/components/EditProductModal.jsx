@@ -107,7 +107,7 @@ export default function EditProductModal({
     minStockAlert: '5',
     unit: 'Pcs',
     yardsPerThan: '25',
-    remnantThreshold: '2',
+    remnantThreshold: '',
     imageUrl: '',
     imageCaption: '',
     shortDescription: '',
@@ -345,7 +345,7 @@ export default function EditProductModal({
   const handleOpenFabricVariantModal = (idx, v) => {
     const sStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0));
     const ypt = Math.max(0.1, Number(formData.yardsPerThan) || 25);
-    const remTh = Math.max(0.1, Number(formData.remnantThreshold) || 2);
+    const remTh = formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0;
     const bd = calculateThanBreakdown(sStock, ypt, remTh);
     const varName = v.Attributes ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ') : (v.Color || v.VariantID || `ভ্যারিয়েন্ট #${idx + 1}`);
 
@@ -427,7 +427,7 @@ export default function EditProductModal({
         minStockAlert: product.MinStockAlert !== undefined ? String(product.MinStockAlert) : '5',
         unit: getProductDisplayUnit(product),
         yardsPerThan: product.YardsPerThan !== undefined ? String(product.YardsPerThan) : (product.yardsPerThan !== undefined ? String(product.yardsPerThan) : '25'),
-        remnantThreshold: product.RemnantThreshold !== undefined ? String(product.RemnantThreshold) : (product.remnantThreshold !== undefined ? String(product.remnantThreshold) : '2'),
+        remnantThreshold: product.RemnantThreshold !== undefined ? String(product.RemnantThreshold) : (product.remnantThreshold !== undefined ? String(product.remnantThreshold) : ''),
         imageUrl: product.ImageUrl || '',
         imageCaption: product.ImageCaption || '',
         shortDescription: product.ShortDescription || '',
@@ -471,7 +471,7 @@ export default function EditProductModal({
       // বস্ত্রালয় কাপড়ের ক্ষেত্রে স্টকের প্রাথমিক থান, গজ ও গিরা বিভাজন
       const effectiveUnit = getProductDisplayUnit(product);
       const ypt = Number(product.YardsPerThan !== undefined ? product.YardsPerThan : (product.yardsPerThan !== undefined ? product.yardsPerThan : 25));
-      const remTh = Number(product.RemnantThreshold !== undefined ? product.RemnantThreshold : (product.remnantThreshold !== undefined ? product.remnantThreshold : 2));
+      const remTh = Number(product.RemnantThreshold !== undefined ? product.RemnantThreshold : (product.remnantThreshold !== undefined ? product.remnantThreshold : 0));
       const sStock = Number(product.StockQuantity !== undefined ? product.StockQuantity : 0);
       const bd = calculateThanBreakdown(sStock, ypt, remTh);
 
@@ -579,7 +579,7 @@ export default function EditProductModal({
       if (isThanUnit(formData.unit)) {
         const num = Math.max(0, parseFloat(value) || 0);
         const ypt = Math.max(0.1, parseFloat(formData.yardsPerThan) || 25);
-        const remTh = Math.max(0.1, parseFloat(formData.remnantThreshold) || 2);
+        const remTh = formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0;
         const bd = calculateThanBreakdown(num, ypt, remTh);
         setShopFullThans(String(bd.fullThans || 0));
         setShopCutGoj(String(bd.runningCutGojGira?.goj || 0));
@@ -828,8 +828,8 @@ export default function EditProductModal({
         minStockAlert: Number(formData.minStockAlert) || 5,
         yardsPerThan: Number(formData.yardsPerThan) || 25,
         YardsPerThan: Number(formData.yardsPerThan) || 25,
-        remnantThreshold: Number(formData.remnantThreshold) || 2,
-        RemnantThreshold: Number(formData.remnantThreshold) || 2,
+        remnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0,
+        RemnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0,
         imageUrl: imageUploadMode === 'url' ? formData.imageUrl.trim() : (formData.imageUrl || ''),
         imageCaption: formData.imageCaption.trim(),
         imageBase64: imageUploadMode === 'upload' ? imageBase64 : '',
@@ -1424,12 +1424,12 @@ export default function EditProductModal({
                   </label>
                   <input
                     type="number"
-                    min="0.1"
-                    step="0.0625"
+                    min="0"
+                    step="any"
                     name="remnantThreshold"
                     value={formData.remnantThreshold}
                     onChange={handleChange}
-                    placeholder="যেমন: ২.০০"
+                    placeholder="যেমন: ২ বা ০"
                     className="w-full px-3 py-2 bg-white border border-rose-300 rounded-xl text-xs font-black text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
                   />
                   <span className="text-[10px] text-amber-700">এর নিচে নামলে ছাঁট খাতা ও নতুন থান চালানের অ্যালার্ট</span>
@@ -1506,7 +1506,7 @@ export default function EditProductModal({
                   ? variants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0)
                   : (Number(formData.godownStock) || 0);
                 const ypt = Number(formData.yardsPerThan) || 25;
-                const remTh = Number(formData.remnantThreshold) || 2;
+                const remTh = formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0;
                 const breakdown = calculateThanBreakdown(sStock, ypt, remTh);
                 const totalCombinedYards = (gStock * ypt) + sStock;
 
@@ -1671,7 +1671,7 @@ export default function EditProductModal({
                       {variants.map((v, idx) => {
                         const isThan = isThanUnit(formData.unit);
                         const ypt = Number(formData.yardsPerThan) || 25;
-                        const remTh = Number(formData.remnantThreshold) || 2;
+                        const remTh = formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0;
                         const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0));
                         const vSStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0));
                         const vBd = isThan ? calculateThanBreakdown(vSStock, ypt, remTh) : null;

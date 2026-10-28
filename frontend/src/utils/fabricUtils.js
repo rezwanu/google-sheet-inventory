@@ -98,10 +98,12 @@ export function calculateInitialShopYards(fullThans, cutGoj, cutGira, yardsPerTh
  *   displayText: string
  * }}
  */
-export function calculateThanBreakdown(totalYards, yardsPerThan = 25, remnantThreshold = 2) {
+export function calculateThanBreakdown(totalYards, yardsPerThan = 25, remnantThreshold = 0) {
   const total = Math.max(0, parseFloat(totalYards) || 0);
   const ypt = Math.max(1, parseFloat(yardsPerThan) || 25);
-  const threshold = Math.max(0, parseFloat(remnantThreshold) || 2);
+  const threshold = (remnantThreshold !== undefined && remnantThreshold !== null && String(remnantThreshold).trim() !== '' && !isNaN(Number(remnantThreshold)))
+    ? Math.max(0, parseFloat(remnantThreshold))
+    : 0;
 
   const fullThans = Math.floor(total / ypt);
   const runningCutYards = Math.round((total % ypt) * 10000) / 10000;
@@ -115,8 +117,8 @@ export function calculateThanBreakdown(totalYards, yardsPerThan = 25, remnantThr
     }
   };
 
-  // চলমান কাটা থান যদি ছাঁট সীমার নিচে বা সমান হয়
-  const isRemnant = runningCutYards > 0 && runningCutYards <= threshold;
+  // চলমান কাটা থান যদি ছাঁট সীমার নিচে বা সমান হয় (ছাঁট সীমা ০ হলে ছাঁট অ্যালার্ট হবে না)
+  const isRemnant = threshold > 0 && runningCutYards > 0 && runningCutYards <= threshold;
 
   // দোকানে যদি কোনো আস্ত থান না থাকে এবং রানিং থান ছাঁট সীমায় নেমে যায় বা শেষ হয়ে যায়
   const needsRestock = fullThans === 0 && (runningCutYards === 0 || isRemnant);
