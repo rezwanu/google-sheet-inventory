@@ -504,6 +504,7 @@ export default function StockTransferModal({
       const unit = getProductDisplayUnit(p);
       const isThan = /than|থান/i.test(unit);
       const yardsPerThan = isThan ? (Number(p.YardsPerThan || p.yardsPerThan || 0) || 25) : 0;
+      const remTh = Number(p.RemnantThreshold || p.remnantThreshold || 2);
       const unitCost = Number(p.CostPrice || p.costPrice || p.PurchasePrice || p.purchasePrice || p.Cost || p.cost || p.BuyingPrice || p.BuyPrice || 0);
       const unitSelling = Number(p.SellingPrice || p.sellingPrice || p.Price || p.price || p.MRP || p.mrp || 0);
 
@@ -513,6 +514,12 @@ export default function StockTransferModal({
           const vSStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
           const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
           const vSelling = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : unitSelling));
+          const vBd = isThan ? calculateThanBreakdown(vSStock, yardsPerThan, remTh) : null;
+          const vGodownYards = isThan ? (vGStock * yardsPerThan) : 0;
+          const vShopYards = isThan ? vSStock : 0;
+          const vTotalYards = isThan ? (vGodownYards + vShopYards) : 0;
+          const vTotalThans = isThan ? (vGStock + (vBd ? vBd.fullThans : 0)) : (vGStock + vSStock);
+
           list.push({
             parentProduct: p,
             variant: v,
@@ -531,17 +538,25 @@ export default function StockTransferModal({
             sellingPrice: vSelling,
             isThanUnit: isThan,
             yardsPerThan: yardsPerThan,
+            remnantThreshold: remTh,
+            thanBreakdown: vBd,
             godownStock: vGStock,
             shopStock: vSStock,
-            totalStock: vGStock + vSStock,
-            godownYards: isThan ? (vGStock * yardsPerThan) : 0,
-            shopYards: isThan ? (vSStock * yardsPerThan) : 0,
-            totalYards: isThan ? ((vGStock + vSStock) * yardsPerThan) : 0,
+            totalStock: vTotalThans,
+            godownYards: vGodownYards,
+            shopYards: vShopYards,
+            totalYards: vTotalYards,
           });
         });
       } else {
         const gStock = Number(p.GodownStock || 0);
         const sStock = Number(p.StockQuantity || 0);
+        const bd = isThan ? calculateThanBreakdown(sStock, yardsPerThan, remTh) : null;
+        const gYards = isThan ? (gStock * yardsPerThan) : 0;
+        const sYards = isThan ? sStock : 0;
+        const tYards = isThan ? (gYards + sYards) : 0;
+        const totalThans = isThan ? (gStock + (bd ? bd.fullThans : 0)) : (gStock + sStock);
+
         list.push({
           parentProduct: p,
           variant: null,
@@ -559,12 +574,14 @@ export default function StockTransferModal({
           sellingPrice: unitSelling,
           isThanUnit: isThan,
           yardsPerThan: yardsPerThan,
+          remnantThreshold: remTh,
+          thanBreakdown: bd,
           godownStock: gStock,
           shopStock: sStock,
-          totalStock: gStock + sStock,
-          godownYards: isThan ? (gStock * yardsPerThan) : 0,
-          shopYards: isThan ? (sStock * yardsPerThan) : 0,
-          totalYards: isThan ? ((gStock + sStock) * yardsPerThan) : 0,
+          totalStock: totalThans,
+          godownYards: gYards,
+          shopYards: sYards,
+          totalYards: tYards,
         });
       }
     });
@@ -2821,17 +2838,21 @@ export default function StockTransferModal({
                             filteredOverviewProducts.map((p) => {
                               const gStock = Number(p.GodownStock || 0);
                               const sStock = Number(p.StockQuantity || 0);
-                              const total = gStock + sStock;
-                              const minAlert = Number(p.MinStockAlert || 5);
-                              const isLowShop = sStock <= minAlert;
-                              const isZeroShop = sStock <= 0;
-                              const vars = getVariantsOfProduct(p);
-                              const hasVars = vars.length > 0;
-                              const isExpanded = Boolean(expandedProductIds[p.ProductID]);
                               const unit = getProductDisplayUnit(p);
                               const isThan = /than|থান/i.test(unit);
                               const isGoj = !isThan && /গজ|yard/i.test(unit);
                               const yardsPerThan = isThan ? (Number(p.YardsPerThan || p.yardsPerThan || 0) || 25) : 0;
+                              const remTh = Number(p.RemnantThreshold || p.remnantThreshold || 2);
+                              const bd = isThan ? calculateThanBreakdown(sStock, yardsPerThan, remTh) : null;
+                              const total = isThan ? (gStock + (bd ? bd.fullThans : 0)) : (gStock + sStock);
+                              const minAlert = Number(p.MinStockAlert || 5);
+                              const isZeroShop = sStock <= 0;
+                              const isLowShop = isThan
+                                ? (bd ? (bd.needsRestock || bd.fullThans === 0 || sStock <= yardsPerThan) : (sStock <= minAlert))
+                                : (sStock <= minAlert);
+                              const vars = getVariantsOfProduct(p);
+                              const hasVars = vars.length > 0;
+                              const isExpanded = Boolean(expandedProductIds[p.ProductID]);
                               const varGStockSum = vars.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0), 0);
                               const effectiveGStock = hasVars && varGStockSum > 0 ? varGStockSum : gStock;
                               const totalGoj = isThan ? (gStock * yardsPerThan) : (isGoj ? gStock : 0);
@@ -2860,11 +2881,10 @@ export default function StockTransferModal({
                                 ? (hasVars
                                     ? vars.reduce((sum, v) => {
                                         const vSStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0));
-                                        const vGoj = vSStock * yardsPerThan;
                                         const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
-                                        return sum + (vGoj * vCost);
+                                        return sum + (vSStock * vCost);
                                       }, 0)
-                                    : (sStock * yardsPerThan * unitCost))
+                                    : (sStock * unitCost))
                                 : isGoj
                                 ? (sStock * unitCost)
                                 : (hasVars
@@ -2879,11 +2899,10 @@ export default function StockTransferModal({
                                 ? (hasVars
                                     ? vars.reduce((sum, v) => {
                                         const vSStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0));
-                                        const vGoj = vSStock * yardsPerThan;
                                         const vSell = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : unitSelling));
-                                        return sum + (vGoj * vSell);
+                                        return sum + (vSStock * vSell);
                                       }, 0)
-                                    : (sStock * yardsPerThan * unitSelling))
+                                    : (sStock * unitSelling))
                                 : isGoj
                                 ? (sStock * unitSelling)
                                 : (hasVars
@@ -3085,20 +3104,52 @@ export default function StockTransferModal({
                                             ? 'bg-amber-500 text-white border border-amber-600 shadow-amber-200'
                                             : 'bg-emerald-600 text-white border border-emerald-700 shadow-emerald-200'
                                         }`}>
-                                          {sStock} {isThan ? 'থান' : unit}
+                                          {isThan ? (
+                                            sStock <= 0 ? '০ গজ' : (
+                                              bd && bd.fullThans > 0 && bd.runningCutYards > 0
+                                                ? `${bd.fullThans} থান + ${bd.runningCutGojGira}`
+                                                : bd && bd.fullThans > 0
+                                                ? `${bd.fullThans} থান`
+                                                : bd
+                                                ? `${bd.runningCutGojGira}`
+                                                : `${sStock} গজ`
+                                            )
+                                          ) : (
+                                            `${sStock} ${unit}`
+                                          )}
                                         </span>
-                                        {isThan && yardsPerThan > 0 && sStock > 0 && (
-                                          <span className="mt-1 text-[10px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-200/60 font-mono">
-                                            {(sStock * yardsPerThan).toLocaleString('bn-BD')} গজ
+                                        {isThan && sStock > 0 && (
+                                          <span className="mt-1 text-[10px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-200/60 font-mono" title="দোকানের মোট কাপড় (গজে)">
+                                            মোট: {sStock.toLocaleString('bn-BD')} গজ
                                           </span>
                                         )}
                                       </div>
                                     </td>
                                     {/* মোট স্টক - বাটন ব্যাজ */}
                                     <td className="py-3 px-3 text-center">
-                                      <span className="inline-flex items-center px-3 py-1.5 rounded-xl font-black font-mono text-xs sm:text-sm bg-slate-800 text-white shadow-2xs border border-slate-900">
-                                        {total} {isThan ? 'থান' : unit}
-                                      </span>
+                                      <div className="inline-flex flex-col items-center">
+                                        <span className="inline-flex items-center px-3 py-1.5 rounded-xl font-black font-mono text-xs sm:text-sm bg-slate-800 text-white shadow-2xs border border-slate-900">
+                                          {isThan ? (
+                                            (() => {
+                                              const totalFullThans = gStock + (bd ? bd.fullThans : 0);
+                                              const hasRunningCut = bd && bd.runningCutYards > 0;
+                                              if (totalFullThans <= 0 && !hasRunningCut) return '০ গজ';
+                                              if (totalFullThans > 0 && hasRunningCut) {
+                                                return `${totalFullThans} থান + ${bd.runningCutGojGira}`;
+                                              }
+                                              if (totalFullThans > 0) return `${totalFullThans} থান`;
+                                              return `${bd ? bd.runningCutGojGira : '০ গজ'}`;
+                                            })()
+                                          ) : (
+                                            `${total} ${unit}`
+                                          )}
+                                        </span>
+                                        {isThan && (
+                                          <span className="mt-1 text-[10px] font-bold text-slate-300 bg-slate-700 px-2 py-0.5 rounded-md border border-slate-600 font-mono" title="গোডাউন ও দোকান মিলিয়ে মোট গজ">
+                                            মোট: {((gStock * yardsPerThan) + sStock).toLocaleString('bn-BD')} গজ
+                                          </span>
+                                        )}
+                                      </div>
                                     </td>
                                     {/* অবস্থা */}
                                     <td className="py-3 px-3 text-center">
@@ -3217,7 +3268,7 @@ export default function StockTransferModal({
                                                     ভ্যারিয়েন্ট গোডাউন মোট: <strong className="font-mono">{sumVarGodown}</strong> {isThan ? 'থান' : getProductDisplayUnit(p)}
                                                   </span>
                                                   <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
-                                                    ভ্যারিয়েন্ট দোকান মোট: <strong className="font-mono">{sumVarShop}</strong> {isThan ? 'থান' : getProductDisplayUnit(p)}
+                                                    ভ্যারিয়েন্ট দোকান মোট: <strong className="font-mono">{sumVarShop}</strong> {isThan ? 'গজ' : getProductDisplayUnit(p)}
                                                   </span>
                                                   {!isShopStockView && (
                                                     <button
@@ -3285,12 +3336,15 @@ export default function StockTransferModal({
                                                   {vars.map((v, vIdx) => {
                                                     const vGStock = Number(v.GodownStock) || 0;
                                                     const vSStock = Number(v.StockQuantity) || 0;
-                                                    const vTotal = vGStock + vSStock;
                                                     const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
                                                     const vColor = v.Attributes?.Color || v.Color || '';
                                                     const vSize = v.Attributes?.Size || v.Size || '';
+                                                    const vBd = isThan ? calculateThanBreakdown(vSStock, yardsPerThan, remTh) : null;
+                                                    const vTotal = isThan ? (vGStock + (vBd ? vBd.fullThans : 0)) : (vGStock + vSStock);
                                                     const isVZero = vSStock <= 0;
-                                                    const isVLow = vSStock <= 2;
+                                                    const isVLow = isThan
+                                                      ? (vBd ? (vBd.needsRestock || vBd.fullThans === 0 || vSStock <= yardsPerThan) : (vSStock <= 2))
+                                                      : (vSStock <= 2);
                                                     const hexColor = getColorHex(vColor);
 
                                                     return (
@@ -3342,23 +3396,61 @@ export default function StockTransferModal({
                                                         </td>
                                                         {/* ভ্যারিয়েন্ট দোকান স্টক - রঙিন ব্যাজ */}
                                                         <td className="py-2.5 px-3 text-center bg-emerald-50/20">
-                                                          <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-black font-mono shadow-2xs ${
-                                                            isVZero
-                                                              ? 'bg-rose-500 text-white'
-                                                              : isVLow
-                                                              ? 'bg-amber-500 text-white'
-                                                              : 'bg-emerald-600 text-white'
-                                                          }`}>
-                                                            {vSStock} {isThan ? 'থান' : unit}
-                                                          </span>
-                                                          {isThan && yardsPerThan > 0 && (
-                                                            <div className="text-[10px] text-emerald-700 font-bold mt-0.5 font-mono">
-                                                              {(vSStock * yardsPerThan).toLocaleString('bn-BD')} গজ
-                                                            </div>
-                                                          )}
+                                                          <div className="inline-flex flex-col items-center">
+                                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-black font-mono shadow-2xs ${
+                                                              isVZero
+                                                                ? 'bg-rose-500 text-white'
+                                                                : isVLow
+                                                                ? 'bg-amber-500 text-white'
+                                                                : 'bg-emerald-600 text-white'
+                                                            }`}>
+                                                              {isThan ? (
+                                                                vSStock <= 0 ? '০ গজ' : (
+                                                                  vBd && vBd.fullThans > 0 && vBd.runningCutYards > 0
+                                                                    ? `${vBd.fullThans} থান + ${vBd.runningCutGojGira}`
+                                                                    : vBd && vBd.fullThans > 0
+                                                                    ? `${vBd.fullThans} থান`
+                                                                    : vBd
+                                                                    ? `${vBd.runningCutGojGira}`
+                                                                    : `${vSStock} গজ`
+                                                                )
+                                                              ) : (
+                                                                `${vSStock} ${unit}`
+                                                              )}
+                                                            </span>
+                                                            {isThan && vSStock > 0 && (
+                                                              <div className="text-[10px] text-emerald-800 font-bold mt-0.5 font-mono">
+                                                                মোট: {vSStock.toLocaleString('bn-BD')} গজ
+                                                              </div>
+                                                            )}
+                                                          </div>
                                                         </td>
                                                         <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-800">
-                                                          {vTotal}
+                                                          {isThan ? (
+                                                            (() => {
+                                                              const vTotalThans = vGStock + (vBd ? vBd.fullThans : 0);
+                                                              const vTotalAllYards = (vGStock * yardsPerThan) + vSStock;
+                                                              const hasRunningCut = vBd && vBd.runningCutYards > 0;
+                                                              return (
+                                                                <div className="inline-flex flex-col items-center">
+                                                                  <span className="text-xs font-black font-mono">
+                                                                    {vTotalThans <= 0 && !hasRunningCut
+                                                                      ? '০ গজ'
+                                                                      : vTotalThans > 0 && hasRunningCut
+                                                                      ? `${vTotalThans} থান + ${vBd.runningCutGojGira}`
+                                                                      : vTotalThans > 0
+                                                                      ? `${vTotalThans} থান`
+                                                                      : `${vBd ? vBd.runningCutGojGira : '০ গজ'}`}
+                                                                  </span>
+                                                                  <span className="text-[10px] text-slate-500 font-mono font-normal">
+                                                                    ({vTotalAllYards.toLocaleString('bn-BD')} গজ)
+                                                                  </span>
+                                                                </div>
+                                                              );
+                                                            })()
+                                                          ) : (
+                                                            vTotal
+                                                          )}
                                                         </td>
                                                         <td className="py-2.5 px-3 text-center">
                                                           {isVZero && vGStock > 0 ? (
@@ -3655,19 +3747,50 @@ export default function StockTransferModal({
                                           ? 'bg-amber-500 text-white border border-amber-600 shadow-amber-200'
                                           : 'bg-emerald-600 text-white border border-emerald-700 shadow-emerald-200'
                                       }`}>
-                                        {item.shopStock} {item.unit || 'থান'}
+                                        {item.isThanUnit ? (
+                                          item.shopStock <= 0 ? '০ গজ' : (
+                                            item.thanBreakdown && item.thanBreakdown.fullThans > 0 && item.thanBreakdown.runningCutYards > 0
+                                              ? `${item.thanBreakdown.fullThans} থান + ${item.thanBreakdown.runningCutGojGira}`
+                                              : item.thanBreakdown && item.thanBreakdown.fullThans > 0
+                                              ? `${item.thanBreakdown.fullThans} থান`
+                                              : item.thanBreakdown
+                                              ? `${item.thanBreakdown.runningCutGojGira}`
+                                              : `${item.shopStock} গজ`
+                                          )
+                                        ) : (
+                                          `${item.shopStock} ${item.unit || 'থান'}`
+                                        )}
                                       </span>
-                                      {item.isThanUnit && item.shopYards > 0 && (
+                                      {item.isThanUnit && item.shopStock > 0 && (
                                         <div className="text-[10px] text-emerald-800 font-bold mt-1 font-mono">
-                                          ({item.shopYards} গজ)
+                                          মোট: {item.shopStock.toLocaleString('bn-BD')} গজ
                                         </div>
                                       )}
                                     </div>
                                   </td>
                                   <td className="py-3 px-3 text-center font-black font-mono text-slate-900">
-                                    <span className="inline-flex items-center px-3 py-1.5 rounded-xl font-black font-mono text-xs sm:text-sm bg-slate-800 text-white shadow-2xs border border-slate-900">
-                                      {item.totalStock} {item.unit || 'থান'}
-                                    </span>
+                                    <div className="inline-flex flex-col items-center">
+                                      <span className="inline-flex items-center px-3 py-1.5 rounded-xl font-black font-mono text-xs sm:text-sm bg-slate-800 text-white shadow-2xs border border-slate-900">
+                                        {item.isThanUnit ? (
+                                          (() => {
+                                            const bd = item.thanBreakdown;
+                                            const totalFullThans = item.godownStock + (bd ? bd.fullThans : 0);
+                                            const hasRunningCut = bd && bd.runningCutYards > 0;
+                                            if (totalFullThans <= 0 && !hasRunningCut) return '০ গজ';
+                                            if (totalFullThans > 0 && hasRunningCut) return `${totalFullThans} থান + ${bd.runningCutGojGira}`;
+                                            if (totalFullThans > 0) return `${totalFullThans} থান`;
+                                            return `${bd ? bd.runningCutGojGira : '০ গজ'}`;
+                                          })()
+                                        ) : (
+                                          `${item.totalStock} ${item.unit || 'থান'}`
+                                        )}
+                                      </span>
+                                      {item.isThanUnit && (
+                                        <span className="mt-1 text-[10px] font-bold text-slate-300 bg-slate-700 px-2 py-0.5 rounded-md border border-slate-600 font-mono">
+                                          মোট: {item.totalYards.toLocaleString('bn-BD')} গজ
+                                        </span>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="py-3 px-3 text-center">
                                     {isZeroShop && item.godownStock > 0 ? (
@@ -4696,8 +4819,15 @@ export default function StockTransferModal({
               <div className="p-3 bg-slate-50 rounded-xl space-y-1">
                 <strong className="text-slate-900 text-sm block">{adjustTargetProduct.ProductName}</strong>
                 <div className="flex items-center space-x-3 text-xs text-slate-600">
-                  <span>🏬 বর্তমান দোকান স্টক: <strong>{adjustTargetProduct.StockQuantity || 0}</strong></span>
-                  <span>🏭 বর্তমান গোডাউন স্টক: <strong>{adjustTargetProduct.GodownStock || 0}</strong></span>
+                  {(() => {
+                    const isT = /than|থান/i.test(getProductDisplayUnit(adjustTargetProduct));
+                    return (
+                      <>
+                        <span>🏬 বর্তমান দোকান স্টক: <strong>{adjustTargetProduct.StockQuantity || 0} {isT ? 'গজ' : getProductDisplayUnit(adjustTargetProduct)}</strong></span>
+                        <span>🏭 বর্তমান গোডাউন স্টক: <strong>{adjustTargetProduct.GodownStock || 0} {isT ? 'থান' : getProductDisplayUnit(adjustTargetProduct)}</strong></span>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -4889,11 +5019,11 @@ export default function StockTransferModal({
                     <div className="text-center flex-1">
                       <span className="text-[10.5px] font-semibold text-slate-500 block">🏬 বর্তমান দোকান</span>
                       <span className="text-sm font-black text-emerald-950 font-mono">
-                        {targetV.StockQuantity || 0} {isProdThan ? 'থান' : getProductDisplayUnit(prod)}
+                        {targetV.StockQuantity || 0} {isProdThan ? 'গজ' : getProductDisplayUnit(prod)}
                       </span>
-                      {isProdThan && prodYardsPerThan > 0 && (
+                      {isProdThan && prodYardsPerThan > 0 && Number(targetV.StockQuantity || 0) > 0 && (
                         <span className="text-[9.5px] text-emerald-600 block font-semibold">
-                          ({(targetV.StockQuantity || 0) * prodYardsPerThan} গজ)
+                          ({calculateThanBreakdown(targetV.StockQuantity, prodYardsPerThan, 2).displayText})
                         </span>
                       )}
                     </div>
@@ -5242,7 +5372,7 @@ export default function StockTransferModal({
 
                     <div>
                       <label className="block text-[11px] font-bold text-emerald-900 mb-1">
-                        দোকান স্টক ({isThan ? 'থান' : getProductDisplayUnit(prod)})
+                        দোকান স্টক ({isThan ? 'গজ' : getProductDisplayUnit(prod)})
                       </label>
                       <input
                         type="number"
@@ -5252,9 +5382,9 @@ export default function StockTransferModal({
                         onChange={(e) => setNewColorModal(prev => ({ ...prev, shopStock: e.target.value }))}
                         className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-lg text-xs font-black text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
-                      {isThan && prodYardsPerThan > 0 && (
+                      {isThan && prodYardsPerThan > 0 && Number(newColorModal.shopStock || 0) > 0 && (
                         <div className="text-[10px] text-emerald-700 font-bold mt-1">
-                          = {(Number(newColorModal.shopStock) || 0) * prodYardsPerThan} গজ
+                          = {calculateThanBreakdown(newColorModal.shopStock, prodYardsPerThan, 2).displayText}
                         </div>
                       )}
                     </div>
@@ -5413,7 +5543,7 @@ export default function StockTransferModal({
 
                       <div>
                         <label className="block text-[11px] font-bold text-emerald-900 mb-1">
-                          🏬 দোকান স্টক ({currentUnit})
+                          🏬 দোকান স্টক ({isThan ? 'গজ' : currentUnit})
                         </label>
                         <input
                           type="number"
@@ -5424,9 +5554,9 @@ export default function StockTransferModal({
                           onChange={(e) => setEditVariantModal(prev => ({ ...prev, shopStock: e.target.value }))}
                           className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-lg text-xs font-black text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         />
-                        {isThan && prodYardsPerThan > 0 && (
+                        {isThan && prodYardsPerThan > 0 && Number(editVariantModal.shopStock || 0) > 0 && (
                           <div className="text-[10px] text-emerald-700 font-bold mt-1">
-                            = {(Number(editVariantModal.shopStock) || 0) * prodYardsPerThan} গজ
+                            = {calculateThanBreakdown(editVariantModal.shopStock, prodYardsPerThan, 2).displayText}
                           </div>
                         )}
                       </div>
@@ -5676,8 +5806,13 @@ export default function StockTransferModal({
                             <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-center">
                               <span className="text-[10.5px] font-bold text-emerald-700 block">🏬 দোকান বর্তমান স্টক</span>
                               <span className="text-lg font-black font-mono text-emerald-950">
-                                {currentShopStock} <span className="text-xs font-bold">{unitLabel}</span>
+                                {isThan ? `${currentShopStock} গজ` : `${currentShopStock} ${unitLabel}`}
                               </span>
+                              {isThan && prodYardsPerThan > 0 && currentShopStock > 0 && (
+                                <span className="text-[10px] text-emerald-700 font-bold block mt-0.5">
+                                  ({calculateThanBreakdown(currentShopStock, prodYardsPerThan, 2).displayText})
+                                </span>
+                              )}
                             </div>
                           </div>
 
@@ -5854,8 +5989,13 @@ export default function StockTransferModal({
                         <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-center">
                           <span className="text-[10.5px] font-bold text-emerald-700 block">🏬 দোকান বর্তমান স্টক</span>
                           <span className="text-lg font-black font-mono text-emerald-950">
-                            {currentShopStock} <span className="text-xs font-bold">{unitLabel}</span>
+                            {isThan ? `${currentShopStock} গজ` : `${currentShopStock} ${unitLabel}`}
                           </span>
+                          {isThan && prodYardsPerThan > 0 && currentShopStock > 0 && (
+                            <span className="text-[10px] text-emerald-700 font-bold block mt-0.5">
+                              ({calculateThanBreakdown(currentShopStock, prodYardsPerThan, 2).displayText})
+                            </span>
+                          )}
                         </div>
                       </div>
 
