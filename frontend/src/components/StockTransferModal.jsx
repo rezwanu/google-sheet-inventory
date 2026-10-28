@@ -46,7 +46,8 @@ import {
   parseGojGira,
   formatFabricQuantity,
   isFabricUnit,
-  isThanUnit
+  isThanUnit,
+  getSafeRunningCutText
 } from '../utils/fabricUtils';
 import {
   exportGodownOutflowExcelCSV,
@@ -1414,24 +1415,49 @@ export default function StockTransferModal({
     if (!window.confirm(confirmMsg)) return;
 
     const count = currentVariants.length;
+    const unit = getProductDisplayUnit(product);
+    const isThan = /than|থান/i.test(unit);
+
     const baseG = Math.floor(parentGodown / count);
     const remG = parentGodown % count;
 
-    const baseS = Math.floor(parentShop / count);
-    const remS = parentShop % count;
+    let updatedVariants;
+    if (isThan) {
+      // কাপড়ের ক্ষেত্রে গিরা ভিত্তিক নিখুঁত বণ্টন (১ গজ = ১৬ গিরা) যাতে দশমিক গজ হারিয়ে না যায়
+      const totalGiras = Math.round(parentShop * 16);
+      const baseGira = Math.floor(totalGiras / count);
+      const remGira = totalGiras % count;
 
-    const updatedVariants = currentVariants.map((v, i) => {
-      const g = baseG + (i < remG ? 1 : 0);
-      const s = baseS + (i < remS ? 1 : 0);
-      return {
-        ...v,
-        GodownStock: g,
-        godownStock: g,
-        StockQuantity: s,
-        stockQuantity: s,
-        TotalStock: g + s
-      };
-    });
+      updatedVariants = currentVariants.map((v, i) => {
+        const g = baseG + (i < remG ? 1 : 0);
+        const vGiras = baseGira + (i < remGira ? 1 : 0);
+        const s = Math.round((vGiras / 16) * 10000) / 10000;
+        return {
+          ...v,
+          GodownStock: g,
+          godownStock: g,
+          StockQuantity: s,
+          stockQuantity: s,
+          TotalStock: g + s
+        };
+      });
+    } else {
+      const baseS = Math.floor(parentShop / count);
+      const remS = parentShop % count;
+
+      updatedVariants = currentVariants.map((v, i) => {
+        const g = baseG + (i < remG ? 1 : 0);
+        const s = baseS + (i < remS ? 1 : 0);
+        return {
+          ...v,
+          GodownStock: g,
+          godownStock: g,
+          StockQuantity: s,
+          stockQuantity: s,
+          TotalStock: g + s
+        };
+      });
+    }
 
     await onUpdateProductVariants(product.ProductID, updatedVariants, {
       location: 'Godown',
@@ -1531,7 +1557,7 @@ export default function StockTransferModal({
     const gStock = Math.max(0, Number(godownStock) || 0);
     const sStock = Math.max(0, Number(shopStock) || 0);
     const baseBarcode = product.Barcode || `pb-${product.ProductID}`;
-    const finalBarcode = barcode ? barcode.trim() : `${baseBarcode}-${cleanVarName.toLowerCase().replace(/\s+/g, '-')}`;
+    const finalBarcode = (barcode || `${baseBarcode}-${cleanVarName.toLowerCase()}`).trim().replace(/\s+/g, '-');
 
     const newVariantObj = {
       VariantID: `VAR-${vType.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-4)}-${cleanVarName.toUpperCase().replace(/\s+/g, '_')}`,
@@ -2334,7 +2360,7 @@ export default function StockTransferModal({
                         </span>
                       </div>
                       <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
-                        {stockKpis.totalShop.toLocaleString('bn-BD')}
+                        {stockKpis.totalShop.toLocaleString('bn-BD')} {stockKpis.fabricShopYards > 0 ? <span className="text-xs font-bold text-slate-500">গজ</span> : <span className="text-xs font-bold text-slate-500">আইটেম</span>}
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-2">
                         <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
@@ -2452,7 +2478,7 @@ export default function StockTransferModal({
                         </span>
                       </div>
                       <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
-                        {stockKpis.totalGodown.toLocaleString('bn-BD')}
+                        {stockKpis.totalGodown.toLocaleString('bn-BD')} {stockKpis.fabricGodownYards > 0 ? <span className="text-xs font-bold text-slate-500">থান</span> : <span className="text-xs font-bold text-slate-500">আইটেম</span>}
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-2">
                         <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
@@ -2662,57 +2688,82 @@ export default function StockTransferModal({
                           <button
                             type="button"
                             onClick={() => setOverviewFilter('ALL')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'ALL'
-                                ? 'bg-white shadow-xs text-indigo-700 font-black'
+                                ? 'bg-white shadow-2xs text-indigo-700 font-bold border border-indigo-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
-                            সকল ({products.length})
+                            <span>সকল পণ্য</span>
+                            <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                              overviewFilter === 'ALL' ? 'bg-indigo-100 text-indigo-800 font-bold' : 'bg-slate-200/70 text-slate-600'
+                            }`}>
+                              {products.length}
+                            </span>
                           </button>
                           <button
                             type="button"
                             onClick={() => setOverviewFilter('IN_GODOWN')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
+                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'IN_GODOWN'
-                                ? 'bg-indigo-600 text-white shadow-xs font-black'
+                                ? 'bg-white text-indigo-800 shadow-2xs font-bold border border-indigo-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
                             <span>🏭 গোডাউনে আছে</span>
+                            <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                              overviewFilter === 'IN_GODOWN' ? 'bg-indigo-100 text-indigo-900 font-bold' : 'bg-slate-200/70 text-slate-600'
+                            }`}>
+                              {products.filter(prod => Number(prod.GodownStock || 0) > 0 || getVariantsOfProduct(prod).some(v => Number(v.GodownStock || 0) > 0)).length}
+                            </span>
                           </button>
                           <button
                             type="button"
                             onClick={() => setOverviewFilter('LOW_GODOWN')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
+                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'LOW_GODOWN'
-                                ? 'bg-rose-600 text-white shadow-xs font-black'
+                                ? 'bg-white text-rose-800 shadow-2xs font-bold border border-rose-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
-                            <span>🚨 গোডাউনে কম ({stockKpis.godownLowCount || 0})</span>
+                            <span>🚨 গোডাউনে কম</span>
+                            {(stockKpis.godownLowCount || 0) > 0 && (
+                              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-rose-100 text-rose-800 font-bold">
+                                {stockKpis.godownLowCount || 0}
+                              </span>
+                            )}
                           </button>
                           <button
                             type="button"
                             onClick={() => setOverviewFilter('NEED_TRANSFER')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
+                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'NEED_TRANSFER'
-                                ? 'bg-amber-500 text-white shadow-xs font-black'
+                                ? 'bg-white text-amber-900 shadow-2xs font-bold border border-amber-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
-                            <span>⚠️ দোকানে ঘাটতি ({stockKpis.needTransferCount})</span>
+                            <span>⚠️ দোকানে ঘাটতি</span>
+                            {(stockKpis.needTransferCount || 0) > 0 && (
+                              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-amber-100 text-amber-900 font-bold">
+                                {stockKpis.needTransferCount}
+                              </span>
+                            )}
                           </button>
                           <button
                             type="button"
                             onClick={() => setOverviewFilter('IN_SHOP')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
+                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'IN_SHOP'
-                                ? 'bg-emerald-600 text-white shadow-xs font-black'
+                                ? 'bg-white text-emerald-900 shadow-2xs font-bold border border-emerald-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
                             <span>🏬 দোকানে আছে</span>
+                            <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                              overviewFilter === 'IN_SHOP' ? 'bg-emerald-100 text-emerald-900 font-bold' : 'bg-slate-200/70 text-slate-600'
+                            }`}>
+                              {stockKpis.shopProductCount || 0}
+                            </span>
                           </button>
                         </div>
                       )}
@@ -2847,8 +2898,10 @@ export default function StockTransferModal({
                               const hasVars = vars.length > 0;
                               const isExpanded = Boolean(expandedProductIds[p.ProductID]);
                               const varGStockSum = vars.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0), 0);
+                              const varSStockSum = vars.reduce((s, v) => s + (Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0), 0);
                               const effectiveGStock = hasVars && varGStockSum > 0 ? varGStockSum : gStock;
-                              const totalGoj = isThan ? (gStock * yardsPerThan) : (isGoj ? gStock : 0);
+                              const isUnallocatedShopStock = hasVars && sStock > 0 && varSStockSum === 0;
+                              const totalGoj = isThan ? (effectiveGStock * yardsPerThan) : (isGoj ? effectiveGStock : 0);
                               const unitCost = Number(p.CostPrice || p.costPrice || p.PurchasePrice || p.purchasePrice || p.Cost || p.cost || p.BuyingPrice || p.BuyPrice || 0);
                               const unitSelling = Number(p.SellingPrice || p.sellingPrice || p.Price || p.price || p.MRP || p.mrp || 0);
                               const totalGodownCost = isThan
@@ -3034,15 +3087,15 @@ export default function StockTransferModal({
                                     <td className="py-3 px-4 text-center bg-indigo-50/20">
                                       <div className="inline-flex flex-col items-center">
                                         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs shadow-2xs border ${
-                                          gStock > 0
+                                          effectiveGStock > 0
                                             ? 'bg-indigo-50 text-indigo-900 border-indigo-200/80'
                                             : 'bg-slate-50 text-slate-400 border-slate-200'
                                         }`}>
-                                          {gStock > 0 ? `${gStock} ${isThan ? 'থান' : unit}` : '০ মজুত'}
+                                          {effectiveGStock > 0 ? `${effectiveGStock} ${isThan ? 'থান' : unit}` : '০ মজুত'}
                                         </span>
-                                        {isThan && yardsPerThan > 0 && gStock > 0 && (
+                                        {isThan && yardsPerThan > 0 && effectiveGStock > 0 && (
                                           <span className="mt-0.5 text-[10.5px] font-medium text-slate-500 font-mono">
-                                            ({(gStock * yardsPerThan).toLocaleString('bn-BD')} গজ)
+                                            ({(effectiveGStock * yardsPerThan).toLocaleString('bn-BD')} গজ)
                                           </span>
                                         )}
                                       </div>
@@ -3060,11 +3113,11 @@ export default function StockTransferModal({
                                           {isThan ? (
                                             sStock <= 0 ? '০ গজ' : (
                                               bd && bd.fullThans > 0 && bd.runningCutYards > 0
-                                                ? `${bd.fullThans} থান + ${bd.runningCutText || bd.runningCutGojGira}`
+                                                ? `${bd.fullThans} থান + ${getSafeRunningCutText(bd)}`
                                                 : bd && bd.fullThans > 0
                                                 ? `${bd.fullThans} থান`
                                                 : bd && bd.runningCutYards > 0
-                                                ? `${bd.runningCutText || bd.runningCutGojGira}`
+                                                ? `${getSafeRunningCutText(bd)}`
                                                 : `${sStock} গজ`
                                             )
                                           ) : (
@@ -3084,9 +3137,9 @@ export default function StockTransferModal({
                                         <span className="inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs bg-slate-100 text-slate-800 border border-slate-200/90 shadow-2xs">
                                           {isThan ? (
                                             (() => {
-                                              const totalFullThans = gStock + (bd ? bd.fullThans : 0);
+                                              const totalFullThans = effectiveGStock + (bd ? bd.fullThans : 0);
                                               const hasRunningCut = bd && bd.runningCutYards > 0;
-                                              const cutStr = bd ? (bd.runningCutText || String(bd.runningCutGojGira)) : '';
+                                              const cutStr = getSafeRunningCutText(bd);
                                               if (totalFullThans <= 0 && !hasRunningCut) return '০ গজ';
                                               if (totalFullThans > 0 && hasRunningCut) {
                                                 return `${totalFullThans} থান + ${cutStr}`;
@@ -3100,24 +3153,29 @@ export default function StockTransferModal({
                                         </span>
                                         {isThan && (
                                           <span className="mt-0.5 text-[10.5px] font-medium text-slate-500 font-mono" title="গোডাউন ও দোকান মিলিয়ে মোট গজ">
-                                            মোট: {((gStock * yardsPerThan) + sStock).toLocaleString('bn-BD')} গজ
+                                            মোট: {((effectiveGStock * yardsPerThan) + sStock).toLocaleString('bn-BD')} গজ
                                           </span>
                                         )}
                                       </div>
                                     </td>
                                     {/* অবস্থা - আধুনিক ডট ইনডিকেটর পিল */}
                                     <td className="py-3 px-3 text-center">
-                                      {isZeroShop && gStock > 0 ? (
+                                      {isUnallocatedShopStock ? (
+                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs" title="মূল পণ্যে দোকান স্টক রয়েছে কিন্তু ভ্যারিয়েন্টে বণ্টন করা হয়নি">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                          <span>⚠️ ভ্যারিয়েন্টে অবণ্টিত</span>
+                                        </span>
+                                      ) : isZeroShop && effectiveGStock > 0 ? (
                                         <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
                                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                                           <span>⚡ দোকানে আনুন</span>
                                         </span>
-                                      ) : isZeroShop && gStock <= 0 ? (
+                                      ) : isZeroShop && effectiveGStock <= 0 ? (
                                         <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
                                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                                           <span>❌ শেষ</span>
                                         </span>
-                                      ) : isLowShop && gStock > 0 ? (
+                                      ) : isLowShop && effectiveGStock > 0 ? (
                                         <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
                                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                                           <span>⚠️ দোকানে কম</span>
@@ -3134,10 +3192,10 @@ export default function StockTransferModal({
                                       <div className="flex items-center justify-end space-x-1.5">
                                         <button
                                           type="button"
-                                          disabled={gStock <= 0}
+                                          disabled={effectiveGStock <= 0}
                                           onClick={() => handleOpenDirectTransfer(p)}
                                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center space-x-1 shadow-2xs transition-all ${
-                                            gStock <= 0
+                                            effectiveGStock <= 0
                                               ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
                                               : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white cursor-pointer shadow-indigo-100'
                                           }`}
@@ -3371,11 +3429,11 @@ export default function StockTransferModal({
                                                               {isThan ? (
                                                                 vSStock <= 0 ? '০ গজ' : (
                                                                   vBd && vBd.fullThans > 0 && vBd.runningCutYards > 0
-                                                                    ? `${vBd.fullThans} থান + ${vBd.runningCutText || vBd.runningCutGojGira}`
+                                                                    ? `${vBd.fullThans} থান + ${getSafeRunningCutText(vBd)}`
                                                                     : vBd && vBd.fullThans > 0
                                                                     ? `${vBd.fullThans} থান`
                                                                     : vBd && vBd.runningCutYards > 0
-                                                                    ? `${vBd.runningCutText || vBd.runningCutGojGira}`
+                                                                    ? `${getSafeRunningCutText(vBd)}`
                                                                     : `${vSStock} গজ`
                                                                 )
                                                               ) : (
@@ -3395,7 +3453,7 @@ export default function StockTransferModal({
                                                               const vTotalThans = vGStock + (vBd ? vBd.fullThans : 0);
                                                               const vTotalAllYards = (vGStock * yardsPerThan) + vSStock;
                                                               const hasRunningCut = vBd && vBd.runningCutYards > 0;
-                                                              const cutStr = vBd ? (vBd.runningCutText || String(vBd.runningCutGojGira)) : '';
+                                                              const cutStr = getSafeRunningCutText(vBd);
                                                               return (
                                                                 <div className="inline-flex flex-col items-center">
                                                                   <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-lg bg-slate-100 text-slate-800 border border-slate-200/90 shadow-2xs">
@@ -3704,11 +3762,11 @@ export default function StockTransferModal({
                                         {item.isThanUnit ? (
                                           item.shopStock <= 0 ? '০ গজ' : (
                                             item.thanBreakdown && item.thanBreakdown.fullThans > 0 && item.thanBreakdown.runningCutYards > 0
-                                              ? `${item.thanBreakdown.fullThans} থান + ${item.thanBreakdown.runningCutText || item.thanBreakdown.runningCutGojGira}`
+                                              ? `${item.thanBreakdown.fullThans} থান + ${getSafeRunningCutText(item.thanBreakdown)}`
                                               : item.thanBreakdown && item.thanBreakdown.fullThans > 0
                                               ? `${item.thanBreakdown.fullThans} থান`
                                               : item.thanBreakdown && item.thanBreakdown.runningCutYards > 0
-                                              ? `${item.thanBreakdown.runningCutText || item.thanBreakdown.runningCutGojGira}`
+                                              ? `${getSafeRunningCutText(item.thanBreakdown)}`
                                               : `${item.shopStock} গজ`
                                           )
                                         ) : (
@@ -3730,7 +3788,7 @@ export default function StockTransferModal({
                                             const bd = item.thanBreakdown;
                                             const totalFullThans = item.godownStock + (bd ? bd.fullThans : 0);
                                             const hasRunningCut = bd && bd.runningCutYards > 0;
-                                            const cutStr = bd ? (bd.runningCutText || String(bd.runningCutGojGira)) : '';
+                                            const cutStr = getSafeRunningCutText(bd);
                                             if (totalFullThans <= 0 && !hasRunningCut) return '০ গজ';
                                             if (totalFullThans > 0 && hasRunningCut) return `${totalFullThans} থান + ${cutStr}`;
                                             if (totalFullThans > 0) return `${totalFullThans} থান`;

@@ -151,6 +151,32 @@ export function calculateThanBreakdown(totalYards, yardsPerThan = 25, remnantThr
 }
 
 /**
+ * থান ব্রেকডাউন থেকে নিরাপদ ও পাঠযোগ্য রানিং কাটা গজ-গিরার টেক্সট প্রদান করে (কখনই [object Object] হবে না)
+ * @param {object} breakdown 
+ * @returns {string}
+ */
+export function getSafeRunningCutText(breakdown) {
+  if (!breakdown) return '';
+  if (typeof breakdown === 'string') return breakdown;
+  if (breakdown.runningCutText && typeof breakdown.runningCutText === 'string') {
+    return breakdown.runningCutText;
+  }
+  const rc = breakdown.runningCutGojGira;
+  if (!rc) {
+    return breakdown.runningCutYards > 0 ? `${breakdown.runningCutYards} গজ` : '';
+  }
+  if (typeof rc === 'string') return rc;
+  if (rc.text && typeof rc.text === 'string') return rc.text;
+  const g = Number(rc.goj) || 0;
+  const gi = Number(rc.gira) || 0;
+  if (g > 0 && gi > 0) return `${g} গজ ${gi} গিরা`;
+  if (g > 0) return `${g} গজ`;
+  if (gi > 0) return `${gi} গিরা`;
+  if (breakdown.runningCutYards > 0) return `${breakdown.runningCutYards} গজ`;
+  return '';
+}
+
+/**
  * মেমো, ইনভয়েস এবং কার্ট সামারির জন্য গজ ও গিরার সুন্দর বিবরণ তৈরি করে
  * যেমন: ২.২৫ গজ -> "২ গজ ৪ গিরা (২.২৫ গজ)"
  * @param {number|string} quantity 
