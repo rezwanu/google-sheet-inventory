@@ -2964,10 +2964,15 @@ export default function StockTransferModal({
                                                           <Store className="w-3 h-3 text-emerald-600 shrink-0" />
                                                           <span>দোকানে: {bd.totalYards.toLocaleString('bn-BD')} গজ</span>
                                                         </span>
-                                                        {bd.fullThans > 0 && (
+                                                        {bd.fullThans > 0 ? (
                                                           <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 shadow-2xs whitespace-nowrap transition-colors" title="দোকানে অক্ষত আস্ত থান">
                                                             <Package className="w-3 h-3 text-indigo-600 shrink-0" />
                                                             <span>{bd.fullThans}টি আস্ত থান</span>
+                                                          </span>
+                                                        ) : (
+                                                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs whitespace-nowrap" title="দোকানে অক্ষত আস্ত থান নেই">
+                                                            <Package className="w-3 h-3 text-slate-400 shrink-0" />
+                                                            <span>০টি আস্ত থান</span>
                                                           </span>
                                                         )}
                                                         {bd.runningCutYards > 0 && !bd.isRemnant && (
@@ -3642,9 +3647,13 @@ export default function StockTransferModal({
                                                   <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200 whitespace-nowrap">
                                                     🏬 মোট: {bd.totalYards} গজ
                                                   </span>
-                                                  {bd.fullThans > 0 && (
+                                                  {bd.fullThans > 0 ? (
                                                     <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 whitespace-nowrap">
                                                       📦 {bd.fullThans}টি আস্ত থান
+                                                    </span>
+                                                  ) : (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+                                                      📦 ০টি আস্ত থান
                                                     </span>
                                                   )}
                                                   {bd.runningCutYards > 0 && !bd.isRemnant && (

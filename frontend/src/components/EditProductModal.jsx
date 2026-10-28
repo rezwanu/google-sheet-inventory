@@ -26,7 +26,9 @@ import {
   Palette,
   Plus,
   Trash2,
-  Scissors
+  Scissors,
+  Store,
+  Package
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';
@@ -149,6 +151,14 @@ export default function EditProductModal({
   const [attributeColors, setAttributeColors] = useState('');
   const [quickColorInput, setQuickColorInput] = useState('');
   const [quickColorThans, setQuickColorThans] = useState(1);
+
+  // বস্ত্রালয় থান ও গজ ক্যালকুলেটর স্টেট (সিম্পল পণ্যের জন্য)
+  const [shopFullThans, setShopFullThans] = useState('0');
+  const [shopCutGoj, setShopCutGoj] = useState('0');
+  const [shopCutGira, setShopCutGira] = useState('0');
+
+  // ভ্যারিয়েন্ট পণ্যের থান ক্যালকুলেটর মোডাল স্টেট
+  const [fabricVariantModal, setFabricVariantModal] = useState(null); // { idx, variantName, fullThans, cutGoj, cutGira }
 
   // কম্বো বান্ডেল স্টেট
   const [bundleItems, setBundleItems] = useState([]);
@@ -309,6 +319,59 @@ export default function EditProductModal({
     }));
   };
 
+  // বস্ত্রালয় সিম্পল কাপড়ের ক্ষেত্রে থান, গজ ও গিরা পরিবর্তনের হ্যান্ডলার
+  const handleFabricShopStockChange = (field, val) => {
+    let nextFull = field === 'fullThans' ? val : shopFullThans;
+    let nextGoj = field === 'cutGoj' ? val : shopCutGoj;
+    let nextGira = field === 'cutGira' ? val : shopCutGira;
+
+    if (field === 'fullThans') setShopFullThans(val);
+    if (field === 'cutGoj') setShopCutGoj(val);
+    if (field === 'cutGira') setShopCutGira(val);
+
+    const fT = Math.max(0, parseInt(nextFull, 10) || 0);
+    const cG = Math.max(0, parseInt(nextGoj, 10) || 0);
+    const cGi = Math.max(0, Math.min(15, parseInt(nextGira, 10) || 0));
+    const ypt = Math.max(0.1, parseFloat(formData.yardsPerThan) || 25);
+
+    const calcYards = calculateInitialShopYards(fT, cG, cGi, ypt);
+    setFormData((prev) => ({
+      ...prev,
+      stockQuantity: String(calcYards)
+    }));
+  };
+
+  // ভ্যারিয়েন্ট থান ক্যালকুলেটর ওপেন হ্যান্ডলার
+  const handleOpenFabricVariantModal = (idx, v) => {
+    const sStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0));
+    const ypt = Math.max(0.1, Number(formData.yardsPerThan) || 25);
+    const remTh = Math.max(0.1, Number(formData.remnantThreshold) || 2);
+    const bd = calculateThanBreakdown(sStock, ypt, remTh);
+    const varName = v.Attributes ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ') : (v.Color || v.VariantID || `ভ্যারিয়েন্ট #${idx + 1}`);
+
+    setFabricVariantModal({
+      idx,
+      variantName: varName,
+      fullThans: String(bd.fullThans || 0),
+      cutGoj: String(bd.runningCutGojGira?.goj || 0),
+      cutGira: String(bd.runningCutGojGira?.gira || 0)
+    });
+  };
+
+  // ভ্যারিয়েন্ট থান ক্যালকুলেটর ফলাফল প্রয়োগ হ্যান্ডলার
+  const handleApplyFabricVariantModal = () => {
+    if (!fabricVariantModal) return;
+    const { idx, fullThans, cutGoj, cutGira } = fabricVariantModal;
+    const fT = Math.max(0, parseInt(fullThans, 10) || 0);
+    const cG = Math.max(0, parseInt(cutGoj, 10) || 0);
+    const cGi = Math.max(0, Math.min(15, parseInt(cutGira, 10) || 0));
+    const ypt = Math.max(0.1, parseFloat(formData.yardsPerThan) || 25);
+
+    const calcYards = calculateInitialShopYards(fT, cG, cGi, ypt);
+    handleUpdateVariantField(idx, 'StockQuantity', calcYards);
+    setFabricVariantModal(null);
+  };
+
   const handleAddBundleItem = () => {
     if (!selectedBundleProduct) return;
     const p = products.find((prod) => prod.ProductID === selectedBundleProduct);
@@ -404,6 +467,18 @@ export default function EditProductModal({
       } else {
         setFeatures([]);
       }
+
+      // বস্ত্রালয় কাপড়ের ক্ষেত্রে স্টকের প্রাথমিক থান, গজ ও গিরা বিভাজন
+      const effectiveUnit = getProductDisplayUnit(product);
+      const ypt = Number(product.YardsPerThan !== undefined ? product.YardsPerThan : (product.yardsPerThan !== undefined ? product.yardsPerThan : 25));
+      const remTh = Number(product.RemnantThreshold !== undefined ? product.RemnantThreshold : (product.remnantThreshold !== undefined ? product.remnantThreshold : 2));
+      const sStock = Number(product.StockQuantity !== undefined ? product.StockQuantity : 0);
+      const bd = calculateThanBreakdown(sStock, ypt, remTh);
+
+      setShopFullThans(String(bd.fullThans || 0));
+      setShopCutGoj(String(bd.runningCutGojGira?.goj || 0));
+      setShopCutGira(String(bd.runningCutGojGira?.gira || 0));
+      setFabricVariantModal(null);
     }
   }, [product, isOpen]);
 
@@ -499,6 +574,27 @@ export default function EditProductModal({
         category: value,
         subCategory: subs.length > 0 ? subs[0].SubCategoryName : ''
       }));
+    } else if (name === 'stockQuantity') {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      if (isThanUnit(formData.unit)) {
+        const num = Math.max(0, parseFloat(value) || 0);
+        const ypt = Math.max(0.1, parseFloat(formData.yardsPerThan) || 25);
+        const remTh = Math.max(0.1, parseFloat(formData.remnantThreshold) || 2);
+        const bd = calculateThanBreakdown(num, ypt, remTh);
+        setShopFullThans(String(bd.fullThans || 0));
+        setShopCutGoj(String(bd.runningCutGojGira?.goj || 0));
+        setShopCutGira(String(bd.runningCutGojGira?.gira || 0));
+      }
+    } else if (name === 'yardsPerThan') {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      if (isThanUnit(formData.unit) && productType === 'simple') {
+        const fT = Math.max(0, parseInt(shopFullThans, 10) || 0);
+        const cG = Math.max(0, parseInt(shopCutGoj, 10) || 0);
+        const cGi = Math.max(0, Math.min(15, parseInt(shopCutGira, 10) || 0));
+        const ypt = Math.max(0.1, parseFloat(value) || 25);
+        const calcYards = calculateInitialShopYards(fT, cG, cGi, ypt);
+        setFormData((prev) => ({ ...prev, stockQuantity: String(calcYards) }));
+      }
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -1159,35 +1255,57 @@ export default function EditProductModal({
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center space-x-1">
                 <PackageCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>🏬 দোকান স্টক</span>
+                <span>🏬 দোকান স্টক {productType === 'variable' && '(ভ্যারিয়েন্টের মোট)'}</span>
               </label>
               <input
                 type="number"
                 name="stockQuantity"
                 step="any"
                 min="0"
-                value={formData.stockQuantity}
+                disabled={productType === 'variable'}
+                value={productType === 'variable' ? variants.reduce((s, v) => s + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0) : formData.stockQuantity}
                 onChange={handleChange}
                 placeholder="0"
-                className="w-full px-3 py-2 text-xs font-bold text-slate-800 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                className={`w-full px-3 py-2 text-xs font-bold border rounded-lg focus:outline-none ${
+                  productType === 'variable'
+                    ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed'
+                    : 'text-slate-800 border-slate-300 focus:ring-2 focus:ring-emerald-500'
+                }`}
               />
+              {isThanUnit(formData.unit) && (
+                <span className="text-[10px] text-emerald-700 font-semibold block mt-0.5">
+                  {productType === 'variable' ? 'নিচের ভ্যারিয়েন্ট টেবিল থেকে নির্ধারিত' : `= ${formData.stockQuantity} গজ`}
+                </span>
+              )}
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center space-x-1">
                 <PackageCheck className="w-3.5 h-3.5 text-indigo-600" />
-                <span>🏭 গোডাউন স্টক</span>
+                <span>🏭 গোডাউন স্টক {productType === 'variable' && '(ভ্যারিয়েন্টের মোট)'}</span>
               </label>
               <input
                 type="number"
                 name="godownStock"
                 step="any"
                 min="0"
-                value={formData.godownStock !== undefined ? formData.godownStock : '0'}
+                disabled={productType === 'variable'}
+                value={productType === 'variable' ? variants.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0) : (formData.godownStock !== undefined ? formData.godownStock : '0')}
                 onChange={handleChange}
                 placeholder="0"
-                className="w-full px-3 py-2 text-xs font-bold text-slate-800 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className={`w-full px-3 py-2 text-xs font-bold border rounded-lg focus:outline-none ${
+                  productType === 'variable'
+                    ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed'
+                    : 'text-slate-800 border-slate-300 focus:ring-2 focus:ring-indigo-500'
+                }`}
               />
+              {isThanUnit(formData.unit) && (
+                <span className="text-[10px] text-indigo-700 font-semibold block mt-0.5">
+                  {productType === 'variable' 
+                    ? `= ${(variants.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0) * (Number(formData.yardsPerThan) || 25)).toLocaleString('bn-BD')} গজ`
+                    : `= ${((Number(formData.godownStock) || 0) * (Number(formData.yardsPerThan) || 25)).toLocaleString('bn-BD')} গজ`}
+                </span>
+              )}
             </div>
 
             <div>
@@ -1318,20 +1436,87 @@ export default function EditProductModal({
                 </div>
               </div>
 
+              {/* সিম্পল থান কাপড়ের ক্ষেত্রে দোকানে আস্ত থান ও খোলা গজের ক্যালকুলেটর ইনপুট */}
+              {productType === 'simple' && isThanUnit(formData.unit) && (
+                <div className="p-3 bg-white/95 rounded-xl border border-amber-300 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-950 flex items-center space-x-1.5">
+                      <Store className="w-3.5 h-3.5 text-amber-600" />
+                      <span>দোকানের প্রাথমিক কাপড় স্টক বিভাজন (থান + খোলা গজ):</span>
+                    </span>
+                    <span className="text-[10px] text-amber-800 font-semibold">
+                      স্বয়ংক্রিয়ভাবে মোট গজে রূপান্তর হবে
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div>
+                      <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                        📦 আস্ত থান সংখ্যা
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={shopFullThans}
+                        onChange={(e) => handleFabricShopStockChange('fullThans', e.target.value)}
+                        placeholder="০"
+                        className="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-black text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                        ✂️ খোলা থানের গজ
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={shopCutGoj}
+                        onChange={(e) => handleFabricShopStockChange('cutGoj', e.target.value)}
+                        placeholder="০"
+                        className="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-black text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                        ✂️ গিরা (০-১৫)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="15"
+                        step="1"
+                        value={shopCutGira}
+                        onChange={(e) => handleFabricShopStockChange('cutGira', e.target.value)}
+                        placeholder="০"
+                        className="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-black text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 text-center"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* বর্তমান স্টকের লাইভ অ্যানালাইসিস */}
               {(() => {
-                const sStock = Number(formData.stockQuantity) || 0;
+                const isVariable = productType === 'variable';
+                const sStock = isVariable
+                  ? variants.reduce((sum, v) => sum + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0)
+                  : (Number(formData.stockQuantity) || 0);
+                const gStock = isVariable
+                  ? variants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0)
+                  : (Number(formData.godownStock) || 0);
                 const ypt = Number(formData.yardsPerThan) || 25;
                 const remTh = Number(formData.remnantThreshold) || 2;
                 const breakdown = calculateThanBreakdown(sStock, ypt, remTh);
+                const totalCombinedYards = (gStock * ypt) + sStock;
 
                 return (
-                  <div className="bg-white/80 p-3 rounded-xl border border-amber-300/80 text-xs text-amber-950 space-y-1">
+                  <div className="bg-white/80 p-3 rounded-xl border border-amber-300/80 text-xs text-amber-950 space-y-2">
                     <div className="font-bold flex items-center justify-between">
-                      <span>🏬 দোকানে বর্তমান ফ্লোর মজুত বিশ্লেষণ:</span>
+                      <span>🏬 দোকানে বর্তমান ফ্লোর মজুত:</span>
                       <strong className="text-emerald-700 font-mono font-black">{sStock.toLocaleString('bn-BD')} গজ</strong>
                     </div>
-                    <div className="text-[11px] text-slate-700 flex flex-wrap items-center gap-1.5 pt-1">
+                    <div className="text-[11px] text-slate-700 flex flex-wrap items-center gap-1.5">
                       <span className="px-2 py-0.5 bg-amber-100 text-amber-900 rounded font-bold">
                         {breakdown.displayText}
                       </span>
@@ -1340,6 +1525,10 @@ export default function EditProductModal({
                           ⚠️ রানিং থানটি ছাঁট সীমায় নেমে এসেছে!
                         </span>
                       )}
+                    </div>
+                    <div className="pt-1.5 border-t border-amber-200/60 flex flex-wrap items-center justify-between text-[11px] text-slate-600 gap-1">
+                      <span>🏭 গোডাউনে আছে: <strong className="text-indigo-900 font-bold">{gStock} থান</strong> (= {(gStock * ypt).toLocaleString('bn-BD')} গজ)</span>
+                      <span>🌐 সর্বমোট কাপড়: <strong className="text-slate-900 font-mono font-bold">{totalCombinedYards.toLocaleString('bn-BD')} গজ</strong></span>
                     </div>
                   </div>
                 );
@@ -1469,78 +1658,128 @@ export default function EditProductModal({
                         <th className="p-2">বারকোড</th>
                         <th className="p-2 w-16">কেনা</th>
                         <th className="p-2 w-16">বিক্রি</th>
-                        <th className="p-2 w-16 text-indigo-700">গোডাউন</th>
-                        <th className="p-2 w-16 text-emerald-700">দোকান</th>
+                        <th className="p-2 min-w-24 text-indigo-700">
+                          {isThanUnit(formData.unit) ? 'গোডাউন (থান)' : 'গোডাউন'}
+                        </th>
+                        <th className="p-2 min-w-36 text-emerald-700">
+                          {isThanUnit(formData.unit) ? 'দোকান স্টক' : 'দোকান'}
+                        </th>
                         <th className="p-2 pr-3 text-center">মুছুন</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
-                      {variants.map((v, idx) => (
-                        <tr key={v.VariantID || idx} className="hover:bg-slate-50/60">
-                          <td className="p-2 pl-3">
-                            <span className="font-bold text-slate-800">
-                              {v.Attributes ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ') : (v.Color || v.VariantID)}
-                            </span>
-                          </td>
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              value={v.Barcode || ''}
-                              onChange={(e) => handleUpdateVariantField(idx, 'Barcode', e.target.value)}
-                              className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-mono"
-                              placeholder="বারকোড"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <input
-                              type="number"
-                              value={v.CostPrice}
-                              onChange={(e) => handleUpdateVariantField(idx, 'CostPrice', Number(e.target.value) || 0)}
-                              className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-bold"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <input
-                              type="number"
-                              value={v.SellingPrice}
-                              onChange={(e) => handleUpdateVariantField(idx, 'SellingPrice', Number(e.target.value) || 0)}
-                              className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-bold text-indigo-700"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <input
-                              type="number"
-                              min="0"
-                              step="any"
-                              value={v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0)}
-                              onChange={(e) => handleUpdateVariantField(idx, 'GodownStock', Number(e.target.value) || 0)}
-                              className="w-full px-2 py-1 bg-indigo-50 border border-indigo-200 rounded text-[11px] font-black text-indigo-900"
-                              title="গোডাউন স্টক"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <input
-                              type="number"
-                              min="0"
-                              step="any"
-                              value={v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0)}
-                              onChange={(e) => handleUpdateVariantField(idx, 'StockQuantity', Number(e.target.value) || 0)}
-                              className="w-full px-2 py-1 bg-emerald-50 border border-emerald-200 rounded text-[11px] font-black text-emerald-700"
-                              title="দোকান স্টক"
-                            />
-                          </td>
-                          <td className="p-2 pr-3 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveVariant(idx)}
-                              className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
-                              title="মুছুন"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {variants.map((v, idx) => {
+                        const isThan = isThanUnit(formData.unit);
+                        const ypt = Number(formData.yardsPerThan) || 25;
+                        const remTh = Number(formData.remnantThreshold) || 2;
+                        const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0));
+                        const vSStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0));
+                        const vBd = isThan ? calculateThanBreakdown(vSStock, ypt, remTh) : null;
+
+                        return (
+                          <tr key={v.VariantID || idx} className="hover:bg-slate-50/60">
+                            <td className="p-2 pl-3">
+                              <span className="font-bold text-slate-800">
+                                {v.Attributes ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ') : (v.Color || v.VariantID)}
+                              </span>
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={v.Barcode || ''}
+                                onChange={(e) => handleUpdateVariantField(idx, 'Barcode', e.target.value)}
+                                className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-mono"
+                                placeholder="বারকোড"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="number"
+                                value={v.CostPrice}
+                                onChange={(e) => handleUpdateVariantField(idx, 'CostPrice', Number(e.target.value) || 0)}
+                                className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-bold"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="number"
+                                value={v.SellingPrice}
+                                onChange={(e) => handleUpdateVariantField(idx, 'SellingPrice', Number(e.target.value) || 0)}
+                                className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[11px] font-bold text-indigo-700"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="number"
+                                min="0"
+                                step="any"
+                                value={vGStock}
+                                onChange={(e) => handleUpdateVariantField(idx, 'GodownStock', Number(e.target.value) || 0)}
+                                className="w-full px-2 py-1 bg-indigo-50 border border-indigo-200 rounded text-[11px] font-black text-indigo-900"
+                                title="গোডাউন স্টক"
+                              />
+                              {isThan && (
+                                <span className="text-[10px] text-indigo-700 font-bold block mt-0.5 whitespace-nowrap">
+                                  = {(vGStock * ypt).toLocaleString('bn-BD')} গজ
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-2">
+                              {isThan ? (
+                                <div className="space-y-1">
+                                  <div className="flex items-center space-x-1.5">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="any"
+                                      value={vSStock}
+                                      onChange={(e) => handleUpdateVariantField(idx, 'StockQuantity', Number(e.target.value) || 0)}
+                                      className="w-16 px-2 py-1 bg-emerald-50 border border-emerald-200 rounded text-[11px] font-black text-emerald-700"
+                                      title="দোকান স্টক (মোট গজ)"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenFabricVariantModal(idx, v)}
+                                      className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10.5px] font-bold flex items-center space-x-1 cursor-pointer shadow-2xs whitespace-nowrap"
+                                      title="থান ও গজ ক্যালকুলেটরে হিসাব করুন"
+                                    >
+                                      <Scissors className="w-3 h-3 text-white" />
+                                      <span>থান হিসাব</span>
+                                    </button>
+                                  </div>
+                                  {/* লাইভ ব্রেকডাউন */}
+                                  <div className="text-[10px] text-slate-600 font-semibold">
+                                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 inline-block whitespace-nowrap">
+                                      {vBd.fullThans > 0 ? `${vBd.fullThans} থান` : '০ থান'}
+                                      {vBd.runningCutYards > 0 ? ` + ${vBd.runningCutText || `${vBd.runningCutYards} গজ`}` : ''}
+                                    </span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  value={vSStock}
+                                  onChange={(e) => handleUpdateVariantField(idx, 'StockQuantity', Number(e.target.value) || 0)}
+                                  className="w-full px-2 py-1 bg-emerald-50 border border-emerald-200 rounded text-[11px] font-black text-emerald-700"
+                                  title="দোকান স্টক"
+                                />
+                              )}
+                            </td>
+                            <td className="p-2 pr-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVariant(idx)}
+                                className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
+                                title="মুছুন"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1985,6 +2224,120 @@ export default function EditProductModal({
           currencySymbol={currencySymbol}
           storeName={settings?.StoreName || 'Pabna Bostraloy'}
         />
+      )}
+
+      {/* বস্ত্রালয় ভ্যারিয়েন্ট থান ও গজ ক্যালকুলেটর পপআপ মডাল */}
+      {fabricVariantModal && (
+        <div className="fixed inset-0 z-60 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-amber-300 max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-amber-200">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 bg-amber-100 text-amber-800 rounded-xl">
+                  <Scissors className="w-5 h-5 text-amber-700" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-amber-950">ভ্যারিয়েন্ট থান ও গজ ক্যালকুলেটর</h4>
+                  <p className="text-xs text-amber-800 font-semibold">{fabricVariantModal.variantName}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFabricVariantModal(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200/80 text-xs text-amber-900 font-medium">
+              📏 প্রতি থানে <strong>{formData.yardsPerThan || 25} গজ</strong> ধরে মোট গজে রূপান্তর হবে।
+            </div>
+
+            <div className="grid grid-cols-3 gap-2.5">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  📦 আস্ত থান
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={fabricVariantModal.fullThans}
+                  onChange={(e) => setFabricVariantModal(prev => ({ ...prev, fullThans: e.target.value }))}
+                  className="w-full px-2.5 py-2 bg-white border border-amber-300 rounded-lg text-xs font-black text-slate-800 text-center focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  placeholder="০"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  ✂️ খোলা গজ
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={fabricVariantModal.cutGoj}
+                  onChange={(e) => setFabricVariantModal(prev => ({ ...prev, cutGoj: e.target.value }))}
+                  className="w-full px-2.5 py-2 bg-white border border-amber-300 rounded-lg text-xs font-black text-slate-800 text-center focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  placeholder="০"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  ✂️ গিরা (০-১৫)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="15"
+                  step="1"
+                  value={fabricVariantModal.cutGira}
+                  onChange={(e) => setFabricVariantModal(prev => ({ ...prev, cutGira: e.target.value }))}
+                  className="w-full px-2.5 py-2 bg-white border border-amber-300 rounded-lg text-xs font-black text-slate-800 text-center focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  placeholder="০"
+                />
+              </div>
+            </div>
+
+            {/* লাইভ ফলাফল প্রদর্শন */}
+            {(() => {
+              const fT = Math.max(0, parseInt(fabricVariantModal.fullThans, 10) || 0);
+              const cG = Math.max(0, parseInt(fabricVariantModal.cutGoj, 10) || 0);
+              const cGi = Math.max(0, Math.min(15, parseInt(fabricVariantModal.cutGira, 10) || 0));
+              const ypt = Math.max(0.1, parseFloat(formData.yardsPerThan) || 25);
+              const calcYards = calculateInitialShopYards(fT, cG, cGi, ypt);
+              return (
+                <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-center space-y-1">
+                  <span className="text-[11px] font-semibold text-emerald-800 block">দোকানে মোট প্রস্তুতকৃত স্টক:</span>
+                  <div className="text-base font-black text-emerald-700 font-mono">
+                    {calcYards.toLocaleString('bn-BD')} গজ
+                  </div>
+                  <div className="text-[11px] text-slate-600 font-medium">
+                    ({fT > 0 ? `${fT}টি আস্ত থান` : '০টি আস্ত থান'} {cG > 0 || cGi > 0 ? `+ ${cG} গজ ${cGi} গিরা` : ''})
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setFabricVariantModal(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                onClick={handleApplyFabricVariantModal}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors shadow-xs flex items-center space-x-1 cursor-pointer"
+              >
+                <Check className="w-4 h-4" />
+                <span>✓ প্রয়োগ করুন</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>
