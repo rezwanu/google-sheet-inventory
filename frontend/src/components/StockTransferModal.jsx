@@ -2585,84 +2585,77 @@ export default function StockTransferModal({
                     {/* ফিল্টার পিল বাটনসমূহ */}
                     <div className="flex items-center space-x-1.5 flex-wrap gap-y-1.5">
                       {isShopStockView ? (
-                        <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold border border-slate-200/60 overflow-x-auto">
-                          <button
-                            type="button"
-                            onClick={() => setOverviewFilter('IN_SHOP')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
-                              overviewFilter === 'IN_SHOP'
-                                ? 'bg-emerald-600 text-white shadow-xs font-black'
-                                : 'text-slate-600 hover:text-slate-900'
+                        <div className="flex items-center space-x-2 flex-wrap gap-y-2">
+                          {/* প্রাইমারি সেগমেন্টেড কন্ট্রোল */}
+                          <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold border border-slate-200/60 overflow-x-auto">
+                            <button
+                              type="button"
+                              onClick={() => setOverviewFilter('IN_SHOP')}
+                              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
+                                overviewFilter === 'IN_SHOP'
+                                  ? 'bg-white text-emerald-900 shadow-2xs font-bold border border-emerald-200/80'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              <span>🏬 সকল দোকান পণ্য</span>
+                              <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                                overviewFilter === 'IN_SHOP' ? 'bg-emerald-100 text-emerald-900 font-bold' : 'bg-slate-200/70 text-slate-600'
+                              }`}>
+                                {stockKpis.shopProductCount || 0}
+                              </span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setOverviewFilter(stockKpis.shopZeroInGodownCount > 0 ? 'SHOP_ZERO_IN_GODOWN' : 'LOW_SHOP')}
+                              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
+                                (overviewFilter === 'LOW_SHOP' || overviewFilter === 'SHOP_ZERO_IN_GODOWN')
+                                  ? 'bg-white text-rose-800 shadow-2xs font-bold border border-rose-200/80'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              <span>🚨 ঘাটতি ও অ্যালার্ট</span>
+                              {((stockKpis.shopLowCount || 0) + (stockKpis.shopZeroInGodownCount || 0)) > 0 && (
+                                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-rose-100 text-rose-800 font-bold">
+                                  {(stockKpis.shopLowCount || 0) + (stockKpis.shopZeroInGodownCount || 0)}
+                                </span>
+                              )}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setOverviewFilter('SHOP_FABRIC')}
+                              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
+                                overviewFilter === 'SHOP_FABRIC'
+                                  ? 'bg-white text-indigo-900 shadow-2xs font-bold border border-indigo-200/80'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              <span>🧵 থান ও গজ কাপড়</span>
+                            </button>
+                          </div>
+
+                          {/* সেকেন্ডারি ফিল্টার ড্রপডাউন */}
+                          <select
+                            value={['SHOP_REMNANT', 'SHOP_NEED_BOLT', 'SHOP_SUFFICIENT', 'SHOP_ZERO_IN_GODOWN', 'LOW_SHOP'].includes(overviewFilter) && overviewFilter !== 'LOW_SHOP' && overviewFilter !== 'SHOP_ZERO_IN_GODOWN' ? overviewFilter : 'MORE_FILTERS'}
+                            onChange={(e) => {
+                              if (e.target.value !== 'MORE_FILTERS') {
+                                setOverviewFilter(e.target.value);
+                              }
+                            }}
+                            className={`px-3 py-1.5 text-xs rounded-xl border font-semibold transition-all cursor-pointer ${
+                              ['SHOP_REMNANT', 'SHOP_NEED_BOLT', 'SHOP_SUFFICIENT'].includes(overviewFilter)
+                                ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-bold shadow-2xs'
+                                : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-white'
                             }`}
                           >
-                            <span>🏬 সকল দোকান পণ্য ({stockKpis.shopProductCount || 0})</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOverviewFilter('SHOP_ZERO_IN_GODOWN')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
-                              overviewFilter === 'SHOP_ZERO_IN_GODOWN'
-                                ? 'bg-rose-600 text-white shadow-xs font-black'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                          >
-                            <span>🚨 দোকানে শেষ (গোডাউনে আছে: {stockKpis.shopZeroInGodownCount || 0})</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOverviewFilter('LOW_SHOP')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
-                              overviewFilter === 'LOW_SHOP'
-                                ? 'bg-amber-500 text-white shadow-xs font-black'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                          >
-                            <span>⚠️ দোকানে কম স্টক ({stockKpis.shopLowCount || 0})</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOverviewFilter('SHOP_FABRIC')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
-                              overviewFilter === 'SHOP_FABRIC'
-                                ? 'bg-indigo-600 text-white shadow-xs font-black'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                          >
-                            <span>🧵 শুধু থান ও গজ কাপড়</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOverviewFilter('SHOP_REMNANT')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
-                              overviewFilter === 'SHOP_REMNANT'
-                                ? 'bg-amber-600 text-white shadow-xs font-black'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                          >
-                            <span>✂️ শেষ ছাঁট কাপড় ({stockKpis.fabricShopRemnantsCount || 0})</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOverviewFilter('SHOP_NEED_BOLT')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
-                              overviewFilter === 'SHOP_NEED_BOLT'
-                                ? 'bg-rose-700 text-white shadow-xs font-black'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                          >
-                            <span>🚨 নতুন থান প্রয়োজন ({stockKpis.fabricShopNeedsRestockCount || 0})</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOverviewFilter('SHOP_SUFFICIENT')}
-                            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 whitespace-nowrap ${
-                              overviewFilter === 'SHOP_SUFFICIENT'
-                                ? 'bg-teal-600 text-white shadow-xs font-black'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                          >
-                            <span>✓ পর্যাপ্ত মজুত</span>
-                          </button>
+                            <option value="MORE_FILTERS">আরও ফিল্টার ▾</option>
+                            <option value="SHOP_ZERO_IN_GODOWN">🚨 দোকানে শেষ (গোডাউনে আছে: {stockKpis.shopZeroInGodownCount || 0})</option>
+                            <option value="LOW_SHOP">⚠️ দোকানে কম স্টক ({stockKpis.shopLowCount || 0})</option>
+                            <option value="SHOP_REMNANT">✂️ শেষ ছাঁট কাপড় ({stockKpis.fabricShopRemnantsCount || 0})</option>
+                            <option value="SHOP_NEED_BOLT">🧵 নতুন থান প্রয়োজন ({stockKpis.fabricShopNeedsRestockCount || 0})</option>
+                            <option value="SHOP_SUFFICIENT">✓ পর্যাপ্ত মজুত</option>
+                          </select>
                         </div>
                       ) : (
                         <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold border border-slate-200/60 overflow-x-auto">
@@ -2949,128 +2942,83 @@ export default function StockTransferModal({
                                             ID: {p.ProductID} {p.Barcode ? `| #${p.Barcode}` : ''}
                                           </div>
 
-                                          {/* বাটনের মতো কালারফুল ব্যাচ সারি */}
-                                          {isShopStockView ? (
-                                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                              {isThan ? (
+                                          {/* আধুনিক ও পরিচ্ছন্ন মেটাডাটা ও কাপড় বিবরণী */}
+                                          <div className="mt-1 flex flex-col gap-0.5">
+                                            {/* লাইন ২: ক্যাটাগরি, বারকোড ও মূল্য মেটাডাটা */}
+                                            <div className="text-[11px] text-slate-500 font-medium flex items-center space-x-2 flex-wrap">
+                                              <span>{p.Category || 'সাধারণ'}</span>
+                                              {p.Barcode && <span>• #{p.Barcode}</span>}
+                                              {(totalShopCost > 0 || totalShopSelling > 0) && (
                                                 <>
-                                                  {(() => {
-                                                    const ypt = yardsPerThan || 25;
-                                                    const remTh = Number(p.RemnantThreshold || p.remnantThreshold || 2);
-                                                    const bd = calculateThanBreakdown(sStock, ypt, remTh);
-                                                    return (
-                                                      <>
-                                                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-black bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-200 shadow-2xs whitespace-nowrap transition-colors" title="দোকানের মোট গজ">
-                                                          <Store className="w-3 h-3 text-emerald-600 shrink-0" />
-                                                          <span>দোকানে: {bd.totalYards.toLocaleString('bn-BD')} গজ</span>
-                                                        </span>
-                                                        {bd.fullThans > 0 ? (
-                                                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 shadow-2xs whitespace-nowrap transition-colors" title="দোকানে অক্ষত আস্ত থান">
-                                                            <Package className="w-3 h-3 text-indigo-600 shrink-0" />
-                                                            <span>{bd.fullThans}টি আস্ত থান</span>
-                                                          </span>
-                                                        ) : (
-                                                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs whitespace-nowrap" title="দোকানে অক্ষত আস্ত থান নেই">
-                                                            <Package className="w-3 h-3 text-slate-400 shrink-0" />
-                                                            <span>০টি আস্ত থান</span>
-                                                          </span>
-                                                        )}
-                                                        {bd.runningCutYards > 0 && !bd.isRemnant && (
-                                                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 shadow-2xs whitespace-nowrap transition-colors" title="কাউন্টার টেবিলে রানিং কাটা থান">
-                                                            <Scissors className="w-3 h-3 text-teal-600 shrink-0" />
-                                                            <span>কাটা থানে: {formatFabricQuantity(bd.runningCutYards, 'গজ', false)}</span>
-                                                          </span>
-                                                        )}
-                                                        {bd.isRemnant && (
-                                                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-black bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 shadow-2xs whitespace-nowrap transition-colors animate-pulse" title="থানের শেষ ছাঁট (কাউন্টার টুকরা হিসেবে বিক্রয়যোগ্য)">
-                                                            <Scissors className="w-3 h-3 text-amber-800 shrink-0" />
-                                                            <span>✂️ শেষ ছাঁট: {formatFabricQuantity(bd.runningCutYards, 'গজ', false)} [বিক্রয়যোগ্য]</span>
-                                                          </span>
-                                                        )}
-                                                        {bd.needsRestock && gStock > 0 && (
-                                                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-black bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 shadow-2xs whitespace-nowrap transition-colors animate-pulse" title="কাউন্টারের থান শেষ বা ছাঁট সীমার নিচে! গোডাউন থেকে নতুন থান আনুন">
-                                                            <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" />
-                                                            <span>🚨 নতুন থান চালান প্রয়োজন</span>
-                                                          </span>
-                                                        )}
-                                                      </>
-                                                    );
-                                                  })()}
+                                                  <span>•</span>
+                                                  <span className="text-slate-600 font-mono">
+                                                    {totalShopCost > 0 && `ক্রয়: ${currencySymbol}${Math.round(totalShopCost).toLocaleString('bn-BD')}`}
+                                                    {totalShopCost > 0 && totalShopSelling > 0 && ' | '}
+                                                    {totalShopSelling > 0 && `বিক্রয়: ${currencySymbol}${Math.round(totalShopSelling).toLocaleString('bn-BD')}`}
+                                                  </span>
                                                 </>
-                                              ) : (
-                                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 shadow-2xs whitespace-nowrap transition-colors">
-                                                  <Store className="w-3 h-3 text-emerald-600 shrink-0" />
-                                                  <span>দোকানে: {sStock} {unit}</span>
-                                                </span>
-                                              )}
-                                              {totalShopCost > 0 && (
-                                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 shadow-2xs whitespace-nowrap transition-colors">
-                                                  <span>💰 ক্রয়: {currencySymbol}{Math.round(totalShopCost).toLocaleString('bn-BD')}</span>
-                                                </span>
-                                              )}
-                                              {totalShopSelling > 0 && (
-                                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 shadow-2xs whitespace-nowrap transition-colors">
-                                                  <span>🏷️ বিক্রয়: {currencySymbol}{Math.round(totalShopSelling).toLocaleString('bn-BD')}</span>
-                                                </span>
-                                              )}
-                                              <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold border shadow-2xs whitespace-nowrap transition-colors ${
-                                                gStock > 0
-                                                  ? 'bg-slate-100 text-slate-800 border-slate-300'
-                                                  : 'bg-rose-50 text-rose-700 border-rose-200'
-                                              }`}>
-                                                <Warehouse className="w-3 h-3 text-slate-600 shrink-0" />
-                                                <span>গোডাউনে আছে: {gStock > 0 ? `${gStock} ${isThan ? 'থান' : unit}` : 'নেই'}</span>
-                                              </span>
-                                            </div>
-                                          ) : isThan ? (
-                                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-2xs whitespace-nowrap transition-colors">
-                                                <Warehouse className="w-3 h-3 text-indigo-600 shrink-0" />
-                                                <span>গোডাউন: {gStock} থান</span>
-                                              </span>
-                                              {yardsPerThan > 0 && (
-                                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 shadow-2xs whitespace-nowrap transition-colors">
-                                                  <Scissors className="w-3 h-3 text-amber-700 shrink-0" />
-                                                  <span>{yardsPerThan} গজ/থান</span>
-                                                </span>
-                                              )}
-                                              {yardsPerThan > 0 && (
-                                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs whitespace-nowrap transition-colors">
-                                                  <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                                                  <span>মোট: {(gStock * yardsPerThan).toLocaleString('bn-BD')} গজ</span>
-                                                </span>
-                                              )}
-                                              {totalGodownCost > 0 && (
-                                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 shadow-2xs whitespace-nowrap transition-colors">
-                                                  <span>💰 মূল্য: {currencySymbol}{Math.round(totalGodownCost).toLocaleString('bn-BD')}</span>
-                                                </span>
                                               )}
                                             </div>
-                                          ) : isGoj ? (
-                                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-emerald-50 text-emerald-900 border border-emerald-200 shadow-2xs whitespace-nowrap">
-                                                <Warehouse className="w-3 h-3 text-emerald-600 shrink-0" />
-                                                <span>গোডাউন: {gStock} গজ</span>
-                                              </span>
-                                              {totalGodownCost > 0 && (
-                                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-purple-50 text-purple-900 border border-purple-200 shadow-2xs whitespace-nowrap">
-                                                  <span>💰 মূল্য: {currencySymbol}{Math.round(totalGodownCost).toLocaleString('bn-BD')}</span>
-                                                </span>
-                                              )}
-                                            </div>
-                                          ) : (
-                                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-sky-50 text-sky-800 border border-sky-200 shadow-2xs whitespace-nowrap">
-                                                <Warehouse className="w-3 h-3 text-sky-600 shrink-0" />
-                                                <span>গোডাউন: {gStock} {unit}</span>
-                                              </span>
-                                              {totalGodownCost > 0 && (
-                                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-purple-50 text-purple-900 border border-purple-200 shadow-2xs whitespace-nowrap">
-                                                  <span>💰 মূল্য: {currencySymbol}{Math.round(totalGodownCost).toLocaleString('bn-BD')}</span>
-                                                </span>
-                                              )}
-                                            </div>
-                                          )}
+
+                                            {/* লাইন ৩: থান ও গজ কাপড়ের স্পষ্ট বিবরণী (যদি থান বা গজ হয়) */}
+                                            {isShopStockView ? (
+                                              isThan && (() => {
+                                                const ypt = yardsPerThan || 25;
+                                                const remTh = Number(p.RemnantThreshold || p.remnantThreshold || 2);
+                                                const bd = calculateThanBreakdown(sStock, ypt, remTh);
+                                                return (
+                                                  <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                                                    <span className="inline-flex items-center text-slate-600 bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200/70 font-medium">
+                                                      🧵 ১ থান = {ypt} গজ
+                                                    </span>
+
+                                                    {bd.fullThans > 0 ? (
+                                                      <span className="inline-flex items-center text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/80 font-semibold">
+                                                        দোকানে {bd.fullThans}টি আস্ত থান {bd.runningCutYards > 0 ? `+ টেবিলে ${bd.runningCutText} কাটা` : ''}
+                                                      </span>
+                                                    ) : bd.runningCutYards > 0 ? (
+                                                      <span className="inline-flex items-center text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 font-semibold">
+                                                        দোকানে ০টি আস্ত থান (টেবিলে {bd.runningCutText} কাটা)
+                                                      </span>
+                                                    ) : (
+                                                      <span className="inline-flex items-center text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200/80 font-semibold">
+                                                        দোকানে থান বা গজ নেই
+                                                      </span>
+                                                    )}
+
+                                                    {bd.isRemnant && (
+                                                      <span className="inline-flex items-center text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300 font-bold animate-pulse text-[10.5px]">
+                                                        ✂️ শেষ ছাঁট
+                                                      </span>
+                                                    )}
+                                                    {bd.needsRestock && gStock > 0 && (
+                                                      <span className="inline-flex items-center text-rose-800 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-300 font-bold animate-pulse text-[10.5px]">
+                                                        🚨 নতুন থান চালান প্রয়োজন
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                );
+                                              })()
+                                            ) : (
+                                              isThan && (
+                                                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                                                  <span className="inline-flex items-center text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/70 font-medium">
+                                                    🧵 ১ থান = {yardsPerThan || 25} গজ
+                                                  </span>
+                                                  {yardsPerThan > 0 && gStock > 0 && (
+                                                    <span className="inline-flex items-center text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60 font-medium">
+                                                      গোডাউনে মোট: {(gStock * yardsPerThan).toLocaleString('bn-BD')} গজ
+                                                    </span>
+                                                  )}
+                                                  {totalGodownCost > 0 && (
+                                                    <span className="inline-flex items-center text-purple-800 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200/70 font-medium">
+                                                      স্টক মূল্য: {currencySymbol}{Math.round(totalGodownCost).toLocaleString('bn-BD')}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              )
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
                                     </td>
@@ -3082,32 +3030,32 @@ export default function StockTransferModal({
                                         {getProductDisplayUnit(p)}
                                       </span>
                                     </td>
-                                    {/* গোডাউন স্টক - রঙিন বাটন ব্যাজ */}
+                                    {/* গোডাউন স্টক - আধুনিক সফট ব্যাজ */}
                                     <td className="py-3 px-4 text-center bg-indigo-50/20">
                                       <div className="inline-flex flex-col items-center">
-                                        <span className={`inline-flex items-center px-3 py-1.5 rounded-xl font-black font-mono text-xs sm:text-sm shadow-2xs transition-transform hover:scale-105 ${
+                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs shadow-2xs border ${
                                           gStock > 0
-                                            ? 'bg-indigo-600 text-white border border-indigo-700 shadow-indigo-200'
-                                            : 'bg-slate-100 text-slate-400 border border-slate-200'
+                                            ? 'bg-indigo-50 text-indigo-900 border-indigo-200/80'
+                                            : 'bg-slate-50 text-slate-400 border-slate-200'
                                         }`}>
                                           {gStock > 0 ? `${gStock} ${isThan ? 'থান' : unit}` : '০ মজুত'}
                                         </span>
                                         {isThan && yardsPerThan > 0 && gStock > 0 && (
-                                          <span className="mt-1 text-[10px] font-bold text-indigo-700 bg-indigo-100/70 px-2 py-0.5 rounded-md border border-indigo-200/60 font-mono">
-                                            {(gStock * yardsPerThan).toLocaleString('bn-BD')} গজ
+                                          <span className="mt-0.5 text-[10.5px] font-medium text-slate-500 font-mono">
+                                            ({(gStock * yardsPerThan).toLocaleString('bn-BD')} গজ)
                                           </span>
                                         )}
                                       </div>
                                     </td>
-                                    {/* দোকান স্টক - রঙিন বাটন ব্যাজ */}
+                                    {/* দোকান স্টক - আধুনিক সফট ব্যাজ */}
                                     <td className="py-3 px-4 text-center bg-emerald-50/20">
                                       <div className="inline-flex flex-col items-center">
-                                        <span className={`inline-flex items-center px-3 py-1.5 rounded-xl font-black font-mono text-xs sm:text-sm shadow-2xs transition-transform hover:scale-105 ${
+                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs shadow-2xs border ${
                                           isZeroShop
-                                            ? 'bg-rose-500 text-white border border-rose-600 shadow-rose-200'
+                                            ? 'bg-rose-50 text-rose-800 border-rose-200'
                                             : isLowShop
-                                            ? 'bg-amber-500 text-white border border-amber-600 shadow-amber-200'
-                                            : 'bg-emerald-600 text-white border border-emerald-700 shadow-emerald-200'
+                                            ? 'bg-amber-50 text-amber-900 border-amber-200'
+                                            : 'bg-emerald-50 text-emerald-900 border-emerald-200'
                                         }`}>
                                           {isThan ? (
                                             sStock <= 0 ? '০ গজ' : (
@@ -3115,7 +3063,7 @@ export default function StockTransferModal({
                                                 ? `${bd.fullThans} থান + ${bd.runningCutText || bd.runningCutGojGira}`
                                                 : bd && bd.fullThans > 0
                                                 ? `${bd.fullThans} থান`
-                                                : bd
+                                                : bd && bd.runningCutYards > 0
                                                 ? `${bd.runningCutText || bd.runningCutGojGira}`
                                                 : `${sStock} গজ`
                                             )
@@ -3124,16 +3072,16 @@ export default function StockTransferModal({
                                           )}
                                         </span>
                                         {isThan && sStock > 0 && (
-                                          <span className="mt-1 text-[10px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-200/60 font-mono" title="দোকানের মোট কাপড় (গজে)">
+                                          <span className="mt-0.5 text-[10.5px] font-medium text-slate-500 font-mono" title="দোকানের মোট কাপড় (গজে)">
                                             মোট: {sStock.toLocaleString('bn-BD')} গজ
                                           </span>
                                         )}
                                       </div>
                                     </td>
-                                    {/* মোট স্টক - বাটন ব্যাজ */}
+                                    {/* মোট স্টক - আধুনিক সফট স্লেট ব্যাজ */}
                                     <td className="py-3 px-3 text-center">
                                       <div className="inline-flex flex-col items-center">
-                                        <span className="inline-flex items-center px-3 py-1.5 rounded-xl font-black font-mono text-xs sm:text-sm bg-slate-800 text-white shadow-2xs border border-slate-900">
+                                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs bg-slate-100 text-slate-800 border border-slate-200/90 shadow-2xs">
                                           {isThan ? (
                                             (() => {
                                               const totalFullThans = gStock + (bd ? bd.fullThans : 0);
@@ -3151,54 +3099,58 @@ export default function StockTransferModal({
                                           )}
                                         </span>
                                         {isThan && (
-                                          <span className="mt-1 text-[10px] font-bold text-slate-300 bg-slate-700 px-2 py-0.5 rounded-md border border-slate-600 font-mono" title="গোডাউন ও দোকান মিলিয়ে মোট গজ">
+                                          <span className="mt-0.5 text-[10.5px] font-medium text-slate-500 font-mono" title="গোডাউন ও দোকান মিলিয়ে মোট গজ">
                                             মোট: {((gStock * yardsPerThan) + sStock).toLocaleString('bn-BD')} গজ
                                           </span>
                                         )}
                                       </div>
                                     </td>
-                                    {/* অবস্থা */}
+                                    {/* অবস্থা - আধুনিক ডট ইনডিকেটর পিল */}
                                     <td className="py-3 px-3 text-center">
                                       {isZeroShop && gStock > 0 ? (
-                                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10.5px] font-black bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                                           <span>⚡ দোকানে আনুন</span>
                                         </span>
                                       ) : isZeroShop && gStock <= 0 ? (
-                                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                                           <span>❌ শেষ</span>
                                         </span>
                                       ) : isLowShop && gStock > 0 ? (
-                                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                                           <span>⚠️ দোকানে কম</span>
                                         </span>
                                       ) : (
-                                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                           <span>✓ পর্যাপ্ত</span>
                                         </span>
                                       )}
                                     </td>
-                                    {/* অ্যাকশন বাটনসমূহ */}
+                                    {/* কার্যক্রম - স্লীক বাটন ও আইকন গ্রুপ */}
                                     <td className="py-3 px-4 text-right">
-                                      <div className="flex items-center justify-end space-x-2">
+                                      <div className="flex items-center justify-end space-x-1.5">
                                         <button
                                           type="button"
                                           disabled={gStock <= 0}
                                           onClick={() => handleOpenDirectTransfer(p)}
-                                          className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-all ${
+                                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center space-x-1 shadow-2xs transition-all ${
                                             gStock <= 0
-                                              ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none'
-                                              : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white cursor-pointer shadow-indigo-200'
+                                              ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
+                                              : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white cursor-pointer shadow-indigo-100'
                                           }`}
                                           title={gStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে দোকানে পণ্য আনুন'}
                                         >
                                           <Truck className="w-3.5 h-3.5" />
-                                          <span>দোকানে চালান</span>
+                                          <span>চালান</span>
                                         </button>
-                                        <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                                        <div className="flex items-center bg-slate-50 p-0.5 rounded-lg border border-slate-200">
                                           <button
                                             type="button"
                                             onClick={() => setPrintStickerProduct(p)}
-                                            className="p-1.5 hover:bg-white hover:text-indigo-600 text-slate-600 rounded-lg text-xs transition-colors cursor-pointer"
+                                            className="p-1.5 hover:bg-white hover:text-indigo-600 text-slate-500 rounded-md text-xs transition-colors cursor-pointer"
                                             title="প্রাইস ট্যাগ / বারকোড স্টিকার প্রিন্ট করুন"
                                           >
                                             <Printer className="w-3.5 h-3.5" />
@@ -3212,7 +3164,7 @@ export default function StockTransferModal({
                                               setAdjustReason(isShopStockView ? 'দোকানে কাটা/নষ্ট/স্যাম্পল' : 'নতুন লট গোডাউনে আগমন');
                                               setAdjustQty(1);
                                             }}
-                                            className="p-1.5 hover:bg-white hover:text-amber-600 text-slate-600 rounded-lg text-xs transition-colors cursor-pointer"
+                                            className="p-1.5 hover:bg-white hover:text-amber-600 text-slate-500 rounded-md text-xs transition-colors cursor-pointer"
                                             title={isShopStockView ? 'দোকানের কাউন্টার স্টক সংশোধন বা সমন্বয়' : 'গোডাউন স্টক সংশোধন বা সমন্বয়'}
                                           >
                                             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -3221,7 +3173,7 @@ export default function StockTransferModal({
                                             <button
                                               type="button"
                                               onClick={() => onEditProduct(p)}
-                                              className="p-1.5 hover:bg-white hover:text-indigo-600 text-slate-600 rounded-lg text-xs transition-colors cursor-pointer"
+                                              className="p-1.5 hover:bg-white hover:text-indigo-600 text-slate-500 rounded-md text-xs transition-colors cursor-pointer"
                                               title="পণ্য এডিট করুন"
                                             >
                                               <Edit3 className="w-3.5 h-3.5" />
@@ -3235,7 +3187,7 @@ export default function StockTransferModal({
                                                   onDeleteProduct(p.ProductID);
                                                 }
                                               }}
-                                              className="p-1.5 hover:bg-rose-50 hover:text-rose-600 text-slate-400 rounded-lg text-xs transition-colors cursor-pointer"
+                                              className="p-1.5 hover:bg-rose-50 hover:text-rose-600 text-slate-400 rounded-md text-xs transition-colors cursor-pointer"
                                               title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
                                             >
                                               <Trash2 className="w-3.5 h-3.5" />
@@ -3384,31 +3336,37 @@ export default function StockTransferModal({
                                                         <td className="py-2.5 px-3 font-mono text-[10.5px] text-slate-500">
                                                           {v.Barcode || p.Barcode || '—'}
                                                         </td>
-                                                        {/* ভ্যারিয়েন্ট গোডাউন স্টক - রঙিন ব্যাজ */}
+                                                        {/* ভ্যারিয়েন্ট গোডাউন স্টক - আধুনিক সফট ব্যাজ */}
                                                         <td className="py-2.5 px-3 text-center bg-indigo-50/20">
-                                                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-black font-mono bg-indigo-600 text-white shadow-2xs">
-                                                            {vGStock} {isThan ? 'থান' : unit}
-                                                          </span>
-                                                          {isThan && yardsPerThan > 0 && (
-                                                            <div className="text-[10px] text-indigo-600 font-bold mt-0.5 font-mono">
-                                                              {(vGStock * yardsPerThan).toLocaleString('bn-BD')} গজ
-                                                            </div>
-                                                          )}
-                                                          {vCost > 0 && vGStock > 0 && (
-                                                            <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded bg-purple-50 text-purple-800 border border-purple-200 text-[9px] font-bold">
-                                                              {currencySymbol}{Math.round((isThan ? (vGStock * yardsPerThan) : vGStock) * vCost).toLocaleString('bn-BD')}
+                                                          <div className="inline-flex flex-col items-center">
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold font-mono border shadow-2xs ${
+                                                              vGStock > 0
+                                                                ? 'bg-indigo-50 text-indigo-900 border-indigo-200/80'
+                                                                : 'bg-slate-50 text-slate-400 border-slate-200'
+                                                            }`}>
+                                                              {vGStock} {isThan ? 'থান' : unit}
                                                             </span>
-                                                          )}
+                                                            {isThan && yardsPerThan > 0 && vGStock > 0 && (
+                                                              <span className="text-[10px] text-slate-500 font-medium mt-0.5 font-mono">
+                                                                ({(vGStock * yardsPerThan).toLocaleString('bn-BD')} গজ)
+                                                              </span>
+                                                            )}
+                                                            {vCost > 0 && vGStock > 0 && (
+                                                              <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded bg-purple-50 text-purple-800 border border-purple-200 text-[9px] font-medium font-mono">
+                                                                {currencySymbol}{Math.round((isThan ? (vGStock * yardsPerThan) : vGStock) * vCost).toLocaleString('bn-BD')}
+                                                              </span>
+                                                            )}
+                                                          </div>
                                                         </td>
-                                                        {/* ভ্যারিয়েন্ট দোকান স্টক - রঙিন ব্যাজ */}
+                                                        {/* ভ্যারিয়েন্ট দোকান স্টক - আধুনিক সফট ব্যাজ */}
                                                         <td className="py-2.5 px-3 text-center bg-emerald-50/20">
                                                           <div className="inline-flex flex-col items-center">
-                                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-black font-mono shadow-2xs ${
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold font-mono border shadow-2xs ${
                                                               isVZero
-                                                                ? 'bg-rose-500 text-white'
+                                                                ? 'bg-rose-50 text-rose-800 border-rose-200'
                                                                 : isVLow
-                                                                ? 'bg-amber-500 text-white'
-                                                                : 'bg-emerald-600 text-white'
+                                                                ? 'bg-amber-50 text-amber-900 border-amber-200'
+                                                                : 'bg-emerald-50 text-emerald-900 border-emerald-200'
                                                             }`}>
                                                               {isThan ? (
                                                                 vSStock <= 0 ? '০ গজ' : (
@@ -3416,7 +3374,7 @@ export default function StockTransferModal({
                                                                     ? `${vBd.fullThans} থান + ${vBd.runningCutText || vBd.runningCutGojGira}`
                                                                     : vBd && vBd.fullThans > 0
                                                                     ? `${vBd.fullThans} থান`
-                                                                    : vBd
+                                                                    : vBd && vBd.runningCutYards > 0
                                                                     ? `${vBd.runningCutText || vBd.runningCutGojGira}`
                                                                     : `${vSStock} গজ`
                                                                 )
@@ -3425,9 +3383,9 @@ export default function StockTransferModal({
                                                               )}
                                                             </span>
                                                             {isThan && vSStock > 0 && (
-                                                              <div className="text-[10px] text-emerald-800 font-bold mt-0.5 font-mono">
+                                                              <span className="text-[10px] text-slate-500 font-medium mt-0.5 font-mono">
                                                                 মোট: {vSStock.toLocaleString('bn-BD')} গজ
-                                                              </div>
+                                                              </span>
                                                             )}
                                                           </div>
                                                         </td>
@@ -3440,7 +3398,7 @@ export default function StockTransferModal({
                                                               const cutStr = vBd ? (vBd.runningCutText || String(vBd.runningCutGojGira)) : '';
                                                               return (
                                                                 <div className="inline-flex flex-col items-center">
-                                                                  <span className="text-xs font-black font-mono">
+                                                                  <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-lg bg-slate-100 text-slate-800 border border-slate-200/90 shadow-2xs">
                                                                     {vTotalThans <= 0 && !hasRunningCut
                                                                       ? '০ গজ'
                                                                       : vTotalThans > 0 && hasRunningCut
@@ -3449,28 +3407,33 @@ export default function StockTransferModal({
                                                                       ? `${vTotalThans} থান`
                                                                       : (cutStr || '০ গজ')}
                                                                   </span>
-                                                                  <span className="text-[10px] text-slate-500 font-mono font-normal">
+                                                                  <span className="text-[10px] text-slate-500 font-mono font-normal mt-0.5">
                                                                     ({vTotalAllYards.toLocaleString('bn-BD')} গজ)
                                                                   </span>
                                                                 </div>
                                                               );
                                                             })()
                                                           ) : (
-                                                            vTotal
+                                                            <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-lg bg-slate-100 text-slate-800 border border-slate-200/90 shadow-2xs">
+                                                              {vTotal} {unit}
+                                                            </span>
                                                           )}
                                                         </td>
                                                         <td className="py-2.5 px-3 text-center">
                                                           {isVZero && vGStock > 0 ? (
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
-                                                              দোকানে নেই
+                                                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
+                                                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                                              <span>দোকানে নেই</span>
                                                             </span>
                                                           ) : isVZero && vGStock <= 0 ? (
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700">
-                                                              শেষ
+                                                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
+                                                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                                              <span>শেষ</span>
                                                             </span>
                                                           ) : (
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                                                              উপলব্ধ
+                                                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+                                                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                              <span>উপলব্ধ</span>
                                                             </span>
                                                           )}
                                                         </td>
@@ -3480,15 +3443,15 @@ export default function StockTransferModal({
                                                               type="button"
                                                               disabled={vGStock <= 0}
                                                               onClick={() => handleOpenDirectTransfer(p, v)}
-                                                              className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all shadow-xs ${
+                                                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold inline-flex items-center space-x-1 transition-all shadow-2xs ${
                                                                 vGStock <= 0
-                                                                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none'
-                                                                  : 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer'
+                                                                  ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
+                                                                  : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white cursor-pointer shadow-indigo-100'
                                                               }`}
                                                               title={vGStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে এই ভ্যারিয়েন্ট দোকানে আনুন'}
                                                             >
                                                               <Truck className="w-3 h-3" />
-                                                              <span>দোকানে চালান</span>
+                                                              <span>চালান</span>
                                                             </button>
                                                             {isShopStockView ? (
                                                               <>
@@ -3634,94 +3597,74 @@ export default function StockTransferModal({
                                     <div className="text-[10px] font-mono text-slate-400 mt-1">
                                       ID: {item.productId} {item.barcode ? `| #${item.barcode}` : ''}
                                     </div>
-                                    {isShopStockView ? (
-                                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
-                                        {item.isThanUnit ? (
+                                    {/* আধুনিক ও পরিচ্ছন্ন মেটাডাটা ও কাপড় বিবরণী */}
+                                    <div className="mt-1 flex flex-col gap-0.5">
+                                      <div className="text-[11px] text-slate-500 font-medium flex items-center space-x-2 flex-wrap">
+                                        <span>{item.category || 'সাধারণ'}</span>
+                                        {item.barcode && <span>• #{item.barcode}</span>}
+                                        {(Number(item.costPrice || 0) > 0 || Number(item.sellingPrice || 0) > 0) && (
                                           <>
-                                            {(() => {
-                                              const ypt = item.yardsPerThan || 25;
-                                              const remTh = Number(item.parentProduct?.RemnantThreshold || item.parentProduct?.remnantThreshold || 2);
-                                              const bd = calculateThanBreakdown(item.shopStock, ypt, remTh);
-                                              return (
-                                                <>
-                                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200 whitespace-nowrap">
-                                                    🏬 মোট: {bd.totalYards} গজ
-                                                  </span>
-                                                  {bd.fullThans > 0 ? (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 whitespace-nowrap">
-                                                      📦 {bd.fullThans}টি আস্ত থান
-                                                    </span>
-                                                  ) : (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
-                                                      📦 ০টি আস্ত থান
-                                                    </span>
-                                                  )}
-                                                  {bd.runningCutYards > 0 && !bd.isRemnant && (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-200 whitespace-nowrap">
-                                                      ✂️ কাটা থানে: {formatFabricQuantity(bd.runningCutYards, 'গজ', false)}
-                                                    </span>
-                                                  )}
-                                                  {bd.isRemnant && (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 border border-amber-300 whitespace-nowrap font-bold animate-pulse">
-                                                      ✂️ শেষ ছাঁট: {formatFabricQuantity(bd.runningCutYards, 'গজ', false)} [বিক্রয়যোগ্য]
-                                                    </span>
-                                                  )}
-                                                  {bd.needsRestock && item.godownStock > 0 && (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300 whitespace-nowrap font-bold animate-pulse">
-                                                      🚨 নতুন থান প্রয়োজন
-                                                    </span>
-                                                  )}
-                                                </>
-                                              );
-                                            })()}
+                                            <span>•</span>
+                                            <span className="text-slate-600 font-mono">
+                                              {Number(item.costPrice || 0) > 0 && `ক্রয়: ${currencySymbol}${Math.round(Number(item.costPrice || 0)).toLocaleString('bn-BD')}`}
+                                              {Number(item.costPrice || 0) > 0 && Number(item.sellingPrice || 0) > 0 && ' | '}
+                                              {Number(item.sellingPrice || 0) > 0 && `বিক্রয়: ${currencySymbol}${Math.round(Number(item.sellingPrice || 0)).toLocaleString('bn-BD')}`}
+                                            </span>
                                           </>
-                                        ) : (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200 whitespace-nowrap">
-                                            🏬 দোকানে: {item.shopStock} {item.unit || 'পিস'}
-                                          </span>
-                                        )}
-                                        {Number(item.costPrice || 0) > 0 && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200 whitespace-nowrap">
-                                            💰 ক্রয়: {currencySymbol}{Math.round((item.isThanUnit ? item.shopYards : item.shopStock) * (item.costPrice || 0)).toLocaleString('bn-BD')}
-                                          </span>
-                                        )}
-                                        {Number(item.sellingPrice || 0) > 0 && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-200 whitespace-nowrap">
-                                            🏷️ বিক্রয়: {currencySymbol}{Math.round((item.isThanUnit ? item.shopYards : item.shopStock) * (item.sellingPrice || 0)).toLocaleString('bn-BD')}
-                                          </span>
-                                        )}
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md border whitespace-nowrap ${
-                                          item.godownStock > 0 ? 'bg-slate-100 text-slate-800 border-slate-300' : 'bg-rose-50 text-rose-700 border-rose-200'
-                                        }`}>
-                                          🏭 গোডাউনে আছে: {item.godownStock > 0 ? `${item.godownStock} ${item.unit || 'থান'}` : 'নেই'}
-                                        </span>
-                                      </div>
-                                    ) : item.isThanUnit ? (
-                                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 whitespace-nowrap">
-                                          📏 {item.yardsPerThan} গজ/থান
-                                        </span>
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 whitespace-nowrap">
-                                          🏭 গোডাউন: {item.godownYards} গজ
-                                        </span>
-                                        {Number(item.costPrice || 0) > 0 && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200 whitespace-nowrap">
-                                            💰 স্টক মূল্য: {currencySymbol}{Math.round((item.godownYards || item.godownStock) * (item.costPrice || 0)).toLocaleString('bn-BD')}
-                                          </span>
                                         )}
                                       </div>
-                                    ) : (
-                                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200 whitespace-nowrap">
-                                          🏭 গোডাউন: {item.godownStock} {item.unit}
-                                        </span>
-                                        {Number(item.costPrice || 0) > 0 && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200 whitespace-nowrap">
-                                            💰 স্টক মূল্য: {currencySymbol}{Math.round(item.godownStock * (item.costPrice || 0)).toLocaleString('bn-BD')}
-                                          </span>
-                                        )}
-                                      </div>
-                                    )}
+
+                                      {isShopStockView ? (
+                                        item.isThanUnit && (() => {
+                                          const ypt = item.yardsPerThan || 25;
+                                          const remTh = Number(item.parentProduct?.RemnantThreshold || item.parentProduct?.remnantThreshold || 2);
+                                          const bd = calculateThanBreakdown(item.shopStock, ypt, remTh);
+                                          return (
+                                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                                              <span className="inline-flex items-center text-slate-600 bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200/70 font-medium">
+                                                🧵 ১ থান = {ypt} গজ
+                                              </span>
+                                              {bd.fullThans > 0 ? (
+                                                <span className="inline-flex items-center text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/80 font-semibold">
+                                                  দোকানে {bd.fullThans}টি আস্ত থান {bd.runningCutYards > 0 ? `+ টেবিলে ${bd.runningCutText} কাটা` : ''}
+                                                </span>
+                                              ) : bd.runningCutYards > 0 ? (
+                                                <span className="inline-flex items-center text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 font-semibold">
+                                                  দোকানে ০টি আস্ত থান (টেবিলে {bd.runningCutText} কাটা)
+                                                </span>
+                                              ) : (
+                                                <span className="inline-flex items-center text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200/80 font-semibold">
+                                                  দোকানে থান বা গজ নেই
+                                                </span>
+                                              )}
+                                              {bd.isRemnant && (
+                                                <span className="inline-flex items-center text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300 font-bold animate-pulse text-[10.5px]">
+                                                  ✂️ শেষ ছাঁট
+                                                </span>
+                                              )}
+                                              {bd.needsRestock && item.godownStock > 0 && (
+                                                <span className="inline-flex items-center text-rose-800 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-300 font-bold animate-pulse text-[10.5px]">
+                                                  🚨 নতুন থান প্রয়োজন
+                                                </span>
+                                              )}
+                                            </div>
+                                          );
+                                        })()
+                                      ) : (
+                                        item.isThanUnit && (
+                                          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                                            <span className="inline-flex items-center text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/70 font-medium">
+                                              🧵 ১ থান = {item.yardsPerThan || 25} গজ
+                                            </span>
+                                            {item.godownYards > 0 && (
+                                              <span className="inline-flex items-center text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60 font-medium">
+                                                গোডাউনে মোট: {item.godownYards.toLocaleString('bn-BD')} গজ
+                                              </span>
+                                            )}
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="py-3 px-3 text-slate-600 font-semibold">
                                     {item.category}
@@ -3731,32 +3674,32 @@ export default function StockTransferModal({
                                       {item.unit || getProductDisplayUnit(item.parentProduct)}
                                     </span>
                                   </td>
-                                  {/* গোডাউন স্টক রঙিন বাটন ব্যাজ */}
+                                  {/* গোডাউন স্টক - আধুনিক সফট ব্যাজ */}
                                   <td className="py-3 px-4 text-center bg-indigo-50/20">
                                     <div className="inline-flex flex-col items-center">
-                                      <span className={`inline-flex items-center px-3 py-1.5 rounded-xl font-black font-mono text-xs sm:text-sm shadow-2xs transition-transform hover:scale-105 ${
+                                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs shadow-2xs border ${
                                         item.godownStock > 0
-                                          ? 'bg-indigo-600 text-white border border-indigo-700 shadow-indigo-200'
-                                          : 'bg-slate-100 text-slate-400 border border-slate-200'
+                                          ? 'bg-indigo-50 text-indigo-900 border-indigo-200/80'
+                                          : 'bg-slate-50 text-slate-400 border-slate-200'
                                       }`}>
                                         {item.godownStock} {item.unit || 'থান'}
                                       </span>
                                       {item.isThanUnit && item.godownYards > 0 && (
-                                        <div className="text-[10px] text-indigo-700 font-bold mt-1 font-mono">
+                                        <span className="text-[10.5px] text-slate-500 font-medium mt-0.5 font-mono">
                                           ({item.godownYards} গজ)
-                                        </div>
+                                        </span>
                                       )}
                                     </div>
                                   </td>
-                                  {/* দোকান স্টক রঙিন বাটন ব্যাজ */}
+                                  {/* দোকান স্টক - আধুনিক সফট ব্যাজ */}
                                   <td className="py-3 px-4 text-center bg-emerald-50/20">
                                     <div className="inline-flex flex-col items-center">
-                                      <span className={`inline-flex items-center px-3 py-1.5 rounded-xl font-black font-mono text-xs sm:text-sm shadow-2xs transition-transform hover:scale-105 ${
+                                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs shadow-2xs border ${
                                         isZeroShop
-                                          ? 'bg-rose-500 text-white border border-rose-600 shadow-rose-200'
+                                          ? 'bg-rose-50 text-rose-800 border-rose-200'
                                           : isLowShop
-                                          ? 'bg-amber-500 text-white border border-amber-600 shadow-amber-200'
-                                          : 'bg-emerald-600 text-white border border-emerald-700 shadow-emerald-200'
+                                          ? 'bg-amber-50 text-amber-900 border-amber-200'
+                                          : 'bg-emerald-50 text-emerald-900 border-emerald-200'
                                       }`}>
                                         {item.isThanUnit ? (
                                           item.shopStock <= 0 ? '০ গজ' : (
@@ -3764,7 +3707,7 @@ export default function StockTransferModal({
                                               ? `${item.thanBreakdown.fullThans} থান + ${item.thanBreakdown.runningCutText || item.thanBreakdown.runningCutGojGira}`
                                               : item.thanBreakdown && item.thanBreakdown.fullThans > 0
                                               ? `${item.thanBreakdown.fullThans} থান`
-                                              : item.thanBreakdown
+                                              : item.thanBreakdown && item.thanBreakdown.runningCutYards > 0
                                               ? `${item.thanBreakdown.runningCutText || item.thanBreakdown.runningCutGojGira}`
                                               : `${item.shopStock} গজ`
                                           )
@@ -3773,15 +3716,15 @@ export default function StockTransferModal({
                                         )}
                                       </span>
                                       {item.isThanUnit && item.shopStock > 0 && (
-                                        <div className="text-[10px] text-emerald-800 font-bold mt-1 font-mono">
+                                        <span className="text-[10.5px] text-slate-500 font-medium mt-0.5 font-mono">
                                           মোট: {item.shopStock.toLocaleString('bn-BD')} গজ
-                                        </div>
+                                        </span>
                                       )}
                                     </div>
                                   </td>
-                                  <td className="py-3 px-3 text-center font-black font-mono text-slate-900">
+                                  <td className="py-3 px-3 text-center">
                                     <div className="inline-flex flex-col items-center">
-                                      <span className="inline-flex items-center px-3 py-1.5 rounded-xl font-black font-mono text-xs sm:text-sm bg-slate-800 text-white shadow-2xs border border-slate-900">
+                                      <span className="inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs bg-slate-100 text-slate-800 border border-slate-200/90 shadow-2xs">
                                         {item.isThanUnit ? (
                                           (() => {
                                             const bd = item.thanBreakdown;
@@ -3798,7 +3741,7 @@ export default function StockTransferModal({
                                         )}
                                       </span>
                                       {item.isThanUnit && (
-                                        <span className="mt-1 text-[10px] font-bold text-slate-300 bg-slate-700 px-2 py-0.5 rounded-md border border-slate-600 font-mono">
+                                        <span className="text-[10.5px] text-slate-500 font-medium mt-0.5 font-mono">
                                           মোট: {item.totalYards.toLocaleString('bn-BD')} গজ
                                         </span>
                                       )}
@@ -3806,38 +3749,42 @@ export default function StockTransferModal({
                                   </td>
                                   <td className="py-3 px-3 text-center">
                                     {isZeroShop && item.godownStock > 0 ? (
-                                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10.5px] font-black bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                                      <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                                         <span>⚡ দোকানে আনুন</span>
                                       </span>
                                     ) : isZeroShop && item.godownStock <= 0 ? (
-                                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                                      <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                                         <span>❌ শেষ</span>
                                       </span>
                                     ) : isLowShop && item.godownStock > 0 ? (
-                                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                      <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                                         <span>⚠️ দোকানে কম</span>
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                         <span>✓ পর্যাপ্ত</span>
                                       </span>
                                     )}
                                   </td>
                                   <td className="py-3 px-4 text-right">
-                                    <div className="flex items-center justify-end space-x-2">
+                                    <div className="flex items-center justify-end space-x-1.5">
                                       <button
                                         type="button"
                                         disabled={item.godownStock <= 0}
                                         onClick={() => handleOpenDirectTransfer(item.parentProduct, item.variant)}
-                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-all ${
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center space-x-1 shadow-2xs transition-all ${
                                           item.godownStock <= 0
-                                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none'
-                                            : 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-indigo-200'
+                                            ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
+                                            : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white cursor-pointer shadow-indigo-100'
                                         }`}
                                         title={item.godownStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে এই ভ্যারিয়েন্ট সরাসরি দোকানে আনুন'}
                                       >
                                         <Truck className="w-3.5 h-3.5" />
-                                        <span>দোকানে চালান</span>
+                                        <span>চালান</span>
                                       </button>
                                       {item.isVariant ? (
                                         <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
