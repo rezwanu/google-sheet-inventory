@@ -105,7 +105,15 @@ export function calculateThanBreakdown(totalYards, yardsPerThan = 25, remnantThr
 
   const fullThans = Math.floor(total / ypt);
   const runningCutYards = Math.round((total % ypt) * 10000) / 10000;
-  const runningCutGojGira = parseGojGira(runningCutYards);
+  const cutText = formatFabricQuantity(runningCutYards, 'গজ', false);
+  const rawGojGira = parseGojGira(runningCutYards);
+  const runningCutGojGira = {
+    ...rawGojGira,
+    text: cutText,
+    toString() {
+      return cutText;
+    }
+  };
 
   // চলমান কাটা থান যদি ছাঁট সীমার নিচে বা সমান হয়
   const isRemnant = runningCutYards > 0 && runningCutYards <= threshold;
@@ -119,7 +127,6 @@ export function calculateThanBreakdown(totalYards, yardsPerThan = 25, remnantThr
     parts.push(`${fullThans}টি আস্ত থান`);
   }
   if (runningCutYards > 0) {
-    const cutText = formatFabricQuantity(runningCutYards, 'গজ', false);
     if (isRemnant) {
       parts.push(`১টি শেষ ছাঁট (${cutText})`);
     } else {
@@ -135,6 +142,7 @@ export function calculateThanBreakdown(totalYards, yardsPerThan = 25, remnantThr
     fullThans,
     runningCutYards,
     runningCutGojGira,
+    runningCutText: cutText,
     isRemnant,
     remnantThreshold: threshold,
     needsRestock,

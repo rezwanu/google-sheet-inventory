@@ -3107,11 +3107,11 @@ export default function StockTransferModal({
                                           {isThan ? (
                                             sStock <= 0 ? '০ গজ' : (
                                               bd && bd.fullThans > 0 && bd.runningCutYards > 0
-                                                ? `${bd.fullThans} থান + ${bd.runningCutGojGira}`
+                                                ? `${bd.fullThans} থান + ${bd.runningCutText || bd.runningCutGojGira}`
                                                 : bd && bd.fullThans > 0
                                                 ? `${bd.fullThans} থান`
                                                 : bd
-                                                ? `${bd.runningCutGojGira}`
+                                                ? `${bd.runningCutText || bd.runningCutGojGira}`
                                                 : `${sStock} গজ`
                                             )
                                           ) : (
@@ -3133,12 +3133,13 @@ export default function StockTransferModal({
                                             (() => {
                                               const totalFullThans = gStock + (bd ? bd.fullThans : 0);
                                               const hasRunningCut = bd && bd.runningCutYards > 0;
+                                              const cutStr = bd ? (bd.runningCutText || String(bd.runningCutGojGira)) : '';
                                               if (totalFullThans <= 0 && !hasRunningCut) return '০ গজ';
                                               if (totalFullThans > 0 && hasRunningCut) {
-                                                return `${totalFullThans} থান + ${bd.runningCutGojGira}`;
+                                                return `${totalFullThans} থান + ${cutStr}`;
                                               }
                                               if (totalFullThans > 0) return `${totalFullThans} থান`;
-                                              return `${bd ? bd.runningCutGojGira : '০ গজ'}`;
+                                              return cutStr || '০ গজ';
                                             })()
                                           ) : (
                                             `${total} ${unit}`
@@ -3407,11 +3408,11 @@ export default function StockTransferModal({
                                                               {isThan ? (
                                                                 vSStock <= 0 ? '০ গজ' : (
                                                                   vBd && vBd.fullThans > 0 && vBd.runningCutYards > 0
-                                                                    ? `${vBd.fullThans} থান + ${vBd.runningCutGojGira}`
+                                                                    ? `${vBd.fullThans} থান + ${vBd.runningCutText || vBd.runningCutGojGira}`
                                                                     : vBd && vBd.fullThans > 0
                                                                     ? `${vBd.fullThans} থান`
                                                                     : vBd
-                                                                    ? `${vBd.runningCutGojGira}`
+                                                                    ? `${vBd.runningCutText || vBd.runningCutGojGira}`
                                                                     : `${vSStock} গজ`
                                                                 )
                                                               ) : (
@@ -3431,16 +3432,17 @@ export default function StockTransferModal({
                                                               const vTotalThans = vGStock + (vBd ? vBd.fullThans : 0);
                                                               const vTotalAllYards = (vGStock * yardsPerThan) + vSStock;
                                                               const hasRunningCut = vBd && vBd.runningCutYards > 0;
+                                                              const cutStr = vBd ? (vBd.runningCutText || String(vBd.runningCutGojGira)) : '';
                                                               return (
                                                                 <div className="inline-flex flex-col items-center">
                                                                   <span className="text-xs font-black font-mono">
                                                                     {vTotalThans <= 0 && !hasRunningCut
                                                                       ? '০ গজ'
                                                                       : vTotalThans > 0 && hasRunningCut
-                                                                      ? `${vTotalThans} থান + ${vBd.runningCutGojGira}`
+                                                                      ? `${vTotalThans} থান + ${cutStr}`
                                                                       : vTotalThans > 0
                                                                       ? `${vTotalThans} থান`
-                                                                      : `${vBd ? vBd.runningCutGojGira : '০ গজ'}`}
+                                                                      : (cutStr || '০ গজ')}
                                                                   </span>
                                                                   <span className="text-[10px] text-slate-500 font-mono font-normal">
                                                                     ({vTotalAllYards.toLocaleString('bn-BD')} গজ)
@@ -3750,11 +3752,11 @@ export default function StockTransferModal({
                                         {item.isThanUnit ? (
                                           item.shopStock <= 0 ? '০ গজ' : (
                                             item.thanBreakdown && item.thanBreakdown.fullThans > 0 && item.thanBreakdown.runningCutYards > 0
-                                              ? `${item.thanBreakdown.fullThans} থান + ${item.thanBreakdown.runningCutGojGira}`
+                                              ? `${item.thanBreakdown.fullThans} থান + ${item.thanBreakdown.runningCutText || item.thanBreakdown.runningCutGojGira}`
                                               : item.thanBreakdown && item.thanBreakdown.fullThans > 0
                                               ? `${item.thanBreakdown.fullThans} থান`
                                               : item.thanBreakdown
-                                              ? `${item.thanBreakdown.runningCutGojGira}`
+                                              ? `${item.thanBreakdown.runningCutText || item.thanBreakdown.runningCutGojGira}`
                                               : `${item.shopStock} গজ`
                                           )
                                         ) : (
@@ -3776,10 +3778,11 @@ export default function StockTransferModal({
                                             const bd = item.thanBreakdown;
                                             const totalFullThans = item.godownStock + (bd ? bd.fullThans : 0);
                                             const hasRunningCut = bd && bd.runningCutYards > 0;
+                                            const cutStr = bd ? (bd.runningCutText || String(bd.runningCutGojGira)) : '';
                                             if (totalFullThans <= 0 && !hasRunningCut) return '০ গজ';
-                                            if (totalFullThans > 0 && hasRunningCut) return `${totalFullThans} থান + ${bd.runningCutGojGira}`;
+                                            if (totalFullThans > 0 && hasRunningCut) return `${totalFullThans} থান + ${cutStr}`;
                                             if (totalFullThans > 0) return `${totalFullThans} থান`;
-                                            return `${bd ? bd.runningCutGojGira : '০ গজ'}`;
+                                            return cutStr || '০ গজ';
                                           })()
                                         ) : (
                                           `${item.totalStock} ${item.unit || 'থান'}`
