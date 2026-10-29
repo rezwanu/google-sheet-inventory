@@ -2655,7 +2655,7 @@ export default function StockTransferModal({
                 <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col gap-3">
                   <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
                     {/* সার্চ বক্স ও ক্যাটাগরি */}
-                    <div className="flex items-center space-x-2 flex-1">
+                    <div className="flex items-center space-x-2 flex-1 min-w-[260px]">
                       <div className="relative flex-1">
                         <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
@@ -2663,7 +2663,7 @@ export default function StockTransferModal({
                           value={overviewSearch}
                           onChange={(e) => setOverviewSearch(e.target.value)}
                           placeholder="পণ্য, কোড, রং বা বারকোড খুঁজুন..."
-                          className="w-full pl-10 pr-9 py-2 bg-slate-50/80 hover:bg-slate-50 focus:bg-white text-xs font-medium border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all shadow-2xs"
+                          className="w-full pl-10 pr-9 py-2 bg-slate-50/70 hover:bg-slate-50 focus:bg-white text-xs font-semibold text-slate-800 border border-slate-200 hover:border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none transition-all shadow-2xs"
                         />
                         {overviewSearch && (
                           <button
@@ -2679,7 +2679,7 @@ export default function StockTransferModal({
                       <select
                         value={overviewCategory}
                         onChange={(e) => setOverviewCategory(e.target.value)}
-                        className="px-3 py-2 text-xs border border-slate-300 rounded-xl bg-slate-50/80 hover:bg-white text-slate-800 font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer shadow-2xs shrink-0"
+                        className="px-3 py-2 text-xs border border-slate-200 hover:border-slate-300 rounded-xl bg-slate-50/70 hover:bg-white text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none cursor-pointer shadow-2xs shrink-0"
                       >
                         <option value="ALL">সকল ক্যাটাগরি ({categories.length})</option>
                         {categories.map((c) => (
@@ -2939,20 +2939,24 @@ export default function StockTransferModal({
                     <table className="w-full text-xs text-left">
                       <thead className="bg-slate-100/80 text-slate-700 border-b border-slate-200 font-black uppercase tracking-wider text-[11px]">
                         <tr>
-                          <th className="py-3.5 px-4">
+                          <th className="py-3.5 px-4 min-w-[240px]">
                             {stockViewMode === 'grouped' ? 'পণ্য ও বিবরণ' : 'পণ্য ও ভ্যারিয়েন্ট বিবরণ'}
                           </th>
-                          <th className="py-3.5 px-3">ক্যাটাগরি</th>
-                          <th className="py-3.5 px-3 text-center">একক</th>
-                          <th className="py-3.5 px-4 text-center bg-indigo-50/70 text-indigo-950 font-black">
+                          <th className="py-3.5 px-4 text-center bg-indigo-50/70 text-indigo-950 font-black min-w-[130px]">
                             🏭 গোডাউন স্টক
                           </th>
-                          <th className="py-3.5 px-4 text-center bg-emerald-50/70 text-emerald-950 font-black">
+                          <th className="py-3.5 px-4 text-center bg-slate-100/70 text-slate-800 font-black min-w-[140px]">
                             🏬 দোকান স্টক
                           </th>
-                          <th className="py-3.5 px-3 text-center">📦 মোট স্টক</th>
-                          <th className="py-3.5 px-3 text-center">অবস্থা</th>
-                          <th className="py-3.5 px-4 text-right">কার্যক্রম</th>
+                          <th className="py-3.5 px-4 text-center text-slate-800 font-black min-w-[130px]">
+                            📦 মোট স্টক
+                          </th>
+                          <th className="py-3.5 px-3 text-center text-slate-800 font-black min-w-[105px]">
+                            অবস্থা
+                          </th>
+                          <th className="py-3.5 px-4 text-right min-w-[145px]">
+                            কার্যক্রম
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -2962,7 +2966,7 @@ export default function StockTransferModal({
                           // =========================================================
                           filteredOverviewProducts.length === 0 ? (
                             <tr>
-                              <td colSpan="8" className="py-12 text-center text-slate-400 font-medium">
+                              <td colSpan="6" className="py-12 text-center text-slate-400 font-medium">
                                 কোনো পণ্য খুঁজে পাওয়া যায়নি।
                               </td>
                             </tr>
@@ -3077,13 +3081,13 @@ export default function StockTransferModal({
                               return (
                                 <React.Fragment key={p.ProductID}>
                                   <tr className={`hover:bg-indigo-50/10 transition-colors ${isExpanded ? 'bg-indigo-50/20' : ''}`}>
-                                    <td className="py-3 px-4">
-                                      <div className="flex items-start space-x-2">
+                                    <td className="py-3.5 px-4">
+                                      <div className="flex items-start space-x-2.5">
                                         {hasVars ? (
                                           <button
                                             type="button"
                                             onClick={() => toggleExpandProduct(p.ProductID)}
-                                            className="mt-0.5 p-1 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-all cursor-pointer"
+                                            className="mt-0.5 p-1 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 transition-all cursor-pointer shadow-2xs"
                                             title={isExpanded ? 'সংক্ষেপ করুন' : 'ভ্যারিয়েন্ট বিস্তারিত দেখুন'}
                                           >
                                             {isExpanded ? (
@@ -3095,21 +3099,34 @@ export default function StockTransferModal({
                                         ) : (
                                           <div className="w-6 shrink-0" />
                                         )}
-                                        <div>
+                                        <div className="flex-1 min-w-0">
                                           <div className="font-bold text-slate-900 text-sm flex items-center space-x-2 flex-wrap gap-y-1">
-                                            <span>{p.ProductName}</span>
+                                            <span className="truncate">{p.ProductName}</span>
                                             {hasVars && (
-                                              <span
+                                              <button
+                                                type="button"
                                                 onClick={() => toggleExpandProduct(p.ProductID)}
-                                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 cursor-pointer transition-colors"
+                                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 cursor-pointer transition-colors"
                                               >
                                                 <Palette className="w-2.5 h-2.5 mr-1" />
                                                 {vars.length}টি ভ্যারিয়েন্ট
-                                              </span>
+                                              </button>
                                             )}
                                           </div>
-                                          <div className="text-[10px] font-mono text-slate-400 mt-0.5">
-                                            ID: {p.ProductID} {p.Barcode && String(p.Barcode).trim() !== String(p.ProductID).trim() ? `| #${p.Barcode}` : ''}
+
+                                          {/* একীভূত মেটাডাটা সাব-ব্যাজ (ক্যাটাগরি, একক ও আইডি) */}
+                                          <div className="mt-1 flex items-center space-x-1.5 flex-wrap gap-y-1">
+                                            {p.Category && (
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-slate-100 text-slate-700 border border-slate-200/80">
+                                                {p.Category}
+                                              </span>
+                                            )}
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200/70 font-mono">
+                                              {unit}{isThan && yardsPerThan > 0 ? ` (${yardsPerThan} গজ)` : ''}
+                                            </span>
+                                            <span className="text-[10px] font-mono text-slate-400">
+                                              ID: {p.ProductID} {p.Barcode && String(p.Barcode).trim() !== String(p.ProductID).trim() ? `• #${p.Barcode}` : ''}
+                                            </span>
                                           </div>
 
                                           {/* শুধুমাত্র দোকান মজুত খতিয়ান ট্যাবে কাপড়ের বিস্তারিত বিবরণী প্রদর্শিত হবে */}
@@ -3167,33 +3184,31 @@ export default function StockTransferModal({
                                         </div>
                                       </div>
                                     </td>
-                                    <td className="py-3 px-3 text-slate-600 font-semibold">
-                                      {p.Category}
-                                    </td>
-                                    <td className="py-3 px-3 text-center">
-                                      <span className="inline-block px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold border border-slate-200 text-xs">
-                                        {getProductDisplayUnit(p)}
-                                      </span>
-                                    </td>
-                                    {/* গোডাউন স্টক - আধুনিক সফট ব্যাজ */}
-                                    <td className="py-3 px-4 text-center bg-indigo-50/20">
+                                    {/* গোডাউন স্টক - হিরো কলাম (Hero Column) */}
+                                    <td className="py-3.5 px-4 text-center bg-indigo-50/20">
                                       <div className="inline-flex flex-col items-center">
-                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs shadow-2xs border ${
+                                        <div className={`inline-flex items-baseline space-x-1 px-3 py-1 rounded-xl shadow-2xs border ${
                                           effectiveGStock > 0
-                                            ? 'bg-indigo-50 text-indigo-900 border-indigo-200/80'
+                                            ? 'bg-indigo-50 text-indigo-950 border-indigo-200/80'
                                             : 'bg-slate-50 text-slate-400 border-slate-200'
                                         }`}>
-                                          {effectiveGStock > 0 ? `${effectiveGStock} ${isThan ? 'থান' : unit}` : '০ মজুত'}
-                                        </span>
+                                          <span className="text-sm font-black font-mono">
+                                            {effectiveGStock > 0 ? effectiveGStock.toLocaleString('bn-BD') : '০'}
+                                          </span>
+                                          <span className="text-xs font-bold text-indigo-800">
+                                            {isThan ? 'থান' : unit}
+                                          </span>
+                                        </div>
                                         {isThan && yardsPerThan > 0 && effectiveGStock > 0 && (
-                                          <span className="mt-0.5 text-[10.5px] font-medium text-slate-500 font-mono">
+                                          <span className="mt-1 text-[11px] font-bold text-indigo-700/80 font-mono bg-indigo-50/60 px-2 py-0.5 rounded-md">
                                             ({(effectiveGStock * yardsPerThan).toLocaleString('bn-BD')} গজ)
                                           </span>
                                         )}
                                       </div>
                                     </td>
-                                    {/* দোকান স্টক - আধুনিক সফট ব্যাজ */}
-                                    <td className="py-3 px-4 text-center bg-emerald-50/20">
+
+                                    {/* দোকান স্টক - সেকেন্ডারি রেফারেন্স */}
+                                    <td className="py-3.5 px-4 text-center bg-slate-50/40">
                                       <div className="inline-flex flex-col items-center">
                                         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs shadow-2xs border ${
                                           isZeroShop
@@ -3214,18 +3229,19 @@ export default function StockTransferModal({
                                               })()
                                             )
                                           ) : (
-                                            `${sStock} ${unit}`
+                                            `${sStock.toLocaleString('bn-BD')} ${unit}`
                                           )}
                                         </span>
                                         {isThan && sStock > 0 && (
-                                          <span className="mt-0.5 text-[10.5px] font-medium text-slate-500 font-mono" title="দোকানের মোট কাপড় (গজে)">
+                                          <span className="mt-1 text-[10.5px] font-medium text-slate-500 font-mono" title="দোকানের মোট কাপড় (গজে)">
                                             মোট: {sStock.toLocaleString('bn-BD')} গজ
                                           </span>
                                         )}
                                       </div>
                                     </td>
+
                                     {/* মোট স্টক - আধুনিক সফট স্লেট ব্যাজ */}
-                                    <td className="py-3 px-3 text-center">
+                                    <td className="py-3.5 px-4 text-center">
                                       <div className="inline-flex flex-col items-center">
                                         <span className="inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs bg-slate-100 text-slate-800 border border-slate-200/90 shadow-2xs">
                                           {isThan ? (
@@ -3243,18 +3259,19 @@ export default function StockTransferModal({
                                               return cutStr || '০ গজ';
                                             })()
                                           ) : (
-                                            `${total} ${unit}`
+                                            `${total.toLocaleString('bn-BD')} ${unit}`
                                           )}
                                         </span>
                                         {isThan && (
-                                          <span className="mt-0.5 text-[10.5px] font-medium text-slate-500 font-mono" title="গোডাউন ও দোকান মিলিয়ে মোট গজ">
+                                          <span className="mt-1 text-[10.5px] font-medium text-slate-500 font-mono" title="গোডাউন ও দোকান মিলিয়ে মোট গজ">
                                             মোট: {((effectiveGStock * yardsPerThan) + sStock).toLocaleString('bn-BD')} গজ
                                           </span>
                                         )}
                                       </div>
                                     </td>
+
                                     {/* অবস্থা - আধুনিক ডট ইনডিকেটর পিল */}
-                                    <td className="py-3 px-3 text-center">
+                                    <td className="py-3.5 px-3 text-center">
                                       {isUnallocatedShopStock ? (
                                         <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs" title="মূল পণ্যে দোকান স্টক রয়েছে কিন্তু ভ্যারিয়েন্টে বণ্টন করা হয়নি">
                                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -3292,14 +3309,15 @@ export default function StockTransferModal({
                                         </span>
                                       )}
                                     </td>
-                                    {/* কার্যক্রম - স্লীক বাটন ও আইকন গ্রুপ */}
-                                    <td className="py-3 px-4 text-right">
+
+                                    {/* কার্যক্রম - স্লীক প্রাইমারি চালান বাটন ও আইকন গ্রুপ */}
+                                    <td className="py-3.5 px-4 text-right">
                                       <div className="flex items-center justify-end space-x-1.5">
                                         <button
                                           type="button"
                                           disabled={effectiveGStock <= 0}
                                           onClick={() => handleOpenDirectTransfer(p)}
-                                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center space-x-1 shadow-2xs transition-all ${
+                                          className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-all ${
                                             effectiveGStock <= 0
                                               ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
                                               : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white cursor-pointer shadow-indigo-100'
@@ -3309,11 +3327,11 @@ export default function StockTransferModal({
                                           <Truck className="w-3.5 h-3.5" />
                                           <span>চালান</span>
                                         </button>
-                                        <div className="flex items-center bg-slate-50 p-0.5 rounded-lg border border-slate-200">
+                                        <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-200/90 shadow-2xs">
                                           <button
                                             type="button"
                                             onClick={() => setPrintStickerProduct(p)}
-                                            className="p-1.5 hover:bg-white hover:text-indigo-600 text-slate-500 rounded-md text-xs transition-colors cursor-pointer"
+                                            className="p-1.5 hover:bg-white hover:text-indigo-600 text-slate-500 rounded-lg text-xs transition-colors cursor-pointer"
                                             title="প্রাইস ট্যাগ / বারকোড স্টিকার প্রিন্ট করুন"
                                           >
                                             <Printer className="w-3.5 h-3.5" />
@@ -3327,7 +3345,7 @@ export default function StockTransferModal({
                                               setAdjustReason(isShopStockView ? 'দোকানে কাটা/নষ্ট/স্যাম্পল' : 'নতুন লট গোডাউনে আগমন');
                                               setAdjustQty(1);
                                             }}
-                                            className="p-1.5 hover:bg-white hover:text-amber-600 text-slate-500 rounded-md text-xs transition-colors cursor-pointer"
+                                            className="p-1.5 hover:bg-white hover:text-amber-600 text-slate-500 rounded-lg text-xs transition-colors cursor-pointer"
                                             title={isShopStockView ? 'দোকানের কাউন্টার স্টক সংশোধন বা সমন্বয়' : 'গোডাউন স্টক সংশোধন বা সমন্বয়'}
                                           >
                                             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -3336,7 +3354,7 @@ export default function StockTransferModal({
                                             <button
                                               type="button"
                                               onClick={() => onEditProduct(p)}
-                                              className="p-1.5 hover:bg-white hover:text-indigo-600 text-slate-500 rounded-md text-xs transition-colors cursor-pointer"
+                                              className="p-1.5 hover:bg-white hover:text-indigo-600 text-slate-500 rounded-lg text-xs transition-colors cursor-pointer"
                                               title="পণ্য এডিট করুন"
                                             >
                                               <Edit3 className="w-3.5 h-3.5" />
@@ -3350,7 +3368,7 @@ export default function StockTransferModal({
                                                   onDeleteProduct(p.ProductID);
                                                 }
                                               }}
-                                              className="p-1.5 hover:bg-rose-50 hover:text-rose-600 text-slate-400 rounded-md text-xs transition-colors cursor-pointer"
+                                              className="p-1.5 hover:bg-rose-50 hover:text-rose-600 text-slate-400 rounded-lg text-xs transition-colors cursor-pointer"
                                               title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
                                             >
                                               <Trash2 className="w-3.5 h-3.5" />
@@ -3364,7 +3382,7 @@ export default function StockTransferModal({
                                   {/* ভ্যারিয়েন্ট বিস্তারিত সাব-টেবিল */}
                                   {hasVars && isExpanded && (
                                     <tr className="bg-slate-50/90 border-y border-indigo-100">
-                                      <td colSpan="8" className="p-3 pl-6 sm:pl-10">
+                                      <td colSpan="6" className="p-3 pl-6 sm:pl-10">
                                         {(() => {
                                           const sumVarGodown = vars.reduce((s, item) => s + (Number(item.GodownStock) || 0), 0);
                                           const sumVarShop = vars.reduce((s, item) => s + (Number(item.StockQuantity) || 0), 0);
@@ -3713,7 +3731,7 @@ export default function StockTransferModal({
                           // =========================================================
                           flattenedVariantList.length === 0 ? (
                             <tr>
-                              <td colSpan="8" className="py-12 text-center text-slate-400 font-medium">
+                              <td colSpan="6" className="py-12 text-center text-slate-400 font-medium">
                                 কোনো ভ্যারিয়েন্ট খুঁজে পাওয়া যায়নি।
                               </td>
                             </tr>
@@ -3725,7 +3743,7 @@ export default function StockTransferModal({
 
                               return (
                                 <tr key={item.variantId ? `${item.productId}_${item.variantId}` : `${item.productId}_${idx}`} className="hover:bg-indigo-50/10 transition-colors">
-                                  <td className="py-3 px-4">
+                                  <td className="py-3.5 px-4">
                                     <div className="font-bold text-slate-900 text-sm">
                                       {item.productName}
                                     </div>
@@ -3755,26 +3773,29 @@ export default function StockTransferModal({
                                         </span>
                                       )}
                                     </div>
-                                    <div className="text-[10px] font-mono text-slate-400 mt-1">
-                                      ID: {item.productId} {item.barcode ? `| #${item.barcode}` : ''}
-                                    </div>
-                                    {/* আধুনিক ও পরিচ্ছন্ন মেটাডাটা ও কাপড় বিবরণী */}
-                                    <div className="mt-1 flex flex-col gap-0.5">
-                                      <div className="text-[11px] text-slate-500 font-medium flex items-center space-x-2 flex-wrap">
-                                        <span>{item.category || 'সাধারণ'}</span>
-                                        {item.barcode && <span>• #{item.barcode}</span>}
-                                        {(Number(item.costPrice || 0) > 0 || Number(item.sellingPrice || 0) > 0) && (
-                                          <>
-                                            <span>•</span>
-                                            <span className="text-slate-600 font-mono">
-                                              {Number(item.costPrice || 0) > 0 && `ক্রয়: ${currencySymbol}${Math.round(Number(item.costPrice || 0)).toLocaleString('bn-BD')}`}
-                                              {Number(item.costPrice || 0) > 0 && Number(item.sellingPrice || 0) > 0 && ' | '}
-                                              {Number(item.sellingPrice || 0) > 0 && `বিক্রয়: ${currencySymbol}${Math.round(Number(item.sellingPrice || 0)).toLocaleString('bn-BD')}`}
-                                            </span>
-                                          </>
-                                        )}
-                                      </div>
 
+                                    {/* মেটাডাটা সাব-ব্যাজ (ক্যাটাগরি, একক ও আইডি) */}
+                                    <div className="mt-1.5 flex items-center space-x-1.5 flex-wrap gap-y-1">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-slate-100 text-slate-700 border border-slate-200/80">
+                                        {item.category || 'সাধারণ'}
+                                      </span>
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200/70 font-mono">
+                                        {item.unit || getProductDisplayUnit(item.parentProduct)}{item.isThanUnit && item.yardsPerThan > 0 ? ` (${item.yardsPerThan} গজ)` : ''}
+                                      </span>
+                                      <span className="text-[10px] font-mono text-slate-400">
+                                        ID: {item.productId} {item.barcode ? `• #${item.barcode}` : ''}
+                                      </span>
+                                      {(Number(item.costPrice || 0) > 0 || Number(item.sellingPrice || 0) > 0) && (
+                                        <span className="text-[10.5px] text-slate-500 font-mono">
+                                          ({Number(item.costPrice || 0) > 0 && `ক্রয়: ${currencySymbol}${Math.round(Number(item.costPrice || 0)).toLocaleString('bn-BD')}`}
+                                          {Number(item.costPrice || 0) > 0 && Number(item.sellingPrice || 0) > 0 && ' | '}
+                                          {Number(item.sellingPrice || 0) > 0 && `বিক্রয়: ${currencySymbol}${Math.round(Number(item.sellingPrice || 0)).toLocaleString('bn-BD')}`})
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* আধুনিক ও পরিচ্ছন্ন কাপড় বিবরণী */}
+                                    <div className="mt-1 flex flex-col gap-0.5">
                                       {isShopStockView ? (
                                         item.isThanUnit && (() => {
                                           const ypt = item.yardsPerThan || 25;
@@ -3827,33 +3848,32 @@ export default function StockTransferModal({
                                       )}
                                     </div>
                                   </td>
-                                  <td className="py-3 px-3 text-slate-600 font-semibold">
-                                    {item.category}
-                                  </td>
-                                  <td className="py-3 px-3 text-center">
-                                    <span className="inline-block px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold border border-slate-200 text-xs">
-                                      {item.unit || getProductDisplayUnit(item.parentProduct)}
-                                    </span>
-                                  </td>
-                                  {/* গোডাউন স্টক - আধুনিক সফট ব্যাজ */}
-                                  <td className="py-3 px-4 text-center bg-indigo-50/20">
+
+                                  {/* গোডাউন স্টক - হিরো কলাম */}
+                                  <td className="py-3.5 px-4 text-center bg-indigo-50/20">
                                     <div className="inline-flex flex-col items-center">
-                                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs shadow-2xs border ${
+                                      <div className={`inline-flex items-baseline space-x-1 px-3 py-1 rounded-xl shadow-2xs border ${
                                         item.godownStock > 0
-                                          ? 'bg-indigo-50 text-indigo-900 border-indigo-200/80'
+                                          ? 'bg-indigo-50 text-indigo-950 border-indigo-200/80'
                                           : 'bg-slate-50 text-slate-400 border-slate-200'
                                       }`}>
-                                        {item.godownStock} {item.unit || 'থান'}
-                                      </span>
+                                        <span className="text-sm font-black font-mono">
+                                          {item.godownStock > 0 ? item.godownStock.toLocaleString('bn-BD') : '০'}
+                                        </span>
+                                        <span className="text-xs font-bold text-indigo-800">
+                                          {item.unit || 'থান'}
+                                        </span>
+                                      </div>
                                       {item.isThanUnit && item.godownYards > 0 && (
-                                        <span className="text-[10.5px] text-slate-500 font-medium mt-0.5 font-mono">
-                                          ({item.godownYards} গজ)
+                                        <span className="mt-1 text-[11px] font-bold text-indigo-700/80 font-mono bg-indigo-50/60 px-2 py-0.5 rounded-md">
+                                          ({item.godownYards.toLocaleString('bn-BD')} গজ)
                                         </span>
                                       )}
                                     </div>
                                   </td>
-                                  {/* দোকান স্টক - আধুনিক সফট ব্যাজ */}
-                                  <td className="py-3 px-4 text-center bg-emerald-50/20">
+
+                                  {/* দোকান স্টক - সেকেন্ডারি রেফারেন্স */}
+                                  <td className="py-3.5 px-4 text-center bg-slate-50/40">
                                     <div className="inline-flex flex-col items-center">
                                       <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs shadow-2xs border ${
                                         isZeroShop
@@ -3873,17 +3893,19 @@ export default function StockTransferModal({
                                               : `${item.shopStock} গজ`
                                           )
                                         ) : (
-                                          `${item.shopStock} ${item.unit || 'থান'}`
+                                          `${item.shopStock.toLocaleString('bn-BD')} ${item.unit || 'থান'}`
                                         )}
                                       </span>
                                       {item.isThanUnit && item.shopStock > 0 && (
-                                        <span className="text-[10.5px] text-slate-500 font-medium mt-0.5 font-mono">
+                                        <span className="mt-1 text-[10.5px] font-medium text-slate-500 font-mono" title="দোকানের মোট কাপড় (গজে)">
                                           মোট: {item.shopStock.toLocaleString('bn-BD')} গজ
                                         </span>
                                       )}
                                     </div>
                                   </td>
-                                  <td className="py-3 px-3 text-center">
+
+                                  {/* মোট স্টক - আধুনিক সফট স্লেট ব্যাজ */}
+                                  <td className="py-3.5 px-4 text-center">
                                     <div className="inline-flex flex-col items-center">
                                       <span className="inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs bg-slate-100 text-slate-800 border border-slate-200/90 shadow-2xs">
                                         {item.isThanUnit ? (
@@ -3898,17 +3920,19 @@ export default function StockTransferModal({
                                             return cutStr || '০ গজ';
                                           })()
                                         ) : (
-                                          `${item.totalStock} ${item.unit || 'থান'}`
+                                          `${item.totalStock.toLocaleString('bn-BD')} ${item.unit || 'থান'}`
                                         )}
                                       </span>
                                       {item.isThanUnit && (
-                                        <span className="text-[10.5px] text-slate-500 font-medium mt-0.5 font-mono">
+                                        <span className="mt-1 text-[10.5px] font-medium text-slate-500 font-mono">
                                           মোট: {item.totalYards.toLocaleString('bn-BD')} গজ
                                         </span>
                                       )}
                                     </div>
                                   </td>
-                                  <td className="py-3 px-3 text-center">
+
+                                  {/* অবস্থা - আধুনিক ডট ইনডিকেটর পিল */}
+                                  <td className="py-3.5 px-3 text-center">
                                     {isZeroShop && item.godownStock > 0 ? (
                                       <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
                                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -3931,13 +3955,15 @@ export default function StockTransferModal({
                                       </span>
                                     )}
                                   </td>
-                                  <td className="py-3 px-4 text-right">
+
+                                  {/* কার্যক্রম - স্লীক প্রাইমারি চালান বাটন ও আইকন গ্রুপ */}
+                                  <td className="py-3.5 px-4 text-right">
                                     <div className="flex items-center justify-end space-x-1.5">
                                       <button
                                         type="button"
                                         disabled={item.godownStock <= 0}
                                         onClick={() => handleOpenDirectTransfer(item.parentProduct, item.variant)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center space-x-1 shadow-2xs transition-all ${
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-all ${
                                           item.godownStock <= 0
                                             ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
                                             : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white cursor-pointer shadow-indigo-100'
@@ -3948,7 +3974,7 @@ export default function StockTransferModal({
                                         <span>চালান</span>
                                       </button>
                                       {item.isVariant ? (
-                                        <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                                        <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-200/90 shadow-2xs">
                                           {isShopStockView ? (
                                             <>
                                               <button
@@ -4009,7 +4035,7 @@ export default function StockTransferModal({
                                           )}
                                         </div>
                                       ) : (
-                                        <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                                        <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-200/90 shadow-2xs">
                                           <button
                                             type="button"
                                             onClick={() => setPrintStickerProduct(item.parentProduct)}
