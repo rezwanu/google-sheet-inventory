@@ -292,8 +292,13 @@ export default function StockTransferModal({
     let needTransferCount = 0;
     let godownLowCount = 0;
     let totalVariants = 0;
+    let fabricGodownThans = 0;
     let fabricGodownYards = 0;
+    let generalGodownPcs = 0;
     let fabricShopYards = 0;
+    let generalShopPcs = 0;
+    let fabricGodownValuation = 0;
+    let generalGodownValuation = 0;
     let totalGodownValuation = 0;
     let totalShopCostValuation = 0;
     let totalShopSellingValuation = 0;
@@ -314,26 +319,35 @@ export default function StockTransferModal({
       const minAlert = Number(p.MinStockAlert || 5);
       const unit = getProductDisplayUnit(p);
       const isThan = /than|থান/i.test(unit);
+      const isGoj = !isThan && /গজ|yard/i.test(unit);
       const yardsPerThan = isThan ? (Number(p.YardsPerThan || p.yardsPerThan || 0) || 25) : 0;
-
-      totalGodown += gStock;
-      totalShop += sStock;
-
-      if (sStock > 0) {
-        shopProductCount++;
-      }
+      const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
 
       const vars = getVariantsOfProduct(p);
-      if (vars.length > 0) {
+      const hasVars = vars.length > 0;
+      if (hasVars) {
         totalVariants += vars.length;
       }
 
-      if (isThan && yardsPerThan > 0) {
-        fabricGodownYards += (gStock * yardsPerThan);
-        const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
-        fabricShopYards += sStock;
+      const varGStockSum = hasVars ? vars.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0), 0) : 0;
+      const varSStockSum = hasVars ? vars.reduce((s, v) => s + (Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0), 0) : 0;
 
-        if (vars.length > 0) {
+      const effectiveGStock = hasVars && varGStockSum > 0 ? varGStockSum : gStock;
+      const effectiveSStock = hasVars && varSStockSum > 0 ? varSStockSum : sStock;
+
+      totalGodown += effectiveGStock;
+      totalShop += effectiveSStock;
+
+      if (effectiveSStock > 0) {
+        shopProductCount++;
+      }
+
+      if (isThan && yardsPerThan > 0) {
+        fabricGodownThans += effectiveGStock;
+        fabricGodownYards += (effectiveGStock * yardsPerThan);
+        fabricShopYards += effectiveSStock;
+
+        if (hasVars) {
           vars.forEach((v) => {
             const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
             const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
@@ -343,6 +357,13 @@ export default function StockTransferModal({
             fabricShopThanCount += (vBd.fullThans + (vBd.runningCutYards > 0 ? 1 : 0));
             if (vBd.isRemnant) fabricShopRemnantsCount++;
             if (vBd.needsRestock && vG > 0) fabricShopNeedsRestockCount++;
+
+            let vC = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice || unitCost)) || 0;
+            if (unitCost > 0 && vC > unitCost * 10) vC = unitCost;
+            let vSPrice = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice || sellingPrice)) || 0;
+            fabricGodownValuation += (vG * yardsPerThan * vC);
+            totalShopCostValuation += (vS * vC);
+            totalShopSellingValuation += (vS * vSPrice);
           });
         } else {
           const bd = calculateThanBreakdown(sStock, yardsPerThan, remTh);
@@ -351,72 +372,70 @@ export default function StockTransferModal({
           fabricShopThanCount += (bd.fullThans + (bd.runningCutYards > 0 ? 1 : 0));
           if (bd.isRemnant) fabricShopRemnantsCount++;
           if (bd.needsRestock && gStock > 0) fabricShopNeedsRestockCount++;
-        }
 
-        if (vars.length > 0) {
-          let pGodownVal = 0;
-          let pShopCostVal = 0;
-          let pShopSellVal = 0;
+          fabricGodownValuation += (effectiveGStock * yardsPerThan * unitCost);
+          totalShopCostValuation += (effectiveSStock * unitCost);
+          totalShopSellingValuation += (effectiveSStock * sellingPrice);
+        }
+      } else if (isGoj) {
+        fabricGodownYards += effectiveGStock;
+        fabricShopYards += effectiveSStock;
+        if (effectiveSStock > 0 && effectiveSStock <= remTh) fabricShopRemnantsCount++;
+        if (effectiveSStock <= remTh && effectiveGStock > 0) fabricShopNeedsRestockCount++;
+
+        fabricGodownValuation += (effectiveGStock * unitCost);
+        totalShopCostValuation += (effectiveSStock * unitCost);
+        totalShopSellingValuation += (effectiveSStock * sellingPrice);
+      } else {
+        generalGodownPcs += effectiveGStock;
+        generalShopPcs += effectiveSStock;
+
+        if (hasVars) {
           vars.forEach((v) => {
             const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
             const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
             let vC = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice || unitCost)) || 0;
             if (unitCost > 0 && vC > unitCost * 10) vC = unitCost;
             let vSPrice = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice || sellingPrice)) || 0;
-            pGodownVal += (vG * yardsPerThan * vC);
-            pShopCostVal += (vS * vC);
-            pShopSellVal += (vS * vSPrice);
+            generalGodownValuation += (vG * vC);
+            totalShopCostValuation += (vS * vC);
+            totalShopSellingValuation += (vS * vSPrice);
           });
-          totalGodownValuation += pGodownVal;
-          totalShopCostValuation += pShopCostVal;
-          totalShopSellingValuation += pShopSellVal;
         } else {
-          totalGodownValuation += (gStock * yardsPerThan * unitCost);
-          totalShopCostValuation += (sStock * unitCost);
-          totalShopSellingValuation += (sStock * sellingPrice);
+          generalGodownValuation += (effectiveGStock * unitCost);
+          totalShopCostValuation += (effectiveSStock * unitCost);
+          totalShopSellingValuation += (effectiveSStock * sellingPrice);
         }
-      } else if (!isThan && /গজ|yard/i.test(unit)) {
-        fabricGodownYards += gStock;
-        fabricShopYards += sStock;
-        const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
-        if (sStock > 0 && sStock <= remTh) fabricShopRemnantsCount++;
-        if (sStock <= remTh && gStock > 0) fabricShopNeedsRestockCount++;
-
-        totalGodownValuation += (gStock * unitCost);
-        totalShopCostValuation += (sStock * unitCost);
-        totalShopSellingValuation += (sStock * sellingPrice);
-      } else {
-        totalGodownValuation += (gStock * unitCost);
-        totalShopCostValuation += (sStock * unitCost);
-        totalShopSellingValuation += (sStock * sellingPrice);
       }
 
-      if (sStock <= minAlert && gStock > 0) {
+      if (effectiveSStock <= minAlert && effectiveGStock > 0) {
         needTransferCount++;
       }
 
-      const hasLowGodownVar = vars.length > 0 && vars.some(v => (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0) <= 2);
-      if (gStock <= minAlert || hasLowGodownVar) {
+      const hasLowGodownVar = hasVars && vars.some(v => (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0) <= 2);
+      if (effectiveGStock <= minAlert || hasLowGodownVar) {
         godownLowCount++;
       }
 
-      const hasLowShopVar = vars.length > 0 && vars.some(v => {
+      const hasLowShopVar = hasVars && vars.some(v => {
         const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
         return vS <= 2 && vS > 0;
       });
-      if ((sStock <= minAlert && sStock > 0) || hasLowShopVar) {
+      if ((effectiveSStock <= minAlert && effectiveSStock > 0) || hasLowShopVar) {
         shopLowCount++;
       }
 
-      const hasZeroShopWithGodownVar = vars.length > 0 && vars.some(v => {
+      const hasZeroShopWithGodownVar = hasVars && vars.some(v => {
         const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
         const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
         return vS <= 0 && vG > 0;
       });
-      if ((sStock <= 0 && gStock > 0) || hasZeroShopWithGodownVar) {
+      if ((effectiveSStock <= 0 && effectiveGStock > 0) || hasZeroShopWithGodownVar) {
         shopZeroInGodownCount++;
       }
     });
+
+    totalGodownValuation = fabricGodownValuation + generalGodownValuation;
 
     const inTransitChallans = stockTransfers.filter((t) => t.Status === 'In Transit').length;
     const totalShopPotentialProfit = Math.max(0, totalShopSellingValuation - totalShopCostValuation);
@@ -425,16 +444,18 @@ export default function StockTransferModal({
       totalGodown,
       totalShop,
       totalAll: totalGodown + totalShop,
-      needTransferCount,
-      godownLowCount,
-      inTransitChallans,
-      totalVariants,
+      fabricGodownThans,
+      generalGodownPcs,
       fabricGodownYards,
-      fabricShopYards,
+      fabricGodownValuation,
+      generalGodownValuation,
       totalGodownValuation,
       totalShopCostValuation,
       totalShopSellingValuation,
       totalShopPotentialProfit,
+      needTransferCount,
+      godownLowCount,
+      inTransitChallans,
       shopLowCount,
       shopZeroInGodownCount,
       fabricShopThanCount,
@@ -442,7 +463,8 @@ export default function StockTransferModal({
       fabricShopRunningCutYards,
       fabricShopRemnantsCount,
       fabricShopNeedsRestockCount,
-      shopProductCount
+      shopProductCount,
+      totalVariants
     };
   }, [products, stockTransfers]);
 
@@ -2511,16 +2533,38 @@ export default function StockTransferModal({
                           <Warehouse className="w-4 h-4" />
                         </span>
                       </div>
-                      <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
-                        {stockKpis.totalGodown.toLocaleString('bn-BD')} {stockKpis.fabricGodownYards > 0 ? <span className="text-xs font-bold text-slate-500">থান</span> : <span className="text-xs font-bold text-slate-500">আইটেম</span>}
-                      </div>
+                      
+                      {stockKpis.fabricGodownThans > 0 && stockKpis.generalGodownPcs > 0 ? (
+                        <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
+                          <div className="text-2xl sm:text-3xl font-black text-indigo-900 font-mono">
+                            {stockKpis.fabricGodownThans.toLocaleString('bn-BD')} <span className="text-xs font-bold text-indigo-600">থান</span>
+                          </div>
+                          <span className="text-sm font-black text-slate-300">+</span>
+                          <div className="text-2xl sm:text-3xl font-black text-slate-800 font-mono">
+                            {stockKpis.generalGodownPcs.toLocaleString('bn-BD')} <span className="text-xs font-bold text-slate-500">Pcs</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
+                          {stockKpis.totalGodown.toLocaleString('bn-BD')}{' '}
+                          <span className="text-xs font-bold text-slate-500">
+                            {stockKpis.fabricGodownThans > 0 ? 'থান' : (stockKpis.generalGodownPcs > 0 ? 'Pcs' : 'আইটেম')}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex flex-wrap items-center gap-1.5 mt-2">
                         <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
                           🏭 কেন্দ্রীয় গোডাউন
                         </span>
                         {stockKpis.fabricGodownYards > 0 && (
                           <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
-                            📏 {stockKpis.fabricGodownYards.toLocaleString('bn-BD')} গজ
+                            📏 মোট {stockKpis.fabricGodownYards.toLocaleString('bn-BD')} গজ
+                          </span>
+                        )}
+                        {stockKpis.generalGodownPcs > 0 && stockKpis.fabricGodownThans > 0 && (
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-blue-50 text-blue-800 border border-blue-200/80">
+                            📦 {stockKpis.generalGodownPcs.toLocaleString('bn-BD')} পিস রেডি পণ্য
                           </span>
                         )}
                       </div>
@@ -2541,9 +2585,20 @@ export default function StockTransferModal({
                         <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-purple-50 text-purple-800 border border-purple-200/80">
                           💰 ক্রয়মূল্য ভিত্তিক সম্পদ
                         </span>
-                        <span className="text-[10.5px] font-semibold text-slate-500">
-                          {(stockKpis.totalVariants || 0)}টি ভ্যারিয়েন্ট
-                        </span>
+                        {stockKpis.fabricGodownValuation > 0 && stockKpis.generalGodownValuation > 0 ? (
+                          <>
+                            <span className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                              🧵 কাপড়: {currencySymbol}{Math.round(stockKpis.fabricGodownValuation).toLocaleString('bn-BD')}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200/80">
+                              📦 পিস: {currencySymbol}{Math.round(stockKpis.generalGodownValuation).toLocaleString('bn-BD')}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-[10.5px] font-semibold text-slate-500">
+                            {(stockKpis.totalVariants || 0)}টি ভ্যারিয়েন্ট
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -2589,7 +2644,7 @@ export default function StockTransferModal({
                           value={overviewSearch}
                           onChange={(e) => setOverviewSearch(e.target.value)}
                           placeholder="পণ্য নাম, কোড, রং, সাইজ বা বারকোড দিয়ে খুঁজুন..."
-                          className="w-full pl-10 pr-9 py-2 bg-slate-50/70 hover:bg-slate-50 focus:bg-white text-xs font-medium border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
+                          className="w-full pl-10 pr-9 py-2 bg-slate-50/80 hover:bg-slate-50 focus:bg-white text-xs font-medium border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all shadow-2xs"
                         />
                         {overviewSearch && (
                           <button
@@ -2605,7 +2660,7 @@ export default function StockTransferModal({
                       <select
                         value={overviewCategory}
                         onChange={(e) => setOverviewCategory(e.target.value)}
-                        className="px-3 py-2 text-xs border border-slate-300 rounded-xl bg-slate-50/70 hover:bg-white text-slate-800 font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+                        className="px-3 py-2 text-xs border border-slate-300 rounded-xl bg-slate-50/80 hover:bg-white text-slate-800 font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer shadow-2xs shrink-0"
                       >
                         <option value="ALL">সকল ক্যাটাগরি ({categories.length})</option>
                         {categories.map((c) => (
@@ -2614,18 +2669,18 @@ export default function StockTransferModal({
                       </select>
                     </div>
 
-                    {/* ফিল্টার পিল বাটনসমূহ */}
-                    <div className="flex items-center space-x-1.5 flex-wrap gap-y-1.5">
+                    {/* ফিল্টার পিল সেগমেন্টেড কন্ট্রোল */}
+                    <div className="flex items-center shrink-0 overflow-x-auto">
                       {isShopStockView ? (
-                        <div className="flex items-center space-x-2 flex-wrap gap-y-2">
+                        <div className="flex items-center space-x-2 flex-wrap sm:flex-nowrap">
                           {/* প্রাইমারি সেগমেন্টেড কন্ট্রোল */}
-                          <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold border border-slate-200/60 overflow-x-auto">
+                          <div className="flex items-center bg-slate-100/90 p-1 rounded-xl text-xs font-semibold border border-slate-200/70 overflow-x-auto shadow-2xs">
                             <button
                               type="button"
                               onClick={() => setOverviewFilter('IN_SHOP')}
                               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                                 overviewFilter === 'IN_SHOP'
-                                  ? 'bg-white text-emerald-900 shadow-2xs font-bold border border-emerald-200/80'
+                                  ? 'bg-white text-emerald-900 shadow-xs font-bold border border-emerald-200/80'
                                   : 'text-slate-600 hover:text-slate-900'
                               }`}
                             >
@@ -2642,7 +2697,7 @@ export default function StockTransferModal({
                               onClick={() => setOverviewFilter(stockKpis.shopZeroInGodownCount > 0 ? 'SHOP_ZERO_IN_GODOWN' : 'LOW_SHOP')}
                               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                                 (overviewFilter === 'LOW_SHOP' || overviewFilter === 'SHOP_ZERO_IN_GODOWN')
-                                  ? 'bg-white text-rose-800 shadow-2xs font-bold border border-rose-200/80'
+                                  ? 'bg-white text-rose-800 shadow-xs font-bold border border-rose-200/80'
                                   : 'text-slate-600 hover:text-slate-900'
                               }`}
                             >
@@ -2659,7 +2714,7 @@ export default function StockTransferModal({
                               onClick={() => setOverviewFilter('SHOP_FABRIC')}
                               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                                 overviewFilter === 'SHOP_FABRIC'
-                                  ? 'bg-white text-indigo-900 shadow-2xs font-bold border border-indigo-200/80'
+                                  ? 'bg-white text-indigo-900 shadow-xs font-bold border border-indigo-200/80'
                                   : 'text-slate-600 hover:text-slate-900'
                               }`}
                             >
@@ -2675,9 +2730,9 @@ export default function StockTransferModal({
                                 setOverviewFilter(e.target.value);
                               }
                             }}
-                            className={`px-3 py-1.5 text-xs rounded-xl border font-semibold transition-all cursor-pointer ${
+                            className={`px-3 py-1.5 text-xs rounded-xl border font-semibold transition-all cursor-pointer shadow-2xs ${
                               ['SHOP_REMNANT', 'SHOP_NEED_BOLT', 'SHOP_SUFFICIENT'].includes(overviewFilter)
-                                ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-bold shadow-2xs'
+                                ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-bold'
                                 : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-white'
                             }`}
                           >
@@ -2690,13 +2745,13 @@ export default function StockTransferModal({
                           </select>
                         </div>
                       ) : (
-                        <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold border border-slate-200/60 overflow-x-auto">
+                        <div className="flex items-center bg-slate-100/90 p-1 rounded-xl text-xs font-bold border border-slate-200/70 overflow-x-auto shadow-2xs">
                           <button
                             type="button"
                             onClick={() => setOverviewFilter('ALL')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'ALL'
-                                ? 'bg-white shadow-2xs text-indigo-700 font-bold border border-indigo-200/80'
+                                ? 'bg-white shadow-xs text-indigo-700 font-bold border border-indigo-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -2712,7 +2767,7 @@ export default function StockTransferModal({
                             onClick={() => setOverviewFilter('IN_GODOWN')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'IN_GODOWN'
-                                ? 'bg-white text-indigo-800 shadow-2xs font-bold border border-indigo-200/80'
+                                ? 'bg-white text-indigo-800 shadow-xs font-bold border border-indigo-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -2728,7 +2783,7 @@ export default function StockTransferModal({
                             onClick={() => setOverviewFilter('LOW_GODOWN')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'LOW_GODOWN'
-                                ? 'bg-white text-rose-800 shadow-2xs font-bold border border-rose-200/80'
+                                ? 'bg-white text-rose-800 shadow-xs font-bold border border-rose-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -2744,7 +2799,7 @@ export default function StockTransferModal({
                             onClick={() => setOverviewFilter('NEED_TRANSFER')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'NEED_TRANSFER'
-                                ? 'bg-white text-amber-900 shadow-2xs font-bold border border-amber-200/80'
+                                ? 'bg-white text-amber-900 shadow-xs font-bold border border-amber-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -2760,7 +2815,7 @@ export default function StockTransferModal({
                             onClick={() => setOverviewFilter('IN_SHOP')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'IN_SHOP'
-                                ? 'bg-white text-emerald-900 shadow-2xs font-bold border border-emerald-200/80'
+                                ? 'bg-white text-emerald-900 shadow-xs font-bold border border-emerald-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -2773,81 +2828,89 @@ export default function StockTransferModal({
                           </button>
                         </div>
                       )}
+                    </div>
+                  </div>
 
+                  {/* ভিউ মোড টগল ও অ্যাকশন স্ট্রিপ */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between pt-3 border-t border-slate-100 gap-3">
+                    {/* ভিউ মোড ও বিস্তার/সংক্ষেপ */}
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-[11.5px] font-bold text-slate-500 whitespace-nowrap">প্রদর্শন মোড:</span>
+                        <div className="flex items-center bg-slate-100/90 p-1 rounded-xl text-xs font-bold border border-slate-200/70 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => setStockViewMode('grouped')}
+                            className={`px-3 py-1 rounded-lg flex items-center space-x-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                              stockViewMode === 'grouped'
+                                ? 'bg-white shadow-xs text-indigo-700 font-black border border-indigo-200/60'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            <Package className="w-3.5 h-3.5" />
+                            <span>📦 পণ্য ভিত্তিক গ্রুপ ভিউ</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStockViewMode('variants')}
+                            className={`px-3 py-1 rounded-lg flex items-center space-x-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                              stockViewMode === 'variants'
+                                ? 'bg-indigo-600 shadow-xs text-white font-black'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            <Palette className="w-3.5 h-3.5" />
+                            <span>🎨 ভ্যারিয়েন্ট বিস্তারিত ভিউ</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {stockViewMode === 'grouped' && (
+                        <div className="flex items-center space-x-1.5">
+                          <button
+                            type="button"
+                            onClick={handleExpandAll}
+                            className="px-2.5 py-1 text-[11px] font-bold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200/80 rounded-lg transition-all cursor-pointer flex items-center space-x-1"
+                          >
+                            <span>সকল বিস্তার</span>
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCollapseAll}
+                            className="px-2.5 py-1 text-[11px] font-bold text-slate-600 bg-slate-100/80 hover:bg-slate-200 border border-slate-200 rounded-lg transition-all cursor-pointer flex items-center space-x-1"
+                          >
+                            <span>সংক্ষেপ</span>
+                            <ChevronUp className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* এক্সেল ও শিট অ্যাকশন বাটনসমূহ */}
+                    <div className="flex items-center justify-end space-x-2 shrink-0">
                       <button
                         type="button"
                         onClick={() => exportLocationStockExcelCSV(products)}
-                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs transition-all cursor-pointer shrink-0"
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs hover:shadow transition-all cursor-pointer shrink-0"
                         title="স্টক খতিয়ানের এক্সেল ফাইল ডাউনলোড করুন"
                       >
                         <FileSpreadsheet className="w-4 h-4" />
-                        <span className="hidden sm:inline">এক্সেল রিপোর্ট</span>
+                        <span>এক্সেল রিপোর্ট</span>
                       </button>
 
                       {isShopStockView && (
                         <button
                           type="button"
                           onClick={() => setIsPrintableShopStockAudit(true)}
-                          className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs transition-all cursor-pointer shrink-0"
+                          className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs hover:shadow transition-all cursor-pointer shrink-0"
                           title="দোকানের ফিজিক্যাল স্টক অডিট ও ফ্লোর গণনা শিট প্রিন্ট করুন"
                         >
                           <ClipboardList className="w-4 h-4" />
-                          <span className="hidden sm:inline">গণনা শিট (Audit)</span>
+                          <span>গণনা শিট (Audit)</span>
                         </button>
                       )}
                     </div>
-                  </div>
-
-                  {/* ভিউ মোড টগল */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between pt-2.5 border-t border-slate-100 gap-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs font-bold text-slate-500">প্রদর্শন মোড:</span>
-                      <div className="flex items-center bg-slate-100 p-0.5 rounded-xl text-xs font-bold border border-slate-200/50">
-                        <button
-                          type="button"
-                          onClick={() => setStockViewMode('grouped')}
-                          className={`px-3 py-1 rounded-lg flex items-center space-x-1.5 transition-all cursor-pointer ${
-                            stockViewMode === 'grouped'
-                              ? 'bg-white shadow-xs text-indigo-700 font-black'
-                              : 'text-slate-600 hover:text-slate-900'
-                          }`}
-                        >
-                          <Package className="w-3.5 h-3.5" />
-                          <span>📦 পণ্য ভিত্তিক গ্রুপ ভিউ</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setStockViewMode('variants')}
-                          className={`px-3 py-1 rounded-lg flex items-center space-x-1.5 transition-all cursor-pointer ${
-                            stockViewMode === 'variants'
-                              ? 'bg-indigo-600 shadow-xs text-white font-black'
-                              : 'text-slate-600 hover:text-slate-900'
-                          }`}
-                        >
-                          <Palette className="w-3.5 h-3.5" />
-                          <span>🎨 ভ্যারিয়েন্ট বিস্তারিত ভিউ</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {stockViewMode === 'grouped' && (
-                      <div className="flex items-center space-x-2 text-xs">
-                        <button
-                          type="button"
-                          onClick={handleExpandAll}
-                          className="px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-all cursor-pointer"
-                        >
-                          সকল ভ্যারিয়েন্ট বিস্তার করুন ▾
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleCollapseAll}
-                          className="px-3 py-1 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition-all cursor-pointer"
-                        >
-                          সংক্ষেপ করুন ▴
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
 
