@@ -718,15 +718,25 @@ export function normalizeProduct(p) {
     const vSize = v.Size || v.Attributes?.Size || '';
     const attr = v.Attributes || v.attributes || (vSize || vColor ? { ...(vColor ? { Color: vColor } : {}), ...(vSize ? { Size: vSize } : {}) } : {});
 
+    let vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : cost));
+    if (isNaN(vCost) || vCost < 0) vCost = cost;
+    // অস্বাভাবিক বা বিকৃত ক্রয়মূল্য রোধ (যেমন প্যারেন্ট কস্টের ১০ গুণ বা বিক্রয়মূল্যের ৫ গুণের বেশি হলে প্যারেন্ট কস্টে রিসেট)
+    if (cost > 0 && vCost > cost * 10) {
+      vCost = cost;
+    } else if (price > 0 && vCost > price * 5) {
+      vCost = cost || price;
+    }
+
     return {
       ...v,
       VariantID: String(v.VariantID || v.variantId || `VAR-${idx + 1}`),
       Attributes: attr,
       Barcode: String(v.Barcode || v.barcode || ''),
-      CostPrice: Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice || cost)),
+      CostPrice: vCost,
+      costPrice: vCost,
       WholesalePrice: Number(v.WholesalePrice !== undefined ? v.WholesalePrice : (v.wholesalePrice || wholesale || 0)),
       wholesalePrice: Number(v.WholesalePrice !== undefined ? v.WholesalePrice : (v.wholesalePrice || wholesale || 0)),
-      MinSellingPrice: Number(v.MinSellingPrice !== undefined ? v.MinSellingPrice : (v.minSellingPrice || v.CostPrice || cost)),
+      MinSellingPrice: Number(v.MinSellingPrice !== undefined ? v.MinSellingPrice : (v.minSellingPrice || vCost || cost)),
       SellingPrice: Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice || price)),
       GodownStock: vGodown,
       godownStock: vGodown,
@@ -1050,7 +1060,9 @@ export function getLocalProducts() {
       return fallback;
     }
 
-    if (cleanList.length !== parsed.length) {
+    const rawStr = JSON.stringify(parsed);
+    const normStr = JSON.stringify(cleanList);
+    if (cleanList.length !== parsed.length || rawStr !== normStr) {
       saveLocalProducts(cleanList);
     }
     return cleanList;

@@ -798,8 +798,18 @@ export default function EditProductModal({
         ? variants.map(v => {
             const g = Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0;
             const s = Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0;
+            let c = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : costNum)) || 0;
+            if (costNum > 0 && c > costNum * 10) c = costNum;
+            let sp = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : sellNum)) || 0;
+            let minSp = Number(v.MinSellingPrice !== undefined ? v.MinSellingPrice : (v.minSellingPrice !== undefined ? v.minSellingPrice : minSellNum)) || 0;
             return {
               ...v,
+              CostPrice: c,
+              costPrice: c,
+              SellingPrice: sp,
+              sellingPrice: sp,
+              MinSellingPrice: minSp,
+              minSellingPrice: minSp,
               GodownStock: g,
               godownStock: g,
               StockQuantity: s,
@@ -1507,7 +1517,36 @@ export default function EditProductModal({
                   : (Number(formData.godownStock) || 0);
                 const ypt = Number(formData.yardsPerThan) || 25;
                 const remTh = formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0;
-                const breakdown = calculateThanBreakdown(sStock, ypt, remTh);
+                
+                const varFullThans = isVariable
+                  ? variants.reduce((sum, v) => {
+                      const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0;
+                      return sum + (calculateThanBreakdown(vS, ypt, remTh).fullThans || 0);
+                    }, 0)
+                  : 0;
+                const varCutYards = isVariable
+                  ? variants.reduce((sum, v) => {
+                      const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0;
+                      return sum + (calculateThanBreakdown(vS, ypt, remTh).runningCutYards || 0);
+                    }, 0)
+                  : 0;
+
+                const breakdown = isVariable
+                  ? {
+                      displayText: varFullThans > 0 && varCutYards > 0
+                        ? `${varFullThans}টি আস্ত থান + ${formatFabricQuantity(varCutYards, 'গজ', false)} খোলা`
+                        : varFullThans > 0
+                        ? `${varFullThans}টি আস্ত থান`
+                        : varCutYards > 0
+                        ? `${formatFabricQuantity(varCutYards, 'গজ', false)} খোলা`
+                        : '০ গজ (মজুত শেষ)',
+                      isRemnant: variants.some(v => {
+                        const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0;
+                        return calculateThanBreakdown(vS, ypt, remTh).isRemnant;
+                      })
+                    }
+                  : calculateThanBreakdown(sStock, ypt, remTh);
+
                 const totalCombinedYards = (gStock * ypt) + sStock;
 
                 return (

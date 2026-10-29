@@ -323,20 +323,58 @@ export default function StockTransferModal({
         shopProductCount++;
       }
 
+      const vars = getVariantsOfProduct(p);
+      if (vars.length > 0) {
+        totalVariants += vars.length;
+      }
+
       if (isThan && yardsPerThan > 0) {
         fabricGodownYards += (gStock * yardsPerThan);
         const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
-        const bd = calculateThanBreakdown(sStock, yardsPerThan, remTh);
         fabricShopYards += sStock;
-        fabricShopFullThans += bd.fullThans;
-        fabricShopRunningCutYards += bd.runningCutYards;
-        fabricShopThanCount += (bd.fullThans + (bd.runningCutYards > 0 ? 1 : 0));
-        if (bd.isRemnant) fabricShopRemnantsCount++;
-        if (bd.needsRestock && gStock > 0) fabricShopNeedsRestockCount++;
 
-        totalGodownValuation += (gStock * yardsPerThan * unitCost);
-        totalShopCostValuation += (sStock * unitCost);
-        totalShopSellingValuation += (sStock * sellingPrice);
+        if (vars.length > 0) {
+          vars.forEach((v) => {
+            const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+            const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
+            const vBd = calculateThanBreakdown(vS, yardsPerThan, remTh);
+            fabricShopFullThans += vBd.fullThans;
+            fabricShopRunningCutYards += vBd.runningCutYards;
+            fabricShopThanCount += (vBd.fullThans + (vBd.runningCutYards > 0 ? 1 : 0));
+            if (vBd.isRemnant) fabricShopRemnantsCount++;
+            if (vBd.needsRestock && vG > 0) fabricShopNeedsRestockCount++;
+          });
+        } else {
+          const bd = calculateThanBreakdown(sStock, yardsPerThan, remTh);
+          fabricShopFullThans += bd.fullThans;
+          fabricShopRunningCutYards += bd.runningCutYards;
+          fabricShopThanCount += (bd.fullThans + (bd.runningCutYards > 0 ? 1 : 0));
+          if (bd.isRemnant) fabricShopRemnantsCount++;
+          if (bd.needsRestock && gStock > 0) fabricShopNeedsRestockCount++;
+        }
+
+        if (vars.length > 0) {
+          let pGodownVal = 0;
+          let pShopCostVal = 0;
+          let pShopSellVal = 0;
+          vars.forEach((v) => {
+            const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
+            const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+            let vC = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice || unitCost)) || 0;
+            if (unitCost > 0 && vC > unitCost * 10) vC = unitCost;
+            let vSPrice = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice || sellingPrice)) || 0;
+            pGodownVal += (vG * yardsPerThan * vC);
+            pShopCostVal += (vS * vC);
+            pShopSellVal += (vS * vSPrice);
+          });
+          totalGodownValuation += pGodownVal;
+          totalShopCostValuation += pShopCostVal;
+          totalShopSellingValuation += pShopSellVal;
+        } else {
+          totalGodownValuation += (gStock * yardsPerThan * unitCost);
+          totalShopCostValuation += (sStock * unitCost);
+          totalShopSellingValuation += (sStock * sellingPrice);
+        }
       } else if (!isThan && /গজ|yard/i.test(unit)) {
         fabricGodownYards += gStock;
         fabricShopYards += sStock;
@@ -351,11 +389,6 @@ export default function StockTransferModal({
         totalGodownValuation += (gStock * unitCost);
         totalShopCostValuation += (sStock * unitCost);
         totalShopSellingValuation += (sStock * sellingPrice);
-      }
-
-      const vars = getVariantsOfProduct(p);
-      if (vars.length > 0) {
-        totalVariants += vars.length;
       }
 
       if (sStock <= minAlert && gStock > 0) {
@@ -513,7 +546,8 @@ export default function StockTransferModal({
         vars.forEach((v, vIdx) => {
           const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
           const vSStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
-          const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+          let vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+          if (unitCost > 0 && vCost > unitCost * 10) vCost = unitCost;
           const vSelling = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : unitSelling));
           const vBd = isThan ? calculateThanBreakdown(vSStock, yardsPerThan, remTh) : null;
           const vGodownYards = isThan ? (vGStock * yardsPerThan) : 0;
@@ -2859,19 +2893,38 @@ export default function StockTransferModal({
                               const isGoj = !isThan && /গজ|yard/i.test(unit);
                               const yardsPerThan = isThan ? (Number(p.YardsPerThan || p.yardsPerThan || 0) || 25) : 0;
                               const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
-                              const bd = isThan ? calculateThanBreakdown(sStock, yardsPerThan, remTh) : null;
-                              const total = isThan ? (gStock + (bd ? bd.fullThans : 0)) : (gStock + sStock);
-                              const minAlert = Number(p.MinStockAlert || 5);
-                              const isZeroShop = sStock <= 0;
-                              const isLowShop = isThan
-                                ? (bd ? (bd.needsRestock || bd.fullThans === 0 || sStock <= yardsPerThan) : (sStock <= minAlert))
-                                : (sStock <= minAlert);
                               const vars = getVariantsOfProduct(p);
                               const hasVars = vars.length > 0;
                               const isExpanded = Boolean(expandedProductIds[p.ProductID]);
                               const varGStockSum = vars.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0), 0);
                               const varSStockSum = vars.reduce((s, v) => s + (Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0), 0);
                               const effectiveGStock = hasVars && varGStockSum > 0 ? varGStockSum : gStock;
+
+                              // কাপড়ের ভ্যারিয়েন্ট থাকলে প্রতিটি ভ্যারিয়েন্টের আলাদা আস্ত থান ও খোলা গজ হিসাব করা (যাতে ভিন্ন রঙের কাপড় জোড়া না লাগে)
+                              const varFullThansSum = hasVars && isThan
+                                ? vars.reduce((sum, v) => {
+                                    const vQty = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+                                    return sum + (calculateThanBreakdown(vQty, yardsPerThan, remTh).fullThans || 0);
+                                  }, 0)
+                                : 0;
+                              const varRunningCutYardsSum = hasVars && isThan
+                                ? vars.reduce((sum, v) => {
+                                    const vQty = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+                                    return sum + (calculateThanBreakdown(vQty, yardsPerThan, remTh).runningCutYards || 0);
+                                  }, 0)
+                                : 0;
+
+                              const bd = isThan ? calculateThanBreakdown(sStock, yardsPerThan, remTh) : null;
+                              const total = isThan
+                                ? (effectiveGStock + (hasVars ? varFullThansSum : (bd ? bd.fullThans : 0)))
+                                : (effectiveGStock + sStock);
+                              const minAlert = Number(p.MinStockAlert || 5);
+                              const isZeroShop = sStock <= 0;
+                              const isLowShop = isThan
+                                ? (hasVars
+                                    ? (varFullThansSum === 0 || sStock <= yardsPerThan)
+                                    : (bd ? (bd.needsRestock || bd.fullThans === 0 || sStock <= yardsPerThan) : (sStock <= minAlert)))
+                                : (sStock <= minAlert);
                               const isUnallocatedShopStock = hasVars && sStock > 0 && varSStockSum === 0;
                               const totalGoj = isThan ? (effectiveGStock * yardsPerThan) : (isGoj ? effectiveGStock : 0);
                               const unitCost = Number(p.CostPrice || p.costPrice || p.PurchasePrice || p.purchasePrice || p.Cost || p.cost || p.BuyingPrice || p.BuyPrice || 0);
@@ -2881,7 +2934,8 @@ export default function StockTransferModal({
                                     ? vars.reduce((sum, v) => {
                                         const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0));
                                         const vGoj = vGStock * yardsPerThan;
-                                        const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+                                        let vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+          if (unitCost > 0 && vCost > unitCost * 10) vCost = unitCost;
                                         return sum + (vGoj * vCost);
                                       }, 0)
                                     : (totalGoj * unitCost))
@@ -2890,7 +2944,8 @@ export default function StockTransferModal({
                                 : (hasVars
                                     ? vars.reduce((sum, v) => {
                                         const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0));
-                                        const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+                                        let vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+          if (unitCost > 0 && vCost > unitCost * 10) vCost = unitCost;
                                         return sum + (vGStock * vCost);
                                       }, 0)
                                     : (gStock * unitCost));
@@ -2899,7 +2954,8 @@ export default function StockTransferModal({
                                 ? (hasVars
                                     ? vars.reduce((sum, v) => {
                                         const vSStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0));
-                                        const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+                                        let vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+          if (unitCost > 0 && vCost > unitCost * 10) vCost = unitCost;
                                         return sum + (vSStock * vCost);
                                       }, 0)
                                     : (sStock * unitCost))
@@ -2908,7 +2964,8 @@ export default function StockTransferModal({
                                 : (hasVars
                                     ? vars.reduce((sum, v) => {
                                         const vSStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : 0));
-                                        const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+                                        let vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+          if (unitCost > 0 && vCost > unitCost * 10) vCost = unitCost;
                                         return sum + (vSStock * vCost);
                                       }, 0)
                                     : (sStock * unitCost));
@@ -2971,20 +3028,34 @@ export default function StockTransferModal({
                                           {isShopStockView && isThan && (() => {
                                             const ypt = yardsPerThan || 25;
                                             const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
-                                            const bd = calculateThanBreakdown(sStock, ypt, remTh);
+                                            const effectiveShopFullThans = hasVars ? varFullThansSum : (bd ? bd.fullThans : 0);
+                                            const effectiveShopCutYards = hasVars ? varRunningCutYardsSum : (bd ? bd.runningCutYards : 0);
+                                            const effectiveCutText = hasVars
+                                              ? (effectiveShopCutYards > 0 ? formatFabricQuantity(effectiveShopCutYards, 'গজ', false) : '')
+                                              : getSafeRunningCutText(bd);
+                                            const isEffectiveRemnant = hasVars
+                                              ? vars.some(v => {
+                                                  const vQty = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+                                                  return calculateThanBreakdown(vQty, ypt, remTh).isRemnant;
+                                                })
+                                              : Boolean(bd?.isRemnant);
+                                            const isEffectiveNeedsRestock = hasVars
+                                              ? (effectiveShopFullThans === 0 && effectiveGStock > 0)
+                                              : Boolean(bd?.needsRestock && effectiveGStock > 0);
+
                                             return (
                                               <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
                                                 <span className="inline-flex items-center text-slate-600 bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200/70 font-medium">
                                                   🧵 ১ থান = {ypt} গজ
                                                 </span>
 
-                                                {bd.fullThans > 0 ? (
+                                                {effectiveShopFullThans > 0 ? (
                                                   <span className="inline-flex items-center text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/80 font-semibold">
-                                                    দোকানে {bd.fullThans}টি আস্ত থান {bd.runningCutYards > 0 ? `+ টেবিলে ${bd.runningCutText} কাটা` : ''}
+                                                    দোকানে {effectiveShopFullThans}টি আস্ত থান {effectiveShopCutYards > 0 ? `+ টেবিলে ${effectiveCutText} কাটা` : ''}
                                                   </span>
-                                                ) : bd.runningCutYards > 0 ? (
+                                                ) : effectiveShopCutYards > 0 ? (
                                                   <span className="inline-flex items-center text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 font-semibold">
-                                                    দোকানে ০টি আস্ত থান (টেবিলে ${bd.runningCutText} কাটা)
+                                                    দোকানে ০টি আস্ত থান (টেবিলে {effectiveCutText} কাটা)
                                                   </span>
                                                 ) : (
                                                   <span className="inline-flex items-center text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200/80 font-semibold">
@@ -2992,12 +3063,12 @@ export default function StockTransferModal({
                                                   </span>
                                                 )}
 
-                                                {bd.isRemnant && (
+                                                {isEffectiveRemnant && (
                                                   <span className="inline-flex items-center text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300 font-bold animate-pulse text-[10.5px]">
                                                     ✂️ শেষ ছাঁট
                                                   </span>
                                                 )}
-                                                {bd.needsRestock && effectiveGStock > 0 && (
+                                                {isEffectiveNeedsRestock && (
                                                   <span className="inline-flex items-center text-rose-800 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-300 font-bold animate-pulse text-[10.5px]">
                                                     🚨 নতুন থান চালান প্রয়োজন
                                                   </span>
@@ -3045,13 +3116,23 @@ export default function StockTransferModal({
                                         }`}>
                                           {isThan ? (
                                             sStock <= 0 ? '০ গজ' : (
-                                              bd && bd.fullThans > 0 && bd.runningCutYards > 0
-                                                ? `${bd.fullThans} থান + ${getSafeRunningCutText(bd)}`
-                                                : bd && bd.fullThans > 0
-                                                ? `${bd.fullThans} থান`
-                                                : bd && bd.runningCutYards > 0
-                                                ? `${getSafeRunningCutText(bd)}`
-                                                : `${sStock} গজ`
+                                              hasVars ? (
+                                                varFullThansSum > 0 && varRunningCutYardsSum > 0
+                                                  ? `${varFullThansSum} থান + ${formatFabricQuantity(varRunningCutYardsSum, 'গজ', false)}`
+                                                  : varFullThansSum > 0
+                                                  ? `${varFullThansSum} থান`
+                                                  : varRunningCutYardsSum > 0
+                                                  ? `${formatFabricQuantity(varRunningCutYardsSum, 'গজ', false)}`
+                                                  : `${sStock} গজ`
+                                              ) : (
+                                                bd && bd.fullThans > 0 && bd.runningCutYards > 0
+                                                  ? `${bd.fullThans} থান + ${getSafeRunningCutText(bd)}`
+                                                  : bd && bd.fullThans > 0
+                                                  ? `${bd.fullThans} থান`
+                                                  : bd && bd.runningCutYards > 0
+                                                  ? `${getSafeRunningCutText(bd)}`
+                                                  : `${sStock} গজ`
+                                              )
                                             )
                                           ) : (
                                             `${sStock} ${unit}`
@@ -3070,9 +3151,12 @@ export default function StockTransferModal({
                                         <span className="inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs bg-slate-100 text-slate-800 border border-slate-200/90 shadow-2xs">
                                           {isThan ? (
                                             (() => {
-                                              const totalFullThans = effectiveGStock + (bd ? bd.fullThans : 0);
-                                              const hasRunningCut = bd && bd.runningCutYards > 0;
-                                              const cutStr = getSafeRunningCutText(bd);
+                                              const shopThans = hasVars ? varFullThansSum : (bd ? bd.fullThans : 0);
+                                              const cutStr = hasVars
+                                                ? (varRunningCutYardsSum > 0 ? formatFabricQuantity(varRunningCutYardsSum, 'গজ', false) : '')
+                                                : getSafeRunningCutText(bd);
+                                              const totalFullThans = effectiveGStock + shopThans;
+                                              const hasRunningCut = Boolean(cutStr);
                                               if (totalFullThans <= 0 && !hasRunningCut) return '০ গজ';
                                               if (totalFullThans > 0 && hasRunningCut) {
                                                 return `${totalFullThans} থান + ${cutStr}`;
@@ -3218,6 +3302,7 @@ export default function StockTransferModal({
                                                   </span>
                                                   <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
                                                     ভ্যারিয়েন্ট দোকান মোট: <strong className="font-mono">{sumVarShop}</strong> {isThan ? 'গজ' : getProductDisplayUnit(p)}
+                                                    {isThan && varFullThansSum > 0 && ` (${varFullThansSum}টি আস্ত থান${varRunningCutYardsSum > 0 ? ` + ${formatFabricQuantity(varRunningCutYardsSum, 'গজ', false)} খোলা` : ''})`}
                                                   </span>
                                                   {!isShopStockView && (
                                                     <button
@@ -3285,7 +3370,8 @@ export default function StockTransferModal({
                                                   {vars.map((v, vIdx) => {
                                                     const vGStock = Number(v.GodownStock) || 0;
                                                     const vSStock = Number(v.StockQuantity) || 0;
-                                                    const vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+                                                    let vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost));
+          if (unitCost > 0 && vCost > unitCost * 10) vCost = unitCost;
                                                     const vColor = v.Attributes?.Color || v.Color || '';
                                                     const vSize = v.Attributes?.Size || v.Size || '';
                                                     const vBd = isThan ? calculateThanBreakdown(vSStock, yardsPerThan, remTh) : null;
@@ -3340,11 +3426,6 @@ export default function StockTransferModal({
                                                             {isThan && yardsPerThan > 0 && vGStock > 0 && (
                                                               <span className="text-[10px] text-slate-500 font-medium mt-0.5 font-mono">
                                                                 ({(vGStock * yardsPerThan).toLocaleString('bn-BD')} গজ)
-                                                              </span>
-                                                            )}
-                                                            {vCost > 0 && vGStock > 0 && (
-                                                              <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded bg-purple-50 text-purple-800 border border-purple-200 text-[9px] font-medium font-mono">
-                                                                {currencySymbol}{Math.round((isThan ? (vGStock * yardsPerThan) : vGStock) * vCost).toLocaleString('bn-BD')}
                                                               </span>
                                                             )}
                                                           </div>
