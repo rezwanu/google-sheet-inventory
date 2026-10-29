@@ -574,6 +574,17 @@ export default function EditProductModal({
         category: value,
         subCategory: subs.length > 0 ? subs[0].SubCategoryName : ''
       }));
+    } else if (name === 'costPrice') {
+      const newCost = Number(value) || 0;
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      if (newCost > 0 && Array.isArray(variants)) {
+        setVariants((prevVars) => prevVars.map((v) => {
+          if (!v.CostPrice || Number(v.CostPrice) <= 0) {
+            return { ...v, CostPrice: newCost, costPrice: newCost };
+          }
+          return v;
+        }));
+      }
     } else if (name === 'stockQuantity') {
       setFormData((prev) => ({ ...prev, [name]: value }));
       if (isThanUnit(formData.unit)) {
@@ -799,9 +810,12 @@ export default function EditProductModal({
             const g = Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0;
             const s = Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0;
             let c = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : costNum)) || 0;
+            if (c <= 0 && costNum > 0) c = costNum;
             if (costNum > 0 && c > costNum * 10) c = costNum;
             let sp = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : sellNum)) || 0;
+            if (sp <= 0 && sellNum > 0) sp = sellNum;
             let minSp = Number(v.MinSellingPrice !== undefined ? v.MinSellingPrice : (v.minSellingPrice !== undefined ? v.minSellingPrice : minSellNum)) || 0;
+            if (minSp <= 0 && minSellNum > 0) minSp = minSellNum;
             return {
               ...v,
               CostPrice: c,

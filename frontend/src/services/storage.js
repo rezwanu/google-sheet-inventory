@@ -719,13 +719,16 @@ export function normalizeProduct(p) {
     const attr = v.Attributes || v.attributes || (vSize || vColor ? { ...(vColor ? { Color: vColor } : {}), ...(vSize ? { Size: vSize } : {}) } : {});
 
     let vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : cost));
-    if (isNaN(vCost) || vCost < 0) vCost = cost;
+    if (isNaN(vCost) || vCost <= 0) vCost = cost;
     // অস্বাভাবিক বা বিকৃত ক্রয়মূল্য রোধ (যেমন প্যারেন্ট কস্টের ১০ গুণ বা বিক্রয়মূল্যের ৫ গুণের বেশি হলে প্যারেন্ট কস্টে রিসেট)
     if (cost > 0 && vCost > cost * 10) {
       vCost = cost;
     } else if (price > 0 && vCost > price * 5) {
       vCost = cost || price;
     }
+
+    let vSelling = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice || price));
+    if (isNaN(vSelling) || vSelling <= 0) vSelling = price;
 
     return {
       ...v,
@@ -737,7 +740,8 @@ export function normalizeProduct(p) {
       WholesalePrice: Number(v.WholesalePrice !== undefined ? v.WholesalePrice : (v.wholesalePrice || wholesale || 0)),
       wholesalePrice: Number(v.WholesalePrice !== undefined ? v.WholesalePrice : (v.wholesalePrice || wholesale || 0)),
       MinSellingPrice: Number(v.MinSellingPrice !== undefined ? v.MinSellingPrice : (v.minSellingPrice || vCost || cost)),
-      SellingPrice: Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice || price)),
+      SellingPrice: vSelling,
+      sellingPrice: vSelling,
       GodownStock: vGodown,
       godownStock: vGodown,
       StockQuantity: vShop,
