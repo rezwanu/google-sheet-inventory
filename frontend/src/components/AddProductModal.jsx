@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   X,
   PackagePlus,
@@ -41,7 +41,9 @@ import {
   ArrowRight,
   ArrowLeft,
   Scissors,
-  Store
+  Store,
+  ChevronDown,
+  Search
 } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import BarcodeScannerModal from './BarcodeScannerModal';
@@ -55,6 +57,229 @@ import {
   isFabricUnit,
   isThanUnit
 } from '../utils/fabricUtils';
+
+// প্রিমিয়াম কাস্টম ড্রপডাউন কম্পোনেন্ট (Searchable Popover Dropdown)
+function SearchableSelect({
+  value,
+  onChange,
+  options = [],
+  placeholder = '-- নির্বাচন করুন --',
+  searchPlaceholder = 'অনুসন্ধান করুন...',
+  icon: Icon,
+  disabled = false,
+  className = '',
+  popoverWidth = 'w-full',
+  extraAction,
+  emptyMessage = 'কোনো তথ্য পাওয়া যায়নি'
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const normalizedOptions = useMemo(() => {
+    return options.map((opt) => {
+      if (typeof opt === 'object' && opt !== null) {
+        return {
+          value: opt.value !== undefined ? opt.value : opt.id || opt.name,
+          label: opt.label || opt.name || opt.title || String(opt.value),
+          subLabel: opt.subLabel || opt.description || '',
+          badge: opt.badge || '',
+          icon: opt.icon || null,
+          color: opt.color || null,
+          raw: opt
+        };
+      }
+      return {
+        value: String(opt),
+        label: String(opt),
+        subLabel: '',
+        badge: '',
+        icon: null,
+        color: null,
+        raw: opt
+      };
+    });
+  }, [options]);
+
+  const filteredOptions = useMemo(() => {
+    if (!search.trim()) return normalizedOptions;
+    const q = search.toLowerCase();
+    return normalizedOptions.filter((o) =>
+      o.label.toLowerCase().includes(q) ||
+      (o.subLabel && o.subLabel.toLowerCase().includes(q))
+    );
+  }, [normalizedOptions, search]);
+
+  const selectedOption = useMemo(() => {
+    return normalizedOptions.find((o) => String(o.value) === String(value));
+  }, [normalizedOptions, value]);
+
+  return (
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) {
+            setIsOpen((prev) => !prev);
+            setSearch('');
+          }
+        }}
+        className={`w-full px-3 py-2 bg-white border rounded-xl text-xs font-semibold text-left transition-all flex items-center justify-between shadow-2xs select-none ${
+          disabled
+            ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+            : isOpen
+              ? 'border-emerald-500 ring-2 ring-emerald-500/20 text-slate-900 shadow-sm'
+              : 'border-slate-300 hover:border-slate-400 text-slate-800'
+        }`}
+      >
+        <div className="flex items-center space-x-2 truncate pr-2">
+          {Icon && <Icon className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
+          {selectedOption?.color && (
+            <span
+              className="w-3 h-3 rounded-full border border-black/10 shrink-0"
+              style={{ backgroundColor: selectedOption.color }}
+            />
+          )}
+          <span className={`truncate ${!selectedOption ? 'text-slate-400 font-normal' : 'text-slate-800 font-semibold'}`}>
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
+          {selectedOption?.badge && (
+            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-100 text-slate-600 shrink-0">
+              {selectedOption.badge}
+            </span>
+          )}
+        </div>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-emerald-600' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className={`absolute left-0 top-full mt-1.5 ${popoverWidth} bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150`}>
+          {normalizedOptions.length > 5 && (
+            <div className="p-2 border-b border-slate-100 bg-slate-50/70">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
+                <input
+                  type="text"
+                  autoFocus
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="w-full pl-8 pr-7 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 text-xs"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="max-h-56 overflow-y-auto divide-y divide-slate-50 p-1">
+            {placeholder && (
+              <div
+                onClick={() => {
+                  onChange('');
+                  setIsOpen(false);
+                }}
+                className={`px-3 py-2 rounded-xl text-xs cursor-pointer flex items-center justify-between transition-colors ${
+                  !value ? 'bg-emerald-50/70 text-emerald-800 font-bold' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'
+                }`}
+              >
+                <span>{placeholder}</span>
+                {!value && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+              </div>
+            )}
+
+            {filteredOptions.length === 0 ? (
+              <div className="p-3 text-center text-xs text-slate-400 font-medium">
+                {emptyMessage}
+              </div>
+            ) : (
+              filteredOptions.map((opt) => {
+                const isSelected = String(opt.value) === String(value);
+                return (
+                  <div
+                    key={opt.value}
+                    onClick={() => {
+                      onChange(opt.value, opt.raw);
+                      setIsOpen(false);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs cursor-pointer flex items-center justify-between transition-all ${
+                      isSelected
+                        ? 'bg-emerald-50 text-emerald-900 font-bold'
+                        : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2 truncate">
+                      {opt.icon && <opt.icon className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
+                      {opt.color && (
+                        <span
+                          className="w-3 h-3 rounded-full border border-black/10 shrink-0"
+                          style={{ backgroundColor: opt.color }}
+                        />
+                      )}
+                      <div className="truncate">
+                        <span className="block truncate font-semibold">{opt.label}</span>
+                        {opt.subLabel && (
+                          <span className="block text-[10.5px] text-slate-400 font-normal truncate mt-0.5">
+                            {opt.subLabel}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-1.5 shrink-0 ml-2">
+                      {opt.badge && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">
+                          {opt.badge}
+                        </span>
+                      )}
+                      {isSelected && <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {extraAction && (
+            <div className="p-1.5 border-t border-slate-100 bg-slate-50/70">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  extraAction.onClick();
+                }}
+                className="w-full py-1.5 px-3 rounded-xl text-xs font-bold text-indigo-600 hover:bg-indigo-50 hover:text-indigo-800 transition-all flex items-center justify-center space-x-1 cursor-pointer"
+              >
+                <span>{extraAction.label}</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ছবি কম্প্রেস ও অপটিমাইজ ফাংশন (যাতে দ্রুত গুগল ড্রাইভে আপলোড হয়)
 const compressImageForUpload = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
@@ -747,9 +972,9 @@ export default function AddProductModal({
     setIsAddingNewSupplier(false);
   };
 
-  // সাপ্লায়ার ড্রপডাউন নির্বাচন হ্যান্ডলার
-  const handleSupplierChange = (e) => {
-    const val = e.target.value;
+  // সাপ্লায়ার ড্রপডাউন নির্বাচন হ্যান্ডলার (ইভেন্ট বা ডিরেক্ট স্ট্রিং দুটোই সাপোর্ট করে)
+  const handleSupplierChange = (valOrEvent) => {
+    const val = typeof valOrEvent === 'object' && valOrEvent?.target ? valOrEvent.target.value : valOrEvent;
     if (val === 'NEW_SUPPLIER') {
       setIsAddingNewSupplier(true);
       return;
@@ -758,7 +983,7 @@ export default function AddProductModal({
       setFormData(prev => ({ ...prev, supplierId: '', supplierName: '' }));
       return;
     }
-    const found = localSuppliersList.find(s => String(s.SupplierID) === String(val) || String(s.CompanyName).toLowerCase() === val.toLowerCase());
+    const found = localSuppliersList.find(s => String(s.SupplierID) === String(val) || String(s.CompanyName).toLowerCase() === String(val).toLowerCase());
     if (found) {
       setFormData(prev => ({
         ...prev,
@@ -774,22 +999,39 @@ export default function AddProductModal({
     }
   };
 
+  const handleCategoryChange = (value) => {
+    const subs = categories.filter((c) => c.CategoryName === value);
+    setFormData((prev) => ({
+      ...prev,
+      category: value,
+      subCategory: subs.length > 0 ? subs[0].SubCategoryName : ''
+    }));
+  };
+
+  const handleSubCategoryChange = (value) => {
+    setFormData((prev) => ({
+      ...prev,
+      subCategory: value
+    }));
+  };
+
+  const handleUnitChange = (value) => {
+    const isThan = /than|থান/i.test(value);
+    setFormData((prev) => ({
+      ...prev,
+      unit: value,
+      yardsPerThan: isThan ? (prev.yardsPerThan && prev.yardsPerThan !== '0' ? prev.yardsPerThan : '25') : '0',
+    }));
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'category') {
-      const subs = categories.filter((c) => c.CategoryName === value);
-      setFormData((prev) => ({
-        ...prev,
-        category: value,
-        subCategory: subs.length > 0 ? subs[0].SubCategoryName : ''
-      }));
+      handleCategoryChange(value);
+    } else if (name === 'subCategory') {
+      handleSubCategoryChange(value);
     } else if (name === 'unit') {
-      const isThan = /than|থান/i.test(value);
-      setFormData((prev) => ({
-        ...prev,
-        unit: value,
-        yardsPerThan: isThan ? (prev.yardsPerThan && prev.yardsPerThan !== '0' ? prev.yardsPerThan : '25') : '0',
-      }));
+      handleUnitChange(value);
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -1273,7 +1515,17 @@ export default function AddProductModal({
               }`}>
                 ২
               </span>
-              <span>মূল্য ও স্টক</span>
+              <span>মূল্য, স্টক ও ভ্যারিয়েন্ট</span>
+              {productType === 'variable' && variants.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-indigo-100 text-indigo-800 font-black">
+                  {variants.length}
+                </span>
+              )}
+              {productType === 'bundle' && bundleItems.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-amber-100 text-amber-800 font-black">
+                  {bundleItems.length}
+                </span>
+              )}
             </button>
 
             <button
@@ -1290,12 +1542,7 @@ export default function AddProductModal({
               }`}>
                 ৩
               </span>
-              <span>ভ্যারিয়েন্ট ও ছবি</span>
-              {productType === 'variable' && variants.length > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-indigo-100 text-indigo-800 font-black">
-                  {variants.length}
-                </span>
-              )}
+              <span>পণ্যের ছবি ও বিবরণ</span>
             </button>
           </div>
 
@@ -1303,7 +1550,10 @@ export default function AddProductModal({
           <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
             <button
               type="button"
-              onClick={() => setProductType('simple')}
+              onClick={() => {
+                setProductType('simple');
+                setActiveFormTab('pricing');
+              }}
               className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 productType === 'simple'
                   ? 'bg-slate-900 text-white shadow-xs'
@@ -1318,7 +1568,7 @@ export default function AddProductModal({
               type="button"
               onClick={() => {
                 setProductType('variable');
-                setActiveFormTab('variants');
+                setActiveFormTab('pricing');
               }}
               className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 productType === 'variable'
@@ -1334,7 +1584,7 @@ export default function AddProductModal({
               type="button"
               onClick={() => {
                 setProductType('bundle');
-                setActiveFormTab('variants');
+                setActiveFormTab('pricing');
               }}
               className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 productType === 'bundle'
@@ -1528,39 +1778,28 @@ export default function AddProductModal({
                         <label className="block text-[11px] font-medium text-slate-500 mb-1">
                           প্রধান ক্যাটাগরি
                         </label>
-                        <select
-                          name="category"
+                        <SearchableSelect
                           value={formData.category}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
-                        >
-                          {uniqueCategories.map((cat) => (
-                            <option key={cat} value={cat}>{cat}</option>
-                          ))}
-                          {!uniqueCategories.includes(formData.category) && (
-                            <option value={formData.category}>{formData.category}</option>
-                          )}
-                        </select>
+                          onChange={handleCategoryChange}
+                          options={uniqueCategories.map((cat) => ({ value: cat, label: cat }))}
+                          placeholder="-- প্রধান ক্যাটাগরি নির্বাচন --"
+                          searchPlaceholder="ক্যাটাগরি খুঁজুন..."
+                        />
                       </div>
 
                       <div>
                         <label className="block text-[11px] font-medium text-slate-500 mb-1">
                           সাব-ক্যাটাগরি
                         </label>
-                        <select
-                          name="subCategory"
+                        <SearchableSelect
                           value={formData.subCategory}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
-                        >
-                          <option value="">-- সাব-ক্যাটাগরি নির্বাচন --</option>
-                          {availableSubCategories.map((sub) => (
-                            <option key={sub} value={sub}>{sub}</option>
-                          ))}
-                          {formData.subCategory && !availableSubCategories.includes(formData.subCategory) && (
-                            <option value={formData.subCategory}>{formData.subCategory}</option>
-                          )}
-                        </select>
+                          onChange={handleSubCategoryChange}
+                          options={availableSubCategories.map((sub) => ({ value: sub, label: sub }))}
+                          placeholder="-- সাব-ক্যাটাগরি নির্বাচন --"
+                          searchPlaceholder="সাব-ক্যাটাগরি খুঁজুন..."
+                          disabled={availableSubCategories.length === 0}
+                          emptyMessage="এই ক্যাটাগরিতে কোনো সাব-ক্যাটাগরি নেই"
+                        />
                       </div>
                     </div>
                   )}
@@ -1661,23 +1900,23 @@ export default function AddProductModal({
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="relative">
-                        <Truck className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
-                        <select
-                          name="supplierId"
-                          value={formData.supplierId || ''}
-                          onChange={handleSupplierChange}
-                          className="w-full pl-8 pr-8 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                        >
-                          <option value="">-- কোনো নির্দিষ্ট সাপ্লায়ার নেই (সাধারণ সংগ্রহ) --</option>
-                          {localSuppliersList.map((sup) => (
-                            <option key={sup.SupplierID} value={sup.SupplierID}>
-                              {sup.CompanyName || sup.ContactPerson} {sup.Phone ? `(${sup.Phone})` : ''} {sup.Address ? `• ${sup.Address}` : ''}
-                            </option>
-                          ))}
-                          <option value="NEW_SUPPLIER">+ নতুন সাপ্লায়ার যোগ করুন...</option>
-                        </select>
-                      </div>
+                      <SearchableSelect
+                        value={formData.supplierId || ''}
+                        onChange={handleSupplierChange}
+                        options={localSuppliersList.map((sup) => ({
+                          value: sup.SupplierID,
+                          label: sup.CompanyName || sup.ContactPerson,
+                          subLabel: [sup.Phone ? `ফোন: ${sup.Phone}` : '', sup.Address ? `ঠিকানা: ${sup.Address}` : ''].filter(Boolean).join(' • '),
+                          badge: sup.ContactPerson && sup.CompanyName ? sup.ContactPerson : ''
+                        }))}
+                        placeholder="-- কোনো নির্দিষ্ট সাপ্লায়ার নেই (সাধারণ সংগ্রহ) --"
+                        searchPlaceholder="সাপ্লায়ারের নাম বা ফোন নম্বর খুঁজুন..."
+                        icon={Truck}
+                        extraAction={{
+                          label: '+ নতুন সাপ্লায়ার যোগ করুন...',
+                          onClick: () => setIsAddingNewSupplier(true)
+                        }}
+                      />
 
                       {/* নির্বাচিত সাপ্লায়ারের সামারি ব্যাজ */}
                       {formData.supplierName && (
@@ -1918,26 +2157,121 @@ export default function AddProductModal({
                     onClick={() => setActiveFormTab('pricing')}
                     className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center space-x-2 cursor-pointer active:scale-95"
                   >
-                    <span>পরবর্তী ধাপ: মূল্য ও স্টক নির্ধারণ</span>
+                    <span>পরবর্তী ধাপ: মূল্য, স্টক ও ভ্যারিয়েন্ট</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             )}
 
-            {/* ধাপ ২: মূল্য নির্ধারণ ও স্টক লেভেল */}
+            {/* ধাপ ২: মূল্য, স্টক ও ভ্যারিয়েন্ট */}
             {activeFormTab === 'pricing' && (
               <div className="space-y-6 animate-in fade-in duration-150">
+
+                {/* পণ্যের ধরণ নির্বাচক (সাধারণ / ভ্যারিয়েন্ট / কম্বো বান্ডেল) */}
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800 flex items-center space-x-2">
+                      <Layers className="w-4 h-4 text-indigo-600" />
+                      <span>পণ্যের ধরণ নির্বাচন করুন (Product Type):</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-500">
+                      {productType === 'simple' ? '📦 সাধারণ পণ্য' : productType === 'variable' ? '🗂️ ভ্যারিয়েন্ট পণ্য' : '✨ কম্বো বান্ডেল'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setProductType('simple')}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                        productType === 'simple'
+                          ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-500/20 text-emerald-950 shadow-xs'
+                          : 'bg-slate-50/60 border-slate-200 hover:bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 font-bold text-xs">
+                        <Box className="w-4 h-4 text-emerald-600" />
+                        <span>সাধারণ পণ্য</span>
+                      </div>
+                      <p className="text-[10.5px] text-slate-500 mt-1">আলাদা কোনো রঙ বা সাইজ ভ্যারিয়েন্ট নেই</p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProductType('variable');
+                        if (unitCategory === 'than' || unitCategory === 'length') {
+                          setSelectedAttributeType('Color');
+                        } else if (unitCategory === 'weight') {
+                          setSelectedAttributeType('Weight');
+                        } else {
+                          setSelectedAttributeType('Color');
+                        }
+                      }}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                        productType === 'variable'
+                          ? 'bg-indigo-50/80 border-indigo-500 ring-2 ring-indigo-500/20 text-indigo-950 shadow-xs'
+                          : 'bg-slate-50/60 border-slate-200 hover:bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 font-bold text-xs">
+                        <Layers className="w-4 h-4 text-indigo-600" />
+                        <span>ভ্যারিয়েন্ট পণ্য</span>
+                        {variants.length > 0 && (
+                          <span className="ml-auto px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-200 text-indigo-900 font-black">
+                            {variants.length}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10.5px] text-slate-500 mt-1">রঙ, সাইজ বা ওজন অনুযায়ী ভিন্ন স্টক ও দর</p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setProductType('bundle')}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                        productType === 'bundle'
+                          ? 'bg-amber-50/80 border-amber-500 ring-2 ring-amber-500/20 text-amber-950 shadow-xs'
+                          : 'bg-slate-50/60 border-slate-200 hover:bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 font-bold text-xs">
+                        <Sparkles className="w-4 h-4 text-amber-600" />
+                        <span>কম্বো বান্ডেল</span>
+                        {bundleItems.length > 0 && (
+                          <span className="ml-auto px-1.5 py-0.2 rounded-full text-[10px] bg-amber-200 text-amber-900 font-black">
+                            {bundleItems.length}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10.5px] text-slate-500 mt-1">একাধিক পণ্যের প্যাকেজ বা বান্ডেল সেট</p>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
                     <span className="text-xs font-bold text-slate-800 flex items-center space-x-2">
                       <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                      <span>২. মূল্য ও ইনভেন্টরি স্টক</span>
+                      <span>
+                        {productType === 'variable'
+                          ? '২. বেস মূল্য ও ডিফল্ট দর (ভ্যারিয়েন্টগুলোর জন্য)'
+                          : productType === 'bundle'
+                          ? '২. বান্ডেল প্যাকেজ বিক্রয়মূল্য ও মার্জিন'
+                          : '২. মূল্য ও ইনভেন্টরি স্টক'}
+                      </span>
                     </span>
                     <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-bold">
                       রিয়েল-টাইম মার্জিন ক্যালকুলেটর
                     </span>
                   </div>
+
+                  {productType === 'variable' && (
+                    <div className="p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-200 text-indigo-900 text-[11px] font-medium flex items-center space-x-2">
+                      <Layers className="w-4 h-4 text-indigo-600 shrink-0" />
+                      <span>ভ্যারিয়েন্ট ডিফল্ট দর: নিচের ঘরে মূল কেনা ও বিক্রয় দর নির্ধারণ করুন। নতুন ভ্যারিয়েন্ট যোগ করলে এই দরগুলো স্বয়ংক্রিয়ভাবে পাবে, তবে পরে প্রতিটি ভ্যারিয়েন্টের দর টেবিলে আলাদাভাবেও পরিবর্তন করা যাবে।</span>
+                    </div>
+                  )}
 
                 {/* আর্থিক তথ্য: ক্রয়মূল্য, পাইকারি দর, ফ্লোর প্রাইস (নূন্যতম বিক্রয়মূল্য) ও বিক্রয়মূল্য */}
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -2223,19 +2557,18 @@ export default function AddProductModal({
                         </div>
                       </div>
                     ) : (
-                      <select
-                        name="unit"
+                      <SearchableSelect
                         value={formData.unit}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
-                      >
-                        {uniqueUnits.map((u) => (
-                          <option key={u} value={u}>{u}</option>
-                        ))}
-                        {formData.unit && !uniqueUnits.includes(formData.unit) && (
-                          <option value={formData.unit}>{formData.unit}</option>
-                        )}
-                      </select>
+                        onChange={handleUnitChange}
+                        options={uniqueUnits.map((u) => ({ value: u, label: u }))}
+                        placeholder="-- একক নির্বাচন --"
+                        searchPlaceholder="একক খুঁজুন..."
+                        icon={Package}
+                        extraAction={{
+                          label: '+ নতুন একক তৈরি করুন',
+                          onClick: () => setIsAddingNewUnit(true)
+                        }}
+                      />
                     )}
                   </div>
                 </div>
@@ -2883,126 +3216,9 @@ export default function AddProductModal({
                     </div>
                   </div>
                 )}
-
-                {/* ভ্যারিয়েন্ট ম্যানেজার অপশন (ঐচ্ছিক চালু / বন্ধ) */}
-                <div className="bg-white/95 rounded-2xl p-4 border border-slate-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs mt-3">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2.5 rounded-xl transition-all ${
-                      productType === 'variable' 
-                        ? 'bg-indigo-600 text-white shadow-xs' 
-                        : 'bg-indigo-50 text-indigo-700'
-                    }`}>
-                      <Layers className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs font-bold text-slate-800">
-                          এই পণ্যের কি একাধিক ভ্যারিয়েন্ট রয়েছে? (সাইজ, রঙ, ওজন বা প্যাকিং)
-                        </span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
-                          productType === 'variable' 
-                            ? 'bg-indigo-100 text-indigo-900 border-indigo-200' 
-                            : 'bg-slate-100 text-slate-600 border-slate-200'
-                        }`}>
-                          {productType === 'variable' ? `${variants.length}টি ভ্যারিয়েন্ট সক্রিয়` : 'অপশনাল / ঐচ্ছিক'}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5">
-                        {productType === 'variable'
-                          ? 'ভ্যারিয়েন্ট ম্যানেজার সক্রিয় রয়েছে: রঙ, সাইজ বা ওজন অনুযায়ী গোডাউন মজুত নিচের তালিকা থেকে নিয়ন্ত্রণ করুন।'
-                          : 'ভ্যারিয়েন্ট না থাকলে এটি সাধারণ পণ্য হিসেবে সেভ হবে। আর বিভিন্ন রঙ, সাইজ বা ওজনের আলাদা মজুত রাখতে ভ্যারিয়েন্ট ম্যানেজার চালু করুন।'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2 shrink-0">
-                    {productType === 'variable' ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (variants.length > 0) {
-                            if (window.confirm('ভ্যারিয়েন্ট বন্ধ করলে ভ্যারিয়েন্ট তালিকা মুছে পণ্যটি সাধারণ পণ্যে রূপান্তরিত হবে। আপনি কি নিশ্চিত?')) {
-                              setProductType('simple');
-                              setVariants([]);
-                            }
-                          } else {
-                            setProductType('simple');
-                          }
-                        }}
-                        className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>ভ্যারিয়েন্ট বন্ধ করুন</span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProductType('variable');
-                          if (unitCategory === 'than' || unitCategory === 'length') {
-                            setSelectedAttributeType('Color');
-                          } else if (unitCategory === 'weight') {
-                            setSelectedAttributeType('Weight');
-                          } else {
-                            setSelectedAttributeType('Color');
-                          }
-                        }}
-                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>+ ভ্যারিয়েন্ট ম্যানেজার চালু করুন</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
               </div>
 
-                {/* ধাপ ২ নেভিগেশন বাটন */}
-                <div className="flex items-center justify-between pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setActiveFormTab('basic')}
-                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>পূর্ববর্তী: প্রাথমিক তথ্য</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveFormTab('variants')}
-                    className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center space-x-2 cursor-pointer active:scale-95"
-                  >
-                    <span>পরবর্তী ধাপ: ভ্যারিয়েন্ট ও ছবি</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ধাপ ৩: ভ্যারিয়েন্ট, বান্ডেল ও মিডিয়া */}
-            {activeFormTab === 'variants' && (
-              <div className="space-y-6 animate-in fade-in duration-150">
-                {productType === 'simple' && (
-                  <div className="p-4 bg-gradient-to-r from-slate-50 to-indigo-50/40 border border-slate-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center space-x-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 font-bold shrink-0">
-                        <Box className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <strong className="block text-slate-900 font-bold">সাধারণ পণ্য নির্বাচিত</strong>
-                        <span className="text-[11px] text-slate-500">এই পণ্যের কোনো আলাদা রং বা সাইজ ভ্যারিয়েন্ট নেই। ভ্যারিয়েন্ট যোগ করতে চাইলে বাটন চাপুন।</span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setProductType('variable')}
-                      className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center space-x-1 shrink-0 cursor-pointer"
-                    >
-                      <Layers className="w-3.5 h-3.5" />
-                      <span>ভ্যারিয়েন্ট তৈরি করুন</span>
-                    </button>
-                  </div>
-                )}
+              {/* Phase 5.5: ভ্যারিয়েন্ট ম্যানেজার (যদি ভ্যারিয়েন্ট পণ্য নির্বাচিত থাকে) */}
               {productType === 'variable' && (
                 <div className="bg-indigo-50/50 border border-indigo-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
                   <div className="flex items-center justify-between pb-2 border-b border-indigo-100">
@@ -3024,18 +3240,19 @@ export default function AddProductModal({
                         <label className="block text-xs font-bold text-indigo-950 mb-1">
                           ১. ভ্যারিয়েন্টের ধরণ নির্বাচন করুন (Variant Type):
                         </label>
-                        <select
+                        <SearchableSelect
                           value={selectedAttributeType}
-                          onChange={(e) => {
-                            setSelectedAttributeType(e.target.value);
+                          onChange={(val) => {
+                            setSelectedAttributeType(val);
                             setSelectedOptionDropdown('');
                           }}
-                          className="w-full px-3 py-2 bg-indigo-50/50 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                        >
-                          <option value="Color">🎨 রঙ / কালার (Color)</option>
-                          <option value="Size">📏 সাইজ / মাপ (Size)</option>
-                          <option value="Weight">⚖️ ওজন / পরিমাপ (Weight)</option>
-                        </select>
+                          options={[
+                            { value: 'Color', label: '🎨 রঙ / কালার (Color)' },
+                            { value: 'Size', label: '📏 সাইজ / মাপ (Size)' },
+                            { value: 'Weight', label: '⚖️ ওজন / পরিমাপ (Weight)' }
+                          ]}
+                          placeholder="ভ্যারিয়েন্ট ধরণ নির্বাচন করুন"
+                        />
                       </div>
 
                       {/* ২. ড্রপডাউন লিস্ট থেকে মান নির্বাচন */}
@@ -3043,26 +3260,23 @@ export default function AddProductModal({
                         <label className="block text-xs font-bold text-slate-700 mb-1">
                           ২. {selectedAttributeType === 'Color' ? 'রঙের' : selectedAttributeType === 'Size' ? 'সাইজের' : 'ওজনের'} তালিকা ({activeTypeOptions.length}টি ডাটাবেসে উপলব্ধ):
                         </label>
-                        <select
+                        <SearchableSelect
                           value={selectedOptionDropdown}
-                          onChange={(e) => {
-                            const val = e.target.value;
+                          onChange={(val) => {
                             if (val) {
                               handleAddOptionToVariants(val);
                               setSelectedOptionDropdown('');
                             }
                           }}
-                          className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                        >
-                          <option value="">
-                            -- {selectedAttributeType === 'Color' ? 'রঙ নির্বাচন করুন' : selectedAttributeType === 'Size' ? 'সাইজ নির্বাচন করুন' : 'অপশন বেছে নিন'} --
-                          </option>
-                          {activeTypeOptions.map((opt) => (
-                            <option key={opt.VariantID || opt.Name} value={opt.Name}>
-                              {opt.Name}
-                            </option>
-                          ))}
-                        </select>
+                          options={activeTypeOptions.map((opt) => ({
+                            value: opt.Name,
+                            label: opt.Name,
+                            badge: selectedAttributeType
+                          }))}
+                          placeholder={`-- ${selectedAttributeType === 'Color' ? 'রঙ নির্বাচন করুন' : selectedAttributeType === 'Size' ? 'সাইজ নির্বাচন করুন' : 'অপশন বেছে নিন'} --`}
+                          searchPlaceholder={`${selectedAttributeType === 'Color' ? 'রং' : 'অপশন'} খুঁজুন...`}
+                          emptyMessage="এই ক্যাটাগরিতে এখনো কোনো ডাটা নেই"
+                        />
                       </div>
                     </div>
 
@@ -3431,18 +3645,20 @@ export default function AddProductModal({
                   <div className="p-3 bg-white rounded-xl border border-amber-100 space-y-2">
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
                       <div className="sm:col-span-8">
-                        <select
+                        <SearchableSelect
                           value={selectedBundleProduct}
-                          onChange={(e) => setSelectedBundleProduct(e.target.value)}
-                          className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                        >
-                          <option value="">-- অন্তর্ভুক্ত পণ্য বাছাই করুন --</option>
-                          {products.map((p) => (
-                            <option key={p.ProductID} value={p.ProductID}>
-                              {p.ProductName} ({currencySymbol}{p.SellingPrice} • স্টক: {p.StockQuantity})
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(val) => setSelectedBundleProduct(val)}
+                          options={products.map((p) => ({
+                            value: p.ProductID,
+                            label: p.ProductName,
+                            subLabel: `${currencySymbol}${p.SellingPrice} • স্টক: ${p.StockQuantity}`,
+                            badge: p.Category || ''
+                          }))}
+                          placeholder="-- অন্তর্ভুক্ত পণ্য বাছাই করুন --"
+                          searchPlaceholder="পণ্য খুঁজুন..."
+                          icon={Box}
+                          emptyMessage="কোনো পণ্য পাওয়া যায়নি"
+                        />
                       </div>
 
                       <div className="sm:col-span-2">
@@ -3549,12 +3765,37 @@ export default function AddProductModal({
                 </div>
               </div>
 
-              {/* সেকশন ৩: মিডিয়া ও পণ্যের ছবি */}
+              {/* ধাপ ২ নেভিগেশন বাটন */}
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveFormTab('basic')}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>পূর্ববর্তী: প্রাথমিক তথ্য</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFormTab('variants')}
+                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center space-x-2 cursor-pointer active:scale-95"
+                >
+                  <span>পরবর্তী ধাপ: পণ্যের ছবি ও বিবরণ</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ধাপ ৩: পণ্যের ছবি ও বিবরণ */}
+          {activeFormTab === 'variants' && (
+            <div className="space-y-6 animate-in fade-in duration-150">
+              {/* সেকশন ১: মিডিয়া ও পণ্যের ছবি */}
               <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
                   <span className="text-xs font-bold text-slate-800 flex items-center space-x-2">
                     <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
-                    <span>৩. পণ্যের ছবি ও মিডিয়া (ড্রাইভ সিঙ্ক)</span>
+                    <span>১. পণ্যের ছবি ও মিডিয়া (ড্রাইভ সিঙ্ক)</span>
                   </span>
                   
                   {/* আপলোড মোড সুইচ */}
@@ -3705,12 +3946,12 @@ export default function AddProductModal({
                 </div>
               </div>
 
-              {/* সেকশন ৪: বিবরণ ও বৈশিষ্ট্য */}
+              {/* সেকশন ২: বিবরণ ও বৈশিষ্ট্য */}
               <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
                   <span className="text-xs font-bold text-slate-800 flex items-center space-x-2">
                     <span className="w-2 h-2 rounded-full bg-violet-500"></span>
-                    <span>৪. বিবরণ ও মাল্টি-ফিচার বৈশিষ্ট্য</span>
+                    <span>২. বিবরণ ও মাল্টি-ফিচার বৈশিষ্ট্য</span>
                   </span>
                 </div>
 
@@ -3826,7 +4067,7 @@ export default function AddProductModal({
                   className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span>পূর্ববর্তী: মূল্য ও স্টক</span>
+                  <span>পূর্ববর্তী: মূল্য, স্টক ও ভ্যারিয়েন্ট</span>
                 </button>
                 <span className="text-xs text-slate-400 font-medium hidden sm:inline">
                   সব তথ্য যাচাই করে নিচে 'ডাটাবেসে পণ্য যোগ করুন' চাপুন
