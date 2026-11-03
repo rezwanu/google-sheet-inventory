@@ -449,7 +449,24 @@ export function getLocalUnits() {
 }
 
 export function saveLocalUnits(units) {
-  setSecureStorageItem(STORAGE_KEYS.UNITS, units);
+  if (!Array.isArray(units) || units.length === 0) {
+    setSecureStorageItem(STORAGE_KEYS.UNITS, DEFAULT_UNITS);
+    return DEFAULT_UNITS;
+  }
+  const hasThan = units.some(u => String(u.UnitName || u.ShortName || '').includes('থান'));
+  const hasGoj = units.some(u => String(u.UnitName || u.ShortName || '').includes('গজ'));
+  let safeUnits = units;
+  if (!hasThan || !hasGoj) {
+    const merged = [...units];
+    DEFAULT_UNITS.forEach(defU => {
+      if (!merged.some(u => u.UnitID === defU.UnitID || u.ShortName === defU.ShortName || u.UnitName === defU.UnitName)) {
+        merged.push(defU);
+      }
+    });
+    safeUnits = merged;
+  }
+  setSecureStorageItem(STORAGE_KEYS.UNITS, safeUnits);
+  return safeUnits;
 }
 
 // ডিফল্ট ভ্যারিয়েন্ট অপশন তালিকা (রঙ, সাইজ, ইত্যাদি)
@@ -513,21 +530,22 @@ export function getProductDisplayUnit(product) {
   if (!product) return 'Pcs';
   const raw = (product.Unit || product.unit || product['Unit'] || product['Unit Name'] || product.UOM || '').toString().trim();
   
-  if (raw) {
-    // যদি ইউনিট pcs বা অন্য কোনো নির্দিষ্ট একক হয়
-    if (/^(pcs|pc|piece|পিস)$/i.test(raw)) {
-      return raw;
-    }
-    if (/^(than|থান)$/i.test(raw)) {
+  if (/^(than|থান|bolt)$/i.test(raw)) {
+    return 'থান';
+  }
+
+  // যদি প্রোডাক্টে থান সংক্রান্ত সুস্পষ্ট মেট্রিক বিদ্যমান থাকে (যেমন YardsPerThan > 0 বা ThanCount > 0)
+  // কিংবা পণ্যের নামের মধ্যে 'থান' বা 'than' থাকে এবং অন্য কোনো কাপড় একক (যেমন গজ) না থাকে
+  const hasThanMetrics = Number(product.YardsPerThan || product.yardsPerThan || product.TotalThan || product.totalThan || product.ThanCount || product.thanCount) > 0;
+  const hasThanInName = /than|থান/i.test(String(product.ProductName || product.name || product.Title || ''));
+  if (hasThanMetrics || hasThanInName) {
+    if (!/^(গজ|yard|মিটার|meter)$/i.test(raw)) {
       return 'থান';
     }
-    return raw;
   }
-  
-  // যদি একক কোনো কারণে ফাঁকা থাকে তবে পণ্যের নাম দেখে অনুমান (কখনোই অন্য ফিল্ড দিয়ে নয়)
-  const hasThanInName = /than|থান/i.test(String(product.ProductName || product.name || ''));
-  if (hasThanInName) {
-    return 'থান';
+
+  if (raw) {
+    return raw;
   }
 
   return 'Pcs';
@@ -836,7 +854,12 @@ export function normalizeProduct(p) {
 
   // প্রোডাক্টের মূল একক সঠিকভাবে মূল্যায়ন
   const cleanUnit = (unit || '').toString().trim();
-  const isThanProduct = /^(than|থান)$/i.test(cleanUnit) || (cleanUnit.toLowerCase().includes('than') && !cleanUnit.toLowerCase().includes('pcs'));
+  const hasThanInName = /than|থান/i.test(String(name || ''));
+  const hasThanMetrics = Number(p.YardsPerThan || p.yardsPerThan || p.TotalThan || p.totalThan || p.ThanCount || p.thanCount) > 0;
+  const isThanProduct = /^(than|থান|bolt)$/i.test(cleanUnit) || 
+    (cleanUnit.toLowerCase().includes('than') && !cleanUnit.toLowerCase().includes('pcs')) ||
+    (hasThanInName && !/^(গজ|yard|মিটার|meter)$/i.test(cleanUnit)) ||
+    (hasThanMetrics && (!cleanUnit || /^(pcs|pc|piece|পিস)$/i.test(cleanUnit)));
 
   if (isThanProduct) {
     unit = 'থান';

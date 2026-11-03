@@ -949,18 +949,43 @@ export default function App() {
             const localP = currentList.find(lp => String(lp.ProductID || '').trim() === String(incomingP.ProductID || '').trim());
             if (!localP) return incomingP;
 
+            let resolvedP = incomingP;
+
             const inVarGodown = (incomingP.Variants || []).reduce((s, v) => s + (Number(v.GodownStock) || 0), 0);
             const localVarGodown = (localP.Variants || []).reduce((s, v) => s + (Number(v.GodownStock) || 0), 0);
 
             if (localVarGodown > 0 && inVarGodown === 0 && Number(incomingP.GodownStock || 0) > 0) {
-              return {
-                ...incomingP,
+              resolvedP = {
+                ...resolvedP,
                 Variants: localP.Variants,
                 VariantsJSON: localP.VariantsJSON || JSON.stringify(localP.Variants),
                 variantsJSON: localP.variantsJSON || JSON.stringify(localP.Variants)
               };
             }
-            return incomingP;
+
+            // পরিমাপক একক (থান/গজ) স্মার্ট প্রটেকশন: লোকাল স্টেটে প্রোডাক্টের একক থান/গজ থাকলে শিট থেকে বাগবশত Pcs আসলে লোকাল একক অক্ষুণ্ণ রাখা
+            const isLocalThan = /than|থান/i.test(String(localP.Unit || localP.unit || '')) || Number(localP.YardsPerThan || localP.yardsPerThan || 0) > 0;
+            const isIncomingPcs = /^(pcs|pc|piece|পিস)$/i.test(String(incomingP.Unit || incomingP.unit || '')) && Number(incomingP.YardsPerThan || incomingP.yardsPerThan || 0) === 0;
+
+            if (isLocalThan && isIncomingPcs) {
+              const safeYpt = Number(localP.YardsPerThan || localP.yardsPerThan || 25);
+              const safeTotThan = Number(localP.TotalThan || localP.totalThan || localP.ThanCount || (Number(resolvedP.GodownStock || 0) + Number(resolvedP.StockQuantity || 0)));
+              resolvedP = {
+                ...resolvedP,
+                Unit: localP.Unit || 'থান',
+                unit: localP.unit || 'থান',
+                YardsPerThan: safeYpt,
+                yardsPerThan: safeYpt,
+                ThanCount: safeTotThan,
+                thanCount: safeTotThan,
+                TotalThan: safeTotThan,
+                totalThan: safeTotThan,
+                TotalYards: safeTotThan * safeYpt,
+                totalYards: safeTotThan * safeYpt,
+              };
+            }
+
+            return resolvedP;
           });
           saveLocalProducts(merged);
           return merged;
@@ -975,8 +1000,8 @@ export default function App() {
 
       // পরিমাপক একক (Units) আপডেট
       if (data && data.units && Array.isArray(data.units) && data.units.length > 0) {
-        setUnits(data.units);
-        saveLocalUnits(data.units);
+        const mergedUnits = saveLocalUnits(data.units) || data.units;
+        setUnits(mergedUnits);
       }
 
       // ভ্যারিয়েন্ট অপশন (Variants) আপডেট
@@ -3391,6 +3416,10 @@ export default function App() {
                 godownStock: Number(prod.GodownStock) || 0,
                 stockQuantity: Number(prod.StockQuantity) || 0,
                 totalStock: totalStock,
+                unit: prod.Unit || pUnit,
+                Unit: prod.Unit || pUnit,
+                yardsPerThan: yardsPerThan,
+                YardsPerThan: yardsPerThan,
                 thanCount: isThan ? totalStock : 0,
                 totalYards: isThan ? (totalStock * yardsPerThan) : (/গজ|yard/i.test(pUnit) ? totalStock : 0),
                 hasVariants: Array.isArray(prod.Variants) && prod.Variants.length > 0,
@@ -3531,6 +3560,10 @@ export default function App() {
                   godownStock: Number(prod.GodownStock) || 0,
                   stockQuantity: Number(prod.StockQuantity) || 0,
                   totalStock: totalStock,
+                  unit: prod.Unit || pUnit,
+                  Unit: prod.Unit || pUnit,
+                  yardsPerThan: yardsPerThan,
+                  YardsPerThan: yardsPerThan,
                   thanCount: isThan ? totalStock : 0,
                   totalYards: isThan ? (totalStock * yardsPerThan) : (/গজ|yard/i.test(pUnit) ? totalStock : 0),
                   hasVariants: Array.isArray(prod.Variants) && prod.Variants.length > 0,
@@ -3607,6 +3640,10 @@ export default function App() {
                   godownStock: Number(prod.GodownStock) || 0,
                   stockQuantity: Number(prod.StockQuantity) || 0,
                   totalStock: totalStock,
+                  unit: prod.Unit || pUnit,
+                  Unit: prod.Unit || pUnit,
+                  yardsPerThan: yardsPerThan,
+                  YardsPerThan: yardsPerThan,
                   thanCount: isThan ? totalStock : 0,
                   totalYards: isThan ? (totalStock * yardsPerThan) : (/গজ|yard/i.test(pUnit) ? totalStock : 0),
                   hasVariants: Array.isArray(prod.Variants) && prod.Variants.length > 0,
@@ -3746,6 +3783,10 @@ export default function App() {
                   godownStock: Number(prod.GodownStock) || 0,
                   stockQuantity: Number(prod.StockQuantity) || 0,
                   totalStock: totalStock,
+                  unit: prod.Unit || pUnit,
+                  Unit: prod.Unit || pUnit,
+                  yardsPerThan: yardsPerThan,
+                  YardsPerThan: yardsPerThan,
                   thanCount: isThan ? totalStock : 0,
                   totalYards: isThan ? (totalStock * yardsPerThan) : (/গজ|yard/i.test(pUnit) ? totalStock : 0),
                   hasVariants: Array.isArray(prod.Variants) && prod.Variants.length > 0,
@@ -4545,6 +4586,10 @@ export default function App() {
           godownStock: totalGodown,
           stockQuantity: totalShop,
           totalStock: totalAll,
+          unit: targetProduct.Unit || (isThan ? 'থান' : 'Pcs'),
+          Unit: targetProduct.Unit || (isThan ? 'থান' : 'Pcs'),
+          yardsPerThan: yardsPerThan,
+          YardsPerThan: yardsPerThan,
           thanCount: isThan ? totalAll : targetProduct.ThanCount,
           totalYards: isThan ? (totalAll * yardsPerThan) : targetProduct.TotalYards,
           hasVariants: safeVariants.length > 0,

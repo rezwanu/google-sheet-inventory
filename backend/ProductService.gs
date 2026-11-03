@@ -497,8 +497,12 @@ function handleUpdateProduct(spreadsheet, payload) {
   updateIfDefined(stockColIdx, stockQuantity);
   updateIfDefined(godownColIdx, godownStock);
   updateIfDefined(alertColIdx, minStockAlert);
-  updateIfDefined(unitColIdx, unit);
-  updateIfDefined(yardsPerThanColIdx, yardsPerThan);
+  if (unit !== undefined && String(unit).trim() !== '') {
+    updateIfDefined(unitColIdx, String(unit).trim());
+  }
+  if (yardsPerThan !== undefined && !isNaN(yardsPerThan) && Number(yardsPerThan) >= 0) {
+    updateIfDefined(yardsPerThanColIdx, Number(yardsPerThan));
+  }
   updateIfDefined(thanCountColIdx, thanCount);
   updateIfDefined(totalYardsColIdx, totalYards);
   updateIfDefined(imgColIdx, imageUrl);

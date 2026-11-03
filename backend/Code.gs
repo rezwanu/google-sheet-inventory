@@ -171,7 +171,9 @@ function getSheetRowsAsObjects(sheetName) {
         rowObj.SubCategory = rowObj['Sub Category'] || rowObj.subcategory || '';
       }
       if (!rowObj.Unit) {
-        rowObj.Unit = rowObj['Unit Name'] || rowObj.unit || 'Pcs';
+        const hasThanData = Number(rowObj.YardsPerThan || rowObj['Yards Per Than'] || rowObj.TotalThan || rowObj['Total Than'] || rowObj.ThanCount || rowObj['Than Count']) > 0;
+        const hasThanTitle = /than|থান/i.test(String(rowObj.ProductName || rowObj.Name || ''));
+        rowObj.Unit = rowObj['Unit Name'] || rowObj.unit || ((hasThanData || hasThanTitle) ? 'থান' : 'Pcs');
       }
       if (rowObj.ImageUrl === undefined) {
         rowObj.ImageUrl = rowObj.imageurl !== undefined ? rowObj.imageurl : (rowObj.Image !== undefined ? rowObj.Image : (rowObj['Image URL'] !== undefined ? rowObj['Image URL'] : (rowObj.Photo !== undefined ? rowObj.Photo : '')));
@@ -430,6 +432,22 @@ function ensureUnitsSheet(spreadsheet) {
     unitsSheet.appendRow(['UNIT-110', 'Pair (জোড়া)', 'Pair', 'জুতো বা জোড়া আইটেম', 'Active', now]);
     unitsSheet.appendRow(['UNIT-111', 'Meter (মিটার)', 'Meter', 'দৈর্ঘ্য বা কাপড়', 'Active', now]);
     unitsSheet.appendRow(['UNIT-112', 'Roll (রোল)', 'Roll', 'রোল বা ফিতা জাতীয়', 'Active', now]);
+    unitsSheet.appendRow(['UNIT-113', 'থান (Than / Bolt)', 'থান', 'কাপড়ের সম্পূর্ণ থান', 'Active', now]);
+    unitsSheet.appendRow(['UNIT-114', 'গজ (Yard)', 'গজ', 'কাপড় পরিমাপক গজ', 'Active', now]);
+  } else {
+    // পূর্বে তৈরি শিটে 'থান' বা 'গজ' না থাকলে স্বয়ংক্রিয়ভাবে ইনসার্ট করা
+    try {
+      const existingUnitsData = unitsSheet.getDataRange().getValues();
+      const hasThan = existingUnitsData.some(r => String(r[1] || r[2] || '').includes('থান'));
+      const hasGoj = existingUnitsData.some(r => String(r[1] || r[2] || '').includes('গজ'));
+      const now = new Date();
+      if (!hasThan) {
+        unitsSheet.appendRow(['UNIT-113', 'থান (Than / Bolt)', 'থান', 'কাপড়ের সম্পূর্ণ থান', 'Active', now]);
+      }
+      if (!hasGoj) {
+        unitsSheet.appendRow(['UNIT-114', 'গজ (Yard)', 'গজ', 'কাপড় পরিমাপক গজ', 'Active', now]);
+      }
+    } catch (e) {}
   }
 
   return unitsSheet;
@@ -2688,8 +2706,12 @@ function handleUpdateProduct(spreadsheet, payload) {
   updateIfDefined(stockColIdx, stockQuantity);
   updateIfDefined(godownColIdx, godownStock);
   updateIfDefined(alertColIdx, minStockAlert);
-  updateIfDefined(unitColIdx, unit);
-  updateIfDefined(yardsPerThanColIdx, yardsPerThan);
+  if (unit !== undefined && String(unit).trim() !== '') {
+    updateIfDefined(unitColIdx, String(unit).trim());
+  }
+  if (yardsPerThan !== undefined && !isNaN(yardsPerThan) && Number(yardsPerThan) >= 0) {
+    updateIfDefined(yardsPerThanColIdx, Number(yardsPerThan));
+  }
   updateIfDefined(thanCountColIdx, thanCount);
   updateIfDefined(totalYardsColIdx, totalYards);
   updateIfDefined(imgColIdx, imageUrl);
