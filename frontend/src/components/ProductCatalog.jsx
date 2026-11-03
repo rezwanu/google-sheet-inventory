@@ -3,6 +3,8 @@ import {
   Search,
   Barcode,
   Plus,
+  Minus,
+  ShoppingBag,
   Package,
   Sparkles,
   X,
@@ -29,6 +31,8 @@ export default function ProductCatalog({
   products = [], 
   currencySymbol = '৳', 
   onAddToCart, 
+  onUpdateCartQuantity,
+  onRemoveFromCart,
   cartItems = [],
   onOpenProductDetails,
   onOpenInvoiceLookup,
@@ -42,12 +46,37 @@ export default function ProductCatalog({
   onOpenHeldCartsModal,
   onDeleteProduct,
   onEditProduct,
+  onOpenCartDrawer
 }) {
   const isAdmin = Boolean(activeUser && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier'));
   const isCustomer = !isAdmin;
   const [deleteConfirmProduct, setDeleteConfirmProduct] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Fastkart কোয়ান্টিটি হ্রাস ও বৃদ্ধি হ্যান্ডলার
+  const handleDecrementCart = (e, product) => {
+    e.stopPropagation();
+    const currentQty = getItemCartQuantity(product.ProductID);
+    if (currentQty <= 1) {
+      if (onRemoveFromCart) {
+        onRemoveFromCart(product.ProductID);
+      } else if (onUpdateCartQuantity) {
+        onUpdateCartQuantity(product.ProductID, 0);
+      }
+    } else {
+      if (onUpdateCartQuantity) {
+        onUpdateCartQuantity(product.ProductID, currentQty - 1);
+      }
+    }
+  };
+
+  const handleIncrementCart = (e, product) => {
+    e.stopPropagation();
+    if (onAddToCart) {
+      onAddToCart(product);
+    }
+  };
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [stockFilter, setStockFilter] = useState('ALL'); // 'ALL' | 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'WITH_COUPON'
   const [sortBy, setSortBy] = useState('default'); // 'default' | 'name-asc' | 'price-asc' | 'price-desc' | 'stock-desc' | 'stock-asc'
@@ -478,7 +507,7 @@ export default function ProductCatalog({
           })}
         </div>
 
-        {/* ক্যাটাগরি ফিল্টার স্ক্রোলিং পিলস */}
+        {/* ক্যাটাগরি ফিল্টার স্ক্রোলিং পিলস (Fastkart স্টাইল) */}
         <div className="flex items-center space-x-2 overflow-x-auto pb-1 text-xs no-scrollbar pt-0.5">
           {categoriesWithCounts.map((cat) => {
             const isSelected = selectedCategory === cat.id;
@@ -488,7 +517,7 @@ export default function ProductCatalog({
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all duration-150 flex items-center space-x-1.5 border cursor-pointer ${
                   isSelected
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/20 scale-[1.02]'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-600/20 scale-[1.02]'
                     : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -627,25 +656,18 @@ export default function ProductCatalog({
                   className={`group relative flex flex-col justify-between p-3 sm:p-3.5 bg-white rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden ${
                     isOutOfStock
                       ? 'border-slate-200 opacity-75 bg-slate-50/70 hover:border-slate-300'
-                      : 'border-slate-200/80 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 active:scale-[0.99]'
+                      : 'border-slate-200/90 hover:border-[#0da487] hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-0.5 active:scale-[0.99]'
                   }`}
                 >
-                  {/* কার্ট কোয়ান্টিটি ব্যাজ (টপ-রাইট) */}
-                  {cartQty > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-black text-white shadow-md ring-2 ring-white animate-in zoom-in-75">
-                      {cartQty}
-                    </span>
-                  )}
-
                   <div>
-                    {/* পণ্যের ছবি ও ফ্লোটিং স্টক স্ট্যাটাস */}
-                    <div className="w-full h-32 sm:h-40 mb-2.5 overflow-hidden rounded-xl bg-slate-100 border border-slate-100/90 flex items-center justify-center relative">
+                    {/* Fastkart 1:1 Square Media Frame */}
+                    <div className="relative w-full aspect-square mb-2.5 overflow-hidden rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
                       {product.ImageUrl ? (
                         <img
                           src={product.ImageUrl}
                           alt={product.ImageCaption || product.ProductName}
                           title={product.ImageCaption || product.ProductName}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           onError={(e) => {
                             e.target.onerror = null;
                             e.target.parentElement.classList.add('bg-slate-100');
@@ -659,72 +681,94 @@ export default function ProductCatalog({
                         </div>
                       )}
 
-                      {/* ব্যাজ গ্রুপ (টপ-লেফট): কুপন, ভ্যারিয়েন্ট, কম্বো */}
-                      <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 items-start">
-                        {hasCoupon && (
-                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-xs backdrop-blur-md">
+                      {/* Single Smart Badge (Top-Left): Priority Coupon -> Variant -> Bundle */}
+                      <div className="absolute top-2 left-2 z-10">
+                        {hasCoupon ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white shadow-xs">
                             <Tag className="w-2.5 h-2.5" />
                             <span>কুপন</span>
-                          </div>
-                        )}
-                        {product.HasVariants && (
-                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-indigo-600/95 text-white shadow-xs backdrop-blur-md">
+                          </span>
+                        ) : product.HasVariants && product.Variants && product.Variants.length > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-[#0da487] text-white shadow-xs">
                             <Layers className="w-2.5 h-2.5" />
-                            <span>{product.Variants?.length || 0} অপশন</span>
-                          </div>
-                        )}
-                        {product.IsBundle && (
-                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-xs backdrop-blur-md">
+                            <span>{product.Variants.length} অপশন</span>
+                          </span>
+                        ) : product.IsBundle ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-purple-600 text-white shadow-xs">
                             <Sparkles className="w-2.5 h-2.5" />
                             <span>কম্বো</span>
-                          </div>
-                        )}
+                          </span>
+                        ) : null}
                       </div>
 
-                      {/* এক্সপায়ারি ব্যাজ (টপ-রাইট) */}
-                      {expiryInfo && expiryInfo.status !== 'GOOD' && expiryInfo.status !== 'NO_EXPIRY' && (
-                        <div className={`absolute top-2 right-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black shadow-xs backdrop-blur-md border ${
-                          expiryInfo.status === 'EXPIRED'
-                            ? 'bg-rose-600 text-white border-rose-700 animate-pulse'
-                            : expiryInfo.status === 'CRITICAL'
-                            ? 'bg-amber-500 text-white border-amber-600'
-                            : 'bg-yellow-100 text-yellow-800 border-yellow-300'
-                        }`}>
-                          <CalendarClock className="w-2.5 h-2.5" />
-                          <span>{expiryInfo.label}</span>
+                      {/* Top-Right: Admin Hover Action Buttons or Expiry Warning */}
+                      {isAdmin ? (
+                        <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1 bg-white/90 backdrop-blur-md p-1 rounded-xl shadow-xs border border-white/60">
+                          {onEditProduct && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditProduct(product);
+                              }}
+                              title={`'${product.ProductName}' এডিট করুন`}
+                              className="p-1 rounded-lg hover:bg-emerald-50 text-slate-500 hover:text-[#0da487] transition-colors cursor-pointer"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {onDeleteProduct && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteConfirmProduct(product);
+                              }}
+                              title={`'${product.ProductName}' মুছে ফেলুন`}
+                              className="p-1 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
+                      ) : (
+                        expiryInfo && expiryInfo.status !== 'GOOD' && expiryInfo.status !== 'NO_EXPIRY' && (
+                          <div className={`absolute top-2 right-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black shadow-xs backdrop-blur-md border ${
+                            expiryInfo.status === 'EXPIRED'
+                              ? 'bg-rose-600 text-white border-rose-700 animate-pulse'
+                              : expiryInfo.status === 'CRITICAL'
+                              ? 'bg-amber-500 text-white border-amber-600'
+                              : 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                          }`}>
+                            <CalendarClock className="w-2.5 h-2.5" />
+                            <span>{expiryInfo.label}</span>
+                          </div>
+                        )
                       )}
 
-                      {/* ছবির ওপরে ভাসমান স্টক ব্যাজ */}
+                      {/* Floating Stock Badge (Bottom-Left) */}
                       <div className="absolute bottom-2 left-2 z-10">
                         {isOutOfStock ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600/95 text-white backdrop-blur-md shadow-xs">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600/95 text-white backdrop-blur-xs shadow-xs">
                             স্টক শেষ
                           </span>
                         ) : isLowStock ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/95 text-white backdrop-blur-md shadow-xs animate-pulse">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/95 text-white backdrop-blur-xs shadow-xs animate-pulse">
                             {isCustomer 
-                              ? `সীমিত স্টক (${totalStock} ${product.Unit || 'Pcs'}${Number(product.YardsPerThan) > 0 ? ` / ${totalStock * Number(product.YardsPerThan)} গজ` : ''})` 
-                              : `দোকান: ${stock} | গোডাউন: ${godownStock}`}
+                              ? `সীমিত (${totalStock} ${product.Unit || 'Pcs'})` 
+                              : `দোকান: ${stock} | গো: ${godownStock}`}
                           </span>
                         ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-900/80 text-white backdrop-blur-md shadow-2xs">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-900/75 text-white backdrop-blur-xs shadow-2xs">
                             {isCustomer 
-                              ? `মজুদ আছে (${totalStock} ${product.Unit || 'Pcs'}${Number(product.YardsPerThan) > 0 ? ` - ${totalStock * Number(product.YardsPerThan)} গজ` : ''})` 
-                              : (godownStock > 0 ? (stock === 0 ? `দোকানে ০ (গোডাউনে ${godownStock})` : `দোকান: ${stock} | গোডাউন: ${godownStock}`) : `দোকান: ${stock} ${product.Unit || 'Pcs'}`)}
+                              ? `${totalStock} ${product.Unit || 'Pcs'}${Number(product.YardsPerThan) > 0 ? ` (${totalStock * Number(product.YardsPerThan)} গজ)` : ''}` 
+                              : `দোকান: ${stock}${godownStock > 0 ? ` | গো: ${godownStock}` : ''}`}
                           </span>
                         )}
                       </div>
-
-                      {/* বারকোড কোড পিল (টপ-রাইট যদি এক্সপায়ারি ও কার্ট ব্যাজ না থাকে) */}
-                      {cartQty === 0 && (!expiryInfo || expiryInfo.status === 'GOOD' || expiryInfo.status === 'NO_EXPIRY') && product.Barcode && (
-                        <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded-md bg-white/80 backdrop-blur-xs text-[9px] font-mono font-bold text-slate-600 border border-white/40 shadow-2xs">
-                          #{String(product.Barcode).slice(-4)}
-                        </div>
-                      )}
                     </div>
 
-                    {/* ক্যাটাগরি ও সাব-ক্যাটাগরি এবং থান/গজ তথ্য */}
+                    {/* Category & Unit Info */}
                     <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1 gap-1">
                       <span className="font-semibold text-slate-500 truncate max-w-[70%]">
                         {product.Category || 'General'}
@@ -737,13 +781,13 @@ export default function ProductCatalog({
                       )}
                     </div>
 
-                    {/* পণ্যের নাম */}
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug line-clamp-2 min-h-[2.5rem] group-hover:text-indigo-600 transition-colors">
+                    {/* Product Name */}
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug line-clamp-2 min-h-[2.5rem] group-hover:text-[#0da487] transition-colors">
                       {product.ProductName}
                     </h3>
                   </div>
 
-                  {/* নিচের অংশ: মূল্য এবং দ্রুত কার্ট বাটন */}
+                  {/* Bottom: Price Block & Fastkart Morphing Button */}
                   <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-1">
                     <div>
                       <span className="text-[10px] text-slate-400 font-semibold block uppercase">বিক্রয় মূল্য</span>
@@ -751,106 +795,99 @@ export default function ProductCatalog({
                         <span className="text-sm sm:text-base font-black text-slate-900">
                           {formatCurrency(product.SellingPrice)}
                         </span>
-                        {product.MinSellingPrice && Number(product.MinSellingPrice) > 0 && Number(product.MinSellingPrice) < Number(product.SellingPrice) && (
+                        {product.MinSellingPrice && Number(product.MinSellingPrice) > 0 && Number(product.MinSellingPrice) < Number(product.SellingPrice) && isAdmin && (
                           <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200/90 px-1.5 py-0.2 rounded-md" title={`দামাদামির সর্বনিম্ন সীমা: ${formatCurrency(product.MinSellingPrice)}`}>
                             ফ্লোর: {formatCurrency(product.MinSellingPrice)}
                           </span>
                         )}
-                        {product.WholesalePrice && Number(product.WholesalePrice) > 0 && (
-                          <span className="text-[10px] font-bold text-indigo-800 bg-indigo-50 border border-indigo-200/90 px-1.5 py-0.2 rounded-md" title={`পাইকারি বিক্রয়মূল্য: ${formatCurrency(product.WholesalePrice)}`}>
+                        {product.WholesalePrice && Number(product.WholesalePrice) > 0 && isAdmin && (
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/90 px-1.5 py-0.2 rounded-md" title={`পাইকারি বিক্রয়মূল্য: ${formatCurrency(product.WholesalePrice)}`}>
                             পাইকারি: {formatCurrency(product.WholesalePrice)}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {/* অ্যাকশন বাটনসমূহ: এডিট, ডিলিট ও কার্ট/ভ্যারিয়েন্ট */}
-                    <div className="flex items-center space-x-1.5 shrink-0">
-                      {isAdmin && onEditProduct && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEditProduct(product);
-                          }}
-                          title={`'${product.ProductName}' এডিট করুন (Edit Product)`}
-                          className="p-1.5 rounded-xl border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 hover:text-indigo-600 transition-all cursor-pointer shadow-2xs"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {isAdmin && onDeleteProduct && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteConfirmProduct(product);
-                          }}
-                          title={`'${product.ProductName}' মুছে ফেলুন (Delete)`}
-                          className="p-1.5 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-300 text-slate-400 hover:text-rose-600 transition-all cursor-pointer shadow-2xs"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {inStock ? (
-                        product.HasVariants && product.Variants && product.Variants.length > 0 ? (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (onOpenVariantSelector) {
-                                onOpenVariantSelector(product);
-                              } else {
-                                onAddToCart(product);
-                              }
-                            }}
-                            title="ভ্যারিয়েন্ট বাছাই করুন"
-                            className="px-2.5 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-bold active:scale-95 shadow-2xs cursor-pointer bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white border-purple-200"
-                          >
-                            <Layers className="w-3.5 h-3.5" />
-                            <span>বাছাই</span>
-                          </button>
-                        ) : isFabricUnit(product.Unit) ? (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onAddToCart(product);
-                            }}
-                            title="গজ ও গিরা পরিমাপ নির্বাচন করে কার্টে যোগ করুন"
-                            className={`px-2.5 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-black active:scale-95 shadow-2xs cursor-pointer ${
-                              cartQty > 0
-                                ? 'bg-amber-600 text-white border-amber-600 shadow-amber-600/20'
-                                : 'bg-amber-50 hover:bg-amber-600 text-amber-900 hover:text-white border-amber-300'
-                            }`}
-                          >
-                            <Scissors className="w-3.5 h-3.5" />
-                            <span>গজ-গিরা</span>
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onAddToCart(product);
-                            }}
-                            title="কার্টে যোগ করুন"
-                            className={`px-3 py-1.5 rounded-xl transition-all border flex items-center space-x-1 text-xs font-bold active:scale-95 shadow-2xs cursor-pointer ${
-                              cartQty > 0
-                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-600/20'
-                                : 'bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border-indigo-200/80'
-                            }`}
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">যোগ</span>
-                          </button>
-                        )
-                      ) : (
-                        <span className="text-[11px] font-bold text-slate-400 px-2 py-1 bg-slate-100 rounded-lg">
+                    {/* Fastkart Action Button / Morphing Stepper */}
+                    <div className="flex items-center shrink-0">
+                      {!inStock ? (
+                        <span className="text-[11px] font-bold text-slate-400 px-2.5 py-1 bg-slate-100 rounded-full">
                           অনুপলব্ধ
                         </span>
+                      ) : product.HasVariants && product.Variants && product.Variants.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onOpenVariantSelector) {
+                              onOpenVariantSelector(product);
+                            } else {
+                              onAddToCart(product);
+                            }
+                          }}
+                          title="ভ্যারিয়েন্ট বাছাই করুন"
+                          className="px-3 py-1.5 rounded-full transition-all border flex items-center space-x-1 text-xs font-bold active:scale-95 shadow-2xs cursor-pointer bg-emerald-50 hover:bg-[#0da487] text-[#0da487] hover:text-white border-emerald-200"
+                        >
+                          <Layers className="w-3.5 h-3.5" />
+                          <span>বাছাই</span>
+                        </button>
+                      ) : isFabricUnit(product.Unit) ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAddToCart(product);
+                          }}
+                          title="গজ ও গিরা পরিমাপ নির্বাচন করে কার্টে যোগ করুন"
+                          className={`px-3 py-1.5 rounded-full transition-all border flex items-center space-x-1 text-xs font-black active:scale-95 shadow-2xs cursor-pointer ${
+                            cartQty > 0
+                              ? 'bg-amber-600 text-white border-amber-600 shadow-amber-600/20'
+                              : 'bg-amber-50 hover:bg-amber-600 text-amber-900 hover:text-white border-amber-300'
+                          }`}
+                        >
+                          <Scissors className="w-3.5 h-3.5" />
+                          <span>গজ-গিরা {cartQty > 0 ? `(${cartQty})` : ''}</span>
+                        </button>
+                      ) : cartQty === 0 ? (
+                        /* Fastkart Initial "Add +" Button */
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleIncrementCart(product);
+                          }}
+                          title="কার্টে যোগ করুন"
+                          className="px-3.5 py-1.5 rounded-full transition-all duration-200 border flex items-center space-x-1 text-xs font-bold active:scale-95 shadow-2xs cursor-pointer bg-emerald-50 hover:bg-[#0da487] text-[#0da487] hover:text-white border-emerald-200 group-hover:bg-[#0da487] group-hover:text-white group-hover:border-transparent"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>যোগ</span>
+                        </button>
+                      ) : (
+                        /* Fastkart Active Stepper: [-] [qty] [+] */
+                        <div 
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center bg-[#0da487] text-white rounded-full shadow-xs px-1 py-0.5 border border-[#0da487] animate-in zoom-in-75 duration-150"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleDecrementCart(product)}
+                            title="সংখ্যা কমান"
+                            className="p-1 hover:bg-black/15 rounded-full transition-colors active:scale-90 cursor-pointer"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="px-2 text-xs font-black min-w-[20px] text-center select-none">
+                            {cartQty}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleIncrementCart(product)}
+                            title="সংখ্যা বাড়ান"
+                            className="p-1 hover:bg-black/15 rounded-full transition-colors active:scale-90 cursor-pointer"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1007,7 +1044,7 @@ export default function ProductCatalog({
                                       onAddToCart(product);
                                     }
                                   }}
-                                  className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all border flex items-center space-x-1 cursor-pointer bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white border-purple-200"
+                                  className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all border flex items-center space-x-1 cursor-pointer bg-emerald-50 hover:bg-[#0da487] text-[#0da487] hover:text-white border-emerald-200"
                                 >
                                   <Layers className="w-3 h-3" />
                                   <span>বাছাই</span>
@@ -1027,24 +1064,45 @@ export default function ProductCatalog({
                                   }`}
                                 >
                                   <Scissors className="w-3 h-3" />
-                                  <span>গজ-গিরা</span>
+                                  <span>গজ-গিরা {cartQty > 0 ? `(${cartQty})` : ''}</span>
                                 </button>
-                              ) : (
+                              ) : cartQty === 0 ? (
                                 <button
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    onAddToCart(product);
+                                    handleIncrementCart(product);
                                   }}
-                                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border flex items-center space-x-1 cursor-pointer ${
-                                    cartQty > 0
-                                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                                      : 'bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border-indigo-200'
-                                  }`}
+                                  className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all border flex items-center space-x-1 cursor-pointer bg-emerald-50 hover:bg-[#0da487] text-[#0da487] hover:text-white border-emerald-200"
                                 >
                                   <Plus className="w-3 h-3" />
-                                  <span>{cartQty > 0 ? `${cartQty} যোগ` : 'যোগ'}</span>
+                                  <span>যোগ</span>
                                 </button>
+                              ) : (
+                                <div 
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center bg-[#0da487] text-white rounded-lg shadow-xs px-1 py-0.5 border border-[#0da487]"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDecrementCart(product)}
+                                    title="সংখ্যা কমান"
+                                    className="p-1 hover:bg-black/15 rounded transition-colors active:scale-90 cursor-pointer"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <span className="px-1.5 text-xs font-black min-w-[18px] text-center select-none">
+                                    {cartQty}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleIncrementCart(product)}
+                                    title="সংখ্যা বাড়ান"
+                                    className="p-1 hover:bg-black/15 rounded transition-colors active:scale-90 cursor-pointer"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
                               )
                             ) : (
                               <span className="text-[10px] font-bold text-slate-400">অনুপলব্ধ</span>
@@ -1058,7 +1116,7 @@ export default function ProductCatalog({
                                   onEditProduct(product);
                                 }}
                                 title={`'${product.ProductName}' এডিট করুন (Edit Product)`}
-                                className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 hover:text-indigo-600 transition-all cursor-pointer"
+                                className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-500 hover:text-[#0da487] transition-all cursor-pointer"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
@@ -1140,6 +1198,33 @@ export default function ProductCatalog({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ফ্লোটিং কার্ট বাটন (Fastkart Floating Bottom Cart Pill) */}
+      {cartItems.length > 0 && onOpenCartDrawer && (
+        <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 animate-in slide-in-from-bottom-4 duration-300">
+          <button
+            type="button"
+            onClick={onOpenCartDrawer}
+            className="flex items-center gap-3 px-4 sm:px-5 py-3 rounded-full bg-[#0da487] hover:bg-[#0b8b72] text-white shadow-xl shadow-emerald-600/30 border border-emerald-400/40 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+          >
+            <div className="relative">
+              <ShoppingBag className="w-5 h-5 text-white" />
+              <span className="absolute -top-1.5 -right-2 bg-white text-[#0da487] text-[10px] font-black rounded-full h-4 min-w-[16px] px-1 flex items-center justify-center shadow-xs">
+                {cartItems.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)}
+              </span>
+            </div>
+            <div className="text-left leading-tight hidden xs:block">
+              <div className="text-[10px] font-medium text-emerald-100 uppercase tracking-wide">আপনার কার্ট</div>
+              <div className="text-sm font-black text-white">
+                {currencySymbol} {cartItems.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.quantity) || 1)), 0).toLocaleString()}
+              </div>
+            </div>
+            <span className="ml-1 text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full group-hover:bg-white/30 transition-colors">
+              দেখুন &rarr;
+            </span>
+          </button>
         </div>
       )}
 

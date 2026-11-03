@@ -43,6 +43,7 @@ import TailoringModal from './components/TailoringModal';
 import FabricWastageModal from './components/FabricWastageModal';
 import BackupRestoreModal from './components/BackupRestoreModal';
 import AdminPinModal from './components/AdminPinModal';
+import CartDrawer from './components/CartDrawer';
 import { isAdminUser } from './utils/permissionUtils';
 import { isFabricUnit, calculateThanBreakdown, formatFabricQuantity } from './utils/fabricUtils';
 import {
@@ -446,6 +447,7 @@ export default function App() {
 
   const [isCustomersModalOpen, setIsCustomersModalOpen] = useState(false);
   const [isCustomerLedgerModalOpen, setIsCustomerLedgerModalOpen] = useState(false);
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
   const [isAbandonedCartModalOpen, setIsAbandonedCartModalOpen] = useState(false);
@@ -4692,6 +4694,7 @@ export default function App() {
         isSoundActive={isSoundActive}
         onToggleSound={handleToggleSound}
         currentView={currentView}
+        onOpenCartDrawer={() => setIsCartDrawerOpen(true)}
       />
 
       {/* মূল বডি লেআউট: স্থায়ী সাইডবার প্যানেল (শুধুমাত্র এডমিনের জন্য) এবং মূল অ্যাপ্লিকেশন কন্টেন্ট */}
@@ -4711,6 +4714,7 @@ export default function App() {
             cartCount={Array.isArray(cart) ? cart.length : 0}
             cartTotal={Array.isArray(cart) ? cart.reduce((a, b) => a + (Number(b.sellingPrice) || 0) * (Number(b.quantity) || 0), 0) : 0}
             currencySymbol={settings.CurrencySymbol || '৳'}
+            onOpenCartDrawer={() => setIsCartDrawerOpen(true)}
             lowStockCount={lowStockCount}
             godownLowStockCount={godownLowStockCount}
             pendingOrdersCount={pendingOrdersCount}
@@ -4788,6 +4792,9 @@ export default function App() {
                 products={products}
                 currencySymbol={settings.CurrencySymbol || '৳'}
                 onAddToCart={handleAddToCart}
+                onUpdateCartQuantity={handleUpdateQuantity}
+                onRemoveFromCart={handleRemoveItem}
+                onOpenCartDrawer={() => setIsCartDrawerOpen(true)}
                 cartItems={cart}
                 onOpenProductDetails={handleOpenProductDetails}
                 onOpenInvoiceLookup={handleOpenInvoiceLookup}
@@ -5864,6 +5871,25 @@ export default function App() {
         users={users}
         settings={settings}
         actionDescription={adminPinActionDescription}
+      />
+
+      {/* Fastkart Offcanvas Cart Drawer */}
+      <CartDrawer
+        isOpen={isCartDrawerOpen}
+        onClose={() => setIsCartDrawerOpen(false)}
+        cartItems={cart}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        taxRatePercent={settings.TaxRatePercent || 0}
+        onUpdateQuantity={handleUpdateQuantity}
+        onRemoveItem={handleRemoveItem}
+        onClearCart={handleClearCart}
+        onNavigateToCheckout={() => {
+          setIsCartDrawerOpen(false);
+          setCurrentView('checkout');
+        }}
+        discountAmount={discountAmount}
+        setDiscountAmount={setDiscountAmount}
+        coupons={coupons}
       />
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}

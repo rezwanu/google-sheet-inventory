@@ -56,6 +56,7 @@ export default function Navbar({
   isSoundActive = true,
   onToggleSound,
   currentView = 'pos',
+  onOpenCartDrawer,
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
@@ -162,17 +163,23 @@ export default function Navbar({
 
             <button
               type="button"
-              onClick={() => onNavigate && onNavigate('cart')}
+              onClick={() => {
+                if (onOpenCartDrawer) {
+                  onOpenCartDrawer();
+                } else if (onNavigate) {
+                  onNavigate('cart');
+                }
+              }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 currentView === 'cart' || currentView === 'checkout'
-                  ? 'bg-white text-indigo-600 shadow-xs'
+                  ? 'bg-white text-[#0da487] shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <ShoppingCart className="w-3.5 h-3.5" />
               <span>শপিং কার্ট</span>
               {cartCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-indigo-600 text-white ml-0.5">
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-[#0da487] text-white ml-0.5">
                   {cartCount}
                 </span>
               )}
@@ -315,15 +322,21 @@ export default function Navbar({
             {/* সর্বজনীন শপিং কার্ট বাটন (মোবাইল ও ট্যাবলেট সহ সবার জন্য) */}
             <button
               type="button"
-              onClick={() => onNavigate && onNavigate('cart')}
+              onClick={() => {
+                if (onOpenCartDrawer) {
+                  onOpenCartDrawer();
+                } else if (onNavigate) {
+                  onNavigate('cart');
+                }
+              }}
               title={`শপিং কার্ট (${cartCount}টি পণ্য)`}
-              aria-label="শপিং কার্ট পেজে যান"
+              aria-label="শপিং কার্ট খুলুন"
               className={`p-2 rounded-xl transition-all active:scale-95 cursor-pointer relative flex items-center justify-center ${
                 currentView === 'cart' || currentView === 'checkout'
-                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/25 ring-2 ring-indigo-600/30'
+                  ? 'bg-[#0da487] text-white shadow-md shadow-emerald-600/25 ring-2 ring-emerald-500/30'
                   : cartCount > 0
-                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20'
-                  : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-100 border border-slate-200/80'
+                  ? 'bg-[#0da487] text-white shadow-md shadow-emerald-600/20'
+                  : 'text-slate-600 hover:text-[#0da487] hover:bg-slate-100 border border-slate-200/80'
               }`}
             >
               <ShoppingCart className="w-4 h-4 sm:w-4.5 sm:h-4.5" />

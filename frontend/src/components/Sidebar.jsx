@@ -93,6 +93,7 @@ export default function Sidebar({
   fabricWastageCount = 0,
   onOpenBackupModal,
   returnsCount = 0,
+  onOpenCartDrawer,
   transfersInTransitCount = 0,
   isRegisterOpen = false,
   expensesCount = 0,
@@ -202,8 +203,14 @@ export default function Sidebar({
           subTitle: 'আইটেম তালিকা ও বিল প্রস্তুত',
           icon: ShoppingCart,
           isActive: currentView === 'cart' || currentView === 'checkout',
-          onClick: () => onNavigate && onNavigate('cart'),
-          badge: cartCount > 0 ? { text: `${cartCount}`, color: 'bg-indigo-600 text-white font-bold' } : null
+          onClick: () => {
+            if (onOpenCartDrawer) {
+              onOpenCartDrawer();
+            } else if (onNavigate) {
+              onNavigate('cart');
+            }
+          },
+          badge: cartCount > 0 ? { text: `${cartCount}`, color: 'bg-[#0da487] text-white font-bold' } : null
         },
         {
           id: 'order_management',
@@ -787,13 +794,19 @@ export default function Sidebar({
 
               <button
                 type="button"
-                onClick={() => handleAction(() => onNavigate && onNavigate('cart'))}
+                onClick={() => handleAction(() => {
+                  if (onOpenCartDrawer) {
+                    onOpenCartDrawer();
+                  } else if (onNavigate) {
+                    onNavigate('cart');
+                  }
+                })}
                 className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-center transition-all cursor-pointer relative ${
                   currentView === 'cart' || currentView === 'checkout'
-                    ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                    ? 'bg-[#0da487] text-white shadow-xs font-bold'
                     : 'text-slate-700 hover:bg-white hover:text-slate-900'
                 }`}
-                title="শপিং কার্ট পেজ"
+                title="শপিং কার্ট"
               >
                 <ShoppingCart className="w-3.5 h-3.5 mb-0.5" />
                 <span className="text-[10px] font-bold truncate w-full">কার্ট</span>
