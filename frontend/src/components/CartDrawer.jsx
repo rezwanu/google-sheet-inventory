@@ -220,7 +220,7 @@ export default function CartDrawer({
                       {/* একক দর ও মোট দর */}
                       <div className="flex items-baseline space-x-1.5 mt-1">
                         <span className="text-xs font-black text-slate-900">
-                          {currencySymbol}{itemTotal.toLocaleString('en-US')}
+                          {currencySymbol}{(itemTotal || 0).toLocaleString('en-US')}
                         </span>
                         <span className="text-[10px] text-slate-400">
                           ({currencySymbol}{item.sellingPrice} / {item.unit || 'টি'})
@@ -314,17 +314,17 @@ export default function CartDrawer({
               <div className="space-y-1 text-xs text-slate-600">
                 <div className="flex justify-between">
                   <span>মোট বিক্রয়মূল্য</span>
-                  <span className="font-bold text-slate-800">{currencySymbol}{subTotal.toLocaleString('en-US')}</span>
+                  <span className="font-bold text-slate-800">{currencySymbol}{(subTotal || 0).toLocaleString('en-US')}</span>
                 </div>
                 {effectiveDiscount > 0 && (
                   <div className="flex justify-between text-emerald-700 font-bold">
                     <span>বিশেষ ছাড়</span>
-                    <span>-{currencySymbol}{effectiveDiscount.toLocaleString('en-US')}</span>
+                    <span>-{currencySymbol}{(effectiveDiscount || 0).toLocaleString('en-US')}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm sm:text-base font-black text-slate-900 pt-1.5 border-t border-slate-200">
                   <span>সর্বমোট প্রদেয়</span>
-                  <span className="text-emerald-700">{currencySymbol}{grandTotal.toLocaleString('en-US')}</span>
+                  <span className="text-emerald-700">{currencySymbol}{(grandTotal || 0).toLocaleString('en-US')}</span>
                 </div>
               </div>
 

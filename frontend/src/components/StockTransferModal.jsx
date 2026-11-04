@@ -464,6 +464,8 @@ export default function StockTransferModal({
       fabricGodownThans,
       generalGodownPcs,
       fabricGodownYards,
+      fabricShopYards,
+      generalShopPcs,
       fabricGodownValuation,
       generalGodownValuation,
       totalGodownValuation,
@@ -2441,7 +2443,7 @@ export default function StockTransferModal({
                         </span>
                       </div>
                       <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
-                        {stockKpis.totalShop.toLocaleString('bn-BD')} {stockKpis.fabricShopYards > 0 ? <span className="text-xs font-bold text-slate-500">গজ</span> : <span className="text-xs font-bold text-slate-500">আইটেম</span>}
+                        {(stockKpis.totalShop || 0).toLocaleString('bn-BD')} {(stockKpis.fabricShopYards || 0) > 0 ? <span className="text-xs font-bold text-slate-500">গজ</span> : <span className="text-xs font-bold text-slate-500">আইটেম</span>}
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-2">
                         <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
@@ -2467,7 +2469,7 @@ export default function StockTransferModal({
                         </span>
                       </div>
                       <div className="text-2xl sm:text-3xl font-black text-indigo-700 font-mono">
-                        {stockKpis.fabricShopYards.toLocaleString('bn-BD')} <span className="text-xs font-bold text-slate-500">গজ</span>
+                        {(stockKpis.fabricShopYards || 0).toLocaleString('bn-BD')} <span className="text-xs font-bold text-slate-500">গজ</span>
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-2">
                         <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
@@ -2563,11 +2565,11 @@ export default function StockTransferModal({
                         <>
                           <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
                             <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
-                              {stockKpis.fabricGodownThans.toLocaleString('bn-BD')} <span className="text-xs font-bold text-[#0da487]">থান</span>
+                              {(stockKpis.fabricGodownThans || 0).toLocaleString('bn-BD')} <span className="text-xs font-bold text-[#0da487]">থান</span>
                             </div>
                             <span className="text-sm font-black text-slate-300">+</span>
                             <div className="text-2xl sm:text-3xl font-black text-slate-800 font-mono tracking-tight">
-                              {stockKpis.generalGodownPcs.toLocaleString('bn-BD')} <span className="text-xs font-bold text-slate-500">Pcs</span>
+                              {(stockKpis.generalGodownPcs || 0).toLocaleString('bn-BD')} <span className="text-xs font-bold text-slate-500">Pcs</span>
                             </div>
                           </div>
 
@@ -2585,7 +2587,7 @@ export default function StockTransferModal({
                         </>
                       ) : (
                         <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
-                          {stockKpis.totalGodown.toLocaleString('bn-BD')}{' '}
+                          {(stockKpis.totalGodown || 0).toLocaleString('bn-BD')}{' '}
                           <span className="text-xs font-bold text-slate-500">
                             {stockKpis.fabricGodownThans > 0 ? 'থান' : (stockKpis.generalGodownPcs > 0 ? 'Pcs' : 'আইটেম')}
                           </span>
@@ -2598,12 +2600,12 @@ export default function StockTransferModal({
                         </span>
                         {stockKpis.fabricGodownYards > 0 && (
                           <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-teal-50 text-teal-800 border border-teal-200/80">
-                            📏 মোট {stockKpis.fabricGodownYards.toLocaleString('bn-BD')} গজ
+                            📏 মোট {(stockKpis.fabricGodownYards || 0).toLocaleString('bn-BD')} গজ
                           </span>
                         )}
                         {stockKpis.generalGodownPcs > 0 && stockKpis.fabricGodownThans > 0 && (
                           <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-800 border border-slate-200/80">
-                            📦 {stockKpis.generalGodownPcs.toLocaleString('bn-BD')} পিস রেডি
+                            📦 {(stockKpis.generalGodownPcs || 0).toLocaleString('bn-BD')} পিস রেডি
                           </span>
                         )}
                       </div>
@@ -2627,10 +2629,10 @@ export default function StockTransferModal({
                         {stockKpis.fabricGodownValuation > 0 && stockKpis.generalGodownValuation > 0 ? (
                           <>
                             <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60 font-mono">
-                              🧵 কাপড়: {currencySymbol}{Math.round(stockKpis.fabricGodownValuation).toLocaleString('bn-BD')}
+                              🧵 কাপড়: {currencySymbol}{Math.round(stockKpis.fabricGodownValuation || 0).toLocaleString('bn-BD')}
                             </span>
                             <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-slate-100 text-slate-800 border border-slate-200/80 font-mono">
-                              📦 পিস: {currencySymbol}{Math.round(stockKpis.generalGodownValuation).toLocaleString('bn-BD')}
+                              📦 পিস: {currencySymbol}{Math.round(stockKpis.generalGodownValuation || 0).toLocaleString('bn-BD')}
                             </span>
                           </>
                         ) : (
