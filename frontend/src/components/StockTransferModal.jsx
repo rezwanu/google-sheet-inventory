@@ -108,7 +108,8 @@ export default function StockTransferModal({
   onEditProduct,
   onDirectGodownToShopTransfer,
   variantAttributes = [],
-  onAddVariantOption
+  onAddVariantOption,
+  onOpenFabricWastageModal
 }) {
   // প্রধান ট্যাব নেভিগেশন: 'overview' | 'transfers' | 'godown_outflow' | 'shop_outflow'
   const [activeMainTab, setActiveMainTab] = useState(() => {
@@ -2950,6 +2951,18 @@ export default function StockTransferModal({
 
                     {/* এক্সেল ও শিট অ্যাকশন বাটনসমূহ */}
                     <div className="flex items-center justify-end space-x-2 shrink-0">
+                      {onOpenFabricWastageModal && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenFabricWastageModal()}
+                          className="px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
+                          title="কাপড়ের ছাঁট ও ড্যামেজ হিসাব ট্র্যাকার ওপেন করুন"
+                        >
+                          <Scissors className="w-4 h-4 text-amber-700" />
+                          <span>ছাঁট ট্র্যাকার</span>
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => exportLocationStockExcelCSV(products)}
@@ -3247,9 +3260,18 @@ export default function StockTransferModal({
                                                 )}
 
                                                 {isEffectiveRemnant && (
-                                                  <span className="inline-flex items-center text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300 font-bold animate-pulse text-[10.5px]">
-                                                    ✂️ শেষ ছাঁট
-                                                  </span>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => onOpenFabricWastageModal && onOpenFabricWastageModal({
+                                                      ProductID: p.ProductID,
+                                                      ProductName: p.ProductName,
+                                                      remnantYards: effectiveShopCutYards
+                                                    })}
+                                                    className="inline-flex items-center text-amber-900 bg-amber-100 hover:bg-amber-200 px-2 py-0.5 rounded-md border border-amber-300 font-bold animate-pulse text-[10.5px] cursor-pointer transition-colors"
+                                                    title="এই কাপড়ের ছাঁট রেকর্ড বা বান্ডেল তৈরি করতে ক্লিক করুন"
+                                                  >
+                                                    ✂️ শেষ ছাঁট (রেকর্ড)
+                                                  </button>
                                                 )}
                                                 {isEffectiveNeedsRestock && (
                                                   <span className="inline-flex items-center text-rose-800 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-300 font-bold animate-pulse text-[10.5px]">
@@ -3488,6 +3510,20 @@ export default function StockTransferModal({
                                           >
                                             <SlidersHorizontal className="w-3.5 h-3.5" />
                                           </button>
+                                          {isThan && onOpenFabricWastageModal && (
+                                            <button
+                                              type="button"
+                                              onClick={() => onOpenFabricWastageModal({
+                                                ProductID: p.ProductID,
+                                                ProductName: p.ProductName,
+                                                Barcode: p.Barcode
+                                              })}
+                                              className="p-1.5 hover:bg-white hover:text-amber-700 text-slate-500 rounded-lg text-xs transition-colors cursor-pointer"
+                                              title="এই কাপড়ের ছাঁট বা ড্যামেজ রেকর্ড করুন"
+                                            >
+                                              <Scissors className="w-3.5 h-3.5" />
+                                            </button>
+                                          )}
                                           {onEditProduct && (
                                             <button
                                               type="button"
@@ -4025,9 +4061,18 @@ export default function StockTransferModal({
                                                 </span>
                                               )}
                                               {bd.isRemnant && (
-                                                <span className="inline-flex items-center text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300 font-bold animate-pulse text-[10.5px]">
-                                                  ✂️ শেষ ছাঁট
-                                                </span>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => onOpenFabricWastageModal && onOpenFabricWastageModal({
+                                                    ProductID: item.parentProduct?.ProductID,
+                                                    ProductName: item.productName,
+                                                    remnantYards: bd.runningCutYards
+                                                  })}
+                                                  className="inline-flex items-center text-amber-900 bg-amber-100 hover:bg-amber-200 px-2 py-0.5 rounded-md border border-amber-300 font-bold animate-pulse text-[10.5px] cursor-pointer transition-colors"
+                                                  title="এই কাপড়ের ছাঁট রেকর্ড বা বান্ডেল তৈরি করতে ক্লিক করুন"
+                                                >
+                                                  ✂️ শেষ ছাঁট (রেকর্ড)
+                                                </button>
                                               )}
                                               {bd.needsRestock && item.godownStock > 0 && (
                                                 <span className="inline-flex items-center text-rose-800 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-300 font-bold animate-pulse text-[10.5px]">

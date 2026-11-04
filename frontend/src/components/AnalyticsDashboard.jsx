@@ -640,7 +640,12 @@ export default function AnalyticsDashboard({
       }
 
       if (matches) {
-        periodFabricLoss += (Number(fw.LossAmount) || 0);
+        // যদি ক্লিয়ারেন্স বান্ডেল হিসেবে পিওএস-এ বিক্রি হয়ে থাকে, তবে ক্ষতি = Math.max(0, ক্রয়মূল্য - বিক্রিত মূল্য)
+        let effectiveLoss = Number(fw.LossAmount) || 0;
+        if (fw.BundleStatus === 'Sold' && fw.RealizedSellingPrice !== undefined) {
+          effectiveLoss = Math.max(0, effectiveLoss - Number(fw.RealizedSellingPrice));
+        }
+        periodFabricLoss += effectiveLoss;
       }
     });
 

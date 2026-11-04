@@ -204,6 +204,12 @@ export default function CartDrawer({
 
                       {/* ফেব্রিক ও ভ্যারিয়েন্ট বিবরণ */}
                       <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                        {(item.IsClearanceBundle || (item.name && item.name.includes('[ছাঁট প্যাক]'))) && (
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold flex items-center space-x-0.5">
+                            <Scissors className="w-2.5 h-2.5 text-amber-700" />
+                            <span>ছাঁট প্যাক</span>
+                          </span>
+                        )}
                         {item.variantName && (
                           <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">
                             {item.variantName}

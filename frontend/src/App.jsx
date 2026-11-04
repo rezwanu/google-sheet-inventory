@@ -307,6 +307,7 @@ export default function App() {
   });
   const [isTailoringModalOpen, setIsTailoringModalOpen] = useState(false);
   const [isFabricWastageModalOpen, setIsFabricWastageModalOpen] = useState(false);
+  const [fabricWastagePreloadData, setFabricWastagePreloadData] = useState(null);
   const [tailoringPreloadData, setTailoringPreloadData] = useState(null);
 
   // ফেজ ৪: সাপ্লায়ার ও ভেন্ডর, পারচেজ অর্ডার এবং লেজার স্টেট
@@ -1644,59 +1645,131 @@ export default function App() {
   };
 
   // ==========================================================================
-  // ফেজ ২: থান কাপড়ের ছাঁট ও ড্যামেজ ট্র্যাকার হ্যান্ডলারসমূহ
+  // ফেজ ২: থান কাপড়ের ছাঁট ও ড্যামেজ ট্র্যাকার হ্যান্ডলারসমূহ (Full Dual-Location & Lifecycle)
   // ==========================================================================
+
+  const handleOpenFabricWastage = (initialData = null) => {
+    setFabricWastagePreloadData(initialData);
+    setIsFabricWastageModalOpen(true);
+  };
 
   const handleRecordFabricWastage = (payload) => {
     let updatedProds = [...products];
+    const isGodown = payload.Location === 'Godown';
 
-    // ১. প্রোডাক্ট স্টক থেকে মোট নষ্ট/ছাঁট গজ বিয়োগ করা
-    if (payload.ProductID && payload.TotalYards > 0) {
+    // ১. প্রোডাক্ট ও ভ্যারিয়েন্ট স্টক কর্তন (গোডাউন বনাম দোকান)
+    if (payload.ProductID && (payload.TotalYards > 0 || payload.Thans > 0)) {
       const pIdx = updatedProds.findIndex((p) => String(p.ProductID || p.id).trim() === String(payload.ProductID).trim());
       if (pIdx !== -1) {
         const curP = updatedProds[pIdx];
-        const curStock = Number(curP.StockQuantity !== undefined ? curP.StockQuantity : (curP.CurrentStock || curP.stock || 0));
-        const newStock = Math.max(0, Math.round((curStock - payload.TotalYards) * 10000) / 10000);
-        updatedProds[pIdx] = {
-          ...curP,
-          StockQuantity: newStock,
-          CurrentStock: newStock,
-          stock: newStock,
-          UpdatedAt: new Date().toISOString()
-        };
 
-        // দোকান স্টক কমার খতিয়ানে ছাঁট/ওয়েস্টেজ এন্ট্রি সংরক্ষণ
-        recordStockMovementLocally({
-          location: 'Shop',
-          type: 'WASTAGE',
-          reasonBangla: `থান কাপড়ের ছাঁট/টুকরা অবশিষ্টাংশ কর্তন (${payload.Reason || 'ছাঁট'})`,
-          productId: curP.ProductID,
-          productName: curP.ProductName,
-          barcode: curP.Barcode,
-          unit: curP.Unit || 'গজ',
-          quantity: payload.TotalYards,
-          previousStock: curStock,
-          remainingStock: newStock,
-          referenceNo: payload.WastageID || '',
-          operatorName: activeUser?.FullName || 'Admin',
-          notes: payload.Reason || ''
-        });
+        if (isGodown) {
+          // গোডাউন স্টক কর্তন (থানে)
+          const thansToDeduct = Number(payload.Thans) || Math.round((Number(payload.TotalYards) / (Number(curP.YardsPerThan) || 25)) * 100) / 100 || 1;
+          const curGStock = Number(curP.GodownStock || 0);
+          const newGStock = Math.max(0, curGStock - thansToDeduct);
+
+          let updatedVariants = curP.Variants;
+          if (payload.VariantID && Array.isArray(curP.Variants)) {
+            updatedVariants = curP.Variants.map(v => {
+              if (String(v.VariantID || v.variantId).trim() === String(payload.VariantID).trim()) {
+                const vGStk = Number(v.GodownStock || 0);
+                return { ...v, GodownStock: Math.max(0, vGStk - thansToDeduct) };
+              }
+              return v;
+            });
+          }
+
+          updatedProds[pIdx] = {
+            ...curP,
+            GodownStock: newGStock,
+            Variants: updatedVariants,
+            UpdatedAt: new Date().toISOString()
+          };
+
+          recordStockMovementLocally({
+            location: 'Godown',
+            type: 'WASTAGE',
+            reasonBangla: `গোডাউন কাপড়ের ড্যামেজ/নষ্ট কর্তন (${payload.Reason || 'ড্যামেজ'})`,
+            productId: curP.ProductID,
+            productName: curP.ProductName,
+            barcode: curP.Barcode,
+            unit: 'থান',
+            quantity: thansToDeduct,
+            previousStock: curGStock,
+            remainingStock: newGStock,
+            referenceNo: payload.WastageID || '',
+            operatorName: activeUser?.FullName || 'Admin',
+            notes: payload.Reason || ''
+          });
+        } else {
+          // দোকান স্টক কর্তন (গজে)
+          const yardsToDeduct = Number(payload.TotalYards) || 0;
+          const curStock = Number(curP.StockQuantity !== undefined ? curP.StockQuantity : (curP.CurrentStock || curP.stock || 0));
+          const newStock = Math.max(0, Math.round((curStock - yardsToDeduct) * 10000) / 10000);
+
+          let updatedVariants = curP.Variants;
+          if (payload.VariantID && Array.isArray(curP.Variants)) {
+            updatedVariants = curP.Variants.map(v => {
+              if (String(v.VariantID || v.variantId).trim() === String(payload.VariantID).trim()) {
+                const vStk = Number(v.StockQuantity || 0);
+                return { ...v, StockQuantity: Math.max(0, Math.round((vStk - yardsToDeduct) * 10000) / 10000) };
+              }
+              return v;
+            });
+          }
+
+          updatedProds[pIdx] = {
+            ...curP,
+            StockQuantity: newStock,
+            CurrentStock: newStock,
+            stock: newStock,
+            Variants: updatedVariants,
+            UpdatedAt: new Date().toISOString()
+          };
+
+          recordStockMovementLocally({
+            location: 'Shop',
+            type: 'WASTAGE',
+            reasonBangla: `দোকান থান কাপড়ের ছাঁট/টুকরা অবশিষ্টাংশ কর্তন (${payload.Reason || 'ছাঁট'})`,
+            productId: curP.ProductID,
+            productName: curP.ProductName,
+            barcode: curP.Barcode,
+            unit: curP.Unit || 'গজ',
+            quantity: yardsToDeduct,
+            previousStock: curStock,
+            remainingStock: newStock,
+            referenceNo: payload.WastageID || '',
+            operatorName: activeUser?.FullName || 'Admin',
+            notes: payload.Reason || ''
+          });
+        }
+
         setStockMovements(getLocalStockMovements());
       }
     }
 
     // ২. যদি ক্লিয়ারেন্স ছাঁট প্যাক হিসেবে ক্যাটালগে যুক্ত করতে চায়
     if (payload.CreateBundle && payload.BundlePrice > 0) {
+      const bundleId = payload.BundleProductID || `BUNDLE-${Date.now().toString().slice(-6)}`;
+      const bundleBarcode = payload.BundleBarcode || `BND${Date.now().toString().slice(-6)}`;
+      payload.BundleProductID = bundleId;
+      payload.BundleBarcode = bundleBarcode;
+      payload.BundleStatus = 'Available';
+
       const newBundleItem = {
-        ProductID: `BUNDLE-${Date.now().toString().slice(-6)}`,
+        ProductID: bundleId,
         ProductName: `[ছাঁট প্যাক] ${payload.ProductName} (${payload.TotalYards} গজ)`,
         Category: 'ছাঁট ও বান্ডিল',
         CostPrice: payload.LossAmount,
         SellingPrice: payload.BundlePrice,
         StockQuantity: 1,
         CurrentStock: 1,
+        stock: 1,
         Unit: 'প্যাক',
-        Barcode: `BND${Date.now().toString().slice(-6)}`,
+        Barcode: bundleBarcode,
+        IsClearanceBundle: true,
+        RemnantWastageID: payload.WastageID,
         Description: `থানের শেষ অবশিষ্টাংশ ছাঁট প্যাক (${payload.TotalYards} গজ)`
       };
       updatedProds = [newBundleItem, ...updatedProds];
@@ -1714,7 +1787,7 @@ export default function App() {
     logAuditEventLocally({
       ActionType: 'RECORD_FABRIC_WASTAGE',
       Module: 'Inventory',
-      Details: `কাপড়ের অপচয় রেকর্ড: ${payload.ProductName}, পরিমাণ: ${payload.TotalYards} গজ, ক্ষতি: ৳${payload.LossAmount}, কারণ: ${payload.Reason}`,
+      Details: `কাপড়ের অপচয় রেকর্ড: ${payload.ProductName}, পরিমাণ: ${payload.TotalYards} গজ (${payload.Location || 'Shop'}), ক্ষতি: ৳${payload.LossAmount}, কারণ: ${payload.Reason}`,
       UserID: activeUser?.UserID || 'USER-ADMIN-01',
       UserName: activeUser?.FullName || 'Admin'
     });
@@ -1725,45 +1798,112 @@ export default function App() {
   const handleDeleteFabricWastage = (recordId) => {
     const list = getLocalFabricWastage();
     const target = list.find((r) => (r.WastageID || r.wastageId) === recordId);
-    if (target && target.ProductID && Number(target.TotalYards) > 0) {
-      const pIdx = products.findIndex((p) => String(p.ProductID || p.id).trim() === String(target.ProductID).trim());
-      if (pIdx !== -1) {
-        const curP = products[pIdx];
-        const curStock = Number(curP.StockQuantity !== undefined ? curP.StockQuantity : (curP.CurrentStock || curP.stock || 0));
-        const restoredStock = Math.round((curStock + Number(target.TotalYards)) * 10000) / 10000;
-        const updatedProds = [...products];
-        updatedProds[pIdx] = {
-          ...curP,
-          StockQuantity: restoredStock,
-          CurrentStock: restoredStock,
-          stock: restoredStock,
-          UpdatedAt: new Date().toISOString()
-        };
-        setProducts(updatedProds);
-        saveLocalProducts(updatedProds);
+    if (!target) return;
 
-        // দোকান স্টকে ছাঁট কাপড় পুনরুদ্ধার খতিয়ান সংরক্ষণ
-        recordStockMovementLocally({
-          location: 'Shop',
-          type: 'CANCEL_RESTORE',
-          reasonBangla: `ছাঁট/ড্যামেজ রেকর্ড বাতিল হওয়ায় দোকানে কাপড় ফেরত`,
-          productId: curP.ProductID,
-          productName: curP.ProductName,
-          barcode: curP.Barcode,
-          unit: curP.Unit || 'গজ',
-          quantity: Number(target.TotalYards),
-          previousStock: curStock,
-          remainingStock: restoredStock,
-          referenceNo: target.WastageID || '',
-          operatorName: activeUser?.FullName || 'Admin'
-        });
+    let updatedProds = [...products];
+
+    // ১. ক্লিয়ারেন্স বান্ডেল প্রোডাক্ট তৈরি করা থাকলে তা ক্যাটালগ থেকে মুছে ফেলা (ঘোস্ট বান্ডেল প্রিভেনশন)
+    if (target.CreateBundle || target.BundleProductID) {
+      updatedProds = updatedProds.filter(p =>
+        p.ProductID !== target.BundleProductID &&
+        p.RemnantWastageID !== recordId &&
+        !(p.Barcode && target.BundleBarcode && p.Barcode === target.BundleBarcode)
+      );
+    }
+
+    // ২. স্টক পুনরুদ্ধার (গোডাউন বনাম দোকান অনুযায়ী)
+    if (target.ProductID) {
+      const pIdx = updatedProds.findIndex((p) => String(p.ProductID || p.id).trim() === String(target.ProductID).trim());
+      if (pIdx !== -1) {
+        const curP = updatedProds[pIdx];
+        const isGodown = target.Location === 'Godown';
+
+        if (isGodown) {
+          const gThansToRestore = Number(target.Thans) || Math.round((Number(target.TotalYards) / (Number(curP.YardsPerThan) || 25)) * 100) / 100 || 1;
+          const curGStock = Number(curP.GodownStock || 0);
+          const restoredGStock = curGStock + gThansToRestore;
+
+          let updatedVariants = curP.Variants;
+          if (target.VariantID && Array.isArray(curP.Variants)) {
+            updatedVariants = curP.Variants.map(v => {
+              if (String(v.VariantID || v.variantId).trim() === String(target.VariantID).trim()) {
+                return { ...v, GodownStock: (Number(v.GodownStock) || 0) + gThansToRestore };
+              }
+              return v;
+            });
+          }
+
+          updatedProds[pIdx] = {
+            ...curP,
+            GodownStock: restoredGStock,
+            Variants: updatedVariants,
+            UpdatedAt: new Date().toISOString()
+          };
+
+          recordStockMovementLocally({
+            location: 'Godown',
+            type: 'CANCEL_RESTORE',
+            reasonBangla: `গোডাউন ড্যামেজ রেকর্ড বাতিল করায় গোডাউনে কাপড় ফেরত`,
+            productId: curP.ProductID,
+            productName: curP.ProductName,
+            barcode: curP.Barcode,
+            unit: 'থান',
+            quantity: gThansToRestore,
+            previousStock: curGStock,
+            remainingStock: restoredGStock,
+            referenceNo: target.WastageID || '',
+            operatorName: activeUser?.FullName || 'Admin'
+          });
+        } else {
+          const yardsToRestore = Number(target.TotalYards) || 0;
+          const curStock = Number(curP.StockQuantity !== undefined ? curP.StockQuantity : (curP.CurrentStock || curP.stock || 0));
+          const restoredStock = Math.round((curStock + yardsToRestore) * 10000) / 10000;
+
+          let updatedVariants = curP.Variants;
+          if (target.VariantID && Array.isArray(curP.Variants)) {
+            updatedVariants = curP.Variants.map(v => {
+              if (String(v.VariantID || v.variantId).trim() === String(target.VariantID).trim()) {
+                return { ...v, StockQuantity: (Number(v.StockQuantity) || 0) + yardsToRestore };
+              }
+              return v;
+            });
+          }
+
+          updatedProds[pIdx] = {
+            ...curP,
+            StockQuantity: restoredStock,
+            CurrentStock: restoredStock,
+            stock: restoredStock,
+            Variants: updatedVariants,
+            UpdatedAt: new Date().toISOString()
+          };
+
+          recordStockMovementLocally({
+            location: 'Shop',
+            type: 'CANCEL_RESTORE',
+            reasonBangla: `ছাঁট/ড্যামেজ রেকর্ড বাতিল হওয়ায় দোকানে কাপড় ফেরত`,
+            productId: curP.ProductID,
+            productName: curP.ProductName,
+            barcode: curP.Barcode,
+            unit: curP.Unit || 'গজ',
+            quantity: yardsToRestore,
+            previousStock: curStock,
+            remainingStock: restoredStock,
+            referenceNo: target.WastageID || '',
+            operatorName: activeUser?.FullName || 'Admin'
+          });
+        }
+
         setStockMovements(getLocalStockMovements());
       }
     }
 
+    setProducts(updatedProds);
+    saveLocalProducts(updatedProds);
+
     deleteFabricWastageLocally(recordId);
     setFabricWastageList(getLocalFabricWastage());
-    showToast('ছাঁট/ড্যামেজ রেকর্ডটি মুছে ফেলা হয়েছে এবং স্টক পুনরুদ্ধার করা হয়েছে।', 'info');
+    showToast('ছাঁট/ড্যামেজ রেকর্ডটি মুছে ফেলা হয়েছে এবং স্টক সফলভাবে পুনরুদ্ধার করা হয়েছে।', 'info');
   };
 
   // কাস্টমারের সাথে দামাদামির জন্য কার্টের পণ্যের বিক্রয়মূল্য পরিবর্তন (ফ্লোর প্রাইস সুরক্ষা সহ)
@@ -2050,6 +2190,35 @@ export default function App() {
 
       saveSaleLocally(completedSaleRecord);
       setSalesHistory([completedSaleRecord, ...salesHistory]);
+
+      // ছাঁট বান্ডেল বিক্রি হলে FabricWastage স্টেটাসে Sold মার্ক করা
+      try {
+        const curWastage = getLocalFabricWastage();
+        let wastageChanged = false;
+        const updatedWastage = curWastage.map(w => {
+          const matchingSaleItem = (saleOrder.items || []).find(it =>
+            it.productId === w.BundleProductID ||
+            (w.BundleBarcode && it.barcode === w.BundleBarcode) ||
+            (it.name && it.name.includes(w.ProductName) && it.name.includes('[ছাঁট প্যাক]'))
+          );
+          if (matchingSaleItem && w.BundleStatus !== 'Sold') {
+            wastageChanged = true;
+            return {
+              ...w,
+              BundleStatus: 'Sold',
+              SoldAt: new Date().toISOString(),
+              RealizedSellingPrice: Number(matchingSaleItem.price || matchingSaleItem.unitPrice || w.BundlePrice || 0)
+            };
+          }
+          return w;
+        });
+        if (wastageChanged) {
+          saveLocalFabricWastage(updatedWastage);
+          setFabricWastageList(updatedWastage);
+        }
+      } catch (err) {
+        console.warn('Error updating wastage bundle status on sale:', err);
+      }
 
       // ২.১ ওমনিচ্যানেল ইউনিফাইড অর্ডার সিস্টেমে ইন-স্টোর (POS) অর্ডার তৈরি ও সেভ করা
       const posOrderRecord = {
@@ -4973,6 +5142,7 @@ export default function App() {
               onEditProduct={handleOpenEditProduct}
               variantAttributes={variantAttributes}
               onAddVariantOption={handleAddVariantOption}
+              onOpenFabricWastageModal={handleOpenFabricWastage}
               initialTab={
                 currentView === 'shop_stock'
                   ? 'shop_stock'
@@ -5265,11 +5435,16 @@ export default function App() {
             <FabricWastageModal
               embedded={true}
               isOpen={true}
-              onClose={() => setCurrentView('pos')}
+              onClose={() => {
+                setFabricWastagePreloadData(null);
+                setCurrentView('pos');
+              }}
               fabricWastageList={fabricWastageList}
               products={products}
               currencySymbol={settings.CurrencySymbol || '৳'}
               activeUser={activeUser}
+              storeSettings={settings}
+              initialProduct={fabricWastagePreloadData}
               onRecordWastage={handleRecordFabricWastage}
               onDeleteWastageRecord={handleDeleteFabricWastage}
             />
@@ -5751,6 +5926,7 @@ export default function App() {
         onEditProduct={handleOpenEditProduct}
         variantAttributes={variantAttributes}
         onAddVariantOption={handleAddVariantOption}
+        onOpenFabricWastageModal={handleOpenFabricWastage}
         initialTab={stockTransferModalConfig.tab || 'overview'}
         initialTransferSubTab={stockTransferModalConfig.subTab || 'new'}
         initialFilter={stockTransferModalConfig.filter || 'ALL'}
@@ -5814,11 +5990,16 @@ export default function App() {
       {isFabricWastageModalOpen && currentView !== 'fabric_wastage' && (
         <FabricWastageModal
           isOpen={isFabricWastageModalOpen}
-          onClose={() => setIsFabricWastageModalOpen(false)}
+          onClose={() => {
+            setFabricWastagePreloadData(null);
+            setIsFabricWastageModalOpen(false);
+          }}
           fabricWastageList={fabricWastageList}
           products={products}
           currencySymbol={settings.CurrencySymbol || '৳'}
           activeUser={activeUser}
+          storeSettings={settings}
+          initialProduct={fabricWastagePreloadData}
           onRecordWastage={handleRecordFabricWastage}
           onDeleteWastageRecord={handleDeleteFabricWastage}
         />
