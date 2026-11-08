@@ -27,7 +27,10 @@ import {
   ShoppingBag,
   HelpCircle,
   Clock,
-  RotateCcw
+  RotateCcw,
+  ChevronDown,
+  ChevronRight,
+  ListFilter
 } from 'lucide-react';
 import { calculateTotalYards, formatFabricQuantity, parseGojGira, calculateThanBreakdown } from '../utils/fabricUtils';
 import { playCashChime, playWarningBeep } from '../utils/soundEffects';
@@ -53,6 +56,8 @@ export default function FabricWastageModal({
   const [typeFilter, setTypeFilter] = useState('ALL'); // 'ALL' | 'Remnant' | 'Damaged'
   const [locationFilter, setLocationFilter] = useState('ALL'); // 'ALL' | 'Shop' | 'Godown'
   const [bundleStatusFilter, setBundleStatusFilter] = useState('ALL'); // 'ALL' | 'Available' | 'Sold'
+  const [recordsViewMode, setRecordsViewMode] = useState('grouped'); // 'grouped' | 'flat'
+  const [expandedGroupIds, setExpandedGroupIds] = useState(new Set());
 
   // নতুন এন্ট্রি ফর্ম স্টেট
   const [location, setLocation] = useState('Shop'); // 'Shop' | 'Godown'
@@ -154,6 +159,32 @@ export default function FabricWastageModal({
     });
     return list;
   }, [fabricProducts]);
+
+  // দোকানে বর্তমানে সক্রিয় শেষ ছাঁট কাপড়ের গ্রুপভিত্তিক খতিয়ান (প্যারেন্ট নামের অধীনে ভ্যারিয়েন্ট তালিকা)
+  const groupedLiveRemnants = useMemo(() => {
+    const groupMap = new Map();
+
+    liveShopRemnants.forEach((item) => {
+      const prodId = String(item.product.ProductID || item.product.id);
+      if (!groupMap.has(prodId)) {
+        groupMap.set(prodId, {
+          productId: prodId,
+          product: item.product,
+          hasVariants: Array.isArray(item.product.Variants) && item.product.Variants.length > 0,
+          totalRemnantYards: 0,
+          totalShopStock: 0,
+          totalGodownStock: Number(item.product.GodownStock || 0),
+          items: []
+        });
+      }
+      const grp = groupMap.get(prodId);
+      grp.items.push(item);
+      grp.totalRemnantYards = Math.round((grp.totalRemnantYards + (Number(item.remnantYards) || 0)) * 10000) / 10000;
+      grp.totalShopStock = Math.round((grp.totalShopStock + (Number(item.shopStock) || 0)) * 10000) / 10000;
+    });
+
+    return Array.from(groupMap.values());
+  }, [liveShopRemnants]);
 
   // ক্লিয়ারেন্স বান্ডেল তালিকা
   const clearanceBundles = useMemo(() => {
@@ -325,6 +356,40 @@ export default function FabricWastageModal({
       return matchQ && matchType && matchLoc;
     });
   }, [fabricWastageList, searchQuery, typeFilter, locationFilter]);
+
+  // পণ্য ও ভ্যারিয়েন্ট অনুযায়ী গ্রুপ করা রেকর্ড তালিকা
+  const groupedWastageRecords = useMemo(() => {
+    const map = new Map();
+    filteredList.forEach((r) => {
+      const pid = String(r.ProductID || r.ProductName || 'unknown').trim();
+      if (!map.has(pid)) {
+        const matchedProd = (products || []).find((p) => String(p.ProductID || p.id).trim() === pid);
+        const hasVars = Boolean(
+          (matchedProd && Array.isArray(matchedProd.Variants) && matchedProd.Variants.length > 0) ||
+          r.VariantID ||
+          r.VariantName
+        );
+
+        map.set(pid, {
+          productId: pid,
+          productName: r.ProductName || matchedProd?.ProductName || 'পণ্য',
+          category: r.Category || matchedProd?.Category || 'থান কাপড়',
+          hasVariants: hasVars,
+          totalYards: 0,
+          totalLoss: 0,
+          records: []
+        });
+      }
+      const grp = map.get(pid);
+      grp.records.push(r);
+      grp.totalYards = Math.round((grp.totalYards + (Number(r.TotalYards) || 0)) * 10000) / 10000;
+      grp.totalLoss += (Number(r.LossAmount) || 0);
+      if (r.VariantID || r.VariantName) {
+        grp.hasVariants = true;
+      }
+    });
+    return Array.from(map.values());
+  }, [filteredList, products]);
 
   // ফিল্টার করা ক্লিয়ারেন্স বান্ডেল তালিকা
   const filteredBundles = useMemo(() => {
@@ -503,7 +568,7 @@ export default function FabricWastageModal({
                 <div className="text-right">
                   <span className="text-xs font-bold text-amber-800">মোট সক্রিয় ছাঁট:</span>
                   <div className="text-xl font-black text-amber-950 font-mono">
-                    {liveShopRemnants.length}টি থান
+                    {liveShopRemnants.length}টি লট ({groupedLiveRemnants.length}টি কাপড়)
                   </div>
                 </div>
               </div>
@@ -519,111 +584,254 @@ export default function FabricWastageModal({
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                  {liveShopRemnants.map(({ key, product: p, variant: v, isVariant, breakdown: bd, remnantYards, shopStock, godownStock, threshold }) => {
-                    const variantLabel = isVariant && v ? (v.ColorName || v.Attributes?.Color || v.Color || v.VariantName || v.name || Object.values(v.Attributes || {})[0] || 'ভ্যারিয়েন্ট') : '';
-                    return (
-                      <div key={key || p.ProductID} className="bg-white p-4 rounded-2xl border border-amber-200/90 shadow-2xs hover:shadow-md transition-all space-y-3">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 uppercase tracking-wide">
-                                {p.Category || 'গজ কাপড়'}
-                              </span>
-                              {variantLabel && (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                  🎨 {variantLabel}
+                <div className="space-y-4">
+                  {groupedLiveRemnants.map((grp) => {
+                    if (grp.hasVariants) {
+                      // ভ্যারিয়েন্টভিত্তিক কাপড়: মূল পণ্যের ব্যানারের নিচে ভ্যারিয়েন্টগুলোর তালিকা
+                      return (
+                        <div key={grp.productId} className="bg-white rounded-2xl border border-amber-200/90 shadow-2xs hover:shadow-xs transition-all overflow-hidden">
+                          {/* প্যারেন্ট কাপড়ের হেডার */}
+                          <div className="p-3.5 sm:p-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-b border-amber-200/70 flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center space-x-2.5">
+                              <div className="p-2 bg-amber-500/20 text-amber-900 rounded-xl">
+                                <Layers className="w-4 h-4 text-amber-800" />
+                              </div>
+                              <div>
+                                <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 uppercase tracking-wide">
+                                    {grp.product.Category || 'থান কাপড়'}
+                                  </span>
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono">
+                                    🎨 {grp.items.length}টি ভ্যারিয়েন্টে ছাঁট
+                                  </span>
+                                </div>
+                                <h4 className="text-sm font-black text-slate-900 mt-1">
+                                  {grp.product.ProductName}
+                                </h4>
+                                <span className="text-[10px] font-mono text-slate-400">
+                                  ID: {grp.product.ProductID} {grp.product.Barcode ? `• #${grp.product.Barcode}` : ''}
                                 </span>
-                              )}
+                              </div>
                             </div>
-                            <h4 className="text-xs font-black text-slate-900 mt-1 line-clamp-1">
-                              {p.ProductName} {variantLabel ? `(${variantLabel})` : ''}
-                            </h4>
-                            <span className="text-[10px] font-mono text-slate-400">
-                              #{v?.Barcode || p.Barcode || p.ProductID}
+
+                            <div className="flex items-center space-x-3 text-right">
+                              <div>
+                                <span className="text-[10.5px] font-bold text-slate-500 block">মোট ছাঁট অবশিষ্টাংশ:</span>
+                                <span className="text-sm font-black text-amber-950 font-mono">
+                                  {formatFabricQuantity(grp.totalRemnantYards, 'গজ', false)}
+                                </span>
+                              </div>
+                              <div className="pl-3 border-l border-amber-200">
+                                <span className="text-[10.5px] font-bold text-slate-500 block">দোকানে মোট কাপড়:</span>
+                                <span className="text-xs font-bold text-slate-800 font-mono">
+                                  {Number(grp.totalShopStock || 0).toLocaleString('bn-BD')} গজ
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* প্যারেন্ট কাপড়ের আন্ডারে ভ্যারিয়েন্টগুলোর তালিকা */}
+                          <div className="p-3.5 sm:p-4 bg-slate-50/50 space-y-2.5">
+                            <div className="text-[11px] font-bold text-slate-600 flex items-center space-x-1.5 px-0.5">
+                              <Scissors className="w-3.5 h-3.5 text-amber-600" />
+                              <span>এই থানের ছাঁট হওয়া ভ্যারিয়েন্টসমূহ ({grp.items.length}টি):</span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {grp.items.map(({ key, product: p, variant: v, breakdown: bd, remnantYards, shopStock, godownStock, threshold }) => {
+                                const variantLabel = v ? (v.ColorName || v.Attributes?.Color || v.Color || v.VariantName || v.name || Object.values(v.Attributes || {})[0] || 'ভ্যারিয়েন্ট') : '';
+                                const effSellingPrice = Number(v?.SellingPrice || v?.sellingPrice || p.SellingPrice || p.Price || 100);
+
+                                return (
+                                  <div key={key} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs hover:border-amber-300 transition-all space-y-2.5">
+                                    <div className="flex items-start justify-between">
+                                      <div>
+                                        <span className="px-2 py-0.5 rounded-md text-xs font-black bg-emerald-50 text-[#0b8b72] border border-emerald-200 inline-flex items-center space-x-1">
+                                          <span>🎨</span>
+                                          <span>{variantLabel}</span>
+                                        </span>
+                                        <span className="text-[10px] font-mono text-slate-400 block mt-1">
+                                          #{v?.Barcode || p.Barcode || '—'}
+                                        </span>
+                                      </div>
+                                      <span className="p-1 bg-amber-50 text-amber-700 rounded-md">
+                                        <Scissors className="w-3.5 h-3.5" />
+                                      </span>
+                                    </div>
+
+                                    <div className="p-2.5 bg-amber-50/70 rounded-xl border border-amber-200/60 space-y-1">
+                                      <div className="flex items-center justify-between text-xs font-bold text-amber-950">
+                                        <span>✂️ থানের শেষ ছাঁট:</span>
+                                        <span className="text-amber-900 font-mono font-black text-sm">
+                                          {formatFabricQuantity(remnantYards, 'গজ', false)}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-[10.5px] text-slate-600 font-medium pt-1 border-t border-amber-200/50">
+                                        <span>দোকানে মোট গজ:</span>
+                                        <span className="font-mono font-bold text-slate-900">{Number(shopStock || 0).toLocaleString('bn-BD')} গজ</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-[10.5px] text-slate-600 font-medium">
+                                        <span>ছাঁট সতর্কতা সীমা:</span>
+                                        <span className="font-mono text-slate-800">{threshold} গজ</span>
+                                      </div>
+                                    </div>
+
+                                    {bd.needsRestock && (
+                                      <div className="p-1.5 bg-rose-50 text-rose-800 rounded-lg border border-rose-200 text-[10px] font-bold flex items-center space-x-1">
+                                        <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" />
+                                        <span>আস্ত থান নেই! গোডাউনে আছে: {godownStock} থান</span>
+                                      </div>
+                                    )}
+
+                                    <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedProductId(p.ProductID || p.id);
+                                          setSelectedVariantId(v.VariantID || v.variantId || '');
+                                          setLocation('Shop');
+                                          setEntryType('Remnant');
+                                          setGoj(bd.runningCutGojGira.goj !== undefined ? bd.runningCutGojGira.goj : 0);
+                                          setGira(bd.runningCutGojGira.gira !== undefined ? bd.runningCutGojGira.gira : 0);
+                                          setReason('থানের শেষ ছাঁট (End-of-bolt Remnant)');
+                                          setCreateClearanceBundle(true);
+                                          setBundlePrice(Math.round((remnantYards * effSellingPrice) * 0.8));
+                                          setActiveTab('new');
+                                        }}
+                                        className="py-1.5 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10.5px] font-bold transition-all flex items-center justify-center space-x-1 shadow-2xs cursor-pointer"
+                                      >
+                                        <Tag className="w-3 h-3" />
+                                        <span>বান্ডেল তৈরি</span>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setPrintStickerProduct({
+                                            ProductID: p.ProductID || p.id,
+                                            VariantID: v.VariantID || v.variantId || null,
+                                            ProductName: `${p.ProductName} (${variantLabel}) (ছাঁট ${formatFabricQuantity(remnantYards, 'গজ', false)})`,
+                                            Barcode: v?.Barcode || p.Barcode,
+                                            SellingPrice: Math.round(remnantYards * effSellingPrice),
+                                            Price: Math.round(remnantYards * effSellingPrice),
+                                            Unit: 'টুকরা'
+                                          });
+                                        }}
+                                        className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10.5px] font-bold transition-all flex items-center justify-center space-x-1 border border-slate-200 cursor-pointer"
+                                        title="কাউন্টার বিক্রির জন্য ছোট প্রাইস ট্যাগ স্টিকার প্রিন্ট করুন"
+                                      >
+                                        <Printer className="w-3 h-3" />
+                                        <span>ট্যাগ প্রিন্ট</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      // সাধারণ কাপড় (কোনো ভ্যারিয়েন্ট নেই): সরাসরি মূল পণ্যের কার্ড
+                      const item = grp.items[0];
+                      if (!item) return null;
+                      const { breakdown: bd, remnantYards, shopStock, godownStock, threshold } = item;
+                      const p = grp.product;
+                      const effSellingPrice = Number(p.SellingPrice || p.Price || 100);
+
+                      return (
+                        <div key={grp.productId} className="bg-white p-4 rounded-2xl border border-amber-200/90 shadow-2xs hover:shadow-xs transition-all space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 uppercase tracking-wide">
+                                  {p.Category || 'থান কাপড়'}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                  সাধারণ থান
+                                </span>
+                              </div>
+                              <h4 className="text-xs font-black text-slate-900 mt-1 line-clamp-1">
+                                {p.ProductName}
+                              </h4>
+                              <span className="text-[10px] font-mono text-slate-400">
+                                #{p.Barcode || p.ProductID}
+                              </span>
+                            </div>
+                            <span className="p-1.5 bg-amber-50 text-amber-700 rounded-lg">
+                              <Scissors className="w-4 h-4" />
                             </span>
                           </div>
-                          <span className="p-1.5 bg-amber-50 text-amber-700 rounded-lg">
-                            <Scissors className="w-4 h-4" />
-                          </span>
-                        </div>
 
-                        <div className="p-2.5 bg-amber-50/70 rounded-xl border border-amber-200/60 space-y-1">
-                          <div className="flex items-center justify-between text-xs font-bold text-amber-950">
-                            <span>✂️ থানের শেষ ছাঁট:</span>
-                            <span className="text-amber-900 font-mono font-black text-sm">
-                              {formatFabricQuantity(remnantYards, 'গজ', false)}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium pt-1 border-t border-amber-200/50">
-                            <span>দোকানে মোট গজ:</span>
-                            <span className="font-mono font-bold text-slate-900">{Number(shopStock || 0).toLocaleString('bn-BD')} গজ</span>
-                          </div>
-                          <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
-                            <span>ছাঁট সতর্কতা সীমা:</span>
-                            <span className="font-mono text-slate-800">{threshold} গজ</span>
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5 pt-1">
-                          {bd.needsRestock && (
-                            <div className="p-2 bg-rose-50 text-rose-800 rounded-xl border border-rose-200 text-[10.5px] font-bold flex items-center space-x-1.5">
-                              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                              <span>কাটার মতো আস্ত থান নেই! গোডাউনে আছে: {godownStock} থান</span>
+                          <div className="p-2.5 bg-amber-50/70 rounded-xl border border-amber-200/60 space-y-1">
+                            <div className="flex items-center justify-between text-xs font-bold text-amber-950">
+                              <span>✂️ থানের শেষ ছাঁট:</span>
+                              <span className="text-amber-900 font-mono font-black text-sm">
+                                {formatFabricQuantity(remnantYards, 'গজ', false)}
+                              </span>
                             </div>
-                          )}
+                            <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium pt-1 border-t border-amber-200/50">
+                              <span>দোকানে মোট গজ:</span>
+                              <span className="font-mono font-bold text-slate-900">{Number(shopStock || 0).toLocaleString('bn-BD')} গজ</span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
+                              <span>ছাঁট সতর্কতা সীমা:</span>
+                              <span className="font-mono text-slate-800">{threshold} গজ</span>
+                            </div>
+                          </div>
 
-                          <div className="grid grid-cols-2 gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedProductId(p.ProductID || p.id);
-                                if (isVariant && v) {
-                                  setSelectedVariantId(v.VariantID || v.variantId || '');
-                                } else {
+                          <div className="space-y-1.5 pt-1">
+                            {bd.needsRestock && (
+                              <div className="p-2 bg-rose-50 text-rose-800 rounded-xl border border-rose-200 text-[10.5px] font-bold flex items-center space-x-1.5">
+                                <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                                <span>কাটার মতো আস্ত থান নেই! গোডাউনে আছে: {godownStock} থান</span>
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedProductId(p.ProductID || p.id);
                                   setSelectedVariantId('');
-                                }
-                                setLocation('Shop');
-                                setEntryType('Remnant');
-                                setGoj(bd.runningCutGojGira.goj !== undefined ? bd.runningCutGojGira.goj : 0);
-                                setGira(bd.runningCutGojGira.gira !== undefined ? bd.runningCutGojGira.gira : 0);
-                                setReason('থানের শেষ ছাঁট (End-of-bolt Remnant)');
-                                setCreateClearanceBundle(true);
-                                const effSellingPrice = Number(v?.SellingPrice || v?.sellingPrice || p.SellingPrice || p.Price || 100);
-                                setBundlePrice(Math.round((remnantYards * effSellingPrice) * 0.8));
-                                setActiveTab('new');
-                              }}
-                              className="py-1.5 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] font-bold transition-all flex items-center justify-center space-x-1 shadow-xs cursor-pointer"
-                            >
-                              <Tag className="w-3 h-3" />
-                              <span>ছাঁট বান্ডেল তৈরি</span>
-                            </button>
+                                  setLocation('Shop');
+                                  setEntryType('Remnant');
+                                  setGoj(bd.runningCutGojGira.goj !== undefined ? bd.runningCutGojGira.goj : 0);
+                                  setGira(bd.runningCutGojGira.gira !== undefined ? bd.runningCutGojGira.gira : 0);
+                                  setReason('থানের শেষ ছাঁট (End-of-bolt Remnant)');
+                                  setCreateClearanceBundle(true);
+                                  setBundlePrice(Math.round((remnantYards * effSellingPrice) * 0.8));
+                                  setActiveTab('new');
+                                }}
+                                className="py-1.5 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] font-bold transition-all flex items-center justify-center space-x-1 shadow-xs cursor-pointer"
+                              >
+                                <Tag className="w-3 h-3" />
+                                <span>ছাঁট বান্ডেল তৈরি</span>
+                              </button>
 
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const vName = variantLabel ? ` (${variantLabel})` : '';
-                                const effSellingPrice = Number(v?.SellingPrice || v?.sellingPrice || p.SellingPrice || p.Price || 100);
-                                setPrintStickerProduct({
-                                  ProductID: p.ProductID || p.id,
-                                  VariantID: v ? (v.VariantID || v.variantId) : null,
-                                  ProductName: `${p.ProductName}${vName} (ছাঁট ${formatFabricQuantity(remnantYards, 'গজ', false)})`,
-                                  Barcode: v?.Barcode || p.Barcode,
-                                  SellingPrice: Math.round(remnantYards * effSellingPrice),
-                                  Price: Math.round(remnantYards * effSellingPrice),
-                                  Unit: 'টুকরা'
-                                });
-                              }}
-                              className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center space-x-1 border border-slate-200 cursor-pointer"
-                              title="কাউন্টার বিক্রির জন্য ছোট প্রাইস ট্যাগ স্টিকার প্রিন্ট করুন"
-                            >
-                              <Printer className="w-3 h-3" />
-                              <span>ট্যাগ প্রিন্ট</span>
-                            </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPrintStickerProduct({
+                                    ProductID: p.ProductID || p.id,
+                                    ProductName: `${p.ProductName} (ছাঁট ${formatFabricQuantity(remnantYards, 'গজ', false)})`,
+                                    Barcode: p.Barcode,
+                                    SellingPrice: Math.round(remnantYards * effSellingPrice),
+                                    Price: Math.round(remnantYards * effSellingPrice),
+                                    Unit: 'টুকরা'
+                                  });
+                                }}
+                                className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center space-x-1 border border-slate-200 cursor-pointer"
+                                title="কাউন্টার বিক্রির জন্য ছোট প্রাইস ট্যাগ স্টিকার প্রিন্ট করুন"
+                              >
+                                <Printer className="w-3 h-3" />
+                                <span>ট্যাগ প্রিন্ট</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
+                      );
+                    }
                   })}
                 </div>
               )}
@@ -681,7 +889,7 @@ export default function FabricWastageModal({
                               {isSold ? '🟣 পিওএস-এ বিক্রিত' : '🟢 দোকানে বিক্রয়যোগ্য'}
                             </span>
                             <h4 className="text-xs font-black text-slate-900 mt-1 line-clamp-1">
-                              [ছাঁট প্যাক] {b.ProductName}
+                              [ছাঁট প্যাক] {b.ProductName} {b.VariantName ? `(${b.VariantName})` : ''}
                             </h4>
                             <span className="text-[10px] font-mono text-slate-400 block">
                               বারকোড: {b.BundleBarcode || b.WastageID}
@@ -835,6 +1043,34 @@ export default function FabricWastageModal({
                     <option value="Damaged">নষ্ট / ড্যামেজ (Damaged)</option>
                   </select>
 
+                  <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setRecordsViewMode('grouped')}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                        recordsViewMode === 'grouped'
+                          ? 'bg-white text-emerald-900 shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                      title="পণ্য ও ভ্যারিয়েন্ট অনুযায়ী গ্রুপকৃত হিসাব"
+                    >
+                      <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>পণ্য গ্রুপ</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRecordsViewMode('flat')}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                        recordsViewMode === 'flat'
+                          ? 'bg-white text-emerald-900 shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                      title="সকল এন্ট্রি কালানুক্রমিক একক তালিকায় দেখুন"
+                    >
+                      <span>একক তালিকা</span>
+                    </button>
+                  </div>
+
                   <button
                     onClick={() => window.print()}
                     className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer"
@@ -863,7 +1099,197 @@ export default function FabricWastageModal({
                     <span>নতুন এন্ট্রি যোগ করুন</span>
                   </button>
                 </div>
+              ) : recordsViewMode === 'grouped' ? (
+                /* গ্রুপ ভিউ: মূল পণ্যের ব্যানারের নিচে ভ্যারিয়েন্টগুলোর তালিকা */
+                <div className="space-y-4">
+                  {groupedWastageRecords.map((grp) => (
+                    <div key={grp.productId} className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                      {/* গ্রুপ হেডার */}
+                      <div className="p-3.5 bg-gradient-to-r from-slate-100/90 via-slate-50 to-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center space-x-2.5">
+                          <div className="p-2 bg-emerald-50 text-emerald-800 rounded-xl">
+                            <Layers className="w-4 h-4 text-[#0da487]" />
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-200 text-slate-800 uppercase tracking-wide">
+                                {grp.category || 'থান কাপড়'}
+                              </span>
+                              {grp.hasVariants ? (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                  🎨 ভ্যারিয়েন্টভিত্তিক কাপড়
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                  সাধারণ থান
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="text-sm font-black text-slate-900 mt-1">
+                              {grp.productName}
+                            </h4>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3 text-right">
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-500 block">মোট অপচয়/ছাঁট:</span>
+                            <span className="text-xs font-black text-slate-900 font-mono">
+                              {formatFabricQuantity(grp.totalYards, 'গজ', false)}
+                            </span>
+                          </div>
+                          <div className="pl-3 border-l border-slate-200">
+                            <span className="text-[10px] font-bold text-slate-500 block">মোট আর্থিক ক্ষতি:</span>
+                            <span className="text-xs font-black text-rose-700 font-mono">
+                              {currencySymbol}{grp.totalLoss.toLocaleString('bn-BD')}
+                            </span>
+                          </div>
+                          <div className="pl-3 border-l border-slate-200">
+                            <span className="text-[10px] font-bold text-slate-500 block">রেকর্ড সংখ্যা:</span>
+                            <span className="text-xs font-bold text-indigo-900 font-mono">
+                              {grp.records.length}টি
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* রেকর্ড সাব-টেবিল */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead>
+                            <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-600 font-semibold text-[10.5px]">
+                              <th className="p-3 pl-4">তারিখ ও আইডি</th>
+                              {grp.hasVariants && <th className="p-3">ভ্যারিয়েন্ট</th>}
+                              <th className="p-3 text-center">অবস্থান</th>
+                              <th className="p-3">ধরণ</th>
+                              <th className="p-3 text-center">পরিমাণ</th>
+                              <th className="p-3 text-center">আর্থিক ক্ষতি</th>
+                              <th className="p-3">কারণ ও গৃহীত ব্যবস্থা</th>
+                              <th className="p-3">এন্ট্রি কারী</th>
+                              <th className="p-3 pr-4 text-right">অ্যাকশন</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {grp.records.map((item) => (
+                              <tr key={item.WastageID} className="hover:bg-emerald-50/15 transition-colors">
+                                <td className="p-3 pl-4">
+                                  <span className="font-mono font-bold text-slate-800 block">{item.WastageID}</span>
+                                  <span className="text-[10px] text-slate-400">
+                                    {new Date(item.CreatedAt).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  </span>
+                                </td>
+                                {grp.hasVariants && (
+                                  <td className="p-3">
+                                    {item.VariantName ? (
+                                      <span className="px-2 py-0.5 rounded-md text-[10.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 inline-flex items-center space-x-1">
+                                        <span>🎨</span>
+                                        <span>{item.VariantName}</span>
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10.5px] text-slate-400 italic">সাধারণ</span>
+                                    )}
+                                  </td>
+                                )}
+                                <td className="p-3 text-center">
+                                  {item.Location === 'Godown' ? (
+                                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                      🏭 গোডাউন
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                      🏬 দোকান
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="p-3">
+                                  {item.Type === 'Remnant' ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                                      ✂️ থানের ছাঁট
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                      🚨 ড্যামেজ / নষ্ট
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="p-3 text-center font-bold text-slate-900 font-mono">
+                                  {item.Location === 'Godown' && item.Thans > 0 ? (
+                                    <div>
+                                      <span>{item.Thans} থান</span>
+                                      <span className="block text-[10px] text-slate-500 font-normal">
+                                        ({formatFabricQuantity(item.TotalYards, 'গজ', false)})
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    formatFabricQuantity(item.TotalYards, 'গজ', true)
+                                  )}
+                                </td>
+                                <td className="p-3 text-center font-black text-rose-700 font-mono">
+                                  {currencySymbol}{item.LossAmount}
+                                  <span className="block text-[9px] text-slate-400 font-normal font-sans">
+                                    @{currencySymbol}{item.CostPricePerYard}/গজ
+                                  </span>
+                                </td>
+                                <td className="p-3">
+                                  <span className="font-bold text-slate-800 block text-xs">{item.Reason}</span>
+                                  <span className="text-[10px] text-slate-500 block">
+                                    {item.ActionTaken === 'ClearanceBundle' ? (
+                                      <span className="text-[#0da487] font-semibold">✨ ক্লিয়ারেন্স প্যাক (৳{item.BundlePrice})</span>
+                                    ) : (
+                                      'সরাসরি রাইট-অফ (বাদ)'
+                                    )}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-slate-600 font-medium">
+                                  {item.LoggedBy}
+                                </td>
+                                <td className="p-3 pr-4 text-right">
+                                  <div className="flex items-center justify-end space-x-1">
+                                    {item.CreateBundle && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setPrintStickerProduct({
+                                            ProductID: item.BundleProductID || item.WastageID,
+                                            ProductName: `[ছাঁট প্যাক] ${item.ProductName} (${item.TotalYards} গজ)`,
+                                            Barcode: item.BundleBarcode || item.WastageID,
+                                            SellingPrice: item.BundlePrice,
+                                            Price: item.BundlePrice,
+                                            Unit: 'প্যাক'
+                                          });
+                                        }}
+                                        className="p-1.5 text-slate-500 hover:text-[#0da487] hover:bg-emerald-50 rounded-lg transition-all cursor-pointer"
+                                        title="প্রাইস ট্যাগ স্টিকার প্রিন্ট করুন"
+                                      >
+                                        <Printer className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+
+                                    {onDeleteWastageRecord && (
+                                      <button
+                                        onClick={() => {
+                                          if (confirm('আপনি কি নিশ্চিত যে এই রেকর্ডটি মুছে ফেলতে চান? এটি মুছে দিলে কাপড়ের স্টক পূর্বের অবস্থায় পুনরুদ্ধার হবে।')) {
+                                            onDeleteWastageRecord(item.WastageID);
+                                          }
+                                        }}
+                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                                        title="রেকর্ড মুছে ফেলুন ও স্টক পুনরুদ্ধার করুন"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
+                /* ফ্ল্যাট ভিউ: কালানুক্রমিক সাধারণ টেবিল */
                 <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
@@ -1135,11 +1561,11 @@ export default function FabricWastageModal({
                         >
                           <option value="">সাধারণ / সকল ভ্যারিয়েন্ট</option>
                           {selectedProduct.Variants.map((v, vIdx) => {
-                            const vLabel = [v.Color, v.Size].filter(Boolean).join(' - ') || `ভ্যারিয়েন্ট #${vIdx + 1}`;
+                            const vLabel = v.ColorName || v.Attributes?.Color || [v.Color, v.Size].filter(Boolean).join(' - ') || v.VariantName || v.name || Object.values(v.Attributes || {})[0] || `ভ্যারিয়েন্ট #${vIdx + 1}`;
                             const vStock = location === 'Godown' ? `${v.GodownStock || 0} থান` : `${v.StockQuantity || 0} গজ`;
                             return (
                               <option key={v.VariantID || vIdx} value={v.VariantID || v.variantId || vIdx}>
-                                {vLabel} (মজুত: {vStock})
+                                🎨 {vLabel} (মজুত: {vStock})
                               </option>
                             );
                           })}
@@ -1148,7 +1574,7 @@ export default function FabricWastageModal({
                         <input
                           type="text"
                           disabled
-                          placeholder="এই পণ্যে কোনো ভ্যারিয়েন্ট নেই"
+                          placeholder="এই সাধারণ পণ্যে কোনো ভ্যারিয়েন্ট নেই (একক কাপড়)"
                           className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-slate-400 font-medium cursor-not-allowed text-xs"
                         />
                       )}
