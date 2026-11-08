@@ -878,8 +878,12 @@ export default function EditProductModal({
         minStockAlert: Number(formData.minStockAlert) || 5,
         yardsPerThan: Number(formData.yardsPerThan) || 25,
         YardsPerThan: Number(formData.yardsPerThan) || 25,
-        remnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0,
-        RemnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0,
+        remnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold))
+          ? Math.max(0, parseFloat(formData.remnantThreshold))
+          : ((isThanUnit(formData.unit) || isFabricUnit(formData.unit)) ? 1 : 0),
+        RemnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold))
+          ? Math.max(0, parseFloat(formData.remnantThreshold))
+          : ((isThanUnit(formData.unit) || isFabricUnit(formData.unit)) ? 1 : 0),
         imageUrl: imageUploadMode === 'url' ? formData.imageUrl.trim() : (formData.imageUrl || ''),
         imageCaption: formData.imageCaption.trim(),
         imageBase64: imageUploadMode === 'upload' ? imageBase64 : '',
@@ -1678,10 +1682,10 @@ export default function EditProductModal({
                           name="remnantThreshold"
                           value={formData.remnantThreshold}
                           onChange={handleChange}
-                          placeholder="যেমন: ২ বা ০"
+                          placeholder="যেমন: ১ (খালি রাখলে ১ গজ ডিফল্ট)"
                           className="w-full px-3 py-2 bg-white border border-rose-300 rounded-xl text-xs font-black text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
                         />
-                        <span className="text-[10px] text-amber-700">এর নিচে নামলে ছাঁট খাতা ও নতুন থান চালানের অ্যালার্ট</span>
+                        <span className="text-[10px] text-amber-700">১ গজ বা এর নিচে নামলে ছাঁট ট্র্যাকার ও নতুন থান চালানের অ্যালার্ট</span>
                       </div>
                     </div>
 

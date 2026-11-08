@@ -75,11 +75,14 @@ export default function FabricWastageModal({
   useEffect(() => {
     if (initialProduct && (initialProduct.ProductID || initialProduct.id)) {
       setSelectedProductId(String(initialProduct.ProductID || initialProduct.id));
+      if (initialProduct.VariantID || initialProduct.variantId) {
+        setSelectedVariantId(String(initialProduct.VariantID || initialProduct.variantId));
+      }
       setActiveTab('new');
-      if (initialProduct.remnantYards) {
+      if (initialProduct.remnantYards !== undefined && initialProduct.remnantYards !== null) {
         const parsed = parseGojGira(initialProduct.remnantYards);
-        setGoj(parsed.goj || 1);
-        setGira(parsed.gira || 0);
+        setGoj(parsed.goj !== undefined ? parsed.goj : 0);
+        setGira(parsed.gira !== undefined ? parsed.gira : 0);
         setEntryType('Remnant');
         setReason('থানের শেষ ছাঁট (End-of-bolt Remnant)');
       }
@@ -96,23 +99,60 @@ export default function FabricWastageModal({
     });
   }, [products]);
 
-  // দোকানে বর্তমানে সক্রিয় শেষ ছাঁট কাপড়ের তালিকা
+  // দোকানে বর্তমানে সক্রিয় শেষ ছাঁট কাপড়ের তালিকা (ভ্যারিয়েন্ট অনুযায়ী ১ গজ বা কম ও সাধারণ পণ্য উভয়ই শনাক্তকরণ)
   const liveShopRemnants = useMemo(() => {
-    return fabricProducts.map((p) => {
+    const list = [];
+    fabricProducts.forEach((p) => {
       const u = String(p.Unit || p.unit || '');
       const ypt = Number(p.YardsPerThan || p.yardsPerThan || 0) || 25;
-      const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 2));
-      const sStock = Number(p.StockQuantity !== undefined ? p.StockQuantity : (p.CurrentStock || p.stock || 0));
-      const bd = calculateThanBreakdown(sStock, ypt, remTh);
-      if (bd.isRemnant) {
-        return {
-          product: p,
-          breakdown: bd,
-          remnantYards: bd.runningCutYards
-        };
+      const remTh = Number(
+        p.RemnantThreshold !== undefined && p.RemnantThreshold !== null && p.RemnantThreshold !== '' && Number(p.RemnantThreshold) > 0
+          ? p.RemnantThreshold
+          : (p.remnantThreshold !== undefined && p.remnantThreshold !== null && p.remnantThreshold !== '' && Number(p.remnantThreshold) > 0
+            ? p.remnantThreshold
+            : 1)
+      );
+
+      const hasVars = Array.isArray(p.Variants) && p.Variants.length > 0;
+      if (hasVars) {
+        p.Variants.forEach((v) => {
+          const vStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+          const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
+          const bd = calculateThanBreakdown(vStock, ypt, remTh);
+          if (bd.isRemnant) {
+            list.push({
+              key: `${p.ProductID || p.id}_${v.VariantID || v.variantId || v.Barcode || Math.random()}`,
+              product: p,
+              variant: v,
+              isVariant: true,
+              breakdown: bd,
+              remnantYards: bd.runningCutYards,
+              shopStock: vStock,
+              godownStock: vGStock,
+              threshold: remTh
+            });
+          }
+        });
+      } else {
+        const sStock = Number(p.StockQuantity !== undefined ? p.StockQuantity : (p.CurrentStock || p.stock || 0));
+        const gStock = Number(p.GodownStock || 0);
+        const bd = calculateThanBreakdown(sStock, ypt, remTh);
+        if (bd.isRemnant) {
+          list.push({
+            key: String(p.ProductID || p.id),
+            product: p,
+            variant: null,
+            isVariant: false,
+            breakdown: bd,
+            remnantYards: bd.runningCutYards,
+            shopStock: sStock,
+            godownStock: gStock,
+            threshold: remTh
+          });
+        }
       }
-      return null;
-    }).filter(Boolean);
+    });
+    return list;
   }, [fabricProducts]);
 
   // ক্লিয়ারেন্স বান্ডেল তালিকা
@@ -219,7 +259,7 @@ export default function FabricWastageModal({
       ProductID: selectedProduct.ProductID || selectedProduct.id,
       ProductName: selectedProduct.ProductName || selectedProduct.name,
       VariantID: selectedVariant ? (selectedVariant.VariantID || selectedVariant.variantId) : '',
-      VariantName: selectedVariant ? [selectedVariant.Color, selectedVariant.Size].filter(Boolean).join(' - ') : '',
+      VariantName: selectedVariant ? (selectedVariant.ColorName || selectedVariant.Attributes?.Color || selectedVariant.Color || selectedVariant.VariantName || selectedVariant.name || [selectedVariant.Color, selectedVariant.Size].filter(Boolean).join(' - ') || 'ভ্যারিয়েন্ট') : '',
       Category: selectedProduct.Category || selectedProduct.category || 'থান কাপড়',
       Location: location,
       Type: entryType,
@@ -480,20 +520,27 @@ export default function FabricWastageModal({
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                  {liveShopRemnants.map(({ product: p, breakdown: bd, remnantYards }) => {
-                    const gStock = Number(p.GodownStock || 0);
+                  {liveShopRemnants.map(({ key, product: p, variant: v, isVariant, breakdown: bd, remnantYards, shopStock, godownStock, threshold }) => {
+                    const variantLabel = isVariant && v ? (v.ColorName || v.Attributes?.Color || v.Color || v.VariantName || v.name || Object.values(v.Attributes || {})[0] || 'ভ্যারিয়েন্ট') : '';
                     return (
-                      <div key={p.ProductID} className="bg-white p-4 rounded-2xl border border-amber-200/90 shadow-2xs hover:shadow-md transition-all space-y-3">
+                      <div key={key || p.ProductID} className="bg-white p-4 rounded-2xl border border-amber-200/90 shadow-2xs hover:shadow-md transition-all space-y-3">
                         <div className="flex items-start justify-between">
                           <div>
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 uppercase tracking-wide">
-                              {p.Category || 'গজ কাপড়'}
-                            </span>
+                            <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 uppercase tracking-wide">
+                                {p.Category || 'গজ কাপড়'}
+                              </span>
+                              {variantLabel && (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                  🎨 {variantLabel}
+                                </span>
+                              )}
+                            </div>
                             <h4 className="text-xs font-black text-slate-900 mt-1 line-clamp-1">
-                              {p.ProductName}
+                              {p.ProductName} {variantLabel ? `(${variantLabel})` : ''}
                             </h4>
                             <span className="text-[10px] font-mono text-slate-400">
-                              #{p.Barcode || p.ProductID}
+                              #{v?.Barcode || p.Barcode || p.ProductID}
                             </span>
                           </div>
                           <span className="p-1.5 bg-amber-50 text-amber-700 rounded-lg">
@@ -510,11 +557,11 @@ export default function FabricWastageModal({
                           </div>
                           <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium pt-1 border-t border-amber-200/50">
                             <span>দোকানে মোট গজ:</span>
-                            <span className="font-mono font-bold text-slate-900">{p.StockQuantity || 0} গজ</span>
+                            <span className="font-mono font-bold text-slate-900">{Number(shopStock || 0).toLocaleString('bn-BD')} গজ</span>
                           </div>
                           <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
                             <span>ছাঁট সতর্কতা সীমা:</span>
-                            <span className="font-mono text-slate-800">{p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold || 2)} গজ</span>
+                            <span className="font-mono text-slate-800">{threshold} গজ</span>
                           </div>
                         </div>
 
@@ -522,7 +569,7 @@ export default function FabricWastageModal({
                           {bd.needsRestock && (
                             <div className="p-2 bg-rose-50 text-rose-800 rounded-xl border border-rose-200 text-[10.5px] font-bold flex items-center space-x-1.5">
                               <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                              <span>কাটার মতো আস্ত থান নেই! গোডাউনে আছে: {gStock} থান</span>
+                              <span>কাটার মতো আস্ত থান নেই! গোডাউনে আছে: {godownStock} থান</span>
                             </div>
                           )}
 
@@ -530,14 +577,20 @@ export default function FabricWastageModal({
                             <button
                               type="button"
                               onClick={() => {
-                                setSelectedProductId(p.ProductID);
+                                setSelectedProductId(p.ProductID || p.id);
+                                if (isVariant && v) {
+                                  setSelectedVariantId(v.VariantID || v.variantId || '');
+                                } else {
+                                  setSelectedVariantId('');
+                                }
                                 setLocation('Shop');
                                 setEntryType('Remnant');
-                                setGoj(bd.runningCutGojGira.goj);
-                                setGira(bd.runningCutGojGira.gira);
+                                setGoj(bd.runningCutGojGira.goj !== undefined ? bd.runningCutGojGira.goj : 0);
+                                setGira(bd.runningCutGojGira.gira !== undefined ? bd.runningCutGojGira.gira : 0);
                                 setReason('থানের শেষ ছাঁট (End-of-bolt Remnant)');
                                 setCreateClearanceBundle(true);
-                                setBundlePrice(Math.round((remnantYards * Number(p.SellingPrice || p.Price || 100)) * 0.8));
+                                const effSellingPrice = Number(v?.SellingPrice || v?.sellingPrice || p.SellingPrice || p.Price || 100);
+                                setBundlePrice(Math.round((remnantYards * effSellingPrice) * 0.8));
                                 setActiveTab('new');
                               }}
                               className="py-1.5 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] font-bold transition-all flex items-center justify-center space-x-1 shadow-xs cursor-pointer"
@@ -549,12 +602,15 @@ export default function FabricWastageModal({
                             <button
                               type="button"
                               onClick={() => {
+                                const vName = variantLabel ? ` (${variantLabel})` : '';
+                                const effSellingPrice = Number(v?.SellingPrice || v?.sellingPrice || p.SellingPrice || p.Price || 100);
                                 setPrintStickerProduct({
-                                  ProductID: p.ProductID,
-                                  ProductName: `${p.ProductName} (ছাঁট ${formatFabricQuantity(remnantYards, 'গজ', false)})`,
-                                  Barcode: p.Barcode,
-                                  SellingPrice: Math.round(remnantYards * Number(p.SellingPrice || p.Price || 100)),
-                                  Price: Math.round(remnantYards * Number(p.SellingPrice || p.Price || 100)),
+                                  ProductID: p.ProductID || p.id,
+                                  VariantID: v ? (v.VariantID || v.variantId) : null,
+                                  ProductName: `${p.ProductName}${vName} (ছাঁট ${formatFabricQuantity(remnantYards, 'গজ', false)})`,
+                                  Barcode: v?.Barcode || p.Barcode,
+                                  SellingPrice: Math.round(remnantYards * effSellingPrice),
+                                  Price: Math.round(remnantYards * effSellingPrice),
                                   Unit: 'টুকরা'
                                 });
                               }}

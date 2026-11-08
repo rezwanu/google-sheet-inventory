@@ -335,7 +335,13 @@ export default function StockTransferModal({
       const isThan = /than|থান/i.test(unit);
       const isGoj = !isThan && /গজ|yard/i.test(unit);
       const yardsPerThan = isThan ? (Number(p.YardsPerThan || p.yardsPerThan || 0) || 25) : 0;
-      const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
+      const remTh = Number(
+        p.RemnantThreshold !== undefined && p.RemnantThreshold !== null && p.RemnantThreshold !== '' && Number(p.RemnantThreshold) > 0
+          ? p.RemnantThreshold
+          : (p.remnantThreshold !== undefined && p.remnantThreshold !== null && p.remnantThreshold !== '' && Number(p.remnantThreshold) > 0
+            ? p.remnantThreshold
+            : 1)
+      );
 
       const vars = getVariantsOfProduct(p);
       const hasVars = vars.length > 0;
@@ -568,16 +574,44 @@ export default function StockTransferModal({
         const isFab = /than|থান|গজ|yard/i.test(unit);
         if (!isFab) return false;
         const ypt = Number(p.YardsPerThan || p.yardsPerThan || 0) || 25;
-        const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
-        const bd = calculateThanBreakdown(sStock, ypt, remTh);
-        matchFilter = bd.isRemnant;
+        const remTh = Number(
+          p.RemnantThreshold !== undefined && p.RemnantThreshold !== null && p.RemnantThreshold !== '' && Number(p.RemnantThreshold) > 0
+            ? p.RemnantThreshold
+            : (p.remnantThreshold !== undefined && p.remnantThreshold !== null && p.remnantThreshold !== '' && Number(p.remnantThreshold) > 0
+              ? p.remnantThreshold
+              : 1)
+        );
+        if (vars.length > 0) {
+          matchFilter = vars.some((v) => {
+            const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+            return calculateThanBreakdown(vS, ypt, remTh).isRemnant;
+          });
+        } else {
+          const bd = calculateThanBreakdown(sStock, ypt, remTh);
+          matchFilter = bd.isRemnant;
+        }
       } else if (overviewFilter === 'SHOP_NEED_BOLT') {
         const isFab = /than|থান|গজ|yard/i.test(unit);
         if (!isFab) return false;
         const ypt = Number(p.YardsPerThan || p.yardsPerThan || 0) || 25;
-        const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
-        const bd = calculateThanBreakdown(sStock, ypt, remTh);
-        matchFilter = bd.needsRestock && gStock > 0;
+        const remTh = Number(
+          p.RemnantThreshold !== undefined && p.RemnantThreshold !== null && p.RemnantThreshold !== '' && Number(p.RemnantThreshold) > 0
+            ? p.RemnantThreshold
+            : (p.remnantThreshold !== undefined && p.remnantThreshold !== null && p.remnantThreshold !== '' && Number(p.remnantThreshold) > 0
+              ? p.remnantThreshold
+              : 1)
+        );
+        if (vars.length > 0) {
+          matchFilter = vars.some((v) => {
+            const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+            const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
+            const bd = calculateThanBreakdown(vS, ypt, remTh);
+            return bd.needsRestock && vG > 0;
+          });
+        } else {
+          const bd = calculateThanBreakdown(sStock, ypt, remTh);
+          matchFilter = bd.needsRestock && gStock > 0;
+        }
       } else if (overviewFilter === 'SHOP_SUFFICIENT') {
         matchFilter = sStock > minAlert;
       } else if (overviewFilter === 'OUT_OF_STOCK') {
@@ -596,7 +630,13 @@ export default function StockTransferModal({
       const unit = getProductDisplayUnit(p);
       const isThan = /than|থান/i.test(unit);
       const yardsPerThan = isThan ? (Number(p.YardsPerThan || p.yardsPerThan || 0) || 25) : 0;
-      const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
+      const remTh = Number(
+        p.RemnantThreshold !== undefined && p.RemnantThreshold !== null && p.RemnantThreshold !== '' && Number(p.RemnantThreshold) > 0
+          ? p.RemnantThreshold
+          : (p.remnantThreshold !== undefined && p.remnantThreshold !== null && p.remnantThreshold !== '' && Number(p.remnantThreshold) > 0
+            ? p.remnantThreshold
+            : 1)
+      );
       const unitCost = Number(p.CostPrice || p.costPrice || p.PurchasePrice || p.purchasePrice || p.Cost || p.cost || p.BuyingPrice || p.BuyPrice || 0);
       const unitSelling = Number(p.SellingPrice || p.sellingPrice || p.Price || p.price || p.MRP || p.mrp || 0);
 
@@ -3107,7 +3147,13 @@ export default function StockTransferModal({
                               const isThan = /than|থান/i.test(unit);
                               const isGoj = !isThan && /গজ|yard/i.test(unit);
                               const yardsPerThan = isThan ? (Number(p.YardsPerThan || p.yardsPerThan || 0) || 25) : 0;
-                              const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
+                              const remTh = Number(
+        p.RemnantThreshold !== undefined && p.RemnantThreshold !== null && p.RemnantThreshold !== '' && Number(p.RemnantThreshold) > 0
+          ? p.RemnantThreshold
+          : (p.remnantThreshold !== undefined && p.remnantThreshold !== null && p.remnantThreshold !== '' && Number(p.remnantThreshold) > 0
+            ? p.remnantThreshold
+            : 1)
+      );
                               const vars = getVariantsOfProduct(p);
                               const hasVars = vars.length > 0;
                               const isExpanded = Boolean(expandedProductIds[p.ProductID]);
@@ -3284,7 +3330,13 @@ export default function StockTransferModal({
                                           {/* শুধুমাত্র দোকান মজুত খতিয়ান ট্যাবে কাপড়ের বিস্তারিত বিবরণী প্রদর্শিত হবে */}
                                           {isShopStockView && isThan && (() => {
                                             const ypt = yardsPerThan || 25;
-                                            const remTh = Number(p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
+                                            const remTh = Number(
+        p.RemnantThreshold !== undefined && p.RemnantThreshold !== null && p.RemnantThreshold !== '' && Number(p.RemnantThreshold) > 0
+          ? p.RemnantThreshold
+          : (p.remnantThreshold !== undefined && p.remnantThreshold !== null && p.remnantThreshold !== '' && Number(p.remnantThreshold) > 0
+            ? p.remnantThreshold
+            : 1)
+      );
                                             const effectiveShopFullThans = hasVars ? varFullThansSum : (bd ? bd.fullThans : 0);
                                             const effectiveShopCutYards = hasVars ? varRunningCutYardsSum : (bd ? bd.runningCutYards : 0);
                                             const effectiveCutText = hasVars
@@ -3796,6 +3848,11 @@ export default function StockTransferModal({
                                                                     মোট: {vSStock.toLocaleString('bn-BD')} গজ
                                                                   </span>
                                                                 )}
+                                                                {isThan && vBd && vBd.isRemnant && (
+                                                                  <span className="inline-flex items-center text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded text-[9.5px] font-bold border border-amber-300 mt-0.5 animate-pulse">
+                                                                    ✂️ শেষ ছাঁট
+                                                                  </span>
+                                                                )}
                                                               </div>
                                                             </td>
 
@@ -3973,6 +4030,22 @@ export default function StockTransferModal({
                                                                   <Edit3 className="w-3 h-3" />
                                                                   <span>এডিট</span>
                                                                 </button>
+                                                                {isThan && vBd && vBd.isRemnant && (
+                                                                  <button
+                                                                    type="button"
+                                                                    onClick={() => onOpenFabricWastageModal && onOpenFabricWastageModal({
+                                                                      ProductID: p.ProductID,
+                                                                      VariantID: v.VariantID || v.variantId,
+                                                                      ProductName: `${p.ProductName} - ${v.Attributes?.Color || v.Color || 'ভ্যারিয়েন্ট'}`,
+                                                                      remnantYards: vSStock
+                                                                    })}
+                                                                    className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                                    title="এই ভ্যারিয়েন্টের শেষ ছাঁট কাপড় ট্র্যাকার বা বান্ডেলে পাঠান"
+                                                                  >
+                                                                    <Scissors className="w-3 h-3 text-amber-700" />
+                                                                    <span>ছাঁট</span>
+                                                                  </button>
+                                                                )}
                                                               </>
                                                             ) : (
                                                               <>
@@ -4110,7 +4183,13 @@ export default function StockTransferModal({
                                       {isShopStockView ? (
                                         item.isThanUnit && (() => {
                                           const ypt = item.yardsPerThan || 25;
-                                          const remTh = Number(item.parentProduct?.RemnantThreshold !== undefined ? item.parentProduct?.RemnantThreshold : (item.parentProduct?.remnantThreshold !== undefined ? item.parentProduct?.remnantThreshold : 0));
+                                          const remTh = Number(
+                                            item.parentProduct?.RemnantThreshold !== undefined && item.parentProduct?.RemnantThreshold !== null && item.parentProduct?.RemnantThreshold !== '' && Number(item.parentProduct?.RemnantThreshold) > 0
+                                              ? item.parentProduct?.RemnantThreshold
+                                              : (item.parentProduct?.remnantThreshold !== undefined && item.parentProduct?.remnantThreshold !== null && item.parentProduct?.remnantThreshold !== '' && Number(item.parentProduct?.remnantThreshold) > 0
+                                                ? item.parentProduct?.remnantThreshold
+                                                : 1)
+                                          );
                                           const bd = calculateThanBreakdown(item.shopStock, ypt, remTh);
                                           return (
                                             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
@@ -4134,8 +4213,9 @@ export default function StockTransferModal({
                                                 <button
                                                   type="button"
                                                   onClick={() => onOpenFabricWastageModal && onOpenFabricWastageModal({
-                                                    ProductID: item.parentProduct?.ProductID,
-                                                    ProductName: item.productName,
+                                                    ProductID: item.parentProduct?.ProductID || item.productId,
+                                                    VariantID: item.isVariant ? (item.variant?.VariantID || item.variant?.variantId) : '',
+                                                    ProductName: item.isVariant ? `${item.productName} - ${item.color || item.size || 'ভ্যারিয়েন্ট'}` : item.productName,
                                                     remnantYards: bd.runningCutYards
                                                   })}
                                                   className="inline-flex items-center text-amber-900 bg-amber-100 hover:bg-amber-200 px-2 py-0.5 rounded-md border border-amber-300 font-bold animate-pulse text-[10.5px] cursor-pointer transition-colors"
@@ -6170,6 +6250,13 @@ export default function StockTransferModal({
           const isThan = /than|থান/i.test(prodUnit);
           const prodYardsPerThan = isThan ? (Number(prod.YardsPerThan || prod.yardsPerThan || 0) || 25) : 0;
           const currentUnit = isThan ? 'থান' : prodUnit;
+          const effRemTh = Number(
+            prod.RemnantThreshold !== undefined && prod.RemnantThreshold !== null && prod.RemnantThreshold !== '' && Number(prod.RemnantThreshold) > 0
+              ? prod.RemnantThreshold
+              : (prod.remnantThreshold !== undefined && prod.remnantThreshold !== null && prod.remnantThreshold !== '' && Number(prod.remnantThreshold) > 0
+                ? prod.remnantThreshold
+                : 1)
+          );
 
           return (
             <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
@@ -6349,7 +6436,7 @@ export default function StockTransferModal({
                             <div className="text-[11px] font-black text-emerald-900">
                               মোট দোকান গজ: <span className="font-mono text-xs text-[#0da487] font-bold">{Number(editVariantModal.shopStock || 0).toLocaleString('bn-BD')} গজ</span>
                               <span className="text-[10px] text-slate-500 font-medium ml-1.5">
-                                ({calculateThanBreakdown(editVariantModal.shopStock || 0, prodYardsPerThan, 2).displayText})
+                                ({calculateThanBreakdown(editVariantModal.shopStock || 0, prodYardsPerThan, effRemTh).displayText})
                               </span>
                             </div>
                             <div className="text-[11px] font-black text-slate-800">
@@ -6373,7 +6460,7 @@ export default function StockTransferModal({
                           />
                           {isThan && prodYardsPerThan > 0 && Number(editVariantModal.shopStock || 0) > 0 && (
                             <div className="text-[10px] text-emerald-700 font-bold mt-1">
-                              = {calculateThanBreakdown(editVariantModal.shopStock, prodYardsPerThan, 2).displayText}
+                              = {calculateThanBreakdown(editVariantModal.shopStock, prodYardsPerThan, effRemTh).displayText}
                             </div>
                           )}
                         </div>

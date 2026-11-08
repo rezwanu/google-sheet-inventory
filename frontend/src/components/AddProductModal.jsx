@@ -1306,8 +1306,12 @@ export default function AddProductModal({
         ThanCount: thanCount,
         totalYards: totalYards,
         TotalYards: totalYards,
-        remnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0,
-        RemnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold)) ? Math.max(0, parseFloat(formData.remnantThreshold)) : 0,
+        remnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold))
+          ? Math.max(0, parseFloat(formData.remnantThreshold))
+          : (isThan || isThanUnit || /গজ|yard/i.test(effectiveUnit) ? 1 : 0),
+        RemnantThreshold: formData.remnantThreshold !== '' && !isNaN(Number(formData.remnantThreshold))
+          ? Math.max(0, parseFloat(formData.remnantThreshold))
+          : (isThan || isThanUnit || /গজ|yard/i.test(effectiveUnit) ? 1 : 0),
         initialShopFullThans: Number(formData.initialShopFullThans) || 0,
         initialShopCutGoj: Number(formData.initialShopCutGoj) || 0,
         initialShopCutGira: Number(formData.initialShopCutGira) || 0,
@@ -2651,10 +2655,10 @@ export default function AddProductModal({
                           name="remnantThreshold"
                           value={formData.remnantThreshold}
                           onChange={handleChange}
-                          placeholder="যেমন: ২ বা ০"
+                          placeholder="যেমন: ১ (খালি রাখলে ১ গজ ডিফল্ট)"
                           className="w-full px-3 py-2 bg-white border border-rose-300 rounded-xl text-xs font-black text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
                         />
-                        <span className="text-[10px] text-amber-700">এর নিচে নামলে ছাঁট খাতা ও রিস্টক অ্যালার্ট</span>
+                        <span className="text-[10px] text-amber-700">১ গজ বা এর নিচে নামলে ছাঁট ট্র্যাকার ও রিস্টক অ্যালার্ট</span>
                       </div>
                     </div>
 
