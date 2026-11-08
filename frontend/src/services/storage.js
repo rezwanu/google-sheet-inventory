@@ -378,7 +378,11 @@ export const DEMO_PRODUCT_IDS = new Set([
   'PROD-1003',
   'PROD-1004',
   'PROD-1005',
-  'PROD-1006'
+  'PROD-1006',
+  'PAB-FAB-001',
+  'PAB-FAB-002',
+  'BUNDLE-WST-20261020-001',
+  'BUNDLE-WST-20261021-002'
 ]);
 
 export const DEMO_PRODUCT_NAMES = new Set([
@@ -389,7 +393,11 @@ export const DEMO_PRODUCT_NAMES = new Set([
   'Premium CTC Black Tea 400g',
   'Refined White Sugar 1kg',
   'Dairy Fresh Full Cream Milk 1L',
-  'Crunchy Chocolate Biscuit 300g'
+  'Crunchy Chocolate Biscuit 300g',
+  'প্রিমিয়াম সুতি থান কাপড় (সাদা)',
+  'জাপানি জর্জেট থান কাপড় (নেভি ব্লু)',
+  'ছাঁট প্যাক - প্রিমিয়াম সুতি থান কাপড় (সাদা)',
+  'ছাঁট প্যাক - জাপানি জর্জেট থান কাপড় (নেভি ব্লু)'
 ]);
 
 /**
@@ -1117,9 +1125,28 @@ export function clearDemoData() {
   if (strictlyReal.length === 0 && DEFAULT_PRODUCTS && DEFAULT_PRODUCTS.length > 0) {
     const fallback = DEFAULT_PRODUCTS.map(normalizeProduct).filter(Boolean);
     saveLocalProducts(fallback);
-    return fallback;
+  } else {
+    saveLocalProducts(strictlyReal);
   }
-  saveLocalProducts(strictlyReal);
+
+  // ডেমো ছাঁট রেকর্ডও লোকাল স্টোরেজ থেকে পরিষ্কার করা
+  try {
+    const curWastage = getSecureStorageItem(STORAGE_KEYS.FABRIC_WASTAGE);
+    if (Array.isArray(curWastage)) {
+      const cleanWastage = curWastage.filter(
+        (r) =>
+          r &&
+          r.WastageID !== 'WST-20261020-001' &&
+          r.WastageID !== 'WST-20261021-002' &&
+          r.ProductID !== 'PAB-FAB-001' &&
+          r.ProductID !== 'PAB-FAB-002'
+      );
+      saveLocalFabricWastage(cleanWastage);
+    }
+  } catch (e) {
+    saveLocalFabricWastage([]);
+  }
+
   return strictlyReal;
 }
 
@@ -4381,49 +4408,31 @@ export function addTailorMasterLocally(masterData) {
 // থান কাপড়ের ছাঁট ও ড্যামেজ ট্র্যাকার (Phase 2: Fabric Wastage & Remnant Tracker)
 // ============================================================================
 
-export const DEFAULT_FABRIC_WASTAGE = [
-  {
-    WastageID: 'WST-20261020-001',
-    ProductID: 'PAB-FAB-001',
-    ProductName: 'প্রিমিয়াম সুতি থান কাপড় (সাদা)',
-    Category: 'থান কাপড়',
-    Type: 'Remnant', // 'Remnant' (ছাঁট কাপড়) | 'Damaged' (নষ্ট কাপড়)
-    Goj: 1,
-    Gira: 8,
-    TotalYards: 1.5,
-    CostPricePerYard: 150,
-    LossAmount: 225,
-    Reason: 'থানের শেষ ছাঁট (End-of-bolt Remnant)',
-    ActionTaken: 'ClearanceBundle', // 'WrittenOff' | 'ClearanceBundle'
-    LoggedBy: 'Admin',
-    CreatedAt: '2026-10-20T12:00:00.000Z',
-    Notes: 'থান শেষ হওয়ার পর অবশিষ্ট ১.৫ গজ ছোট টুকরা ছাঁট হিসেবে আলাদা রাখা হয়েছে'
-  },
-  {
-    WastageID: 'WST-20261021-002',
-    ProductID: 'PAB-FAB-002',
-    ProductName: 'জাপানি জর্জেট থান কাপড় (নেভি ব্লু)',
-    Category: 'থান কাপড়',
-    Type: 'Damaged',
-    Goj: 0,
-    Gira: 12,
-    TotalYards: 0.75,
-    CostPricePerYard: 220,
-    LossAmount: 165,
-    Reason: 'মিল কালার ফল্ট ও ছেঁড়া (Mill Defect)',
-    ActionTaken: 'WrittenOff',
-    LoggedBy: 'Admin',
-    CreatedAt: '2026-10-21T16:45:00.000Z',
-    Notes: 'থানের মাঝখানে সুতা কাটা ও রঙের ছোপ দাগ থাকায় বাদ দেওয়া হলো'
-  }
-];
+export const DEFAULT_FABRIC_WASTAGE = [];
 
 export function getLocalFabricWastage() {
   try {
     const data = getSecureStorageItem(STORAGE_KEYS.FABRIC_WASTAGE);
-    return Array.isArray(data) && data.length > 0 ? data : DEFAULT_FABRIC_WASTAGE;
+    if (!data || !Array.isArray(data)) return [];
+
+    // পূর্ববর্তী সমস্ত ডেমো বা নমুনা রেকর্ড স্বয়ংক্রিয়ভাবে ফিল্টার করে মুছে ফেলা
+    const strictlyReal = data.filter(
+      (r) =>
+        r &&
+        r.WastageID !== 'WST-20261020-001' &&
+        r.WastageID !== 'WST-20261021-002' &&
+        r.ProductID !== 'PAB-FAB-001' &&
+        r.ProductID !== 'PAB-FAB-002' &&
+        !String(r.ProductName || '').includes('প্রিমিয়াম সুতি থান কাপড় (সাদা)') &&
+        !String(r.ProductName || '').includes('জাপানি জর্জেট থান কাপড় (নেভি ব্লু)')
+    );
+
+    if (strictlyReal.length !== data.length) {
+      saveLocalFabricWastage(strictlyReal);
+    }
+    return strictlyReal;
   } catch (e) {
-    return DEFAULT_FABRIC_WASTAGE;
+    return [];
   }
 }
 
