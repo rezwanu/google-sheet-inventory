@@ -381,6 +381,14 @@ export default function StockTransferModal({
             totalShopCostValuation += (vS * vC);
             totalShopSellingValuation += (vS * vSPrice);
           });
+          // ফলব্যাক: যদি ভ্যারিয়েন্টগুলোতে আলাদা দোকান স্টক ০ থাকে কিন্তু প্যারেন্ট পণ্যে দোকান স্টক বিদ্যমান
+          if (varSStockSum === 0 && effectiveSStock > 0) {
+            totalShopCostValuation += (effectiveSStock * unitCost);
+            totalShopSellingValuation += (effectiveSStock * sellingPrice);
+          }
+          if (varGStockSum === 0 && effectiveGStock > 0) {
+            fabricGodownValuation += (effectiveGStock * yardsPerThan * unitCost);
+          }
         } else {
           const bd = calculateThanBreakdown(sStock, yardsPerThan, remTh);
           fabricShopFullThans += bd.fullThans;
@@ -419,6 +427,14 @@ export default function StockTransferModal({
             totalShopCostValuation += (vS * vC);
             totalShopSellingValuation += (vS * vSPrice);
           });
+          // ফলব্যাক: যদি সাধারণ পণ্যে ভ্যারিয়েন্ট থাকে কিন্তু ভ্যারিয়েন্টগুলোর দোকান স্টক ০ এবং মূল পণ্যে দোকান স্টক থাকে
+          if (varSStockSum === 0 && effectiveSStock > 0) {
+            totalShopCostValuation += (effectiveSStock * unitCost);
+            totalShopSellingValuation += (effectiveSStock * sellingPrice);
+          }
+          if (varGStockSum === 0 && effectiveGStock > 0) {
+            generalGodownValuation += (effectiveGStock * unitCost);
+          }
         } else {
           generalGodownValuation += (effectiveGStock * unitCost);
           totalShopCostValuation += (effectiveSStock * unitCost);
@@ -1379,6 +1395,19 @@ export default function StockTransferModal({
 
   // ভ্যারিয়েন্ট রিস্টক মডাল ওপেন
   const handleOpenVariantRestock = (product, variant, variantIdx, defaultLocation = 'Godown') => {
+    const prodUnit = getProductDisplayUnit(product);
+    const isThan = /than|থান/i.test(prodUnit);
+    const prodYardsPerThan = isThan ? (Number(product.YardsPerThan || product.yardsPerThan || 0) || 25) : 0;
+    const currentShopStock = Number(variant.StockQuantity !== undefined ? variant.StockQuantity : variant.stockQuantity) || 0;
+
+    let initGoj = 0;
+    let initGira = 0;
+    if (isThan && prodYardsPerThan > 0 && currentShopStock > 0 && defaultLocation === 'Shop') {
+      const parsed = parseGojGira(currentShopStock);
+      initGoj = parsed.goj || 0;
+      initGira = parsed.gira || 0;
+    }
+
     setVariantRestockModal({
       product,
       variant,
@@ -1386,6 +1415,8 @@ export default function StockTransferModal({
       location: defaultLocation, // 'Godown' | 'Shop'
       action: 'ADD', // 'ADD' | 'DEDUCT' | 'SET'
       quantity: 1,
+      fabricGoj: initGoj,
+      fabricGira: initGira,
       reason: defaultLocation === 'Godown' ? 'নতুন লট গোডাউনে আগমন' : 'দোকান সেলফ বৃদ্ধি / সমন্বয়',
       notes: ''
     });
@@ -1679,6 +1710,22 @@ export default function StockTransferModal({
   // ভ্যারিয়েন্ট এডিট মডাল ওপেন
   const handleOpenEditVariant = (product, variant, variantIdx) => {
     const colorVal = variant.Color || variant.color || variant.Attributes?.Color || variant.Attributes?.color || '';
+    const prodUnit = getProductDisplayUnit(product);
+    const isThan = /than|থান/i.test(prodUnit);
+    const prodYardsPerThan = isThan ? (Number(product.YardsPerThan || product.yardsPerThan || 0) || 25) : 0;
+    const currentShopStock = Number(variant.StockQuantity !== undefined ? variant.StockQuantity : (variant.stockQuantity !== undefined ? variant.stockQuantity : (variant.ShopStock || 0))) || 0;
+
+    let fullThans = 0;
+    let cutGoj = 0;
+    let cutGira = 0;
+    if (isThan && prodYardsPerThan > 0 && currentShopStock > 0) {
+      const bd = calculateThanBreakdown(currentShopStock, prodYardsPerThan, 0);
+      fullThans = bd.fullThans || 0;
+      const parsedCut = parseGojGira(bd.runningCutYards);
+      cutGoj = parsedCut.goj || 0;
+      cutGira = parsedCut.gira || 0;
+    }
+
     setEditVariantModal({
       product,
       variant,
@@ -1686,7 +1733,10 @@ export default function StockTransferModal({
       colorName: colorVal,
       barcode: variant.Barcode || variant.barcode || '',
       godownStock: Number(variant.GodownStock !== undefined ? variant.GodownStock : variant.godownStock) || 0,
-      shopStock: Number(variant.StockQuantity !== undefined ? variant.StockQuantity : variant.stockQuantity) || 0,
+      shopStock: currentShopStock,
+      fullThans: fullThans,
+      cutGoj: cutGoj,
+      cutGira: cutGira,
       costPrice: Number(variant.CostPrice !== undefined ? variant.CostPrice : (product.CostPrice || 0)),
       sellingPrice: Number(variant.SellingPrice !== undefined ? variant.SellingPrice : (product.SellingPrice || 0)),
       wholesalePrice: Number(variant.WholesalePrice !== undefined ? variant.WholesalePrice : (product.WholesalePrice || product.CostPrice || 0)),
@@ -1697,12 +1747,16 @@ export default function StockTransferModal({
   const handleSaveEditVariantSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!editVariantModal || !onUpdateProductVariants) return;
-    const { product, variantIdx, colorName, barcode, godownStock, shopStock, costPrice, sellingPrice, wholesalePrice } = editVariantModal;
+    const { product, variantIdx, colorName, barcode, godownStock, shopStock, fullThans, cutGoj, cutGira, costPrice, sellingPrice, wholesalePrice } = editVariantModal;
     const cleanColor = String(colorName || '').trim();
     if (!cleanColor) {
       alert('দয়া করে রঙের নাম উল্লেখ করুন।');
       return;
     }
+
+    const prodUnit = getProductDisplayUnit(product);
+    const isThan = /than|থান/i.test(prodUnit);
+    const prodYardsPerThan = isThan ? (Number(product.YardsPerThan || product.yardsPerThan || 0) || 25) : 0;
 
     const currentVariants = getVariantsOfProduct(product);
     // অন্য কোনো ভ্যারিয়েন্টে একই নাম আছে কি না যাচাই
@@ -1717,7 +1771,9 @@ export default function StockTransferModal({
     }
 
     const gStock = Math.max(0, Number(godownStock) || 0);
-    const sStock = Math.max(0, Number(shopStock) || 0);
+    const sStock = (isThan && prodYardsPerThan > 0)
+      ? calculateInitialShopYards(fullThans, cutGoj, cutGira, prodYardsPerThan)
+      : Math.max(0, Number(shopStock) || 0);
 
     const updatedVariants = currentVariants.map((v, idx) => {
       if (idx === variantIdx) {
@@ -1730,11 +1786,16 @@ export default function StockTransferModal({
           godownStock: gStock,
           StockQuantity: sStock,
           stockQuantity: sStock,
+          ShopStock: sStock,
+          shopStock: sStock,
           TotalStock: gStock + sStock,
           totalStock: gStock + sStock,
           CostPrice: Number(costPrice) || 0,
+          costPrice: Number(costPrice) || 0,
           SellingPrice: Number(sellingPrice) || 0,
-          WholesalePrice: Number(wholesalePrice) || 0
+          sellingPrice: Number(sellingPrice) || 0,
+          WholesalePrice: Number(wholesalePrice) || 0,
+          wholesalePrice: Number(wholesalePrice) || 0
         };
       }
       return v;
@@ -1743,14 +1804,14 @@ export default function StockTransferModal({
     setIsSubmittingEditVariant(true);
     try {
       await onUpdateProductVariants(product.ProductID, updatedVariants, {
-        location: 'Godown',
+        location: isShopStockView ? 'Shop' : 'Godown',
         type: 'ADJUSTMENT',
         variantName: `রং: ${cleanColor}`,
-        qty: gStock,
-        prevStock: Number(editVariantModal.variant.GodownStock || 0),
-        newStock: gStock,
+        qty: isShopStockView ? sStock : gStock,
+        prevStock: Number(isShopStockView ? (editVariantModal.variant.StockQuantity || 0) : (editVariantModal.variant.GodownStock || 0)),
+        newStock: isShopStockView ? sStock : gStock,
         reason: `ভ্যারিয়েন্ট এডিট (${cleanColor})`,
-        notes: `ভ্যারিয়েন্ট তথ্য ও স্টক আপডেট: গোডাউন ${gStock}, দোকান ${sStock}`
+        notes: `ভ্যারিয়েন্ট তথ্য ও স্টক আপডেট: গোডাউন ${gStock} ${isThan ? 'থান' : prodUnit}, দোকান ${sStock} ${isThan ? 'গজ' : prodUnit}`
       });
       setEditVariantModal(null);
     } catch (err) {
@@ -3903,6 +3964,15 @@ export default function StockTransferModal({
                                                                   <SlidersHorizontal className="w-3 h-3 text-amber-600" />
                                                                   <span>সমন্বয়</span>
                                                                 </button>
+                                                                <button
+                                                                  type="button"
+                                                                  onClick={() => handleOpenEditVariant(p, v, vIdx)}
+                                                                  className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0da487] border border-emerald-200 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                                  title="এই ভ্যারিয়েন্টের তথ্য ও কাটা থান (গজ/গিরা) এডিট করুন"
+                                                                >
+                                                                  <Edit3 className="w-3 h-3" />
+                                                                  <span>এডিট</span>
+                                                                </button>
                                                               </>
                                                             ) : (
                                                               <>
@@ -4310,6 +4380,15 @@ export default function StockTransferModal({
                                               >
                                                 <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600" />
                                                 <span>সমন্বয়</span>
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleOpenEditVariant(item.parentProduct, item.variant, item.variantIndex)}
+                                                className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0da487] border border-emerald-200 rounded-lg text-xs font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                title="এই ভ্যারিয়েন্টের তথ্য ও কাটা থান (গজ/গিরা) এডিট করুন"
+                                              >
+                                                <Edit3 className="w-3.5 h-3.5" />
+                                                <span>এডিট</span>
                                               </button>
                                             </>
                                           ) : (
@@ -5641,23 +5720,87 @@ export default function StockTransferModal({
                     <label className="text-xs font-bold text-slate-700 block mb-1.5">
                       {variantRestockModal.action === 'SET' ? 'নতুন নির্ধারিত স্টক সংখ্যা' : 'সমন্বয়ের পরিমাণ / রিস্টক সংখ্যা'}
                     </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        required
-                        value={variantRestockModal.quantity}
-                        onChange={(e) => setVariantRestockModal(prev => ({ ...prev, quantity: e.target.value }))}
-                        className="w-full px-3.5 py-2.5 text-sm font-black font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0da487] focus:outline-hidden"
-                        placeholder="0"
-                      />
-                      <span className="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400">
-                        {isProdThan
-                          ? (variantRestockModal.location === 'Shop' ? 'গজ' : 'থান')
-                          : getProductDisplayUnit(prod)}
-                      </span>
-                    </div>
+
+                    {isProdThan && variantRestockModal.location === 'Shop' ? (
+                      <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 space-y-2">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-emerald-950">
+                          <span>🏬 দোকানে গজ ও গিরা ইনপুট</span>
+                          <span className="text-[10px] text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200">১ গজ = ১৬ গিরা</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-700 mb-1">গজ</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={variantRestockModal.fabricGoj !== undefined ? variantRestockModal.fabricGoj : ''}
+                              onChange={(e) => {
+                                const g = parseFloat(e.target.value) || 0;
+                                const gi = parseFloat(variantRestockModal.fabricGira) || 0;
+                                const tot = Math.round((g + (gi / 16)) * 10000) / 10000;
+                                setVariantRestockModal(prev => ({
+                                  ...prev,
+                                  fabricGoj: e.target.value,
+                                  quantity: tot
+                                }));
+                              }}
+                              placeholder="0"
+                              className="w-full px-3 py-2 text-xs font-bold font-mono border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-[#0da487]"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-700 mb-1">গিরা (০-১৫)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="15"
+                              step="1"
+                              value={variantRestockModal.fabricGira !== undefined ? variantRestockModal.fabricGira : ''}
+                              onChange={(e) => {
+                                let val = parseInt(e.target.value, 10);
+                                if (isNaN(val)) val = 0;
+                                if (val < 0) val = 0;
+                                if (val > 15) val = 15;
+                                const g = parseFloat(variantRestockModal.fabricGoj) || 0;
+                                const tot = Math.round((g + (val / 16)) * 10000) / 10000;
+                                setVariantRestockModal(prev => ({
+                                  ...prev,
+                                  fabricGira: val === 0 && e.target.value === '' ? '' : val,
+                                  quantity: tot
+                                }));
+                              }}
+                              placeholder="0"
+                              className="w-full px-3 py-2 text-xs font-bold font-mono border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-[#0da487]"
+                            />
+                          </div>
+                        </div>
+                        <div className="text-[11px] font-bold text-emerald-900 bg-white p-2 rounded-lg border border-emerald-200 flex items-center justify-between">
+                          <span>মোট পরিমাণ:</span>
+                          <span className="font-mono text-xs font-bold text-[#0da487]">
+                            {(Number(variantRestockModal.quantity) || 0).toLocaleString('bn-BD')} গজ
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          required
+                          value={variantRestockModal.quantity}
+                          onChange={(e) => setVariantRestockModal(prev => ({ ...prev, quantity: e.target.value }))}
+                          className="w-full px-3.5 py-2.5 text-sm font-black font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0da487] focus:outline-hidden"
+                          placeholder="0"
+                        />
+                        <span className="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400">
+                          {isProdThan
+                            ? (variantRestockModal.location === 'Shop' ? 'গজ' : 'থান')
+                            : getProductDisplayUnit(prod)}
+                        </span>
+                      </div>
+                    )}
                     {isProdThan && prodYardsPerThan > 0 && variantRestockModal.location === 'Godown' && (
                       <div className="mt-1.5 px-3 py-1.5 bg-emerald-50/50 rounded-lg border border-emerald-100 flex items-center justify-between text-xs text-emerald-900 font-semibold">
                         <span>মোট গজ হিসাব ({prodYardsPerThan} গজ/থান):</span>
@@ -6078,7 +6221,7 @@ export default function StockTransferModal({
                       <span>মজুত সমন্বয় (একক: {currentUnit})</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className={isThan && prodYardsPerThan > 0 ? "space-y-3" : "grid grid-cols-2 gap-3"}>
                       <div>
                         <label className="block text-[11px] font-bold text-indigo-900 mb-1">
                           🏭 গোডাউন স্টক ({currentUnit})
@@ -6099,25 +6242,142 @@ export default function StockTransferModal({
                         )}
                       </div>
 
-                      <div>
-                        <label className="block text-[11px] font-bold text-emerald-900 mb-1">
-                          🏬 দোকান স্টক ({isThan ? 'গজ' : currentUnit})
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="any"
-                          required
-                          value={editVariantModal.shopStock}
-                          onChange={(e) => setEditVariantModal(prev => ({ ...prev, shopStock: e.target.value }))}
-                          className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-lg text-xs font-black text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        />
-                        {isThan && prodYardsPerThan > 0 && Number(editVariantModal.shopStock || 0) > 0 && (
-                          <div className="text-[10px] text-emerald-700 font-bold mt-1">
-                            = {calculateThanBreakdown(editVariantModal.shopStock, prodYardsPerThan, 2).displayText}
+                      {isThan && prodYardsPerThan > 0 ? (
+                        <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-[11px] font-bold text-emerald-950 flex items-center space-x-1">
+                              <Store className="w-3.5 h-3.5 text-[#0da487]" />
+                              <span>🏬 দোকানে বর্তমান মজুত (আস্ত থান + কাটা থান গজ ও গিরা)</span>
+                            </label>
+                            <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-200 shadow-2xs">
+                              ১ থান = {prodYardsPerThan} গজ | ১ গজ = ১৬ গিরা
+                            </span>
                           </div>
-                        )}
-                      </div>
+
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                                📦 আস্ত থান
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={editVariantModal.fullThans !== undefined ? editVariantModal.fullThans : ''}
+                                onChange={(e) => {
+                                  const ft = Math.max(0, parseInt(e.target.value, 10) || 0);
+                                  const cg = Math.max(0, parseInt(editVariantModal.cutGoj, 10) || 0);
+                                  const cgi = Math.max(0, parseInt(editVariantModal.cutGira, 10) || 0);
+                                  const totalYards = calculateInitialShopYards(ft, cg, cgi, prodYardsPerThan);
+                                  setEditVariantModal(prev => ({
+                                    ...prev,
+                                    fullThans: e.target.value,
+                                    shopStock: totalYards
+                                  }));
+                                }}
+                                placeholder="0"
+                                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#0da487]"
+                              />
+                              <span className="text-[9.5px] text-slate-500 font-semibold block mt-0.5">
+                                = {((parseInt(editVariantModal.fullThans, 10) || 0) * prodYardsPerThan)} গজ
+                              </span>
+                            </div>
+
+                            <div>
+                              <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                                ✂️ কাটা গজ
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={editVariantModal.cutGoj !== undefined ? editVariantModal.cutGoj : ''}
+                                onChange={(e) => {
+                                  const ft = Math.max(0, parseInt(editVariantModal.fullThans, 10) || 0);
+                                  const cg = Math.max(0, parseInt(e.target.value, 10) || 0);
+                                  const cgi = Math.max(0, parseInt(editVariantModal.cutGira, 10) || 0);
+                                  const totalYards = calculateInitialShopYards(ft, cg, cgi, prodYardsPerThan);
+                                  setEditVariantModal(prev => ({
+                                    ...prev,
+                                    cutGoj: e.target.value,
+                                    shopStock: totalYards
+                                  }));
+                                }}
+                                placeholder="0"
+                                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#0da487]"
+                              />
+                              <span className="text-[9.5px] text-slate-500 font-semibold block mt-0.5">
+                                রানিং কাটা থান
+                              </span>
+                            </div>
+
+                            <div>
+                              <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                                📏 কাটা গিরা (০-১৫)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="15"
+                                step="1"
+                                value={editVariantModal.cutGira !== undefined ? editVariantModal.cutGira : ''}
+                                onChange={(e) => {
+                                  let val = parseInt(e.target.value, 10);
+                                  if (isNaN(val)) val = 0;
+                                  if (val < 0) val = 0;
+                                  if (val > 15) val = 15;
+                                  const ft = Math.max(0, parseInt(editVariantModal.fullThans, 10) || 0);
+                                  const cg = Math.max(0, parseInt(editVariantModal.cutGoj, 10) || 0);
+                                  const totalYards = calculateInitialShopYards(ft, cg, val, prodYardsPerThan);
+                                  setEditVariantModal(prev => ({
+                                    ...prev,
+                                    cutGira: val === 0 && e.target.value === '' ? '' : val,
+                                    shopStock: totalYards
+                                  }));
+                                }}
+                                placeholder="0"
+                                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#0da487]"
+                              />
+                              <span className="text-[9.5px] text-slate-500 font-semibold block mt-0.5">
+                                = {((parseInt(editVariantModal.cutGira, 10) || 0) / 16).toFixed(4)} গজ
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* লাইভ মোট গজ ও সম্পদ মূল্য প্রিভিউ */}
+                          <div className="mt-2.5 p-2 bg-white rounded-lg border border-emerald-200/90 flex flex-wrap items-center justify-between gap-1.5">
+                            <div className="text-[11px] font-black text-emerald-900">
+                              মোট দোকান গজ: <span className="font-mono text-xs text-[#0da487] font-bold">{Number(editVariantModal.shopStock || 0).toLocaleString('bn-BD')} গজ</span>
+                              <span className="text-[10px] text-slate-500 font-medium ml-1.5">
+                                ({calculateThanBreakdown(editVariantModal.shopStock || 0, prodYardsPerThan, 2).displayText})
+                              </span>
+                            </div>
+                            <div className="text-[11px] font-black text-slate-800">
+                              সম্পদ মূল্য: <span className="font-mono text-xs text-amber-700 font-bold">{currencySymbol}{Math.round((Number(editVariantModal.shopStock || 0)) * (Number(editVariantModal.costPrice) || Number(prod.CostPrice || 0))).toLocaleString('bn-BD')}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-[11px] font-bold text-emerald-900 mb-1">
+                            🏬 দোকান স্টক ({currentUnit})
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            required
+                            value={editVariantModal.shopStock}
+                            onChange={(e) => setEditVariantModal(prev => ({ ...prev, shopStock: e.target.value }))}
+                            className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-lg text-xs font-black text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                          {isThan && prodYardsPerThan > 0 && Number(editVariantModal.shopStock || 0) > 0 && (
+                            <div className="text-[10px] text-emerald-700 font-bold mt-1">
+                              = {calculateThanBreakdown(editVariantModal.shopStock, prodYardsPerThan, 2).displayText}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
