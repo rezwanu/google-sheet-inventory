@@ -5,184 +5,207 @@ import {
   Copy,
   Check,
   RotateCcw,
-  Sparkles,
-  History,
   Trash2,
   Plus,
   Minus,
-  Calculator
+  Receipt,
+  Layers,
+  ShoppingBag
 } from 'lucide-react';
-import { calculateTotalYards, formatFabricQuantity } from '../utils/fabricUtils';
+import { calculateTotalYards, formatFabricQuantity, parseGojGira } from '../utils/fabricUtils';
+import { playCashChime } from '../utils/soundEffects';
 
 export default function QuickCalculatorModal({
   isOpen = false,
   onClose,
   currencySymbol = '৳'
 }) {
+  // ১. বর্তমান এন্ট্রি ইনপুট স্টেট
   const [goj, setGoj] = useState(1);
   const [gira, setGira] = useState(0);
   const [rate, setRate] = useState(150);
-  const [copiedNotification, setCopiedNotification] = useState(false);
-  const [history, setHistory] = useState(() => {
+
+  // ২. কাস্টমারের কাপড়ের সংরক্ষিত আইটেম তালিকা (Multi-Item Cut List)
+  const [savedItems, setSavedItems] = useState(() => {
     try {
-      const saved = localStorage.getItem('pos_fabric_cut_calc_history');
+      const saved = localStorage.getItem('pos_fabric_calculator_items');
       return saved ? JSON.parse(saved) : [];
     } catch (e) {
       return [];
     }
   });
 
+  const [copiedNotification, setCopiedNotification] = useState(false);
+  const [copiedGrandTotal, setCopiedGrandTotal] = useState(false);
   const rateInputRef = useRef(null);
 
-  // লাইভ মোট গজ ও মূল্য হিসাব
-  const calculation = useMemo(() => {
-    const numGoj = Number(goj) || 0;
-    const numGira = Number(gira) || 0;
-    const numRate = Number(rate) || 0;
+  // ৩. তালিকায় পরিবর্তন হলে লোকাল স্টোরেজে সংরক্ষণ
+  useEffect(() => {
+    try {
+      localStorage.setItem('pos_fabric_calculator_items', JSON.stringify(savedItems));
+    } catch (e) {}
+  }, [savedItems]);
+
+  // ৪. একক কাপড়ের লাইভ হিসাব
+  const currentCalculation = useMemo(() => {
+    const numGoj = Math.max(0, Number(goj) || 0);
+    const numGira = Math.max(0, Math.min(15, Number(gira) || 0));
+    const numRate = Math.max(0, Number(rate) || 0);
 
     const totalYards = calculateTotalYards(numGoj, numGira);
     const exactPrice = totalYards * numRate;
     const roundedPrice = Math.round(exactPrice);
 
-    let giraBangla = '';
-    if (numGira === 4) giraBangla = ' (১ পোয়া)';
-    else if (numGira === 8) giraBangla = ' (আধা গজ)';
-    else if (numGira === 12) giraBangla = ' (পৌনে এক গজ)';
-    else if (numGira === 2) giraBangla = ' (আধা পোয়া)';
+    let giraSubText = '';
+    if (numGira === 4) giraSubText = ' (১ পোয়া)';
+    else if (numGira === 8) giraSubText = ' (আধা গজ)';
+    else if (numGira === 12) giraSubText = ' (পৌনে ১ গজ)';
+    else if (numGira === 2) giraSubText = ' (আধা পোয়া)';
 
-    const fabricText = `${numGoj} গজ${numGira > 0 ? ` ${numGira} গিরা${giraBangla}` : ''}`;
+    const labelText = `${numGoj} গজ${numGira > 0 ? ` ${numGira} গিরা${giraSubText}` : ''}`;
 
     return {
       numGoj,
       numGira,
       numRate,
-      totalYards,
+      totalYards: Math.round(totalYards * 10000) / 10000,
       exactPrice,
       roundedPrice,
-      fabricText
+      labelText
     };
   }, [goj, gira, rate]);
 
-  // হিস্ট্রি লোকাল স্টোরেজে সেভ করা
-  const saveToHistory = (item) => {
-    setHistory((prev) => {
-      // ডুপ্লিকেট রোধ
-      if (prev.length > 0 && prev[0].text === item.text && prev[0].rate === item.rate) {
-        return prev;
-      }
-      const updated = [item, ...prev].slice(0, 10);
-      try {
-        localStorage.setItem('pos_fabric_cut_calc_history', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
+  // ৫. সংরক্ষিত আইটেম তালিকার সর্বমোট (Grand Total Summary)
+  const listSummary = useMemo(() => {
+    const totalCount = savedItems.length;
+    const totalYards = savedItems.reduce((acc, it) => acc + (Number(it.yards) || 0), 0);
+    const grandTotal = savedItems.reduce((acc, it) => acc + (Number(it.price) || 0), 0);
+    
+    // গজ-গিরাতে রূপান্তর
+    const parsed = parseGojGira(totalYards);
+    const formattedYardsText = `${parsed.goj} গজ${parsed.gira > 0 ? ` ${parsed.gira} গিরা` : ''}`;
+
+    return {
+      totalCount,
+      totalYards: Math.round(totalYards * 10000) / 10000,
+      grandTotal: Math.round(grandTotal),
+      formattedYardsText
+    };
+  }, [savedItems]);
+
+  // ৬. বর্তমান কাপড় তালিকায় যোগ / সংরক্ষণ করুন
+  const handleAddItemToList = (e) => {
+    if (e) e.preventDefault();
+    if (currentCalculation.roundedPrice <= 0 && currentCalculation.totalYards <= 0) {
+      return;
+    }
+
+    const newItem = {
+      id: Date.now().toString(),
+      itemNo: savedItems.length + 1,
+      goj: currentCalculation.numGoj,
+      gira: currentCalculation.numGira,
+      yards: currentCalculation.totalYards,
+      rate: currentCalculation.numRate,
+      price: currentCalculation.roundedPrice,
+      text: currentCalculation.labelText,
+      time: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setSavedItems((prev) => [...prev, newItem]);
+    playCashChime();
+
+    // নতুন এন্ট্রির সুবিধার জন্য গজ ১ ও গিরা ০ রাখা (দর অপরিবর্তিত রাখা হয় যাতে দ্রুত টাইপ করা যায়)
+    setGoj(1);
+    setGira(0);
+    if (rateInputRef.current) {
+      rateInputRef.current.focus();
+      rateInputRef.current.select();
+    }
   };
 
-  const clearHistory = () => {
-    setHistory([]);
+  // ৭. তালিকা থেকে একক আইটেম মোছা
+  const handleRemoveItem = (id) => {
+    setSavedItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // ৮. সম্পূর্ণ তালিকা খালি করা (নতুন কাস্টমার)
+  const handleClearAllItems = () => {
+    if (savedItems.length === 0) return;
+    if (confirm('আপনি কি নিশ্চিত যে সম্পূর্ণ সংরক্ষিত তালিকা খালি করে নতুন কাস্টমারের হিসাব শুরু করবেন?')) {
+      setSavedItems([]);
+    }
+  };
+
+  // ৯. একক কাপড়ের দাম কপি
+  const handleCopyCurrentPrice = () => {
+    const text = String(currentCalculation.roundedPrice);
     try {
-      localStorage.removeItem('pos_fabric_cut_calc_history');
+      navigator.clipboard.writeText(text);
+      setCopiedNotification(true);
+      setTimeout(() => setCopiedNotification(false), 1600);
     } catch (e) {}
   };
 
-  // ফলাফল ক্লিপবোর্ডে কপি
-  const handleCopyPrice = () => {
-    const textToCopy = String(calculation.roundedPrice);
+  // ১০. সর্বমোট প্রদেয় বিল কপি
+  const handleCopyGrandTotal = () => {
+    const text = String(listSummary.grandTotal);
     try {
-      navigator.clipboard.writeText(textToCopy);
-      setCopiedNotification(true);
-      setTimeout(() => setCopiedNotification(false), 1800);
-    } catch (e) {
-      const el = document.createElement('textarea');
-      el.value = textToCopy;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-      setCopiedNotification(true);
-      setTimeout(() => setCopiedNotification(false), 1800);
-    }
-
-    // হিস্ট্রিতে সেভ করা
-    if (calculation.roundedPrice > 0) {
-      saveToHistory({
-        id: Date.now(),
-        text: calculation.fabricText,
-        yards: calculation.totalYards,
-        rate: calculation.numRate,
-        price: calculation.roundedPrice,
-        time: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })
-      });
-    }
+      navigator.clipboard.writeText(text);
+      setCopiedGrandTotal(true);
+      setTimeout(() => setCopiedGrandTotal(false), 1600);
+    } catch (e) {}
   };
 
-  // রিসেট ফাংশন
-  const handleReset = () => {
-    setGoj(1);
-    setGira(0);
-    setRate(150);
-    if (rateInputRef.current) {
-      rateInputRef.current.focus();
-    }
-  };
-
-  // কীবোর্ড Esc শর্টকাট
+  // ১১. কীবোর্ড শর্টকাট (Esc দিয়ে ক্লোজ, Ctrl+Enter দিয়ে তালিকায় যোগ)
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         onClose && onClose();
-      } else if (e.key === 'Enter' && e.ctrlKey) {
+      } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        handleCopyPrice();
+        handleAddItemToList();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, calculation, onClose]);
+  }, [isOpen, currentCalculation, onClose]);
 
   if (!isOpen) return null;
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/50 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div 
-        className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150"
+        className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150 text-slate-800"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* শীর্ষ প্রিমিয়াম হেডার */}
-        <div className="bg-gradient-to-r from-emerald-800 via-[#0da487] to-teal-800 text-white p-3.5 flex items-center justify-between border-b border-emerald-900/40 shrink-0">
+        {/* শীর্ষ মার্জিত হেডার (আঁখি-বান্ধব সফট ডার্ক স্লেট) */}
+        <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 shrink-0">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-emerald-600/90 text-white flex items-center justify-center shadow-xs">
               <Scissors className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-black tracking-tight flex items-center space-x-1.5">
-                <span>কাটা কাপড় ক্যালকুলেটর</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-white/20 text-white border border-white/20">
+              <h3 className="text-sm font-bold tracking-tight flex items-center space-x-2">
+                <span>কাটা কাপড় গজ-গিরা ক্যালকুলেটর</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
                   Alt+C
                 </span>
               </h3>
-              <p className="text-[10.5px] text-emerald-100">গজ ও গিরা থেকে মোট কাপড় ও বিক্রয়মূল্য হিসাব</p>
+              <p className="text-[10.5px] text-slate-400">গজ ও গিরা থেকে তাৎক্ষণিক কাপড় ও সর্বমোট বিল হিসাব</p>
             </div>
           </div>
 
           <div className="flex items-center space-x-1">
             <button
               type="button"
-              onClick={handleReset}
-              className="w-7 h-7 rounded-xl hover:bg-white/20 text-emerald-100 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-              title="নতুন হিসাবে রিসেট করুন"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
               onClick={onClose}
-              className="w-7 h-7 rounded-xl hover:bg-white/20 text-emerald-100 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="w-7 h-7 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
               title="বন্ধ করুন (Esc)"
             >
               <X className="w-4 h-4" />
@@ -190,26 +213,28 @@ export default function QuickCalculatorModal({
           </div>
         </div>
 
-        {/* প্রধান কনটেন্ট বডি */}
+        {/* স্ক্রোলেবল বডি কনটেন্ট */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-200">
-
-          {/* ১. ইনপুট সেকশন: গজ, গিরা ও প্রতি গজ দর */}
-          <div className="bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/90 space-y-3">
+          
+          {/* ======================================================== */}
+          {/* সেকশন ১: ইনপুট প্যানেল (গজ, গিরা ও দর) */}
+          {/* ======================================================== */}
+          <div className="bg-slate-50/90 p-3.5 rounded-2xl border border-slate-200/90 space-y-3">
             
-            {/* গজ ও গিরা গ্রিড */}
+            {/* গজ ও গিরা ইনপুট গ্রিড */}
             <div className="grid grid-cols-2 gap-3">
               
-              {/* গজ ইনপুট ও +/- বাটন */}
+              {/* ১.১ গজ (Goj) ইনপুট ফিল্ড */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1 flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700 block mb-1.5 flex items-center justify-between">
                   <span>গজ (Goj)</span>
-                  <span className="text-[10px] font-medium text-slate-500">পূর্ণ গজ</span>
+                  <span className="text-[10px] text-slate-500 font-medium">পূর্ণ গজ</span>
                 </label>
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-600/20">
                   <button
                     type="button"
-                    onClick={() => setGoj(prev => Math.max(0, Number(prev || 0) - 1))}
-                    className="w-8 h-9 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center text-sm font-bold shadow-2xs transition-colors cursor-pointer"
+                    onClick={() => setGoj((prev) => Math.max(0, Number(prev || 0) - 1))}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer active:scale-95 shrink-0"
                     title="১ গজ কমান"
                   >
                     <Minus className="w-3.5 h-3.5" />
@@ -220,12 +245,13 @@ export default function QuickCalculatorModal({
                     step="1"
                     value={goj}
                     onChange={(e) => setGoj(Math.max(0, Number(e.target.value) || 0))}
-                    className="flex-1 px-2.5 py-1.5 text-center text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0da487] font-mono font-bold text-slate-900 shadow-2xs"
+                    className="w-full text-center text-sm font-bold font-mono text-slate-900 bg-transparent focus:outline-hidden"
+                    placeholder="০"
                   />
                   <button
                     type="button"
-                    onClick={() => setGoj(prev => Number(prev || 0) + 1)}
-                    className="w-8 h-9 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center text-sm font-bold shadow-2xs transition-colors cursor-pointer"
+                    onClick={() => setGoj((prev) => Number(prev || 0) + 1)}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer active:scale-95 shrink-0"
                     title="১ গজ বাড়ান"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -233,97 +259,53 @@ export default function QuickCalculatorModal({
                 </div>
               </div>
 
-              {/* গিরা ড্রপডাউন */}
+              {/* ১.২ গিরা (Gira) ইনপুট ফিল্ড (ড্রপডাউনের পরিবর্তে ইনপুট) */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1 flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700 block mb-1.5 flex items-center justify-between">
                   <span>গিরা (Gira)</span>
-                  <span className="text-[10px] font-medium text-[#0da487] font-semibold">১৬ গিরা = ১ গজ</span>
+                  <span className="text-[10px] text-emerald-700 font-semibold">১৬ গিরা = ১ গজ</span>
                 </label>
-                <select
-                  value={gira}
-                  onChange={(e) => setGira(Number(e.target.value) || 0)}
-                  className="w-full h-9 px-2.5 py-1 text-xs bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0da487] font-bold text-slate-800 shadow-2xs cursor-pointer"
-                >
-                  <option value={0}>০ গিরা (০ গজ)</option>
-                  <option value={1}>১ গিরা (০.০৬২৫ গজ)</option>
-                  <option value={2}>২ গিরা (আধা পোয়া)</option>
-                  <option value={3}>৩ গিরা (০.১৮৭৫ গজ)</option>
-                  <option value={4}>৪ গিরা (১ পোয়া / ০.২৫)</option>
-                  <option value={5}>৫ গিরা (০.৩১২৫ গজ)</option>
-                  <option value={6}>৬ গিরা (০.৩৭৫ গজ)</option>
-                  <option value={7}>৭ গিরা (০.৪৩৭৫ গজ)</option>
-                  <option value={8}>৮ গিরা (আধা গজ / ০.৫)</option>
-                  <option value={9}>৯ গিরা (০.৫৬২৫ গজ)</option>
-                  <option value={10}>১০ গিরা (০.৬২৫ গজ)</option>
-                  <option value={11}>১১ গিরা (০.৬৮৭৫ গজ)</option>
-                  <option value={12}>১২ গিরা (পৌনে ১ / ০.৭৫)</option>
-                  <option value={13}>১৩ গিরা (০.৮১২৫ গজ)</option>
-                  <option value={14}>১৪ গিরা (০.৮৭৫ গজ)</option>
-                  <option value={15}>১৫ গিরা (০.৯৩৭৫ গজ)</option>
-                </select>
+                <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-600/20">
+                  <button
+                    type="button"
+                    onClick={() => setGira((prev) => Math.max(0, Number(prev || 0) - 1))}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer active:scale-95 shrink-0"
+                    title="১ গিরা কমান"
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <input
+                    type="number"
+                    min="0"
+                    max="15"
+                    step="1"
+                    value={gira}
+                    onChange={(e) => {
+                      const val = Number(e.target.value) || 0;
+                      setGira(Math.max(0, Math.min(15, val)));
+                    }}
+                    className="w-full text-center text-sm font-bold font-mono text-slate-900 bg-transparent focus:outline-hidden"
+                    placeholder="০"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setGira((prev) => Math.min(15, Number(prev || 0) + 1))}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer active:scale-95 shrink-0"
+                    title="১ গিরা বাড়ান"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
             </div>
 
-            {/* কুইক গজ সিলেক্টর পিলস */}
-            <div className="flex items-center space-x-1.5 overflow-x-auto scrollbar-none pt-0.5">
-              <span className="text-[10px] text-slate-400 font-bold shrink-0">কুইক গজ:</span>
-              {[1, 1.5, 2, 2.5, 3, 3.5, 4, 5].map((preset) => {
-                const isSelected = calculation.totalYards === preset;
-                return (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => {
-                      const full = Math.floor(preset);
-                      const frac = preset - full;
-                      setGoj(full);
-                      setGira(Math.round(frac * 16));
-                    }}
-                    className={`px-2 py-0.5 rounded-lg text-[10.5px] font-bold transition-all shrink-0 cursor-pointer ${
-                      isSelected
-                        ? 'bg-[#0da487] text-white shadow-xs'
-                        : 'bg-white hover:bg-slate-200/80 text-slate-700 border border-slate-200/80'
-                    }`}
-                  >
-                    {preset} গজ
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* কুইক গিরা সিলেক্টর পিলস */}
-            <div className="flex items-center space-x-1.5 overflow-x-auto scrollbar-none pt-0.5">
-              <span className="text-[10px] text-slate-400 font-bold shrink-0">কুইক গিরা:</span>
-              {[
-                { g: 0, label: '০' },
-                { g: 2, label: '২ গিরা' },
-                { g: 4, label: '৪ (১ পোয়া)' },
-                { g: 8, label: '৮ (আধা গজ)' },
-                { g: 12, label: '১২ (পৌনে ১)' },
-                { g: 14, label: '১৪ গিরা' }
-              ].map((item) => (
-                <button
-                  key={item.g}
-                  type="button"
-                  onClick={() => setGira(item.g)}
-                  className={`px-2 py-0.5 rounded-lg text-[10.5px] font-bold transition-all shrink-0 cursor-pointer ${
-                    gira === item.g
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'bg-white hover:bg-slate-200/80 text-slate-700 border border-slate-200/80'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-
-            {/* প্রতি গজ বিক্রয় দর ইনপুট */}
-            <div className="pt-1 border-t border-slate-200/70">
+            {/* ১.৩ প্রতি গজ বিক্রয় দর ইনপুট */}
+            <div>
               <label className="text-xs font-bold text-slate-700 block mb-1 flex items-center justify-between">
                 <span>প্রতি গজের বিক্রয় দর ({currencySymbol})</span>
                 <span className="text-[10.5px] text-slate-500 font-mono">
-                  {rate > 0 ? `৳${Number(rate).toLocaleString('bn-BD')} / গজ` : 'দর লিখুন'}
+                  {currentCalculation.numRate > 0 ? `৳${currentCalculation.numRate.toLocaleString('bn-BD')} / গজ` : 'দর লিখুন'}
                 </span>
               </label>
               <div className="relative">
@@ -338,149 +320,179 @@ export default function QuickCalculatorModal({
                   value={rate}
                   onChange={(e) => setRate(Math.max(0, Number(e.target.value) || 0))}
                   placeholder="যেমন: ১৮০"
-                  className="w-full pl-8 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0da487] font-mono font-bold text-slate-900 shadow-2xs"
+                  className="w-full pl-8 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 font-mono font-bold text-slate-900 shadow-2xs"
                 />
               </div>
             </div>
 
-          </div>
-
-          {/* ২. বড় লাইভ রেজাল্ট কার্ড (Hero Display) */}
-          <div className="bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white p-4 rounded-2xl border-2 border-emerald-300 shadow-sm space-y-3 relative overflow-hidden">
-            <div className="absolute right-0 top-0 translate-x-3 -translate-y-3 w-20 h-20 rounded-full bg-emerald-200/40 pointer-events-none blur-lg" />
-
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[10.5px] font-bold text-emerald-800 uppercase tracking-wider block">
-                  মোট কাপড়ের পরিমাণ
-                </span>
-                <h4 className="text-base sm:text-lg font-black text-emerald-950 font-mono mt-0.5">
-                  {calculation.fabricText}
-                </h4>
-                <span className="text-xs font-semibold text-slate-500 font-mono">
-                  = {calculation.totalYards} গজ
-                </span>
-              </div>
-
-              <div className="text-right">
-                <span className="text-[10.5px] font-bold text-emerald-800 uppercase tracking-wider block">
-                  মোট প্রদেয় মূল্য
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-black text-[#0b8b72] font-mono mt-0.5 tracking-tight">
-                  {currencySymbol}{calculation.roundedPrice.toLocaleString('bn-BD')}
-                </h2>
-                {calculation.exactPrice !== calculation.roundedPrice && (
-                  <span className="text-[10px] text-slate-400 font-mono block">
-                    (সঠিক: {currencySymbol}{calculation.exactPrice.toFixed(2)})
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* হিসাব বিবরণী ফর্মুলা লাইন */}
-            <div className="bg-white/90 p-2 rounded-xl border border-emerald-200/80 text-xs font-mono text-slate-600 flex items-center justify-between">
-              <span>সূত্র:</span>
-              <span className="font-bold text-slate-800">
-                {calculation.totalYards} গজ × {currencySymbol}{calculation.numRate} = {currencySymbol}{calculation.roundedPrice}
-              </span>
-            </div>
-
-            {/* কপি অ্যাকশন বাটন */}
-            <div className="pt-1 flex items-center space-x-2">
-              <button
-                type="button"
-                onClick={handleCopyPrice}
-                className="flex-1 py-2 px-3 bg-[#0da487] hover:bg-[#0b8b72] active:scale-98 text-white rounded-xl text-xs font-bold inline-flex items-center justify-center space-x-1.5 shadow-sm transition-all cursor-pointer"
-              >
-                {copiedNotification ? (
-                  <>
-                    <Check className="w-4 h-4 text-emerald-200" />
-                    <span>✓ মূল্য কপি হয়েছে ({currencySymbol}{calculation.roundedPrice})</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    <span>মোট মূল্য কপি করুন ({currencySymbol}{calculation.roundedPrice})</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  saveToHistory({
-                    id: Date.now(),
-                    text: calculation.fabricText,
-                    yards: calculation.totalYards,
-                    rate: calculation.numRate,
-                    price: calculation.roundedPrice,
-                    time: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })
-                  });
-                  setCopiedNotification(true);
-                  setTimeout(() => setCopiedNotification(false), 1200);
-                }}
-                className="py-2 px-3 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-                title="হিস্ট্রিতে সংরক্ষণ করুন"
-              >
-                সংরক্ষণ
-              </button>
-            </div>
-          </div>
-
-          {/* ৩. পূর্ববর্তী কাটা কাপড়ের হিস্ট্রি (Recent Cuts) */}
-          {history.length > 0 && (
-            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+            {/* ১.৪ বর্তমান কাপড়ের ফলাফল কার্ড ও তালিকায় যোগ বাটন */}
+            <div className="bg-white p-3 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-700 flex items-center space-x-1">
-                  <History className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>পূর্ববর্তী কাটা হিসাব ({history.length})</span>
-                </span>
+                <div>
+                  <span className="text-[10.5px] font-semibold text-slate-500 block">এই কাপড়ের পরিমাপ:</span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 font-mono">
+                    {currentCalculation.labelText} ({currentCalculation.totalYards} গজ)
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10.5px] font-semibold text-slate-500 block">এই কাপড়ের দাম:</span>
+                  <span className="text-base sm:text-lg font-black text-emerald-800 font-mono">
+                    {currencySymbol}{currentCalculation.roundedPrice.toLocaleString('bn-BD')}
+                  </span>
+                </div>
+              </div>
+
+              {/* অ্যাকশন বাটন গ্রুপ: সংরক্ষণ/তালিকায় যোগ এবং কপি */}
+              <div className="flex items-center space-x-2 pt-1 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={clearHistory}
-                  className="text-[10px] font-bold text-rose-600 hover:text-rose-800 flex items-center space-x-0.5 cursor-pointer"
+                  onClick={handleAddItemToList}
+                  className="flex-1 py-2 px-3 bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white rounded-xl text-xs font-bold inline-flex items-center justify-center space-x-1.5 shadow-xs transition-all cursor-pointer"
+                  title="এই কাপড়টি কাস্টমারের বিল তালিকায় যোগ ও সংরক্ষণ করুন (Ctrl+Enter)"
                 >
-                  <Trash2 className="w-3 h-3" />
-                  <span>মুছুন</span>
+                  <Plus className="w-4 h-4" />
+                  <span>তালিকায় যোগ / সংরক্ষণ করুন</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCopyCurrentPrice}
+                  className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold inline-flex items-center space-x-1 transition-colors cursor-pointer shrink-0"
+                  title="শুধু এই কাপড়ের দাম কপি করুন"
+                >
+                  {copiedNotification ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-700">কপি হয়েছে</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>কপি</span>
+                    </>
+                  )}
                 </button>
               </div>
+            </div>
 
-              <div className="max-h-28 overflow-y-auto space-y-1 pr-1 scrollbar-thin">
-                {history.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      const parsed = parseGojGira(item.yards);
-                      setGoj(parsed.goj);
-                      setGira(parsed.gira);
-                      setRate(item.rate);
-                    }}
-                    className="flex items-center justify-between p-1.5 rounded-lg bg-white border border-slate-200/80 hover:border-emerald-300 hover:bg-emerald-50/40 text-xs font-mono transition-all cursor-pointer group"
-                    title="এই হিসাবটি পুনরায় লোড করতে ক্লিক করুন"
-                  >
-                    <div className="flex items-center space-x-1.5 truncate">
-                      <span className="font-bold text-slate-800 group-hover:text-emerald-900">
-                        {item.text}
-                      </span>
-                      <span className="text-[10px] text-slate-400">
-                        (@ {currencySymbol}{item.rate})
-                      </span>
+          </div>
+
+          {/* ======================================================== */}
+          {/* সেকশন ২: কাস্টমারের সংরক্ষিত কাপড়ের তালিকা ও সর্বমোট */}
+          {/* ======================================================== */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
+                <Receipt className="w-4 h-4 text-emerald-700" />
+                <span>কাস্টমারের কাপড়ের তালিকা ({savedItems.length})</span>
+              </span>
+
+              {savedItems.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearAllItems}
+                  className="text-[11px] font-bold text-rose-600 hover:text-rose-800 flex items-center space-x-1 transition-colors cursor-pointer"
+                  title="সম্পূর্ণ তালিকা খালি করে নতুন কাস্টমারের হিসাব শুরু করুন"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>নতুন কাস্টমার (তালিকা মুছুন)</span>
+                </button>
+              )}
+            </div>
+
+            {/* তালিকা বা এম্পটি স্টেট */}
+            {savedItems.length === 0 ? (
+              <div className="p-5 text-center bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 text-slate-400 space-y-1">
+                <p className="text-xs font-medium text-slate-500">এখনো কোনো কাপড় তালিকায় যোগ করা হয়নি</p>
+                <p className="text-[10.5px]">
+                  উপরে গজ, গিরা ও দর দিয়ে <span className="font-bold text-emerald-700">"তালিকায় যোগ / সংরক্ষণ করুন"</span> বাটনে চাপুন।
+                </p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 scrollbar-thin">
+                  {savedItems.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className="p-2.5 sm:px-3 flex items-center justify-between hover:bg-slate-50/70 transition-colors text-xs font-mono"
+                    >
+                      <div className="flex items-center space-x-2 min-w-0 pr-2">
+                        <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold shrink-0">
+                          {idx + 1}
+                        </span>
+                        <div className="truncate">
+                          <span className="font-bold text-slate-800 block truncate">
+                            {item.text}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {item.yards} গজ @ ৳{item.rate}/গজ
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2 shrink-0">
+                        <span className="font-bold text-slate-900 text-sm">
+                          {currencySymbol}{item.price.toLocaleString('bn-BD')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="p-1 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer rounded-md"
+                          title="এই আইটেমটি মুছুন"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <span className="font-black text-[#0da487] group-hover:scale-105 transition-transform pl-2">
-                      {currencySymbol}{item.price.toLocaleString('bn-BD')}
+                  ))}
+                </div>
+
+                {/* সর্বমোট গ্র্যান্ড টোটাল স্ট্রিপ (চোখে আরামদায়ক সফট এমেরাল্ড ব্যানার) */}
+                <div className="bg-emerald-50/80 p-3.5 border-t border-emerald-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10.5px] font-bold text-emerald-900 uppercase tracking-wider block">
+                      সর্বমোট প্রদেয় বিল ({listSummary.totalCount}টি কাপড়)
+                    </span>
+                    <span className="text-xs font-semibold text-slate-600 font-mono">
+                      মোট কাপড়ের মাপ: {listSummary.formattedYardsText} ({listSummary.totalYards} গজ)
                     </span>
                   </div>
-                ))}
+
+                  <div className="flex items-center space-x-3 justify-between sm:justify-end">
+                    <span className="text-xl sm:text-2xl font-black text-emerald-900 font-mono tracking-tight">
+                      {currencySymbol}{listSummary.grandTotal.toLocaleString('bn-BD')}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={handleCopyGrandTotal}
+                      className="py-1.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold inline-flex items-center space-x-1 shadow-2xs transition-all cursor-pointer"
+                      title="সর্বমোট বিলের টাকা কপি করুন"
+                    >
+                      {copiedGrandTotal ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-200" />
+                          <span>কপি হয়েছে</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>সর্বমোট কপি</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
         </div>
 
         {/* ফুটার নোট ও হেল্পার */}
         <div className="p-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 shrink-0">
           <span className="font-medium">
-            💡 শর্টকাট: <kbd className="px-1.5 py-0.5 rounded bg-slate-200 border border-slate-300 font-mono font-bold text-[10px] text-slate-800">Alt+C</kbd>
+            💡 শর্টকাট: <kbd className="px-1.5 py-0.5 rounded bg-slate-200 border border-slate-300 font-mono font-bold text-[10px] text-slate-800">Alt+C</kbd> (খোলা/বন্ধ) | <kbd className="px-1.5 py-0.5 rounded bg-slate-200 border border-slate-300 font-mono font-bold text-[10px] text-slate-800">Ctrl+Enter</kbd> (তালিকায় যোগ)
           </span>
           <button
             type="button"
