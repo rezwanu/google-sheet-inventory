@@ -44,6 +44,7 @@ import FabricWastageModal from './components/FabricWastageModal';
 import BackupRestoreModal from './components/BackupRestoreModal';
 import AdminPinModal from './components/AdminPinModal';
 import CartDrawer from './components/CartDrawer';
+import PosCartPanel from './components/PosCartPanel';
 import QuickCalculatorModal from './components/QuickCalculatorModal';
 import { isAdminUser } from './utils/permissionUtils';
 import { isFabricUnit, calculateThanBreakdown, formatFabricQuantity } from './utils/fabricUtils';
@@ -4967,28 +4968,55 @@ export default function App() {
           )}
 
           {currentView === 'pos' && (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-6.5rem)]">
-              <ProductCatalog
-                products={products}
-                currencySymbol={settings.CurrencySymbol || '৳'}
-                onAddToCart={handleAddToCart}
-                onUpdateCartQuantity={handleUpdateQuantity}
-                onRemoveFromCart={handleRemoveItem}
-                onOpenCartDrawer={() => setIsCartDrawerOpen(true)}
-                cartItems={cart}
-                onOpenProductDetails={handleOpenProductDetails}
-                onOpenInvoiceLookup={handleOpenInvoiceLookup}
-                onDeleteProduct={handleDeleteProduct}
-                onEditProduct={handleOpenEditProduct}
-                activeUser={activeUser}
-                apiUrl={settings.apiUrl}
-                onOpenSettings={() => setIsSettingsModalOpen(true)}
-                onSync={() => handleSync(true)}
-                coupons={coupons}
-                onOpenVariantSelector={(prod) => setVariantSelectModalProduct(prod)}
-                heldCartsCount={heldCarts.length}
-                onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
-              />
+            <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-0 h-[calc(100vh-6.5rem)]">
+              {/* বামপাশ: আধুনিক পণ্য ক্যাটালগ হাব */}
+              <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                <ProductCatalog
+                  products={products}
+                  currencySymbol={settings.CurrencySymbol || '৳'}
+                  onAddToCart={handleAddToCart}
+                  onUpdateCartQuantity={handleUpdateQuantity}
+                  onRemoveFromCart={handleRemoveItem}
+                  onOpenCartDrawer={() => setIsCartDrawerOpen(true)}
+                  cartItems={cart}
+                  onOpenProductDetails={handleOpenProductDetails}
+                  onOpenInvoiceLookup={handleOpenInvoiceLookup}
+                  onDeleteProduct={handleDeleteProduct}
+                  onEditProduct={handleOpenEditProduct}
+                  activeUser={activeUser}
+                  apiUrl={settings.apiUrl}
+                  onOpenSettings={() => setIsSettingsModalOpen(true)}
+                  onSync={() => handleSync(true)}
+                  coupons={coupons}
+                  onOpenVariantSelector={(prod) => setVariantSelectModalProduct(prod)}
+                  heldCartsCount={heldCarts.length}
+                  onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
+                />
+              </div>
+
+              {/* ডানপাশ: স্থায়ী লাইভ কাউন্টার ও কার্ট টার্মিনাল (ডেস্কটপ / পিওএস কাউন্টারে দৃশ্যমান) */}
+              <div className="hidden lg:flex w-80 xl:w-96 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-col">
+                <PosCartPanel
+                  cartItems={cart}
+                  currencySymbol={settings.CurrencySymbol || '৳'}
+                  taxRatePercent={settings.TaxRatePercent || 0}
+                  onUpdateQuantity={handleUpdateQuantity}
+                  onUpdateItemPrice={handleUpdateItemPrice}
+                  onRemoveItem={handleRemoveItem}
+                  onClearCart={handleClearCart}
+                  discountAmount={discountAmount}
+                  setDiscountAmount={setDiscountAmount}
+                  coupons={coupons}
+                  activeUser={activeUser}
+                  heldCarts={heldCarts}
+                  onHoldCart={handleHoldCurrentCart}
+                  onResumeHeldCart={handleResumeHeldCart}
+                  onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
+                  onSendToTailoring={handleSendToTailoringFromCart}
+                  onNavigateToCheckout={() => setCurrentView('checkout')}
+                  onQuickCashCheckout={() => setCurrentView('checkout')}
+                />
+              </div>
             </div>
           )}
 
@@ -5491,9 +5519,9 @@ export default function App() {
         </main>
       </div>
 
-      {/* ক্যাটালগ ভিউতে ফ্লোটিং ডায়নামিক কার্ট বার (Floating Dynamic Island) */}
+      {/* ক্যাটালগ ভিউতে ফ্লোটিং ডায়নামিক কার্ট বার (মোবাইল / ছোট ডিভাইসে দৃশ্যমান) */}
       {Array.isArray(cart) && cart.length > 0 && currentView === 'pos' && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 hover:bg-slate-900 text-white pl-4 pr-2.5 py-2 rounded-full shadow-2xl backdrop-blur-xl flex items-center space-x-3 sm:space-x-4 border border-white/10 animate-in fade-in slide-in-from-bottom-5 transition-all">
+        <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 hover:bg-slate-900 text-white pl-4 pr-2.5 py-2 rounded-full shadow-2xl backdrop-blur-xl flex items-center space-x-3 sm:space-x-4 border border-white/10 animate-in fade-in slide-in-from-bottom-5 transition-all">
           <div className="flex items-center space-x-2">
             <span className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 text-white font-black text-xs flex items-center justify-center shadow-md shadow-indigo-500/30">
               {cart.reduce((a, b) => a + (Number(b.quantity) || 0), 0)}
