@@ -168,15 +168,25 @@ export default function StockTransferModal({
   const [overviewCategory, setOverviewCategory] = useState('ALL');
 
   // দোকানে বর্তমান মজুদ ভিউ মোড কিনা
-  const isShopStockView = initialTab === 'shop_stock' || initialTab === 'shop_outflow' || [
-    'IN_SHOP',
-    'SHOP_ZERO_IN_GODOWN',
-    'LOW_SHOP',
-    'SHOP_FABRIC',
-    'SHOP_SUFFICIENT',
-    'SHOP_REMNANT',
-    'SHOP_NEED_BOLT'
-  ].includes(overviewFilter);
+  const isShopStockView = initialTab === 'shop_stock' || initialTab === 'shop_outflow' || (
+    initialTab !== 'godown_stock' && initialTab !== 'godown_outflow' && [
+      'IN_SHOP',
+      'SHOP_ZERO_IN_GODOWN',
+      'LOW_SHOP',
+      'SHOP_FABRIC',
+      'SHOP_SUFFICIENT',
+      'SHOP_REMNANT',
+      'SHOP_NEED_BOLT'
+    ].includes(overviewFilter)
+  );
+
+  // গোডাউনে বর্তমান মজুদ ভিউ মোড কিনা
+  const isGodownStockView = initialTab === 'godown_stock' || initialTab === 'godown_outflow' || initialTab === 'godown_low_stock' || (
+    initialTab !== 'shop_stock' && initialTab !== 'shop_outflow' && [
+      'IN_GODOWN',
+      'LOW_GODOWN'
+    ].includes(overviewFilter)
+  );
 
   // ভ্যারিয়েন্ট স্টক এক্সপ্যান্ড ও ভিউ মোড স্টেট
   const [stockViewMode, setStockViewMode] = useState('grouped'); // 'grouped' | 'variants'
@@ -1955,18 +1965,20 @@ export default function StockTransferModal({
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={() => { setActiveMainTab('shop_outflow'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                  activeMainTab === 'shop_outflow'
-                    ? 'bg-[#0da487] text-white shadow-xs font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <Store className="w-3.5 h-3.5" />
-                <span>দোকান কমার খাতা</span>
-              </button>
+              {!isGodownStockView && (
+                <button
+                  type="button"
+                  onClick={() => { setActiveMainTab('shop_outflow'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                    activeMainTab === 'shop_outflow'
+                      ? 'bg-[#0da487] text-white shadow-xs font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                  }`}
+                >
+                  <Store className="w-3.5 h-3.5" />
+                  <span>দোকান কমার খাতা</span>
+                </button>
+              )}
             </div>
 
             <button

@@ -9,7 +9,6 @@ import {
   PlusCircle,
   AlertTriangle,
   CalendarClock,
-  ArrowRightLeft,
   Barcode as BarcodeIcon,
   PackageCheck,
   Building2,
@@ -293,26 +292,8 @@ export default function Sidebar({
           title: 'গোডাউন বর্তমান মজুত',
           subTitle: 'গোডাউন থান, গজ ও মূল স্টক',
           icon: Warehouse,
-          isActive: currentView === 'godown_stock',
+          isActive: currentView === 'godown_stock' || currentView === 'godown_transfer' || currentView === 'godown_outflow',
           onClick: () => onNavigate ? onNavigate('godown_stock') : onOpenGodownStockModal ? onOpenGodownStockModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
-          badge: null
-        },
-        {
-          id: 'godown_transfer',
-          title: 'গোডাউন থেকে দোকান চালান',
-          subTitle: 'দোকানে মালামাল পাঠানোর চালান তৈরি',
-          icon: ArrowRightLeft,
-          isActive: currentView === 'godown_transfer',
-          onClick: () => onNavigate ? onNavigate('godown_transfer') : onOpenGodownTransferModal ? onOpenGodownTransferModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
-          badge: null
-        },
-        {
-          id: 'godown_outflow',
-          title: 'গোডাউন কমার খাতা (ভ্যারিয়েন্ট)',
-          subTitle: 'ভ্যারিয়েন্ট ভিত্তিক স্টক কমার তালিকা',
-          icon: TrendingDown,
-          isActive: currentView === 'godown_outflow',
-          onClick: () => onNavigate ? onNavigate('godown_outflow') : onOpenGodownOutflowModal ? onOpenGodownOutflowModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
           badge: null
         },
         {
