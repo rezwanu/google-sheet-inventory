@@ -554,32 +554,43 @@ export default function StockTransferModal({
       const sStock = Number(p.StockQuantity || 0);
       const minAlert = Number(p.MinStockAlert || 5);
       const unit = getProductDisplayUnit(p);
+      const hasVars = vars.length > 0;
+      const varGStockSum = hasVars ? vars.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0), 0) : 0;
+      const varSStockSum = hasVars ? vars.reduce((s, v) => s + (Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0), 0) : 0;
+
+      const effectiveGStock = hasVars && varGStockSum > 0 ? varGStockSum : gStock;
+      const effectiveSStock = hasVars && varSStockSum > 0 ? varSStockSum : sStock;
 
       let matchFilter = true;
       if (overviewFilter === 'NEED_TRANSFER') {
-        matchFilter = sStock <= minAlert && gStock > 0;
+        const hasVarNeedTransfer = hasVars && vars.some(v => {
+          const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+          const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
+          return vS <= minAlert && vG > 0;
+        });
+        matchFilter = (effectiveSStock <= minAlert && effectiveGStock > 0) || hasVarNeedTransfer;
       } else if (overviewFilter === 'LOW_GODOWN' || overviewFilter === 'GODOWN_ALERT') {
-        const hasLowVar = vars.length > 0 && vars.some(v => (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0) <= 2);
-        matchFilter = gStock <= minAlert || hasLowVar;
+        const hasLowVar = hasVars && vars.some(v => (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0) <= 2);
+        matchFilter = effectiveGStock <= minAlert || hasLowVar;
       } else if (overviewFilter === 'IN_GODOWN') {
-        matchFilter = gStock > 0;
+        matchFilter = effectiveGStock > 0;
       } else if (overviewFilter === 'IN_SHOP') {
-        matchFilter = sStock > 0;
+        matchFilter = effectiveSStock > 0;
       } else if (overviewFilter === 'SHOP_ZERO_IN_GODOWN') {
-        const hasZeroShopWithGodownVar = vars.length > 0 && vars.some(v => {
+        const hasZeroShopWithGodownVar = hasVars && vars.some(v => {
           const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
           const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
           return vS <= 0 && vG > 0;
         });
-        matchFilter = (sStock <= 0 && gStock > 0) || hasZeroShopWithGodownVar;
+        matchFilter = (effectiveSStock <= 0 && effectiveGStock > 0) || hasZeroShopWithGodownVar;
       } else if (overviewFilter === 'LOW_SHOP') {
-        const hasLowShopVar = vars.length > 0 && vars.some(v => {
+        const hasLowShopVar = hasVars && vars.some(v => {
           const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
           return vS <= 2 && vS > 0;
         });
-        matchFilter = (sStock <= minAlert && sStock > 0) || hasLowShopVar;
+        matchFilter = (effectiveSStock <= minAlert && effectiveSStock > 0) || hasLowShopVar;
       } else if (overviewFilter === 'SHOP_FABRIC') {
-        matchFilter = (/than|থান|গজ|yard/i.test(unit)) && sStock > 0;
+        matchFilter = (/than|থান|গজ|yard/i.test(unit)) && effectiveSStock > 0;
       } else if (overviewFilter === 'SHOP_REMNANT') {
         const isFab = /than|থান|গজ|yard/i.test(unit);
         if (!isFab) return false;
@@ -591,13 +602,13 @@ export default function StockTransferModal({
               ? p.remnantThreshold
               : 1)
         );
-        if (vars.length > 0) {
+        if (hasVars) {
           matchFilter = vars.some((v) => {
             const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
             return calculateThanBreakdown(vS, ypt, remTh).isRemnant;
           });
         } else {
-          const bd = calculateThanBreakdown(sStock, ypt, remTh);
+          const bd = calculateThanBreakdown(effectiveSStock, ypt, remTh);
           matchFilter = bd.isRemnant;
         }
       } else if (overviewFilter === 'SHOP_NEED_BOLT') {
@@ -611,7 +622,7 @@ export default function StockTransferModal({
               ? p.remnantThreshold
               : 1)
         );
-        if (vars.length > 0) {
+        if (hasVars) {
           matchFilter = vars.some((v) => {
             const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
             const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
@@ -619,13 +630,13 @@ export default function StockTransferModal({
             return bd.needsRestock && vG > 0;
           });
         } else {
-          const bd = calculateThanBreakdown(sStock, ypt, remTh);
-          matchFilter = bd.needsRestock && gStock > 0;
+          const bd = calculateThanBreakdown(effectiveSStock, ypt, remTh);
+          matchFilter = bd.needsRestock && effectiveGStock > 0;
         }
       } else if (overviewFilter === 'SHOP_SUFFICIENT') {
-        matchFilter = sStock > minAlert;
+        matchFilter = effectiveSStock > minAlert;
       } else if (overviewFilter === 'OUT_OF_STOCK') {
-        matchFilter = gStock <= 0 && sStock <= 0;
+        matchFilter = effectiveGStock <= 0 && effectiveSStock <= 0;
       }
 
       return matchSearch && matchCat && matchFilter;
@@ -664,6 +675,35 @@ export default function StockTransferModal({
           const vShopYards = isThan ? vSStock : 0;
           const vTotalYards = isThan ? (vGodownYards + vShopYards) : 0;
           const vTotalThans = isThan ? (vGStock + (vBd ? vBd.fullThans : 0)) : (vGStock + vSStock);
+
+          // ফ্ল্যাট ভিউতে নির্দিষ্ট ফিল্টার সক্রিয় থাকলে ভ্যারিয়েন্ট লেভেলে ম্যাচ যাচাই
+          let varMatch = true;
+          const minAlert = Number(p.MinStockAlert || 5);
+          if (overviewFilter === 'IN_SHOP') {
+            varMatch = vSStock > 0;
+          } else if (overviewFilter === 'IN_GODOWN') {
+            varMatch = vGStock > 0;
+          } else if (overviewFilter === 'SHOP_ZERO_IN_GODOWN') {
+            varMatch = vSStock <= 0 && vGStock > 0;
+          } else if (overviewFilter === 'LOW_SHOP') {
+            varMatch = vSStock <= minAlert && vSStock > 0;
+          } else if (overviewFilter === 'LOW_GODOWN' || overviewFilter === 'GODOWN_ALERT') {
+            varMatch = vGStock <= minAlert;
+          } else if (overviewFilter === 'SHOP_FABRIC') {
+            varMatch = isThan && vSStock > 0;
+          } else if (overviewFilter === 'SHOP_REMNANT') {
+            varMatch = isThan && Boolean(vBd?.isRemnant);
+          } else if (overviewFilter === 'SHOP_NEED_BOLT') {
+            varMatch = isThan && Boolean(vBd?.needsRestock && vGStock > 0);
+          } else if (overviewFilter === 'SHOP_SUFFICIENT') {
+            varMatch = vSStock > minAlert;
+          } else if (overviewFilter === 'OUT_OF_STOCK') {
+            varMatch = vGStock <= 0 && vSStock <= 0;
+          } else if (overviewFilter === 'NEED_TRANSFER') {
+            varMatch = vSStock <= minAlert && vGStock > 0;
+          }
+
+          if (!varMatch) return;
 
           list.push({
             parentProduct: p,
@@ -731,7 +771,7 @@ export default function StockTransferModal({
       }
     });
     return list;
-  }, [filteredOverviewProducts]);
+  }, [filteredOverviewProducts, overviewFilter]);
 
   // চালান তৈরির পণ্য সাজেশন্স
   const filteredChallanSuggestions = useMemo(() => {
@@ -3667,7 +3707,7 @@ export default function StockTransferModal({
                                               ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
                                               : 'bg-[#0da487] hover:bg-[#0b8b72] active:scale-95 text-white cursor-pointer shadow-emerald-600/20'
                                           }`}
-                                          title={gStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে দোকানে পণ্য আনুন'}
+                                          title={effectiveGStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে দোকানে পণ্য আনুন'}
                                         >
                                           <Truck className="w-3.5 h-3.5" />
                                           <span>চালান</span>
@@ -3695,16 +3735,39 @@ export default function StockTransferModal({
                                           >
                                             <SlidersHorizontal className="w-3.5 h-3.5" />
                                           </button>
-                                          {isThan && onOpenFabricWastageModal && (
+                                          {isThan && onOpenFabricWastageModal && (!hasVars ? Boolean(bd && bd.isRemnant) : vars.some(v => {
+                                            const vQty = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+                                            return calculateThanBreakdown(vQty, yardsPerThan, remTh).isRemnant;
+                                          })) && (
                                             <button
                                               type="button"
-                                              onClick={() => onOpenFabricWastageModal({
-                                                ProductID: p.ProductID,
-                                                ProductName: p.ProductName,
-                                                Barcode: p.Barcode
-                                              })}
-                                              className="p-1.5 hover:bg-white hover:text-amber-700 text-slate-500 rounded-lg text-xs transition-colors cursor-pointer"
-                                              title="এই কাপড়ের ছাঁট বা ড্যামেজ রেকর্ড করুন"
+                                              onClick={() => {
+                                                if (hasVars) {
+                                                  const remVar = vars.find(v => {
+                                                    const vQty = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+                                                    return calculateThanBreakdown(vQty, yardsPerThan, remTh).isRemnant;
+                                                  });
+                                                  if (remVar) {
+                                                    const vBd = calculateThanBreakdown(Number(remVar.StockQuantity !== undefined ? remVar.StockQuantity : (remVar.stockQuantity || 0)) || 0, yardsPerThan, remTh);
+                                                    onOpenFabricWastageModal({
+                                                      ProductID: p.ProductID,
+                                                      VariantID: remVar.VariantID || remVar.variantId,
+                                                      ProductName: `${p.ProductName} - ${remVar.Attributes?.Color || remVar.Color || 'ভ্যারিয়েন্ট'}`,
+                                                      Barcode: remVar.Barcode || p.Barcode,
+                                                      remnantYards: vBd.runningCutYards
+                                                    });
+                                                    return;
+                                                  }
+                                                }
+                                                onOpenFabricWastageModal({
+                                                  ProductID: p.ProductID,
+                                                  ProductName: p.ProductName,
+                                                  Barcode: p.Barcode,
+                                                  remnantYards: bd ? bd.runningCutYards : 0
+                                                });
+                                              }}
+                                              className="p-1.5 hover:bg-amber-100 hover:text-amber-800 text-amber-700 bg-amber-50 rounded-lg text-xs transition-colors cursor-pointer border border-amber-200"
+                                              title="এই কাপড়ের শেষ ছাঁট রেকর্ড করুন"
                                             >
                                               <Scissors className="w-3.5 h-3.5" />
                                             </button>
