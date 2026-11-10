@@ -500,11 +500,11 @@ export default function Sidebar({
         },
         {
           id: 'quick_calculator',
-          title: 'স্মার্ট ক্যালকুলেটর ও গজ-গিরা',
-          subTitle: 'সাধারণ হিসাব, থান ও গজ দর',
-          icon: Calculator,
+          title: 'কাটা কাপড় ক্যালকুলেটর',
+          subTitle: 'গজ ও গিরা থেকে মোট মূল্য',
+          icon: Scissors,
           onClick: () => onOpenCalculator && onOpenCalculator(),
-          badge: { text: 'Alt+C', color: 'bg-indigo-100 text-indigo-800 font-mono font-bold' }
+          badge: { text: 'Alt+C', color: 'bg-emerald-100 text-emerald-800 font-mono font-bold' }
         },
         {
           id: 'pnl_analytics',
@@ -784,10 +784,10 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => onOpenCalculator && onOpenCalculator()}
-              className="w-9 h-9 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 flex items-center justify-center transition-colors cursor-pointer"
-              title="স্মার্ট ক্যালকুলেটর ও গজ-গিরা (Alt+C)"
+              className="w-9 h-9 rounded-xl text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 flex items-center justify-center transition-colors cursor-pointer"
+              title="কাটা কাপড় গজ-গিরা ক্যালকুলেটর (Alt+C)"
             >
-              <Calculator className="w-4 h-4 text-indigo-600" />
+              <Scissors className="w-4 h-4 text-[#0da487]" />
             </button>
           </div>
         )}
@@ -857,11 +857,11 @@ export default function Sidebar({
               <button
                 type="button"
                 onClick={() => handleAction(() => onOpenCalculator && onOpenCalculator())}
-                className="flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-center transition-all cursor-pointer text-slate-700 hover:bg-white hover:text-indigo-600 group"
-                title="স্মার্ট ক্যালকুলেটর ও গজ-গিরা কনভার্টার (Alt+C বা F6)"
+                className="flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-center transition-all cursor-pointer text-slate-700 hover:bg-white hover:text-emerald-700 group"
+                title="কাটা কাপড় গজ-গিরা ক্যালকুলেটর (Alt+C বা F6)"
               >
-                <Calculator className="w-3.5 h-3.5 mb-0.5 text-indigo-600 group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] font-bold truncate w-full">হিসাব</span>
+                <Scissors className="w-3.5 h-3.5 mb-0.5 text-[#0da487] group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] font-bold truncate w-full">গজ হিসাব</span>
               </button>
             </div>
           </div>

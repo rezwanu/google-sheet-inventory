@@ -6084,7 +6084,7 @@ export default function App() {
         coupons={coupons}
       />
 
-      {/* ফেজ ৯: স্মার্ট রিটেইল ও থান গজ-গিরা ক্যালকুলেটর মডাল (Alt+C বা F6) */}
+      {/* ফেজ ৯: কাটা কাপড় গজ ও গিরা ক্যালকুলেটর মডাল (Alt+C বা F6) */}
       <QuickCalculatorModal
         isOpen={isCalculatorOpen}
         onClose={() => setIsCalculatorOpen(false)}
