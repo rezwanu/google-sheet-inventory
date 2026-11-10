@@ -2154,7 +2154,7 @@ export default function App() {
       const localInvoiceNo = `INV-${new Date().getTime().toString().slice(-6)}`;
 
       // দোকান স্টক কমার খতিয়ানে বিক্রয় এন্ট্রি সংরক্ষণ
-      itemsToProcess.forEach((soldItem) => {
+      (saleOrder.items || []).forEach((soldItem) => {
         const itemQty = Number(soldItem.quantity) || 1;
         const targetPid = String(soldItem.productId || '').trim();
         const foundProd = products.find((p) => String(p.ProductID || '').trim() === targetPid || String(p.Barcode || '').trim() === targetPid);
