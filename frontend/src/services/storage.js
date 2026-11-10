@@ -4447,21 +4447,32 @@ export function addFabricWastageLocally(wastageData) {
   const newId = wastageData.WastageID || `WST-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(list.length + 1).padStart(3, '0')}`;
 
   const record = {
+    ...wastageData,
     WastageID: newId,
     ProductID: wastageData.ProductID || wastageData.productId || '',
     ProductName: wastageData.ProductName || wastageData.productName || 'থান কাপড়',
+    VariantID: wastageData.VariantID || wastageData.variantId || '',
+    VariantName: wastageData.VariantName || wastageData.variantName || '',
     Category: wastageData.Category || wastageData.category || 'থান কাপড়',
+    Location: wastageData.Location || wastageData.location || 'Shop',
     Type: wastageData.Type || wastageData.type || 'Remnant', // Remnant or Damaged
-    Goj: Number(wastageData.Goj || wastageData.goj || 0),
-    Gira: Number(wastageData.Gira || wastageData.gira || 0),
-    TotalYards: Number(wastageData.TotalYards || wastageData.totalYards || 0),
-    CostPricePerYard: Number(wastageData.CostPricePerYard || wastageData.costPricePerYard || 0),
-    LossAmount: Number(wastageData.LossAmount || wastageData.lossAmount || 0),
+    Goj: Number(wastageData.Goj !== undefined ? wastageData.Goj : (wastageData.goj !== undefined ? wastageData.goj : 0)),
+    Gira: Number(wastageData.Gira !== undefined ? wastageData.Gira : (wastageData.gira !== undefined ? wastageData.gira : 0)),
+    Thans: Number(wastageData.Thans !== undefined ? wastageData.Thans : (wastageData.thans !== undefined ? wastageData.thans : 0)),
+    TotalYards: Number(wastageData.TotalYards !== undefined ? wastageData.TotalYards : (wastageData.totalYards !== undefined ? wastageData.totalYards : 0)),
+    CostPricePerYard: Number(wastageData.CostPricePerYard !== undefined ? wastageData.CostPricePerYard : (wastageData.costPricePerYard !== undefined ? wastageData.costPricePerYard : 0)),
+    LossAmount: Number(wastageData.LossAmount !== undefined ? wastageData.LossAmount : (wastageData.lossAmount !== undefined ? wastageData.lossAmount : 0)),
     Reason: wastageData.Reason || wastageData.reason || 'থানের শেষ ছাঁট',
     ActionTaken: wastageData.ActionTaken || wastageData.actionTaken || 'WrittenOff',
     LoggedBy: wastageData.LoggedBy || wastageData.loggedBy || 'Cashier',
     CreatedAt: wastageData.CreatedAt || now,
-    Notes: wastageData.Notes || wastageData.notes || ''
+    Notes: wastageData.Notes || wastageData.notes || '',
+    CreateBundle: Boolean(wastageData.CreateBundle),
+    BundleProductID: wastageData.BundleProductID || '',
+    BundleBarcode: wastageData.BundleBarcode || '',
+    BundlePrice: Number(wastageData.BundlePrice || 0),
+    BundleStatus: wastageData.BundleStatus || (wastageData.CreateBundle ? 'Available' : 'WrittenOff'),
+    SoldAt: wastageData.SoldAt || null
   };
 
   list.unshift(record);

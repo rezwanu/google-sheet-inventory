@@ -3375,11 +3375,30 @@ export default function StockTransferModal({
                                                 {isEffectiveRemnant && (
                                                   <button
                                                     type="button"
-                                                    onClick={() => onOpenFabricWastageModal && onOpenFabricWastageModal({
-                                                      ProductID: p.ProductID,
-                                                      ProductName: p.ProductName,
-                                                      remnantYards: effectiveShopCutYards
-                                                    })}
+                                                    onClick={() => {
+                                                      if (!onOpenFabricWastageModal) return;
+                                                      if (hasVariants && Array.isArray(p.Variants)) {
+                                                        const remVar = p.Variants.find(v => {
+                                                          const vQty = Number(v.StockQuantity || 0);
+                                                          return calculateThanBreakdown(vQty, yardsPerThan, remTh).isRemnant;
+                                                        });
+                                                        if (remVar) {
+                                                          const vBd = calculateThanBreakdown(Number(remVar.StockQuantity || 0), yardsPerThan, remTh);
+                                                          onOpenFabricWastageModal({
+                                                            ProductID: p.ProductID,
+                                                            VariantID: remVar.VariantID || remVar.variantId,
+                                                            ProductName: `${p.ProductName} - ${remVar.Attributes?.Color || remVar.Color || 'ভ্যারিয়েন্ট'}`,
+                                                            remnantYards: vBd.runningCutYards
+                                                          });
+                                                          return;
+                                                        }
+                                                      }
+                                                      onOpenFabricWastageModal({
+                                                        ProductID: p.ProductID,
+                                                        ProductName: p.ProductName,
+                                                        remnantYards: effectiveShopCutYards
+                                                      });
+                                                    }}
                                                     className="inline-flex items-center text-amber-900 bg-amber-100 hover:bg-amber-200 px-2 py-0.5 rounded-md border border-amber-300 font-bold animate-pulse text-[10.5px] cursor-pointer transition-colors"
                                                     title="এই কাপড়ের ছাঁট রেকর্ড বা বান্ডেল তৈরি করতে ক্লিক করুন"
                                                   >
@@ -4037,7 +4056,7 @@ export default function StockTransferModal({
                                                                       ProductID: p.ProductID,
                                                                       VariantID: v.VariantID || v.variantId,
                                                                       ProductName: `${p.ProductName} - ${v.Attributes?.Color || v.Color || 'ভ্যারিয়েন্ট'}`,
-                                                                      remnantYards: vSStock
+                                                                      remnantYards: vBd.runningCutYards
                                                                     })}
                                                                     className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                                                     title="এই ভ্যারিয়েন্টের শেষ ছাঁট কাপড় ট্র্যাকার বা বান্ডেলে পাঠান"
@@ -4470,6 +4489,34 @@ export default function StockTransferModal({
                                                 <Edit3 className="w-3.5 h-3.5" />
                                                 <span>এডিট</span>
                                               </button>
+                                              {item.isThanUnit && (() => {
+                                                const ypt = item.yardsPerThan || 25;
+                                                const remTh = Number(
+                                                  item.parentProduct?.RemnantThreshold !== undefined && item.parentProduct?.RemnantThreshold !== null && item.parentProduct?.RemnantThreshold !== '' && Number(item.parentProduct?.RemnantThreshold) > 0
+                                                    ? item.parentProduct?.RemnantThreshold
+                                                    : (item.parentProduct?.remnantThreshold !== undefined && item.parentProduct?.remnantThreshold !== null && item.parentProduct?.remnantThreshold !== '' && Number(item.parentProduct?.remnantThreshold) > 0
+                                                      ? item.parentProduct?.remnantThreshold
+                                                      : 1)
+                                                );
+                                                const bd = calculateThanBreakdown(item.shopStock, ypt, remTh);
+                                                if (!bd || !bd.isRemnant) return null;
+                                                return (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => onOpenFabricWastageModal && onOpenFabricWastageModal({
+                                                      ProductID: item.parentProduct?.ProductID || item.productId,
+                                                      VariantID: item.variant?.VariantID || item.variant?.variantId,
+                                                      ProductName: `${item.productName} - ${item.color || item.size || 'ভ্যারিয়েন্ট'}`,
+                                                      remnantYards: bd.runningCutYards
+                                                    })}
+                                                    className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                    title="এই ভ্যারিয়েন্টের শেষ ছাঁট কাপড় ট্র্যাকার বা বান্ডেলে পাঠান"
+                                                  >
+                                                    <Scissors className="w-3.5 h-3.5 text-amber-700" />
+                                                    <span>ছাঁট</span>
+                                                  </button>
+                                                );
+                                              })()}
                                             </>
                                           ) : (
                                             <>
@@ -4525,6 +4572,32 @@ export default function StockTransferModal({
                                           >
                                             <SlidersHorizontal className="w-3.5 h-3.5" />
                                           </button>
+                                          {item.isThanUnit && isShopStockView && (() => {
+                                            const ypt = item.yardsPerThan || 25;
+                                            const remTh = Number(
+                                              item.parentProduct?.RemnantThreshold !== undefined && item.parentProduct?.RemnantThreshold !== null && item.parentProduct?.RemnantThreshold !== '' && Number(item.parentProduct?.RemnantThreshold) > 0
+                                                ? item.parentProduct?.RemnantThreshold
+                                                : (item.parentProduct?.remnantThreshold !== undefined && item.parentProduct?.remnantThreshold !== null && item.parentProduct?.remnantThreshold !== '' && Number(item.parentProduct?.remnantThreshold) > 0
+                                                  ? item.parentProduct?.remnantThreshold
+                                                  : 1)
+                                            );
+                                            const bd = calculateThanBreakdown(item.shopStock, ypt, remTh);
+                                            if (!bd || !bd.isRemnant) return null;
+                                            return (
+                                              <button
+                                                type="button"
+                                                onClick={() => onOpenFabricWastageModal && onOpenFabricWastageModal({
+                                                  ProductID: item.parentProduct?.ProductID || item.productId,
+                                                  ProductName: item.productName,
+                                                  remnantYards: bd.runningCutYards
+                                                })}
+                                                className="p-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-xs transition-colors cursor-pointer"
+                                                title="এই কাপড়ের শেষ ছাঁট ট্র্যাকার বা বান্ডেলে পাঠান"
+                                              >
+                                                <Scissors className="w-3.5 h-3.5 text-amber-700" />
+                                              </button>
+                                            );
+                                          })()}
                                         </div>
                                       )}
                                     </div>

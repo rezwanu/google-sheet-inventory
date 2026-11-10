@@ -82,7 +82,10 @@ export default function FabricWastageModal({
       setSelectedProductId(String(initialProduct.ProductID || initialProduct.id));
       if (initialProduct.VariantID || initialProduct.variantId) {
         setSelectedVariantId(String(initialProduct.VariantID || initialProduct.variantId));
+      } else {
+        setSelectedVariantId('');
       }
+      setLocation('Shop');
       setActiveTab('new');
       if (initialProduct.remnantYards !== undefined && initialProduct.remnantYards !== null) {
         const parsed = parseGojGira(initialProduct.remnantYards);
