@@ -44,6 +44,7 @@ import FabricWastageModal from './components/FabricWastageModal';
 import BackupRestoreModal from './components/BackupRestoreModal';
 import AdminPinModal from './components/AdminPinModal';
 import CartDrawer from './components/CartDrawer';
+import QuickCalculatorModal from './components/QuickCalculatorModal';
 import { isAdminUser } from './utils/permissionUtils';
 import { isFabricUnit, calculateThanBreakdown, formatFabricQuantity } from './utils/fabricUtils';
 import {
@@ -309,6 +310,7 @@ export default function App() {
   const [isFabricWastageModalOpen, setIsFabricWastageModalOpen] = useState(false);
   const [fabricWastagePreloadData, setFabricWastagePreloadData] = useState(null);
   const [tailoringPreloadData, setTailoringPreloadData] = useState(null);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   // ফেজ ৪: সাপ্লায়ার ও ভেন্ডর, পারচেজ অর্ডার এবং লেজার স্টেট
   const [suppliers, setSuppliers] = useState(() => {
@@ -1232,10 +1234,17 @@ export default function App() {
           setIsFabricWastageModalOpen(false);
           return;
         }
+        if (isCalculatorOpen) {
+          setIsCalculatorOpen(false);
+          return;
+        }
       }
 
-      // ফাংশন কি-সমূহ (F1 - F10)
-      if (e.key === 'F1') {
+      // ফাংশন কি-সমূহ (F1 - F10) ও কীবোর্ড শর্টকাট
+      if ((e.altKey && (e.key === 'c' || e.key === 'C')) || e.key === 'F6') {
+        e.preventDefault();
+        setIsCalculatorOpen((prev) => !prev);
+      } else if (e.key === 'F1') {
         e.preventDefault();
         setCurrentView('pos');
         setTimeout(() => {
@@ -1294,6 +1303,7 @@ export default function App() {
     isInvoiceModalOpen,
     isTailoringModalOpen,
     isFabricWastageModalOpen,
+    isCalculatorOpen,
     fabricCutProduct
   ]);
 
@@ -4938,6 +4948,7 @@ export default function App() {
             onOpenInvoiceLookupModal={handleOpenInvoiceLookup}
             onOpenCustomerOrdersModal={() => setIsCustomerOrdersOpen(true)}
             onSwitchToCustomerMode={handleSwitchToCustomerMode}
+            onOpenCalculator={() => setIsCalculatorOpen(true)}
             onOpenAuthModal={() => setIsAuthModalOpen(true)}
             onLogout={handleLogout}
             syncStatus={syncStatus}
@@ -6071,6 +6082,13 @@ export default function App() {
         discountAmount={discountAmount}
         setDiscountAmount={setDiscountAmount}
         coupons={coupons}
+      />
+
+      {/* ফেজ ৯: স্মার্ট রিটেইল ও থান গজ-গিরা ক্যালকুলেটর মডাল (Alt+C বা F6) */}
+      <QuickCalculatorModal
+        isOpen={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
+        currencySymbol={settings.CurrencySymbol || '৳'}
       />
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}

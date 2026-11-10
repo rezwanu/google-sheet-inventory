@@ -36,7 +36,8 @@ import {
   Scissors,
   Database,
   Search,
-  X
+  X,
+  Calculator
 } from 'lucide-react';
 import { isAdminUser } from '../utils/permissionUtils';
 
@@ -111,6 +112,7 @@ export default function Sidebar({
   onOpenCustomerOrdersModal,
   onSwitchToCustomerMode,
   onOpenAuthModal,
+  onOpenCalculator,
   onLogout,
   syncStatus = 'offline',
 }) {
@@ -497,6 +499,14 @@ export default function Sidebar({
           }
         },
         {
+          id: 'quick_calculator',
+          title: 'স্মার্ট ক্যালকুলেটর ও গজ-গিরা',
+          subTitle: 'সাধারণ হিসাব, থান ও গজ দর',
+          icon: Calculator,
+          onClick: () => onOpenCalculator && onOpenCalculator(),
+          badge: { text: 'Alt+C', color: 'bg-indigo-100 text-indigo-800 font-mono font-bold' }
+        },
+        {
           id: 'pnl_analytics',
           title: 'লাভ-ক্ষতি ও P&L রিপোর্ট',
           subTitle: 'আর্থিক অ্যানালিটিক্স ও ডেড স্টক',
@@ -758,8 +768,8 @@ export default function Sidebar({
             )}
           </div>
         ) : (
-          /* কোল্যাপ্সড মোডে কুইক সার্চ আইকন বাটন */
-          <div className="p-1.5 flex justify-center shrink-0">
+          /* কোল্যাপ্সড মোডে কুইক সার্চ ও ক্যালকুলেটর আইকন বাটন */
+          <div className="p-1.5 flex flex-col items-center space-y-1 shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -771,17 +781,25 @@ export default function Sidebar({
             >
               <Search className="w-4 h-4" />
             </button>
+            <button
+              type="button"
+              onClick={() => onOpenCalculator && onOpenCalculator()}
+              className="w-9 h-9 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 flex items-center justify-center transition-colors cursor-pointer"
+              title="স্মার্ট ক্যালকুলেটর ও গজ-গিরা (Alt+C)"
+            >
+              <Calculator className="w-4 h-4 text-indigo-600" />
+            </button>
           </div>
         )}
 
-        {/* ৩. শীর্ষ কুইক পিনড শর্টকাট (Quick Hot-Bar: POS, Cart, Orders) */}
+        {/* ৩. শীর্ষ কুইক পিনড শর্টকাট (Quick Hot-Bar: POS, Cart, Orders, Calculator) */}
         {!isCollapsed && !searchQuery && (
-          <div className="px-2.5 pt-1 pb-1 shrink-0">
-            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100/80 rounded-xl border border-slate-200/70">
+          <div className="px-2 pt-1 pb-1 shrink-0">
+            <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100/80 rounded-xl border border-slate-200/70">
               <button
                 type="button"
                 onClick={() => handleAction(() => onNavigate && onNavigate('pos'))}
-                className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-center transition-all cursor-pointer ${
+                className={`flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-center transition-all cursor-pointer ${
                   currentView === 'pos'
                     ? 'bg-indigo-600 text-white shadow-xs font-bold'
                     : 'text-slate-700 hover:bg-white hover:text-slate-900'
@@ -801,7 +819,7 @@ export default function Sidebar({
                     onNavigate('cart');
                   }
                 })}
-                className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-center transition-all cursor-pointer relative ${
+                className={`flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-center transition-all cursor-pointer relative ${
                   currentView === 'cart' || currentView === 'checkout'
                     ? 'bg-[#0da487] text-white shadow-xs font-bold'
                     : 'text-slate-700 hover:bg-white hover:text-slate-900'
@@ -811,7 +829,7 @@ export default function Sidebar({
                 <ShoppingCart className="w-3.5 h-3.5 mb-0.5" />
                 <span className="text-[10px] font-bold truncate w-full">কার্ট</span>
                 {cartCount > 0 && (
-                  <span className="absolute -top-0.5 right-1 px-1 py-0.2 rounded-full text-[8.5px] font-black bg-rose-500 text-white shadow-xs">
+                  <span className="absolute -top-0.5 right-0.5 px-1 py-0.2 rounded-full text-[8.5px] font-black bg-rose-500 text-white shadow-xs">
                     {cartCount}
                   </span>
                 )}
@@ -820,7 +838,7 @@ export default function Sidebar({
               <button
                 type="button"
                 onClick={() => handleAction(() => onNavigate && onNavigate('orders'))}
-                className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-center transition-all cursor-pointer relative ${
+                className={`flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-center transition-all cursor-pointer relative ${
                   currentView === 'orders'
                     ? 'bg-indigo-600 text-white shadow-xs font-bold'
                     : 'text-slate-700 hover:bg-white hover:text-slate-900'
@@ -830,10 +848,20 @@ export default function Sidebar({
                 <Truck className="w-3.5 h-3.5 mb-0.5" />
                 <span className="text-[10px] font-bold truncate w-full">অর্ডার</span>
                 {pendingOrdersCount > 0 && (
-                  <span className="absolute -top-0.5 right-1 px-1 py-0.2 rounded-full text-[8.5px] font-black bg-amber-500 text-white shadow-xs">
+                  <span className="absolute -top-0.5 right-0.5 px-1 py-0.2 rounded-full text-[8.5px] font-black bg-amber-500 text-white shadow-xs">
                     {pendingOrdersCount}
                   </span>
                 )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleAction(() => onOpenCalculator && onOpenCalculator())}
+                className="flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-center transition-all cursor-pointer text-slate-700 hover:bg-white hover:text-indigo-600 group"
+                title="স্মার্ট ক্যালকুলেটর ও গজ-গিরা কনভার্টার (Alt+C বা F6)"
+              >
+                <Calculator className="w-3.5 h-3.5 mb-0.5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] font-bold truncate w-full">হিসাব</span>
               </button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Keyboard, Sparkles, Check, ShoppingCart, PauseCircle, Search, Camera, Receipt, CreditCard, Scissors } from 'lucide-react';
+import { X, Keyboard, Sparkles, Check, ShoppingCart, PauseCircle, Search, Camera, Receipt, CreditCard, Scissors, Calculator } from 'lucide-react';
 
 /**
  * প্রফেশনাল ক্যাশিয়ার কিবোর্ড শর্টকাট গাইড মডাল (Keyboard Shortcuts Cheat Sheet)
@@ -28,6 +28,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
     {
       title: '🧾 নেভিগেশন ও সাধারণ (General & Invoices)',
       items: [
+        { key: 'Alt + C / F6', description: 'স্মার্ট ক্যালকুলেটর ও গজ-গিরা কনভার্টার', icon: Calculator },
         { key: 'F10', description: 'ইনভয়েস অনুসন্ধান ও মেমো লুকআপ মডাল', icon: Receipt },
         { key: 'Shift + ?', description: 'কিবোর্ড শর্টকাট সহায়িকা গাইড খুলুন', icon: Keyboard },
         { key: 'Esc', description: 'যেকোনো খোলা মডাল বা পপআপ বন্ধ করুন', icon: X },
