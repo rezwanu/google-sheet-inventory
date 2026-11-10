@@ -2369,7 +2369,9 @@ export default function StockTransferModal({
                   <div>
                     <span className="text-slate-500 block font-medium">সিস্টেম মোট দোকান স্টক:</span>
                     <span className="font-black font-mono text-emerald-700 text-sm">
-                      {stockKpis.totalShop} {stockKpis.fabricShopYards > 0 ? `(${stockKpis.fabricShopYards} গজ)` : ''}
+                      {stockKpis.fabricShopYards > 0 && stockKpis.generalShopPcs > 0
+                        ? `${stockKpis.fabricShopYards.toLocaleString('bn-BD')} গজ + ${stockKpis.generalShopPcs.toLocaleString('bn-BD')} Pcs`
+                        : (stockKpis.fabricShopYards > 0 ? `${stockKpis.fabricShopYards.toLocaleString('bn-BD')} গজ` : `${(stockKpis.totalShop || 0).toLocaleString('bn-BD')} Pcs`)}
                     </span>
                   </div>
                 </div>
@@ -2492,7 +2494,9 @@ export default function StockTransferModal({
                           সর্বমোট সিস্টেম দোকান মজুত:
                         </td>
                         <td className="py-2.5 px-3 text-center font-black text-sm font-mono text-emerald-800 border border-slate-300">
-                          {stockKpis.totalShop}
+                          {stockKpis.fabricShopYards > 0 && stockKpis.generalShopPcs > 0
+                            ? `${stockKpis.fabricShopYards.toLocaleString('bn-BD')} গজ + ${stockKpis.generalShopPcs.toLocaleString('bn-BD')} Pcs`
+                            : (stockKpis.fabricShopYards > 0 ? `${stockKpis.fabricShopYards.toLocaleString('bn-BD')} গজ` : `${(stockKpis.totalShop || 0).toLocaleString('bn-BD')} Pcs`)}
                         </td>
                         <td colSpan="3" className="border border-slate-300"></td>
                       </tr>
@@ -2544,9 +2548,39 @@ export default function StockTransferModal({
                           <Store className="w-4 h-4" />
                         </span>
                       </div>
-                      <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
-                        {(stockKpis.totalShop || 0).toLocaleString('bn-BD')} {(stockKpis.fabricShopYards || 0) > 0 ? <span className="text-xs font-bold text-slate-500">গজ</span> : <span className="text-xs font-bold text-slate-500">আইটেম</span>}
-                      </div>
+                      {stockKpis.fabricShopYards > 0 && stockKpis.generalShopPcs > 0 ? (
+                        <>
+                          <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
+                            <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
+                              {(stockKpis.fabricShopYards || 0).toLocaleString('bn-BD')} <span className="text-xs font-bold text-[#0da487]">গজ</span>
+                            </div>
+                            <span className="text-sm font-black text-slate-300">+</span>
+                            <div className="text-2xl sm:text-3xl font-black text-slate-800 font-mono tracking-tight">
+                              {(stockKpis.generalShopPcs || 0).toLocaleString('bn-BD')} <span className="text-xs font-bold text-slate-500">Pcs</span>
+                            </div>
+                          </div>
+
+                          {/* কাপড় ও পিসের আনুপাতিক মিনি ভিজ্যুয়াল বার */}
+                          {(() => {
+                            const tot = (stockKpis.fabricShopYards || 0) + (stockKpis.generalShopPcs || 0);
+                            const fabricPct = tot > 0 ? Math.round(((stockKpis.fabricShopYards || 0) / tot) * 100) : 100;
+                            return (
+                              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden flex mt-2.5" title={`কাপড়: ${fabricPct}% | রেডি পণ্য: ${100 - fabricPct}%`}>
+                                <div style={{ width: `${fabricPct}%` }} className="bg-[#0da487] h-full rounded-full" />
+                                <div style={{ width: `${100 - fabricPct}%` }} className="bg-slate-300 h-full rounded-full" />
+                              </div>
+                            );
+                          })()}
+                        </>
+                      ) : (
+                        <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
+                          {((stockKpis.fabricShopYards > 0 ? stockKpis.fabricShopYards : (stockKpis.generalShopPcs > 0 ? stockKpis.generalShopPcs : stockKpis.totalShop)) || 0).toLocaleString('bn-BD')}{' '}
+                          <span className="text-xs font-bold text-slate-500">
+                            {stockKpis.fabricShopYards > 0 ? 'গজ' : (stockKpis.generalShopPcs > 0 ? 'Pcs' : 'আইটেম')}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
                         <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
                           🏬 বিক্রয় ফ্লোরে উপস্থিত
@@ -2554,6 +2588,11 @@ export default function StockTransferModal({
                         <span className="text-[10.5px] font-semibold text-slate-500 font-mono">
                           {(stockKpis.shopProductCount || 0).toLocaleString('bn-BD')}টি পণ্য
                         </span>
+                        {stockKpis.fabricShopYards > 0 && stockKpis.generalShopPcs > 0 && (
+                          <span className="text-[10.5px] font-medium text-slate-400 font-mono">
+                            ({(stockKpis.fabricShopYards || 0).toLocaleString('bn-BD')} গজ কাপড় + {(stockKpis.generalShopPcs || 0).toLocaleString('bn-BD')} পিস রেডি)
+                          </span>
+                        )}
                       </div>
                     </div>
 
