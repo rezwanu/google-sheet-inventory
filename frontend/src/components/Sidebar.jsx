@@ -275,27 +275,9 @@ export default function Sidebar({
           title: 'দোকানের বর্তমান মজুত',
           subTitle: 'দোকান ফ্লোর ও কাউন্টার মজুত',
           icon: Store,
-          isActive: currentView === 'shop_stock',
+          isActive: currentView === 'shop_stock' || currentView === 'shop_challans' || currentView === 'shop_outflow',
           onClick: () => onNavigate ? onNavigate('shop_stock') : onOpenShopStockModal ? onOpenShopStockModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
-          badge: null
-        },
-        {
-          id: 'shop_challans',
-          title: 'দোকানে আসা চালান',
-          subTitle: 'গোডাউন থেকে চালান বুঝে নেওয়া',
-          icon: Truck,
-          isActive: currentView === 'shop_challans',
-          onClick: () => onNavigate ? onNavigate('shop_challans') : onOpenShopChallansModal ? onOpenShopChallansModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
-          badge: transfersInTransitCount > 0 ? { text: `${transfersInTransitCount}টি পথে`, color: 'bg-blue-600 text-white font-bold' } : null
-        },
-        {
-          id: 'shop_outflow',
-          title: 'দোকান কমার খাতা',
-          subTitle: 'বিক্রি ও সার্ভিসে কমার হিসাব',
-          icon: TrendingDown,
-          isActive: currentView === 'shop_outflow',
-          onClick: () => onNavigate ? onNavigate('shop_outflow') : onOpenShopOutflowModal ? onOpenShopOutflowModal() : onOpenStockTransferModal && onOpenStockTransferModal(),
-          badge: null
+          badge: transfersInTransitCount > 0 ? { text: `${transfersInTransitCount}টি চালান পথে`, color: 'bg-blue-600 text-white font-bold' } : null
         },
         {
           id: 'fabric_wastage',

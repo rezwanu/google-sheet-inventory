@@ -168,7 +168,7 @@ export default function StockTransferModal({
   const [overviewCategory, setOverviewCategory] = useState('ALL');
 
   // দোকানে বর্তমান মজুদ ভিউ মোড কিনা
-  const isShopStockView = initialTab === 'shop_stock' || [
+  const isShopStockView = initialTab === 'shop_stock' || initialTab === 'shop_outflow' || [
     'IN_SHOP',
     'SHOP_ZERO_IN_GODOWN',
     'LOW_SHOP',
@@ -1940,18 +1940,20 @@ export default function StockTransferModal({
                 )}
               </button>
 
-              <button
-                type="button"
-                onClick={() => { setActiveMainTab('godown_outflow'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                  activeMainTab === 'godown_outflow'
-                    ? 'bg-[#0da487] text-white shadow-xs font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <TrendingDown className="w-3.5 h-3.5" />
-                <span>গোডাউন কমার খাতা</span>
-              </button>
+              {!isShopStockView && (
+                <button
+                  type="button"
+                  onClick={() => { setActiveMainTab('godown_outflow'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                    activeMainTab === 'godown_outflow'
+                      ? 'bg-[#0da487] text-white shadow-xs font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                  }`}
+                >
+                  <TrendingDown className="w-3.5 h-3.5" />
+                  <span>গোডাউন কমার খাতা</span>
+                </button>
+              )}
 
               <button
                 type="button"
