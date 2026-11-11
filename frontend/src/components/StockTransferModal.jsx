@@ -3253,6 +3253,7 @@ export default function StockTransferModal({
                               const varGStockSum = vars.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0), 0);
                               const varSStockSum = vars.reduce((s, v) => s + (Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0), 0);
                               const effectiveGStock = hasVars && varGStockSum > 0 ? varGStockSum : gStock;
+                              const effectiveSStock = hasVars && varSStockSum > 0 ? varSStockSum : sStock;
 
                               // কাপড়ের ভ্যারিয়েন্ট থাকলে প্রতিটি ভ্যারিয়েন্টের আলাদা আস্ত থান ও খোলা গজ হিসাব করা (যাতে ভিন্ন রঙের কাপড় জোড়া না লাগে)
                               const varFullThansSum = hasVars && isThan
@@ -3268,17 +3269,17 @@ export default function StockTransferModal({
                                   }, 0)
                                 : 0;
 
-                              const bd = isThan ? calculateThanBreakdown(sStock, yardsPerThan, remTh) : null;
+                              const bd = isThan ? calculateThanBreakdown(effectiveSStock, yardsPerThan, remTh) : null;
                               const total = isThan
                                 ? (effectiveGStock + (hasVars ? varFullThansSum : (bd ? bd.fullThans : 0)))
-                                : (effectiveGStock + sStock);
+                                : (effectiveGStock + effectiveSStock);
                               const minAlert = Number(p.MinStockAlert || 5);
-                              const isZeroShop = sStock <= 0;
+                              const isZeroShop = effectiveSStock <= 0;
                               const isLowShop = isThan
                                 ? (hasVars
-                                    ? (varFullThansSum === 0 || sStock <= yardsPerThan)
-                                    : (bd ? (bd.needsRestock || bd.fullThans === 0 || sStock <= yardsPerThan) : (sStock <= minAlert)))
-                                : (sStock <= minAlert);
+                                    ? (varFullThansSum === 0 || effectiveSStock <= yardsPerThan)
+                                    : (bd ? (bd.needsRestock || bd.fullThans === 0 || effectiveSStock <= yardsPerThan) : (effectiveSStock <= minAlert)))
+                                : (effectiveSStock <= minAlert);
                               const isUnallocatedShopStock = hasVars && sStock > 0 && varSStockSum === 0;
                               const totalGoj = isThan ? (effectiveGStock * yardsPerThan) : (isGoj ? effectiveGStock : 0);
                               const unitCost = Number(p.CostPrice || p.costPrice || p.PurchasePrice || p.purchasePrice || p.Cost || p.cost || p.BuyingPrice || p.BuyPrice || 0);
@@ -3470,19 +3471,23 @@ export default function StockTransferModal({
                                                     type="button"
                                                     onClick={() => {
                                                       if (!onOpenFabricWastageModal) return;
-                                                      if (hasVariants && Array.isArray(p.Variants)) {
-                                                        const remVar = p.Variants.find(v => {
-                                                          const vQty = Number(v.StockQuantity || 0);
+                                                      if (hasVars && Array.isArray(vars)) {
+                                                        const remVar = vars.find(v => {
+                                                          const vQty = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
                                                           return calculateThanBreakdown(vQty, yardsPerThan, remTh).isRemnant;
                                                         });
                                                         if (remVar) {
-                                                          const vBd = calculateThanBreakdown(Number(remVar.StockQuantity || 0), yardsPerThan, remTh);
-                                                          onOpenFabricWastageModal({
-                                                            ProductID: p.ProductID,
-                                                            VariantID: remVar.VariantID || remVar.variantId,
-                                                            ProductName: `${p.ProductName} - ${remVar.Attributes?.Color || remVar.Color || 'ভ্যারিয়েন্ট'}`,
-                                                            remnantYards: vBd.runningCutYards
-                                                          });
+                                                          const vQty = Number(remVar.StockQuantity !== undefined ? remVar.StockQuantity : (remVar.stockQuantity || 0)) || 0;
+                                                          const vBd = calculateThanBreakdown(vQty, yardsPerThan, remTh);
+                                                          const varLabel = remVar.Attributes?.Color || remVar.Color || remVar.VariantName || 'ভ্যারিয়েন্ট';
+                                                    onOpenFabricWastageModal({
+                                                      ProductID: p.ProductID,
+                                                      VariantID: remVar.VariantID || remVar.variantId || '',
+                                                      VariantName: varLabel,
+                                                      Barcode: remVar.Barcode || p.Barcode,
+                                                      ProductName: `${p.ProductName} - ${varLabel}`,
+                                                      remnantYards: vBd.runningCutYards
+                                                    });
                                                           return;
                                                         }
                                                       }
@@ -3524,24 +3529,31 @@ export default function StockTransferModal({
                                             }`}>
                                               <span className="text-sm font-black font-mono">
                                                 {isThan ? (
-                                                  sStock <= 0 ? '০ গজ' : (
+                                                  effectiveSStock <= 0 ? '০ গজ' : (
                                                     (() => {
-                                                      const effBd = calculateThanBreakdown(sStock, yardsPerThan, remTh);
+                                                      if (hasVars) {
+                                                        if (varFullThansSum > 0 && varRunningCutYardsSum > 0) {
+                                                          return `${varFullThansSum} থান + ${formatFabricQuantity(varRunningCutYardsSum, 'গজ', false)}`;
+                                                        }
+                                                        if (varFullThansSum > 0) return `${varFullThansSum} থান`;
+                                                        return formatFabricQuantity(varRunningCutYardsSum, 'গজ', false) || `${effectiveSStock} গজ`;
+                                                      }
+                                                      const effBd = calculateThanBreakdown(effectiveSStock, yardsPerThan, remTh);
                                                       if (effBd.fullThans > 0 && effBd.runningCutYards > 0) {
                                                         return `${effBd.fullThans} থান + ${getSafeRunningCutText(effBd)}`;
                                                       }
                                                       if (effBd.fullThans > 0) return `${effBd.fullThans} থান`;
-                                                      return getSafeRunningCutText(effBd) || `${sStock} গজ`;
+                                                      return getSafeRunningCutText(effBd) || `${effectiveSStock} গজ`;
                                                     })()
                                                   )
                                                 ) : (
-                                                  `${sStock.toLocaleString('bn-BD')} ${unit}`
+                                                  `${effectiveSStock.toLocaleString('bn-BD')} ${unit}`
                                                 )}
                                               </span>
                                             </div>
-                                            {isThan && sStock > 0 && (
+                                            {isThan && effectiveSStock > 0 && (
                                               <span className="mt-1 text-[10.5px] font-bold text-[#0b8b72] font-mono bg-white px-2 py-0.5 rounded-md border border-emerald-100 shadow-2xs" title="দোকানের মোট কাপড় (গজে)">
-                                                মোট: {sStock.toLocaleString('bn-BD')} গজ
+                                                মোট: {effectiveSStock.toLocaleString('bn-BD')} গজ
                                               </span>
                                             )}
                                           </div>
@@ -3601,23 +3613,30 @@ export default function StockTransferModal({
                                                 : 'bg-emerald-50 text-emerald-900 border-emerald-200'
                                             }`}>
                                               {isThan ? (
-                                                sStock <= 0 ? '০ গজ' : (
+                                                effectiveSStock <= 0 ? '০ গজ' : (
                                                   (() => {
-                                                    const effBd = calculateThanBreakdown(sStock, yardsPerThan, remTh);
+                                                    if (hasVars) {
+                                                      if (varFullThansSum > 0 && varRunningCutYardsSum > 0) {
+                                                        return `${varFullThansSum} থান + ${formatFabricQuantity(varRunningCutYardsSum, 'গজ', false)}`;
+                                                      }
+                                                      if (varFullThansSum > 0) return `${varFullThansSum} থান`;
+                                                      return formatFabricQuantity(varRunningCutYardsSum, 'গজ', false) || `${effectiveSStock} গজ`;
+                                                    }
+                                                    const effBd = calculateThanBreakdown(effectiveSStock, yardsPerThan, remTh);
                                                     if (effBd.fullThans > 0 && effBd.runningCutYards > 0) {
                                                       return `${effBd.fullThans} থান + ${getSafeRunningCutText(effBd)}`;
                                                     }
                                                     if (effBd.fullThans > 0) return `${effBd.fullThans} থান`;
-                                                    return getSafeRunningCutText(effBd) || `${sStock} গজ`;
+                                                    return getSafeRunningCutText(effBd) || `${effectiveSStock} গজ`;
                                                   })()
                                                 )
                                               ) : (
-                                                `${sStock.toLocaleString('bn-BD')} ${unit}`
+                                                `${effectiveSStock.toLocaleString('bn-BD')} ${unit}`
                                               )}
                                             </span>
-                                            {isThan && sStock > 0 && (
+                                            {isThan && effectiveSStock > 0 && (
                                               <span className="mt-1 text-[10.5px] font-medium text-slate-500 font-mono" title="দোকানের মোট কাপড় (গজে)">
-                                                মোট: {sStock.toLocaleString('bn-BD')} গজ
+                                                মোট: {effectiveSStock.toLocaleString('bn-BD')} গজ
                                               </span>
                                             )}
                                           </div>
@@ -3631,9 +3650,10 @@ export default function StockTransferModal({
                                         <span className="inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs bg-slate-100 text-slate-800 border border-slate-200/90 shadow-2xs">
                                           {isThan ? (
                                             (() => {
-                                              const effBd = calculateThanBreakdown(sStock, yardsPerThan, remTh);
-                                              const shopThans = effBd ? effBd.fullThans : 0;
-                                              const cutStr = effBd ? getSafeRunningCutText(effBd) : '';
+                                              const shopThans = hasVars ? varFullThansSum : (bd ? bd.fullThans : 0);
+                                              const cutStr = hasVars
+                                                ? (varRunningCutYardsSum > 0 ? formatFabricQuantity(varRunningCutYardsSum, 'গজ', false) : '')
+                                                : (bd ? getSafeRunningCutText(bd) : '');
                                               const totalFullThans = effectiveGStock + shopThans;
                                               const hasRunningCut = Boolean(cutStr);
                                               if (totalFullThans <= 0 && !hasRunningCut) return '০ গজ';
@@ -3649,7 +3669,7 @@ export default function StockTransferModal({
                                         </span>
                                         {isThan && (
                                           <span className="mt-1 text-[10.5px] font-medium text-slate-500 font-mono" title="গোডাউন ও দোকান মিলিয়ে মোট গজ">
-                                            মোট: {((effectiveGStock * yardsPerThan) + sStock).toLocaleString('bn-BD')} গজ
+                                            মোট: {((effectiveGStock * yardsPerThan) + effectiveSStock).toLocaleString('bn-BD')} গজ
                                           </span>
                                         )}
                                       </div>
@@ -3748,12 +3768,13 @@ export default function StockTransferModal({
                                                     return calculateThanBreakdown(vQty, yardsPerThan, remTh).isRemnant;
                                                   });
                                                   if (remVar) {
-                                                    const vBd = calculateThanBreakdown(Number(remVar.StockQuantity !== undefined ? remVar.StockQuantity : (remVar.stockQuantity || 0)) || 0, yardsPerThan, remTh);
+                                                    const varLabel = remVar.Attributes?.Color || remVar.Color || remVar.VariantName || 'ভ্যারিয়েন্ট';
                                                     onOpenFabricWastageModal({
                                                       ProductID: p.ProductID,
-                                                      VariantID: remVar.VariantID || remVar.variantId,
-                                                      ProductName: `${p.ProductName} - ${remVar.Attributes?.Color || remVar.Color || 'ভ্যারিয়েন্ট'}`,
+                                                      VariantID: remVar.VariantID || remVar.variantId || '',
+                                                      VariantName: varLabel,
                                                       Barcode: remVar.Barcode || p.Barcode,
+                                                      ProductName: `${p.ProductName} - ${varLabel}`,
                                                       remnantYards: vBd.runningCutYards
                                                     });
                                                     return;
@@ -4168,12 +4189,17 @@ export default function StockTransferModal({
                                                                 {isThan && vBd && vBd.isRemnant && (
                                                                   <button
                                                                     type="button"
-                                                                    onClick={() => onOpenFabricWastageModal && onOpenFabricWastageModal({
-                                                                      ProductID: p.ProductID,
-                                                                      VariantID: v.VariantID || v.variantId,
-                                                                      ProductName: `${p.ProductName} - ${v.Attributes?.Color || v.Color || 'ভ্যারিয়েন্ট'}`,
-                                                                      remnantYards: vBd.runningCutYards
-                                                                    })}
+                                                                    onClick={() => {
+                                                                      const varLabel = v.Attributes?.Color || v.Color || v.VariantName || 'ভ্যারিয়েন্ট';
+                                                                      onOpenFabricWastageModal && onOpenFabricWastageModal({
+                                                                        ProductID: p.ProductID,
+                                                                        VariantID: v.VariantID || v.variantId || '',
+                                                                        VariantName: varLabel,
+                                                                        Barcode: v.Barcode || p.Barcode,
+                                                                        ProductName: `${p.ProductName} - ${varLabel}`,
+                                                                        remnantYards: vBd.runningCutYards
+                                                                      });
+                                                                    }}
                                                                     className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                                                     title="এই ভ্যারিয়েন্টের শেষ ছাঁট কাপড় ট্র্যাকার বা বান্ডেলে পাঠান"
                                                                   >
@@ -4619,12 +4645,17 @@ export default function StockTransferModal({
                                                 return (
                                                   <button
                                                     type="button"
-                                                    onClick={() => onOpenFabricWastageModal && onOpenFabricWastageModal({
-                                                      ProductID: item.parentProduct?.ProductID || item.productId,
-                                                      VariantID: item.variant?.VariantID || item.variant?.variantId,
-                                                      ProductName: `${item.productName} - ${item.color || item.size || 'ভ্যারিয়েন্ট'}`,
-                                                      remnantYards: bd.runningCutYards
-                                                    })}
+                                                    onClick={() => {
+                                                      const varLabel = item.color || item.size || item.variant?.VariantName || 'ভ্যারিয়েন্ট';
+                                                      onOpenFabricWastageModal && onOpenFabricWastageModal({
+                                                        ProductID: item.parentProduct?.ProductID || item.productId,
+                                                        VariantID: item.variant?.VariantID || item.variant?.variantId || '',
+                                                        VariantName: varLabel,
+                                                        Barcode: item.barcode || item.variant?.Barcode || '',
+                                                        ProductName: `${item.productName} - ${varLabel}`,
+                                                        remnantYards: bd.runningCutYards
+                                                      });
+                                                    }}
                                                     className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                                     title="এই ভ্যারিয়েন্টের শেষ ছাঁট কাপড় ট্র্যাকার বা বান্ডেলে পাঠান"
                                                   >

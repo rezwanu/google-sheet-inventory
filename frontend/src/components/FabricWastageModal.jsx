@@ -80,8 +80,8 @@ export default function FabricWastageModal({
   useEffect(() => {
     if (initialProduct && (initialProduct.ProductID || initialProduct.id)) {
       setSelectedProductId(String(initialProduct.ProductID || initialProduct.id));
-      if (initialProduct.VariantID || initialProduct.variantId) {
-        setSelectedVariantId(String(initialProduct.VariantID || initialProduct.variantId));
+      if (initialProduct.VariantID || initialProduct.variantId || initialProduct.VariantName || initialProduct.Barcode) {
+        setSelectedVariantId(String(initialProduct.VariantID || initialProduct.variantId || initialProduct.Barcode || initialProduct.VariantName || ''));
       } else {
         setSelectedVariantId('');
       }
@@ -203,7 +203,16 @@ export default function FabricWastageModal({
   // নির্বাচিত ভ্যারিয়েন্ট অবজেক্ট
   const selectedVariant = useMemo(() => {
     if (!selectedProduct || !selectedVariantId || !Array.isArray(selectedProduct.Variants)) return null;
-    return selectedProduct.Variants.find((v) => String(v.VariantID || v.variantId).trim() === String(selectedVariantId).trim());
+    const target = String(selectedVariantId).trim().toLowerCase();
+    return selectedProduct.Variants.find((v, idx) => {
+      const vId = String(v.VariantID || v.variantId || '').trim().toLowerCase();
+      const vCol = String(v.Attributes?.Color || v.Color || v.ColorName || v.VariantName || '').trim().toLowerCase();
+      const vBar = String(v.Barcode || v.barcode || '').trim().toLowerCase();
+      return (vId && vId === target) ||
+             (vBar && vBar === target) ||
+             (vCol && (vCol === target || target.includes(vCol) || vCol.includes(target))) ||
+             String(idx) === target;
+    });
   }, [selectedProduct, selectedVariantId]);
 
   // থান প্রতি গজ
@@ -292,8 +301,10 @@ export default function FabricWastageModal({
     const payload = {
       ProductID: selectedProduct.ProductID || selectedProduct.id,
       ProductName: selectedProduct.ProductName || selectedProduct.name,
-      VariantID: selectedVariant ? (selectedVariant.VariantID || selectedVariant.variantId) : '',
+      VariantID: selectedVariant ? (selectedVariant.VariantID || selectedVariant.variantId || selectedVariant.Barcode || '') : '',
       VariantName: selectedVariant ? (selectedVariant.ColorName || selectedVariant.Attributes?.Color || selectedVariant.Color || selectedVariant.VariantName || selectedVariant.name || [selectedVariant.Color, selectedVariant.Size].filter(Boolean).join(' - ') || 'ভ্যারিয়েন্ট') : '',
+      Barcode: selectedVariant?.Barcode || selectedProduct.Barcode || '',
+      VariantBarcode: selectedVariant?.Barcode || '',
       Category: selectedProduct.Category || selectedProduct.category || 'থান কাপড়',
       Location: location,
       Type: entryType,

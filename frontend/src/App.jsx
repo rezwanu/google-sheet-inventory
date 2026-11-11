@@ -1678,17 +1678,32 @@ export default function App() {
           // গোডাউন স্টক কর্তন (থানে)
           const thansToDeduct = Number(payload.Thans) || Math.round((Number(payload.TotalYards) / (Number(curP.YardsPerThan) || 25)) * 100) / 100 || 1;
           const curGStock = Number(curP.GodownStock || 0);
-          const newGStock = Math.max(0, curGStock - thansToDeduct);
+          let newGStock = Math.max(0, curGStock - thansToDeduct);
+
+          const targetVarId = String(payload.VariantID || payload.variantId || '').trim().toLowerCase();
+          const targetVarName = String(payload.VariantName || payload.variantName || payload.Color || '').trim().toLowerCase();
+          const targetBarcode = String(payload.Barcode || payload.barcode || payload.VariantBarcode || '').trim().toLowerCase();
 
           let updatedVariants = curP.Variants;
-          if (payload.VariantID && Array.isArray(curP.Variants)) {
-            updatedVariants = curP.Variants.map(v => {
-              if (String(v.VariantID || v.variantId).trim() === String(payload.VariantID).trim()) {
+          if (Array.isArray(curP.Variants) && curP.Variants.length > 0) {
+            updatedVariants = curP.Variants.map((v, vIdx) => {
+              const vId = String(v.VariantID || v.variantId || '').trim().toLowerCase();
+              const vCol = String(v.Attributes?.Color || v.Color || v.ColorName || v.VariantName || '').trim().toLowerCase();
+              const vBar = String(v.Barcode || v.barcode || '').trim().toLowerCase();
+              const isMatch = (targetVarId && (vId === targetVarId || String(vIdx) === targetVarId || vBar === targetVarId)) ||
+                             (targetBarcode && vBar === targetBarcode) ||
+                             (targetVarName && (vCol === targetVarName || targetVarName.includes(vCol) || vCol.includes(targetVarName)));
+
+              if (isMatch) {
                 const vGStk = Number(v.GodownStock || 0);
                 return { ...v, GodownStock: Math.max(0, vGStk - thansToDeduct) };
               }
               return v;
             });
+
+            // ভ্যারিয়েন্টগুলোর যোগফল দিয়ে মূল পণ্যের গোডাউন স্টক স্বয়ংক্রিয়ভাবে সিঙ্ক
+            const sumVarG = updatedVariants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0);
+            newGStock = sumVarG;
           }
 
           updatedProds[pIdx] = {
@@ -1703,8 +1718,8 @@ export default function App() {
             type: 'WASTAGE',
             reasonBangla: `গোডাউন কাপড়ের ড্যামেজ/নষ্ট কর্তন (${payload.Reason || 'ড্যামেজ'})`,
             productId: curP.ProductID,
-            productName: curP.ProductName,
-            barcode: curP.Barcode,
+            productName: payload.VariantName ? `${curP.ProductName} (${payload.VariantName})` : curP.ProductName,
+            barcode: payload.Barcode || curP.Barcode,
             unit: 'থান',
             quantity: thansToDeduct,
             previousStock: curGStock,
@@ -1717,17 +1732,49 @@ export default function App() {
           // দোকান স্টক কর্তন (গজে)
           const yardsToDeduct = Number(payload.TotalYards) || 0;
           const curStock = Number(curP.StockQuantity !== undefined ? curP.StockQuantity : (curP.CurrentStock || curP.stock || 0));
-          const newStock = Math.max(0, Math.round((curStock - yardsToDeduct) * 10000) / 10000);
+          let newStock = Math.max(0, Math.round((curStock - yardsToDeduct) * 10000) / 10000);
+
+          const targetVarId = String(payload.VariantID || payload.variantId || '').trim().toLowerCase();
+          const targetVarName = String(payload.VariantName || payload.variantName || payload.Color || '').trim().toLowerCase();
+          const targetBarcode = String(payload.Barcode || payload.barcode || payload.VariantBarcode || '').trim().toLowerCase();
 
           let updatedVariants = curP.Variants;
-          if (payload.VariantID && Array.isArray(curP.Variants)) {
-            updatedVariants = curP.Variants.map(v => {
-              if (String(v.VariantID || v.variantId).trim() === String(payload.VariantID).trim()) {
+          if (Array.isArray(curP.Variants) && curP.Variants.length > 0) {
+            let matchedAny = false;
+            updatedVariants = curP.Variants.map((v, vIdx) => {
+              const vId = String(v.VariantID || v.variantId || '').trim().toLowerCase();
+              const vCol = String(v.Attributes?.Color || v.Color || v.ColorName || v.VariantName || '').trim().toLowerCase();
+              const vBar = String(v.Barcode || v.barcode || '').trim().toLowerCase();
+              const isMatch = (targetVarId && (vId === targetVarId || String(vIdx) === targetVarId || vBar === targetVarId)) ||
+                             (targetBarcode && vBar === targetBarcode) ||
+                             (targetVarName && (vCol === targetVarName || targetVarName.includes(vCol) || vCol.includes(targetVarName)));
+
+              if (isMatch) {
+                matchedAny = true;
                 const vStk = Number(v.StockQuantity || 0);
                 return { ...v, StockQuantity: Math.max(0, Math.round((vStk - yardsToDeduct) * 10000) / 10000) };
               }
               return v;
             });
+
+            // ফলব্যাক: যদি স্পেসিফিক কোনো ভ্যারিয়েন্ট নাম/আইডি না মেলে কিন্তু কোনো ভ্যারিয়েন্টে ছাঁট বিদ্যমান থাকে
+            if (!matchedAny && targetVarName) {
+              const partialIdx = updatedVariants.findIndex(v => {
+                const col = String(v.Attributes?.Color || v.Color || '').toLowerCase();
+                return col && (targetVarName.includes(col) || col.includes(targetVarName));
+              });
+              if (partialIdx !== -1) {
+                const vStk = Number(updatedVariants[partialIdx].StockQuantity || 0);
+                updatedVariants[partialIdx] = {
+                  ...updatedVariants[partialIdx],
+                  StockQuantity: Math.max(0, Math.round((vStk - yardsToDeduct) * 10000) / 10000)
+                };
+              }
+            }
+
+            // ভ্যারিয়েন্টগুলোর যোগফল দিয়ে মূল পণ্যের দোকান স্টক স্বয়ংক্রিয়ভাবে সিঙ্ক
+            const sumVarS = updatedVariants.reduce((sum, v) => sum + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0);
+            newStock = sumVarS;
           }
 
           updatedProds[pIdx] = {
@@ -1744,8 +1791,8 @@ export default function App() {
             type: 'WASTAGE',
             reasonBangla: `দোকান থান কাপড়ের ছাঁট/টুকরা অবশিষ্টাংশ কর্তন (${payload.Reason || 'ছাঁট'})`,
             productId: curP.ProductID,
-            productName: curP.ProductName,
-            barcode: curP.Barcode,
+            productName: payload.VariantName ? `${curP.ProductName} (${payload.VariantName})` : curP.ProductName,
+            barcode: payload.Barcode || curP.Barcode,
             unit: curP.Unit || 'গজ',
             quantity: yardsToDeduct,
             previousStock: curStock,
