@@ -598,7 +598,7 @@ export function normalizeProduct(p) {
   const subCat = p.SubCategory || p.subCategory || p['Sub Category'] || p.subcategory || p['sub_category'] || '';
 
   // স্টক পরিমাণ
-  const stock = p.StockQuantity !== undefined && p.StockQuantity !== null && p.StockQuantity !== ''
+  let stock = p.StockQuantity !== undefined && p.StockQuantity !== null && p.StockQuantity !== ''
     ? p.StockQuantity
     : (p.StockQuantit !== undefined && p.StockQuantit !== null && p.StockQuantit !== ''
         ? p.StockQuantit
@@ -634,7 +634,7 @@ export function normalizeProduct(p) {
                 ? p.warehouseStock
                 : null)));
 
-  const godownStock = rawGodownStock !== null
+  let godownStock = rawGodownStock !== null
     ? Number(rawGodownStock)
     : (Number(stock) > 0 ? Math.max(15, Math.round(Number(stock) * 2)) : 0);
 
