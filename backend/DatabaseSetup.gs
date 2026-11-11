@@ -45,13 +45,8 @@ function setupDatabase() {
     categoriesSheet.appendRow([
       'CategoryID', 'CategoryName', 'SubCategoryName', 'Description', 'Status', 'CreatedAt'
     ]);
-    categoriesSheet.appendRow(['CAT-101', 'Grocery', 'Rice & Grain', 'চাল ও খাদ্যশস্য', 'Active', new Date()]);
-    categoriesSheet.appendRow(['CAT-102', 'Grocery', 'Edible Oil', 'ভোজ্যতেল ও ঘি', 'Active', new Date()]);
-    categoriesSheet.appendRow(['CAT-103', 'Grocery', 'Sugar & Salt', 'চিনি ও লবণ', 'Active', new Date()]);
-    categoriesSheet.appendRow(['CAT-104', 'Beverage', 'Tea & Coffee', 'চা ও কফি সামগ্রী', 'Active', new Date()]);
-    categoriesSheet.appendRow(['CAT-105', 'Beverage', 'Juice & Drinks', 'জুস ও পানীয়', 'Active', new Date()]);
-    categoriesSheet.appendRow(['CAT-106', 'Dairy', 'Milk & Dairy', 'দুধ ও দুগ্ধজাত পণ্য', 'Active', new Date()]);
-    categoriesSheet.appendRow(['CAT-107', 'Bakery', 'Biscuits & Cookies', 'বিস্কুট ও কুকিজ', 'Active', new Date()]);
+    categoriesSheet.appendRow(['CAT-101', 'Fabric', 'Cotton Print Fabric', 'সুতি প্রিন্ট ও থান কাপড়', 'Active', new Date()]);
+    categoriesSheet.appendRow(['CAT-102', 'Women', 'Three Piece', 'মহিলাদের থ্রি-পিস ও পোশাক', 'Active', new Date()]);
   }
 
   // ৩. Sales শিট তৈরি ও ইনিশিয়ালাইজেশন

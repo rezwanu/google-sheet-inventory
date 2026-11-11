@@ -1177,7 +1177,7 @@ export default function App() {
     setCustomers(Array.isArray(cleanCustomers) ? cleanCustomers : []);
     const targetUrl = (settings.apiUrl || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (targetUrl) {
-      handleSync(false, targetUrl);
+      handleSync(true, targetUrl);
     }
   }, [settings.apiUrl]);
 

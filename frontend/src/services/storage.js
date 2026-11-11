@@ -46,13 +46,13 @@ import {
   BASELINE_UNITS,
   BASELINE_USERS,
   BASELINE_CUSTOMERS
-} from './baselineData';
+} from './baselineData.js';
 
 import {
   getSecureStorageItem,
   setSecureStorageItem,
   removeSecureStorageItem
-} from './secureStorage';
+} from './secureStorage.js';
 
 // প্রাথমিক ডিফল্ট সিস্টেম ইউজার ও অ্যাকাউন্ট তালিকা (লাইভ বেসলাইন থেকে ইনস্ট্যান্ট লোড)
 export const DEFAULT_USERS = BASELINE_USERS && BASELINE_USERS.length > 0 ? BASELINE_USERS : [
@@ -379,6 +379,12 @@ export const DEMO_PRODUCT_IDS = new Set([
   'PROD-1004',
   'PROD-1005',
   'PROD-1006',
+  'PROD-1791746173872-208',
+  'PROD-1791746267080-143',
+  'PROD-1791782159984-708',
+  'PROD-1791784060849-913',
+  'PROD-1791791769255-116',
+  'PROD-1791917264112-763',
   'PAB-FAB-001',
   'PAB-FAB-002',
   'BUNDLE-WST-20261020-001',
@@ -386,6 +392,10 @@ export const DEMO_PRODUCT_IDS = new Set([
 ]);
 
 export const DEMO_PRODUCT_NAMES = new Set([
+  'Men Shoe',
+  'Womwn Shoe',
+  'Cisily Sponge Holder for Kitchen Sink, Sink Organizer with Brush Holder',
+  'GUUKIN Sponge Holder for Kitchen Sink, 10"x 4" Kitchen Sink Organizer, Sink Caddy and Soap Tray,Compatible with Scrub Daddy, Kitchen Sink Accessories (Grey)',
   'Basmati Rice Premium 5kg',
   'Basmati Rice 5kg',
   'Pure Soyabean Oil 5L',
@@ -4115,157 +4125,9 @@ export function saveCampaignLocally(campaignData) {
 // টেইলারিং ও সেলাই অর্ডার ব্যবস্থাপনা (Phase 2: Tailoring & Custom Stitching)
 // ============================================================================
 
-export const DEFAULT_TAILOR_MASTERS = [
-  {
-    TailorID: 'TLR-01',
-    Name: 'মাস্টার বশির আহমেদ',
-    Phone: '01710000001',
-    Speciality: 'পাঞ্জাবি ও শেরওয়ানি',
-    Experience: '১২ বছর',
-    Status: 'Active'
-  },
-  {
-    TailorID: 'TLR-02',
-    Name: 'আকরাম আলী',
-    Phone: '01820000002',
-    Speciality: 'ফরমাল শার্ট ও প্যান্ট',
-    Experience: '৮ বছর',
-    Status: 'Active'
-  },
-  {
-    TailorID: 'TLR-03',
-    Name: 'রাবেয়া খাতুন',
-    Phone: '01930000003',
-    Speciality: 'মহিলাদের কামিজ, বোরকা ও ব্লাউজ',
-    Experience: '১০ বছর',
-    Status: 'Active'
-  }
-];
+export const DEFAULT_TAILOR_MASTERS = [];
 
-export const DEFAULT_TAILORING_ORDERS = [
-  {
-    OrderID: 'TL-20261020-001',
-    TokenNo: '101',
-    CustomerName: 'মো: রফিকুল ইসলাম',
-    CustomerPhone: '01711223344',
-    CustomerAddress: 'বসতি হাউজিং, মোহাম্মদপুর',
-    GarmentType: 'পাঞ্জাবি',
-    Quantity: 1,
-    FabricSource: 'store',
-    FabricName: 'প্রিমিয়াম সুতি থান কাপড় (সাদা)',
-    FabricYards: 2.5,
-    TailorMaster: 'মাস্টার বশির আহমেদ',
-    Measurements: {
-      length: '40',
-      chest: '38',
-      waist: '36',
-      shoulder: '17',
-      sleeve: '24',
-      collar: '15.5',
-      armhole: '18',
-      cuff: '9.5',
-      flair: '26',
-      pocket: 'দুই পাশে কাট পকেট'
-    },
-    DesignDetails: 'ব্যান্ড কলার, মেটাল রিভেট বোতাম, ডাবল সেলাই ফিনিশিং',
-    StitchingCharge: 450,
-    AccessoriesCharge: 100,
-    TotalAmount: 550,
-    AdvancePaid: 300,
-    DueAmount: 250,
-    PaymentMethod: 'Cash',
-    Status: 'Stitching', // Pending -> Cutting -> Stitching -> Ready -> Delivered
-    OrderDate: '2026-10-20T10:30:00.000Z',
-    DeliveryDate: '2026-10-24T18:00:00.000Z',
-    Notes: 'ব্যান্ড কলারে হালকা সুতার এমব্রয়ডারি ডিজাইন হবে',
-    StatusHistory: [
-      { status: 'Pending', timestamp: '2026-10-20T10:30:00.000Z', note: 'অর্ডার গৃহীত হয়েছে ও ৩০০ টাকা অগ্রিম জমা' },
-      { status: 'Cutting', timestamp: '2026-10-21T11:00:00.000Z', note: 'মাস্টার বশির কাটিং সম্পন্ন করেছেন' },
-      { status: 'Stitching', timestamp: '2026-10-22T09:00:00.000Z', note: 'সেলাই চলছে' }
-    ]
-  },
-  {
-    OrderID: 'TL-20261021-002',
-    TokenNo: '102',
-    CustomerName: 'তানভীর আহমেদ',
-    CustomerPhone: '01822334455',
-    CustomerAddress: 'ধানমন্ডি ২৭, ঢাকা',
-    GarmentType: 'শার্ট',
-    Quantity: 2,
-    FabricSource: 'store',
-    FabricName: 'রেমি কটন প্রিন্ট থান',
-    FabricYards: 4.5,
-    TailorMaster: 'আকরাম আলী',
-    Measurements: {
-      length: '29',
-      chest: '39',
-      waist: '36',
-      shoulder: '18',
-      sleeve: '24',
-      collar: '15.5',
-      armhole: '18.5',
-      cuff: '9.5',
-      pocket: '১টি বুক পকেট'
-    },
-    DesignDetails: 'স্মার্ট সেমি-স্প্রেড কলার, রেগুলার ফিট, মার্বেল বোতাম',
-    StitchingCharge: 700,
-    AccessoriesCharge: 100,
-    TotalAmount: 800,
-    AdvancePaid: 500,
-    DueAmount: 300,
-    PaymentMethod: 'bKash',
-    Status: 'Cutting',
-    OrderDate: '2026-10-21T14:15:00.000Z',
-    DeliveryDate: '2026-10-25T17:00:00.000Z',
-    Notes: 'একটি ফুল হাতা এবং একটি হাফ হাতা শার্ট',
-    StatusHistory: [
-      { status: 'Pending', timestamp: '2026-10-21T14:15:00.000Z', note: 'বিকাশে ৫০০ টাকা অগ্রিম গৃহীত' },
-      { status: 'Cutting', timestamp: '2026-10-22T10:30:00.000Z', note: 'কাটিং টেবিল এ দেওয়া হয়েছে' }
-    ]
-  },
-  {
-    OrderID: 'TL-20261019-003',
-    TokenNo: '103',
-    CustomerName: 'নাসরিন আক্তার',
-    CustomerPhone: '01933445566',
-    CustomerAddress: 'বসিলা গার্ডেন সিটি, ঢাকা',
-    GarmentType: 'কামিজ ও সালোয়ার',
-    Quantity: 1,
-    FabricSource: 'customer',
-    FabricName: 'গ্রাহকের নিজস্ব জর্জেট থান কাপড়',
-    FabricYards: 3.5,
-    TailorMaster: 'রাবেয়া খাতুন',
-    Measurements: {
-      length: '42',
-      chest: '36',
-      waist: '32',
-      hip: '38',
-      shoulder: '14.5',
-      sleeve: '19',
-      armhole: '16',
-      frontNeck: '6',
-      backNeck: '5',
-      slit: '20'
-    },
-    DesignDetails: 'পান গলা, বেল হাতা, সুতি আস্তরণ দেওয়া হবে',
-    StitchingCharge: 450,
-    AccessoriesCharge: 50,
-    TotalAmount: 500,
-    AdvancePaid: 500,
-    DueAmount: 0,
-    PaymentMethod: 'Cash',
-    Status: 'Ready',
-    OrderDate: '2026-10-19T16:00:00.000Z',
-    DeliveryDate: '2026-10-22T20:00:00.000Z',
-    Notes: 'কাজ সম্পূর্ণ শেষ, কাস্টমারকে এসএমএস পাঠানো হয়েছে',
-    StatusHistory: [
-      { status: 'Pending', timestamp: '2026-10-19T16:00:00.000Z', note: 'অর্ডার গৃহীত ও ফুল পেমেন্ট কমপ্লিট' },
-      { status: 'Cutting', timestamp: '2026-10-20T11:00:00.000Z', note: 'কাটিং সম্পন্ন' },
-      { status: 'Stitching', timestamp: '2026-10-21T15:30:00.000Z', note: 'সেলাই সম্পন্ন' },
-      { status: 'Ready', timestamp: '2026-10-22T11:00:00.000Z', note: 'প্যাকিং ও আয়রন শেষ, ডেলিভারির জন্য প্রস্তুত' }
-    ]
-  }
-];
+export const DEFAULT_TAILORING_ORDERS = [];
 
 export function getLocalTailoringOrders() {
   try {

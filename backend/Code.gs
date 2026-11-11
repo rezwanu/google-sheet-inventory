@@ -392,13 +392,8 @@ function ensureCategoriesSheet(spreadsheet) {
       'CategoryID', 'CategoryName', 'SubCategoryName', 'Description', 'Status', 'CreatedAt'
     ]);
     const now = new Date();
-    categoriesSheet.appendRow(['CAT-101', 'Grocery', 'Rice & Grain', 'চাল ও খাদ্যশস্য', 'Active', now]);
-    categoriesSheet.appendRow(['CAT-102', 'Grocery', 'Edible Oil', 'ভোজ্যতেল ও ঘি', 'Active', now]);
-    categoriesSheet.appendRow(['CAT-103', 'Grocery', 'Sugar & Salt', 'চিনি ও লবণ', 'Active', now]);
-    categoriesSheet.appendRow(['CAT-104', 'Beverage', 'Tea & Coffee', 'চা ও কফি সামগ্রী', 'Active', now]);
-    categoriesSheet.appendRow(['CAT-105', 'Beverage', 'Juice & Drinks', 'জুস ও পানীয়', 'Active', now]);
-    categoriesSheet.appendRow(['CAT-106', 'Dairy', 'Milk & Dairy', 'দুধ ও দুগ্ধজাত পণ্য', 'Active', now]);
-    categoriesSheet.appendRow(['CAT-107', 'Bakery', 'Biscuits & Cookies', 'বিস্কুট ও কুকিজ', 'Active', now]);
+    categoriesSheet.appendRow(['CAT-101', 'Fabric', 'Cotton Print Fabric', 'সুতি প্রিন্ট ও থান কাপড়', 'Active', now]);
+    categoriesSheet.appendRow(['CAT-102', 'Women', 'Three Piece', 'মহিলাদের থ্রি-পিস ও পোশাক', 'Active', now]);
   }
 
   return categoriesSheet;
@@ -919,10 +914,7 @@ function ensureUsersSheet(spreadsheet) {
     usersSheet.appendRow(expectedHeaders);
     const now = new Date();
     usersSheet.appendRow([
-      'USER-ADMIN-01', 'এডমিন মোহাম্মদ করিম', '01700000000', 'admin@pos.local', 'Admin', '1234', 'হেড অফিস, গুলশান, ঢাকা', 'Active', now, now
-    ]);
-    usersSheet.appendRow([
-      'USER-CASHIER-01', 'প্রধান ক্যাশিয়ার রফিক', '01711111111', 'cashier@pos.local', 'Cashier', '1122', 'কাউন্টার ১, ঢাকা', 'Active', now, now
+      'USER-ADMIN-01', 'Rezwanur Rahman', '01675934919', 'rezwanureee@gmail.com', 'Admin', '1234', 'Bosila, Mohammadpur, Dhaka', '', 'Active', now, now
     ]);
     return usersSheet;
   }

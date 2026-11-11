@@ -33,7 +33,10 @@ export async function fetchInitialData(apiUrl, force = false) {
   const cleanUrl = apiUrl.trim();
 
   // ১. মেমোরি ক্যাশ চেক (যদি ৬০ সেকেন্ডের মধ্যে ডাটা আনা হয়ে থাকে এবং force=false হয়)
-  if (!force && cachedInitialData && (Date.now() - lastInitialDataFetchTime < INITIAL_DATA_CACHE_TTL_MS)) {
+  if (force) {
+    cachedInitialData = null;
+    lastInitialDataFetchTime = 0;
+  } else if (cachedInitialData && (Date.now() - lastInitialDataFetchTime < INITIAL_DATA_CACHE_TTL_MS)) {
     return cachedInitialData;
   }
 
@@ -42,7 +45,7 @@ export async function fetchInitialData(apiUrl, force = false) {
     return inFlightInitialDataPromise;
   }
 
-  const endpoint = `${cleanUrl}${cleanUrl.includes('?') ? '&' : '?'}action=getInitialData`;
+  const endpoint = `${cleanUrl}${cleanUrl.includes('?') ? '&' : '?'}action=getInitialData${force ? '&force=true&nocache=true' : ''}`;
 
   inFlightInitialDataPromise = (async () => {
     try {
