@@ -3482,7 +3482,7 @@ export default function StockTransferModal({
                                                           const varLabel = remVar.Attributes?.Color || remVar.Color || remVar.VariantName || 'ভ্যারিয়েন্ট';
                                                     onOpenFabricWastageModal({
                                                       ProductID: p.ProductID,
-                                                      VariantID: remVar.VariantID || remVar.variantId || '',
+                                                      VariantID: remVar.VariantID || remVar.variantId || remVar.Barcode || varLabel,
                                                       VariantName: varLabel,
                                                       Barcode: remVar.Barcode || p.Barcode,
                                                       ProductName: `${p.ProductName} - ${varLabel}`,
@@ -3771,7 +3771,7 @@ export default function StockTransferModal({
                                                     const varLabel = remVar.Attributes?.Color || remVar.Color || remVar.VariantName || 'ভ্যারিয়েন্ট';
                                                     onOpenFabricWastageModal({
                                                       ProductID: p.ProductID,
-                                                      VariantID: remVar.VariantID || remVar.variantId || '',
+                                                      VariantID: remVar.VariantID || remVar.variantId || remVar.Barcode || varLabel,
                                                       VariantName: varLabel,
                                                       Barcode: remVar.Barcode || p.Barcode,
                                                       ProductName: `${p.ProductName} - ${varLabel}`,
@@ -4649,7 +4649,7 @@ export default function StockTransferModal({
                                                       const varLabel = item.color || item.size || item.variant?.VariantName || 'ভ্যারিয়েন্ট';
                                                       onOpenFabricWastageModal && onOpenFabricWastageModal({
                                                         ProductID: item.parentProduct?.ProductID || item.productId,
-                                                        VariantID: item.variant?.VariantID || item.variant?.variantId || '',
+                                                        VariantID: item.variant?.VariantID || item.variant?.variantId || item.barcode || item.color || varLabel,
                                                         VariantName: varLabel,
                                                         Barcode: item.barcode || item.variant?.Barcode || '',
                                                         ProductName: `${item.productName} - ${varLabel}`,

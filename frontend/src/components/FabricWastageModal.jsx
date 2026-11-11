@@ -79,12 +79,39 @@ export default function FabricWastageModal({
   // যদি initialProduct পাস করা থাকে, তবে স্বয়ংক্রিয়ভাবে ফর্ম ইনিশিয়ালাইজ করুন
   useEffect(() => {
     if (initialProduct && (initialProduct.ProductID || initialProduct.id)) {
-      setSelectedProductId(String(initialProduct.ProductID || initialProduct.id));
-      if (initialProduct.VariantID || initialProduct.variantId || initialProduct.VariantName || initialProduct.Barcode) {
+      const pId = String(initialProduct.ProductID || initialProduct.id).trim();
+      setSelectedProductId(pId);
+
+      const prod = (products || []).find((p) => String(p.ProductID || p.id).trim() === pId);
+      let matchedVal = '';
+      if (prod && Array.isArray(prod.Variants) && prod.Variants.length > 0) {
+        const targetId = String(initialProduct.VariantID || initialProduct.variantId || '').trim().toLowerCase();
+        const targetBar = String(initialProduct.Barcode || initialProduct.VariantBarcode || '').trim().toLowerCase();
+        const targetName = String(initialProduct.VariantName || initialProduct.variantName || initialProduct.Color || '').trim().toLowerCase();
+
+        const matchIdx = prod.Variants.findIndex((v, idx) => {
+          const vId = String(v.VariantID || v.variantId || '').trim().toLowerCase();
+          const vBar = String(v.Barcode || v.barcode || '').trim().toLowerCase();
+          const vCol = String(v.Attributes?.Color || v.Color || v.ColorName || v.VariantName || '').trim().toLowerCase();
+          return (targetId && (vId === targetId || String(idx) === targetId || vBar === targetId)) ||
+                 (targetBar && (vBar === targetBar || vId === targetBar)) ||
+                 (targetName && (vCol === targetName || targetName.includes(vCol) || vCol.includes(targetName)));
+        });
+
+        if (matchIdx !== -1) {
+          const mv = prod.Variants[matchIdx];
+          matchedVal = String(mv.VariantID || mv.variantId || mv.Barcode || mv.Attributes?.Color || mv.Color || matchIdx);
+        }
+      }
+
+      if (matchedVal) {
+        setSelectedVariantId(matchedVal);
+      } else if (initialProduct.VariantID || initialProduct.variantId || initialProduct.VariantName || initialProduct.Barcode) {
         setSelectedVariantId(String(initialProduct.VariantID || initialProduct.variantId || initialProduct.Barcode || initialProduct.VariantName || ''));
       } else {
         setSelectedVariantId('');
       }
+
       setLocation('Shop');
       setActiveTab('new');
       if (initialProduct.remnantYards !== undefined && initialProduct.remnantYards !== null) {
@@ -95,7 +122,7 @@ export default function FabricWastageModal({
         setReason('থানের শেষ ছাঁট (End-of-bolt Remnant)');
       }
     }
-  }, [initialProduct]);
+  }, [initialProduct, products]);
 
   // থান ও গজ কাপড়ের পণ্য তালিকা
   const fabricProducts = useMemo(() => {
@@ -208,10 +235,9 @@ export default function FabricWastageModal({
       const vId = String(v.VariantID || v.variantId || '').trim().toLowerCase();
       const vCol = String(v.Attributes?.Color || v.Color || v.ColorName || v.VariantName || '').trim().toLowerCase();
       const vBar = String(v.Barcode || v.barcode || '').trim().toLowerCase();
-      return (vId && vId === target) ||
-             (vBar && vBar === target) ||
-             (vCol && (vCol === target || target.includes(vCol) || vCol.includes(target))) ||
-             String(idx) === target;
+      const vKey = String(v.VariantID || v.variantId || v.Barcode || v.Attributes?.Color || v.Color || idx).trim().toLowerCase();
+      return (target && (vKey === target || vId === target || vBar === target || String(idx) === target)) ||
+             (vCol && (vCol === target || target.includes(vCol) || vCol.includes(target)));
     });
   }, [selectedProduct, selectedVariantId]);
 
@@ -301,7 +327,7 @@ export default function FabricWastageModal({
     const payload = {
       ProductID: selectedProduct.ProductID || selectedProduct.id,
       ProductName: selectedProduct.ProductName || selectedProduct.name,
-      VariantID: selectedVariant ? (selectedVariant.VariantID || selectedVariant.variantId || selectedVariant.Barcode || '') : '',
+      VariantID: selectedVariant ? (selectedVariant.VariantID || selectedVariant.variantId || selectedVariant.Barcode || selectedVariant.Color || '') : '',
       VariantName: selectedVariant ? (selectedVariant.ColorName || selectedVariant.Attributes?.Color || selectedVariant.Color || selectedVariant.VariantName || selectedVariant.name || [selectedVariant.Color, selectedVariant.Size].filter(Boolean).join(' - ') || 'ভ্যারিয়েন্ট') : '',
       Barcode: selectedVariant?.Barcode || selectedProduct.Barcode || '',
       VariantBarcode: selectedVariant?.Barcode || '',
@@ -1575,10 +1601,11 @@ export default function FabricWastageModal({
                         >
                           <option value="">সাধারণ / সকল ভ্যারিয়েন্ট</option>
                           {selectedProduct.Variants.map((v, vIdx) => {
+                            const vKey = String(v.VariantID || v.variantId || v.Barcode || v.Attributes?.Color || v.Color || vIdx);
                             const vLabel = v.ColorName || v.Attributes?.Color || [v.Color, v.Size].filter(Boolean).join(' - ') || v.VariantName || v.name || Object.values(v.Attributes || {})[0] || `ভ্যারিয়েন্ট #${vIdx + 1}`;
                             const vStock = location === 'Godown' ? `${v.GodownStock || 0} থান` : `${v.StockQuantity || 0} গজ`;
                             return (
-                              <option key={v.VariantID || vIdx} value={v.VariantID || v.variantId || vIdx}>
+                              <option key={vKey} value={vKey}>
                                 🎨 {vLabel} (মজুত: {vStock})
                               </option>
                             );

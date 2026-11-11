@@ -823,6 +823,14 @@ export function normalizeProduct(p) {
         };
       });
     }
+
+    // ভ্যারিয়েন্টগুলোর যোগফল দিয়ে মূল পণ্যের গোডাউন ও দোকান স্টক স্বয়ংক্রিয় সিঙ্ক (অমিল প্রতিরোধ)
+    const finalSumG = variants.reduce((s, v) => s + (Number(v.GodownStock) || 0), 0);
+    const finalSumS = variants.reduce((s, v) => s + (Number(v.StockQuantity) || 0), 0);
+    if (finalSumG > 0 || finalSumS > 0) {
+      godownStock = finalSumG;
+      stock = finalSumS;
+    }
   }
 
   const batchNumber = String(p.BatchNumber || p.batchNumber || p.Batch || p.batch || '').trim();

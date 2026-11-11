@@ -1701,17 +1701,34 @@ export default function App() {
               return v;
             });
 
-            // ভ্যারিয়েন্টগুলোর যোগফল দিয়ে মূল পণ্যের গোডাউন স্টক স্বয়ংক্রিয়ভাবে সিঙ্ক
+            // ভ্যারিয়েন্টগুলোর যোগফল দিয়ে মূল পণ্যের গোডাউন ও দোকান স্টক স্বয়ংক্রিয়ভাবে সিঙ্ক
             const sumVarG = updatedVariants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0);
+            const sumVarS = updatedVariants.reduce((sum, v) => sum + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0);
             newGStock = sumVarG;
-          }
+            const newShopStock = sumVarS;
 
-          updatedProds[pIdx] = {
-            ...curP,
-            GodownStock: newGStock,
-            Variants: updatedVariants,
-            UpdatedAt: new Date().toISOString()
-          };
+            updatedProds[pIdx] = {
+              ...curP,
+              GodownStock: newGStock,
+              godownStock: newGStock,
+              StockQuantity: newShopStock,
+              CurrentStock: newShopStock,
+              ShopStock: newShopStock,
+              stock: newShopStock,
+              TotalStock: newGStock + newShopStock,
+              Variants: updatedVariants,
+              VariantsJSON: JSON.stringify(updatedVariants),
+              UpdatedAt: new Date().toISOString()
+            };
+          } else {
+            updatedProds[pIdx] = {
+              ...curP,
+              GodownStock: newGStock,
+              godownStock: newGStock,
+              TotalStock: newGStock + (Number(curP.StockQuantity) || 0),
+              UpdatedAt: new Date().toISOString()
+            };
+          }
 
           recordStockMovementLocally({
             location: 'Godown',
@@ -1745,14 +1762,18 @@ export default function App() {
               const vId = String(v.VariantID || v.variantId || '').trim().toLowerCase();
               const vCol = String(v.Attributes?.Color || v.Color || v.ColorName || v.VariantName || '').trim().toLowerCase();
               const vBar = String(v.Barcode || v.barcode || '').trim().toLowerCase();
-              const isMatch = (targetVarId && (vId === targetVarId || String(vIdx) === targetVarId || vBar === targetVarId)) ||
-                             (targetBarcode && vBar === targetBarcode) ||
+              const isMatch = (targetVarId && (vId === targetVarId || String(vIdx) === targetVarId || vBar === targetVarId || (vCol && vCol === targetVarId))) ||
+                             (targetBarcode && (vBar === targetBarcode || vId === targetBarcode)) ||
                              (targetVarName && (vCol === targetVarName || targetVarName.includes(vCol) || vCol.includes(targetVarName)));
 
               if (isMatch) {
                 matchedAny = true;
                 const vStk = Number(v.StockQuantity || 0);
-                return { ...v, StockQuantity: Math.max(0, Math.round((vStk - yardsToDeduct) * 10000) / 10000) };
+                return {
+                  ...v,
+                  StockQuantity: Math.max(0, Math.round((vStk - yardsToDeduct) * 10000) / 10000),
+                  stockQuantity: Math.max(0, Math.round((vStk - yardsToDeduct) * 10000) / 10000)
+                };
               }
               return v;
             });
@@ -1767,24 +1788,41 @@ export default function App() {
                 const vStk = Number(updatedVariants[partialIdx].StockQuantity || 0);
                 updatedVariants[partialIdx] = {
                   ...updatedVariants[partialIdx],
-                  StockQuantity: Math.max(0, Math.round((vStk - yardsToDeduct) * 10000) / 10000)
+                  StockQuantity: Math.max(0, Math.round((vStk - yardsToDeduct) * 10000) / 10000),
+                  stockQuantity: Math.max(0, Math.round((vStk - yardsToDeduct) * 10000) / 10000)
                 };
               }
             }
 
-            // ভ্যারিয়েন্টগুলোর যোগফল দিয়ে মূল পণ্যের দোকান স্টক স্বয়ংক্রিয়ভাবে সিঙ্ক
+            // ভ্যারিয়েন্টগুলোর যোগফল দিয়ে মূল পণ্যের দোকান ও গোডাউন স্টক সম্পূর্ণ সমন্বিত
             const sumVarS = updatedVariants.reduce((sum, v) => sum + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0);
+            const sumVarG = updatedVariants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0);
             newStock = sumVarS;
-          }
 
-          updatedProds[pIdx] = {
-            ...curP,
-            StockQuantity: newStock,
-            CurrentStock: newStock,
-            stock: newStock,
-            Variants: updatedVariants,
-            UpdatedAt: new Date().toISOString()
-          };
+            updatedProds[pIdx] = {
+              ...curP,
+              StockQuantity: newStock,
+              CurrentStock: newStock,
+              ShopStock: newStock,
+              stock: newStock,
+              GodownStock: sumVarG,
+              godownStock: sumVarG,
+              TotalStock: newStock + sumVarG,
+              Variants: updatedVariants,
+              VariantsJSON: JSON.stringify(updatedVariants),
+              UpdatedAt: new Date().toISOString()
+            };
+          } else {
+            updatedProds[pIdx] = {
+              ...curP,
+              StockQuantity: newStock,
+              CurrentStock: newStock,
+              ShopStock: newStock,
+              stock: newStock,
+              TotalStock: newStock + (Number(curP.GodownStock) || 0),
+              UpdatedAt: new Date().toISOString()
+            };
+          }
 
           recordStockMovementLocally({
             location: 'Shop',
@@ -1849,6 +1887,51 @@ export default function App() {
       UserID: activeUser?.UserID || 'USER-ADMIN-01',
       UserName: activeUser?.FullName || 'Admin'
     });
+
+    // ৫. গুগল শিট ব্যাকএন্ডে স্বয়ংক্রিয় লাইভ সিঙ্ক পাঠানো
+    if (settings.apiUrl && settings.apiUrl.trim() && payload.ProductID) {
+      try {
+        const pToSync = updatedProds.find(p => String(p.ProductID || p.id).trim() === String(payload.ProductID).trim());
+        if (pToSync) {
+          const isThan = /than|থান/i.test(pToSync.Unit || pToSync.unit);
+          const ypt = Number(pToSync.YardsPerThan || pToSync.yardsPerThan || 0) || 20;
+          const gStk = Number(pToSync.GodownStock || 0);
+          const sStk = Number(pToSync.StockQuantity || 0);
+          const tStk = gStk + sStk;
+          const syncPayload = {
+            productId: pToSync.ProductID,
+            productName: pToSync.ProductName,
+            barcode: pToSync.Barcode,
+            category: pToSync.Category,
+            costPrice: pToSync.CostPrice,
+            sellingPrice: pToSync.SellingPrice,
+            godownStock: gStk,
+            stockQuantity: sStk,
+            totalStock: tStk,
+            unit: pToSync.Unit || (isThan ? 'থান' : 'Pcs'),
+            Unit: pToSync.Unit || (isThan ? 'থান' : 'Pcs'),
+            yardsPerThan: ypt,
+            YardsPerThan: ypt,
+            thanCount: isThan ? tStk : pToSync.ThanCount,
+            totalYards: isThan ? (tStk * ypt) : pToSync.TotalYards,
+            hasVariants: Array.isArray(pToSync.Variants) && pToSync.Variants.length > 0,
+            variants: pToSync.Variants || [],
+            variantsJSON: JSON.stringify(pToSync.Variants || [])
+          };
+          postUpdateProduct(settings.apiUrl, syncPayload)
+            .then((res) => {
+              if (res?.success) {
+                console.info('Fabric wastage stock successfully synced to Google Sheet');
+              }
+            })
+            .catch((err) => {
+              console.warn('Google Sheet product sync delayed for fabric wastage:', err);
+            });
+        }
+      } catch (syncErr) {
+        console.warn('Sync payload preparation error for fabric wastage:', syncErr);
+      }
+    }
 
     return saved;
   };
@@ -1918,23 +2001,48 @@ export default function App() {
           const restoredStock = Math.round((curStock + yardsToRestore) * 10000) / 10000;
 
           let updatedVariants = curP.Variants;
-          if (target.VariantID && Array.isArray(curP.Variants)) {
+          if (Array.isArray(curP.Variants) && curP.Variants.length > 0) {
+            const tId = String(target.VariantID || target.variantId || target.Color || '').trim().toLowerCase();
+            const tBar = String(target.Barcode || '').trim().toLowerCase();
             updatedVariants = curP.Variants.map(v => {
-              if (String(v.VariantID || v.variantId).trim() === String(target.VariantID).trim()) {
-                return { ...v, StockQuantity: (Number(v.StockQuantity) || 0) + yardsToRestore };
+              const vId = String(v.VariantID || v.variantId || '').trim().toLowerCase();
+              const vCol = String(v.Attributes?.Color || v.Color || v.VariantName || '').trim().toLowerCase();
+              const vBar = String(v.Barcode || '').trim().toLowerCase();
+              if ((tId && (vId === tId || vCol === tId)) || (tBar && vBar === tBar)) {
+                return {
+                  ...v,
+                  StockQuantity: (Number(v.StockQuantity) || 0) + yardsToRestore,
+                  stockQuantity: (Number(v.StockQuantity) || 0) + yardsToRestore
+                };
               }
               return v;
             });
+            const sumVarS = updatedVariants.reduce((sum, v) => sum + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0);
+            const sumVarG = updatedVariants.reduce((sum, v) => sum + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0);
+            updatedProds[pIdx] = {
+              ...curP,
+              StockQuantity: sumVarS,
+              CurrentStock: sumVarS,
+              ShopStock: sumVarS,
+              stock: sumVarS,
+              GodownStock: sumVarG,
+              godownStock: sumVarG,
+              TotalStock: sumVarS + sumVarG,
+              Variants: updatedVariants,
+              VariantsJSON: JSON.stringify(updatedVariants),
+              UpdatedAt: new Date().toISOString()
+            };
+          } else {
+            updatedProds[pIdx] = {
+              ...curP,
+              StockQuantity: restoredStock,
+              CurrentStock: restoredStock,
+              ShopStock: restoredStock,
+              stock: restoredStock,
+              TotalStock: restoredStock + (Number(curP.GodownStock) || 0),
+              UpdatedAt: new Date().toISOString()
+            };
           }
-
-          updatedProds[pIdx] = {
-            ...curP,
-            StockQuantity: restoredStock,
-            CurrentStock: restoredStock,
-            stock: restoredStock,
-            Variants: updatedVariants,
-            UpdatedAt: new Date().toISOString()
-          };
 
           recordStockMovementLocally({
             location: 'Shop',
@@ -1958,6 +2066,41 @@ export default function App() {
 
     setProducts(updatedProds);
     saveLocalProducts(updatedProds);
+
+    // ৩. গুগল শিটে রিস্টোর হওয়া স্টক সিঙ্ক পাঠানো
+    if (settings.apiUrl && settings.apiUrl.trim() && target.ProductID) {
+      try {
+        const pToSync = updatedProds.find(p => String(p.ProductID || p.id).trim() === String(target.ProductID).trim());
+        if (pToSync) {
+          const isThan = /than|থান/i.test(pToSync.Unit || pToSync.unit);
+          const ypt = Number(pToSync.YardsPerThan || pToSync.yardsPerThan || 0) || 20;
+          const gStk = Number(pToSync.GodownStock || 0);
+          const sStk = Number(pToSync.StockQuantity || 0);
+          const tStk = gStk + sStk;
+          const syncPayload = {
+            productId: pToSync.ProductID,
+            productName: pToSync.ProductName,
+            barcode: pToSync.Barcode,
+            category: pToSync.Category,
+            costPrice: pToSync.CostPrice,
+            sellingPrice: pToSync.SellingPrice,
+            godownStock: gStk,
+            stockQuantity: sStk,
+            totalStock: tStk,
+            unit: pToSync.Unit || (isThan ? 'থান' : 'Pcs'),
+            Unit: pToSync.Unit || (isThan ? 'থান' : 'Pcs'),
+            yardsPerThan: ypt,
+            YardsPerThan: ypt,
+            thanCount: isThan ? tStk : pToSync.ThanCount,
+            totalYards: isThan ? (tStk * ypt) : pToSync.TotalYards,
+            hasVariants: Array.isArray(pToSync.Variants) && pToSync.Variants.length > 0,
+            variants: pToSync.Variants || [],
+            variantsJSON: JSON.stringify(pToSync.Variants || [])
+          };
+          postUpdateProduct(settings.apiUrl, syncPayload).catch(() => {});
+        }
+      } catch (e) {}
+    }
 
     deleteFabricWastageLocally(recordId);
     setFabricWastageList(getLocalFabricWastage());
