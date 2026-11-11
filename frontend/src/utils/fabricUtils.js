@@ -11,7 +11,8 @@
  */
 export function isFabricUnit(unit) {
   if (!unit) return false;
-  return /^(গজ|goj|yard|yards|থান|than|bolt)$/i.test(String(unit).trim());
+  const u = String(unit).trim().toLowerCase();
+  return /গজ|goj|yard|yards|থান|than|bolt|মিটার|meter/i.test(u);
 }
 
 /**
@@ -21,7 +22,57 @@ export function isFabricUnit(unit) {
  */
 export function isThanUnit(unit) {
   if (!unit) return false;
-  return /^(থান|than|bolt|রোল|roll)$/i.test(String(unit).trim());
+  const u = String(unit).trim().toLowerCase();
+  return /থান|than|bolt|রোল|roll/i.test(u);
+}
+
+/**
+ * পুরো পণ্য অবজেক্টটি কাপড় কি না যাচাই করে
+ * @param {object} product 
+ * @returns {boolean}
+ */
+export function isFabricProduct(product) {
+  if (!product) return false;
+  const cat = String(product.Category || product.category || '').trim().toLowerCase();
+  if (cat === 'fabric' || cat === 'বস্ত্র' || cat === 'কাপড়' || cat === 'বস্ত্রালয়') return true;
+  if (isFabricUnit(product.Unit || product.unit)) return true;
+  if (Number(product.YardsPerThan || product.yardsPerThan || 0) > 0) return true;
+  return false;
+}
+
+/**
+ * রঙের বাংলা/ইংরেজি নাম থেকে হেক্স কালার কোড প্রদান করে
+ * @param {string} colorName 
+ * @returns {string|null}
+ */
+export function getColorHex(colorName = '') {
+  if (!colorName) return null;
+  const c = String(colorName).trim().toLowerCase();
+  const map = {
+    'লাল': '#EF4444', 'red': '#EF4444',
+    'নীল': '#2563EB', 'blue': '#2563EB',
+    'কালো': '#0F172A', 'black': '#0F172A',
+    'সাদা': '#F8FAFC', 'white': '#F8FAFC',
+    'সবুজ': '#10B981', 'green': '#10B981',
+    'হলুদ': '#EAB308', 'yellow': '#EAB308',
+    'গোলাপি': '#EC4899', 'pink': '#EC4899', 'গোলাপী': '#EC4899',
+    'মেরুন': '#881337', 'maroon': '#881337',
+    'অফ-হোয়াইট': '#FEF3C7', 'off-white': '#FEF3C7', 'offwhite': '#FEF3C7',
+    'বেগুনি': '#8B5CF6', 'purple': '#8B5CF6',
+    'কমলা': '#F97316', 'orange': '#F97316',
+    'আকাশি': '#0284C7', 'sky': '#0284C7', 'আকাশী': '#0284C7',
+    'ছাই': '#64748B', 'grey': '#64748B', 'gray': '#64748B',
+    'বাদামি': '#78350F', 'brown': '#78350F', 'বাদামী': '#78350F',
+    'গোল্ডেন': '#D97706', 'golden': '#D97706',
+    'সিলভার': '#94A3B8', 'silver': '#94A3B8',
+    'পেস্ট': '#0D9488', 'paste': '#0D9488',
+    'ম্যাজেন্টা': '#C026D3', 'magenta': '#C026D3',
+    'জলপাই': '#65A30D', 'olive': '#65A30D',
+    'নেভি ব্লু': '#1E3A8A', 'navy': '#1E3A8A', 'navy blue': '#1E3A8A',
+    'টিয়া': '#84CC16', 'lime': '#84CC16',
+    'খয়েরি': '#78350F', 'খয়েরী': '#78350F'
+  };
+  return map[c] || '#6366F1';
 }
 
 /**

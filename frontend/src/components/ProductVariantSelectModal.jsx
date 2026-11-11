@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { isFabricUnit, calculateTotalYards, formatFabricQuantity, parseGojGira } from '../utils/fabricUtils';
+import { isFabricUnit, isFabricProduct, calculateTotalYards, formatFabricQuantity, parseGojGira } from '../utils/fabricUtils';
 import {
   X,
   Layers,
@@ -114,7 +114,7 @@ export default function ProductVariantSelectModal({
   const [fabricGoj, setFabricGoj] = useState(1);
   const [fabricGira, setFabricGira] = useState(0);
 
-  const isFabric = isFabricUnit(product?.Unit || product?.unit);
+  const isFabric = isFabricProduct(product);
   const yardsPerThan = isFabric ? (Number(product?.YardsPerThan || product?.yardsPerThan || 0) || 20) : 0;
   const effectiveQuantity = isFabric ? calculateTotalYards(fabricGoj, fabricGira) : quantity;
 

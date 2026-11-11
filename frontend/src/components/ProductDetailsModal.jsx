@@ -22,6 +22,15 @@ import {
 } from 'lucide-react';
 import BarcodeStickerModal from './BarcodeStickerModal';
 import { isAdminUser, canViewCostPrice, formatMaskedCostPrice } from '../utils/permissionUtils';
+import {
+  isFabricUnit,
+  isThanUnit,
+  isFabricProduct,
+  calculateThanBreakdown,
+  formatFabricQuantity,
+  getSafeRunningCutText,
+  getColorHex,
+} from '../utils/fabricUtils';
 
 export default function ProductDetailsModal({
   isOpen,
@@ -52,6 +61,7 @@ export default function ProductDetailsModal({
   if (!isOpen || !product) return null;
 
   const stock = Number(product.StockQuantity || 0);
+  const godownStock = Number(product.GodownStock || 0);
   const minAlert = Number(product.MinStockAlert || 5);
   const selling = Number(product.SellingPrice || 0);
   
@@ -59,7 +69,38 @@ export default function ProductDetailsModal({
   const isLowStock = inStock && stock <= minAlert;
   const isOutOfStock = !inStock;
   const remainingStockForCart = Math.max(0, stock - cartQuantity);
-  const isThanUnit = String(product.Unit || '').includes('থান') || String(product.Unit || '').toLowerCase().includes('than') || Number(product.YardsPerThan) > 0;
+
+  const isFabric = isFabricProduct(product);
+  const yardsPerThan = Number(product.YardsPerThan) || (isFabric ? 20 : 0);
+  const hasThanSystem = isFabric && (yardsPerThan > 0 || isThanUnit(product.Unit));
+
+  // ফেব্রিক পণ্যের জন্য নির্ভুল গজ ও থান বিশ্লেষণ
+  const fabricData = useMemo(() => {
+    if (!isFabric) return null;
+
+    // দোকানে মজুত বিশ্লেষণ (দোকানের StockQuantity গজে থাকে)
+    const shopBreakdown = hasThanSystem
+      ? calculateThanBreakdown(stock, yardsPerThan)
+      : null;
+
+    // গোডাউন বিশ্লেষণ (গোডাউনের স্টক সংখ্যা হলো আস্ত থান)
+    const godownThans = hasThanSystem ? godownStock : 0;
+    const godownYards = hasThanSystem ? Math.round(godownThans * yardsPerThan * 10000) / 10000 : 0;
+
+    // মোট কাপড়ের মজুত (দোকানের গজ + গোডাউনের গজ)
+    const totalYards = hasThanSystem ? Math.round((stock + godownYards) * 10000) / 10000 : stock;
+    const totalBreakdown = hasThanSystem ? calculateThanBreakdown(totalYards, yardsPerThan) : null;
+
+    return {
+      yardsPerThan,
+      shopYards: stock,
+      shopBreakdown,
+      godownThans,
+      godownYards,
+      totalYards,
+      totalBreakdown,
+    };
+  }, [isFabric, hasThanSystem, stock, godownStock, yardsPerThan]);
 
   // পণ্য বৈশিষ্ট্যসমূহ তালিকা
   const productFeatures = Array.isArray(product.Features)
@@ -264,7 +305,7 @@ export default function ProductDetailsModal({
                   )}
                   <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
                     <Scale className="w-3 h-3" />
-                    একক: {product.Unit || 'Pcs'}
+                    {isFabric ? `একক: ${product.Unit || 'গজ'}${yardsPerThan > 0 ? ` (${yardsPerThan} গজ/থান)` : ''}` : `একক: ${product.Unit || 'Pcs'}`}
                   </span>
                 </div>
 
@@ -298,22 +339,39 @@ export default function ProductDetailsModal({
               {/* বিক্রয়মূল্য ও মজুত হাইলাইট */}
               <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-100 flex items-center justify-between">
                 <div>
-                  <span className="text-xs text-indigo-700 font-medium block">বিক্রয়মূল্য (প্রতি {product.Unit || 'একক'})</span>
+                  <span className="text-xs text-indigo-700 font-medium block">
+                    {isFabric ? 'বিক্রয়মূল্য (প্রতি গজ)' : `বিক্রয়মূল্য (প্রতি ${product.Unit || 'একক'})`}
+                  </span>
                   <div className="flex items-baseline space-x-1 mt-0.5">
                     <span className="text-sm font-semibold text-indigo-600">{currencySymbol}</span>
                     <span className="text-2xl font-black text-indigo-900">
                       {selling.toFixed(2)}
                     </span>
+                    {isFabric && (
+                      <span className="text-xs font-bold text-slate-500 ml-0.5">/গজ</span>
+                    )}
                   </div>
+                  {isFabric && yardsPerThan > 0 && (
+                    <span className="text-[10px] text-indigo-700 font-semibold block mt-0.5">
+                      ১ থান ({yardsPerThan} গজ) = {currencySymbol}{(selling * yardsPerThan).toFixed(2)}
+                    </span>
+                  )}
                 </div>
 
                 {/* ফেজ ৩: ক্যাশিয়ারের জন্য কেনা দাম সুরক্ষা */}
                 {canViewCostPrice(activeUser) ? (
                   <div className="text-center px-3 border-x border-indigo-200/60">
-                    <span className="text-[11px] text-slate-500 font-bold block">কেনা দাম</span>
+                    <span className="text-[11px] text-slate-500 font-bold block">
+                      {isFabric ? 'কেনা দাম (গজ)' : 'কেনা দাম'}
+                    </span>
                     <span className="text-base font-black text-slate-800 font-mono">
                       {currencySymbol}{Number(product.CostPrice || 0).toFixed(2)}
                     </span>
+                    {isFabric && yardsPerThan > 0 && (
+                      <span className="text-[10px] text-slate-500 font-medium block">
+                        থান: {currencySymbol}{(Number(product.CostPrice || 0) * yardsPerThan).toFixed(2)}
+                      </span>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center px-3 border-x border-indigo-200/60">
@@ -325,7 +383,9 @@ export default function ProductDetailsModal({
                 {/* পাইকারি বিক্রয়মূল্য */}
                 {Number(product.WholesalePrice || product.wholesalePrice) > 0 && (
                   <div className="text-center px-3 border-r border-indigo-200/60">
-                    <span className="text-[11px] text-indigo-700 font-bold block">পাইকারি দর</span>
+                    <span className="text-[11px] text-indigo-700 font-bold block">
+                      {isFabric ? 'পাইকারি দর (গজ)' : 'পাইকারি দর'}
+                    </span>
                     <span className="text-base font-black text-indigo-900 font-mono">
                       {currencySymbol}{Number(product.WholesalePrice || product.wholesalePrice).toFixed(2)}
                     </span>
@@ -334,36 +394,96 @@ export default function ProductDetailsModal({
 
                 <div className="text-right">
                   <span className="text-xs text-slate-500 font-medium block">দোকানে মজুত</span>
-                  <span className={`text-xl font-extrabold block ${isOutOfStock ? 'text-rose-600' : isLowStock ? 'text-amber-600' : 'text-emerald-700'}`}>
-                    {stock} <span className="text-xs font-semibold text-slate-500">{product.Unit || 'Pcs'}</span>
-                  </span>
+                  {isFabric ? (
+                    <div>
+                      <span className={`text-xl font-extrabold block ${isOutOfStock ? 'text-rose-600' : isLowStock ? 'text-amber-600' : 'text-emerald-700'}`}>
+                        {stock} <span className="text-xs font-semibold text-slate-500">গজ</span>
+                      </span>
+                      {hasThanSystem && fabricData?.shopBreakdown && (
+                        <span className="text-[10px] font-semibold text-slate-500 block truncate max-w-[150px]" title={fabricData.shopBreakdown.displayText}>
+                          {fabricData.shopBreakdown.fullThans > 0 
+                            ? `${fabricData.shopBreakdown.fullThans} থান + ${getSafeRunningCutText(fabricData.shopBreakdown)}` 
+                            : getSafeRunningCutText(fabricData.shopBreakdown) || `${stock} গজ`}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className={`text-xl font-extrabold block ${isOutOfStock ? 'text-rose-600' : isLowStock ? 'text-amber-600' : 'text-emerald-700'}`}>
+                      {stock} <span className="text-xs font-semibold text-slate-500">{product.Unit || 'Pcs'}</span>
+                    </span>
+                  )}
                 </div>
               </div>
 
               {/* গোডাউন বনাম দোকান স্টক বিভাজন */}
               <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200">
-                <div className="p-2 bg-emerald-50/80 rounded-xl border border-emerald-200 text-center">
+                <div className="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200 text-center">
                   <span className="text-[10px] font-bold text-emerald-800 block">🏬 দোকান স্টক</span>
-                  <span className="text-base font-black text-emerald-950 block">
-                    {stock} <span className="text-[10px] font-medium text-emerald-700">{product.Unit || 'Pcs'}</span>
-                  </span>
+                  {isFabric ? (
+                    <>
+                      <span className="text-base font-black text-emerald-950 block">
+                        {stock} <span className="text-[10px] font-medium text-emerald-700">গজ</span>
+                      </span>
+                      {hasThanSystem && fabricData?.shopBreakdown && (
+                        <span className="text-[10px] font-semibold text-emerald-700 block truncate" title={fabricData.shopBreakdown.displayText}>
+                          {fabricData.shopBreakdown.fullThans > 0 
+                            ? `${fabricData.shopBreakdown.fullThans} থান + ${getSafeRunningCutText(fabricData.shopBreakdown)}` 
+                            : getSafeRunningCutText(fabricData.shopBreakdown) || `${stock} গজ`}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-base font-black text-emerald-950 block">
+                      {stock} <span className="text-[10px] font-medium text-emerald-700">{product.Unit || 'Pcs'}</span>
+                    </span>
+                  )}
                 </div>
-                <div className="p-2 bg-indigo-50/80 rounded-xl border border-indigo-200 text-center">
+
+                <div className="p-2.5 bg-indigo-50/80 rounded-xl border border-indigo-200 text-center">
                   <span className="text-[10px] font-bold text-indigo-800 block">🏭 গোডাউন স্টক</span>
-                  <span className="text-base font-black text-indigo-950 block">
-                    {Number(product.GodownStock || 0)} <span className="text-[10px] font-medium text-indigo-700">{product.Unit || 'Pcs'}</span>
-                  </span>
+                  {isFabric ? (
+                    <>
+                      <span className="text-base font-black text-indigo-950 block">
+                        {godownStock} <span className="text-[10px] font-medium text-indigo-700">থান</span>
+                      </span>
+                      {hasThanSystem && (
+                        <span className="text-[10px] font-semibold text-indigo-700 block">
+                          ({fabricData?.godownYards || 0} গজ)
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-base font-black text-indigo-950 block">
+                      {godownStock} <span className="text-[10px] font-medium text-indigo-700">{product.Unit || 'Pcs'}</span>
+                    </span>
+                  )}
                 </div>
-                <div className="p-2 bg-slate-100 rounded-xl border border-slate-200 text-center">
+
+                <div className="p-2.5 bg-slate-100 rounded-xl border border-slate-200 text-center">
                   <span className="text-[10px] font-bold text-slate-700 block">📦 মোট স্টক</span>
-                  <span className="text-base font-black text-slate-900 block">
-                    {stock + Number(product.GodownStock || 0)} <span className="text-[10px] font-medium text-slate-600">{product.Unit || 'Pcs'}</span>
-                  </span>
+                  {isFabric ? (
+                    <>
+                      <span className="text-base font-black text-slate-900 block">
+                        {fabricData?.totalYards || 0} <span className="text-[10px] font-medium text-slate-600">গজ</span>
+                      </span>
+                      {hasThanSystem && fabricData?.totalBreakdown && (
+                        <span className="text-[10px] font-semibold text-slate-600 block truncate" title={`${fabricData.totalBreakdown.fullThans} থান + ${getSafeRunningCutText(fabricData.totalBreakdown)}`}>
+                          {fabricData.totalBreakdown.fullThans > 0 
+                            ? `${fabricData.totalBreakdown.fullThans} থান + ${getSafeRunningCutText(fabricData.totalBreakdown)}` 
+                            : getSafeRunningCutText(fabricData.totalBreakdown) || `${fabricData.totalYards} গজ`}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-base font-black text-slate-900 block">
+                      {stock + godownStock} <span className="text-[10px] font-medium text-slate-600">{product.Unit || 'Pcs'}</span>
+                    </span>
+                  )}
                 </div>
               </div>
 
               {/* কাপড় পরিমাপ ও থান-গজ বিশদ বিবরণ */}
-              {(Number(product.YardsPerThan) > 0 || String(product.Unit || '').includes('থান')) && (
+              {hasThanSystem && fabricData && (
                 <div className="bg-amber-50/80 rounded-2xl p-3.5 border border-amber-200 mt-3 text-xs space-y-2">
                   <div className="flex items-center justify-between text-amber-950 font-bold border-b border-amber-200/70 pb-1.5">
                     <span className="flex items-center space-x-1.5">
@@ -379,33 +499,37 @@ export default function ProductDetailsModal({
                     <div className="bg-white p-2 rounded-xl border border-amber-100">
                       <span className="text-[10px] text-amber-800 font-bold block">প্রতি থানে গজ</span>
                       <span className="text-sm font-black text-amber-950 block">
-                        {Number(product.YardsPerThan) || 0} গজ
+                        {fabricData.yardsPerThan} গজ
                       </span>
                     </div>
 
                     <div className="bg-white p-2 rounded-xl border border-amber-100">
                       <span className="text-[10px] text-amber-800 font-bold block">দোকানে গজ</span>
                       <span className="text-sm font-black text-amber-950 block">
-                        {stock * (Number(product.YardsPerThan) || 0)} গজ
+                        {fabricData.shopYards} গজ
                       </span>
-                      <span className="text-[9px] text-slate-500 font-medium">({stock} থান)</span>
+                      <span className="text-[9px] text-slate-500 font-medium block truncate" title={fabricData.shopBreakdown?.displayText}>
+                        ({fabricData.shopBreakdown?.displayText || `${fabricData.shopYards} গজ`})
+                      </span>
                     </div>
 
                     <div className="bg-white p-2 rounded-xl border border-amber-100">
                       <span className="text-[10px] text-amber-800 font-bold block">গোডাউনে গজ</span>
                       <span className="text-sm font-black text-indigo-950 block">
-                        {(Number(product.GodownStock) || 0) * (Number(product.YardsPerThan) || 0)} গজ
+                        {fabricData.godownYards} গজ
                       </span>
-                      <span className="text-[9px] text-slate-500 font-medium">({Number(product.GodownStock) || 0} থান)</span>
+                      <span className="text-[9px] text-slate-500 font-medium block">
+                        ({fabricData.godownThans} থান আস্ত)
+                      </span>
                     </div>
                   </div>
 
-                  <div className="p-2 bg-amber-100/70 rounded-xl border border-amber-200 flex items-center justify-between font-bold text-amber-950">
+                  <div className="p-2.5 bg-amber-100/70 rounded-xl border border-amber-200 flex items-center justify-between font-bold text-amber-950">
                     <span className="text-[11px]">মোট কাপড়ের মজুদ (দোকান + গোডাউন):</span>
                     <span className="text-sm font-black text-amber-950">
-                      {(stock + (Number(product.GodownStock) || 0)) * (Number(product.YardsPerThan) || 0)} গজ
-                      <span className="text-[10px] font-normal text-amber-800 ml-1">
-                        ({stock + (Number(product.GodownStock) || 0)} থান)
+                      {fabricData.totalYards} গজ
+                      <span className="text-[10px] font-normal text-amber-800 ml-1.5">
+                        ({fabricData.totalBreakdown?.fullThans || 0} থান + {getSafeRunningCutText(fabricData.totalBreakdown) || '০ গজ'})
                       </span>
                     </span>
                   </div>
@@ -442,35 +566,98 @@ export default function ProductDetailsModal({
 
           {/* ভ্যারিয়েন্ট তালিকা (Phase 6) */}
           {product.HasVariants && Array.isArray(product.Variants) && product.Variants.length > 0 && (
-            <div className="p-3.5 bg-indigo-50/40 rounded-xl border border-indigo-100 space-y-2">
-              <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-indigo-600" />
-                <span>সাইজ ও কালার ভ্যারিয়েন্ট তালিকা ({product.Variants.length} টি অপশন)</span>
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {product.Variants.map((v, idx) => (
-                  <div key={idx} className="p-2.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between text-xs shadow-2xs">
-                    <div>
-                      <span className="font-bold text-slate-900 block">
-                        {(v.Attributes && typeof v.Attributes === 'object' && Object.keys(v.Attributes).length > 0)
-                          ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ')
-                          : ([v.Size, v.Color, v.Weight, v.Title].filter(Boolean).join(' / ') || `ভ্যারিয়েন্ট #${idx + 1}`)}
-                      </span>
-                      {v.Barcode && <span className="font-mono text-[10px] text-slate-400">#{v.Barcode}</span>}
-                    </div>
-                    <div className="text-right">
-                      <span className="font-black text-slate-900 block">{currencySymbol}{Number(v.SellingPrice || product.SellingPrice).toFixed(2)}</span>
-                      {Number(v.WholesalePrice) > 0 && (
-                        <span className="text-[10px] text-indigo-700 font-bold block">
-                          পাইকারি: {currencySymbol}{Number(v.WholesalePrice).toFixed(2)}
+            <div className="p-3.5 bg-indigo-50/40 rounded-xl border border-indigo-100 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>সাইজ ও কালার ভ্যারিয়েন্ট তালিকা ({product.Variants.length} টি অপশন)</span>
+                </span>
+                <span className="text-[10px] font-semibold text-slate-500">
+                  {isFabric ? 'দোকান (গজ) | গোডাউন (থান)' : 'দোকান ও গোডাউন স্টক'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {product.Variants.map((v, idx) => {
+                  const vStock = Number(v.StockQuantity || 0);
+                  const vGodown = Number(v.GodownStock || 0);
+                  const vSelling = Number(v.SellingPrice || product.SellingPrice || 0);
+                  const vColor = v.Color || (v.Attributes && (v.Attributes.Color || v.Attributes.color || v.Attributes['রং'])) || null;
+                  const hexColor = vColor ? getColorHex(vColor) : null;
+                  const label = (v.Attributes && typeof v.Attributes === 'object' && Object.keys(v.Attributes).length > 0)
+                    ? Object.entries(v.Attributes).map(([k, val]) => `${k}: ${val}`).join(', ')
+                    : ([v.Color, v.Size, v.Weight, v.Title].filter(Boolean).join(' / ') || v.VariantName || `ভ্যারিয়েন্ট #${idx + 1}`);
+
+                  let vShopDisplay = '';
+                  let vGodownDisplay = '';
+                  let vTotalDisplay = '';
+
+                  if (isFabric) {
+                    const vGodownYards = hasThanSystem ? vGodown * yardsPerThan : 0;
+                    const vTotalYards = Math.round((vStock + vGodownYards) * 10000) / 10000;
+                    const vBreakdown = hasThanSystem ? calculateThanBreakdown(vStock, yardsPerThan) : null;
+                    const vTotalBreakdown = hasThanSystem ? calculateThanBreakdown(vTotalYards, yardsPerThan) : null;
+
+                    vShopDisplay = `${vStock} গজ`;
+                    if (hasThanSystem && vBreakdown && vBreakdown.fullThans > 0) {
+                      vShopDisplay += ` (${vBreakdown.fullThans}থান + ${getSafeRunningCutText(vBreakdown)})`;
+                    }
+                    vGodownDisplay = `${vGodown} থান (${vGodownYards} গজ)`;
+                    vTotalDisplay = `${vTotalYards} গজ`;
+                    if (hasThanSystem && vTotalBreakdown && vTotalBreakdown.fullThans > 0) {
+                      vTotalDisplay += ` (${vTotalBreakdown.fullThans}থান + ${getSafeRunningCutText(vTotalBreakdown)})`;
+                    }
+                  } else {
+                    vShopDisplay = `${vStock} ${product.Unit || 'একক'}`;
+                    vGodownDisplay = `${vGodown} ${product.Unit || 'একক'}`;
+                    vTotalDisplay = `${vStock + vGodown} ${product.Unit || 'একক'}`;
+                  }
+
+                  return (
+                    <div key={v.VariantID || idx} className="p-2.5 bg-white rounded-xl border border-slate-200 space-y-1.5 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 min-w-0">
+                          {hexColor && (
+                            <span 
+                              className="w-3.5 h-3.5 rounded-full border border-black/20 shrink-0 inline-block"
+                              style={{ backgroundColor: hexColor }}
+                              title={`রং: ${vColor}`}
+                            />
+                          )}
+                          <span className="font-bold text-slate-900 text-xs truncate">
+                            {label}
+                          </span>
+                        </div>
+                        <span className="font-black text-slate-900 text-xs">
+                          {currencySymbol}{vSelling.toFixed(2)}
+                          {isFabric && <span className="text-[9px] text-slate-500 font-normal ml-0.5">/গজ</span>}
                         </span>
+                      </div>
+
+                      {v.Barcode && (
+                        <div className="font-mono text-[10px] text-slate-400">
+                          #{v.Barcode}
+                        </div>
                       )}
-                      <span className="text-[10px] text-slate-500 font-medium block">
-                        মজুদ: {v.StockQuantity || 0} {isThanUnit ? `থান (${(Number(v.StockQuantity) || 0) * (Number(product.YardsPerThan) || 0)} গজ)` : (product.Unit || 'একক')}
-                      </span>
+
+                      <div className="pt-1 border-t border-slate-100 grid grid-cols-2 gap-1 text-[11px]">
+                        <div className="text-emerald-700">
+                          <span className="text-[9px] text-slate-400 font-bold block uppercase">দোকান মজুত:</span>
+                          <span className="font-bold">{vShopDisplay}</span>
+                        </div>
+                        <div className="text-indigo-700 text-right">
+                          <span className="text-[9px] text-slate-400 font-bold block uppercase">গোডাউন ব্যাকআপ:</span>
+                          <span className="font-bold">{vGodownDisplay}</span>
+                        </div>
+                      </div>
+
+                      <div className="text-[10px] font-semibold text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-100 flex items-center justify-between">
+                        <span>মোট মজুত:</span>
+                        <span className="font-bold text-slate-800">{vTotalDisplay}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -588,13 +775,13 @@ export default function ProductDetailsModal({
           {/* কার্টে যোগ করার সেকশন */}
           <div className="w-full sm:w-auto flex items-center space-x-3 justify-end">
             
-            {inStock && remainingStockForCart > 0 && (
+            {inStock && remainingStockForCart > 0 && !product.HasVariants && (
               <div className="flex items-center border border-slate-300 rounded-xl bg-white overflow-hidden shadow-2xs">
                 <button
                   type="button"
                   onClick={handleDecrement}
                   disabled={quantity <= 1}
-                  className="px-2.5 py-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white transition-colors"
+                  className="px-2.5 py-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white transition-colors cursor-pointer"
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
@@ -605,7 +792,7 @@ export default function ProductDetailsModal({
                   type="button"
                   onClick={handleIncrement}
                   disabled={quantity >= remainingStockForCart}
-                  className="px-2.5 py-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white transition-colors"
+                  className="px-2.5 py-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
@@ -616,7 +803,7 @@ export default function ProductDetailsModal({
               type="button"
               onClick={handleAddToCartClick}
               disabled={isOutOfStock || remainingStockForCart <= 0}
-              className="flex-1 sm:flex-initial px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 sm:flex-initial px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <ShoppingCart className="w-4 h-4" />
               <span>
@@ -624,6 +811,8 @@ export default function ProductDetailsModal({
                   ? 'স্টক নেই'
                   : remainingStockForCart <= 0
                   ? 'কার্টে সীমা শেষ'
+                  : product.HasVariants
+                  ? 'ভ্যারিয়েন্ট বাছাই ও কার্টে যোগ'
                   : `কার্টে যোগ করুন (${currencySymbol} ${(selling * quantity).toFixed(2)})`}
               </span>
             </button>
