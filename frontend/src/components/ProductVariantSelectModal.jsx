@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { isFabricUnit, calculateTotalYards, formatFabricQuantity } from '../utils/fabricUtils';
+import React, { useState, useMemo, useEffect } from 'react';
+import { isFabricUnit, calculateTotalYards, formatFabricQuantity, parseGojGira } from '../utils/fabricUtils';
 import {
   X,
   Layers,
@@ -7,8 +7,99 @@ import {
   ShoppingCart,
   Barcode,
   Plus,
-  Minus
+  Minus,
+  AlertCircle
 } from 'lucide-react';
+
+// রঙের বাংলা/ইংরেজি নাম থেকে হেক্স কালার কোড
+const getColorHex = (colorName = '') => {
+  if (!colorName) return null;
+  const c = String(colorName).trim().toLowerCase();
+  const map = {
+    'লাল': '#EF4444', 'red': '#EF4444',
+    'নীল': '#2563EB', 'blue': '#2563EB',
+    'কালো': '#0F172A', 'black': '#0F172A',
+    'সাদা': '#F8FAFC', 'white': '#F8FAFC',
+    'সবুজ': '#10B981', 'green': '#10B981',
+    'হলুদ': '#EAB308', 'yellow': '#EAB308',
+    'গোলাপি': '#EC4899', 'pink': '#EC4899', 'গোলাপী': '#EC4899',
+    'মেরুন': '#881337', 'maroon': '#881337',
+    'অফ-হোয়াইট': '#FEF3C7', 'off-white': '#FEF3C7', 'offwhite': '#FEF3C7',
+    'বেগুনি': '#8B5CF6', 'purple': '#8B5CF6',
+    'কমলা': '#F97316', 'orange': '#F97316',
+    'আকাশি': '#0284C7', 'sky': '#0284C7', 'আকাশী': '#0284C7',
+    'ছাই': '#64748B', 'grey': '#64748B', 'gray': '#64748B',
+    'বাদামি': '#78350F', 'brown': '#78350F', 'বাদামী': '#78350F',
+    'গোল্ডেন': '#D97706', 'golden': '#D97706',
+    'সিলভার': '#94A3B8', 'silver': '#94A3B8',
+    'পেস্ট': '#0D9488', 'paste': '#0D9488',
+    'ম্যাজেন্টা': '#C026D3', 'magenta': '#C026D3',
+    'জলপাই': '#65A30D', 'olive': '#65A30D',
+    'নেভি ব্লু': '#1E3A8A', 'navy': '#1E3A8A', 'navy blue': '#1E3A8A',
+    'টিয়া': '#84CC16', 'lime': '#84CC16',
+    'খয়েরি': '#78350F', 'খয়েরী': '#78350F'
+  };
+  return map[c] || '#6366F1';
+};
+
+// ভ্যারিয়েন্ট অবজেক্ট থেকে রং এর নাম বের করার হেল্পার
+const extractVariantColor = (v) => {
+  if (!v) return null;
+  if (v.Color) return v.Color;
+  if (v.Attributes) {
+    if (v.Attributes.Color) return v.Attributes.Color;
+    if (v.Attributes.color) return v.Attributes.color;
+    if (v.Attributes['রং']) return v.Attributes['রং'];
+    if (v.Attributes.Colour) return v.Attributes.Colour;
+  }
+  return null;
+};
+
+// ভ্যারিয়েন্ট এট্রিবিউট লেবেল সুন্দর করে উপস্থাপন
+const formatVariantLabel = (v) => {
+  if (v.VariantName && v.VariantName.trim()) {
+    return v.VariantName;
+  }
+  if (!v.Attributes || typeof v.Attributes !== 'object') {
+    return v.VariantID || '';
+  }
+  const entries = Object.entries(v.Attributes);
+  if (entries.length === 0) return v.VariantID || '';
+
+  return entries
+    .map(([key, val]) => {
+      const kLower = key.toLowerCase();
+      let label = key;
+      if (kLower === 'color') label = 'রং';
+      else if (kLower === 'size') label = 'সাইজ';
+      else if (kLower === 'weight') label = 'ওজন';
+      return `${label}: ${val}`;
+    })
+    .join(' | ');
+};
+
+// স্টক পরিমাণ সুন্দর করে উপস্থাপন (গজ কাপড়ের ক্ষেত্রে গজ-গিরা ও থান ব্রেকডাউন)
+const formatVariantStockText = (vStock, isFabric, yardsPerThan, unit = 'পিস') => {
+  if (vStock <= 0) return 'স্টক শেষ';
+  if (!isFabric) {
+    return `${vStock} ${unit || 'পিস'} মজুদ`;
+  }
+
+  if (yardsPerThan && yardsPerThan > 0) {
+    const fullThans = Math.floor(vStock / yardsPerThan);
+    const cutYards = Math.round((vStock % yardsPerThan) * 10000) / 10000;
+    const cutText = formatFabricQuantity(cutYards, 'গজ', false);
+
+    if (fullThans > 0 && cutYards > 0) {
+      return `${fullThans} থান + ${cutText} (${vStock} গজ) মজুদ`;
+    }
+    if (fullThans > 0 && cutYards === 0) {
+      return `${fullThans} থান (${vStock} গজ) মজুদ`;
+    }
+  }
+
+  return `${formatFabricQuantity(vStock, 'গজ', true)} মজুদ`;
+};
 
 export default function ProductVariantSelectModal({
   isOpen,
@@ -23,7 +114,8 @@ export default function ProductVariantSelectModal({
   const [fabricGoj, setFabricGoj] = useState(1);
   const [fabricGira, setFabricGira] = useState(0);
 
-  const isFabric = isFabricUnit(product?.Unit);
+  const isFabric = isFabricUnit(product?.Unit || product?.unit);
+  const yardsPerThan = isFabric ? (Number(product?.YardsPerThan || product?.yardsPerThan || 0) || 20) : 0;
   const effectiveQuantity = isFabric ? calculateTotalYards(fabricGoj, fabricGira) : quantity;
 
   // ভ্যারিয়েন্ট তালিকা নিরাপদ এক্সট্র্যাক্ট
@@ -35,16 +127,29 @@ export default function ProductVariantSelectModal({
   }, [product]);
 
   // ডিফল্ট সিলেক্টেড ভ্যারিয়েন্ট সেট করা
-  React.useEffect(() => {
+  useEffect(() => {
     if (variants.length > 0) {
       // প্রথম যে ভ্যারিয়েন্টের স্টক আছে সেটা নির্বাচন করুন, নতুবা প্রথম ভ্যারিয়েন্ট
       const inStockVariant = variants.find((v) => Number(v.StockQuantity || 0) > 0);
-      setSelectedVariantId(inStockVariant ? inStockVariant.VariantID : variants[0].VariantID);
+      const chosen = inStockVariant || variants[0];
+      setSelectedVariantId(chosen.VariantID);
       setQuantity(1);
-      setFabricGoj(1);
-      setFabricGira(0);
+      if (isFabric) {
+        const initialStock = Number(chosen?.StockQuantity || 0);
+        if (initialStock > 0 && initialStock < 1) {
+          const { goj, gira } = parseGojGira(initialStock);
+          setFabricGoj(goj);
+          setFabricGira(gira);
+        } else {
+          setFabricGoj(1);
+          setFabricGira(0);
+        }
+      } else {
+        setFabricGoj(1);
+        setFabricGira(0);
+      }
     }
-  }, [variants, isOpen]);
+  }, [variants, isOpen, isFabric]);
 
   const currentVariant = variants.find((v) => v.VariantID === selectedVariantId) || variants[0];
   const variantStock = currentVariant ? Number(currentVariant.StockQuantity || 0) : 0;
@@ -53,27 +158,72 @@ export default function ProductVariantSelectModal({
   // কার্টে অলরেডি এই ভ্যারিয়েন্ট কয়টি আছে (সবসময় রেন্ডার হুক হিসেবে কল হবে)
   const alreadyInCartQty = useMemo(() => {
     if (!currentVariant || !product) return 0;
-    const match = (cartItems || []).find((ci) => ci.variantId === currentVariant.VariantID && ci.productId === product.ProductID);
+    const match = (cartItems || []).find((ci) => {
+      const vid = ci.variantId || ci.VariantID || (ci.cartItemId ? ci.cartItemId.split('__')[1] : null);
+      const pid = ci.productId || ci.ProductID || (ci.cartItemId ? ci.cartItemId.split('__')[0] : null);
+      return vid === currentVariant.VariantID && pid === product.ProductID;
+    });
     return match ? Number(match.quantity || 0) : 0;
   }, [cartItems, currentVariant, product]);
 
   const maxSelectable = Math.max(0, variantStock - alreadyInCartQty);
 
+  // ভ্যারিয়েন্ট ক্লিক হ্যান্ডলার (স্টক সীমা অনুযায়ী কোয়ান্টিটি স্বয়ংক্রিয় সমন্বিত)
+  const handleSelectVariant = (v) => {
+    const vStock = Number(v.StockQuantity || 0);
+    if (vStock <= 0) return;
+    setSelectedVariantId(v.VariantID);
+
+    const inCart = (cartItems || []).find((ci) => {
+      const vid = ci.variantId || ci.VariantID || (ci.cartItemId ? ci.cartItemId.split('__')[1] : null);
+      const pid = ci.productId || ci.ProductID || (ci.cartItemId ? ci.cartItemId.split('__')[0] : null);
+      return vid === v.VariantID && pid === product.ProductID;
+    });
+    const inCartQty = inCart ? Number(inCart.quantity || 0) : 0;
+    const vMax = Math.max(0, vStock - inCartQty);
+
+    if (isFabric) {
+      const curTotal = calculateTotalYards(fabricGoj, fabricGira);
+      if (curTotal > vMax) {
+        if (vMax < 1 && vMax > 0) {
+          const { goj, gira } = parseGojGira(vMax);
+          setFabricGoj(goj);
+          setFabricGira(gira);
+        } else {
+          const { goj, gira } = parseGojGira(Math.max(0, vMax));
+          setFabricGoj(goj);
+          setFabricGira(gira);
+        }
+      }
+    } else {
+      if (quantity > vMax) {
+        setQuantity(Math.max(1, Math.min(vMax, quantity)));
+      }
+    }
+  };
+
   const handleConfirmAddToCart = () => {
     if (!currentVariant || !product) return;
     if (variantStock <= 0) return;
+    if (effectiveQuantity <= 0) return;
     if (effectiveQuantity > maxSelectable) return;
 
     // বিশেষ প্রোডাক্ট অবজেক্ট তৈরি যা কার্টে ভ্যারিয়েন্টের সব ডেটাসহ যাবে
     const attributesText = currentVariant.Attributes
-      ? Object.entries(currentVariant.Attributes).map(([k, v]) => `${k}: ${v}`).join(', ')
-      : '';
+      ? Object.entries(currentVariant.Attributes).map(([k, v]) => {
+          const kLower = k.toLowerCase();
+          const label = kLower === 'color' ? 'রং' : (kLower === 'size' ? 'সাইজ' : k);
+          return `${label}: ${v}`;
+        }).join(', ')
+      : (currentVariant.VariantName || '');
 
     const productWithVariant = {
       ...product,
       SellingPrice: variantPrice,
       CostPrice: Number(currentVariant.CostPrice || product.CostPrice || 0),
       MinSellingPrice: Number(currentVariant.MinSellingPrice !== undefined ? currentVariant.MinSellingPrice : (product.MinSellingPrice !== undefined ? product.MinSellingPrice : (currentVariant.CostPrice || product.CostPrice || 0))),
+      StockQuantity: Number(currentVariant.StockQuantity !== undefined ? currentVariant.StockQuantity : product.StockQuantity),
+      GodownStock: Number(currentVariant.GodownStock !== undefined ? currentVariant.GodownStock : product.GodownStock),
       Barcode: currentVariant.Barcode || product.Barcode,
       variantId: currentVariant.VariantID,
       variantName: attributesText || currentVariant.VariantID,
@@ -89,6 +239,9 @@ export default function ProductVariantSelectModal({
 
   // সব হুক ও মেমো কল করার পর সেফ গার্ড রিটার্ন
   if (!isOpen || !product) return null;
+
+  const subTotal = Math.round(variantPrice * effectiveQuantity * 100) / 100;
+  const isOverStock = effectiveQuantity > maxSelectable;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
@@ -139,12 +292,20 @@ export default function ProductVariantSelectModal({
             <h4 className="text-sm font-black text-slate-900 truncate">
               {product.ProductName}
             </h4>
-            <div className="flex items-center space-x-2 text-xs text-slate-500 mt-0.5">
-              <span>{product.Category}</span>
+            <div className="flex items-center space-x-2 text-xs text-slate-500 mt-0.5 flex-wrap">
+              <span>{product.Category || 'সাধারণ'}</span>
               <span>•</span>
               <span className="font-bold text-indigo-600">
                 ভ্যারিয়েন্ট অপশন: {variants.length}টি
               </span>
+              {isFabric && yardsPerThan > 0 && (
+                <>
+                  <span>•</span>
+                  <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                    প্রতি থান: {yardsPerThan} গজ
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -158,15 +319,17 @@ export default function ProductVariantSelectModal({
           {variants.map((v) => {
             const isSelected = v.VariantID === selectedVariantId;
             const vStock = Number(v.StockQuantity || 0);
+            const vGStock = Number(v.GodownStock || 0);
             const isOutOfStock = vStock <= 0;
-            const attrText = v.Attributes 
-              ? Object.entries(v.Attributes).map(([key, val]) => `${key}: ${val}`).join(' | ') 
-              : v.VariantID;
+            const vColor = extractVariantColor(v);
+            const hexColor = vColor ? getColorHex(vColor) : null;
+            const attrText = formatVariantLabel(v);
+            const stockDisplayText = formatVariantStockText(vStock, isFabric, yardsPerThan, product?.Unit);
 
             return (
               <div
                 key={v.VariantID}
-                onClick={() => !isOutOfStock && setSelectedVariantId(v.VariantID)}
+                onClick={() => handleSelectVariant(v)}
                 className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                   isSelected
                     ? 'bg-indigo-50/80 border-indigo-600 ring-2 ring-indigo-600/20 shadow-xs'
@@ -175,8 +338,8 @@ export default function ProductVariantSelectModal({
                     : 'bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50/50'
                 }`}
               >
-                <div className="flex items-center space-x-3">
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
                     isSelected
                       ? 'border-indigo-600 bg-indigo-600 text-white'
                       : 'border-slate-300 bg-white'
@@ -184,30 +347,45 @@ export default function ProductVariantSelectModal({
                     {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                   </div>
 
-                  <div>
-                    <div className="text-xs sm:text-sm font-bold text-slate-900">
-                      {attrText}
-                    </div>
-                    {v.Barcode && (
-                      <div className="text-[10px] text-slate-400 font-mono flex items-center space-x-1 mt-0.5">
-                        <Barcode className="w-3 h-3" />
-                        <span>{v.Barcode}</span>
-                      </div>
+                  <div className="flex items-center space-x-2.5 min-w-0">
+                    {vColor && (
+                      <span
+                        className="w-4 h-4 rounded-full border border-black/15 shadow-2xs shrink-0 inline-block"
+                        style={{ backgroundColor: hexColor }}
+                        title={`রং: ${vColor}`}
+                      />
                     )}
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                        {attrText}
+                      </div>
+                      {v.Barcode && (
+                        <div className="text-[10px] text-slate-400 font-mono flex items-center space-x-1 mt-0.5">
+                          <Barcode className="w-3 h-3 shrink-0" />
+                          <span className="truncate">{v.Barcode}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="text-right">
+                <div className="text-right shrink-0 pl-3">
                   <div className="text-xs sm:text-sm font-black text-indigo-700">
                     {currencySymbol}{Number(v.SellingPrice || product.SellingPrice || 0).toLocaleString('en-IN')}
+                    {isFabric && <span className="text-[10px] font-normal text-slate-500"> / গজ</span>}
                   </div>
                   <div className="text-[10px] mt-0.5 font-semibold">
                     {isOutOfStock ? (
-                      <span className="text-rose-600">স্টক শেষ</span>
+                      <span className="text-rose-600 font-bold">স্টক শেষ</span>
                     ) : (
-                      <span className="text-emerald-700 font-bold">{vStock} পিস মজুদ</span>
+                      <span className="text-emerald-700 font-bold">{stockDisplayText}</span>
                     )}
                   </div>
+                  {vGStock > 0 && (
+                    <div className="text-[9px] text-slate-400 font-medium mt-0.5">
+                      গোডাউন: {vGStock} {isFabric ? 'থান' : (product?.Unit || 'টি')}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -215,8 +393,8 @@ export default function ProductVariantSelectModal({
         </div>
 
         {/* কোয়ান্টিটি ও সাবটোটাল ফুটার */}
-        <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 space-y-3.5">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="text-xs font-bold text-slate-600">
               পরিমাণ {isFabric ? '(গজ ও গিরা)' : '(Quantity)'}:
             </span>
@@ -304,15 +482,32 @@ export default function ProductVariantSelectModal({
           </div>
 
           {isFabric && (
-            <div className="text-right text-[11px] font-bold text-amber-900">
-              নির্বাচিত: {formatFabricQuantity(effectiveQuantity, 'গজ')}
+            <div className="flex items-center justify-between text-[11px] font-bold">
+              <span className="text-slate-500">পরিমাপ বিশ্লেষণ:</span>
+              <span className="text-amber-900 bg-amber-100/70 px-2 py-0.5 rounded-md border border-amber-200">
+                নির্বাচিত: {formatFabricQuantity(effectiveQuantity, 'গজ', true)}
+              </span>
             </div>
           )}
+
+          {/* স্টক সতর্কতা বা কার্ট ইনফো */}
+          {isOverStock ? (
+            <div className="flex items-center space-x-1.5 p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>
+                মজুদের চেয়ে বেশি পরিমাণ নির্বাচন করা হয়েছে (সর্বোচ্চ: {isFabric ? formatFabricQuantity(maxSelectable, 'গজ') : `${maxSelectable} ${product?.Unit || 'পিস'}`})
+              </span>
+            </div>
+          ) : alreadyInCartQty > 0 ? (
+            <div className="text-right text-[11px] font-medium text-indigo-600">
+              (কার্টে ইতিমধ্যে {isFabric ? formatFabricQuantity(alreadyInCartQty, 'গজ') : `${alreadyInCartQty} ${product?.Unit || 'পিস'}`} রয়েছে)
+            </div>
+          ) : null}
 
           <div className="flex items-center justify-between text-xs pt-1">
             <span className="text-slate-500 font-medium">সাবটোটাল:</span>
             <span className="text-base font-black text-slate-900">
-              {currencySymbol}{(variantPrice * effectiveQuantity).toLocaleString('en-IN')}
+              {currencySymbol}{subTotal.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
             </span>
           </div>
 
@@ -328,7 +523,7 @@ export default function ProductVariantSelectModal({
             <button
               type="button"
               onClick={handleConfirmAddToCart}
-              disabled={variantStock <= 0 || maxSelectable <= 0}
+              disabled={variantStock <= 0 || maxSelectable <= 0 || effectiveQuantity <= 0 || isOverStock}
               className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center space-x-1.5 cursor-pointer disabled:cursor-not-allowed"
             >
               <ShoppingCart className="w-4 h-4" />
@@ -340,4 +535,3 @@ export default function ProductVariantSelectModal({
     </div>
   );
 }
-
