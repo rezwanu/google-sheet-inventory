@@ -548,22 +548,26 @@ export function getProductDisplayUnit(product) {
   if (!product) return 'Pcs';
   const raw = (product.Unit || product.unit || product['Unit'] || product['Unit Name'] || product.UOM || '').toString().trim();
   
-  if (/^(than|থান|bolt)$/i.test(raw)) {
+  // ১. যদি মূল একক 'থান' বা বোল্ট হয়
+  if (/than|থান|bolt|রোল|roll/i.test(raw)) {
     return 'থান';
   }
 
-  // যদি প্রোডাক্টে থান সংক্রান্ত সুস্পষ্ট মেট্রিক বিদ্যমান থাকে (যেমন YardsPerThan > 0 বা ThanCount > 0)
-  // কিংবা পণ্যের নামের মধ্যে 'থান' বা 'than' থাকে এবং অন্য কোনো কাপড় একক (যেমন গজ) না থাকে
-  const hasThanMetrics = Number(product.YardsPerThan || product.yardsPerThan || product.TotalThan || product.totalThan || product.ThanCount || product.thanCount) > 0;
-  const hasThanInName = /than|থান/i.test(String(product.ProductName || product.name || product.Title || ''));
-  if (hasThanMetrics || hasThanInName) {
-    if (!/^(গজ|yard|মিটার|meter)$/i.test(raw)) {
-      return 'থান';
-    }
+  // ২. যদি মূল একক গজ বা মিটার হয়
+  if (/গজ|goj|yard|মিটার|meter/i.test(raw)) {
+    return 'গজ';
   }
 
-  if (raw) {
+  // ৩. যদি কোনো সাধারণ একক নির্দিষ্ট থাকে (যেমন: Pcs, পিস, Piece, Box, Packet ইত্যাদি)
+  // তবে সেটিই বজায় থাকবে, কোনোভাবেই থানে রূপান্তরিত হবে না
+  if (raw && !/^(item|একক|unit|)$/i.test(raw)) {
     return raw;
+  }
+
+  // ৪. যদি কোনো কাঁচা একক না থাকে, কিন্তু পণ্যের নামের মধ্যে 'থান' থাকে
+  const hasThanInName = /than|থান/i.test(String(product.ProductName || product.name || product.Title || ''));
+  if (hasThanInName) {
+    return 'থান';
   }
 
   return 'Pcs';

@@ -3442,8 +3442,18 @@ export default function StockTransferModal({
                                                   return calculateThanBreakdown(vQty, ypt, remTh).isRemnant;
                                                 })
                                               : Boolean(bd?.isRemnant);
+                                            const zeroShopVars = hasVars ? vars.filter(v => {
+                                              const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+                                              const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
+                                              return vS <= 0 && vG > 0;
+                                            }) : [];
+                                            const needsRestockVars = hasVars ? vars.filter(v => {
+                                              const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+                                              const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
+                                              return calculateThanBreakdown(vS, ypt, remTh).needsRestock && vG > 0;
+                                            }) : [];
                                             const isEffectiveNeedsRestock = hasVars
-                                              ? (effectiveShopFullThans === 0 && effectiveGStock > 0)
+                                              ? (needsRestockVars.length > 0 || (effectiveShopFullThans === 0 && effectiveGStock > 0))
                                               : Boolean(bd?.needsRestock && effectiveGStock > 0);
 
                                             return (
@@ -3503,9 +3513,14 @@ export default function StockTransferModal({
                                                     ✂️ শেষ ছাঁট (রেকর্ড)
                                                   </button>
                                                 )}
+                                                {zeroShopVars.length > 0 && (
+                                                  <span className="inline-flex items-center text-rose-800 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-300 font-bold text-[10.5px]" title="দোকানে এই ভ্যারিয়েন্টের কোনো মজুত নেই, গোডাউন থেকে চালান দিন">
+                                                    🚨 {zeroShopVars.map(v => v.Attributes?.Color || v.Color || v.VariantName || 'ভ্যারিয়েন্ট').join(', ')} শেষ (গোডাউনে আছে)
+                                                  </span>
+                                                )}
                                                 {isEffectiveNeedsRestock && (
                                                   <span className="inline-flex items-center text-rose-800 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-300 font-bold animate-pulse text-[10.5px]">
-                                                    🚨 নতুন থান চালান প্রয়োজন
+                                                    🚨 {hasVars && needsRestockVars.length > 0 ? `${needsRestockVars.map(v => v.Attributes?.Color || v.Color || v.VariantName || 'ভ্যারিয়েন্ট').join(', ')}: ` : ''}নতুন থান চালান প্রয়োজন
                                                   </span>
                                                 )}
                                               </div>
@@ -3696,6 +3711,26 @@ export default function StockTransferModal({
                                         <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
                                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                                           <span>⚠️ দোকানে কম</span>
+                                        </span>
+                                      ) : hasVars && vars.some(v => {
+                                        const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+                                        const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
+                                        return vS <= 0 && vG > 0;
+                                      }) ? (
+                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200/80 shadow-2xs" title="দোকানে কিছু ভ্যারিয়েন্ট শেষ হলেও গোডাউনে মজুত আছে">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                          <span>🚨 ভ্যারিয়েন্ট শেষ</span>
+                                        </span>
+                                      ) : hasVars && vars.some(v => {
+                                        const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
+                                        const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
+                                        const ypt = Number(p.YardsPerThan || p.yardsPerThan || 0) || 25;
+                                        const remTh = Number(p.RemnantThreshold || p.remnantThreshold || 1);
+                                        return isThan && calculateThanBreakdown(vS, ypt, remTh).needsRestock && vG > 0;
+                                      }) ? (
+                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200/80 shadow-2xs" title="কিছু ভ্যারিয়েন্টে নতুন থান চালান প্রয়োজন">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                          <span>🚨 থান প্রয়োজন</span>
                                         </span>
                                       ) : hasVars && vars.some(v => (Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0) <= 2) ? (
                                         <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200/80 shadow-2xs" title="কিছু ভ্যারিয়েন্টে গোডাউন স্টক কম রয়েছে">
@@ -4123,6 +4158,11 @@ export default function StockTransferModal({
                                                             <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
                                                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                                                               <span>শেষ</span>
+                                                            </span>
+                                                          ) : isThan && vBd?.needsRestock && vGStock > 0 ? (
+                                                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-800 border border-rose-200/80 shadow-2xs" title="টেবিলে কাপড়ের শেষ কাটা গজ চলছে, গোডাউন থেকে নতুন থান আনুন">
+                                                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                                              <span>থান প্রয়োজন</span>
                                                             </span>
                                                           ) : (
                                                             <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
@@ -4566,6 +4606,11 @@ export default function StockTransferModal({
                                       <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
                                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                                         <span>⚠️ দোকানে কম</span>
+                                      </span>
+                                    ) : item.isThanUnit && item.thanBreakdown?.needsRestock && item.godownStock > 0 ? (
+                                      <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200/80 shadow-2xs" title="কিছু ভ্যারিয়েন্টে নতুন থান চালান প্রয়োজন">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                        <span>🚨 থান প্রয়োজন</span>
                                       </span>
                                     ) : (
                                       <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80">

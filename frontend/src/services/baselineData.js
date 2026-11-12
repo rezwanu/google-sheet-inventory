@@ -128,7 +128,7 @@ export const BASELINE_PRODUCTS = [
     "ProductID": "PROD-1794310033733-926",
     "Barcode": "PB-57161815",
     "ProductName": "three pics",
-    "Category": "Fabric",
+    "Category": "Men",
     "SubCategory": "",
     "CostPrice": 220,
     "WholesalePrice": 260,
