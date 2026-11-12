@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Package,
@@ -75,7 +75,7 @@ export default function ProductDetailsModal({
   const hasThanSystem = isFabric && (yardsPerThan > 0 || isThanUnit(product.Unit));
 
   // ফেব্রিক পণ্যের জন্য নির্ভুল গজ ও থান বিশ্লেষণ
-  const fabricData = useMemo(() => {
+  const fabricData = (() => {
     if (!isFabric) return null;
 
     // দোকানে মজুত বিশ্লেষণ (দোকানের StockQuantity গজে থাকে)
@@ -100,7 +100,7 @@ export default function ProductDetailsModal({
       totalYards,
       totalBreakdown,
     };
-  }, [isFabric, hasThanSystem, stock, godownStock, yardsPerThan]);
+  })();
 
   // পণ্য বৈশিষ্ট্যসমূহ তালিকা
   const productFeatures = Array.isArray(product.Features)
