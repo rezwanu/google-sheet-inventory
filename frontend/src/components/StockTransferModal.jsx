@@ -322,8 +322,11 @@ export default function StockTransferModal({
     let fabricShopYards = 0;
     let generalShopPcs = 0;
     let fabricGodownValuation = 0;
+    let fabricGodownSellingValuation = 0;
     let generalGodownValuation = 0;
+    let generalGodownSellingValuation = 0;
     let totalGodownValuation = 0;
+    let totalGodownSellingValuation = 0;
     let totalShopCostValuation = 0;
     let totalShopSellingValuation = 0;
     let shopLowCount = 0;
@@ -394,6 +397,7 @@ export default function StockTransferModal({
             let vSPrice = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : sellingPrice)) || 0;
             if (vSPrice <= 0 && sellingPrice > 0) vSPrice = sellingPrice;
             fabricGodownValuation += (vG * yardsPerThan * vC);
+            fabricGodownSellingValuation += (vG * yardsPerThan * vSPrice);
             totalShopCostValuation += (vS * vC);
             totalShopSellingValuation += (vS * vSPrice);
           });
@@ -404,6 +408,7 @@ export default function StockTransferModal({
           }
           if (varGStockSum === 0 && effectiveGStock > 0) {
             fabricGodownValuation += (effectiveGStock * yardsPerThan * unitCost);
+            fabricGodownSellingValuation += (effectiveGStock * yardsPerThan * sellingPrice);
           }
         } else {
           const bd = calculateThanBreakdown(sStock, yardsPerThan, remTh);
@@ -414,6 +419,7 @@ export default function StockTransferModal({
           if (bd.needsRestock && gStock > 0) fabricShopNeedsRestockCount++;
 
           fabricGodownValuation += (effectiveGStock * yardsPerThan * unitCost);
+          fabricGodownSellingValuation += (effectiveGStock * yardsPerThan * sellingPrice);
           totalShopCostValuation += (effectiveSStock * unitCost);
           totalShopSellingValuation += (effectiveSStock * sellingPrice);
         }
@@ -424,6 +430,7 @@ export default function StockTransferModal({
         if (effectiveSStock <= remTh && effectiveGStock > 0) fabricShopNeedsRestockCount++;
 
         fabricGodownValuation += (effectiveGStock * unitCost);
+        fabricGodownSellingValuation += (effectiveGStock * sellingPrice);
         totalShopCostValuation += (effectiveSStock * unitCost);
         totalShopSellingValuation += (effectiveSStock * sellingPrice);
       } else {
@@ -440,6 +447,7 @@ export default function StockTransferModal({
             let vSPrice = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : sellingPrice)) || 0;
             if (vSPrice <= 0 && sellingPrice > 0) vSPrice = sellingPrice;
             generalGodownValuation += (vG * vC);
+            generalGodownSellingValuation += (vG * vSPrice);
             totalShopCostValuation += (vS * vC);
             totalShopSellingValuation += (vS * vSPrice);
           });
@@ -450,9 +458,11 @@ export default function StockTransferModal({
           }
           if (varGStockSum === 0 && effectiveGStock > 0) {
             generalGodownValuation += (effectiveGStock * unitCost);
+            generalGodownSellingValuation += (effectiveGStock * sellingPrice);
           }
         } else {
           generalGodownValuation += (effectiveGStock * unitCost);
+          generalGodownSellingValuation += (effectiveGStock * sellingPrice);
           totalShopCostValuation += (effectiveSStock * unitCost);
           totalShopSellingValuation += (effectiveSStock * sellingPrice);
         }
@@ -486,6 +496,8 @@ export default function StockTransferModal({
     });
 
     totalGodownValuation = fabricGodownValuation + generalGodownValuation;
+    totalGodownSellingValuation = fabricGodownSellingValuation + generalGodownSellingValuation;
+    const totalGodownPotentialProfit = Math.max(0, totalGodownSellingValuation - totalGodownValuation);
 
     const inTransitChallans = stockTransfers.filter((t) => t.Status === 'In Transit').length;
     const totalShopPotentialProfit = Math.max(0, totalShopSellingValuation - totalShopCostValuation);
@@ -500,8 +512,12 @@ export default function StockTransferModal({
       fabricShopYards,
       generalShopPcs,
       fabricGodownValuation,
+      fabricGodownSellingValuation,
       generalGodownValuation,
+      generalGodownSellingValuation,
       totalGodownValuation,
+      totalGodownSellingValuation,
+      totalGodownPotentialProfit,
       totalShopCostValuation,
       totalShopSellingValuation,
       totalShopPotentialProfit,
@@ -2807,7 +2823,10 @@ export default function StockTransferModal({
                     </div>
 
                     {/* কার্ড ২: গোডাউন মোট মজুদ মূল্য (Valuation) */}
-                    <div className="p-4 bg-white rounded-2xl border border-slate-200/80 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs hover:shadow-md hover:-translate-y-0.5 duration-200">
+                    <div
+                      className="p-4 bg-white rounded-2xl border border-slate-200/80 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs hover:shadow-md hover:-translate-y-0.5 duration-200"
+                      title="গোডাউন মোট সম্পদ মূল্য (ক্রয়মূল্য ভিত্তিক): কাপড়ের মোট গজ × মিল রেট + রেডি পণ্যের পিস × কেনা দাম"
+                    >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">গোডাউন মোট সম্পদ মূল্য</span>
                         <span className="p-2 rounded-xl bg-teal-50 text-teal-700 border border-teal-100/80 shadow-2xs">
@@ -2818,9 +2837,16 @@ export default function StockTransferModal({
                         {currencySymbol}{Math.round(stockKpis.totalGodownValuation || 0).toLocaleString('bn-BD')}
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
-                        <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-800 border border-slate-200/80">
-                          💰 ক্রয়মূল্য ভিত্তিক সম্পদ
-                        </span>
+                        {stockKpis.totalGodownSellingValuation > 0 && (
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-800 border border-slate-200/80 font-mono" title="গোডাউনের সকল পণ্যের সম্ভাব্য মোট বিক্রয়মূল্য">
+                            🏷️ বিক্রয়: {currencySymbol}{Math.round(stockKpis.totalGodownSellingValuation || 0).toLocaleString('bn-BD')}
+                          </span>
+                        )}
+                        {stockKpis.totalGodownPotentialProfit > 0 && (
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-emerald-50 text-[#0da487] border border-emerald-200/80 font-mono" title="সম্ভাব্য গ্রস লাভ মার্জিন">
+                            +{(Math.round((stockKpis.totalGodownPotentialProfit / (stockKpis.totalGodownValuation || 1)) * 100))}% মার্জিন
+                          </span>
+                        )}
                         {stockKpis.fabricGodownValuation > 0 && stockKpis.generalGodownValuation > 0 ? (
                           <>
                             <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60 font-mono">
@@ -2830,6 +2856,14 @@ export default function StockTransferModal({
                               📦 পিস: {currencySymbol}{Math.round(stockKpis.generalGodownValuation || 0).toLocaleString('bn-BD')}
                             </span>
                           </>
+                        ) : stockKpis.fabricGodownYards > 0 ? (
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-teal-50 text-teal-800 border border-teal-200/70 font-mono" title="গজ কাপড়ের মোট গজ অনুযায়ী ক্রয়মূল্য">
+                            📏 {(stockKpis.fabricGodownYards || 0).toLocaleString('bn-BD')} গজ কাপড় (গজ দর ভিত্তিক)
+                          </span>
+                        ) : stockKpis.generalGodownPcs > 0 ? (
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-slate-100 text-slate-800 border border-slate-200/80 font-mono">
+                            📦 {(stockKpis.generalGodownPcs || 0).toLocaleString('bn-BD')} পিস রেডি পণ্য
+                          </span>
                         ) : (
                           <span className="text-[10.5px] font-semibold text-slate-500 font-mono">
                             {(stockKpis.totalVariants || 0)}টি ভ্যারিয়েন্ট
