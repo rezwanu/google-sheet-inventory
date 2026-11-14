@@ -205,6 +205,15 @@ export default function StockTransferModal({
     if (!Array.isArray(vars)) return [];
     const parentCost = Number(p.CostPrice || p.costPrice || p.PurchasePrice || p.purchasePrice || p.Cost || p.cost || p.BuyingPrice || p.BuyPrice || 0);
     const parentSelling = Number(p.SellingPrice || p.sellingPrice || p.Price || p.price || p.MRP || p.mrp || 0);
+    const parentMinSelling = Number(
+      p.MinSellingPrice !== undefined && p.MinSellingPrice !== null && p.MinSellingPrice !== ''
+        ? p.MinSellingPrice
+        : (p.minSellingPrice !== undefined && p.minSellingPrice !== null && p.minSellingPrice !== ''
+          ? p.minSellingPrice
+          : (p.FloorPrice !== undefined && p.FloorPrice !== null && p.FloorPrice !== ''
+            ? p.FloorPrice
+            : (p.floorPrice || parentSelling)))
+    ) || parentSelling;
 
     return vars.map((v) => {
       const gStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0)) || 0;
@@ -214,6 +223,19 @@ export default function StockTransferModal({
       if (parentCost > 0 && vCost > parentCost * 10) vCost = parentCost;
       let vSell = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : parentSelling)) || 0;
       if (vSell <= 0 && parentSelling > 0) vSell = parentSelling;
+      let vMinSell = Number(
+        v.MinSellingPrice !== undefined && v.MinSellingPrice !== null && v.MinSellingPrice !== ''
+          ? v.MinSellingPrice
+          : (v.minSellingPrice !== undefined && v.minSellingPrice !== null && v.minSellingPrice !== ''
+            ? v.minSellingPrice
+            : (v.FloorPrice !== undefined && v.FloorPrice !== null && v.FloorPrice !== ''
+              ? v.FloorPrice
+              : (v.floorPrice !== undefined && v.floorPrice !== null && v.floorPrice !== ''
+                ? v.floorPrice
+                : parentMinSelling)))
+      ) || parentMinSelling;
+      if (vMinSell <= 0 && parentMinSelling > 0) vMinSell = parentMinSelling;
+      if (vMinSell <= 0 && vSell > 0) vMinSell = vSell;
 
       return {
         ...v,
@@ -221,6 +243,8 @@ export default function StockTransferModal({
         costPrice: vCost,
         SellingPrice: vSell,
         sellingPrice: vSell,
+        MinSellingPrice: vMinSell,
+        minSellingPrice: vMinSell,
         GodownStock: gStock,
         godownStock: gStock,
         StockQuantity: sStock,
@@ -323,10 +347,13 @@ export default function StockTransferModal({
     let generalShopPcs = 0;
     let fabricGodownValuation = 0;
     let fabricGodownSellingValuation = 0;
+    let fabricGodownMinSellingValuation = 0;
     let generalGodownValuation = 0;
     let generalGodownSellingValuation = 0;
+    let generalGodownMinSellingValuation = 0;
     let totalGodownValuation = 0;
     let totalGodownSellingValuation = 0;
+    let totalGodownMinSellingValuation = 0;
     let totalShopCostValuation = 0;
     let totalShopSellingValuation = 0;
     let shopLowCount = 0;
@@ -341,6 +368,15 @@ export default function StockTransferModal({
     products.forEach((p) => {
       const unitCost = Number(p.CostPrice || p.costPrice || p.PurchasePrice || p.purchasePrice || p.Cost || p.cost || p.BuyingPrice || p.BuyPrice || 0);
       const sellingPrice = Number(p.SellingPrice || p.sellingPrice || p.Price || p.price || p.MRP || p.mrp || 0);
+      const minSellingPrice = Number(
+        p.MinSellingPrice !== undefined && p.MinSellingPrice !== null && p.MinSellingPrice !== ''
+          ? p.MinSellingPrice
+          : (p.minSellingPrice !== undefined && p.minSellingPrice !== null && p.minSellingPrice !== ''
+            ? p.minSellingPrice
+            : (p.FloorPrice !== undefined && p.FloorPrice !== null && p.FloorPrice !== ''
+              ? p.FloorPrice
+              : (p.floorPrice || sellingPrice)))
+      ) || sellingPrice;
       const gStock = Number(p.GodownStock || 0);
       const sStock = Number(p.StockQuantity || 0);
       const minAlert = Number(p.MinStockAlert || 5);
@@ -396,8 +432,21 @@ export default function StockTransferModal({
             if (unitCost > 0 && vC > unitCost * 10) vC = unitCost;
             let vSPrice = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : sellingPrice)) || 0;
             if (vSPrice <= 0 && sellingPrice > 0) vSPrice = sellingPrice;
+            let vMinSell = Number(
+              v.MinSellingPrice !== undefined && v.MinSellingPrice !== null && v.MinSellingPrice !== ''
+                ? v.MinSellingPrice
+                : (v.minSellingPrice !== undefined && v.minSellingPrice !== null && v.minSellingPrice !== ''
+                  ? v.minSellingPrice
+                  : (v.FloorPrice !== undefined && v.FloorPrice !== null && v.FloorPrice !== ''
+                    ? v.FloorPrice
+                    : (v.floorPrice || minSellingPrice)))
+            ) || minSellingPrice;
+            if (vMinSell <= 0 && minSellingPrice > 0) vMinSell = minSellingPrice;
+            if (vMinSell <= 0 && vSPrice > 0) vMinSell = vSPrice;
+
             fabricGodownValuation += (vG * yardsPerThan * vC);
             fabricGodownSellingValuation += (vG * yardsPerThan * vSPrice);
+            fabricGodownMinSellingValuation += (vG * yardsPerThan * vMinSell);
             totalShopCostValuation += (vS * vC);
             totalShopSellingValuation += (vS * vSPrice);
           });
@@ -409,6 +458,7 @@ export default function StockTransferModal({
           if (varGStockSum === 0 && effectiveGStock > 0) {
             fabricGodownValuation += (effectiveGStock * yardsPerThan * unitCost);
             fabricGodownSellingValuation += (effectiveGStock * yardsPerThan * sellingPrice);
+            fabricGodownMinSellingValuation += (effectiveGStock * yardsPerThan * minSellingPrice);
           }
         } else {
           const bd = calculateThanBreakdown(sStock, yardsPerThan, remTh);
@@ -420,6 +470,7 @@ export default function StockTransferModal({
 
           fabricGodownValuation += (effectiveGStock * yardsPerThan * unitCost);
           fabricGodownSellingValuation += (effectiveGStock * yardsPerThan * sellingPrice);
+          fabricGodownMinSellingValuation += (effectiveGStock * yardsPerThan * minSellingPrice);
           totalShopCostValuation += (effectiveSStock * unitCost);
           totalShopSellingValuation += (effectiveSStock * sellingPrice);
         }
@@ -431,6 +482,7 @@ export default function StockTransferModal({
 
         fabricGodownValuation += (effectiveGStock * unitCost);
         fabricGodownSellingValuation += (effectiveGStock * sellingPrice);
+        fabricGodownMinSellingValuation += (effectiveGStock * minSellingPrice);
         totalShopCostValuation += (effectiveSStock * unitCost);
         totalShopSellingValuation += (effectiveSStock * sellingPrice);
       } else {
@@ -446,8 +498,21 @@ export default function StockTransferModal({
             if (unitCost > 0 && vC > unitCost * 10) vC = unitCost;
             let vSPrice = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : sellingPrice)) || 0;
             if (vSPrice <= 0 && sellingPrice > 0) vSPrice = sellingPrice;
+            let vMinSell = Number(
+              v.MinSellingPrice !== undefined && v.MinSellingPrice !== null && v.MinSellingPrice !== ''
+                ? v.MinSellingPrice
+                : (v.minSellingPrice !== undefined && v.minSellingPrice !== null && v.minSellingPrice !== ''
+                  ? v.minSellingPrice
+                  : (v.FloorPrice !== undefined && v.FloorPrice !== null && v.FloorPrice !== ''
+                    ? v.FloorPrice
+                    : (v.floorPrice || minSellingPrice)))
+            ) || minSellingPrice;
+            if (vMinSell <= 0 && minSellingPrice > 0) vMinSell = minSellingPrice;
+            if (vMinSell <= 0 && vSPrice > 0) vMinSell = vSPrice;
+
             generalGodownValuation += (vG * vC);
             generalGodownSellingValuation += (vG * vSPrice);
+            generalGodownMinSellingValuation += (vG * vMinSell);
             totalShopCostValuation += (vS * vC);
             totalShopSellingValuation += (vS * vSPrice);
           });
@@ -459,10 +524,12 @@ export default function StockTransferModal({
           if (varGStockSum === 0 && effectiveGStock > 0) {
             generalGodownValuation += (effectiveGStock * unitCost);
             generalGodownSellingValuation += (effectiveGStock * sellingPrice);
+            generalGodownMinSellingValuation += (effectiveGStock * minSellingPrice);
           }
         } else {
           generalGodownValuation += (effectiveGStock * unitCost);
           generalGodownSellingValuation += (effectiveGStock * sellingPrice);
+          generalGodownMinSellingValuation += (effectiveGStock * minSellingPrice);
           totalShopCostValuation += (effectiveSStock * unitCost);
           totalShopSellingValuation += (effectiveSStock * sellingPrice);
         }
@@ -497,6 +564,7 @@ export default function StockTransferModal({
 
     totalGodownValuation = fabricGodownValuation + generalGodownValuation;
     totalGodownSellingValuation = fabricGodownSellingValuation + generalGodownSellingValuation;
+    totalGodownMinSellingValuation = fabricGodownMinSellingValuation + generalGodownMinSellingValuation;
     const totalGodownPotentialProfit = Math.max(0, totalGodownSellingValuation - totalGodownValuation);
 
     const inTransitChallans = stockTransfers.filter((t) => t.Status === 'In Transit').length;
@@ -513,10 +581,13 @@ export default function StockTransferModal({
       generalShopPcs,
       fabricGodownValuation,
       fabricGodownSellingValuation,
+      fabricGodownMinSellingValuation,
       generalGodownValuation,
       generalGodownSellingValuation,
+      generalGodownMinSellingValuation,
       totalGodownValuation,
       totalGodownSellingValuation,
+      totalGodownMinSellingValuation,
       totalGodownPotentialProfit,
       totalShopCostValuation,
       totalShopSellingValuation,
@@ -2840,6 +2911,11 @@ export default function StockTransferModal({
                         {stockKpis.totalGodownSellingValuation > 0 && (
                           <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-800 border border-slate-200/80 font-mono" title="গোডাউনের সকল পণ্যের সম্ভাব্য মোট বিক্রয়মূল্য">
                             🏷️ বিক্রয়: {currencySymbol}{Math.round(stockKpis.totalGodownSellingValuation || 0).toLocaleString('bn-BD')}
+                          </span>
+                        )}
+                        {stockKpis.totalGodownMinSellingValuation > 0 && (
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-amber-50 text-amber-900 border border-amber-200/90 font-mono" title="নূন্যতম বিক্রয়মূল্য (ফ্লোর প্রাইস) অনুযায়ী গোডাউনের মোট সম্পদ বিক্রয়মূল্য">
+                            🛡️ নূন্যতম বিক্রয়: {currencySymbol}{Math.round(stockKpis.totalGodownMinSellingValuation || 0).toLocaleString('bn-BD')}
                           </span>
                         )}
                         {stockKpis.totalGodownPotentialProfit > 0 && (
