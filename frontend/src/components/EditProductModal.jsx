@@ -178,7 +178,9 @@ export default function EditProductModal({
   const [quickColorInput, setQuickColorInput] = useState('');
   const [quickColorThans, setQuickColorThans] = useState(1);
 
-  // বস্ত্রালয় থান ও গজ ক্যালকুলেটর স্টেট (সিম্পল পণ্যের জন্য)
+  // বস্ত্রালয় থান ও গজ ক্যালকুলেটর স্টেট (সিম্পল পণ্যের জন্য)  // আধুনিক ৩-ট্যাব বিশিষ্ট স্টেট (প্রাথমিক তথ্য, মূল্য ও স্টক, অতিরিক্ত বিবরণ)
+  const [activeTab, setActiveTab] = useState('basic'); // 'basic' | 'pricing' | 'details'
+
   const [shopFullThans, setShopFullThans] = useState('0');
   const [shopCutGoj, setShopCutGoj] = useState('0');
   const [shopCutGira, setShopCutGira] = useState('0');
@@ -395,7 +397,7 @@ export default function EditProductModal({
 
     const calcYards = calculateInitialShopYards(fT, cG, cGi, ypt);
     handleUpdateVariantField(idx, 'StockQuantity', calcYards);
-    setFabricVariantModal(null);
+    setFabricVariantModal(null);      setActiveTab('basic');
   };
 
   const handleAddBundleItem = () => {
@@ -802,14 +804,18 @@ export default function EditProductModal({
       setTimeout(() => setScannedNotification(''), 2500);
     }
   };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.productName.trim() || !formData.sellingPrice) {
-      alert('পণ্যের নাম এবং বিক্রয়মূল্য দেওয়া আবশ্যক।');
+    if (!formData.productName.trim()) {
+      setActiveTab('basic');
+      alert('পণ্যের নাম দেওয়া আবশ্যক।');
       return;
     }
-
+    if (!formData.sellingPrice) {
+      setActiveTab('pricing');
+      alert('পণ্যের বিক্রয়মূল্য দেওয়া আবশ্যক।');
+      return;
+    }
     const costNum = Number(formData.costPrice) || 0;
     const sellNum = Number(formData.sellingPrice) || 0;
     const minSellNum = formData.minSellingPrice !== '' ? Number(formData.minSellingPrice) : costNum;
@@ -942,63 +948,137 @@ export default function EditProductModal({
           </button>
         </div>
 
-        {/* ফর্ম কন্টেন্ট (স্ক্রোলেবল বডি + ফিক্সড ফুটার) */}
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden bg-slate-50/50">
-          
-          {/* স্ক্রোলেবল কন্টেন্ট এরিয়া */}
-          <div className="p-4 sm:p-6 overflow-y-auto space-y-5 flex-1">
-            
-            {/* পণ্য ধরন নির্বাচন (সাধারণ পণ্য vs ভ্যারিয়েন্ট vs কম্বো বান্ডেল) */}
-            <div className="bg-white p-1.5 rounded-2xl flex items-center space-x-2 border border-slate-200/90 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setProductType('simple')}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
-                  productType === 'simple'
-                    ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
-                }`}
-              >
-                <Box className="w-3.5 h-3.5" />
-                <span>সাধারণ পণ্য</span>
-              </button>
+        {/* ফর্ম কন্টেন্ট (স্ক্রোলেবল বডি + ফিক্সড ফুটার) */}<form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden bg-slate-50/50">
+        
+        {/* ========================================================
+            আধুনিক স্টেপ / ট্যাব নেভিগেশন বার
+            ======================================================== */}
+        <div className="bg-slate-100/90 px-4 sm:px-6 py-2.5 border-b border-slate-200/90 flex flex-wrap items-center justify-between gap-3 select-none shrink-0 shadow-2xs">
+          {/* ৩টি প্রধান ফর্ম ট্যাব */}
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab('basic')}
+              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+                activeTab === 'basic'
+                  ? 'bg-white text-indigo-900 shadow-xs border border-indigo-300 ring-2 ring-indigo-500/10'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              }`}
+            >
+              <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-black ${
+                activeTab === 'basic' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'
+              }`}>
+                ১
+              </span>
+              <span>প্রাথমিক তথ্য ও ছবি</span>
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setProductType('variable')}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
-                  productType === 'variable'
-                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-xs shadow-indigo-500/25'
-                    : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>ভ্যারিয়েন্ট</span>
-              </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('pricing')}
+              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+                activeTab === 'pricing'
+                  ? 'bg-white text-emerald-900 shadow-xs border border-emerald-300 ring-2 ring-emerald-500/10'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              }`}
+            >
+              <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-black ${
+                activeTab === 'pricing' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
+              }`}>
+                ২
+              </span>
+              <span>মূল্য, স্টক ও ভ্যারিয়েন্ট</span>
+              {productType === 'variable' && variants.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-indigo-100 text-indigo-800 font-black">
+                  {variants.length}
+                </span>
+              )}
+              {productType === 'bundle' && bundleItems.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-amber-100 text-amber-800 font-black">
+                  {bundleItems.length}
+                </span>
+              )}
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setProductType('bundle')}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
-                  productType === 'bundle'
-                    ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-xs shadow-amber-500/25'
-                    : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>কম্বো বান্ডেল</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('details')}
+              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+                activeTab === 'details'
+                  ? 'bg-white text-purple-900 shadow-xs border border-purple-300 ring-2 ring-purple-500/10'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              }`}
+            >
+              <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-black ${
+                activeTab === 'details' ? 'bg-purple-600 text-white' : 'bg-slate-200 text-slate-700'
+              }`}>
+                ৩
+              </span>
+              <span>অতিরিক্ত বিবরণ ও মেয়াদ</span>
+            </button>
+          </div>
 
-            {/* মূল ২-কলাম গ্রিড (Left: Basic, Barcode, Pricing, Media | Right: Inventory, Fabric, Batch, Short Desc & Features) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-              
-              {/* ========================================================
-                  কলাম ১ (বাম পাশ): পরিচিতি, বারকোড, আর্থিক তথ্য ও ছবি
-                  ======================================================== */}
+          {/* ডানে পণ্য ধরন নির্বাচন (সাধারণ / ভ্যারিয়েন্ট / বান্ডেল) */}
+          <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => {
+                setProductType('simple');
+                setActiveTab('pricing');
+              }}
+              className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                productType === 'simple'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Box className="w-3.5 h-3.5" />
+              <span>সাধারণ পণ্য</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setProductType('variable');
+                setActiveTab('pricing');
+              }}
+              className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                productType === 'variable'
+                  ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-500/25'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>ভ্যারিয়েন্ট</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setProductType('bundle');
+                setActiveTab('pricing');
+              }}
+              className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                productType === 'bundle'
+                  ? 'bg-amber-600 text-white shadow-xs shadow-amber-500/25'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>কম্বো বান্ডেল</span>
+            </button>
+          </div>
+        </div>
+
+        {/* স্ক্রোলেবল ফর্ম কন্টেন্ট এরিয়া */}
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 flex-1">
+
+          {/* ========================================================
+              ট্যাব ১: প্রাথমিক তথ্য ও ছবি (Basic Info & Image)
+              ======================================================== */}
+          {activeTab === 'basic' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start animate-in fade-in duration-150">
               <div className="space-y-4">
-                
-                {/* ১. প্রাথমিক পরিচিতি ও ক্যাটাগরি কার্ড */}
                 <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
                     <Tag className="w-3.5 h-3.5 text-indigo-600" />
@@ -1013,7 +1093,6 @@ export default function EditProductModal({
                     <input
                       type="text"
                       name="productName"
-                      required
                       value={formData.productName}
                       onChange={handleChange}
                       placeholder="যেমন: রুবেল ভয়েল / সুতি কাপড়"
@@ -1105,7 +1184,6 @@ export default function EditProductModal({
                   </div>
                 </div>
 
-                {/* ২. আধুনিক কমপ্যাক্ট বারকোড / SKU প্যানেল */}
                 <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-1.5 pb-2 border-b border-slate-100">
                     <label className="text-xs font-black text-slate-800 flex items-center space-x-1.5 uppercase tracking-wider">
@@ -1201,131 +1279,8 @@ export default function EditProductModal({
                     </div>
                   )}
                 </div>
-
-                {/* ৩. আর্থিক তথ্য ও বিক্রয়মূল্য নির্ধারণ কার্ড */}
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
-                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                    <span>আর্থিক তথ্য ও বিক্রয়মূল্য নির্ধারণ</span>
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* কেনা দাম */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        কেনা দাম / Cost
-                      </label>
-                      <div className="relative">
-                        {canViewCostPrice(activeUser) ? (
-                          <>
-                            <input
-                              type="number"
-                              name="costPrice"
-                              step="any"
-                              min="0"
-                              value={formData.costPrice}
-                              onChange={handleChange}
-                              placeholder="0.00"
-                              className="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
-                            />
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">{currencySymbol}</span>
-                          </>
-                        ) : (
-                          <div className="w-full px-2.5 py-2 text-xs border border-slate-200 rounded-xl bg-slate-100 text-slate-400 font-bold flex items-center justify-between">
-                            <span>🔒 সুরক্ষিত</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* ফ্লোর প্রাইস */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-xs font-bold text-amber-950">
-                          ফ্লোর প্রাইস
-                        </label>
-                        <span className="text-[9.5px] font-black text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
-                          নূন্যতম দর
-                        </span>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          name="minSellingPrice"
-                          step="any"
-                          min="0"
-                          value={formData.minSellingPrice}
-                          onChange={handleChange}
-                          placeholder={formData.costPrice ? `${formData.costPrice}` : "0.00"}
-                          className={`w-full pl-7 pr-3 py-2 text-xs font-mono font-black text-amber-950 border rounded-xl focus:ring-2 focus:outline-none bg-amber-50/60 transition-all shadow-2xs ${
-                            isFloorBelowCost 
-                              ? 'border-rose-400 focus:ring-rose-500' 
-                              : isFloorAboveSell 
-                                ? 'border-rose-400 focus:ring-rose-500' 
-                                : 'border-amber-300 focus:ring-amber-500'
-                          }`}
-                          title="কাস্টমার দামাদামি করলেও এর নিচে বিক্রি করা যাবে না"
-                        />
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-amber-600 font-bold">{currencySymbol}</span>
-                      </div>
-                    </div>
-
-                    {/* বিক্রয়মূল্য */}
-                    <div>
-                      <label className="block text-xs font-bold text-indigo-950 mb-1">
-                        বিক্রয়মূল্য / Selling <span className="text-rose-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          name="sellingPrice"
-                          step="any"
-                          min="0"
-                          required
-                          value={formData.sellingPrice}
-                          onChange={handleChange}
-                          placeholder="0.00"
-                          className="w-full pl-7 pr-3 py-2 text-xs font-mono font-black text-indigo-950 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-indigo-50/30 hover:bg-white transition-all shadow-2xs"
-                        />
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-indigo-600 font-bold">{currencySymbol}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* সতর্কবার্তা যদি ফ্লোর প্রাইস কেনা দামের নিচে বা বিক্রয়মূল্যের উপরে যায় */}
-                  {isFloorBelowCost && (
-                    <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center space-x-1.5">
-                      <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                      <span>সতর্কতা: নূন্যতম বিক্রয়মূল্য ({currencySymbol}{minSell}) কেনা দামের চেয়ে কম (লোকসান হতে পারে)।</span>
-                    </div>
-                  )}
-                  {isFloorAboveSell && (
-                    <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center space-x-1.5">
-                      <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                      <span>ত্রুটি: নূন্যতম বিক্রয়মূল্য সাধারণ বিক্রয়মূল্যের চেয়ে বেশি হতে পারে না।</span>
-                    </div>
-                  )}
-
-                  {/* লাইভ লাভ ও মার্জিন প্রিভিউ বার */}
-                  {(cost > 0 || sell > 0 || minSell > 0) && (
-                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold font-mono border shadow-2xs ${
-                        isProfitable
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
-                          : 'bg-rose-50 text-rose-800 border-rose-200/80'
-                      }`}>
-                        স্বাভাবিক লাভ: {currencySymbol}{netProfit.toFixed(2)} ({isProfitable ? `+${profitMarginPercent}%` : `${profitMarginPercent}%`})
-                      </span>
-                      {minSell > 0 && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold font-mono bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs">
-                          ফ্লোর দর লাভ: {currencySymbol}{minFloorProfit.toFixed(2)} ({minFloorProfit >= 0 ? `+${minFloorMarginPercent}%` : `${minFloorMarginPercent}%`})
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* ৪. পণ্যের প্রধান ছবি ও মিডিয়া */}
+              </div>
+              <div className="space-y-4">
                 <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                     <label className="text-xs font-black text-slate-800 flex items-center space-x-1.5 uppercase tracking-wider">
@@ -1488,14 +1443,208 @@ export default function EditProductModal({
                   </div>
                 </div>
 
-              </div>
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
+                    <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>সংক্ষিপ্ত বিবরণ ও বৈশিষ্ট্যসমূহ</span>
+                  </h4>
 
-              {/* ========================================================
-                  কলাম ২ (ডান পাশ): মজুত, একক, কাপড় সেটিংস, ব্যাচ ও ফিচার
-                  ======================================================== */}
-              <div className="space-y-4">
-                
-                {/* ১. বর্তমান মজুত ও পরিমাপক একক কার্ড */}
+                  {/* সংক্ষিপ্ত বিবরণ */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      সংক্ষিপ্ত বিবরণ (Short Description)
+                    </label>
+                    <textarea
+                      name="shortDescription"
+                      rows={2}
+                      value={formData.shortDescription}
+                      onChange={handleChange}
+                      placeholder="এক বা দুই লাইনে পণ্যের পরিচিতি..."
+                      className="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none resize-none leading-relaxed bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
+                    />
+                  </div>
+
+                  {/* প্রধান বৈশিষ্ট্যসমূহ */}
+                  <div className="space-y-2 pt-1">
+                    <label className="block text-xs font-bold text-slate-700 flex items-center space-x-1">
+                      <ListPlus className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>প্রধান বৈশিষ্ট্যসমূহ (Features)</span>
+                    </label>
+                    
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={featureInput}
+                        onChange={(e) => setFeatureInput(e.target.value)}
+                        onKeyDown={handleFeatureKeyDown}
+                        placeholder="বৈশিষ্ট্য লিখে Enter বা 'যোগ' চাপুন..."
+                        className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white shadow-2xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddFeature}
+                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors shrink-0 shadow-2xs cursor-pointer"
+                      >
+                        যোগ
+                      </button>
+                    </div>
+
+                    {/* ফিচার ব্যাজ তালিকা */}
+                    {features.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {features.map((feat, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-800 border border-indigo-200/80 shadow-2xs"
+                          >
+                            <Check className="w-3 h-3 text-emerald-600 mr-1" />
+                            <span>{feat}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFeature(idx)}
+                              className="ml-1.5 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                              title="মুছুন"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================
+              ট্যাব ২: মূল্য, স্টক ও ভ্যারিয়েন্ট (Pricing, Stock & Variants)
+              ======================================================== */}
+          {activeTab === 'pricing' && (
+            <div className="space-y-5 animate-in fade-in duration-150">
+              {/* আর্থিক তথ্য ও মজুত ২-কলাম গ্রিড */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                    <span>আর্থিক তথ্য ও বিক্রয়মূল্য নির্ধারণ</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* কেনা দাম */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        কেনা দাম / Cost
+                      </label>
+                      <div className="relative">
+                        {canViewCostPrice(activeUser) ? (
+                          <>
+                            <input
+                              type="number"
+                              name="costPrice"
+                              step="any"
+                              min="0"
+                              value={formData.costPrice}
+                              onChange={handleChange}
+                              placeholder="0.00"
+                              className="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
+                            />
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">{currencySymbol}</span>
+                          </>
+                        ) : (
+                          <div className="w-full px-2.5 py-2 text-xs border border-slate-200 rounded-xl bg-slate-100 text-slate-400 font-bold flex items-center justify-between">
+                            <span>🔒 সুরক্ষিত</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ফ্লোর প্রাইস */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-amber-950">
+                          ফ্লোর প্রাইস
+                        </label>
+                        <span className="text-[9.5px] font-black text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
+                          নূন্যতম দর
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          name="minSellingPrice"
+                          step="any"
+                          min="0"
+                          value={formData.minSellingPrice}
+                          onChange={handleChange}
+                          placeholder={formData.costPrice ? `${formData.costPrice}` : "0.00"}
+                          className={`w-full pl-7 pr-3 py-2 text-xs font-mono font-black text-amber-950 border rounded-xl focus:ring-2 focus:outline-none bg-amber-50/60 transition-all shadow-2xs ${
+                            isFloorBelowCost 
+                              ? 'border-rose-400 focus:ring-rose-500' 
+                              : isFloorAboveSell 
+                                ? 'border-rose-400 focus:ring-rose-500' 
+                                : 'border-amber-300 focus:ring-amber-500'
+                          }`}
+                          title="কাস্টমার দামাদামি করলেও এর নিচে বিক্রি করা যাবে না"
+                        />
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-amber-600 font-bold">{currencySymbol}</span>
+                      </div>
+                    </div>
+
+                    {/* বিক্রয়মূল্য */}
+                    <div>
+                      <label className="block text-xs font-bold text-indigo-950 mb-1">
+                        বিক্রয়মূল্য / Selling <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          name="sellingPrice"
+                          step="any"
+                          min="0"
+                          value={formData.sellingPrice}
+                          onChange={handleChange}
+                          placeholder="0.00"
+                          className="w-full pl-7 pr-3 py-2 text-xs font-mono font-black text-indigo-950 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-indigo-50/30 hover:bg-white transition-all shadow-2xs"
+                        />
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-indigo-600 font-bold">{currencySymbol}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* সতর্কবার্তা যদি ফ্লোর প্রাইস কেনা দামের নিচে বা বিক্রয়মূল্যের উপরে যায় */}
+                  {isFloorBelowCost && (
+                    <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center space-x-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                      <span>সতর্কতা: নূন্যতম বিক্রয়মূল্য ({currencySymbol}{minSell}) কেনা দামের চেয়ে কম (লোকসান হতে পারে)।</span>
+                    </div>
+                  )}
+                  {isFloorAboveSell && (
+                    <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center space-x-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                      <span>ত্রুটি: নূন্যতম বিক্রয়মূল্য সাধারণ বিক্রয়মূল্যের চেয়ে বেশি হতে পারে না।</span>
+                    </div>
+                  )}
+
+                  {/* লাইভ লাভ ও মার্জিন প্রিভিউ বার */}
+                  {(cost > 0 || sell > 0 || minSell > 0) && (
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold font-mono border shadow-2xs ${
+                        isProfitable
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
+                          : 'bg-rose-50 text-rose-800 border-rose-200/80'
+                      }`}>
+                        স্বাভাবিক লাভ: {currencySymbol}{netProfit.toFixed(2)} ({isProfitable ? `+${profitMarginPercent}%` : `${profitMarginPercent}%`})
+                      </span>
+                      {minSell > 0 && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold font-mono bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs">
+                          ফ্লোর দর লাভ: {currencySymbol}{minFloorProfit.toFixed(2)} ({minFloorProfit >= 0 ? `+${minFloorMarginPercent}%` : `${minFloorMarginPercent}%`})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
                     <PackageCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -1633,8 +1782,9 @@ export default function EditProductModal({
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* ২. বস্ত্রালয় থান ও গজ কাপড় সেটিংস (Conditional) */}
+              {/* বস্ত্রালয় থান ও গজ কাপড় সেটিংস (স্মার্ট ভিজিবিলিটি: শুধুমাত্র থান/গজ পণ্য হলে প্রদর্শিত হবে) */}
                 {(isThanUnit(formData.unit) || isFabricUnit(formData.unit)) && (
                   <div className="bg-gradient-to-r from-amber-50/90 to-orange-50/90 border border-amber-200/90 rounded-2xl p-4 space-y-3 shadow-2xs">
                     <div className="flex items-center justify-between pb-1 border-b border-amber-200/60">
@@ -1818,137 +1968,7 @@ export default function EditProductModal({
                   </div>
                 )}
 
-                {/* ৩. ব্যাচ নম্বর ও মেয়াদ ট্র্যাকিং কার্ড */}
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                    <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5">
-                      <CalendarClock className="w-4 h-4 text-rose-600" />
-                      <span>ব্যাচ নম্বর ও মেয়াদ ট্র্যাকিং (অপশনাল)</span>
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-bold">
-                      অটো মেয়াদ সতর্কতা
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        ব্যাচ নম্বর (Batch No.)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="BATCH-2026-A1"
-                        value={batchNumber}
-                        onChange={(e) => setBatchNumber(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-xl text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        উৎপাদন (Mfg Date)
-                      </label>
-                      <input
-                        type="date"
-                        value={mfgDate}
-                        onChange={(e) => setMfgDate(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        মেয়াদ (Expiry Date)
-                      </label>
-                      <input
-                        type="date"
-                        value={expiryDate}
-                        onChange={(e) => setExpiryDate(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-xl text-xs font-bold text-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* ৪. সংক্ষিপ্ত বিবরণ ও প্রধান বৈশিষ্ট্য কার্ড */}
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
-                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
-                    <FileText className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>সংক্ষিপ্ত বিবরণ ও বৈশিষ্ট্যসমূহ</span>
-                  </h4>
-
-                  {/* সংক্ষিপ্ত বিবরণ */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      সংক্ষিপ্ত বিবরণ (Short Description)
-                    </label>
-                    <textarea
-                      name="shortDescription"
-                      rows={2}
-                      value={formData.shortDescription}
-                      onChange={handleChange}
-                      placeholder="এক বা দুই লাইনে পণ্যের পরিচিতি..."
-                      className="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none resize-none leading-relaxed bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
-                    />
-                  </div>
-
-                  {/* প্রধান বৈশিষ্ট্যসমূহ */}
-                  <div className="space-y-2 pt-1">
-                    <label className="block text-xs font-bold text-slate-700 flex items-center space-x-1">
-                      <ListPlus className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>প্রধান বৈশিষ্ট্যসমূহ (Features)</span>
-                    </label>
-                    
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={featureInput}
-                        onChange={(e) => setFeatureInput(e.target.value)}
-                        onKeyDown={handleFeatureKeyDown}
-                        placeholder="বৈশিষ্ট্য লিখে Enter বা 'যোগ' চাপুন..."
-                        className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white shadow-2xs"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddFeature}
-                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors shrink-0 shadow-2xs cursor-pointer"
-                      >
-                        যোগ
-                      </button>
-                    </div>
-
-                    {/* ফিচার ব্যাজ তালিকা */}
-                    {features.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {features.map((feat, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-800 border border-indigo-200/80 shadow-2xs"
-                          >
-                            <Check className="w-3 h-3 text-emerald-600 mr-1" />
-                            <span>{feat}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveFeature(idx)}
-                              className="ml-1.5 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                              title="মুছুন"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* ========================================================
-                ফুল-উইডথ সেকশন: ভ্যারিয়েন্ট কনফিগারেশন (Variable Product)
-                ======================================================== */}
+              {/* ফুল-উইডথ ভ্যারিয়েন্ট কনফিগারেশন (যদি variable product হয়) */}
             {productType === 'variable' && (
               <div className="bg-indigo-50/40 border border-indigo-200/90 rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xs">
                 <div className="flex items-center justify-between pb-3 border-b border-indigo-200/70">
@@ -2219,9 +2239,7 @@ export default function EditProductModal({
               </div>
             )}
 
-            {/* ========================================================
-                ফুল-উইডথ সেকশন: কম্বো বান্ডেল কনফিগারেশন (Bundle Package)
-                ======================================================== */}
+              {/* ফুল-উইডথ কম্বো বান্ডেল আইটেম নির্বাচন (যদি bundle product হয়) */}
             {productType === 'bundle' && (
               <div className="bg-amber-50/50 border border-amber-200/90 rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xs">
                 <div className="flex items-center justify-between pb-3 border-b border-amber-200/70">
@@ -2303,10 +2321,65 @@ export default function EditProductModal({
                 )}
               </div>
             )}
+            </div>
+          )}
 
-            {/* ========================================================
-                ফুল-উইডথ সেকশন: বিস্তারিত বিবরণ (Rich Text Editor)
-                ======================================================== */}
+          {/* ========================================================
+              ট্যাব ৩: অতিরিক্ত বিবরণ ও মেয়াদ (Details & Expiry)
+              ======================================================== */}
+          {activeTab === 'details' && (
+            <div className="space-y-5 animate-in fade-in duration-150">
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5">
+                      <CalendarClock className="w-4 h-4 text-rose-600" />
+                      <span>ব্যাচ নম্বর ও মেয়াদ ট্র্যাকিং (অপশনাল)</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-bold">
+                      অটো মেয়াদ সতর্কতা
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        ব্যাচ নম্বর (Batch No.)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="BATCH-2026-A1"
+                        value={batchNumber}
+                        onChange={(e) => setBatchNumber(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-xl text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        উৎপাদন (Mfg Date)
+                      </label>
+                      <input
+                        type="date"
+                        value={mfgDate}
+                        onChange={(e) => setMfgDate(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        মেয়াদ (Expiry Date)
+                      </label>
+                      <input
+                        type="date"
+                        value={expiryDate}
+                        onChange={(e) => setExpiryDate(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-xl text-xs font-bold text-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2.5">
               <label className="block text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
                 <AlignLeft className="w-4 h-4 text-indigo-600" />
@@ -2318,48 +2391,77 @@ export default function EditProductModal({
                 placeholder="পণ্যের পূর্ণ বিবরণ, ব্যবহারবিধি লিখুন বা ছবি যুক্ত করুন..."
               />
             </div>
-
-          </div>
-
-          {/* ========================================================
-              স্টিকি মডাল ফুটার (Sticky Action Bar at Bottom)
-              ======================================================== */}
-          <div className="px-6 py-3.5 bg-white border-t border-slate-200/90 flex items-center justify-between shrink-0 shadow-xs">
-            {onDeleteProduct ? (
-              <button
-                type="button"
-                onClick={handleDeleteProduct}
-                disabled={isSubmitting || isDeleting}
-                className="px-4 py-2 border border-rose-200 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 shadow-2xs"
-                title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
-              >
-                <Trash2 className="w-4 h-4 text-rose-600" />
-                <span>{isDeleting ? 'মুছে ফেলা হচ্ছে...' : 'পণ্যটি মুছে ফেলুন'}</span>
-              </button>
-            ) : <div />}
-            <div className="flex items-center space-x-2.5">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                বাতিল
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting || isDeleting}
-                className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white text-xs font-bold rounded-xl shadow-sm shadow-indigo-500/25 transition-all flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span>{isSubmitting ? 'আপডেট হচ্ছে...' : 'হালনাগাদ সংরক্ষণ করুন'}</span>
-              </button>
             </div>
+          )}
+
+        </div>
+
+        {/* ========================================================
+            স্টিকি মডাল ফুটার (Sticky Action Bar at Bottom)
+            ======================================================== */}
+        <div className="px-6 py-3.5 bg-white border-t border-slate-200/90 flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-xs">
+          {onDeleteProduct ? (
+            <button
+              type="button"
+              onClick={handleDeleteProduct}
+              disabled={isSubmitting || isDeleting}
+              className="px-4 py-2 border border-rose-200 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 shadow-2xs"
+              title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
+            >
+              <Trash2 className="w-4 h-4 text-rose-600" />
+              <span>{isDeleting ? 'মুছে ফেলা হচ্ছে...' : 'পণ্যটি মুছে ফেলুন'}</span>
+            </button>
+          ) : <div />}
+
+          <div className="flex items-center space-x-2">
+            {activeTab !== 'basic' && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeTab === 'details') setActiveTab('pricing');
+                  else if (activeTab === 'pricing') setActiveTab('basic');
+                }}
+                className="px-3.5 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                ← পূর্ববর্তী
+              </button>
+            )}
+
+            {activeTab !== 'details' && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeTab === 'basic') setActiveTab('pricing');
+                  else if (activeTab === 'pricing') setActiveTab('details');
+                }}
+                className="px-3.5 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                পরবর্তী →
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              বাতিল
+            </button>
+
+            <button
+              type="submit"
+              disabled={isSubmitting || isDeleting}
+              className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white text-xs font-bold rounded-xl shadow-sm shadow-indigo-500/25 transition-all flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>{isSubmitting ? 'আপডেট হচ্ছে...' : 'হালনাগাদ সংরক্ষণ করুন'}</span>
+            </button>
           </div>
+        </div>
 
-        </form>
+      </form>
 
-      </div>
-
+    </div>
 
       {/* মোবাইল/ওয়েবক্যাম ক্যামেরা বারকোড স্ক্যানার মডাল */}
       <BarcodeScannerModal
