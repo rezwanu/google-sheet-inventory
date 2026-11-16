@@ -5456,6 +5456,9 @@ export default function App() {
               activeUser={activeUser}
               onSaveExpense={handleSaveExpense}
               onDeleteExpense={handleDeleteExpense}
+              storeName={settings.StoreName || 'Pabna Bostraloy'}
+              storeAddress={settings.Address || settings.StoreAddress || ''}
+              storePhone={settings.Phone || settings.StorePhone || ''}
             />
           )}
 
@@ -6054,6 +6057,9 @@ export default function App() {
         activeUser={activeUser}
         onSaveExpense={handleSaveExpense}
         onDeleteExpense={handleDeleteExpense}
+        storeName={settings.StoreName || 'Pabna Bostraloy'}
+        storeAddress={settings.Address || settings.StoreAddress || ''}
+        storePhone={settings.Phone || settings.StorePhone || ''}
       />
 
       {/* ফেজ ৫: দৈনিক ক্যাশ ড্রয়ার ও EOD ক্লোজিং মডাল */}

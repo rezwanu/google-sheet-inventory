@@ -2914,6 +2914,7 @@ export function saveOrUpdateExpenseLocally(expenseData) {
     Category: expenseData.Category || expenseData.category || 'Other',
     Amount: Number(expenseData.Amount !== undefined ? expenseData.Amount : expenseData.amount) || 0,
     PaymentMethod: expenseData.PaymentMethod || expenseData.paymentMethod || 'Cash',
+    Payee: expenseData.Payee || expenseData.payee || '',
     Description: expenseData.Description || expenseData.description || '',
     ReceiptImage: expenseData.ReceiptImage || expenseData.receiptImage || '',
     CreatedBy: expenseData.CreatedBy || expenseData.createdBy || 'Admin',
