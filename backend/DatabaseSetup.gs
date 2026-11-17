@@ -87,6 +87,9 @@ function setupDatabase() {
   // ৮. Coupons (কুপন ও অফার ব্যবস্থাপনা ডাটাবেস) শিট তৈরি ও কলাম হেডার ইনিশিয়ালাইজেশন
   ensureCouponsSheet(spreadsheet);
 
+  // ৯. Attendance (ডিজিটাল হাজিরা খাতা) শিট তৈরি ও কলাম হেডার ইনিশিয়ালাইজেশন
+  ensureAttendanceSheet(spreadsheet);
+
   return 'সবগুলো শিট এবং হেডার সফলভাবে তৈরি করা হয়েছে!';
 }
 

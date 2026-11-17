@@ -110,6 +110,7 @@ import {
   getLocalUsers,
   saveLocalUsers,
   saveOrUpdateUserLocally,
+  syncAttendanceWithRemote,
   deleteUserLocally,
   registerCustomerLocally,
   authenticateUser,
@@ -767,6 +768,8 @@ export default function App() {
       if (settings.apiUrl && settings.apiUrl.trim()) {
         try {
           const res = await postAddUser(settings.apiUrl, {
+            ...userData,
+            userId: newUser.UserID,
             fullName: newUser.FullName,
             phone: newUser.Phone,
             email: newUser.Email,
@@ -776,7 +779,14 @@ export default function App() {
             avatarUrl: newUser.AvatarUrl || userData.AvatarUrl || '',
             imageBase64: userData.imageBase64 || '',
             imageMimeType: userData.imageMimeType || '',
-            status: newUser.Status
+            status: newUser.Status,
+            baseSalary: newUser.BaseSalary,
+            commissionRate: newUser.CommissionRate,
+            nid: newUser.NID,
+            emergencyContact: newUser.EmergencyContact,
+            emergencyPhone: newUser.EmergencyPhone,
+            bloodGroup: newUser.BloodGroup,
+            permissions: newUser.Permissions
           });
           if (res && res.success && res.data) {
             saveOrUpdateUserLocally(res.data);
@@ -805,7 +815,21 @@ export default function App() {
         postUpdateUser(settings.apiUrl, {
           ...userData,
           userId: updated.UserID,
+          fullName: updated.FullName,
+          phone: updated.Phone,
+          email: updated.Email,
+          role: updated.Role,
+          pin: updated.PIN,
+          address: updated.Address,
           avatarUrl: updated.AvatarUrl,
+          status: updated.Status,
+          baseSalary: updated.BaseSalary,
+          commissionRate: updated.CommissionRate,
+          nid: updated.NID,
+          emergencyContact: updated.EmergencyContact,
+          emergencyPhone: updated.EmergencyPhone,
+          bloodGroup: updated.BloodGroup,
+          permissions: updated.Permissions
         }).then(res => {
           if (res && res.success && res.data) {
             const synced = saveOrUpdateUserLocally(res.data);
@@ -1038,6 +1062,11 @@ export default function App() {
       if (data && data.users && Array.isArray(data.users) && data.users.length > 0) {
         setUsers(data.users);
         saveLocalUsers(data.users);
+      }
+
+      // ডিজিটাল হাজিরা ডাটাবেস আপডেট (গুগল শিট Attendance ট্যাব থেকে ক্লাউড ডাটা)
+      if (data && data.attendance && Array.isArray(data.attendance)) {
+        syncAttendanceWithRemote(data.attendance);
       }
 
       // কাস্টমার লেজার ডাটাবেস আপডেট (গুগল শিট CustomerLedger ট্যাব থেকে ক্লাউড ডাটা)

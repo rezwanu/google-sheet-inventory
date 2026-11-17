@@ -1889,6 +1889,52 @@ export function clockOutStaffLocally(userId, notes = '') {
 }
 
 /**
+ * গুগল শিট থেকে প্রাপ্ত হাজিরা রেকর্ড লোকাল রেকর্ডের সাথে মার্জ ও সিঙ্ক করা
+ * @param {Array} remoteRecords - গুগল শিট থেকে আসা হাজিরা অ্যারে
+ * @return {Array} মার্জকৃত হাজিরা তালিকা
+ */
+export function syncAttendanceWithRemote(remoteRecords) {
+  if (!Array.isArray(remoteRecords) || remoteRecords.length === 0) return getLocalStaffAttendance();
+  const local = getLocalStaffAttendance();
+  const mergedMap = new Map();
+
+  // ১. লোকাল রেকর্ডগুলো ম্যাপে রাখা
+  local.forEach(r => {
+    if (r && r.UserID && r.Date) {
+      const key = `${String(r.UserID).trim()}_${String(r.Date).trim()}`;
+      mergedMap.set(key, r);
+    }
+  });
+
+  // ২. গুগল শিটের রিমোট রেকর্ড সমন্বয় করা
+  remoteRecords.forEach(rem => {
+    if (rem && (rem.UserID || rem.userId) && (rem.Date || rem.date)) {
+      const uId = String(rem.UserID || rem.userId).trim();
+      const dt = String(rem.Date || rem.date).trim();
+      const key = `${uId}_${dt}`;
+      const existing = mergedMap.get(key) || {};
+
+      mergedMap.set(key, {
+        AttendanceID: rem.AttendanceID || rem.attendanceId || existing.AttendanceID || `ATT-${Date.now()}`,
+        UserID: uId,
+        UserName: rem.FullName || rem.fullName || rem.UserName || existing.UserName || 'Staff',
+        FullName: rem.FullName || rem.fullName || rem.UserName || existing.FullName || 'Staff',
+        Date: dt,
+        ClockIn: rem.ClockIn || rem.clockIn || existing.ClockIn || null,
+        ClockOut: rem.ClockOut || rem.clockOut || existing.ClockOut || null,
+        Duration: rem.Duration || rem.duration || existing.Duration || '',
+        Status: rem.Status || rem.status || existing.Status || 'Present',
+        Notes: rem.Notes || rem.notes || existing.Notes || ''
+      });
+    }
+  });
+
+  const mergedList = Array.from(mergedMap.values()).sort((a, b) => new Date(b.Date || 0) - new Date(a.Date || 0));
+  saveLocalStaffAttendance(mergedList);
+  return mergedList;
+}
+
+/**
  * লগআউট - সক্রিয় সেশন সম্পূর্ণ মুছে ফেলা
  */
 export function logoutUser() {

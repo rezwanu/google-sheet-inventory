@@ -27,7 +27,8 @@ const SHEETS = {
   AUDIT_LOGS: 'AuditLogs',
   SALES_RETURNS: 'SalesReturns',
   STOCK_TRANSFERS: 'StockTransfers',
-  VARIANTS: 'Variants'
+  VARIANTS: 'Variants',
+  ATTENDANCE: 'Attendance'
 };
 
 /**
@@ -907,19 +908,23 @@ function ensureUsersSheet(spreadsheet) {
   }
 
   const expectedHeaders = [
-    'UserID', 'FullName', 'Phone', 'Email', 'Role', 'PIN', 'Address', 'AvatarUrl', 'Status', 'CreatedAt', 'UpdatedAt'
+    'UserID', 'FullName', 'Phone', 'Email', 'Role', 'PIN', 'Address', 'AvatarUrl', 'Status',
+    'BaseSalary', 'CommissionRate', 'NID', 'EmergencyContact', 'EmergencyPhone', 'BloodGroup', 'Permissions',
+    'CreatedAt', 'UpdatedAt'
   ];
 
   if (usersSheet.getLastRow() === 0) {
     usersSheet.appendRow(expectedHeaders);
     const now = new Date();
     usersSheet.appendRow([
-      'USER-ADMIN-01', 'Rezwanur Rahman', '01675934919', 'rezwanureee@gmail.com', 'Admin', '1234', 'Bosila, Mohammadpur, Dhaka', '', 'Active', now, now
+      'USER-ADMIN-01', 'Rezwanur Rahman', '01675934919', 'rezwanureee@gmail.com', 'Admin', '1234', 'Bosila, Mohammadpur, Dhaka', '', 'Active',
+      0, 0, '', '', '', '', '["canGiveDiscount","canViewBuyingPrice","canDeleteOrders","canTransferStock","canManageExpenses","canViewReports"]',
+      now, now
     ]);
     return usersSheet;
   }
 
-  // যদি শিটটিতে পূর্বে কিছু কলাম (যেমন Phone, Address, UpdatedAt) অনুপস্থিত থাকে, ডাটা অক্ষত রেখে হেডার যুক্ত করা
+  // যদি শিটটিতে পূর্বে কিছু কলাম অনুপস্থিত থাকে, ডাটা অক্ষত রেখে স্বয়ংক্রিয়ভাবে হেডার যুক্ত করা
   const lastCol = usersSheet.getLastColumn();
   if (lastCol > 0) {
     const existingHeaders = usersSheet.getRange(1, 1, 1, lastCol).getValues()[0];
@@ -934,6 +939,42 @@ function ensureUsersSheet(spreadsheet) {
   }
 
   return usersSheet;
+}
+
+/**
+ * Attendance (ডিজিটাল হাজিরা খাতা) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} Attendance শিট অবজেক্ট
+ */
+function ensureAttendanceSheet(spreadsheet) {
+  let attSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.ATTENDANCE);
+  if (!attSheet) {
+    attSheet = spreadsheet.insertSheet(SHEETS.ATTENDANCE);
+  }
+
+  const expectedHeaders = [
+    'AttendanceID', 'UserID', 'FullName', 'Date', 'ClockIn', 'ClockOut', 'Duration', 'Status', 'Notes', 'CreatedAt', 'UpdatedAt'
+  ];
+
+  if (attSheet.getLastRow() === 0) {
+    attSheet.appendRow(expectedHeaders);
+    return attSheet;
+  }
+
+  const lastCol = attSheet.getLastColumn();
+  if (lastCol > 0) {
+    const existingHeaders = attSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    for (let h = 0; h < expectedHeaders.length; h++) {
+      const headerName = expectedHeaders[h];
+      const foundIdx = findCol(existingHeaders, headerName);
+      if (foundIdx === -1) {
+        attSheet.getRange(1, attSheet.getLastColumn() + 1).setValue(headerName);
+        existingHeaders.push(headerName);
+      }
+    }
+  }
+
+  return attSheet;
 }
 
 
@@ -1344,6 +1385,9 @@ function ensureDatabaseSchema(spreadsheet) {
 
   // ২.১৩ StockTransfers (গোডাউন ও দোকান স্টক ট্রান্সফার চালান) শিট নিশ্চিত করা
   ensureStockTransfersSheet(spreadsheet);
+
+  // ২.১৪ Attendance (ডিজিটাল হাজিরা খাতা) শিট নিশ্চিত করা
+  ensureAttendanceSheet(spreadsheet);
 
   // ৩. Products শিটের সকল কলাম (SellingPrice সহ) নিশ্চিত করা
   const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
@@ -3274,7 +3318,17 @@ function doGet(e) {
       // সর্বশেষ ৫০০টি অডিট লগ রিটার্ন করা যেন রেসপন্স দ্রুত থাকে
       const auditLogs = rawAuditLogs.slice(-500).reverse();
 
+      ensureAttendanceSheet(spreadsheet);
+      const rawAttendance = getSheetRowsAsObjects(SHEETS.ATTENDANCE);
+      const attendance = rawAttendance.slice(-400).reverse();
+
       const users = getSheetRowsAsObjects(SHEETS.USERS).map(user => {
+        let perms = [];
+        try {
+          if (Array.isArray(user.Permissions)) perms = user.Permissions;
+          else if (typeof user.Permissions === 'string' && user.Permissions.trim().startsWith('[')) perms = JSON.parse(user.Permissions);
+        } catch (e) {}
+
         return {
           UserID: user.UserID,
           FullName: user.FullName,
@@ -3285,6 +3339,13 @@ function doGet(e) {
           Address: user.Address || '',
           AvatarUrl: formatGoogleDriveImageUrl(user.AvatarUrl || user.Avatar || user.Photo || user.ProfilePicture || ''),
           Status: user.Status || 'Active',
+          BaseSalary: Number(user.BaseSalary) || 0,
+          CommissionRate: Number(user.CommissionRate) || 0,
+          NID: user.NID || '',
+          EmergencyContact: user.EmergencyContact || '',
+          EmergencyPhone: user.EmergencyPhone || '',
+          BloodGroup: user.BloodGroup || '',
+          Permissions: perms,
           CreatedAt: user.CreatedAt || '',
           UpdatedAt: user.UpdatedAt || ''
         };
@@ -3321,7 +3382,8 @@ function doGet(e) {
           coupons: coupons,
           sales: sales,
           orders: orders,
-          users: users
+          users: users,
+          attendance: attendance
         }
       });
 
@@ -3456,22 +3518,52 @@ function doGet(e) {
     if (action === 'getUsers') {
       const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
       ensureUsersSheet(spreadsheet);
-      const users = getSheetRowsAsObjects(SHEETS.USERS).map(user => ({
-        UserID: user.UserID,
-        FullName: user.FullName,
-        Phone: user.Phone || '',
-        Email: user.Email || '',
-        Role: user.Role || 'Customer',
-        PIN: user.PIN || '',
-        Address: user.Address || '',
-        AvatarUrl: formatGoogleDriveImageUrl(user.AvatarUrl || user.Avatar || user.Photo || user.ProfilePicture || ''),
-        Status: user.Status || 'Active',
-        CreatedAt: user.CreatedAt || '',
-        UpdatedAt: user.UpdatedAt || ''
-      }));
+      const users = getSheetRowsAsObjects(SHEETS.USERS).map(user => {
+        let perms = [];
+        try {
+          if (Array.isArray(user.Permissions)) perms = user.Permissions;
+          else if (typeof user.Permissions === 'string' && user.Permissions.trim().startsWith('[')) perms = JSON.parse(user.Permissions);
+        } catch (e) {}
+
+        return {
+          UserID: user.UserID,
+          FullName: user.FullName,
+          Phone: user.Phone || '',
+          Email: user.Email || '',
+          Role: user.Role || 'Customer',
+          PIN: user.PIN || '',
+          Address: user.Address || '',
+          AvatarUrl: formatGoogleDriveImageUrl(user.AvatarUrl || user.Avatar || user.Photo || user.ProfilePicture || ''),
+          Status: user.Status || 'Active',
+          BaseSalary: Number(user.BaseSalary) || 0,
+          CommissionRate: Number(user.CommissionRate) || 0,
+          NID: user.NID || '',
+          EmergencyContact: user.EmergencyContact || '',
+          EmergencyPhone: user.EmergencyPhone || '',
+          BloodGroup: user.BloodGroup || '',
+          Permissions: perms,
+          CreatedAt: user.CreatedAt || '',
+          UpdatedAt: user.UpdatedAt || ''
+        };
+      });
       return createJsonResponse({
         success: true,
         data: users
+      });
+    }
+
+    // ৬.১ ডিজিটাল হাজিরা তালিকা আনা (getAttendance)
+    if (action === 'getAttendance') {
+      const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+      ensureAttendanceSheet(spreadsheet);
+      const targetDate = (e.parameter && e.parameter.date) ? String(e.parameter.date).trim() : '';
+      let records = getSheetRowsAsObjects(SHEETS.ATTENDANCE);
+      if (targetDate) {
+        records = records.filter(r => String(r.Date || '').trim() === targetDate);
+      }
+      return createJsonResponse({
+        success: true,
+        data: records
       });
     }
 
@@ -3626,6 +3718,18 @@ function doPost(e) {
 
       case 'deleteUser':
         result = handleDeleteUser(spreadsheet, payload);
+        break;
+
+      case 'clockInStaff':
+        result = handleClockInStaff(spreadsheet, payload);
+        break;
+
+      case 'clockOutStaff':
+        result = handleClockOutStaff(spreadsheet, payload);
+        break;
+
+      case 'bulkClockInStaff':
+        result = handleBulkClockInStaff(spreadsheet, payload);
         break;
 
       case 'loginUser':
@@ -4655,6 +4759,16 @@ function handleAddUser(spreadsheet, payload) {
     }
   }
 
+  const baseSalary = Number(payload.baseSalary !== undefined ? payload.baseSalary : payload.BaseSalary) || 0;
+  const commissionRate = Number(payload.commissionRate !== undefined ? payload.commissionRate : payload.CommissionRate) || 0;
+  const nid = String(payload.nid || payload.NID || '').trim();
+  const emergencyContact = String(payload.emergencyContact || payload.EmergencyContact || '').trim();
+  const emergencyPhone = String(payload.emergencyPhone || payload.EmergencyPhone || '').trim();
+  const bloodGroup = String(payload.bloodGroup || payload.BloodGroup || '').trim();
+  const permissions = Array.isArray(payload.permissions || payload.Permissions)
+    ? JSON.stringify(payload.permissions || payload.Permissions)
+    : String(payload.permissions || payload.Permissions || '[]');
+
   const lastCol = usersSheet.getLastColumn();
   const headers = usersSheet.getRange(1, 1, 1, lastCol).getValues()[0];
   const colMap = {
@@ -4667,6 +4781,13 @@ function handleAddUser(spreadsheet, payload) {
     Address: findCol(headers, 'Address'),
     AvatarUrl: findCol(headers, 'AvatarUrl', 'Avatar', 'Photo', 'ProfilePicture', 'ImageUrl', 'Image'),
     Status: findCol(headers, 'Status'),
+    BaseSalary: findCol(headers, 'BaseSalary', 'Salary'),
+    CommissionRate: findCol(headers, 'CommissionRate', 'Commission'),
+    NID: findCol(headers, 'NID', 'Nid'),
+    EmergencyContact: findCol(headers, 'EmergencyContact'),
+    EmergencyPhone: findCol(headers, 'EmergencyPhone'),
+    BloodGroup: findCol(headers, 'BloodGroup'),
+    Permissions: findCol(headers, 'Permissions'),
     CreatedAt: findCol(headers, 'CreatedAt', 'Created'),
     UpdatedAt: findCol(headers, 'UpdatedAt', 'Updated')
   };
@@ -4683,6 +4804,13 @@ function handleAddUser(spreadsheet, payload) {
   if (colMap.Address !== -1) newRow[colMap.Address] = address;
   if (colMap.AvatarUrl !== -1) newRow[colMap.AvatarUrl] = avatarUrl;
   if (colMap.Status !== -1) newRow[colMap.Status] = status;
+  if (colMap.BaseSalary !== -1) newRow[colMap.BaseSalary] = baseSalary;
+  if (colMap.CommissionRate !== -1) newRow[colMap.CommissionRate] = commissionRate;
+  if (colMap.NID !== -1) newRow[colMap.NID] = nid;
+  if (colMap.EmergencyContact !== -1) newRow[colMap.EmergencyContact] = emergencyContact;
+  if (colMap.EmergencyPhone !== -1) newRow[colMap.EmergencyPhone] = emergencyPhone;
+  if (colMap.BloodGroup !== -1) newRow[colMap.BloodGroup] = bloodGroup;
+  if (colMap.Permissions !== -1) newRow[colMap.Permissions] = permissions;
   if (colMap.CreatedAt !== -1) newRow[colMap.CreatedAt] = now;
   if (colMap.UpdatedAt !== -1) newRow[colMap.UpdatedAt] = now;
 
@@ -4714,6 +4842,13 @@ function handleAddUser(spreadsheet, payload) {
     Address: address,
     AvatarUrl: formatGoogleDriveImageUrl(avatarUrl),
     Status: status,
+    BaseSalary: baseSalary,
+    CommissionRate: commissionRate,
+    NID: nid,
+    EmergencyContact: emergencyContact,
+    EmergencyPhone: emergencyPhone,
+    BloodGroup: bloodGroup,
+    Permissions: Array.isArray(payload.permissions || payload.Permissions) ? (payload.permissions || payload.Permissions) : [],
     CreatedAt: now.toISOString(),
     UpdatedAt: now.toISOString()
   };
@@ -4775,6 +4910,13 @@ function handleUpdateUser(spreadsheet, payload) {
     Address: findCol(headers, 'Address'),
     AvatarUrl: findCol(headers, 'AvatarUrl', 'Avatar', 'Photo', 'ProfilePicture', 'ImageUrl', 'Image'),
     Status: findCol(headers, 'Status'),
+    BaseSalary: findCol(headers, 'BaseSalary', 'Salary'),
+    CommissionRate: findCol(headers, 'CommissionRate', 'Commission'),
+    NID: findCol(headers, 'NID', 'Nid'),
+    EmergencyContact: findCol(headers, 'EmergencyContact'),
+    EmergencyPhone: findCol(headers, 'EmergencyPhone'),
+    BloodGroup: findCol(headers, 'BloodGroup'),
+    Permissions: findCol(headers, 'Permissions'),
     UpdatedAt: findCol(headers, 'UpdatedAt', 'Updated')
   };
 
@@ -4786,6 +4928,13 @@ function handleUpdateUser(spreadsheet, payload) {
   const address = payload.address || payload.Address;
   let avatarUrl = payload.avatarUrl || payload.AvatarUrl || payload.photoUrl;
   const status = payload.status || payload.Status;
+  const baseSalary = payload.baseSalary !== undefined ? payload.baseSalary : payload.BaseSalary;
+  const commissionRate = payload.commissionRate !== undefined ? payload.commissionRate : payload.CommissionRate;
+  const nid = payload.nid !== undefined ? payload.nid : payload.NID;
+  const emergencyContact = payload.emergencyContact !== undefined ? payload.emergencyContact : payload.EmergencyContact;
+  const emergencyPhone = payload.emergencyPhone !== undefined ? payload.emergencyPhone : payload.EmergencyPhone;
+  const bloodGroup = payload.bloodGroup !== undefined ? payload.bloodGroup : payload.BloodGroup;
+  const permissions = payload.permissions !== undefined ? payload.permissions : payload.Permissions;
   const now = new Date();
 
   // যদি নতুন ইমেজ বেইজ৬৪ পাঠানো হয় তবে গুগল ড্রাইভে আপলোড
@@ -4809,9 +4958,26 @@ function handleUpdateUser(spreadsheet, payload) {
   if (address !== undefined && colMap.Address !== -1) usersSheet.getRange(target._rowIndex, colMap.Address + 1).setValue(String(address).trim());
   if (avatarUrl !== undefined && colMap.AvatarUrl !== -1) usersSheet.getRange(target._rowIndex, colMap.AvatarUrl + 1).setValue(String(avatarUrl).trim());
   if (status !== undefined && colMap.Status !== -1) usersSheet.getRange(target._rowIndex, colMap.Status + 1).setValue(String(status).trim());
+  if (baseSalary !== undefined && colMap.BaseSalary !== -1) usersSheet.getRange(target._rowIndex, colMap.BaseSalary + 1).setValue(Number(baseSalary) || 0);
+  if (commissionRate !== undefined && colMap.CommissionRate !== -1) usersSheet.getRange(target._rowIndex, colMap.CommissionRate + 1).setValue(Number(commissionRate) || 0);
+  if (nid !== undefined && colMap.NID !== -1) usersSheet.getRange(target._rowIndex, colMap.NID + 1).setValue(String(nid).trim());
+  if (emergencyContact !== undefined && colMap.EmergencyContact !== -1) usersSheet.getRange(target._rowIndex, colMap.EmergencyContact + 1).setValue(String(emergencyContact).trim());
+  if (emergencyPhone !== undefined && colMap.EmergencyPhone !== -1) usersSheet.getRange(target._rowIndex, colMap.EmergencyPhone + 1).setValue(String(emergencyPhone).trim());
+  if (bloodGroup !== undefined && colMap.BloodGroup !== -1) usersSheet.getRange(target._rowIndex, colMap.BloodGroup + 1).setValue(String(bloodGroup).trim());
+  if (permissions !== undefined && colMap.Permissions !== -1) {
+    const permStr = Array.isArray(permissions) ? JSON.stringify(permissions) : String(permissions);
+    usersSheet.getRange(target._rowIndex, colMap.Permissions + 1).setValue(permStr);
+  }
   if (colMap.UpdatedAt !== -1) usersSheet.getRange(target._rowIndex, colMap.UpdatedAt + 1).setValue(now);
 
   SpreadsheetApp.flush();
+
+  let parsedPerms = target.Permissions || [];
+  if (permissions !== undefined) {
+    parsedPerms = Array.isArray(permissions) ? permissions : (typeof permissions === 'string' && permissions.startsWith('[') ? JSON.parse(permissions) : []);
+  } else if (typeof parsedPerms === 'string' && parsedPerms.startsWith('[')) {
+    try { parsedPerms = JSON.parse(parsedPerms); } catch (e) {}
+  }
 
   return {
     success: true,
@@ -4825,6 +4991,13 @@ function handleUpdateUser(spreadsheet, payload) {
       Address: address !== undefined ? address : target.Address,
       AvatarUrl: formatGoogleDriveImageUrl(avatarUrl !== undefined ? avatarUrl : target.AvatarUrl),
       Status: status || target.Status,
+      BaseSalary: baseSalary !== undefined ? (Number(baseSalary) || 0) : (Number(target.BaseSalary) || 0),
+      CommissionRate: commissionRate !== undefined ? (Number(commissionRate) || 0) : (Number(target.CommissionRate) || 0),
+      NID: nid !== undefined ? String(nid).trim() : (target.NID || ''),
+      EmergencyContact: emergencyContact !== undefined ? String(emergencyContact).trim() : (target.EmergencyContact || ''),
+      EmergencyPhone: emergencyPhone !== undefined ? String(emergencyPhone).trim() : (target.EmergencyPhone || ''),
+      BloodGroup: bloodGroup !== undefined ? String(bloodGroup).trim() : (target.BloodGroup || ''),
+      Permissions: parsedPerms,
       UpdatedAt: now.toISOString()
     }
   };
@@ -4922,6 +5095,12 @@ function handleLoginUser(spreadsheet, payload) {
     }
   }
 
+  let userPerms = [];
+  try {
+    if (Array.isArray(user.Permissions)) userPerms = user.Permissions;
+    else if (typeof user.Permissions === 'string' && user.Permissions.trim().startsWith('[')) userPerms = JSON.parse(user.Permissions);
+  } catch (e) {}
+
   return {
     success: true,
     message: `স্বাগতম, ${user.FullName || 'ইউজার'}! লগইন সফল হয়েছে।`,
@@ -4935,9 +5114,202 @@ function handleLoginUser(spreadsheet, payload) {
       Address: user.Address || '',
       AvatarUrl: formatGoogleDriveImageUrl(user.AvatarUrl || user.Avatar || user.Photo || user.ProfilePicture || ''),
       Status: user.Status || 'Active',
+      BaseSalary: Number(user.BaseSalary) || 0,
+      CommissionRate: Number(user.CommissionRate) || 0,
+      NID: user.NID || '',
+      EmergencyContact: user.EmergencyContact || '',
+      EmergencyPhone: user.EmergencyPhone || '',
+      BloodGroup: user.BloodGroup || '',
+      Permissions: userPerms,
       CreatedAt: user.CreatedAt || '',
       UpdatedAt: user.UpdatedAt || ''
     }
+  };
+}
+
+/**
+ * ============================================================================
+ * ডিজিটাল হাজিরা খাতা ব্যাকএন্ড হ্যান্ডলারসমূহ (Staff Attendance Handlers)
+ * ============================================================================
+ */
+
+/**
+ * স্টাফ ক্লক-ইন হ্যান্ডলার (Google Sheets Attendance)
+ */
+function handleClockInStaff(spreadsheet, payload) {
+  const attSheet = ensureAttendanceSheet(spreadsheet);
+  const userId = String(payload.userId || payload.UserID || '').trim();
+  const userName = String(payload.userName || payload.FullName || payload.fullName || '').trim();
+  const dateStr = String(payload.date || payload.Date || new Date().toISOString().split('T')[0]).trim();
+  const now = new Date();
+  const nowIso = payload.clockIn || now.toISOString();
+  const notes = String(payload.notes || payload.Notes || '').trim();
+
+  if (!userId) {
+    return { success: false, message: 'স্টাফের UserID প্রদান করা আবশ্যক।' };
+  }
+
+  const rows = getSheetRowsAsObjects(SHEETS.ATTENDANCE);
+  const existing = rows.find(r => String(r.UserID).trim() === userId && String(r.Date).trim() === dateStr);
+
+  const lastCol = attSheet.getLastColumn();
+  const headers = attSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const colMap = {
+    AttendanceID: findCol(headers, 'AttendanceID', 'ID'),
+    UserID: findCol(headers, 'UserID'),
+    FullName: findCol(headers, 'FullName', 'Name'),
+    Date: findCol(headers, 'Date'),
+    ClockIn: findCol(headers, 'ClockIn'),
+    ClockOut: findCol(headers, 'ClockOut'),
+    Duration: findCol(headers, 'Duration'),
+    Status: findCol(headers, 'Status'),
+    Notes: findCol(headers, 'Notes'),
+    CreatedAt: findCol(headers, 'CreatedAt', 'Created'),
+    UpdatedAt: findCol(headers, 'UpdatedAt', 'Updated')
+  };
+
+  if (existing && existing._rowIndex) {
+    if (notes && colMap.Notes !== -1) {
+      const curNotes = existing.Notes || '';
+      attSheet.getRange(existing._rowIndex, colMap.Notes + 1).setValue(curNotes ? `${curNotes}; ${notes}` : notes);
+    }
+    if (colMap.UpdatedAt !== -1) attSheet.getRange(existing._rowIndex, colMap.UpdatedAt + 1).setValue(now);
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      message: 'স্টাফের আজকের উপস্থিতি ইতিমধ্যে রেকর্ড করা হয়েছে।',
+      data: {
+        ...existing,
+        ClockIn: existing.ClockIn || nowIso
+      }
+    };
+  }
+
+  const attId = `ATT-${dateStr.replace(/-/g, '')}-${userId.replace(/\D/g, '').slice(-4) || Math.floor(1000 + Math.random() * 9000)}`;
+  const newRow = new Array(lastCol).fill('');
+
+  if (colMap.AttendanceID !== -1) newRow[colMap.AttendanceID] = attId;
+  if (colMap.UserID !== -1) newRow[colMap.UserID] = userId;
+  if (colMap.FullName !== -1) newRow[colMap.FullName] = userName;
+  if (colMap.Date !== -1) newRow[colMap.Date] = dateStr;
+  if (colMap.ClockIn !== -1) newRow[colMap.ClockIn] = nowIso;
+  if (colMap.ClockOut !== -1) newRow[colMap.ClockOut] = '';
+  if (colMap.Duration !== -1) newRow[colMap.Duration] = '';
+  if (colMap.Status !== -1) newRow[colMap.Status] = 'OnDuty';
+  if (colMap.Notes !== -1) newRow[colMap.Notes] = notes;
+  if (colMap.CreatedAt !== -1) newRow[colMap.CreatedAt] = now;
+  if (colMap.UpdatedAt !== -1) newRow[colMap.UpdatedAt] = now;
+
+  attSheet.appendRow(newRow);
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: `${userName || 'স্টাফ'}-এর প্রবেশ সময় সফলভাবে সংরক্ষিত হয়েছে।`,
+    data: {
+      AttendanceID: attId,
+      UserID: userId,
+      FullName: userName,
+      Date: dateStr,
+      ClockIn: nowIso,
+      ClockOut: '',
+      Duration: '',
+      Status: 'OnDuty',
+      Notes: notes,
+      CreatedAt: now.toISOString(),
+      UpdatedAt: now.toISOString()
+    }
+  };
+}
+
+/**
+ * স্টাফ ক্লক-আউট হ্যান্ডলার (Google Sheets Attendance)
+ */
+function handleClockOutStaff(spreadsheet, payload) {
+  const attSheet = ensureAttendanceSheet(spreadsheet);
+  const userId = String(payload.userId || payload.UserID || '').trim();
+  const dateStr = String(payload.date || payload.Date || new Date().toISOString().split('T')[0]).trim();
+  const now = new Date();
+  const nowIso = payload.clockOut || now.toISOString();
+  const notes = String(payload.notes || payload.Notes || '').trim();
+
+  if (!userId) {
+    return { success: false, message: 'স্টাফের UserID প্রদান করা আবশ্যক।' };
+  }
+
+  const rows = getSheetRowsAsObjects(SHEETS.ATTENDANCE);
+  const existing = rows.find(r => String(r.UserID).trim() === userId && String(r.Date).trim() === dateStr);
+
+  if (!existing || !existing._rowIndex) {
+    return { success: false, message: 'আজকের কোনো প্রবেশ (Clock-in) রেকর্ড পাওয়া যায়নি।' };
+  }
+
+  const lastCol = attSheet.getLastColumn();
+  const headers = attSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const colMap = {
+    ClockOut: findCol(headers, 'ClockOut'),
+    Duration: findCol(headers, 'Duration'),
+    Status: findCol(headers, 'Status'),
+    Notes: findCol(headers, 'Notes'),
+    UpdatedAt: findCol(headers, 'UpdatedAt', 'Updated')
+  };
+
+  // কাজের সময় গণনা
+  let durationStr = '';
+  if (existing.ClockIn) {
+    const diffMs = Math.max(0, new Date(nowIso).getTime() - new Date(existing.ClockIn).getTime());
+    const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    durationStr = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+  }
+
+  if (colMap.ClockOut !== -1) attSheet.getRange(existing._rowIndex, colMap.ClockOut + 1).setValue(nowIso);
+  if (durationStr && colMap.Duration !== -1) attSheet.getRange(existing._rowIndex, colMap.Duration + 1).setValue(durationStr);
+  if (colMap.Status !== -1) attSheet.getRange(existing._rowIndex, colMap.Status + 1).setValue('Completed');
+  if (notes && colMap.Notes !== -1) {
+    const curNotes = existing.Notes || '';
+    attSheet.getRange(existing._rowIndex, colMap.Notes + 1).setValue(curNotes ? `${curNotes}; ${notes}` : notes);
+  }
+  if (colMap.UpdatedAt !== -1) attSheet.getRange(existing._rowIndex, colMap.UpdatedAt + 1).setValue(now);
+
+  SpreadsheetApp.flush();
+
+  return {
+    success: true,
+    message: 'শিফট সমাপ্ত ও প্রস্থান সময় সফলভাবে রেকর্ড করা হয়েছে।',
+    data: {
+      ...existing,
+      ClockOut: nowIso,
+      Duration: durationStr,
+      Status: 'Completed',
+      UpdatedAt: now.toISOString()
+    }
+  };
+}
+
+/**
+ * বাল্ক ক্লক-ইন হ্যান্ডলার (Google Sheets Attendance)
+ */
+function handleBulkClockInStaff(spreadsheet, payload) {
+  const staffList = Array.isArray(payload.staff) ? payload.staff : [];
+  const results = [];
+  for (let i = 0; i < staffList.length; i++) {
+    const s = staffList[i];
+    if (s && (s.UserID || s.userId)) {
+      const res = handleClockInStaff(spreadsheet, {
+        userId: s.UserID || s.userId,
+        userName: s.FullName || s.fullName || '',
+        date: payload.date || new Date().toISOString().split('T')[0],
+        notes: 'বাল্ক ক্লক-ইন'
+      });
+      if (res && res.data) results.push(res.data);
+    }
+  }
+  return {
+    success: true,
+    message: `${results.length} জন কর্মীর উপস্থিতি সফলভাবে রেকর্ড করা হয়েছে।`,
+    data: results
   };
 }
 

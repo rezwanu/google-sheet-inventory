@@ -2085,3 +2085,152 @@ export async function postSendBulkTargetedSms(apiUrl, campaignPayload) {
   }
 }
 
+/**
+ * ============================================================================
+ * ডিজিটাল হাজিরা খাতা API মেথডসমূহ (Staff Attendance APIs)
+ * ============================================================================
+ */
+
+/**
+ * গুগল শিট থেকে স্টাফ হাজিরা তালিকা ফেচ করা (action: 'getAttendance')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {string} [date] - নির্দিষ্ট তারিখ (YYYY-MM-DD)
+ */
+export async function fetchAttendance(apiUrl, date = '') {
+  if (!apiUrl || !apiUrl.trim()) return [];
+
+  const queryDate = date ? `&date=${encodeURIComponent(date.trim())}` : '';
+  const endpoint = `${apiUrl.trim()}${apiUrl.includes('?') ? '&' : '?'}action=getAttendance${queryDate}`;
+  try {
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      redirect: 'follow',
+    });
+
+    if (!response.ok) return [];
+    const result = await response.json();
+    return result.success && Array.isArray(result.data) ? result.data : [];
+  } catch (e) {
+    console.warn('Attendance fetch error:', e);
+    return [];
+  }
+}
+
+/**
+ * স্টাফ ক্লক-ইন API কল (action: 'clockInStaff')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} clockInData - { userId, userName, date, clockIn, notes }
+ */
+export async function postClockInStaff(apiUrl, clockInData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: হাজিরা স্থানীয় ব্রাউজারে সংরক্ষিত হয়েছে।',
+      data: clockInData,
+    };
+  }
+
+  const payload = {
+    action: 'clockInStaff',
+    ...clockInData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `ক্লক-ইন ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * স্টাফ ক্লক-আউট API কল (action: 'clockOutStaff')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} clockOutData - { userId, date, clockOut, notes }
+ */
+export async function postClockOutStaff(apiUrl, clockOutData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: প্রস্থান সময় স্থানীয় ব্রাউজারে সংরক্ষিত হয়েছে।',
+      data: clockOutData,
+    };
+  }
+
+  const payload = {
+    action: 'clockOutStaff',
+    ...clockOutData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `ক্লক-আউট ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * বাল্ক ক্লক-ইন API কল (action: 'bulkClockInStaff')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Array} staffList - অন-ডিউটি স্টাফ তালিকা
+ * @param {string} [date] - তারিখ
+ */
+export async function postBulkClockInStaff(apiUrl, staffList, date = '') {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: বাল্ক হাজিরা স্থানীয়ভাবে সংরক্ষিত হয়েছে।',
+    };
+  }
+
+  const payload = {
+    action: 'bulkClockInStaff',
+    staff: staffList,
+    date: date || new Date().toISOString().split('T')[0],
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `বাল্ক ক্লক-ইন ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+

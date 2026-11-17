@@ -58,8 +58,15 @@ import {
   formatImageUrl,
   getLocalStaffAttendance,
   clockInStaffLocally,
-  clockOutStaffLocally
+  clockOutStaffLocally,
+  syncAttendanceWithRemote
 } from '../services/storage';
+import {
+  postClockInStaff,
+  postClockOutStaff,
+  postBulkClockInStaff,
+  fetchAttendance
+} from '../services/api';
 
 export const ROLES = [
   {
@@ -203,7 +210,26 @@ export default function UsersModal({
   // হাজিরা রিফ্রেশ
   const refreshAttendance = () => {
     setAttendanceRecords(getLocalStaffAttendance());
+    if (settings?.apiUrl && settings.apiUrl.trim()) {
+      fetchAttendance(settings.apiUrl, selectedAttendanceDate).then(rem => {
+        if (Array.isArray(rem) && rem.length > 0) {
+          const synced = syncAttendanceWithRemote(rem);
+          setAttendanceRecords(synced);
+        }
+      }).catch(e => console.warn('Attendance sync delayed:', e));
+    }
   };
+
+  useEffect(() => {
+    if (activeMainTab === 'attendance' && settings?.apiUrl && settings.apiUrl.trim()) {
+      fetchAttendance(settings.apiUrl, selectedAttendanceDate).then(rem => {
+        if (Array.isArray(rem) && rem.length > 0) {
+          const synced = syncAttendanceWithRemote(rem);
+          setAttendanceRecords(synced);
+        }
+      }).catch(e => console.warn('Attendance sync delayed:', e));
+    }
+  }, [activeMainTab, selectedAttendanceDate, settings?.apiUrl]);
 
   // ক্লিনআপ পিন টাইমার
   useEffect(() => {
@@ -680,28 +706,72 @@ export default function UsersModal({
 
   // হাজিরা ক্লক-ইন / ক্লক-আউট হ্যান্ডলার
   const handleStaffClockIn = (user) => {
+    const today = new Date().toISOString().split('T')[0];
+    const nowIso = new Date().toISOString();
     clockInStaffLocally(user.UserID, user.FullName, 'স্বয়ংক্রিয় শিফট শুরু');
     refreshAttendance();
+
+    if (settings?.apiUrl && settings.apiUrl.trim()) {
+      postClockInStaff(settings.apiUrl, {
+        userId: user.UserID,
+        userName: user.FullName,
+        date: today,
+        clockIn: nowIso,
+        notes: 'স্বয়ংক্রিয় শিফট শুরু'
+      }).then(res => {
+        if (res && res.success && res.data) {
+          const synced = syncAttendanceWithRemote([res.data]);
+          setAttendanceRecords(synced);
+        }
+      }).catch(err => console.warn('Clock-in cloud sync delayed:', err));
+    }
   };
 
   const handleStaffClockOut = (user) => {
+    const today = new Date().toISOString().split('T')[0];
+    const nowIso = new Date().toISOString();
     clockOutStaffLocally(user.UserID, 'শিফট সমাপ্ত');
     refreshAttendance();
+
+    if (settings?.apiUrl && settings.apiUrl.trim()) {
+      postClockOutStaff(settings.apiUrl, {
+        userId: user.UserID,
+        date: today,
+        clockOut: nowIso,
+        notes: 'শিফট সমাপ্ত'
+      }).then(res => {
+        if (res && res.success && res.data) {
+          const synced = syncAttendanceWithRemote([res.data]);
+          setAttendanceRecords(synced);
+        }
+      }).catch(err => console.warn('Clock-out cloud sync delayed:', err));
+    }
   };
 
   // বাল্ক ক্লক-ইন (আজকের সক্রিয় সকল স্টাফ)
   const handleBulkClockIn = () => {
     const today = new Date().toISOString().split('T')[0];
     const activeStaff = users.filter(u => u.Role !== 'Customer' && u.Status !== 'Inactive');
+    const toClockIn = [];
     activeStaff.forEach(u => {
       const alreadyIn = attendanceRecords.some(
         r => String(r.UserID) === String(u.UserID) && r.Date === today && r.ClockIn
       );
       if (!alreadyIn) {
         clockInStaffLocally(u.UserID, u.FullName, 'বাল্ক ক্লক-ইন');
+        toClockIn.push(u);
       }
     });
     refreshAttendance();
+
+    if (settings?.apiUrl && settings.apiUrl.trim() && toClockIn.length > 0) {
+      postBulkClockInStaff(settings.apiUrl, toClockIn, today).then(res => {
+        if (res && res.success && Array.isArray(res.data)) {
+          const synced = syncAttendanceWithRemote(res.data);
+          setAttendanceRecords(synced);
+        }
+      }).catch(err => console.warn('Bulk clock-in cloud sync delayed:', err));
+    }
   };
 
   if (!isOpen && !embedded) return null;
