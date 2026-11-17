@@ -382,31 +382,31 @@ export default function UsersModal({
 
   // এডিট ইউজার ফর্ম ওপেন
   const handleOpenEditUserForm = (user) => {
-    setEditingUserId(user.UserID);
+    setEditingUserId(user.UserID || user.userId);
     const av = user.AvatarUrl || user.avatarUrl || '';
     setAvatarPreview(av);
     setAvatarBase64('');
     setAvatarMimeType('');
     if (fileInputRef.current) fileInputRef.current.value = '';
 
-    const roleDef = ROLES.find(r => r.id === user.Role);
-    const perms = Array.isArray(user.Permissions) ? user.Permissions : (roleDef ? roleDef.defaultPermissions : []);
+    const roleDef = ROLES.find(r => r.id === (user.Role || user.role));
+    const perms = Array.isArray(user.Permissions) ? user.Permissions : (Array.isArray(user.permissions) ? user.permissions : (roleDef ? roleDef.defaultPermissions : []));
 
     setFormData({
-      FullName: user.FullName || '',
-      Phone: user.Phone || '',
-      Email: user.Email || '',
-      Role: user.Role || 'Customer',
-      PIN: user.PIN || '',
-      Address: user.Address || '',
+      FullName: String(user.FullName || user.fullName || user.Name || user.name || ''),
+      Phone: String(user.Phone !== undefined && user.Phone !== null ? user.Phone : (user.phone !== undefined && user.phone !== null ? user.phone : (user.Mobile || user.mobile || ''))),
+      Email: String(user.Email || user.email || ''),
+      Role: user.Role || user.role || 'Customer',
+      PIN: String(user.PIN !== undefined && user.PIN !== null ? user.PIN : (user.pin !== undefined && user.pin !== null ? user.pin : '1234')),
+      Address: String(user.Address || user.address || ''),
       AvatarUrl: av,
-      Status: user.Status || 'Active',
-      BaseSalary: user.BaseSalary !== undefined ? String(user.BaseSalary) : '',
-      CommissionRate: user.CommissionRate !== undefined ? String(user.CommissionRate) : '',
-      NID: user.NID || '',
-      EmergencyContact: user.EmergencyContact || '',
-      EmergencyPhone: user.EmergencyPhone || '',
-      BloodGroup: user.BloodGroup || '',
+      Status: user.Status || user.status || 'Active',
+      BaseSalary: user.BaseSalary !== undefined ? String(user.BaseSalary) : (user.baseSalary !== undefined ? String(user.baseSalary) : ''),
+      CommissionRate: user.CommissionRate !== undefined ? String(user.CommissionRate) : (user.commissionRate !== undefined ? String(user.commissionRate) : ''),
+      NID: String(user.NID || user.nid || ''),
+      EmergencyContact: String(user.EmergencyContact || user.emergencyContact || ''),
+      EmergencyPhone: String(user.EmergencyPhone || user.emergencyPhone || ''),
+      BloodGroup: String(user.BloodGroup || user.bloodGroup || ''),
       Permissions: perms
     });
     setFormActiveTab('basic');
@@ -439,19 +439,27 @@ export default function UsersModal({
 
   // ফর্ম সাবমিশন
   const handleSubmitForm = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setFormError('');
     setFormSuccess('');
 
-    if (!formData.FullName.trim()) {
+    const cleanName = String(formData.FullName || '').trim();
+    const cleanPhone = String(formData.Phone || '').trim();
+    const cleanEmail = String(formData.Email || '').trim();
+    const cleanPIN = String(formData.PIN || '').trim();
+
+    if (!cleanName) {
+      setFormActiveTab('basic');
       setFormError('ব্যবহারকারীর পুরো নাম প্রদান করুন।');
       return;
     }
-    if (!formData.Phone.trim() && !formData.Email.trim()) {
+    if (!cleanPhone && !cleanEmail) {
+      setFormActiveTab('basic');
       setFormError('মোবাইল নম্বর অথবা ইমেইল যেকোনো একটি প্রদান করা আবশ্যক।');
       return;
     }
-    if (!formData.PIN.trim() || formData.PIN.trim().length < 4) {
+    if (!cleanPIN || cleanPIN.length < 4) {
+      setFormActiveTab('basic');
       setFormError('কমপক্ষে ৪ ডিজিটের পিন কোড বা পাসওয়ার্ড দিন।');
       return;
     }
@@ -460,12 +468,17 @@ export default function UsersModal({
     try {
       const userPayload = {
         ...formData,
+        FullName: cleanName,
+        Phone: cleanPhone,
+        Email: cleanEmail,
+        PIN: cleanPIN,
         BaseSalary: Number(formData.BaseSalary) || 0,
         CommissionRate: Number(formData.CommissionRate) || 0,
         AvatarUrl: formData.AvatarUrl || avatarPreview,
         avatarUrl: formData.AvatarUrl || avatarPreview,
         imageBase64: avatarBase64,
         imageMimeType: avatarMimeType,
+        Permissions: Array.isArray(formData.Permissions) ? formData.Permissions : []
       };
 
       if (editingUserId) {
@@ -794,7 +807,7 @@ export default function UsersModal({
                 </div>
               )}
 
-              <form onSubmit={handleSubmitForm} className="space-y-4">
+              <form onSubmit={handleSubmitForm} noValidate className="space-y-4">
                 
                 {/* ট্যাব ১: মৌলিক তথ্য ও রোল */}
                 {formActiveTab === 'basic' && (
@@ -845,7 +858,6 @@ export default function UsersModal({
                         </label>
                         <input
                           type="text"
-                          required
                           placeholder="যেমন: মোঃ রফিকুল ইসলাম"
                           value={formData.FullName}
                           onChange={(e) => setFormData(prev => ({ ...prev, FullName: e.target.value }))}
@@ -896,7 +908,6 @@ export default function UsersModal({
                         </div>
                         <input
                           type="text"
-                          required
                           maxLength={6}
                           placeholder="যেমন: 1234"
                           value={formData.PIN}
@@ -1131,6 +1142,14 @@ export default function UsersModal({
                   </div>
                 )}
 
+                {/* ত্রুটি বার্তা (সব ট্যাবেই সরাসরি বাটনের উপরে দৃশ্যমান) */}
+                {formError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm rounded-xl flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                    <span className="font-medium">{formError}</span>
+                  </div>
+                )}
+
                 {/* সাবমিট বাটন */}
                 <div className="pt-4 flex items-center justify-end space-x-3 border-t border-slate-100">
                   <button
@@ -1141,7 +1160,8 @@ export default function UsersModal({
                     বাতিল
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmitForm}
                     disabled={isSubmitting}
                     className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center space-x-2 cursor-pointer disabled:opacity-50"
                   >

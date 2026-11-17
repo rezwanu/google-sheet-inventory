@@ -795,19 +795,18 @@ export default function App() {
   const handleUpdateUser = async (userData) => {
     try {
       const updated = saveOrUpdateUserLocally(userData);
-      if (activeUser && (activeUser.UserID === updated.UserID || (activeUser.Phone && activeUser.Phone === updated.Phone))) {
+      if (activeUser && updated && (activeUser.UserID === updated.UserID || (activeUser.Phone && activeUser.Phone === updated.Phone))) {
         setActiveUser(updated);
       }
       setUsers(getLocalUsers());
       showToast(`ব্যবহারকারীর তথ্য সফলভাবে আপডেট হয়েছে!`, 'success');
 
-      if (settings.apiUrl && settings.apiUrl.trim()) {
-        try {
-          const res = await postUpdateUser(settings.apiUrl, {
-            ...userData,
-            userId: updated.UserID,
-            avatarUrl: updated.AvatarUrl,
-          });
+      if (settings.apiUrl && settings.apiUrl.trim() && updated) {
+        postUpdateUser(settings.apiUrl, {
+          ...userData,
+          userId: updated.UserID,
+          avatarUrl: updated.AvatarUrl,
+        }).then(res => {
           if (res && res.success && res.data) {
             const synced = saveOrUpdateUserLocally(res.data);
             if (activeUser && activeUser.UserID === synced.UserID) {
@@ -815,9 +814,9 @@ export default function App() {
             }
             setUsers(getLocalUsers());
           }
-        } catch (apiErr) {
+        }).catch(apiErr => {
           console.warn('Update user sheet sync delayed:', apiErr);
-        }
+        });
       }
     } catch (err) {
       showToast(err.message || 'তথ্য আপডেট ব্যর্থ হয়েছে।', 'error');
