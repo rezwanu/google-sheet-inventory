@@ -65,7 +65,9 @@
   #printable-eod-slip,
   #printable-eod-slip *,
   #printable-expense-voucher,
-  #printable-expense-voucher * {
+  #printable-expense-voucher *,
+  #printable-staff-id-card,
+  #printable-staff-id-card * {
     visibility: visible !important;
   }
 
@@ -76,7 +78,8 @@
   #printable-challan-container,
   #printable-godown-outflow-container,
   #printable-eod-slip,
-  #printable-expense-voucher {
+  #printable-expense-voucher,
+  #printable-staff-id-card {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;

@@ -5532,6 +5532,11 @@ export default function App() {
               onDeleteUser={handleDeleteUser}
               onRefreshUsers={handleRefreshUsers}
               isLoading={syncStatus === 'syncing'}
+              salesHistory={salesHistory}
+              expenses={expenses}
+              auditLogs={auditLogs}
+              settings={settings}
+              currencySymbol={settings.CurrencySymbol || '৳'}
             />
           )}
 
@@ -5955,6 +5960,11 @@ export default function App() {
         onDeleteUser={handleDeleteUser}
         onRefreshUsers={handleRefreshUsers}
         isLoading={syncStatus === 'syncing'}
+        salesHistory={salesHistory}
+        expenses={expenses}
+        auditLogs={auditLogs}
+        settings={settings}
+        currencySymbol={settings.CurrencySymbol || '৳'}
       />
 
       {/* গ্রাহকের নিজস্ব পূর্ববর্তী অর্ডার তালিকা মডাল */}

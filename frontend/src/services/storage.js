@@ -37,6 +37,7 @@ const STORAGE_KEYS = {
   TAILORS: 'pos_tailor_masters',
   FABRIC_WASTAGE: 'pos_fabric_wastage',
   STOCK_MOVEMENTS: 'pos_stock_movements',
+  STAFF_ATTENDANCE: 'pos_staff_attendance',
 };
 
 import {
@@ -1757,14 +1758,21 @@ export function saveOrUpdateUserLocally(userData) {
     Address: String(userData.Address || userData.address || '').trim(),
     AvatarUrl: String(userData.AvatarUrl !== undefined ? userData.AvatarUrl : (userData.avatarUrl !== undefined ? userData.avatarUrl : (existingIndex >= 0 ? users[existingIndex].AvatarUrl : '')) || '').trim(),
     Status: String(userData.Status || userData.status || 'Active').trim(),
+    NID: String(userData.NID || userData.nid || (existingIndex >= 0 ? users[existingIndex].NID : '') || '').trim(),
+    EmergencyContact: String(userData.EmergencyContact || userData.emergencyContact || (existingIndex >= 0 ? users[existingIndex].EmergencyContact : '') || '').trim(),
+    EmergencyPhone: String(userData.EmergencyPhone || userData.emergencyPhone || (existingIndex >= 0 ? users[existingIndex].EmergencyPhone : '') || '').trim(),
+    BloodGroup: String(userData.BloodGroup || userData.bloodGroup || (existingIndex >= 0 ? users[existingIndex].BloodGroup : '') || '').trim(),
+    BaseSalary: Number(userData.BaseSalary !== undefined ? userData.BaseSalary : (userData.baseSalary !== undefined ? userData.baseSalary : (existingIndex >= 0 ? users[existingIndex].BaseSalary : 0))) || 0,
+    CommissionRate: Number(userData.CommissionRate !== undefined ? userData.CommissionRate : (userData.commissionRate !== undefined ? userData.commissionRate : (existingIndex >= 0 ? users[existingIndex].CommissionRate : 0))) || 0,
+    Permissions: Array.isArray(userData.Permissions || userData.permissions) ? (userData.Permissions || userData.permissions) : (existingIndex >= 0 && Array.isArray(users[existingIndex].Permissions) ? users[existingIndex].Permissions : null),
     CreatedAt: userData.CreatedAt || (existingIndex >= 0 ? users[existingIndex].CreatedAt : now),
     UpdatedAt: now,
   };
 
   if (existingIndex >= 0) {
-    users[existingIndex] = { ...users[existingIndex], ...updatedRecord };
+    users[existingIndex] = { ...users[existingIndex], ...updatedRecord, ...userData };
   } else {
-    users.push(updatedRecord);
+    users.push({ ...updatedRecord, ...userData });
   }
 
   saveLocalUsers(users);
@@ -1803,6 +1811,81 @@ export function deleteUserLocally(userId) {
   const users = getLocalUsers();
   const filtered = users.filter((u) => String(u.UserID || '').trim() !== String(userId).trim());
   saveLocalUsers(filtered);
+}
+
+// ============================================================================
+// স্টাফ ডিজিটাল হাজিরা ও শিফট ট্র্যাকার (Staff Digital Attendance & Shift)
+// ============================================================================
+
+export function getLocalStaffAttendance() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.STAFF_ATTENDANCE);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalStaffAttendance(records) {
+  setSecureStorageItem(STORAGE_KEYS.STAFF_ATTENDANCE, Array.isArray(records) ? records : []);
+}
+
+export function clockInStaffLocally(userId, userName, notes = '') {
+  if (!userId) return getLocalStaffAttendance();
+  const records = getLocalStaffAttendance();
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toISOString();
+  const existingIndex = records.findIndex(r => String(r.UserID).trim() === String(userId).trim() && r.Date === today);
+  
+  if (existingIndex >= 0) {
+    records[existingIndex] = {
+      ...records[existingIndex],
+      ClockIn: records[existingIndex].ClockIn || now,
+      Notes: notes || records[existingIndex].Notes || ''
+    };
+  } else {
+    records.unshift({
+      AttendanceID: `ATT-${Date.now().toString().slice(-6)}`,
+      UserID: userId,
+      UserName: userName || 'Staff',
+      Date: today,
+      ClockIn: now,
+      ClockOut: null,
+      Status: 'Present',
+      Notes: notes
+    });
+  }
+  saveLocalStaffAttendance(records);
+  return records;
+}
+
+export function clockOutStaffLocally(userId, notes = '') {
+  if (!userId) return getLocalStaffAttendance();
+  const records = getLocalStaffAttendance();
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toISOString();
+  const existingIndex = records.findIndex(r => String(r.UserID).trim() === String(userId).trim() && r.Date === today);
+  
+  if (existingIndex >= 0) {
+    records[existingIndex] = {
+      ...records[existingIndex],
+      ClockOut: now,
+      Notes: notes ? (records[existingIndex].Notes ? `${records[existingIndex].Notes}; ${notes}` : notes) : records[existingIndex].Notes
+    };
+  } else {
+    records.unshift({
+      AttendanceID: `ATT-${Date.now().toString().slice(-6)}`,
+      UserID: userId,
+      UserName: 'Staff',
+      Date: today,
+      ClockIn: now,
+      ClockOut: now,
+      Status: 'Present',
+      Notes: notes
+    });
+  }
+  saveLocalStaffAttendance(records);
+  return records;
 }
 
 /**
