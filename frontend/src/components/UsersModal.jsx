@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   X,
   Users,
@@ -43,7 +43,16 @@ import {
   UserX,
   BadgePercent,
   Wallet,
-  PhoneCall
+  PhoneCall,
+  MessageSquare,
+  ExternalLink,
+  QrCode,
+  DollarSign,
+  Download,
+  Share2,
+  CheckSquare,
+  Square,
+  Filter
 } from 'lucide-react';
 import {
   formatImageUrl,
@@ -84,7 +93,7 @@ export const ROLES = [
     cardBorder: 'border-amber-500 bg-gradient-to-b from-amber-50/90 to-white text-amber-950 ring-2 ring-amber-500/30 shadow-md shadow-amber-500/10',
     avatarGradient: 'from-amber-500 via-orange-600 to-amber-700',
     description: 'POS কাউন্টারে দ্রুত বিক্রয় এবং ইনভয়েস মেমো তৈরি',
-    defaultPermissions: ['canGiveDiscount']
+    defaultPermissions: ['canGiveDiscount', 'canManageExpenses']
   },
   {
     id: 'Salesman',
@@ -95,7 +104,7 @@ export const ROLES = [
     cardBorder: 'border-purple-500 bg-gradient-to-b from-purple-50/90 to-white text-purple-950 ring-2 ring-purple-500/30 shadow-md shadow-purple-500/10',
     avatarGradient: 'from-purple-600 via-fuchsia-600 to-indigo-700',
     description: 'কাউন্টার ও ফিল্ড সেলস, পণ্য অর্ডার নেওয়া ও ক্যাটালগ প্রদর্শন',
-    defaultPermissions: []
+    defaultPermissions: ['canGiveDiscount']
   },
   {
     id: 'Customer',
@@ -110,7 +119,7 @@ export const ROLES = [
   },
 ];
 
-const PERMISSION_DEFINITIONS = [
+export const PERMISSION_DEFINITIONS = [
   { id: 'canGiveDiscount', label: 'ডিসকাউন্ট ও বিশেষ ছাড়', desc: 'বিল কাটার সময় কুপন ছাড়াও ম্যানুয়াল ডিসকাউন্ট দেওয়ার অনুমতি' },
   { id: 'canViewBuyingPrice', label: 'পণ্যের কেনা দাম (Cost Price)', desc: 'পণ্যের পাইকারি কেনা দর ও লাভ-ক্ষতির গোপনীয় হিসাব দেখার অনুমতি' },
   { id: 'canDeleteOrders', label: 'অর্ডার ও ইনভয়েস বাতিল/মুছুন', desc: 'পূর্ববর্তী ইনভয়েস বা ভাউচার মুছে ফেলার প্রশাসনিক ক্ষমতা' },
@@ -136,23 +145,29 @@ export default function UsersModal({
   settings = {},
   currencySymbol = '৳'
 }) {
-  const [activeMainTab, setActiveMainTab] = useState('users'); // 'users' | 'attendance'
+  // প্রধান ভিউ নেভিগেশন: 'staff' (দোকানের কর্মী) | 'customers' (অনলাইন কাস্টমার) | 'attendance' (হাজিরা) | 'payroll' (পে-রোল)
+  const [activeMainTab, setActiveMainTab] = useState('staff');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('All');
+  const [selectedDutyFilter, setSelectedDutyFilter] = useState('all'); // 'all' | 'on_duty' | 'absent' | 'completed'
   const [sortBy, setSortBy] = useState('default');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
+
+  // তারিখ ভিত্তিক হাজিরা অনুসন্ধান
+  const [selectedAttendanceDate, setSelectedAttendanceDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   // নতুন/এডিট ফর্ম স্টেট
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [formActiveTab, setFormActiveTab] = useState('basic'); // 'basic' | 'finance' | 'kyc' | 'permissions'
 
-  // সাব-মোডালসমূহ (ID Card, Deep Profile)
+  // সাব-মোডালসমূহ (ID Card, Deep Profile, Payslip)
   const [selectedStaffForIdCard, setSelectedStaffForIdCard] = useState(null);
   const [selectedStaffForProfile, setSelectedStaffForProfile] = useState(null);
+  const [selectedStaffForPayslip, setSelectedStaffForPayslip] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [revealedPinId, setRevealedPinId] = useState(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const pinTimeoutRef = useRef(null);
 
   // হাজিরা স্টেট
   const [attendanceRecords, setAttendanceRecords] = useState(() => getLocalStaffAttendance());
@@ -162,8 +177,8 @@ export default function UsersModal({
     FullName: '',
     Phone: '',
     Email: '',
-    Role: 'Cashier',
-    PIN: '',
+    Role: 'Salesman',
+    PIN: '1234',
     Address: '',
     AvatarUrl: '',
     Status: 'Active',
@@ -190,6 +205,13 @@ export default function UsersModal({
     setAttendanceRecords(getLocalStaffAttendance());
   };
 
+  // ক্লিনআপ পিন টাইমার
+  useEffect(() => {
+    return () => {
+      if (pinTimeoutRef.current) clearTimeout(pinTimeoutRef.current);
+    };
+  }, []);
+
   // স্টোরের মেটাডাটা
   const storeName = settings?.StoreName || 'Pabna Bostraloy';
   const storePhone = settings?.Phone || settings?.StorePhone || '';
@@ -204,22 +226,110 @@ export default function UsersModal({
     const admins = adminOnly + managers;
     const cashiers = list.filter((u) => u.Role === 'Cashier').length;
     const salesmen = list.filter((u) => u.Role === 'Salesman').length;
-    const staff = cashiers + salesmen + list.filter((u) => u.Role === 'Staff').length;
+    const staffList = list.filter((u) => u.Role !== 'Customer');
+    const staff = staffList.length;
     const customers = list.filter((u) => u.Role === 'Customer').length;
-    const active = list.filter((u) => u.Status !== 'Inactive').length;
-    const inactive = total - active;
+    const activeStaff = staffList.filter((u) => u.Status !== 'Inactive').length;
+    const inactiveStaff = staff - activeStaff;
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayPresentCount = attendanceRecords.filter(r => r.Date === todayStr).length;
+    const targetDate = selectedAttendanceDate || todayStr;
+    const dateRecords = attendanceRecords.filter(r => r.Date === targetDate);
+    
+    // উপস্থিতি ও ডিউটি স্ট্যাটাস
+    const todayPresentCount = dateRecords.filter(r => r.ClockIn).length;
+    const currentlyOnDutyCount = dateRecords.filter(r => r.ClockIn && !r.ClockOut).length;
+    const todayAbsentCount = Math.max(0, activeStaff - todayPresentCount);
 
-    return { total, adminOnly, managers, admins, cashiers, salesmen, staff, customers, active, inactive, todayPresentCount };
-  }, [users, attendanceRecords]);
+    // মোট নির্ধারিত মাসিক বেতন
+    const totalMonthlySalary = staffList
+      .filter(u => u.Status !== 'Inactive')
+      .reduce((sum, u) => sum + (Number(u.BaseSalary) || 0), 0);
 
-  // ফিল্টারকৃত ইউজার তালিকা
+    return {
+      total,
+      adminOnly,
+      managers,
+      admins,
+      cashiers,
+      salesmen,
+      staff,
+      customers,
+      activeStaff,
+      inactiveStaff,
+      todayPresentCount,
+      currentlyOnDutyCount,
+      todayAbsentCount,
+      totalMonthlySalary
+    };
+  }, [users, attendanceRecords, selectedAttendanceDate]);
+
+  // কর্মচারীর লাইভ ডিউটি স্ট্যাটাস জানার হেল্পার
+  const getStaffDutyStatus = (user, dateStr = selectedAttendanceDate) => {
+    if (!user || user.Role === 'Customer') return null;
+    const att = attendanceRecords.find(
+      r => String(r.UserID).trim() === String(user.UserID).trim() && r.Date === dateStr
+    );
+    if (!att || !att.ClockIn) {
+      return {
+        status: 'absent',
+        label: 'আজ আসেননি',
+        badge: 'bg-rose-50 text-rose-700 border-rose-200',
+        dot: 'bg-rose-500'
+      };
+    }
+    if (att.ClockIn && !att.ClockOut) {
+      return {
+        status: 'on_duty',
+        label: 'ডিউটিতে আছেন',
+        time: new Date(att.ClockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        badge: 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-1 ring-emerald-400/30',
+        dot: 'bg-emerald-500 animate-pulse'
+      };
+    }
+    return {
+      status: 'completed',
+      label: 'শিফট সম্পন্ন',
+      time: new Date(att.ClockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      badge: 'bg-amber-50 text-amber-800 border-amber-300',
+      dot: 'bg-amber-500'
+    };
+  };
+
+  // শিফট ডিউরেশন হিসাব
+  const getShiftDuration = (clockIn, clockOut) => {
+    if (!clockIn) return '—';
+    const start = new Date(clockIn).getTime();
+    const end = clockOut ? new Date(clockOut).getTime() : Date.now();
+    const diffMs = Math.max(0, end - start);
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    if (diffHrs === 0) return `${diffMins} মি.`;
+    return `${diffHrs} ঘণ্টা ${diffMins} মি.`;
+  };
+
+  // লেট ক্লক-ইন ডিটেকশন (সকাল ৯:৩০ এর পর)
+  const isLateClockIn = (clockIn) => {
+    if (!clockIn) return false;
+    const d = new Date(clockIn);
+    const hour = d.getHours();
+    const minute = d.getMinutes();
+    return hour > 9 || (hour === 9 && minute > 30);
+  };
+
+  // ফিল্টারকৃত ইউজার তালিকা (স্টাফ বনাম কাস্টমার পৃথকীকরণ সহ)
   const filteredUsers = useMemo(() => {
     let list = [...(users || [])];
     const q = searchQuery.trim().toLowerCase();
 
+    // মূল ট্যাবের ভিত্তিতে ফিল্টারিং
+    if (activeMainTab === 'customers') {
+      list = list.filter(u => u.Role === 'Customer');
+    } else if (activeMainTab === 'staff' || activeMainTab === 'payroll') {
+      list = list.filter(u => u.Role !== 'Customer');
+    }
+
+    // রোল ফিল্টার
     if (selectedRoleFilter !== 'All') {
       if (selectedRoleFilter === 'AdminGroup') {
         list = list.filter((u) => u.Role === 'Admin' || u.Role === 'Manager');
@@ -230,6 +340,15 @@ export default function UsersModal({
       }
     }
 
+    // ডিউটি ফিল্টার (যদি অন থাকে)
+    if (selectedDutyFilter !== 'all' && activeMainTab === 'staff') {
+      list = list.filter((u) => {
+        const duty = getStaffDutyStatus(u);
+        return duty?.status === selectedDutyFilter;
+      });
+    }
+
+    // সার্চ কুয়েরি
     if (q) {
       list = list.filter((user) => {
         return (
@@ -243,6 +362,7 @@ export default function UsersModal({
       });
     }
 
+    // সর্টিং
     if (sortBy === 'name-asc') {
       list.sort((a, b) => String(a.FullName || '').localeCompare(String(b.FullName || '')));
     } else if (sortBy === 'newest') {
@@ -253,7 +373,7 @@ export default function UsersModal({
     }
 
     return list;
-  }, [users, searchQuery, selectedRoleFilter, sortBy]);
+  }, [users, searchQuery, selectedRoleFilter, selectedDutyFilter, sortBy, activeMainTab, attendanceRecords, selectedAttendanceDate]);
 
   // স্টাফ পারফরম্যান্স হিসাব ফাংশন
   const getStaffSalesMetrics = (user) => {
@@ -285,7 +405,6 @@ export default function UsersModal({
     const currentMonthStr = new Date().toISOString().slice(0, 7);
 
     const salaryExpenses = expenses.filter(exp => {
-      const cat = String(exp.Category || '');
       const payee = String(exp.Payee || '').trim().toLowerCase();
       const desc = String(exp.Description || '').trim().toLowerCase();
       const dateStr = String(exp.Date || exp.date || '');
@@ -350,29 +469,83 @@ export default function UsersModal({
     }
   };
 
+  // স্মার্ট পিন রিভিল ও অটো-হাইড
+  const handleToggleRevealPin = (userId) => {
+    if (revealedPinId === userId) {
+      setRevealedPinId(null);
+    } else {
+      setRevealedPinId(userId);
+      if (pinTimeoutRef.current) clearTimeout(pinTimeoutRef.current);
+      pinTimeoutRef.current = setTimeout(() => {
+        setRevealedPinId(null);
+      }, 6000);
+    }
+  };
+
+  // হোয়াটসঅ্যাপ ও কল হ্যান্ডলার
+  const handleWhatsApp = (phone, name) => {
+    if (!phone) return;
+    const clean = String(phone).replace(/\D/g, '');
+    const formatted = clean.startsWith('880') ? clean : (clean.startsWith('0') ? '88' + clean : '880' + clean);
+    const text = encodeURIComponent(`আসসালামু আলাইকুম ${name}, ${storeName} থেকে যোগাযোগ করা হচ্ছে।`);
+    window.open(`https://wa.me/${formatted}?text=${text}`, '_blank');
+  };
+
+  // পারমিশন প্রিসেট প্রয়োগ
+  const applyPermissionPreset = (presetKey) => {
+    if (presetKey === 'cashier') {
+      setFormData(prev => ({
+        ...prev,
+        Permissions: ['canGiveDiscount', 'canManageExpenses']
+      }));
+    } else if (presetKey === 'salesman') {
+      setFormData(prev => ({
+        ...prev,
+        Permissions: ['canGiveDiscount']
+      }));
+    } else if (presetKey === 'manager') {
+      setFormData(prev => ({
+        ...prev,
+        Permissions: ['canGiveDiscount', 'canTransferStock', 'canManageExpenses', 'canViewReports']
+      }));
+    } else if (presetKey === 'all') {
+      setFormData(prev => ({
+        ...prev,
+        Permissions: PERMISSION_DEFINITIONS.map(p => p.id)
+      }));
+    } else if (presetKey === 'clear') {
+      setFormData(prev => ({
+        ...prev,
+        Permissions: []
+      }));
+    }
+  };
+
   // নতুন ইউজার ফর্ম ওপেন
-  const handleOpenNewUserForm = () => {
+  const handleOpenNewUserForm = (defaultRole = 'Salesman') => {
     setEditingUserId(null);
     setAvatarPreview('');
     setAvatarBase64('');
     setAvatarMimeType('');
     if (fileInputRef.current) fileInputRef.current.value = '';
+    
+    const roleDef = ROLES.find(r => r.id === defaultRole) || ROLES[3];
     setFormData({
       FullName: '',
       Phone: '',
       Email: '',
-      Role: 'Salesman',
+      Role: defaultRole,
       PIN: '1234',
       Address: '',
       AvatarUrl: '',
       Status: 'Active',
       BaseSalary: '',
-      CommissionRate: '',
+      CommissionRate: defaultRole === 'Salesman' ? '1.5' : '',
       NID: '',
       EmergencyContact: '',
       EmergencyPhone: '',
       BloodGroup: '',
-      Permissions: ['canGiveDiscount']
+      Permissions: roleDef.defaultPermissions || ['canGiveDiscount']
     });
     setFormActiveTab('basic');
     setFormError('');
@@ -516,6 +689,21 @@ export default function UsersModal({
     refreshAttendance();
   };
 
+  // বাল্ক ক্লক-ইন (আজকের সক্রিয় সকল স্টাফ)
+  const handleBulkClockIn = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const activeStaff = users.filter(u => u.Role !== 'Customer' && u.Status !== 'Inactive');
+    activeStaff.forEach(u => {
+      const alreadyIn = attendanceRecords.some(
+        r => String(r.UserID) === String(u.UserID) && r.Date === today && r.ClockIn
+      );
+      if (!alreadyIn) {
+        clockInStaffLocally(u.UserID, u.FullName, 'বাল্ক ক্লক-ইন');
+      }
+    });
+    refreshAttendance();
+  };
+
   if (!isOpen && !embedded) return null;
 
   return (
@@ -537,22 +725,22 @@ export default function UsersModal({
         {/* =========================================================================
             ১. এক্সিকিউটিভ হেডার
             ========================================================================= */}
-        <div className="bg-slate-900 text-white px-5 sm:px-6 py-4 flex items-center justify-between border-b border-slate-800 shrink-0 shadow-md">
+        <div className="bg-slate-900 text-white px-5 sm:px-6 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0 shadow-md">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-700 to-violet-800 flex items-center justify-center shadow-sm">
               <Users className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">
+                <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
                   ইউজার ও স্টাফ ম্যানেজমেন্ট সুইট
                 </h2>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  রোল ও পারমিশন কন্ট্রোল
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  রোল, পে-রোল ও স্মার্ট হাজিরা
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                দোকানের কর্মী একাউন্ট, পারফরম্যান্স, কমিশন, বেতন লেজার ও ডিজিটাল হাজিরা ব্যবস্থাপনা
+                {storeName} • কর্মী তালিকা, ডিজিটাল হাজিরা, কমিশন লেজার ও অ্যাক্সেস কন্ট্রোল
               </p>
             </div>
           </div>
@@ -571,11 +759,11 @@ export default function UsersModal({
                   </button>
                 )}
                 <button
-                  onClick={handleOpenNewUserForm}
+                  onClick={() => handleOpenNewUserForm(activeMainTab === 'customers' ? 'Customer' : 'Salesman')}
                   className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
-                  <span>নতুন স্টাফ</span>
+                  <span>{activeMainTab === 'customers' ? 'নতুন গ্রাহক' : 'নতুন স্টাফ'}</span>
                 </button>
               </>
             )}
@@ -602,134 +790,207 @@ export default function UsersModal({
         </div>
 
         {/* =========================================================================
-            ২. এক্সিকিউটিভ KPI স্ট্রিপ
+            ২. ইন্টারঅ্যাক্টিভ KPI ফিল্টার ড্যাশবোর্ড
             ========================================================================= */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2.5 p-3.5 bg-slate-50 border-b border-slate-200 shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 sm:p-3.5 bg-slate-50 border-b border-slate-200 shrink-0">
           
+          {/* কার্ড ১: মোট সক্রিয় কর্মী */}
           <div
-            onClick={() => setSelectedRoleFilter('All')}
+            onClick={() => {
+              setActiveMainTab('staff');
+              setSelectedRoleFilter('All');
+              setSelectedDutyFilter('all');
+            }}
             className={`p-3 rounded-xl border transition-all cursor-pointer shadow-xs ${
-              selectedRoleFilter === 'All' ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20' : 'bg-white border-slate-200 hover:border-slate-300'
+              activeMainTab === 'staff' && selectedDutyFilter === 'all' && selectedRoleFilter === 'All'
+                ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm'
+                : 'bg-white border-slate-200 hover:border-slate-300'
             }`}
           >
             <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-              <span>মোট ব্যবহারকারী</span>
-              <Users className="w-3.5 h-3.5 text-slate-400" />
+              <span>মোট কর্মী দল</span>
+              <Users className="w-3.5 h-3.5 text-indigo-500" />
             </div>
-            <p className="text-lg font-bold text-slate-900 mt-0.5">{metrics.total} জন</p>
-            <p className="text-[10px] text-emerald-600 font-medium mt-0.5">{metrics.active} সক্রিয় একাউন্ট</p>
+            <p className="text-lg font-bold text-slate-900 mt-0.5">{metrics.staff} জন</p>
+            <p className="text-[10px] text-emerald-600 font-medium mt-0.5">{metrics.activeStaff} সক্রিয় কর্মী</p>
           </div>
 
+          {/* কার্ড ২: বর্তমানে ডিউটিতে আছেন */}
           <div
-            onClick={() => setSelectedRoleFilter('AdminGroup')}
+            onClick={() => {
+              setActiveMainTab('staff');
+              setSelectedDutyFilter('on_duty');
+            }}
             className={`p-3 rounded-xl border transition-all cursor-pointer shadow-xs ${
-              selectedRoleFilter === 'AdminGroup' ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20' : 'bg-white border-slate-200 hover:border-slate-300'
+              activeMainTab === 'staff' && selectedDutyFilter === 'on_duty'
+                ? 'bg-emerald-50/70 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm'
+                : 'bg-white border-slate-200 hover:border-slate-300'
             }`}
           >
             <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-              <span>এডমিন ও ম্যানেজার</span>
-              <Crown className="w-3.5 h-3.5 text-indigo-500" />
+              <span className="flex items-center space-x-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>ডিউটিতে আছেন</span>
+              </span>
+              <Clock className="w-3.5 h-3.5 text-emerald-600" />
             </div>
-            <p className="text-lg font-bold text-indigo-700 mt-0.5">{metrics.admins} জন</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">পূর্ণ ব্যবস্থাপনা权限</p>
+            <p className="text-lg font-bold text-emerald-700 mt-0.5">{metrics.currentlyOnDutyCount} জন</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">দোকানে সক্রিয় রয়েছেন</p>
           </div>
 
+          {/* কার্ড ৩: আজ অনুপস্থিত */}
           <div
-            onClick={() => setSelectedRoleFilter('StaffGroup')}
+            onClick={() => {
+              setActiveMainTab('staff');
+              setSelectedDutyFilter('absent');
+            }}
             className={`p-3 rounded-xl border transition-all cursor-pointer shadow-xs ${
-              selectedRoleFilter === 'StaffGroup' ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20' : 'bg-white border-slate-200 hover:border-slate-300'
+              activeMainTab === 'staff' && selectedDutyFilter === 'absent'
+                ? 'bg-rose-50/70 border-rose-500 ring-2 ring-rose-500/20 shadow-sm'
+                : 'bg-white border-slate-200 hover:border-slate-300'
             }`}
           >
             <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-              <span>ক্যাশিয়ার ও সেলসম্যান</span>
-              <Briefcase className="w-3.5 h-3.5 text-amber-500" />
+              <span>আজ আসেননি</span>
+              <UserX className="w-3.5 h-3.5 text-rose-500" />
             </div>
-            <p className="text-lg font-bold text-amber-700 mt-0.5">{metrics.staff} জন</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">কাউন্টার ও সেলস টিম</p>
+            <p className="text-lg font-bold text-rose-700 mt-0.5">{metrics.todayAbsentCount} জন</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">অনুপস্থিত কর্মচারী</p>
           </div>
 
+          {/* কার্ড ৪: অনলাইন গ্রাহক তালিকা */}
           <div
-            onClick={() => setSelectedRoleFilter('Customer')}
+            onClick={() => {
+              setActiveMainTab('customers');
+              setSelectedRoleFilter('Customer');
+            }}
             className={`p-3 rounded-xl border transition-all cursor-pointer shadow-xs ${
-              selectedRoleFilter === 'Customer' ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20' : 'bg-white border-slate-200 hover:border-slate-300'
+              activeMainTab === 'customers'
+                ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm'
+                : 'bg-white border-slate-200 hover:border-slate-300'
             }`}
           >
             <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-              <span>অনলাইন কাস্টমার</span>
-              <ShoppingBag className="w-3.5 h-3.5 text-emerald-500" />
+              <span>অনলাইন গ্রাহক</span>
+              <ShoppingBag className="w-3.5 h-3.5 text-purple-500" />
             </div>
-            <p className="text-lg font-bold text-emerald-700 mt-0.5">{metrics.customers} জন</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">অনলাইন সেলফ-অর্ডার</p>
+            <p className="text-lg font-bold text-purple-700 mt-0.5">{metrics.customers} জন</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">নিবন্ধিত কাস্টমার</p>
           </div>
 
+          {/* কার্ড ৫: পে-রোল ও লেজার */}
           <div
-            onClick={() => setActiveMainTab('attendance')}
-            className={`hidden lg:block p-3 rounded-xl border transition-all cursor-pointer shadow-xs ${
-              activeMainTab === 'attendance' ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20' : 'bg-white border-slate-200 hover:border-slate-300'
+            onClick={() => setActiveMainTab('payroll')}
+            className={`col-span-2 sm:col-span-1 p-3 rounded-xl border transition-all cursor-pointer shadow-xs ${
+              activeMainTab === 'payroll'
+                ? 'bg-amber-50/70 border-amber-500 ring-2 ring-amber-500/20 shadow-sm'
+                : 'bg-white border-slate-200 hover:border-slate-300'
             }`}
           >
             <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-              <span>আজকের ডিজিটাল হাজিরা</span>
-              <Clock className="w-3.5 h-3.5 text-blue-500" />
+              <span>মাসিক পে-রোল</span>
+              <Wallet className="w-3.5 h-3.5 text-amber-500" />
             </div>
-            <p className="text-lg font-bold text-blue-700 mt-0.5">{metrics.todayPresentCount} জন উপস্থিত</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">শিফট ক্লক-ইন রেকর্ড</p>
+            <p className="text-lg font-bold text-amber-800 mt-0.5">
+              {currencySymbol}{metrics.totalMonthlySalary.toLocaleString('en-IN')}
+            </p>
+            <p className="text-[10px] text-slate-500 mt-0.5">নির্ধারিত মূল বেতন</p>
           </div>
 
         </div>
 
         {/* =========================================================================
-            ৩. মেইন ভিউ নেভিগেশন ট্যাব
+            ৩. প্রধান নেভিগেশন ট্যাব
             ========================================================================= */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 sm:px-6 bg-white shrink-0">
-          <div className="flex space-x-2">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 sm:px-6 bg-white shrink-0 overflow-x-auto">
+          <div className="flex space-x-1 sm:space-x-2">
+            
+            {/* ট্যাব ১: স্টাফ ও সেলস টিম */}
             <button
               onClick={() => {
-                setActiveMainTab('users');
+                setActiveMainTab('staff');
+                setSelectedRoleFilter('All');
+                setSelectedDutyFilter('all');
                 if (isFormOpen) handleCloseForm();
               }}
-              className={`py-3 px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer ${
-                activeMainTab === 'users' && !isFormOpen
+              className={`py-3 px-3 sm:px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
+                activeMainTab === 'staff' && !isFormOpen
                   ? 'border-indigo-600 text-indigo-700'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
               <Users className="w-4 h-4" />
-              <span>স্টাফ ও ইউজার তালিকা ({filteredUsers.length})</span>
+              <span>স্টাফ ও সেলস টিম ({metrics.staff})</span>
             </button>
+
+            {/* ট্যাব ২: ডিজিটাল হাজিরা খাতা */}
             <button
               onClick={() => {
                 setActiveMainTab('attendance');
                 if (isFormOpen) handleCloseForm();
               }}
-              className={`py-3 px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer ${
+              className={`py-3 px-3 sm:px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
                 activeMainTab === 'attendance' && !isFormOpen
                   ? 'border-indigo-600 text-indigo-700'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
               <Clock className="w-4 h-4" />
-              <span>ডিজিটাল হাজিরা খাতা ({metrics.todayPresentCount}/{metrics.staff + metrics.admins})</span>
+              <span>ডিজিটাল হাজিরা খাতা ({metrics.todayPresentCount}/{metrics.staff})</span>
             </button>
+
+            {/* ট্যাব ৩: বেতন ও পে-রোল লেজার */}
+            <button
+              onClick={() => {
+                setActiveMainTab('payroll');
+                if (isFormOpen) handleCloseForm();
+              }}
+              className={`py-3 px-3 sm:px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
+                activeMainTab === 'payroll' && !isFormOpen
+                  ? 'border-indigo-600 text-indigo-700'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <CreditCard className="w-4 h-4" />
+              <span>বেতন ও পে-রোল লেজার</span>
+            </button>
+
+            {/* ট্যাব ৪: অনলাইন গ্রাহক */}
+            <button
+              onClick={() => {
+                setActiveMainTab('customers');
+                setSelectedRoleFilter('Customer');
+                if (isFormOpen) handleCloseForm();
+              }}
+              className={`py-3 px-3 sm:px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
+                activeMainTab === 'customers' && !isFormOpen
+                  ? 'border-indigo-600 text-indigo-700'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>অনলাইন গ্রাহক ({metrics.customers})</span>
+            </button>
+
           </div>
 
           {isFormOpen && (
-            <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full">
+            <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full whitespace-nowrap ml-2">
               {editingUserId ? `সম্পাদনা মোড (#${editingUserId})` : 'নতুন ব্যবহারকারী এন্ট্রি'}
             </span>
           )}
         </div>
 
         {/* =========================================================================
-            ৪. বডি কন্টেন্ট (লিস্ট মোড বনাম ফর্ম মোড)
+            ৪. বডি কন্টেন্ট (ফর্ম মোড বনাম বিভিন্ন ভিউ মোড)
             ========================================================================= */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 bg-slate-50/70">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 bg-slate-50/70">
           
           {/* -----------------------------------------------------------------
               ফর্ম মোড: নতুন ইউজার তৈরি বা এডিট
               ----------------------------------------------------------------- */}
           {isFormOpen ? (
-            <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-7">
+            <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-7">
               
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
                 <div className="flex items-center space-x-3">
@@ -754,43 +1015,47 @@ export default function UsersModal({
                 </button>
               </div>
 
-              {/* ফর্ম সাব-ট্যাবস */}
+              {/* ফর্ম স্টেপ উইজার্ড ট্যাব */}
               <div className="flex flex-wrap gap-2 mb-5 p-1 bg-slate-100 rounded-xl text-xs font-semibold">
                 <button
                   type="button"
                   onClick={() => setFormActiveTab('basic')}
-                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 ${
                     formActiveTab === 'basic' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  ১. মৌলিক তথ্য ও রোল
+                  <User className="w-3.5 h-3.5" />
+                  <span>১. মৌলিক তথ্য ও রোল</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setFormActiveTab('finance')}
-                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 ${
                     formActiveTab === 'finance' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  ২. বেতন ও কমিশন
+                  <Wallet className="w-3.5 h-3.5" />
+                  <span>২. বেতন ও কমিশন</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setFormActiveTab('kyc')}
-                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 ${
                     formActiveTab === 'kyc' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  ৩. NID ও জরুরি যোগাযোগ
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>৩. NID ও জরুরি যোগাযোগ</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setFormActiveTab('permissions')}
-                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 ${
                     formActiveTab === 'permissions' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  ৪. পারমিশন ম্যাট্রিক্স
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>৪. পারমিশন ম্যাট্রিক্স</span>
                 </button>
               </div>
 
@@ -867,14 +1132,14 @@ export default function UsersModal({
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">
-                          মোবাইল নম্বর (Phone / Login ID) *
+                          মোবাইল নম্বর (Login Mobile) *
                         </label>
                         <input
                           type="tel"
                           placeholder="017XXXXXXXX"
                           value={formData.Phone}
                           onChange={(e) => setFormData(prev => ({ ...prev, Phone: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
                         />
                       </div>
                     </div>
@@ -948,10 +1213,10 @@ export default function UsersModal({
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">
-                          প্রোফাইল ছবি (Profile Photo)
+                          প্রোফাইল ছবি / অবতার
                         </label>
                         <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                          <div className="w-14 h-14 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
                             {avatarPreview ? (
                               <img src={formatImageUrl(avatarPreview)} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
@@ -959,9 +1224,9 @@ export default function UsersModal({
                             )}
                           </div>
                           <div className="flex-1">
-                            <label className="px-3 py-1.5 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center space-x-1.5 cursor-pointer">
-                              <Upload className="w-3.5 h-3.5 text-slate-500" />
-                              <span>{avatarPreview ? 'ছবি বদলান' : 'ছবি আপলোড (গুগল ড্রাইভ)'}</span>
+                            <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer shadow-2xs">
+                              <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>ছবি নির্বাচন করুন</span>
                               <input
                                 ref={fileInputRef}
                                 type="file"
@@ -970,6 +1235,7 @@ export default function UsersModal({
                                 className="hidden"
                               />
                             </label>
+                            <p className="text-[10px] text-slate-400 mt-1">সর্বোচ্চ ৫ মেগাবাইট (JPG, PNG)</p>
                           </div>
                         </div>
                       </div>
@@ -1034,6 +1300,19 @@ export default function UsersModal({
                         </p>
                       </div>
                     </div>
+
+                    {/* লাইভ এস্টিমেটর প্রিভিউ */}
+                    {(Number(formData.BaseSalary) > 0 || Number(formData.CommissionRate) > 0) && (
+                      <div className="p-3 bg-indigo-50/70 rounded-xl border border-indigo-200 text-xs text-indigo-900">
+                        <span className="font-bold flex items-center space-x-1 mb-1">
+                          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>আনুমানিক আয় প্রিভিউ:</span>
+                        </span>
+                        <p className="text-[11px] text-indigo-800">
+                          যদি এই কর্মী মাসে <strong>{currencySymbol}১,০০,০০০</strong> টাকার পণ্য বিক্রি করেন, তবে মূল বেতন ({currencySymbol}{Number(formData.BaseSalary) || 0}) + কমিশন ({currencySymbol}{Math.round((100000 * (Number(formData.CommissionRate) || 0)) / 100)}) = মোট আনুমানিক আয় হবে <strong>{currencySymbol}{((Number(formData.BaseSalary) || 0) + Math.round((100000 * (Number(formData.CommissionRate) || 0)) / 100)).toLocaleString('en-IN')}</strong>।
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1050,7 +1329,7 @@ export default function UsersModal({
                           placeholder="যেমন: 199XXXXXXXXXX"
                           value={formData.NID}
                           onChange={(e) => setFormData(prev => ({ ...prev, NID: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
                         />
                       </div>
 
@@ -1099,7 +1378,7 @@ export default function UsersModal({
                           placeholder="018XXXXXXXX"
                           value={formData.EmergencyPhone}
                           onChange={(e) => setFormData(prev => ({ ...prev, EmergencyPhone: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
                         />
                       </div>
                     </div>
@@ -1108,10 +1387,53 @@ export default function UsersModal({
 
                 {/* ট্যাব ৪: পারমিশন ম্যাট্রিক্স */}
                 {formActiveTab === 'permissions' && (
-                  <div className="space-y-3">
-                    <p className="text-xs text-slate-500">
-                      এই ব্যবহারকারীর জন্য নির্দিষ্ট ক্ষমতার চেকবক্সগুলো টিক দিন বা আনচেক করুন:
-                    </p>
+                  <div className="space-y-3.5">
+                    
+                    {/* ওয়ান-ক্লিক পারমিশন প্রিসেট বাটন */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                      <span className="text-xs font-bold text-slate-700 flex items-center space-x-1">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>কুইক পারমিশন প্রিসেট:</span>
+                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => applyPermissionPreset('cashier')}
+                          className="px-2.5 py-1 text-[11px] font-semibold bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 rounded-lg cursor-pointer"
+                        >
+                          💼 ক্যাশিয়ার প্রিসেট
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyPermissionPreset('salesman')}
+                          className="px-2.5 py-1 text-[11px] font-semibold bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 rounded-lg cursor-pointer"
+                        >
+                          🛍️ সেলসম্যান প্রিসেট
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyPermissionPreset('manager')}
+                          className="px-2.5 py-1 text-[11px] font-semibold bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 rounded-lg cursor-pointer"
+                        >
+                          🛡️ ম্যানেজার প্রিসেট
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyPermissionPreset('all')}
+                          className="px-2 py-1 text-[10px] font-bold text-indigo-600 hover:bg-indigo-50 rounded-lg cursor-pointer"
+                        >
+                          সব দিন
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyPermissionPreset('clear')}
+                          className="px-2 py-1 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                        >
+                          ক্লিয়ার
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {PERMISSION_DEFINITIONS.map(p => {
                         const isGranted = formData.Permissions.includes(p.id);
@@ -1121,7 +1443,7 @@ export default function UsersModal({
                             onClick={() => handleTogglePermission(p.id)}
                             className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start space-x-3 ${
                               isGranted
-                                ? 'bg-indigo-50/70 border-indigo-300 text-indigo-950'
+                                ? 'bg-indigo-50/70 border-indigo-300 text-indigo-950 shadow-2xs'
                                 : 'bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-slate-100'
                             }`}
                           >
@@ -1178,28 +1500,61 @@ export default function UsersModal({
             </div>
           ) : activeMainTab === 'attendance' ? (
             /* -----------------------------------------------------------------
-               ভিউ মোড ২: ডিজিটাল হাজিরা খাতা (Attendance Roster)
+               ভিউ মোড ২: ডিজিটাল হাজিরা খাতা (Attendance Roster & Date Selector)
                ----------------------------------------------------------------- */
             <div className="space-y-4 max-w-5xl mx-auto">
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+              
+              {/* কন্ট্রোল বার: তারিখ নির্বাচন ও বাল্ক ক্লক-ইন */}
+              <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
                     <Clock className="w-4 h-4 text-indigo-600" />
-                    <span>আজকের শিফট ও ডিজিটাল উপস্থিতি ({new Date().toISOString().split('T')[0]})</span>
+                    <span>শিফট হাজিরা ও কাজের সময় খতিয়ান</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    স্টাফরা দোকানে প্রবেশের সময় "ক্লক-ইন" এবং প্রস্থানকালে "ক্লক-আউট" করতে পারবেন
+                    দোকানের কর্মচারীদের প্রবেশ ও প্রস্থান সময় ট্র্যাকিং এবং উপস্থিতি মনিটরিং
                   </p>
                 </div>
-                <button
-                  onClick={refreshAttendance}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl flex items-center space-x-1 cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>হাজিরা রিফ্রেশ</span>
-                </button>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* তারিখ ফিল্টার */}
+                  <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl">
+                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                    <input
+                      type="date"
+                      value={selectedAttendanceDate}
+                      onChange={(e) => setSelectedAttendanceDate(e.target.value)}
+                      className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-hidden cursor-pointer"
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedAttendanceDate(new Date().toISOString().split('T')[0])}
+                    className="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
+                  >
+                    আজ
+                  </button>
+
+                  <button
+                    onClick={handleBulkClockIn}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                    title="আজকের শিফটে সকল সক্রিয় স্টাফকে একসাথে উপস্থিত করুন"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>সবাই উপস্থিত</span>
+                  </button>
+
+                  <button
+                    onClick={refreshAttendance}
+                    className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
+                    title="হাজিরা রিফ্রেশ করুন"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
+              {/* হাজিরা টেবিল */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
@@ -1208,7 +1563,8 @@ export default function UsersModal({
                       <th className="py-3 px-4">মোবাইল</th>
                       <th className="py-3 px-4">প্রবেশ সময় (Clock In)</th>
                       <th className="py-3 px-4">প্রস্থান সময় (Clock Out)</th>
-                      <th className="py-3 px-4 text-center">আজকের স্ট্যাটাস</th>
+                      <th className="py-3 px-4">কাজের সময়</th>
+                      <th className="py-3 px-4 text-center">স্ট্যাটাস</th>
                       <th className="py-3 px-4 text-right">অ্যাকশন</th>
                     </tr>
                   </thead>
@@ -1216,10 +1572,12 @@ export default function UsersModal({
                     {users
                       .filter(u => u.Role !== 'Customer')
                       .map(u => {
-                        const todayStr = new Date().toISOString().split('T')[0];
-                        const att = attendanceRecords.find(r => r.UserID === u.UserID && r.Date === todayStr);
+                        const targetDate = selectedAttendanceDate;
+                        const att = attendanceRecords.find(r => String(r.UserID).trim() === String(u.UserID).trim() && r.Date === targetDate);
                         const isPresent = Boolean(att && att.ClockIn);
                         const isClockedOut = Boolean(att && att.ClockOut);
+                        const durationStr = getShiftDuration(att?.ClockIn, att?.ClockOut);
+                        const isLate = att?.ClockIn ? isLateClockIn(att.ClockIn) : false;
 
                         return (
                           <tr key={u.UserID} className="hover:bg-slate-50/80 transition-colors">
@@ -1228,20 +1586,30 @@ export default function UsersModal({
                                 {u.AvatarUrl ? (
                                   <img src={formatImageUrl(u.AvatarUrl)} alt="" className="w-full h-full object-cover" />
                                 ) : (
-                                  u.FullName.slice(0, 1)
+                                  u.FullName?.slice(0, 1) || 'S'
                                 )}
                               </div>
                               <div>
-                                <p className="font-bold text-slate-900">{u.FullName}</p>
+                                <p className="font-bold text-slate-900 flex items-center space-x-1.5">
+                                  <span>{u.FullName}</span>
+                                  <span className="text-[10px] font-normal text-slate-400">({u.Role})</span>
+                                </p>
                                 <span className="text-[10px] text-slate-500 font-mono">#{u.UserID}</span>
                               </div>
                             </td>
                             <td className="py-3 px-4 font-mono text-slate-600">{u.Phone || 'N/A'}</td>
                             <td className="py-3 px-4 font-mono">
                               {att?.ClockIn ? (
-                                <span className="text-emerald-700 font-bold">
-                                  {new Date(att.ClockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                                <div className="flex items-center space-x-1.5">
+                                  <span className="text-emerald-700 font-bold">
+                                    {new Date(att.ClockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                  {isLate && (
+                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800">
+                                      লেট
+                                    </span>
+                                  )}
+                                </div>
                               ) : (
                                 <span className="text-slate-400 italic">প্রবেশ করেনি</span>
                               )}
@@ -1255,11 +1623,19 @@ export default function UsersModal({
                                 <span className="text-slate-400 italic">—</span>
                               )}
                             </td>
+                            <td className="py-3 px-4 font-mono font-semibold text-slate-700">
+                              {durationStr}
+                            </td>
                             <td className="py-3 px-4 text-center">
-                              {isPresent ? (
-                                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  <span>উপস্থিত</span>
+                              {isPresent && !isClockedOut ? (
+                                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                                  <span>ডিউটিতে আছেন</span>
+                                </span>
+                              ) : isPresent && isClockedOut ? (
+                                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                  <Check className="w-3 h-3" />
+                                  <span>শিফট শেষ</span>
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
@@ -1284,8 +1660,109 @@ export default function UsersModal({
                                   ক্লক-আউট
                                 </button>
                               ) : (
-                                <span className="text-[11px] text-slate-400 font-semibold">শিফট সম্পন্ন</span>
+                                <span className="text-[11px] text-slate-400 font-semibold">শিফট সমাপ্ত</span>
                               )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : activeMainTab === 'payroll' ? (
+            /* -----------------------------------------------------------------
+               ভিউ মোড ৩: বেতন ও পে-রোল লেজার (Payroll Ledger & Payslip Generator)
+               ----------------------------------------------------------------- */
+            <div className="space-y-4 max-w-5xl mx-auto">
+              
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
+                    <CreditCard className="w-4 h-4 text-amber-600" />
+                    <span>চলতি মাসের স্টাফ বেতন ও কমিশন লেজার ({new Date().toLocaleDateString('bn-BD', { month: 'long', year: 'numeric' })})</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    স্টাফের মূল বেতন, অর্জিত বিক্রয় কমিশন এবং খরচের খাতা থেকে গৃহীত অগ্রিমের সমন্বয়
+                  </p>
+                </div>
+              </div>
+
+              {/* পে-রোল টেবিল */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-900 text-slate-300 font-semibold border-b border-slate-800">
+                      <th className="py-3 px-4">কর্মীর নাম ও পদবী</th>
+                      <th className="py-3 px-4 text-right">মূল বেতন</th>
+                      <th className="py-3 px-4 text-right">চলতি মাসে বিক্রি</th>
+                      <th className="py-3 px-4 text-right">অর্জিত কমিশন</th>
+                      <th className="py-3 px-4 text-right">অগ্রিম/প্রদত্ত (Expenses)</th>
+                      <th className="py-3 px-4 text-right">অবশিষ্ট বকেয়া</th>
+                      <th className="py-3 px-4 text-center">অ্যাকশন</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {users
+                      .filter(u => u.Role !== 'Customer')
+                      .map(user => {
+                        const salesM = getStaffSalesMetrics(user);
+                        const sal = getStaffSalaryMetrics(user);
+
+                        return (
+                          <tr key={user.UserID} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-3 px-4 flex items-center space-x-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center overflow-hidden shrink-0">
+                                {user.AvatarUrl ? (
+                                  <img src={formatImageUrl(user.AvatarUrl)} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  user.FullName?.slice(0, 1) || 'S'
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-900">{user.FullName}</p>
+                                <span className="text-[10px] text-slate-500">{user.Role} • #{user.UserID?.slice(-6)}</span>
+                              </div>
+                            </td>
+
+                            <td className="py-3 px-4 text-right font-semibold text-slate-900">
+                              {sal.baseSalary > 0 ? `${currencySymbol}${sal.baseSalary.toLocaleString('en-IN')}` : 'নির্ধারিত নেই'}
+                            </td>
+
+                            <td className="py-3 px-4 text-right font-mono text-slate-700">
+                              {currencySymbol}{salesM.totalSales.toLocaleString('en-IN')}
+                            </td>
+
+                            <td className="py-3 px-4 text-right font-bold text-emerald-700">
+                              {salesM.commissionEarned > 0 ? `${currencySymbol}${salesM.commissionEarned.toLocaleString('en-IN')}` : '০'}
+                            </td>
+
+                            <td className="py-3 px-4 text-right font-bold text-amber-700">
+                              {sal.paidThisMonth > 0 ? `${currencySymbol}${sal.paidThisMonth.toLocaleString('en-IN')}` : '০'}
+                            </td>
+
+                            <td className="py-3 px-4 text-right font-bold text-indigo-700">
+                              {currencySymbol}{sal.balanceDue.toLocaleString('en-IN')}
+                            </td>
+
+                            <td className="py-3 px-4 text-center">
+                              <div className="flex items-center justify-center space-x-1.5">
+                                <button
+                                  onClick={() => setSelectedStaffForPayslip(user)}
+                                  className="px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] flex items-center space-x-1 cursor-pointer transition-colors"
+                                  title="অফিসিয়াল বেতন রসিদ তৈরি করুন"
+                                >
+                                  <Printer className="w-3 h-3" />
+                                  <span>পে-স্লিপ</span>
+                                </button>
+                                <button
+                                  onClick={() => setSelectedStaffForProfile(user)}
+                                  className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 cursor-pointer"
+                                  title="বিস্তারিত হিসাব ও লেজার"
+                                >
+                                  <Activity className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -1296,7 +1773,7 @@ export default function UsersModal({
             </div>
           ) : (
             /* -----------------------------------------------------------------
-               ভিউ মোড ১: স্টাফ ও ইউজার তালিকা (Cards / Table)
+               ভিউ মোড ১: স্টাফ বা কাস্টমার তালিকা (Cards / Table)
                ----------------------------------------------------------------- */
             <div className="space-y-4">
               
@@ -1308,7 +1785,11 @@ export default function UsersModal({
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="নাম, মোবাইল, ইমেইল, ইউজার আইডি বা NID দিয়ে খুঁজুন..."
+                    placeholder={
+                      activeMainTab === 'customers'
+                        ? "গ্রাহকের নাম, মোবাইল নম্বর, ইমেইল বা ঠিকানা দিয়ে খুঁজুন..."
+                        : "স্টাফের নাম, মোবাইল, রোল, আইডি বা NID দিয়ে খুঁজুন..."
+                    }
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-slate-50/50"
@@ -1325,20 +1806,34 @@ export default function UsersModal({
 
                 {/* রোল ও সর্ট কন্ট্রোল */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    value={selectedRoleFilter}
-                    onChange={(e) => setSelectedRoleFilter(e.target.value)}
-                    className="text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold cursor-pointer"
-                  >
-                    <option value="All">সকল ভূমিকা (All)</option>
-                    <option value="AdminGroup">এডমিন ও ম্যানেজার</option>
-                    <option value="StaffGroup">ক্যাশিয়ার ও সেলস টিম</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Manager">Manager</option>
-                    <option value="Cashier">Cashier</option>
-                    <option value="Salesman">Salesman</option>
-                    <option value="Customer">Customer</option>
-                  </select>
+                  {activeMainTab === 'staff' && (
+                    <select
+                      value={selectedRoleFilter}
+                      onChange={(e) => setSelectedRoleFilter(e.target.value)}
+                      className="text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold cursor-pointer"
+                    >
+                      <option value="All">সকল পদবী (All Roles)</option>
+                      <option value="AdminGroup">এডমিন ও ম্যানেজার</option>
+                      <option value="StaffGroup">ক্যাশিয়ার ও সেলস টিম</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Manager">Manager</option>
+                      <option value="Cashier">Cashier</option>
+                      <option value="Salesman">Salesman</option>
+                    </select>
+                  )}
+
+                  {activeMainTab === 'staff' && (
+                    <select
+                      value={selectedDutyFilter}
+                      onChange={(e) => setSelectedDutyFilter(e.target.value)}
+                      className="text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold cursor-pointer"
+                    >
+                      <option value="all">সকল ডিউটি স্ট্যাটাস</option>
+                      <option value="on_duty">🟢 ডিউটিতে আছেন</option>
+                      <option value="completed">⚪ শিফট সম্পন্ন</option>
+                      <option value="absent">🔴 আজ আসেননি</option>
+                    </select>
+                  )}
 
                   <select
                     value={sortBy}
@@ -1375,7 +1870,7 @@ export default function UsersModal({
 
               </div>
 
-              {/* ইউজার কার্ড গ্রিড ভিউ */}
+              {/* গ্রিড ভিউ */}
               {viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
                   {filteredUsers.map((user) => {
@@ -1384,6 +1879,7 @@ export default function UsersModal({
                     const salaryM = getStaffSalaryMetrics(user);
                     const isRevealed = revealedPinId === user.UserID;
                     const isInactive = user.Status === 'Inactive';
+                    const duty = getStaffDutyStatus(user);
 
                     return (
                       <div
@@ -1393,7 +1889,7 @@ export default function UsersModal({
                         }`}
                       >
                         <div>
-                          {/* কার্ড হেডার: ছবি, নাম, পদবী */}
+                          {/* কার্ড হেডার: ছবি, নাম, পদবী ও লাইভ ডিউটি স্ট্যাটাস */}
                           <div className="flex items-start justify-between">
                             <div className="flex items-center space-x-3">
                               <div className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${roleDef.avatarGradient} text-white font-bold text-lg flex items-center justify-center overflow-hidden shrink-0 shadow-xs border border-white`}>
@@ -1427,16 +1923,44 @@ export default function UsersModal({
                                 </div>
                               </div>
                             </div>
+
+                            {/* লাইভ ডিউটি ব্যাজ (যদি কাস্টমার না হয়) */}
+                            {duty && (
+                              <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center space-x-1 ${duty.badge}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${duty.dot}`}></span>
+                                <span>{duty.label}</span>
+                              </div>
+                            )}
                           </div>
 
-                          {/* যোগাযোগ ও পিন */}
-                          <div className="mt-3 pt-3 border-t border-slate-100 space-y-1 text-xs text-slate-600">
+                          {/* যোগাযোগ ও স্মার্ট পিন */}
+                          <div className="mt-3 pt-3 border-t border-slate-100 space-y-1.5 text-xs text-slate-600">
                             <div className="flex items-center justify-between">
                               <span className="text-slate-400 flex items-center space-x-1">
                                 <Phone className="w-3 h-3" />
                                 <span>মোবাইল:</span>
                               </span>
-                              <span className="font-mono font-semibold text-slate-800">{user.Phone || 'N/A'}</span>
+                              <div className="flex items-center space-x-2 font-mono font-semibold text-slate-800">
+                                <span>{user.Phone || 'N/A'}</span>
+                                {user.Phone && (
+                                  <div className="flex items-center space-x-1">
+                                    <a
+                                      href={`tel:${user.Phone}`}
+                                      className="p-1 rounded bg-slate-100 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 transition-colors"
+                                      title="কল করুন"
+                                    >
+                                      <PhoneCall className="w-3 h-3" />
+                                    </a>
+                                    <button
+                                      onClick={() => handleWhatsApp(user.Phone, user.FullName)}
+                                      className="p-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors cursor-pointer"
+                                      title="WhatsApp বার্তা পাঠান"
+                                    >
+                                      <MessageSquare className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
 
                             <div className="flex items-center justify-between">
@@ -1447,18 +1971,28 @@ export default function UsersModal({
                               <div className="flex items-center space-x-1 font-mono font-bold">
                                 <span>{isRevealed ? user.PIN : '••••'}</span>
                                 <button
-                                  onClick={() => setRevealedPinId(isRevealed ? null : user.UserID)}
+                                  onClick={() => handleToggleRevealPin(user.UserID)}
                                   className="text-slate-400 hover:text-slate-600 cursor-pointer ml-1"
+                                  title={isRevealed ? "পিন লুকান" : "পিন দেখুন (৬ সেকেন্ড অটো-হাইড)"}
                                 >
                                   {isRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                                 </button>
+                                {isRevealed && (
+                                  <button
+                                    onClick={() => handleCopyText(user.PIN, `pin-${user.UserID}`)}
+                                    className="text-slate-400 hover:text-indigo-600 cursor-pointer ml-0.5"
+                                    title="পিন কপি করুন"
+                                  >
+                                    {copiedId === `pin-${user.UserID}` ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                                  </button>
+                                )}
                               </div>
                             </div>
                           </div>
 
                           {/* ফাইন্যান্স ও সেলস মেট্রিক্স স্ট্রিপ (যদি কাস্টমার না হয়) */}
                           {user.Role !== 'Customer' && (
-                            <div className="mt-3 p-2 rounded-xl bg-slate-50 border border-slate-200/80 grid grid-cols-2 gap-2 text-[11px]">
+                            <div className="mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 grid grid-cols-2 gap-2 text-[11px]">
                               <div>
                                 <span className="text-slate-400 block text-[10px]">মোট বিক্রি</span>
                                 <span className="font-bold text-slate-900">
@@ -1493,10 +2027,21 @@ export default function UsersModal({
                             <button
                               onClick={() => setSelectedStaffForIdCard(user)}
                               className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
-                              title="আইডি কার্ড প্রিন্ট করুন"
+                              title="স্মার্ট আইডি কার্ড ও QR কোড প্রিন্ট"
                             >
                               <Printer className="w-3.5 h-3.5" />
                             </button>
+
+                            {/* পে-স্লিপ বাটন (কাস্টমার না হলে) */}
+                            {user.Role !== 'Customer' && (
+                              <button
+                                onClick={() => setSelectedStaffForPayslip(user)}
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
+                                title="অফিসিয়াল বেতন রসিদ (Pay Slip)"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                              </button>
+                            )}
 
                             {/* বিস্তারিত প্রোফাইল ও লেজার */}
                             <button
@@ -1549,8 +2094,9 @@ export default function UsersModal({
                           <th className="py-3 px-3.5">স্টাফ ও ইউজার</th>
                           <th className="py-3 px-3.5">পদবী (Role)</th>
                           <th className="py-3 px-3.5">মোবাইল ও পিন</th>
+                          {activeMainTab === 'staff' && <th className="py-3 px-3.5">লাইভ ডিউটি</th>}
                           <th className="py-3 px-3.5 text-right">মোট বিক্রি</th>
-                          <th className="py-3 px-3.5 text-right">মূল বেতন</th>
+                          {activeMainTab === 'staff' && <th className="py-3 px-3.5 text-right">মূল বেতন</th>}
                           <th className="py-3 px-3.5 text-center">স্ট্যাটাস</th>
                           <th className="py-3 px-3.5 text-center">অ্যাকশন</th>
                         </tr>
@@ -1561,6 +2107,7 @@ export default function UsersModal({
                           const salesM = getStaffSalesMetrics(user);
                           const salaryM = getStaffSalaryMetrics(user);
                           const isRevealed = revealedPinId === user.UserID;
+                          const duty = getStaffDutyStatus(user);
 
                           return (
                             <tr key={user.UserID} className="hover:bg-slate-50/80 transition-colors">
@@ -1569,7 +2116,7 @@ export default function UsersModal({
                                   {user.AvatarUrl ? (
                                     <img src={formatImageUrl(user.AvatarUrl)} alt="" className="w-full h-full object-cover" />
                                   ) : (
-                                    user.FullName.slice(0, 1)
+                                    user.FullName?.slice(0, 1) || 'U'
                                   )}
                                 </div>
                                 <div>
@@ -1591,13 +2138,26 @@ export default function UsersModal({
                                 </div>
                               </td>
 
+                              {activeMainTab === 'staff' && (
+                                <td className="py-3 px-3.5 whitespace-nowrap">
+                                  {duty && (
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center space-x-1 ${duty.badge}`}>
+                                      <span className={`w-1.5 h-1.5 rounded-full ${duty.dot}`}></span>
+                                      <span>{duty.label}</span>
+                                    </span>
+                                  )}
+                                </td>
+                              )}
+
                               <td className="py-3 px-3.5 text-right font-bold text-slate-900 whitespace-nowrap">
                                 {currencySymbol}{salesM.totalSales.toLocaleString('en-IN')}
                               </td>
 
-                              <td className="py-3 px-3.5 text-right font-semibold text-indigo-700 whitespace-nowrap">
-                                {salaryM.baseSalary > 0 ? `${currencySymbol}${salaryM.baseSalary.toLocaleString('en-IN')}` : '—'}
-                              </td>
+                              {activeMainTab === 'staff' && (
+                                <td className="py-3 px-3.5 text-right font-semibold text-indigo-700 whitespace-nowrap">
+                                  {salaryM.baseSalary > 0 ? `${currencySymbol}${salaryM.baseSalary.toLocaleString('en-IN')}` : '—'}
+                                </td>
+                              )}
 
                               <td className="py-3 px-3.5 text-center whitespace-nowrap">
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -1616,6 +2176,15 @@ export default function UsersModal({
                                   >
                                     <Printer className="w-3.5 h-3.5" />
                                   </button>
+                                  {user.Role !== 'Customer' && (
+                                    <button
+                                      onClick={() => setSelectedStaffForPayslip(user)}
+                                      className="p-1 rounded text-slate-500 hover:text-amber-600 cursor-pointer"
+                                      title="পে-স্লিপ"
+                                    >
+                                      <FileText className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() => setSelectedStaffForProfile(user)}
                                     className="p-1 rounded text-slate-500 hover:text-indigo-600 cursor-pointer"
@@ -1665,16 +2234,16 @@ export default function UsersModal({
       </div>
 
       {/* =========================================================================
-          ৬. ডিজিটাল স্টাফ আইডি কার্ড প্রিন্ট মোডাল (#printable-staff-id-card)
+          ৬. স্মার্ট ডিজিটাল স্টাফ আইডি কার্ড প্রিন্ট মোডাল (ডায়নামিক QR কোড সহ)
           ========================================================================= */}
       {selectedStaffForIdCard && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 z-[110] animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-200 flex flex-col">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 flex flex-col">
             
             <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800">
               <span className="font-bold text-xs sm:text-sm flex items-center space-x-1.5">
-                <Printer className="w-4 h-4 text-indigo-400" />
-                <span>স্টাফ আইডি কার্ড প্রিন্ট প্রিভিউ</span>
+                <QrCode className="w-4 h-4 text-indigo-400" />
+                <span>স্মার্ট স্টাফ আইডি কার্ড প্রিন্ট প্রিভিউ</span>
               </span>
               <button
                 onClick={() => setSelectedStaffForIdCard(null)}
@@ -1684,14 +2253,16 @@ export default function UsersModal({
               </button>
             </div>
 
-            {/* আইডি কার্ড ভিউ */}
-            <div className="p-5 flex items-center justify-center bg-slate-100">
+            {/* আইডি কার্ড ভিউ (ডুয়েল সাইড) */}
+            <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-center gap-4 bg-slate-100 max-h-[75vh] overflow-y-auto">
+              
+              {/* কার্ডের সামনের পিঠ */}
               <div
                 id="printable-staff-id-card"
-                className="w-[280px] bg-white rounded-2xl border-2 border-slate-300 p-4 shadow-md text-center flex flex-col items-center justify-between font-sans relative overflow-hidden"
+                className="w-[260px] bg-white rounded-2xl border-2 border-slate-300 p-4 shadow-md text-center flex flex-col items-center justify-between font-sans relative overflow-hidden shrink-0"
               >
                 {/* টপ ব্যানার */}
-                <div className="w-full bg-slate-900 text-white py-2 px-3 rounded-xl mb-3">
+                <div className="w-full bg-slate-900 text-white py-2 px-3 rounded-xl mb-2.5">
                   <h4 className="font-black text-xs uppercase tracking-wider">{storeName}</h4>
                   <p className="text-[9px] text-slate-300">{storePhone}</p>
                 </div>
@@ -1714,10 +2285,10 @@ export default function UsersModal({
                 </span>
 
                 {/* তথ্য তালিকা */}
-                <div className="w-full mt-3 py-2 border-y border-dashed border-slate-200 text-[11px] text-slate-700 space-y-1 text-left font-mono">
+                <div className="w-full mt-2.5 py-2 border-y border-dashed border-slate-200 text-[10.5px] text-slate-700 space-y-1 text-left font-mono">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">আইডি নং:</span>
-                    <span className="font-bold">{selectedStaffForIdCard.UserID}</span>
+                    <span className="text-slate-400">আইডি:</span>
+                    <span className="font-bold">#{selectedStaffForIdCard.UserID}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">মোবাইল:</span>
@@ -1725,29 +2296,55 @@ export default function UsersModal({
                   </div>
                   {selectedStaffForIdCard.BloodGroup && (
                     <div className="flex justify-between">
-                      <span className="text-slate-400">রক্তের গ্রুপ:</span>
+                      <span className="text-slate-400">ব্লাড গ্রুপ:</span>
                       <span className="font-bold text-rose-600">{selectedStaffForIdCard.BloodGroup}</span>
                     </div>
                   )}
-                  {selectedStaffForIdCard.EmergencyPhone && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">জরুরি ফোন:</span>
-                      <span>{selectedStaffForIdCard.EmergencyPhone}</span>
-                    </div>
-                  )}
                 </div>
 
-                {/* সিমুলেটেড বারকোড */}
-                <div className="w-full mt-3 flex flex-col items-center">
-                  <div className="font-mono text-[9px] tracking-widest text-slate-400">
-                    ||||| | |||| ||| ||||| |||| ||||
-                  </div>
-                  <span className="text-[9px] text-slate-400 font-mono mt-0.5">
-                    {selectedStaffForIdCard.UserID}
-                  </span>
+                {/* আসল স্ক্যানযোগ্য QR Code */}
+                <div className="mt-2.5 flex flex-col items-center">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`STAFF:${selectedStaffForIdCard.UserID}|${selectedStaffForIdCard.FullName}|${selectedStaffForIdCard.Role}|${selectedStaffForIdCard.Phone}`)}`}
+                    alt="Staff QR"
+                    className="w-16 h-16 rounded-lg border border-slate-200 p-1 bg-white shadow-2xs"
+                  />
+                  <span className="text-[9px] text-slate-400 font-mono mt-0.5">স্মার্ট স্ক্যান ভেরিফাইড</span>
                 </div>
-
               </div>
+
+              {/* কার্ডের পেছনের পিঠ (শর্তাবলী ও জরুরি কন্টাক্ট) */}
+              <div className="w-[260px] bg-slate-900 text-slate-300 rounded-2xl border-2 border-slate-700 p-4 shadow-md text-left flex flex-col justify-between font-sans shrink-0 min-h-[350px]">
+                <div>
+                  <h4 className="font-bold text-white text-xs border-b border-slate-800 pb-1.5 mb-2 flex items-center justify-between">
+                    <span>জরুরি নীতিমালা ও নিয়ম</span>
+                    <Shield className="w-3.5 h-3.5 text-indigo-400" />
+                  </h4>
+                  <ul className="text-[9.5px] text-slate-400 space-y-1.5 list-disc pl-3">
+                    <li>এই কার্ডটি {storeName}-এর নিজস্ব সম্পত্তি।</li>
+                    <li>দোকানে ডিউটিরত অবস্থায় সার্বক্ষণিক কার্ড পরিধান বাধ্যতামূলক।</li>
+                    <li>কার্ড হারিয়ে গেলে তাৎক্ষণিক ম্যানেজারকে রিপোর্ট করুন।</li>
+                  </ul>
+
+                  <div className="mt-4 pt-3 border-t border-slate-800 text-[10px] space-y-1">
+                    <p className="text-slate-400">দোকানের ঠিকানা:</p>
+                    <p className="text-white font-medium">{storeAddress}</p>
+                    <p className="text-slate-400 mt-2">জরুরি যোগাযোগ:</p>
+                    <p className="text-white font-mono">{selectedStaffForIdCard.EmergencyPhone || storePhone}</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-800 flex items-end justify-between text-[9px] text-slate-400">
+                  <div className="text-center">
+                    <div className="h-6 w-20 border-b border-dashed border-slate-600 mb-1"></div>
+                    <span>অনুমোদিত স্বাক্ষর</span>
+                  </div>
+                  <div className="text-right font-mono">
+                    VALID 2026-27
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             {/* অ্যাকশন বাটন */}
@@ -1763,7 +2360,7 @@ export default function UsersModal({
                 className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-sm"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>প্রিন্ট করুন</span>
+                <span>আইডি কার্ড প্রিন্ট করুন</span>
               </button>
             </div>
 
@@ -1772,7 +2369,145 @@ export default function UsersModal({
       )}
 
       {/* =========================================================================
-          ৭. স্টাফ বিস্তারিত প্রোফাইল, পারফরম্যান্স ও লেজার মোডাল
+          ৭. অফিসিয়াল পে-স্লিপ প্রিন্ট মোডাল (Payslip Generator)
+          ========================================================================= */}
+      {selectedStaffForPayslip && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 z-[110] animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 flex flex-col">
+            
+            <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
+              <span className="font-bold text-xs sm:text-sm flex items-center space-x-1.5">
+                <FileText className="w-4 h-4 text-amber-400" />
+                <span>বেতন ও কমিশন রসিদ (Pay Slip)</span>
+              </span>
+              <button
+                onClick={() => setSelectedStaffForPayslip(null)}
+                className="w-7 h-7 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* পে-স্লিপ প্রিন্ট ভিউ */}
+            <div className="p-6 bg-slate-50 overflow-y-auto max-h-[75vh]">
+              <div
+                id="printable-payslip"
+                className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs font-sans text-xs space-y-4"
+              >
+                {/* স্লিপ হেডার */}
+                <div className="text-center border-b border-slate-200 pb-3">
+                  <h3 className="font-black text-base text-slate-900 uppercase tracking-wider">{storeName}</h3>
+                  <p className="text-[11px] text-slate-500">{storeAddress} • ফোন: {storePhone}</p>
+                  <span className="inline-block mt-2 px-3 py-0.5 rounded-full text-[10px] font-bold bg-slate-900 text-white uppercase tracking-wider">
+                    মাসিক বেতন ও কমিশন ভাউচার
+                  </span>
+                </div>
+
+                {/* কর্মীর পরিচিতি */}
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">কর্মীর নাম:</span>
+                    <strong className="text-slate-900">{selectedStaffForPayslip.FullName}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">পদবী / আইডি:</span>
+                    <strong>{selectedStaffForPayslip.Role} (#{selectedStaffForPayslip.UserID})</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">মোবাইল:</span>
+                    <span className="font-mono">{selectedStaffForPayslip.Phone || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">মাস ও বছর:</span>
+                    <strong>{new Date().toLocaleDateString('bn-BD', { month: 'long', year: 'numeric' })}</strong>
+                  </div>
+                </div>
+
+                {/* হিসাব টেবিল */}
+                {(() => {
+                  const salesM = getStaffSalesMetrics(selectedStaffForPayslip);
+                  const sal = getStaffSalaryMetrics(selectedStaffForPayslip);
+                  const grossEarnings = sal.baseSalary + salesM.commissionEarned;
+                  const netPayable = Math.max(0, grossEarnings - sal.paidThisMonth);
+
+                  return (
+                    <div className="space-y-3">
+                      <div className="border border-slate-200 rounded-lg overflow-hidden">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
+                            <tr>
+                              <th className="py-2 px-3">বিবরণ (Earnings & Deductions)</th>
+                              <th className="py-2 px-3 text-right">টাকা ({currencySymbol})</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-[11px]">
+                            <tr>
+                              <td className="py-2 px-3">নির্ধারিত মাসিক মূল বেতন (Basic Salary)</td>
+                              <td className="py-2 px-3 text-right font-semibold">{sal.baseSalary.toLocaleString('en-IN')}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3">
+                                বিক্রয় কমিশন ({selectedStaffForPayslip.CommissionRate || 0}% অন {currencySymbol}{salesM.totalSales.toLocaleString('en-IN')} বিক্রি)
+                              </td>
+                              <td className="py-2 px-3 text-right font-semibold text-emerald-700">+{salesM.commissionEarned.toLocaleString('en-IN')}</td>
+                            </tr>
+                            <tr className="bg-slate-50/70 font-bold text-slate-900">
+                              <td className="py-2 px-3">সর্বমোট অর্জিত আয় (Gross Earnings)</td>
+                              <td className="py-2 px-3 text-right">{grossEarnings.toLocaleString('en-IN')}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 text-amber-800">চলতি মাসে গৃহীত অগ্রিম / প্রদেয় (Advance Drawn)</td>
+                              <td className="py-2 px-3 text-right font-semibold text-amber-800">-{sal.paidThisMonth.toLocaleString('en-IN')}</td>
+                            </tr>
+                            <tr className="bg-indigo-50/80 font-black text-indigo-950 text-xs">
+                              <td className="py-2.5 px-3">নিট অবশিষ্ট প্রদেয় বেতন (Net Payable)</td>
+                              <td className="py-2.5 px-3 text-right text-indigo-700 text-sm">{currencySymbol}{netPayable.toLocaleString('en-IN')}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* স্বাক্ষর লাইন */}
+                      <div className="pt-6 flex justify-between text-[10px] text-slate-500">
+                        <div className="text-center">
+                          <div className="w-24 border-b border-dashed border-slate-400 mb-1"></div>
+                          <span>কর্মীর স্বাক্ষর</span>
+                        </div>
+                        <div className="text-center">
+                          <div className="w-24 border-b border-dashed border-slate-400 mb-1"></div>
+                          <span>হিসাবরক্ষক / ম্যানেজার</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+              </div>
+            </div>
+
+            {/* অ্যাকশন বাটন */}
+            <div className="p-3 bg-white border-t border-slate-200 flex justify-end space-x-2">
+              <button
+                onClick={() => setSelectedStaffForPayslip(null)}
+                className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-sm"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>রসিদ প্রিন্ট করুন</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          ৮. স্টাফ বিস্তারিত প্রোফাইল, পারফরম্যান্স ও লেজার মোডাল
           ========================================================================= */}
       {selectedStaffForProfile && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 z-[110] animate-fadeIn">
@@ -1781,7 +2516,7 @@ export default function UsersModal({
             <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between border-b border-slate-800">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white">
-                  {selectedStaffForProfile.FullName.slice(0, 1)}
+                  {selectedStaffForProfile.FullName?.slice(0, 1) || 'S'}
                 </div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base leading-tight">
