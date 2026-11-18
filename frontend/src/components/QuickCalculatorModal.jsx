@@ -8,11 +8,9 @@ import {
   Trash2,
   Plus,
   Minus,
-  Receipt,
-  Layers,
-  ShoppingBag
+  Receipt
 } from 'lucide-react';
-import { calculateTotalYards, formatFabricQuantity, parseGojGira } from '../utils/fabricUtils';
+import { calculateTotalYards, parseGojGira } from '../utils/fabricUtils';
 import { playCashChime } from '../utils/soundEffects';
 
 export default function QuickCalculatorModal({
@@ -95,7 +93,7 @@ export default function QuickCalculatorModal({
 
   // ৬. বর্তমান কাপড় তালিকায় যোগ / সংরক্ষণ করুন
   const handleAddItemToList = (e) => {
-    if (e) e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (currentCalculation.roundedPrice <= 0 && currentCalculation.totalYards <= 0) {
       return;
     }
@@ -109,13 +107,13 @@ export default function QuickCalculatorModal({
       rate: currentCalculation.numRate,
       price: currentCalculation.roundedPrice,
       text: currentCalculation.labelText,
-      time: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
     };
 
     setSavedItems((prev) => [...prev, newItem]);
     playCashChime();
 
-    // নতুন এন্ট্রির সুবিধার জন্য গজ ১ ও গিরা ০ রাখা (দর অপরিবর্তিত রাখা হয় যাতে দ্রুত টাইপ করা যায়)
+    // নতুন এন্ট্রির সুবিধার জন্য গজ ১ ও গিরা ০ রাখা (দর অপরিবর্তিত রাখা হয় যাতে দ্রুত হিসাব করা যায়)
     setGoj(1);
     setGira(0);
     if (rateInputRef.current) {
@@ -132,7 +130,7 @@ export default function QuickCalculatorModal({
   // ৮. সম্পূর্ণ তালিকা খালি করা (নতুন কাস্টমার)
   const handleClearAllItems = () => {
     if (savedItems.length === 0) return;
-    if (confirm('আপনি কি নিশ্চিত যে সম্পূর্ণ সংরক্ষিত তালিকা খালি করে নতুন কাস্টমারের হিসাব শুরু করবেন?')) {
+    if (confirm('আপনি কি সম্পূর্ণ সংরক্ষিত তালিকা খালি করে নতুন কাস্টমারের হিসাব শুরু করতে চান?')) {
       setSavedItems([]);
     }
   };
@@ -177,64 +175,66 @@ export default function QuickCalculatorModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/50 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-100"
       onClick={onClose}
     >
       <div 
-        className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150 text-slate-800"
+        className="bg-white w-full max-w-lg rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-100 text-slate-800"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* শীর্ষ মার্জিত হেডার (আঁখি-বান্ধব সফট ডার্ক স্লেট) */}
-        <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 shrink-0">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-600/90 text-white flex items-center justify-center shadow-xs">
-              <Scissors className="w-4 h-4" />
+        {/* শীর্ষ মার্জিত হেডার (Human Pro Dark Slate) */}
+        <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0 select-none">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700/80 text-slate-200 flex items-center justify-center shrink-0">
+              <Scissors className="w-4 h-4 text-slate-300" />
             </div>
             <div>
-              <h3 className="text-sm font-bold tracking-tight flex items-center space-x-2">
-                <span>কাটা কাপড় গজ-গিরা ক্যালকুলেটর</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
-                  Alt+C
+              <div className="flex items-center space-x-2">
+                <h3 className="text-sm font-bold tracking-tight text-white">
+                  কাটা কাপড় গজ-গিরা ক্যালকুলেটর
+                </h3>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                  Alt + C
                 </span>
-              </h3>
-              <p className="text-[10.5px] text-slate-400">গজ ও গিরা থেকে তাৎক্ষণিক কাপড় ও সর্বমোট বিল হিসাব</p>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                গজ ও গিরা ভিত্তিক তাৎক্ষণিক কাপড় পরিমাপ ও কাস্টমার বিলিং স্লিপ
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-7 h-7 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-              title="বন্ধ করুন (Esc)"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            title="বন্ধ করুন (Esc)"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         {/* স্ক্রোলেবল বডি কনটেন্ট */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-200">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           
           {/* ======================================================== */}
           {/* সেকশন ১: ইনপুট প্যানেল (গজ, গিরা ও দর) */}
           {/* ======================================================== */}
-          <div className="bg-slate-50/90 p-3.5 rounded-2xl border border-slate-200/90 space-y-3">
+          <form onSubmit={handleAddItemToList} className="bg-slate-50/80 p-4 rounded-xl border border-slate-200/90 space-y-3.5">
             
             {/* গজ ও গিরা ইনপুট গ্রিড */}
             <div className="grid grid-cols-2 gap-3">
               
               {/* ১.১ গজ (Goj) ইনপুট ফিল্ড */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1.5 flex items-center justify-between">
-                  <span>গজ (Goj)</span>
-                  <span className="text-[10px] text-slate-500 font-medium">পূর্ণ গজ</span>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center justify-between">
+                  <span>গজ (Yards)</span>
+                  <span className="text-[11px] text-slate-400 font-normal">পূর্ণ গজ</span>
                 </label>
-                <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-600/20">
+                <div className="flex items-center space-x-1 bg-white p-1 rounded-lg border border-slate-200 focus-within:border-slate-400 focus-within:ring-1 focus-within:ring-slate-400/20">
                   <button
                     type="button"
                     onClick={() => setGoj((prev) => Math.max(0, Number(prev || 0) - 1))}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer active:scale-95 shrink-0"
+                    className="w-8 h-8 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer shrink-0"
                     title="১ গজ কমান"
                   >
                     <Minus className="w-3.5 h-3.5" />
@@ -245,13 +245,13 @@ export default function QuickCalculatorModal({
                     step="1"
                     value={goj}
                     onChange={(e) => setGoj(Math.max(0, Number(e.target.value) || 0))}
-                    className="w-full text-center text-sm font-bold font-mono text-slate-900 bg-transparent focus:outline-hidden"
+                    className="w-full text-center text-sm font-bold font-mono tabular-nums text-slate-900 bg-transparent focus:outline-none"
                     placeholder="০"
                   />
                   <button
                     type="button"
                     onClick={() => setGoj((prev) => Number(prev || 0) + 1)}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer active:scale-95 shrink-0"
+                    className="w-8 h-8 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer shrink-0"
                     title="১ গজ বাড়ান"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -259,17 +259,17 @@ export default function QuickCalculatorModal({
                 </div>
               </div>
 
-              {/* ১.২ গিরা (Gira) ইনপুট ফিল্ড (ড্রপডাউনের পরিবর্তে ইনপুট) */}
+              {/* ১.২ গিরা (Gira) ইনপুট ফিল্ড */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1.5 flex items-center justify-between">
-                  <span>গিরা (Gira)</span>
-                  <span className="text-[10px] text-emerald-700 font-semibold">১৬ গিরা = ১ গজ</span>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center justify-between">
+                  <span>গিরা (Gira 0-15)</span>
+                  <span className="text-[11px] text-slate-400 font-normal">১৬ গিরা = ১ গজ</span>
                 </label>
-                <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-600/20">
+                <div className="flex items-center space-x-1 bg-white p-1 rounded-lg border border-slate-200 focus-within:border-slate-400 focus-within:ring-1 focus-within:ring-slate-400/20">
                   <button
                     type="button"
                     onClick={() => setGira((prev) => Math.max(0, Number(prev || 0) - 1))}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer active:scale-95 shrink-0"
+                    className="w-8 h-8 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer shrink-0"
                     title="১ গিরা কমান"
                   >
                     <Minus className="w-3.5 h-3.5" />
@@ -284,13 +284,13 @@ export default function QuickCalculatorModal({
                       const val = Number(e.target.value) || 0;
                       setGira(Math.max(0, Math.min(15, val)));
                     }}
-                    className="w-full text-center text-sm font-bold font-mono text-slate-900 bg-transparent focus:outline-hidden"
+                    className="w-full text-center text-sm font-bold font-mono tabular-nums text-slate-900 bg-transparent focus:outline-none"
                     placeholder="০"
                   />
                   <button
                     type="button"
                     onClick={() => setGira((prev) => Math.min(15, Number(prev || 0) + 1))}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer active:scale-95 shrink-0"
+                    className="w-8 h-8 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer shrink-0"
                     title="১ গিরা বাড়ান"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -300,16 +300,45 @@ export default function QuickCalculatorModal({
 
             </div>
 
-            {/* ১.৩ প্রতি গজ বিক্রয় দর ইনপুট */}
+            {/* ১.৩ গিরা কুইক প্রিসেট বাটন বার (Traditional Bengali Fabric Presets) */}
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500 font-medium block mb-1">
+                দ্রুত গিরা বাছাই (Quick Gira Shortcuts):
+              </span>
+              <div className="grid grid-cols-5 gap-1.5 text-xs font-medium">
+                {[
+                  { g: 0, label: '০ গিরা' },
+                  { g: 2, label: '২ (আধা পোয়া)' },
+                  { g: 4, label: '৪ (১ পোয়া)' },
+                  { g: 8, label: '৮ (আধা গজ)' },
+                  { g: 12, label: '১২ (পৌনে)' },
+                ].map((preset) => (
+                  <button
+                    key={preset.g}
+                    type="button"
+                    onClick={() => setGira(preset.g)}
+                    className={`py-1 px-1.5 rounded text-[11px] font-medium transition-colors cursor-pointer text-center truncate ${
+                      Number(gira) === preset.g
+                        ? 'bg-slate-900 text-white font-semibold shadow-2xs'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ১.৪ প্রতি গজ বিক্রয় দর ইনপুট */}
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center justify-between">
                 <span>প্রতি গজের বিক্রয় দর ({currencySymbol})</span>
-                <span className="text-[10.5px] text-slate-500 font-mono">
-                  {currentCalculation.numRate > 0 ? `৳${currentCalculation.numRate.toLocaleString('bn-BD')} / গজ` : 'দর লিখুন'}
+                <span className="text-[11px] text-slate-400 font-mono">
+                  {currentCalculation.numRate > 0 ? `${currencySymbol}${currentCalculation.numRate.toLocaleString('en-IN')} / গজ` : 'দর লিখুন'}
                 </span>
               </label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">
                   {currencySymbol}
                 </span>
                 <input
@@ -320,44 +349,43 @@ export default function QuickCalculatorModal({
                   value={rate}
                   onChange={(e) => setRate(Math.max(0, Number(e.target.value) || 0))}
                   placeholder="যেমন: ১৮০"
-                  className="w-full pl-8 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 font-mono font-bold text-slate-900 shadow-2xs"
+                  className="w-full pl-8 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 font-mono font-bold text-slate-900"
                 />
               </div>
             </div>
 
-            {/* ১.৪ বর্তমান কাপড়ের ফলাফল কার্ড ও তালিকায় যোগ বাটন */}
-            <div className="bg-white p-3 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
+            {/* ১.৫ বর্তমান কাপড়ের ফলাফল ও তালিকায় যোগ বাটন */}
+            <div className="bg-white p-3.5 rounded-lg border border-slate-200 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[10.5px] font-semibold text-slate-500 block">এই কাপড়ের পরিমাপ:</span>
+                  <span className="text-[11px] font-medium text-slate-400 block">পরিমাপ</span>
                   <span className="text-xs sm:text-sm font-bold text-slate-900 font-mono">
                     {currentCalculation.labelText} ({currentCalculation.totalYards} গজ)
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10.5px] font-semibold text-slate-500 block">এই কাপড়ের দাম:</span>
-                  <span className="text-base sm:text-lg font-black text-emerald-800 font-mono">
-                    {currencySymbol}{currentCalculation.roundedPrice.toLocaleString('bn-BD')}
+                  <span className="text-[11px] font-medium text-slate-400 block">হিসাবকৃত মূল্য</span>
+                  <span className="text-base sm:text-lg font-bold text-emerald-700 font-mono tabular-nums">
+                    {currencySymbol}{currentCalculation.roundedPrice.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>
 
-              {/* অ্যাকশন বাটন গ্রুপ: সংরক্ষণ/তালিকায় যোগ এবং কপি */}
-              <div className="flex items-center space-x-2 pt-1 border-t border-slate-100">
+              {/* অ্যাকশন বাটন গ্রুপ */}
+              <div className="flex items-center space-x-2 pt-2 border-t border-slate-100">
                 <button
-                  type="button"
-                  onClick={handleAddItemToList}
-                  className="flex-1 py-2 px-3 bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white rounded-xl text-xs font-bold inline-flex items-center justify-center space-x-1.5 shadow-xs transition-all cursor-pointer"
-                  title="এই কাপড়টি কাস্টমারের বিল তালিকায় যোগ ও সংরক্ষণ করুন (Ctrl+Enter)"
+                  type="submit"
+                  className="flex-1 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium inline-flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shadow-xs"
+                  title="এই কাপড়টি কাস্টমারের বিল তালিকায় যোগ করুন (Enter)"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>তালিকায় যোগ / সংরক্ষণ করুন</span>
+                  <Plus className="w-3.5 h-3.5 text-slate-300" />
+                  <span>তালিকায় যোগ করুন</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleCopyCurrentPrice}
-                  className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold inline-flex items-center space-x-1 transition-colors cursor-pointer shrink-0"
+                  className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium inline-flex items-center space-x-1 transition-colors cursor-pointer shrink-0"
                   title="শুধু এই কাপড়ের দাম কপি করুন"
                 >
                   {copiedNotification ? (
@@ -367,7 +395,7 @@ export default function QuickCalculatorModal({
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3.5 h-3.5" />
+                      <Copy className="w-3.5 h-3.5 text-slate-500" />
                       <span>কপি</span>
                     </>
                   )}
@@ -375,69 +403,69 @@ export default function QuickCalculatorModal({
               </div>
             </div>
 
-          </div>
+          </form>
 
           {/* ======================================================== */}
           {/* সেকশন ২: কাস্টমারের সংরক্ষিত কাপড়ের তালিকা ও সর্বমোট */}
           {/* ======================================================== */}
           <div className="space-y-2.5">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
-                <Receipt className="w-4 h-4 text-emerald-700" />
-                <span>কাস্টমারের কাপড়ের তালিকা ({savedItems.length})</span>
+            <div className="flex items-center justify-between px-0.5">
+              <span className="text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
+                <Receipt className="w-3.5 h-3.5 text-slate-500" />
+                <span>কাটিং স্লিপ তালিকা ({savedItems.length})</span>
               </span>
 
               {savedItems.length > 0 && (
                 <button
                   type="button"
                   onClick={handleClearAllItems}
-                  className="text-[11px] font-bold text-rose-600 hover:text-rose-800 flex items-center space-x-1 transition-colors cursor-pointer"
+                  className="text-[11px] font-medium text-rose-600 hover:text-rose-800 flex items-center space-x-1 transition-colors cursor-pointer"
                   title="সম্পূর্ণ তালিকা খালি করে নতুন কাস্টমারের হিসাব শুরু করুন"
                 >
                   <RotateCcw className="w-3 h-3" />
-                  <span>নতুন কাস্টমার (তালিকা মুছুন)</span>
+                  <span>তালিকা মুছুন</span>
                 </button>
               )}
             </div>
 
             {/* তালিকা বা এম্পটি স্টেট */}
             {savedItems.length === 0 ? (
-              <div className="p-5 text-center bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 text-slate-400 space-y-1">
-                <p className="text-xs font-medium text-slate-500">এখনো কোনো কাপড় তালিকায় যোগ করা হয়নি</p>
-                <p className="text-[10.5px]">
-                  উপরে গজ, গিরা ও দর দিয়ে <span className="font-bold text-emerald-700">"তালিকায় যোগ / সংরক্ষণ করুন"</span> বাটনে চাপুন।
+              <div className="p-5 text-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200 text-slate-400 space-y-1">
+                <p className="text-xs font-medium text-slate-500">তালিকায় এখনো কোনো কাপড় যোগ করা হয়নি</p>
+                <p className="text-[11px]">
+                  উপরে গজ, গিরা ও দর দিয়ে <span className="font-semibold text-slate-700">"তালিকায় যোগ করুন"</span> বাটনে চাপুন।
                 </p>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
-                <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 scrollbar-thin">
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+                <div className="max-h-48 overflow-y-auto divide-y divide-slate-100">
                   {savedItems.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="p-2.5 sm:px-3 flex items-center justify-between hover:bg-slate-50/70 transition-colors text-xs font-mono"
+                      className="p-2.5 sm:px-3 flex items-center justify-between hover:bg-slate-50 transition-colors text-xs font-mono"
                     >
-                      <div className="flex items-center space-x-2 min-w-0 pr-2">
-                        <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold shrink-0">
+                      <div className="flex items-center space-x-2.5 min-w-0 pr-2">
+                        <span className="w-5 h-5 rounded bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-mono shrink-0">
                           {idx + 1}
                         </span>
-                        <div className="truncate">
-                          <span className="font-bold text-slate-800 block truncate">
+                        <div className="truncate font-sans">
+                          <span className="font-semibold text-slate-800 block truncate">
                             {item.text}
                           </span>
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[11px] text-slate-400 font-mono">
                             {item.yards} গজ @ ৳{item.rate}/গজ
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-center space-x-2 shrink-0">
-                        <span className="font-bold text-slate-900 text-sm">
-                          {currencySymbol}{item.price.toLocaleString('bn-BD')}
+                        <span className="font-bold text-slate-900 text-sm tabular-nums">
+                          {currencySymbol}{item.price.toLocaleString('en-IN')}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(item.id)}
-                          className="p-1 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer rounded-md"
+                          className="p-1 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer rounded"
                           title="এই আইটেমটি মুছুন"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -447,36 +475,36 @@ export default function QuickCalculatorModal({
                   ))}
                 </div>
 
-                {/* সর্বমোট গ্র্যান্ড টোটাল স্ট্রিপ (চোখে আরামদায়ক সফট এমেরাল্ড ব্যানার) */}
-                <div className="bg-emerald-50/80 p-3.5 border-t border-emerald-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                {/* সর্বমোট গ্র্যান্ড টোটাল স্ট্রিপ (Clean Professional Summary Bar) */}
+                <div className="bg-slate-50 p-3.5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <span className="text-[10.5px] font-bold text-emerald-900 uppercase tracking-wider block">
-                      সর্বমোট প্রদেয় বিল ({listSummary.totalCount}টি কাপড়)
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                      সর্বমোট প্রদেয় বিল ({listSummary.totalCount}টি আইটেম)
                     </span>
-                    <span className="text-xs font-semibold text-slate-600 font-mono">
+                    <span className="text-xs font-medium text-slate-700 font-mono">
                       মোট কাপড়ের মাপ: {listSummary.formattedYardsText} ({listSummary.totalYards} গজ)
                     </span>
                   </div>
 
                   <div className="flex items-center space-x-3 justify-between sm:justify-end">
-                    <span className="text-xl sm:text-2xl font-black text-emerald-900 font-mono tracking-tight">
-                      {currencySymbol}{listSummary.grandTotal.toLocaleString('bn-BD')}
+                    <span className="text-xl sm:text-2xl font-bold text-slate-900 font-mono tabular-nums tracking-tight">
+                      {currencySymbol}{listSummary.grandTotal.toLocaleString('en-IN')}
                     </span>
 
                     <button
                       type="button"
                       onClick={handleCopyGrandTotal}
-                      className="py-1.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold inline-flex items-center space-x-1 shadow-2xs transition-all cursor-pointer"
+                      className="py-1.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium inline-flex items-center space-x-1 transition-colors cursor-pointer shadow-xs"
                       title="সর্বমোট বিলের টাকা কপি করুন"
                     >
                       {copiedGrandTotal ? (
                         <>
-                          <Check className="w-3.5 h-3.5 text-emerald-200" />
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
                           <span>কপি হয়েছে</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="w-3.5 h-3.5" />
+                          <Copy className="w-3.5 h-3.5 text-slate-300" />
                           <span>সর্বমোট কপি</span>
                         </>
                       )}
@@ -490,16 +518,19 @@ export default function QuickCalculatorModal({
         </div>
 
         {/* ফুটার নোট ও হেল্পার */}
-        <div className="p-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 shrink-0">
-          <span className="font-medium">
-            💡 শর্টকাট: <kbd className="px-1.5 py-0.5 rounded bg-slate-200 border border-slate-300 font-mono font-bold text-[10px] text-slate-800">Alt+C</kbd> (খোলা/বন্ধ) | <kbd className="px-1.5 py-0.5 rounded bg-slate-200 border border-slate-300 font-mono font-bold text-[10px] text-slate-800">Ctrl+Enter</kbd> (তালিকায় যোগ)
-          </span>
+        <div className="px-5 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 shrink-0">
+          <div className="flex items-center space-x-2">
+            <span>শর্টকাট:</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono text-[10px] text-slate-700">Alt + C</kbd>
+            <span className="text-slate-300">•</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono text-[10px] text-slate-700">Enter</kbd>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+            className="px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium border border-slate-200 transition-colors cursor-pointer"
           >
-            বন্ধ
+            বন্ধ করুন
           </button>
         </div>
 
