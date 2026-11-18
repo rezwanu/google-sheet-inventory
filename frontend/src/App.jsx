@@ -48,6 +48,7 @@ import PosCartPanel from './components/PosCartPanel';
 import QuickCalculatorModal from './components/QuickCalculatorModal';
 import { isAdminUser } from './utils/permissionUtils';
 import { isFabricUnit, calculateThanBreakdown, formatFabricQuantity } from './utils/fabricUtils';
+import { Clock, CheckCircle2, AlertCircle, X, ChevronRight } from 'lucide-react';
 import {
   playBarcodeBeep,
   playCashChime,
@@ -111,6 +112,9 @@ import {
   saveLocalUsers,
   saveOrUpdateUserLocally,
   syncAttendanceWithRemote,
+  getLocalStaffAttendance,
+  clockInStaffLocally,
+  clockOutStaffLocally,
   deleteUserLocally,
   registerCustomerLocally,
   authenticateUser,
@@ -229,7 +233,9 @@ import {
   postCreateStockTransfer,
   postUpdateStockTransferStatus,
   postDeleteStockTransfer,
-  postSendBulkTargetedSms
+  postSendBulkTargetedSms,
+  postClockInStaff,
+  postClockOutStaff
 } from './services/api';
 
 export default function App() {
@@ -513,6 +519,8 @@ export default function App() {
   // অথেনটিকেশন ও কাস্টমার পোর্টাল মডাল স্টেট
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCustomerOrdersOpen, setIsCustomerOrdersOpen] = useState(false);
+  const [isLogoutConfirmModalOpen, setIsLogoutConfirmModalOpen] = useState(false);
+  const [pendingLogoutShift, setPendingLogoutShift] = useState(null);
 
   // কাস্টমার সরাসরি ট্র্যাকিং পোর্টাল স্টেট (?track=ORD-XXXXX)
   const [directTrackingOrderId, setDirectTrackingOrderId] = useState('');
@@ -683,18 +691,14 @@ export default function App() {
 
   // ইউজার অথেনটিকেশন ও রোল হ্যান্ডলারসমূহ
   const handleLoginSuccess = async ({ identifier, pin, requestedRole }) => {
+    let user = null;
+
     // ১. ক্লাউড API থাকলে লাইভ গুগল শিট Users ট্যাবের মাধ্যমে যাচাই করার চেষ্টা
     if (settings.apiUrl && settings.apiUrl.trim()) {
       try {
         const res = await postLoginUser(settings.apiUrl, { identifier, pin, role: requestedRole });
         if (res && res.success && res.data) {
-          const user = saveOrUpdateUserLocally(res.data);
-          saveActiveUser(user);
-          setActiveUser(user);
-          setIsAuthModalOpen(false);
-          setUsers(getLocalUsers());
-          showToast(`স্বাগতম, ${user.FullName || user.Email}! সফলভাবে লগইন সম্পন্ন হয়েছে।`, 'success');
-          return;
+          user = saveOrUpdateUserLocally(res.data);
         } else if (res && !res.success) {
           throw new Error(res.message || 'ভুল মোবাইল নম্বর বা পাসওয়ার্ড।');
         }
@@ -708,14 +712,51 @@ export default function App() {
     }
 
     // ২. অফলাইন মোডে লোকাল স্টোরেজ থেকে অথেনটিকেশন যাচাই
-    try {
-      const user = authenticateUser({ identifier, pin, requestedRole });
+    if (!user) {
+      try {
+        user = authenticateUser({ identifier, pin, requestedRole });
+      } catch (err) {
+        throw err;
+      }
+    }
+
+    if (user) {
+      saveActiveUser(user);
       setActiveUser(user);
       setIsAuthModalOpen(false);
       setUsers(getLocalUsers());
-      showToast(`স্বাগতম, ${user.FullName || user.Email}! সফলভাবে লগইন সম্পন্ন হয়েছে।`, 'success');
-    } catch (err) {
-      throw err;
+
+      // ৩. স্টাফদের জন্য স্বয়ংক্রিয় ক্লক-ইন (যদি আজকের প্রথম লগইন হয়)
+      let autoClockInMessage = '';
+      if (user.Role !== 'Customer' && user.UserID !== 'GUEST-CUSTOMER') {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const attList = getLocalStaffAttendance();
+        const existingAtt = attList.find(
+          r => String(r.UserID).trim() === String(user.UserID).trim() && r.Date === todayStr
+        );
+
+        if (!existingAtt || !existingAtt.ClockIn) {
+          const nowIso = new Date().toISOString();
+          clockInStaffLocally(user.UserID, user.FullName || user.fullName, 'স্বয়ংক্রিয় লগইন শিফট শুরু');
+          autoClockInMessage = ' ও উপস্থিতি (Clock-In) রেকর্ড সম্পন্ন';
+
+          if (settings.apiUrl && settings.apiUrl.trim()) {
+            postClockInStaff(settings.apiUrl, {
+              userId: user.UserID,
+              userName: user.FullName || user.fullName,
+              date: todayStr,
+              clockIn: nowIso,
+              notes: 'স্বয়ংক্রিয় লগইন শিফট শুরু'
+            }).then(res => {
+              if (res && res.success && res.data) {
+                syncAttendanceWithRemote([res.data]);
+              }
+            }).catch(e => console.warn('Auto clock-in cloud sync delayed:', e));
+          }
+        }
+      }
+
+      showToast(`স্বাগতম, ${user.FullName || user.Email}! সফলভাবে লগইন${autoClockInMessage} হয়েছে।`, 'success');
     }
   };
 
@@ -867,11 +908,54 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    // যদি কোনো স্টাফ মেম্বারের আজকের শিফট চালু থাকে, তাহলে কনফার্মেশন ডায়ালগ দেখানো
+    if (activeUser && activeUser.Role !== 'Customer' && activeUser.UserID !== 'GUEST-CUSTOMER') {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const attList = getLocalStaffAttendance();
+      const openShift = attList.find(
+        r => String(r.UserID).trim() === String(activeUser.UserID).trim() &&
+             r.Date === todayStr &&
+             r.ClockIn && !r.ClockOut && r.Status !== 'AutoClosed'
+      );
+
+      if (openShift) {
+        setPendingLogoutShift(openShift);
+        setIsLogoutConfirmModalOpen(true);
+        return;
+      }
+    }
+
+    // স্বাভাবিক সরাসরি লগআউট
+    executeLogout(false);
+  };
+
+  const executeLogout = (withClockOut = false) => {
+    if (withClockOut && activeUser && activeUser.Role !== 'Customer') {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const nowIso = new Date().toISOString();
+      clockOutStaffLocally(activeUser.UserID, 'লগআউট শিফট সমাপ্ত');
+
+      if (settings.apiUrl && settings.apiUrl.trim()) {
+        postClockOutStaff(settings.apiUrl, {
+          userId: activeUser.UserID,
+          date: todayStr,
+          clockOut: nowIso,
+          notes: 'লগআউট শিফট সমাপ্ত'
+        }).then(res => {
+          if (res && res.success && res.data) {
+            syncAttendanceWithRemote([res.data]);
+          }
+        }).catch(err => console.warn('Auto clock-out cloud sync delayed:', err));
+      }
+    }
+
     const guest = logoutUser();
     setActiveUser(guest);
     setDiscountAmount(0);
     setIsPinAuthorizedSession(false);
-    showToast('সফলভাবে লগআউট সম্পন্ন হয়েছে।', 'info');
+    setIsLogoutConfirmModalOpen(false);
+    setPendingLogoutShift(null);
+    showToast(withClockOut ? 'শিফট সম্পন্ন ও সফলভাবে লগআউট হয়েছে।' : 'সফলভাবে লগআউট সম্পন্ন হয়েছে।', 'info');
   };
 
   const handleSwitchToCustomerMode = () => {
@@ -6352,6 +6436,105 @@ export default function App() {
         onClose={() => setIsCalculatorOpen(false)}
         currencySymbol={settings.CurrencySymbol || '৳'}
       />
+
+      {/* =========================================================================
+          স্টাফ লগআউট ও শিফট সমাপ্তি কনফার্মেশন ডায়ালগ (Logout & Shift Attendance Modal)
+          ========================================================================= */}
+      {isLogoutConfirmModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[120] animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-scaleIn">
+            {/* হেডার */}
+            <div className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold">লগআউট ও শিফট হাজিরা</h3>
+                  <p className="text-[11px] text-slate-300">
+                    {activeUser?.FullName} ({activeUser?.Role})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogoutConfirmModalOpen(false);
+                  setPendingLogoutShift(null);
+                }}
+                className="p-1 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* বডি */}
+            <div className="p-5 space-y-4 text-xs">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start space-x-2.5">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-xs">আপনার আজকের শিফট এখনো চালু আছে!</p>
+                  <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                    প্রবেশ সময়: <span className="font-mono font-bold">{pendingLogoutShift?.ClockIn ? new Date(pendingLogoutShift.ClockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'আজ'}</span>। আপনি কি দোকান ছেড়ে যাওয়ার আগে প্রস্থান (Clock-Out) করতে চান?
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {/* অপশন ১: পদ্ধতি ১ - শিফট শেষ ও লগআউট */}
+                <button
+                  type="button"
+                  onClick={() => executeLogout(true)}
+                  className="w-full p-3.5 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 hover:from-indigo-100 hover:to-violet-100 text-left flex items-center justify-between transition-all cursor-pointer group shadow-2xs"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-indigo-950">পদ্ধতি ১: শিফট সমাপ্ত ও প্রস্থান (Clock-Out)</p>
+                      <p className="text-[11px] text-indigo-700/80 mt-0.5">কাজের সময় সমাপ্ত করে প্রস্থান রেকর্ড ও লগআউট সম্পন্ন করুন</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
+                {/* অপশন ২: পদ্ধতি ২ - শুধু সাময়িক লগআউট */}
+                <button
+                  type="button"
+                  onClick={() => executeLogout(false)}
+                  className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-left flex items-center justify-between transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center font-bold shrink-0">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-slate-800">পদ্ধতি ২: শুধু সাময়িক লগআউট (শিফট চালু থাকবে)</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">নাস্তার বিরতি বা অন্য কর্মীর বসার জন্য (হাজিরা ডিউটিতে থাকবে)</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+            </div>
+
+            {/* ফুটার */}
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogoutConfirmModalOpen(false);
+                  setPendingLogoutShift(null);
+                }}
+                className="px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                বাতিল (লগইন থাকুন)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}
       {toastMessage && (
