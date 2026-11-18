@@ -52,20 +52,25 @@ import {
   Share2,
   CheckSquare,
   Square,
-  Filter
+  Filter,
+  AlertTriangle,
+  Edit3
 } from 'lucide-react';
 import {
   formatImageUrl,
   getLocalStaffAttendance,
   clockInStaffLocally,
   clockOutStaffLocally,
-  syncAttendanceWithRemote
+  syncAttendanceWithRemote,
+  updateAttendanceLocally,
+  applyAutoShiftCutoffLocally
 } from '../services/storage';
 import {
   postClockInStaff,
   postClockOutStaff,
   postBulkClockInStaff,
-  fetchAttendance
+  fetchAttendance,
+  postAdjustAttendance
 } from '../services/api';
 
 export const ROLES = [
@@ -179,6 +184,17 @@ export default function UsersModal({
   // হাজিরা স্টেট
   const [attendanceRecords, setAttendanceRecords] = useState(() => getLocalStaffAttendance());
 
+  // হাজিরা সমন্বয় মডাল স্টেট (ভুলে ক্লক-আউট না করা বা ম্যানুয়াল সময় এডিট)
+  const [adjustingAttendance, setAdjustingAttendance] = useState(null); // { user, record, date }
+  const [adjustFormData, setAdjustFormData] = useState({
+    clockInTime: '09:30',
+    clockOutTime: '20:30',
+    status: 'Completed',
+    notes: ''
+  });
+  const [isAdjustingSubmitting, setIsAdjustingSubmitting] = useState(false);
+  const [adjustSuccessMsg, setAdjustSuccessMsg] = useState('');
+
   // ফর্ম ফিল্ড স্টেট
   const [formData, setFormData] = useState({
     FullName: '',
@@ -264,7 +280,7 @@ export default function UsersModal({
     
     // উপস্থিতি ও ডিউটি স্ট্যাটাস
     const todayPresentCount = dateRecords.filter(r => r.ClockIn).length;
-    const currentlyOnDutyCount = dateRecords.filter(r => r.ClockIn && !r.ClockOut).length;
+    const currentlyOnDutyCount = dateRecords.filter(r => r.ClockIn && !r.ClockOut && r.Status !== 'AutoClosed').length;
     const todayAbsentCount = Math.max(0, activeStaff - todayPresentCount);
 
     // মোট নির্ধারিত মাসিক বেতন
@@ -304,7 +320,26 @@ export default function UsersModal({
         dot: 'bg-rose-500'
       };
     }
+    if (att.Status === 'AutoClosed') {
+      return {
+        status: 'completed',
+        label: 'অটো-ক্লোজড',
+        time: '৯ ঘণ্টা',
+        badge: 'bg-purple-50 text-purple-800 border-purple-300 ring-1 ring-purple-400/30',
+        dot: 'bg-purple-500'
+      };
+    }
     if (att.ClockIn && !att.ClockOut) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (dateStr && dateStr < todayStr) {
+        return {
+          status: 'completed',
+          label: 'অটো-ক্লোজড',
+          time: '৯ ঘণ্টা',
+          badge: 'bg-purple-50 text-purple-800 border-purple-300',
+          dot: 'bg-purple-500'
+        };
+      }
       return {
         status: 'on_duty',
         label: 'ডিউটিতে আছেন',
@@ -322,11 +357,32 @@ export default function UsersModal({
     };
   };
 
-  // শিফট ডিউরেশন হিসাব
-  const getShiftDuration = (clockIn, clockOut) => {
+  // শিফট ডিউরেশন হিসাব (অটো-কাটঅফ গার্ড সহ)
+  const getShiftDuration = (clockIn, clockOut, status, date) => {
     if (!clockIn) return '—';
+    if (status === 'AutoClosed') {
+      return '৯ ঘণ্টা (অটো)';
+    }
     const start = new Date(clockIn).getTime();
-    const end = clockOut ? new Date(clockOut).getTime() : Date.now();
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isPastDate = date && date < todayStr;
+
+    let end;
+    if (clockOut) {
+      end = new Date(clockOut).getTime();
+    } else if (isPastDate) {
+      // পূর্বের তারিখের অসমাপ্ত শিফট - সর্বোচ্চ ৯ ঘণ্টা
+      end = start + 9 * 60 * 60 * 1000;
+    } else {
+      // আজকের রানিং শিফট: তবে ১৪ ঘণ্টার বেশি হলে ৯ ঘণ্টার অটো-কাটঅফ
+      const diffSinceStart = Date.now() - start;
+      if (diffSinceStart > 14 * 60 * 60 * 1000) {
+        end = start + 9 * 60 * 60 * 1000;
+      } else {
+        end = Date.now();
+      }
+    }
+
     const diffMs = Math.max(0, end - start);
     const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -771,6 +827,126 @@ export default function UsersModal({
           setAttendanceRecords(synced);
         }
       }).catch(err => console.warn('Bulk clock-in cloud sync delayed:', err));
+    }
+  };
+
+  // হাজিরা সমন্বয় মডাল ওপেন
+  const handleOpenAdjustModal = (user, attRecord) => {
+    const curDate = selectedAttendanceDate || new Date().toISOString().split('T')[0];
+
+    let inTime = '09:30';
+    if (attRecord?.ClockIn) {
+      const d = new Date(attRecord.ClockIn);
+      const h = String(d.getHours()).padStart(2, '0');
+      const m = String(d.getMinutes()).padStart(2, '0');
+      inTime = `${h}:${m}`;
+    }
+
+    let outTime = '20:30';
+    if (attRecord?.ClockOut) {
+      const d = new Date(attRecord.ClockOut);
+      const h = String(d.getHours()).padStart(2, '0');
+      const m = String(d.getMinutes()).padStart(2, '0');
+      outTime = `${h}:${m}`;
+    }
+
+    setAdjustFormData({
+      clockInTime: inTime,
+      clockOutTime: outTime,
+      status: attRecord?.Status || (attRecord?.ClockOut ? 'Completed' : 'Completed'),
+      notes: attRecord?.Notes || ''
+    });
+    setAdjustSuccessMsg('');
+    setAdjustingAttendance({
+      user,
+      record: attRecord,
+      date: curDate
+    });
+  };
+
+  const handleCloseAdjustModal = () => {
+    setAdjustingAttendance(null);
+    setAdjustSuccessMsg('');
+    setIsAdjustingSubmitting(false);
+  };
+
+  // হাজিরা সমন্বয় সংরক্ষণ
+  const handleSaveAttendanceAdjustment = async () => {
+    if (!adjustingAttendance) return;
+    const { user, record, date } = adjustingAttendance;
+    setIsAdjustingSubmitting(true);
+    setAdjustSuccessMsg('');
+
+    try {
+      let clockInIso = null;
+      if (adjustFormData.clockInTime) {
+        clockInIso = new Date(`${date}T${adjustFormData.clockInTime}:00`).toISOString();
+      }
+
+      let clockOutIso = null;
+      if (adjustFormData.clockOutTime) {
+        clockOutIso = new Date(`${date}T${adjustFormData.clockOutTime}:00`).toISOString();
+      }
+
+      let durationStr = '';
+      if (clockInIso && clockOutIso) {
+        const diffMs = Math.max(0, new Date(clockOutIso).getTime() - new Date(clockInIso).getTime());
+        const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        durationStr = hrs > 0 ? `${hrs} ঘণ্টা ${mins} মি.` : `${mins} মি.`;
+      } else if (adjustFormData.status === 'AutoClosed') {
+        durationStr = '৯ ঘণ্টা (অটো)';
+      }
+
+      const noteText = adjustFormData.notes ? adjustFormData.notes.trim() : 'অ্যাডমিন কর্তৃক সমন্বয়কৃত';
+
+      const payload = {
+        attendanceId: record?.AttendanceID || record?.attendanceId || `ATT-${Date.now().toString().slice(-6)}`,
+        userId: user.UserID,
+        userName: user.FullName,
+        date: date,
+        clockIn: clockInIso,
+        clockOut: clockOutIso,
+        duration: durationStr,
+        status: adjustFormData.status,
+        notes: noteText
+      };
+
+      // ১. লোকাল আপডেট
+      const updatedLocal = updateAttendanceLocally(payload);
+      setAttendanceRecords(updatedLocal);
+
+      // ২. গুগল শিট ক্লাউড আপডেট
+      if (settings?.apiUrl && settings.apiUrl.trim()) {
+        const res = await postAdjustAttendance(settings.apiUrl, payload);
+        if (res && res.success && res.data) {
+          const synced = syncAttendanceWithRemote([res.data]);
+          setAttendanceRecords(synced);
+        }
+      }
+
+      setAdjustSuccessMsg('হাজিরা ও কাজের সময় সফলভাবে সমন্বয় করা হয়েছে!');
+      setTimeout(() => {
+        handleCloseAdjustModal();
+      }, 700);
+    } catch (err) {
+      console.error('Attendance adjustment error:', err);
+    } finally {
+      setIsAdjustingSubmitting(false);
+    }
+  };
+
+  // এক ক্লিকে সকল অসমাপ্ত শিফট অটো-ক্লোজ ও কাট-অফ
+  const handleAutoClosePendingShifts = () => {
+    const updated = applyAutoShiftCutoffLocally(attendanceRecords);
+    setAttendanceRecords(updated);
+    if (settings?.apiUrl && settings.apiUrl.trim()) {
+      fetchAttendance(settings.apiUrl, selectedAttendanceDate).then(rem => {
+        if (Array.isArray(rem) && rem.length > 0) {
+          const synced = syncAttendanceWithRemote(rem);
+          setAttendanceRecords(synced);
+        }
+      }).catch(e => console.warn(e));
     }
   };
 
@@ -1615,6 +1791,15 @@ export default function UsersModal({
                   </button>
 
                   <button
+                    onClick={handleAutoClosePendingShifts}
+                    className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer transition-colors shadow-2xs"
+                    title="অসমাপ্ত বা ভুলে ক্লক-আউট না করা শিফটগুলো স্বয়ংক্রিয়ভাবে কাট-অফ করে বন্ধ করুন"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                    <span>শিফট কাট-অফ</span>
+                  </button>
+
+                  <button
                     onClick={refreshAttendance}
                     className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
                     title="হাজিরা রিফ্রেশ করুন"
@@ -1646,7 +1831,7 @@ export default function UsersModal({
                         const att = attendanceRecords.find(r => String(r.UserID).trim() === String(u.UserID).trim() && r.Date === targetDate);
                         const isPresent = Boolean(att && att.ClockIn);
                         const isClockedOut = Boolean(att && att.ClockOut);
-                        const durationStr = getShiftDuration(att?.ClockIn, att?.ClockOut);
+                        const durationStr = getShiftDuration(att?.ClockIn, att?.ClockOut, att?.Status, targetDate);
                         const isLate = att?.ClockIn ? isLateClockIn(att.ClockIn) : false;
 
                         return (
@@ -1697,7 +1882,15 @@ export default function UsersModal({
                               {durationStr}
                             </td>
                             <td className="py-3 px-4 text-center">
-                              {isPresent && !isClockedOut ? (
+                              {att?.Status === 'AutoClosed' ? (
+                                <span
+                                  className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-300"
+                                  title={att.Notes || 'কর্মী ক্লক-আউট করতে ভুলে গেছেন; সিস্টেম অটো-ক্লোজ করেছে'}
+                                >
+                                  <AlertTriangle className="w-3 h-3 text-purple-600" />
+                                  <span>অটো-ক্লোজড</span>
+                                </span>
+                              ) : isPresent && !isClockedOut ? (
                                 <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
                                   <span>ডিউটিতে আছেন</span>
@@ -1722,7 +1915,7 @@ export default function UsersModal({
                                 >
                                   ক্লক-ইন
                                 </button>
-                              ) : !isClockedOut ? (
+                              ) : !isClockedOut && att?.Status !== 'AutoClosed' ? (
                                 <button
                                   onClick={() => handleStaffClockOut(u)}
                                   className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] cursor-pointer shadow-xs"
@@ -1732,6 +1925,16 @@ export default function UsersModal({
                               ) : (
                                 <span className="text-[11px] text-slate-400 font-semibold">শিফট সমাপ্ত</span>
                               )}
+
+                              {/* অ্যাডমিন এডিট ও সমন্বয় বাটন */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenAdjustModal(u, att)}
+                                className="p-1 rounded-lg bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer inline-flex items-center"
+                                title="হাজিরা ও কাজের সময় সমন্বয়/এডিট করুন"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
                             </td>
                           </tr>
                         );
@@ -2755,6 +2958,169 @@ export default function UsersModal({
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* -------------------------------------------------------------
+          শিফট হাজিরা ও কাজের সময় সমন্বয় মডাল (Admin Attendance Adjustment Modal)
+          ------------------------------------------------------------- */}
+      {adjustingAttendance && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[110] animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-scaleIn">
+            {/* হেডার */}
+            <div className="p-4 bg-gradient-to-r from-indigo-700 via-indigo-800 to-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold">শিফট হাজিরা ও সময় সমন্বয়</h3>
+                  <p className="text-[11px] text-indigo-200">
+                    {adjustingAttendance.user.FullName} ({adjustingAttendance.date})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseAdjustModal}
+                className="p-1 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* ফর্ম বডি */}
+            <div className="p-5 space-y-4 text-xs">
+              {/* তথ্য কার্ড */}
+              <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-[10px]">স্টাফের নাম ও পদবী</p>
+                  <p className="font-bold text-slate-900">{adjustingAttendance.user.FullName} <span className="font-normal text-slate-500">({adjustingAttendance.user.Role})</span></p>
+                </div>
+                <span className="text-[11px] font-mono font-bold bg-white px-2 py-0.5 rounded-md border border-indigo-200 text-indigo-700">
+                  #{adjustingAttendance.user.UserID}
+                </span>
+              </div>
+
+              {/* সময় ইনপুট গ্রিড */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    প্রবেশ সময় (Clock-In)
+                  </label>
+                  <input
+                    type="time"
+                    value={adjustFormData.clockInTime}
+                    onChange={(e) => setAdjustFormData(prev => ({ ...prev, clockInTime: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    প্রস্থান সময় (Clock-Out)
+                  </label>
+                  <input
+                    type="time"
+                    value={adjustFormData.clockOutTime}
+                    onChange={(e) => setAdjustFormData(prev => ({ ...prev, clockOutTime: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              {/* কুইক প্রস্থান সময় প্রিসেট বাটন */}
+              <div>
+                <span className="block text-[11px] font-medium text-slate-500 mb-1.5">
+                  দ্রুত প্রস্থান সময় নির্ধারণ (কমন শিফট সমাপ্তি):
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: 'রাত ০৮:০০', time: '20:00' },
+                    { label: 'রাত ০৮:৩০', time: '20:30' },
+                    { label: 'রাত ০৯:০০', time: '21:00' },
+                    { label: 'রাত ০৯:৩০', time: '21:30' },
+                    { label: 'রাত ১০:০০', time: '22:00' }
+                  ].map(preset => (
+                    <button
+                      key={preset.time}
+                      type="button"
+                      onClick={() => setAdjustFormData(prev => ({ ...prev, clockOutTime: preset.time, status: 'Completed' }))}
+                      className={`px-2 py-1 rounded-lg border text-[11px] font-semibold cursor-pointer transition-colors ${
+                        adjustFormData.clockOutTime === preset.time
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* স্ট্যাটাস নির্বাচন */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  হাজিরা স্ট্যাটাস
+                </label>
+                <select
+                  value={adjustFormData.status}
+                  onChange={(e) => setAdjustFormData(prev => ({ ...prev, status: e.target.value }))}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                >
+                  <option value="Completed">শিফট সম্পন্ন (Completed)</option>
+                  <option value="OnDuty">ডিউটিতে আছেন (On Duty)</option>
+                  <option value="AutoClosed">অটো-ক্লোজড (Auto Closed)</option>
+                  <option value="HalfDay">হাফ-ডে (Half Day)</option>
+                  <option value="Absent">অনুপস্থিত (Absent)</option>
+                </select>
+              </div>
+
+              {/* সমন্বয় নোট / মন্তব্য */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  সমন্বয়ের কারণ / মন্তব্য (নোট)
+                </label>
+                <input
+                  type="text"
+                  placeholder="যেমন: কর্মী ভুলে ক্লক-আউট করেননি, রাত ৯:৩০ এ সমন্বয়কৃত"
+                  value={adjustFormData.notes}
+                  onChange={(e) => setAdjustFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {adjustSuccessMsg && (
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs font-semibold flex items-center space-x-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{adjustSuccessMsg}</span>
+                </div>
+              )}
+            </div>
+
+            {/* ফুটার বাটন */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end space-x-2.5">
+              <button
+                type="button"
+                onClick={handleCloseAdjustModal}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                disabled={isAdjustingSubmitting}
+                onClick={handleSaveAttendanceAdjustment}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition-colors flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isAdjustingSubmitting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Check className="w-3.5 h-3.5" />
+                )}
+                <span>সমন্বয় সংরক্ষণ করুন</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -3319,6 +3319,7 @@ function doGet(e) {
       const auditLogs = rawAuditLogs.slice(-500).reverse();
 
       ensureAttendanceSheet(spreadsheet);
+      autoCloseExpiredAttendanceRows(spreadsheet);
       const rawAttendance = getSheetRowsAsObjects(SHEETS.ATTENDANCE);
       const attendance = rawAttendance.slice(-400).reverse();
 
@@ -3556,6 +3557,7 @@ function doGet(e) {
     if (action === 'getAttendance') {
       const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
       ensureAttendanceSheet(spreadsheet);
+      autoCloseExpiredAttendanceRows(spreadsheet);
       const targetDate = (e.parameter && e.parameter.date) ? String(e.parameter.date).trim() : '';
       let records = getSheetRowsAsObjects(SHEETS.ATTENDANCE);
       if (targetDate) {
@@ -3730,6 +3732,11 @@ function doPost(e) {
 
       case 'bulkClockInStaff':
         result = handleBulkClockInStaff(spreadsheet, payload);
+        break;
+
+      case 'adjustAttendance':
+      case 'updateAttendance':
+        result = handleAdjustAttendance(spreadsheet, payload);
         break;
 
       case 'loginUser':
@@ -5311,6 +5318,192 @@ function handleBulkClockInStaff(spreadsheet, payload) {
     message: `${results.length} জন কর্মীর উপস্থিতি সফলভাবে রেকর্ড করা হয়েছে।`,
     data: results
   };
+}
+
+/**
+ * স্টাফ শিফট হাজিরা সমন্বয় ও এডিট হ্যান্ডলার (Google Sheets Attendance)
+ * অ্যাডমিন বা ম্যানেজার কর্তৃক ভুল ক্লক-আউট সংশোধন অথবা ম্যানুয়াল সময় নির্ধারণ
+ */
+function handleAdjustAttendance(spreadsheet, payload) {
+  const attSheet = ensureAttendanceSheet(spreadsheet);
+  const attId = String(payload.attendanceId || payload.AttendanceID || '').trim();
+  const userId = String(payload.userId || payload.UserID || '').trim();
+  const userName = String(payload.userName || payload.FullName || payload.fullName || '').trim();
+  const dateStr = String(payload.date || payload.Date || new Date().toISOString().split('T')[0]).trim();
+  const now = new Date();
+
+  if (!userId && !attId) {
+    return { success: false, message: 'স্টাফের UserID অথবা AttendanceID প্রদান করা আবশ্যক।' };
+  }
+
+  const rows = getSheetRowsAsObjects(SHEETS.ATTENDANCE);
+  let existing = null;
+  if (attId) {
+    existing = rows.find(r => String(r.AttendanceID).trim() === attId);
+  }
+  if (!existing && userId && dateStr) {
+    existing = rows.find(r => String(r.UserID).trim() === userId && String(r.Date).trim() === dateStr);
+  }
+
+  const lastCol = attSheet.getLastColumn();
+  const headers = attSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const colMap = {
+    AttendanceID: findCol(headers, 'AttendanceID'),
+    UserID: findCol(headers, 'UserID'),
+    FullName: findCol(headers, 'FullName'),
+    Date: findCol(headers, 'Date'),
+    ClockIn: findCol(headers, 'ClockIn'),
+    ClockOut: findCol(headers, 'ClockOut'),
+    Duration: findCol(headers, 'Duration'),
+    Status: findCol(headers, 'Status'),
+    Notes: findCol(headers, 'Notes'),
+    CreatedAt: findCol(headers, 'CreatedAt'),
+    UpdatedAt: findCol(headers, 'UpdatedAt', 'Updated')
+  };
+
+  const newClockIn = payload.clockIn !== undefined ? payload.clockIn : (existing ? existing.ClockIn : now.toISOString());
+  const newClockOut = payload.clockOut !== undefined ? payload.clockOut : (existing ? existing.ClockOut : '');
+  const newStatus = payload.status || (newClockOut ? 'Completed' : 'OnDuty');
+  const newNotes = payload.notes !== undefined ? String(payload.notes).trim() : (existing ? existing.Notes || '' : '');
+
+  // সময় বা ডিউরেশন হিসাব
+  let durationStr = payload.duration || '';
+  if (!durationStr && newClockIn && newClockOut) {
+    const diffMs = Math.max(0, new Date(newClockOut).getTime() - new Date(newClockIn).getTime());
+    const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    durationStr = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+  } else if (!durationStr && newStatus === 'AutoClosed') {
+    durationStr = '9h 0m';
+  }
+
+  if (existing && existing._rowIndex) {
+    // বিদ্যমান সারি আপডেট
+    if (newClockIn && colMap.ClockIn !== -1) attSheet.getRange(existing._rowIndex, colMap.ClockIn + 1).setValue(newClockIn);
+    if (colMap.ClockOut !== -1) attSheet.getRange(existing._rowIndex, colMap.ClockOut + 1).setValue(newClockOut || '');
+    if (durationStr && colMap.Duration !== -1) attSheet.getRange(existing._rowIndex, colMap.Duration + 1).setValue(durationStr);
+    if (colMap.Status !== -1) attSheet.getRange(existing._rowIndex, colMap.Status + 1).setValue(newStatus);
+    if (colMap.Notes !== -1) attSheet.getRange(existing._rowIndex, colMap.Notes + 1).setValue(newNotes);
+    if (colMap.UpdatedAt !== -1) attSheet.getRange(existing._rowIndex, colMap.UpdatedAt + 1).setValue(now);
+
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      message: 'হাজিরা ও কাজের সময় সফলভাবে সমন্বয় করা হয়েছে।',
+      data: {
+        ...existing,
+        ClockIn: newClockIn,
+        ClockOut: newClockOut,
+        Duration: durationStr,
+        Status: newStatus,
+        Notes: newNotes,
+        UpdatedAt: now.toISOString()
+      }
+    };
+  } else {
+    // নতুন সারি এন্ট্রি (যদি পূর্বে কোনো এন্ট্রি না থেকে থাকে)
+    const newAttId = attId || generateUniqueId('ATT');
+    const newRow = new Array(lastCol).fill('');
+    if (colMap.AttendanceID !== -1) newRow[colMap.AttendanceID] = newAttId;
+    if (colMap.UserID !== -1) newRow[colMap.UserID] = userId;
+    if (colMap.FullName !== -1) newRow[colMap.FullName] = userName || 'Staff';
+    if (colMap.Date !== -1) newRow[colMap.Date] = dateStr;
+    if (colMap.ClockIn !== -1) newRow[colMap.ClockIn] = newClockIn;
+    if (colMap.ClockOut !== -1) newRow[colMap.ClockOut] = newClockOut;
+    if (colMap.Duration !== -1) newRow[colMap.Duration] = durationStr;
+    if (colMap.Status !== -1) newRow[colMap.Status] = newStatus;
+    if (colMap.Notes !== -1) newRow[colMap.Notes] = newNotes;
+    if (colMap.CreatedAt !== -1) newRow[colMap.CreatedAt] = now;
+    if (colMap.UpdatedAt !== -1) newRow[colMap.UpdatedAt] = now;
+
+    attSheet.appendRow(newRow);
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      message: 'হাজিরা রেকর্ড সফলভাবে তৈরি ও সংরক্ষিত হয়েছে।',
+      data: {
+        AttendanceID: newAttId,
+        UserID: userId,
+        FullName: userName,
+        Date: dateStr,
+        ClockIn: newClockIn,
+        ClockOut: newClockOut,
+        Duration: durationStr,
+        Status: newStatus,
+        Notes: newNotes,
+        CreatedAt: now.toISOString(),
+        UpdatedAt: now.toISOString()
+      }
+    };
+  }
+}
+
+/**
+ * মেয়াদোত্তীর্ণ বা অসমাপ্ত শিফট স্বয়ংক্রিয়ভাবে কাট-অফ ও ক্লোজ করা
+ * (যদি কর্মী ক্লক-আউট করতে ভুলে যায়)
+ */
+function autoCloseExpiredAttendanceRows(spreadsheet) {
+  const attSheet = ensureAttendanceSheet(spreadsheet);
+  const rows = getSheetRowsAsObjects(SHEETS.ATTENDANCE);
+  if (!rows || rows.length === 0) return rows;
+
+  const now = new Date();
+  const todayStr = Utilities.formatDate(now, Session.getScriptTimeZone() || 'Asia/Dhaka', 'yyyy-MM-dd');
+  const nowMs = now.getTime();
+  const lastCol = attSheet.getLastColumn();
+  const headers = attSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const colMap = {
+    ClockOut: findCol(headers, 'ClockOut'),
+    Duration: findCol(headers, 'Duration'),
+    Status: findCol(headers, 'Status'),
+    Notes: findCol(headers, 'Notes'),
+    UpdatedAt: findCol(headers, 'UpdatedAt', 'Updated')
+  };
+
+  let hasUpdates = false;
+
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    // যদি ক্লক-ইন থাকে কিন্তু ক্লক-আউট খালি থাকে
+    if (r.ClockIn && !r.ClockOut && r._rowIndex) {
+      const attDate = String(r.Date || '').trim();
+      const inDate = new Date(r.ClockIn);
+      const diffMs = nowMs - inDate.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+
+      const isPastDay = attDate && attDate < todayStr;
+      const isOverMaxHours = diffHours >= 14;
+
+      if (isPastDay || isOverMaxHours) {
+        // স্ট্যান্ডার্ড ৯ ঘণ্টার শিফট দিয়ে অটো-ক্লোজ
+        const autoOutTime = new Date(inDate.getTime() + 9 * 60 * 60 * 1000);
+        const autoOutIso = autoOutTime.toISOString();
+        const durationStr = '9h 0m';
+        const autoStatus = 'AutoClosed';
+        const autoNote = (r.Notes ? `${r.Notes}; ` : '') + 'স্বয়ংক্রিয় শিফট সমাপ্ত (ভুলে ক্লক-আউট হয়নি)';
+
+        if (colMap.ClockOut !== -1) attSheet.getRange(r._rowIndex, colMap.ClockOut + 1).setValue(autoOutIso);
+        if (colMap.Duration !== -1) attSheet.getRange(r._rowIndex, colMap.Duration + 1).setValue(durationStr);
+        if (colMap.Status !== -1) attSheet.getRange(r._rowIndex, colMap.Status + 1).setValue(autoStatus);
+        if (colMap.Notes !== -1) attSheet.getRange(r._rowIndex, colMap.Notes + 1).setValue(autoNote);
+        if (colMap.UpdatedAt !== -1) attSheet.getRange(r._rowIndex, colMap.UpdatedAt + 1).setValue(now);
+
+        r.ClockOut = autoOutIso;
+        r.Duration = durationStr;
+        r.Status = autoStatus;
+        r.Notes = autoNote;
+        hasUpdates = true;
+      }
+    }
+  }
+
+  if (hasUpdates) {
+    SpreadsheetApp.flush();
+  }
+
+  return rows;
 }
 
 /**

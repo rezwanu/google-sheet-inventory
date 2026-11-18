@@ -1817,17 +1817,102 @@ export function deleteUserLocally(userId) {
 // স্টাফ ডিজিটাল হাজিরা ও শিফট ট্র্যাকার (Staff Digital Attendance & Shift)
 // ============================================================================
 
+export function saveLocalStaffAttendance(records) {
+  setSecureStorageItem(STORAGE_KEYS.STAFF_ATTENDANCE, Array.isArray(records) ? records : []);
+}
+
+/**
+ * লোকাল স্টোরেজে থাকা অসমাপ্ত পুরোনো শিফট স্বয়ংক্রিয়ভাবে কাট-অফ করা
+ */
+export function applyAutoShiftCutoffLocally(records) {
+  if (!Array.isArray(records)) return [];
+  const todayStr = new Date().toISOString().split('T')[0];
+  const nowMs = Date.now();
+  let changed = false;
+
+  const updated = records.map(r => {
+    if (r && r.ClockIn && !r.ClockOut && r.Status !== 'AutoClosed') {
+      const attDate = String(r.Date || '').trim();
+      const inDate = new Date(r.ClockIn);
+      const diffMs = nowMs - inDate.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+
+      const isPastDay = attDate && attDate < todayStr;
+      const isOverMax = diffHours >= 14;
+
+      if (isPastDay || isOverMax) {
+        changed = true;
+        const autoOutTime = new Date(inDate.getTime() + 9 * 60 * 60 * 1000);
+        return {
+          ...r,
+          ClockOut: autoOutTime.toISOString(),
+          Duration: '9h 0m',
+          Status: 'AutoClosed',
+          Notes: (r.Notes ? `${r.Notes}; ` : '') + 'স্বয়ংক্রিয় শিফট সমাপ্ত (ভুলে ক্লক-আউট হয়নি)',
+          UpdatedAt: new Date().toISOString()
+        };
+      }
+    }
+    return r;
+  });
+
+  if (changed) {
+    saveLocalStaffAttendance(updated);
+    return updated;
+  }
+  return records;
+}
+
 export function getLocalStaffAttendance() {
   try {
     const data = getSecureStorageItem(STORAGE_KEYS.STAFF_ATTENDANCE);
-    return Array.isArray(data) ? data : [];
+    const list = Array.isArray(data) ? data : [];
+    return applyAutoShiftCutoffLocally(list);
   } catch (e) {
     return [];
   }
 }
 
-export function saveLocalStaffAttendance(records) {
-  setSecureStorageItem(STORAGE_KEYS.STAFF_ATTENDANCE, Array.isArray(records) ? records : []);
+/**
+ * লোকাল হাজিরা রেকর্ড সমন্বয় বা আপডেট করা
+ */
+export function updateAttendanceLocally(updatedRecord) {
+  if (!updatedRecord) return getLocalStaffAttendance();
+  const records = getLocalStaffAttendance();
+  const attId = updatedRecord.AttendanceID || updatedRecord.attendanceId;
+  const userId = String(updatedRecord.UserID || updatedRecord.userId || '').trim();
+  const dateStr = String(updatedRecord.Date || updatedRecord.date || '').trim();
+
+  const idx = records.findIndex(r => 
+    (attId && (r.AttendanceID === attId || r.attendanceId === attId)) ||
+    (String(r.UserID).trim() === userId && String(r.Date).trim() === dateStr)
+  );
+
+  if (idx >= 0) {
+    records[idx] = {
+      ...records[idx],
+      ...updatedRecord,
+      UpdatedAt: new Date().toISOString()
+    };
+  } else {
+    records.unshift({
+      AttendanceID: attId || `ATT-${Date.now()}`,
+      UserID: userId,
+      UserName: updatedRecord.FullName || updatedRecord.UserName || 'Staff',
+      FullName: updatedRecord.FullName || updatedRecord.UserName || 'Staff',
+      Date: dateStr || new Date().toISOString().split('T')[0],
+      ClockIn: updatedRecord.ClockIn || null,
+      ClockOut: updatedRecord.ClockOut || null,
+      Duration: updatedRecord.Duration || '',
+      Status: updatedRecord.Status || 'Present',
+      Notes: updatedRecord.Notes || '',
+      CreatedAt: new Date().toISOString(),
+      UpdatedAt: new Date().toISOString()
+    });
+  }
+
+  saveLocalStaffAttendance(records);
+  return records;
 }
 
 export function clockInStaffLocally(userId, userName, notes = '') {

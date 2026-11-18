@@ -2234,3 +2234,42 @@ export async function postBulkClockInStaff(apiUrl, staffList, date = '') {
   }
 }
 
+/**
+ * স্টাফ শিফট হাজিরা সমন্বয়/আপডেট API কল (action: 'adjustAttendance')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} adjustmentData - { attendanceId, userId, userName, date, clockIn, clockOut, duration, status, notes }
+ */
+export async function postAdjustAttendance(apiUrl, adjustmentData) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: হাজিরা স্থানীয়ভাবে আপডেট হয়েছে।',
+      data: adjustmentData,
+    };
+  }
+
+  const payload = {
+    action: 'adjustAttendance',
+    ...adjustmentData,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `হাজিরা সমন্বয় ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
