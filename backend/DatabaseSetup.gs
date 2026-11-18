@@ -90,6 +90,9 @@ function setupDatabase() {
   // ৯. Attendance (ডিজিটাল হাজিরা খাতা) শিট তৈরি ও কলাম হেডার ইনিশিয়ালাইজেশন
   ensureAttendanceSheet(spreadsheet);
 
+  // ১০. MonthlyPnL (মাসিক ও সাময়িক লাভ-ক্ষতি বিবরণী খাতা) শিট তৈরি ও কলাম হেডার ইনিশিয়ালাইজেশন
+  ensureMonthlyPnLSheet(spreadsheet);
+
   return 'সবগুলো শিট এবং হেডার সফলভাবে তৈরি করা হয়েছে!';
 }
 

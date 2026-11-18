@@ -28,7 +28,8 @@ const SHEETS = {
   SALES_RETURNS: 'SalesReturns',
   STOCK_TRANSFERS: 'StockTransfers',
   VARIANTS: 'Variants',
-  ATTENDANCE: 'Attendance'
+  ATTENDANCE: 'Attendance',
+  MONTHLY_PNL: 'MonthlyPnL'
 };
 
 /**
@@ -977,6 +978,42 @@ function ensureAttendanceSheet(spreadsheet) {
   return attSheet;
 }
 
+/**
+ * MonthlyPnL (মাসিক ও সাময়িক লাভ-ক্ষতি বিবরণী খাতা) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} MonthlyPnL শিট অবজেক্ট
+ */
+function ensureMonthlyPnLSheet(spreadsheet) {
+  let pnlSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.MONTHLY_PNL);
+  if (!pnlSheet) {
+    pnlSheet = spreadsheet.insertSheet(SHEETS.MONTHLY_PNL);
+  }
+
+  const expectedHeaders = [
+    'ReportID', 'YearMonth', 'PeriodName', 'GrossRevenue', 'ReturnsRefunds', 'NetRevenue', 'COGS', 'GrossProfit', 'GrossMargin', 'OperatingExpenses', 'StaffSalaries', 'WastageLosses', 'TrueNetProfit', 'NetMargin', 'CashInflow', 'RealizedCashProfit', 'MarketDue', 'AccountingMode', 'GeneratedBy', 'Notes', 'CreatedAt', 'UpdatedAt'
+  ];
+
+  if (pnlSheet.getLastRow() === 0) {
+    pnlSheet.appendRow(expectedHeaders);
+    return pnlSheet;
+  }
+
+  const lastCol = pnlSheet.getLastColumn();
+  if (lastCol > 0) {
+    const existingHeaders = pnlSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    for (let h = 0; h < expectedHeaders.length; h++) {
+      const headerName = expectedHeaders[h];
+      const foundIdx = findCol(existingHeaders, headerName);
+      if (foundIdx === -1) {
+        pnlSheet.getRange(1, pnlSheet.getLastColumn() + 1).setValue(headerName);
+        existingHeaders.push(headerName);
+      }
+    }
+  }
+
+  return pnlSheet;
+}
+
 
 /**
  * Customers শিট থেকে পূর্বে তৈরি হওয়া সমস্ত ডামি/নমুনা গ্রাহক সারি মুছে ফেলা
@@ -1388,6 +1425,9 @@ function ensureDatabaseSchema(spreadsheet) {
 
   // ২.১৪ Attendance (ডিজিটাল হাজিরা খাতা) শিট নিশ্চিত করা
   ensureAttendanceSheet(spreadsheet);
+
+  // ২.১৫ MonthlyPnL (মাসিক ও সাময়িক লাভ-ক্ষতি বিবরণী খাতা) শিট নিশ্চিত করা
+  ensureMonthlyPnLSheet(spreadsheet);
 
   // ৩. Products শিটের সকল কলাম (SellingPrice সহ) নিশ্চিত করা
   const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);
@@ -3323,6 +3363,10 @@ function doGet(e) {
       const rawAttendance = getSheetRowsAsObjects(SHEETS.ATTENDANCE);
       const attendance = rawAttendance.slice(-400).reverse();
 
+      ensureMonthlyPnLSheet(spreadsheet);
+      const rawMonthlyPnL = getSheetRowsAsObjects(SHEETS.MONTHLY_PNL);
+      const monthlyPnL = rawMonthlyPnL.slice(-100).reverse();
+
       const users = getSheetRowsAsObjects(SHEETS.USERS).map(user => {
         let perms = [];
         try {
@@ -3384,7 +3428,8 @@ function doGet(e) {
           sales: sales,
           orders: orders,
           users: users,
-          attendance: attendance
+          attendance: attendance,
+          monthlyPnL: monthlyPnL
         }
       });
 
@@ -3587,6 +3632,17 @@ function doGet(e) {
       });
     }
 
+    // ৮.১ সংরক্ষিত মাসিক ও সাময়িক লাভ-ক্ষতি বিবরণী তালিকা আনা (Monthly P&L Statements)
+    if (action === 'getMonthlyPnL' || action === 'getPnLReports') {
+      const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+      ensureMonthlyPnLSheet(spreadsheet);
+      const reports = getSheetRowsAsObjects(SHEETS.MONTHLY_PNL);
+      return createJsonResponse({
+        success: true,
+        data: reports
+      });
+    }
+
     return createJsonResponse({
       success: false,
       message: `Invalid action: ${action}`
@@ -3737,6 +3793,11 @@ function doPost(e) {
       case 'adjustAttendance':
       case 'updateAttendance':
         result = handleAdjustAttendance(spreadsheet, payload);
+        break;
+
+      case 'saveMonthlyPnL':
+      case 'savePnLReport':
+        result = handleSaveMonthlyPnLStatement(spreadsheet, payload);
         break;
 
       case 'loginUser':
@@ -5504,6 +5565,103 @@ function autoCloseExpiredAttendanceRows(spreadsheet) {
   }
 
   return rows;
+}
+
+/**
+ * মাসিক বা সাময়িক P&L ব্যালেন্স শিট ক্লাউডে সংরক্ষণ/আপডেট হ্যান্ডলার
+ * @param {Spreadsheet} spreadsheet - স্প্রেডশিট অবজেক্ট
+ * @param {Object} payload - P&L ডাটা
+ * @return {Object} ফলাফল
+ */
+function handleSaveMonthlyPnLStatement(spreadsheet, payload) {
+  try {
+    const pnlSheet = ensureMonthlyPnLSheet(spreadsheet);
+    const reportId = String(payload.reportId || payload.ReportID || generateUniqueId('PNL')).trim();
+    const yearMonth = String(payload.yearMonth || payload.YearMonth || new Date().toISOString().slice(0, 7)).trim();
+    const periodName = String(payload.periodName || payload.PeriodName || yearMonth).trim();
+    const nowStr = new Date().toISOString();
+
+    const recordData = {
+      ReportID: reportId,
+      YearMonth: yearMonth,
+      PeriodName: periodName,
+      GrossRevenue: Number(payload.grossRevenue || payload.GrossRevenue) || 0,
+      ReturnsRefunds: Number(payload.returnsRefunds || payload.ReturnsRefunds) || 0,
+      NetRevenue: Number(payload.netRevenue || payload.NetRevenue) || 0,
+      COGS: Number(payload.cogs || payload.COGS) || 0,
+      GrossProfit: Number(payload.grossProfit || payload.GrossProfit) || 0,
+      GrossMargin: Number(payload.grossMargin || payload.GrossMargin) || 0,
+      OperatingExpenses: Number(payload.operatingExpenses || payload.OperatingExpenses) || 0,
+      StaffSalaries: Number(payload.staffSalaries || payload.StaffSalaries) || 0,
+      WastageLosses: Number(payload.wastageLosses || payload.WastageLosses) || 0,
+      TrueNetProfit: Number(payload.trueNetProfit || payload.TrueNetProfit) || 0,
+      NetMargin: Number(payload.netMargin || payload.NetMargin) || 0,
+      CashInflow: Number(payload.cashInflow || payload.CashInflow) || 0,
+      RealizedCashProfit: Number(payload.realizedCashProfit || payload.RealizedCashProfit) || 0,
+      MarketDue: Number(payload.marketDue || payload.MarketDue) || 0,
+      AccountingMode: String(payload.accountingMode || payload.AccountingMode || 'Accrual'),
+      GeneratedBy: String(payload.generatedBy || payload.GeneratedBy || 'Admin').trim(),
+      Notes: String(payload.notes || payload.Notes || '').trim(),
+      CreatedAt: String(payload.createdAt || payload.CreatedAt || nowStr),
+      UpdatedAt: nowStr
+    };
+
+    const lastRow = pnlSheet.getLastRow();
+    const lastCol = pnlSheet.getLastColumn();
+    const headers = pnlSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    const reportIdCol = findCol(headers, 'ReportID');
+    const yearMonthCol = findCol(headers, 'YearMonth');
+
+    let existingRowIdx = -1;
+    if (lastRow > 1) {
+      const data = pnlSheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const rowReportId = reportIdCol !== -1 ? String(row[reportIdCol] || '').trim() : '';
+        const rowYearMonth = yearMonthCol !== -1 ? String(row[yearMonthCol] || '').trim() : '';
+        if ((reportId && rowReportId === reportId) || (yearMonth && rowYearMonth === yearMonth && !payload.forceNew)) {
+          existingRowIdx = i + 2;
+          if (rowReportId) recordData.ReportID = rowReportId;
+          const createdCol = findCol(headers, 'CreatedAt');
+          if (createdCol !== -1 && row[createdCol]) recordData.CreatedAt = row[createdCol];
+          break;
+        }
+      }
+    }
+
+    if (existingRowIdx > 0) {
+      for (let c = 0; c < headers.length; c++) {
+        const hName = headers[c];
+        if (recordData.hasOwnProperty(hName)) {
+          pnlSheet.getRange(existingRowIdx, c + 1).setValue(recordData[hName]);
+        }
+      }
+      SpreadsheetApp.flush();
+      return {
+        success: true,
+        message: `মাসিক P&L স্টেটমেন্ট (${yearMonth}) সফলভাবে আপডেট করা হয়েছে।`,
+        data: recordData
+      };
+    } else {
+      const newRow = [];
+      for (let c = 0; c < headers.length; c++) {
+        const hName = headers[c];
+        newRow.push(recordData.hasOwnProperty(hName) ? recordData[hName] : '');
+      }
+      pnlSheet.appendRow(newRow);
+      SpreadsheetApp.flush();
+      return {
+        success: true,
+        message: `মাসিক P&L স্টেটমেন্ট (${yearMonth}) সফলভাবে ক্লাউডে সংরক্ষিত হয়েছে।`,
+        data: recordData
+      };
+    }
+  } catch (err) {
+    return {
+      success: false,
+      message: 'P&L রিপোর্ট সংরক্ষণ ব্যর্থ: ' + err.toString()
+    };
+  }
 }
 
 /**

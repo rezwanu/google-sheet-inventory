@@ -5399,6 +5399,12 @@ export default function App() {
               customerLedger={customerLedger}
               expenses={expenses}
               fabricWastage={fabricWastageList}
+              users={users}
+              salesReturns={salesReturns}
+              stockTransfers={stockTransfers}
+              activeUser={activeUser}
+              apiUrl={settings.ApiUrl || ''}
+              showToast={showToast}
               currencySymbol={settings.CurrencySymbol || '৳'}
               storeSettings={settings}
               onRefreshSales={handleRefreshSales}
@@ -5909,6 +5915,12 @@ export default function App() {
         customerLedger={customerLedger}
         expenses={expenses}
         fabricWastage={fabricWastageList}
+        users={users}
+        salesReturns={salesReturns}
+        stockTransfers={stockTransfers}
+        activeUser={activeUser}
+        apiUrl={settings.ApiUrl || ''}
+        showToast={showToast}
         currencySymbol={settings.CurrencySymbol || '৳'}
         storeSettings={settings}
         onRefreshSales={handleRefreshSales}

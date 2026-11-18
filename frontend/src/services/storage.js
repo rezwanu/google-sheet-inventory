@@ -38,6 +38,7 @@ const STORAGE_KEYS = {
   FABRIC_WASTAGE: 'pos_fabric_wastage',
   STOCK_MOVEMENTS: 'pos_stock_movements',
   STAFF_ATTENDANCE: 'pos_staff_attendance',
+  MONTHLY_PNL: 'pos_monthly_pnl',
 };
 
 import {
@@ -4820,6 +4821,50 @@ export function exportTailoringExcelCSV(tailoringOrders = []) {
     o.Status || ''
   ]);
   exportToCSV(`Tailoring_Orders_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+}
+
+// ============================================================================
+// সংরক্ষিত মাসিক ও সাময়িক লাভ-ক্ষতি বিবরণী খাতা (Monthly P&L Statements)
+// ============================================================================
+
+export function saveLocalMonthlyPnL(records) {
+  setSecureStorageItem(STORAGE_KEYS.MONTHLY_PNL, Array.isArray(records) ? records : []);
+}
+
+export function getLocalMonthlyPnL() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.MONTHLY_PNL);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveMonthlyPnLEntryLocally(report) {
+  if (!report) return getLocalMonthlyPnL();
+  const records = getLocalMonthlyPnL();
+  const reportId = report.ReportID || report.reportId || `PNL-${Date.now()}`;
+  const yearMonth = report.YearMonth || report.yearMonth;
+
+  const idx = records.findIndex(r => 
+    (reportId && (r.ReportID === reportId || r.reportId === reportId)) ||
+    (yearMonth && (r.YearMonth === yearMonth || r.yearMonth === yearMonth))
+  );
+
+  const updatedEntry = {
+    ...report,
+    ReportID: reportId,
+    UpdatedAt: new Date().toISOString()
+  };
+
+  if (idx >= 0) {
+    records[idx] = { ...records[idx], ...updatedEntry };
+  } else {
+    records.unshift(updatedEntry);
+  }
+
+  saveLocalMonthlyPnL(records);
+  return records;
 }
 
 

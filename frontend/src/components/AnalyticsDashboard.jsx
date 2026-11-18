@@ -26,9 +26,19 @@ import {
   Store,
   AlertTriangle,
   ChevronDown,
-  Archive
+  Archive,
+  Lock,
+  Unlock,
+  Save,
+  Target,
+  DollarSign,
+  Check,
+  Users as UsersIcon,
+  RotateCcw,
+  PieChart
 } from 'lucide-react';
-import { calculateDeadStockAnalysis, exportToCSV } from '../services/storage';
+import { calculateDeadStockAnalysis, exportToCSV, saveMonthlyPnLEntryLocally, getLocalMonthlyPnL } from '../services/storage';
+import { postSaveMonthlyPnL } from '../services/api';
 
 export default function AnalyticsDashboard({
   isOpen,
@@ -42,6 +52,12 @@ export default function AnalyticsDashboard({
   customerLedger = [],
   expenses = [],
   fabricWastage = [],
+  users = [],
+  salesReturns = [],
+  stockTransfers = [],
+  activeUser = null,
+  apiUrl = '',
+  showToast = () => {},
   currencySymbol = '৳',
   storeSettings = {},
   onRefreshSales
@@ -50,6 +66,44 @@ export default function AnalyticsDashboard({
   const [filterRange, setFilterRange] = useState('month'); // 'today' | 'yesterday' | '7days' | 'month' | 'lastMonth' | 'year' | 'all' | 'custom'
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+
+  // ৭টি স্তরের আধুনিকায়ন স্টেটসমূহ
+  const [accountingMode, setAccountingMode] = useState('accrual'); // 'accrual' | 'cash'
+  const [includePayroll, setIncludePayroll] = useState(true);
+  const [includeReturns, setIncludeReturns] = useState(true);
+  const [includeWastage, setIncludeWastage] = useState(true);
+  const [isArchivingCloud, setIsArchivingCloud] = useState(false);
+  const [isUnlockedPin, setIsUnlockedPin] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+
+  // RBAC রোল ও পারমিশন চেক (Tier 7)
+  const isAdmin = activeUser?.Role === 'Admin' || activeUser?.Role === 'SuperAdmin';
+  const canViewReports = isAdmin || activeUser?.Permissions?.includes('canViewReports') || activeUser?.Permissions?.includes('view_reports') || activeUser?.Role === 'Manager';
+  const canViewBuyingPrice = isAdmin || activeUser?.Permissions?.includes('canViewBuyingPrice') || activeUser?.Permissions?.includes('view_buying_price');
+  const hasProfitAccess = isAdmin || (canViewReports && canViewBuyingPrice) || isUnlockedPin;
+
+  // সংবেদনশীল ডাটা মাস্কিং হেল্পার
+  const renderMaskedValue = (val, isCurrency = true, decimals = 2) => {
+    if (hasProfitAccess) {
+      if (typeof val === 'number') {
+        const formatted = Number(val).toLocaleString('en-IN', { maximumFractionDigits: decimals });
+        return isCurrency ? `${currencySymbol}${formatted}` : formatted;
+      }
+      return val;
+    }
+    return (
+      <span
+        onClick={() => setShowPinModal(true)}
+        className="inline-flex items-center space-x-1 cursor-pointer select-none text-slate-400 hover:text-indigo-600 transition-colors"
+        title="লাভ বা কেনা দাম দেখতে অ্যাডমিন পিন দিয়ে আনলক করুন"
+      >
+        <span className="tracking-widest font-mono">••••••</span>
+        <Lock className="w-3 h-3 text-slate-400 inline" />
+      </span>
+    );
+  };
 
   // চ্যানেল ফিল্টার স্টেট: 'all' | 'offline' | 'online'
   const [channelFilter, setChannelFilter] = useState('all');
@@ -572,8 +626,7 @@ export default function AnalyticsDashboard({
       };
     }).sort((a, b) => b.profit - a.profit);
 
-    // ৮. এই সময়কালে মোট দোকানের খরচ (Operating Expenses):
-    let periodExpenses = 0;
+    // ৮. নির্বাচিত সময়কালের সহকারী ডেট ফিল্টার
     const nowDate = new Date();
     const todayStr = nowDate.toISOString().split('T')[0];
     const yesterdayDate = new Date(nowDate);
@@ -584,63 +637,45 @@ export default function AnalyticsDashboard({
     const lastMonthYear = nowDate.getMonth() === 0 ? nowDate.getFullYear() - 1 : nowDate.getFullYear();
     const lastMonthIdx = nowDate.getMonth() === 0 ? 11 : nowDate.getMonth() - 1;
 
+    const checkDateMatchesCurrent = (dateObj, dateStr) => {
+      if (!dateObj || isNaN(dateObj.getTime())) return false;
+      const dStr = dateStr ? String(dateStr).slice(0, 10) : dateObj.toISOString().split('T')[0];
+
+      if (filterRange === 'today') return dStr === todayStr;
+      if (filterRange === 'yesterday') return dStr === yesterdayStr;
+      if (filterRange === '7days') return dateObj >= sevenDaysAgoDate && dateObj <= nowDate;
+      if (filterRange === 'month') return dateObj.getFullYear() === nowDate.getFullYear() && dateObj.getMonth() === nowDate.getMonth();
+      if (filterRange === 'lastMonth') return dateObj.getFullYear() === lastMonthYear && dateObj.getMonth() === lastMonthIdx;
+      if (filterRange === 'year') return dateObj.getFullYear() === nowDate.getFullYear();
+      if (filterRange === 'all') return true;
+      if (filterRange === 'custom') {
+        if (!customStartDate && !customEndDate) return true;
+        const start = customStartDate ? new Date(customStartDate) : new Date('2000-01-01');
+        const end = customEndDate ? new Date(customEndDate) : new Date('2099-12-31');
+        end.setHours(23, 59, 59, 999);
+        return dateObj >= start && dateObj <= end;
+      }
+      return true;
+    };
+
+    // ৮.১ সাধারণ দোকানের পরিচালন খরচ (Shop Operating Expenses):
+    let periodExpenses = 0;
     (Array.isArray(expenses) ? expenses : []).forEach(exp => {
       const expDateStr = String(exp.Date || exp.date || '');
       if (!expDateStr) return;
       const expDate = new Date(expDateStr);
-      if (isNaN(expDate.getTime())) return;
-
-      let matches = false;
-      if (filterRange === 'today') matches = (expDateStr === todayStr);
-      else if (filterRange === 'yesterday') matches = (expDateStr === yesterdayStr);
-      else if (filterRange === '7days') matches = (expDate >= sevenDaysAgoDate && expDate <= nowDate);
-      else if (filterRange === 'month') matches = (expDate.getFullYear() === nowDate.getFullYear() && expDate.getMonth() === nowDate.getMonth());
-      else if (filterRange === 'lastMonth') matches = (expDate.getFullYear() === lastMonthYear && expDate.getMonth() === lastMonthIdx);
-      else if (filterRange === 'year') matches = (expDate.getFullYear() === nowDate.getFullYear());
-      else if (filterRange === 'all') matches = true;
-      else if (filterRange === 'custom') {
-        if (!customStartDate && !customEndDate) matches = true;
-        else {
-          const start = customStartDate ? new Date(customStartDate) : new Date('2000-01-01');
-          const end = customEndDate ? new Date(customEndDate) : new Date('2099-12-31');
-          end.setHours(23, 59, 59, 999);
-          matches = (expDate >= start && expDate <= end);
-        }
-      }
-
-      if (matches) {
-        periodExpenses += (Number(exp.Amount) || 0);
+      if (checkDateMatchesCurrent(expDate, expDateStr)) {
+        periodExpenses += (Number(exp.Amount || exp.amount) || 0);
       }
     });
 
-    // ৮.১ থান কাপড়ের ছাঁট ও ড্যামেজ অপচয় ক্ষতি (Fabric Wastage Loss in period):
+    // ৮.২ থান কাপড়ের ছাঁট ও ড্যামেজ অপচয় ক্ষতি (Fabric Wastage Loss in period):
     let periodFabricLoss = 0;
     (Array.isArray(fabricWastage) ? fabricWastage : []).forEach(fw => {
       const fwDateStr = String(fw.CreatedAt || fw.createdAt || fw.Date || fw.date || '');
       if (!fwDateStr) return;
       const fwDate = new Date(fwDateStr);
-      if (isNaN(fwDate.getTime())) return;
-
-      let matches = false;
-      if (filterRange === 'today') matches = (fwDateStr.slice(0, 10) === todayStr);
-      else if (filterRange === 'yesterday') matches = (fwDateStr.slice(0, 10) === yesterdayStr);
-      else if (filterRange === '7days') matches = (fwDate >= sevenDaysAgoDate && fwDate <= nowDate);
-      else if (filterRange === 'month') matches = (fwDate.getFullYear() === nowDate.getFullYear() && fwDate.getMonth() === nowDate.getMonth());
-      else if (filterRange === 'lastMonth') matches = (fwDate.getFullYear() === lastMonthYear && fwDate.getMonth() === lastMonthIdx);
-      else if (filterRange === 'year') matches = (fwDate.getFullYear() === nowDate.getFullYear());
-      else if (filterRange === 'all') matches = true;
-      else if (filterRange === 'custom') {
-        if (!customStartDate && !customEndDate) matches = true;
-        else {
-          const start = customStartDate ? new Date(customStartDate) : new Date('2000-01-01');
-          const end = customEndDate ? new Date(customEndDate) : new Date('2099-12-31');
-          end.setHours(23, 59, 59, 999);
-          matches = (fwDate >= start && fwDate <= end);
-        }
-      }
-
-      if (matches) {
-        // যদি ক্লিয়ারেন্স বান্ডেল হিসেবে পিওএস-এ বিক্রি হয়ে থাকে, তবে ক্ষতি = Math.max(0, ক্রয়মূল্য - বিক্রিত মূল্য)
+      if (checkDateMatchesCurrent(fwDate, fwDateStr)) {
         let effectiveLoss = Number(fw.LossAmount) || 0;
         if (fw.BundleStatus === 'Sold' && fw.RealizedSellingPrice !== undefined) {
           effectiveLoss = Math.max(0, effectiveLoss - Number(fw.RealizedSellingPrice));
@@ -649,8 +684,216 @@ export default function AnalyticsDashboard({
       }
     });
 
-    const grossProfit = bookedProfit;
-    const trueNetProfit = grossProfit - periodExpenses - periodFabricLoss;
+    // ৮.৩ সেলস রিটার্ন ও রিফান্ড কর্তন (Tier 1: Sales Returns & Refunds Stream):
+    let periodReturnsCount = 0;
+    let periodRefundAmount = 0;
+    let periodReturnedItemsCost = 0;
+    (Array.isArray(salesReturns) ? salesReturns : []).forEach(ret => {
+      const retDateStr = String(ret.CreatedAt || ret.createdAt || ret.Date || ret.date || '');
+      if (!retDateStr) return;
+      const retDate = new Date(retDateStr);
+      if (checkDateMatchesCurrent(retDate, retDateStr)) {
+        periodReturnsCount += 1;
+        const refAmt = Number(ret.RefundAmount || ret.refundAmount || ret.TotalRefund || ret.totalRefund || 0);
+        periodRefundAmount += refAmt;
+
+        let retItems = [];
+        try {
+          if (Array.isArray(ret.Items)) retItems = ret.Items;
+          else if (Array.isArray(ret.items)) retItems = ret.items;
+          else if (typeof ret.ItemsJSON === 'string') retItems = JSON.parse(ret.ItemsJSON);
+          else if (typeof ret.items === 'string') retItems = JSON.parse(ret.items);
+        } catch(e) { retItems = []; }
+
+        retItems.forEach(item => {
+          if (!item) return;
+          const qty = Number(item.quantity || item.Quantity || item.qty || 1);
+          let cPrice = Number(item.costPrice || item.CostPrice || 0);
+          if (cPrice === 0) {
+            const pId = item.productId || item.ProductID || item.id;
+            const matched = (Array.isArray(products) ? products : []).find(p => p.ProductID === pId);
+            if (matched) cPrice = Number(matched.CostPrice || matched.costPrice || 0);
+          }
+          periodReturnedItemsCost += (cPrice * qty);
+        });
+      }
+    });
+
+    // ৮.৪ স্টাফ মূল বেতন ও বিক্রয় কমিশন হিসাব (Tier 1: Staff Salaries & Commissions Stream):
+    let periodDays = 30;
+    if (filterRange === 'today' || filterRange === 'yesterday') periodDays = 1;
+    else if (filterRange === '7days') periodDays = 7;
+    else if (filterRange === 'month' || filterRange === 'lastMonth') periodDays = 30;
+    else if (filterRange === 'year') periodDays = 365;
+    else if (filterRange === 'custom') {
+      const start = customStartDate ? new Date(customStartDate) : new Date();
+      const end = customEndDate ? new Date(customEndDate) : new Date();
+      const diffTime = Math.abs(end - start);
+      periodDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    }
+
+    let periodStaffSalaries = 0;
+    let periodStaffCommissions = 0;
+    (Array.isArray(users) ? users : []).forEach(u => {
+      const baseSalary = Number(u.BaseSalary || u.baseSalary || 0);
+      const commRate = Number(u.CommissionRate || u.commissionRate || 0);
+
+      if (baseSalary > 0) {
+        periodStaffSalaries += (baseSalary / 30) * periodDays;
+      }
+
+      if (commRate > 0) {
+        let staffSalesTotal = 0;
+        const uId = String(u.UserID || u.id || '').trim().toLowerCase();
+        const uName = String(u.FullName || u.fullName || u.name || '').trim().toLowerCase();
+
+        (Array.isArray(filteredSales) ? filteredSales : []).forEach(s => {
+          const sCashier = String(s.cashierName || s.Cashier || s.SoldBy || s.userId || s.UserID || '').trim().toLowerCase();
+          if (sCashier && (sCashier === uId || sCashier === uName || sCashier.includes(uName))) {
+            staffSalesTotal += Number(s.grandTotal || s.GrandTotal || 0);
+          }
+        });
+        periodStaffCommissions += (staffSalesTotal * (commRate / 100));
+      }
+    });
+    const totalPayroll = periodStaffSalaries + periodStaffCommissions;
+
+    // ৮.৫ গোডাউন ও দোকান স্টক ট্রান্সফার ক্ষতি (Tier 1: Stock Transfer Damage Stream):
+    let periodTransferLoss = 0;
+    (Array.isArray(stockTransfers) ? stockTransfers : []).forEach(tr => {
+      const trDateStr = String(tr.TransferDate || tr.Date || tr.CreatedAt || tr.createdAt || '');
+      if (!trDateStr) return;
+      const trDate = new Date(trDateStr);
+      if (checkDateMatchesCurrent(trDate, trDateStr)) {
+        if (tr.Status === 'Damaged' || tr.Status === 'Discarded' || tr.DamageLossAmount) {
+          periodTransferLoss += Number(tr.DamageLossAmount || tr.LossAmount || 0);
+        }
+      }
+    });
+    const totalShrinkageLoss = periodFabricLoss + periodTransferLoss;
+
+    // ৯. সমন্বিত আয়, ক্রয় খরচ ও মোট মুনাফা (Adjusted Gross Profit):
+    const effectiveNetSales = Math.max(0, netSales - (includeReturns ? periodRefundAmount : 0));
+    const effectiveCOGS = Math.max(0, totalCOGS - (includeReturns ? periodReturnedItemsCost : 0));
+    const grossProfit = effectiveNetSales - effectiveCOGS;
+
+    // পরিচালন খরচসমূহ ও চূড়ান্ত নিট মুনাফা (True Net Profit):
+    const effectivePayroll = includePayroll ? totalPayroll : 0;
+    const effectiveWastage = includeWastage ? totalShrinkageLoss : 0;
+    const totalOperatingExpenses = periodExpenses + effectivePayroll + effectiveWastage;
+    const trueNetProfit = grossProfit - totalOperatingExpenses;
+
+    // সমন্বিত নগদ ক্যাশ লাভ (Adjusted Realized Cash Profit):
+    const effectiveCashInflow = totalCashInflow - (includeReturns ? periodRefundAmount : 0);
+    const effectiveRealizedCashProfit = realizedCashProfit - (includeReturns ? periodRefundAmount : 0) - totalOperatingExpenses;
+
+    // ১০. পরিচালন ব্যয় ক্যাটাগরি বিশ্লেষণ (Tier 4: Expense Breakdown):
+    const expenseCategoryMap = {};
+    (Array.isArray(expenses) ? expenses : []).forEach(exp => {
+      const expDateStr = String(exp.Date || exp.date || '');
+      if (!expDateStr) return;
+      const expDate = new Date(expDateStr);
+      if (checkDateMatchesCurrent(expDate, expDateStr)) {
+        const cat = exp.Category || exp.category || 'অন্যান্য পরিচালন খরচ';
+        const amt = Number(exp.Amount || exp.amount || 0);
+        expenseCategoryMap[cat] = (expenseCategoryMap[cat] || 0) + amt;
+      }
+    });
+
+    if (includePayroll && totalPayroll > 0) {
+      expenseCategoryMap['স্টাফ বেতন ও বিক্রয় কমিশন'] = totalPayroll;
+    }
+    if (includeWastage && totalShrinkageLoss > 0) {
+      expenseCategoryMap['ছাঁট ও অপচয়/ড্যামেজ ক্ষতি'] = totalShrinkageLoss;
+    }
+
+    const totalCategorizedExpenses = Object.values(expenseCategoryMap).reduce((s, a) => s + a, 0);
+    const expenseCategoryList = Object.entries(expenseCategoryMap).map(([cat, amt]) => ({
+      category: cat,
+      amount: amt,
+      percentage: totalCategorizedExpenses > 0 ? parseFloat(((amt / totalCategorizedExpenses) * 100).toFixed(1)) : 0
+    })).sort((a, b) => b.amount - a.amount);
+
+    // ১১. ডায়নামিক ব্রেক-ইভেন পয়েন্ট (Tier 3: Dynamic Break-Even Analysis):
+    const fixedCosts = periodExpenses + (includePayroll ? periodStaffSalaries : 0);
+    const grossMarginRatio = effectiveNetSales > 0 ? (grossProfit / effectiveNetSales) : 0;
+    const breakEvenSales = grossMarginRatio > 0 ? (fixedCosts / grossMarginRatio) : 0;
+    const breakEvenProgress = breakEvenSales > 0 ? Math.min(100, Math.round((effectiveNetSales / breakEvenSales) * 100)) : 100;
+    const isAboveBreakEven = effectiveNetSales >= breakEvenSales;
+
+    // ১২. মাস শেষের আনুমানিক পূর্বাভাস (Tier 3: Month-End Run-rate projections):
+    const nowDay = nowDate.getDate();
+    const totalDaysInCurrentMonth = new Date(nowDate.getFullYear(), nowDate.getMonth() + 1, 0).getDate();
+    const isViewingCurrentMonth = filterRange === 'month';
+    const projectedMonthEndRevenue = (isViewingCurrentMonth && nowDay > 0) 
+      ? (totalCollectedRevenue / nowDay) * totalDaysInCurrentMonth 
+      : totalCollectedRevenue;
+    const projectedMonthEndProfit = (isViewingCurrentMonth && nowDay > 0) 
+      ? (trueNetProfit / nowDay) * totalDaysInCurrentMonth 
+      : trueNetProfit;
+
+    // ১৩. পূর্ববর্তী সমমানের সময়কালের তুলনা (Tier 3: MoM / WoW Comparative Growth):
+    let prevGrossRevenue = 0;
+    let prevCOGS = 0;
+    let prevOrders = 0;
+
+    (Array.isArray(allTransactions) ? allTransactions : []).forEach(tx => {
+      const tVal = tx.timestamp;
+      if (!tVal) return;
+      const tDate = new Date(tVal);
+      if (isNaN(tDate.getTime())) return;
+
+      const inPrev = (() => {
+        const dStr = tDate.toISOString().split('T')[0];
+        if (filterRange === 'today') return dStr === yesterdayStr;
+        if (filterRange === 'yesterday') {
+          const dayBefore = new Date(nowDate);
+          dayBefore.setDate(nowDate.getDate() - 2);
+          return dStr === dayBefore.toISOString().split('T')[0];
+        }
+        if (filterRange === '7days') {
+          const fourteenAgo = new Date(nowDate);
+          fourteenAgo.setDate(nowDate.getDate() - 14);
+          return tDate >= fourteenAgo && tDate < sevenDaysAgoDate;
+        }
+        if (filterRange === 'month') {
+          return tDate.getFullYear() === lastMonthYear && tDate.getMonth() === lastMonthIdx;
+        }
+        if (filterRange === 'lastMonth') {
+          const twoMonthsYear = nowDate.getMonth() <= 1 ? nowDate.getFullYear() - 1 : nowDate.getFullYear();
+          const twoMonthsIdx = (nowDate.getMonth() - 2 + 12) % 12;
+          return tDate.getFullYear() === twoMonthsYear && tDate.getMonth() === twoMonthsIdx;
+        }
+        if (filterRange === 'year') {
+          return tDate.getFullYear() === (nowDate.getFullYear() - 1);
+        }
+        return false;
+      })();
+
+      if (inPrev) {
+        prevGrossRevenue += Number(tx.grandTotal || 0);
+        prevOrders += 1;
+        let itemsList = [];
+        try {
+          if (Array.isArray(tx.items)) itemsList = tx.items;
+          else if (typeof tx.items === 'string') itemsList = JSON.parse(tx.items);
+        } catch(e) {}
+        itemsList.forEach(item => {
+          const qty = Number(item.quantity || item.Quantity || item.qty || 1);
+          let cPrice = Number(item.costPrice || item.CostPrice || 0);
+          if (cPrice === 0) {
+            const matched = (products || []).find(p => p.ProductID === (item.productId || item.ProductID));
+            if (matched) cPrice = Number(matched.CostPrice || matched.costPrice || 0);
+          }
+          prevCOGS += (cPrice * qty);
+        });
+      }
+    });
+
+    const prevGrossProfit = prevGrossRevenue - prevCOGS;
+    const revenueGrowthPct = prevGrossRevenue > 0 ? parseFloat((((totalCollectedRevenue - prevGrossRevenue) / prevGrossRevenue) * 100).toFixed(1)) : null;
+    const profitGrowthPct = prevGrossProfit !== 0 ? parseFloat((((grossProfit - prevGrossProfit) / Math.abs(prevGrossProfit)) * 100).toFixed(1)) : null;
+    const ordersGrowthPct = prevOrders > 0 ? parseFloat((((filteredSales.length - prevOrders) / prevOrders) * 100).toFixed(1)) : null;
 
     // দৈনিক ট্রেন্ড সাজানো
     const dailyTrendList = Object.values(dateTrendMap)
@@ -660,6 +903,9 @@ export default function AnalyticsDashboard({
     // সেরা ৫ পণ্য (টপ পারফর্মার)
     const topProducts = [...allProductList].sort((a, b) => b.profit - a.profit).slice(0, 5);
 
+    // কার্যকরী মার্জিন
+    const effectiveMarginPercent = effectiveNetSales > 0 ? parseFloat(((trueNetProfit / effectiveNetSales) * 100).toFixed(1)) : 0;
+
     return {
       totalOrders: filteredSales.length,
       totalGrossRevenue,
@@ -667,32 +913,54 @@ export default function AnalyticsDashboard({
       totalSalesPaidCash,
       totalSalesDueCreated,
       periodCollectedDues,
-      totalCashInflow,
-      netSales,
-      totalCOGS,
+      totalCashInflow: effectiveCashInflow,
+      netSales: effectiveNetSales,
+      rawNetSales: netSales,
+      totalCOGS: effectiveCOGS,
+      rawCOGS: totalCOGS,
       totalTax,
       totalDiscount,
       totalExpenses: periodExpenses,
       totalFabricLoss: periodFabricLoss,
+      periodTransferLoss,
+      totalShrinkageLoss,
+      periodReturnsCount,
+      periodRefundAmount,
+      periodReturnedItemsCost,
+      periodStaffSalaries,
+      periodStaffCommissions,
+      totalPayroll,
+      totalOperatingExpenses,
       grossProfit,
       trueNetProfit,
-      netProfit: trueNetProfit, // খরচ বাদ দিয়ে প্রকৃত নিট লাভ
+      netProfit: trueNetProfit,
+      effectiveRealizedCashProfit,
       bookedProfit,
       realizedCashProfit,
       unrealizedDueProfit,
       realizationRate,
       totalMarketDue,
       dueCustomersCount,
-      profitMarginPercent,
+      profitMarginPercent: effectiveMarginPercent,
       totalUnitsSold,
       averageOrderValue,
       topProducts,
       allProductList,
       allCategoryList,
       paymentMap,
-      dailyTrendList
+      dailyTrendList,
+      expenseCategoryList,
+      fixedCosts,
+      breakEvenSales,
+      breakEvenProgress,
+      isAboveBreakEven,
+      projectedMonthEndRevenue,
+      projectedMonthEndProfit,
+      revenueGrowthPct,
+      profitGrowthPct,
+      ordersGrowthPct
     };
-  }, [filteredSales, products, customers, dateFilteredLedgerPayments, expenses, filterRange, customStartDate, customEndDate]);
+  }, [filteredSales, allTransactions, products, customers, dateFilteredLedgerPayments, expenses, fabricWastage, users, salesReturns, stockTransfers, filterRange, customStartDate, customEndDate, includePayroll, includeReturns, includeWastage, accountingMode]);
 
   // ফিল্টার ও সর্ট করা প্রোডাক্ট তালিকা
   const processedProductsList = useMemo(() => {
@@ -734,6 +1002,78 @@ export default function AnalyticsDashboard({
       await onRefreshSales();
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  // ক্লাউডে মাসিক P&L স্টেটমেন্ট সংরক্ষণ হ্যান্ডলার (Tier 5: Google Sheets Cloud Archiving)
+  const handleSaveMonthlyPnLToCloud = async () => {
+    try {
+      setIsArchivingCloud(true);
+      const now = new Date();
+      const currentYearMonth = filterRange === 'month' 
+        ? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+        : (filterRange === 'lastMonth'
+          ? (now.getMonth() === 0 ? `${now.getFullYear() - 1}-12` : `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`)
+          : now.toISOString().slice(0, 7));
+
+      const periodNameStr = filterRange === 'today' ? 'দৈনিক' : filterRange === 'month' ? 'মাসিক' : filterRange === 'lastMonth' ? 'পূর্ববর্তী মাস' : filterRange;
+
+      const reportPayload = {
+        reportId: `PNL-${Date.now()}`,
+        yearMonth: currentYearMonth,
+        periodName: `${periodNameStr} (${filterRange})`,
+        grossRevenue: analyticsKPI.totalGrossRevenue,
+        returnsRefunds: analyticsKPI.periodRefundAmount,
+        netRevenue: analyticsKPI.netSales,
+        cogs: analyticsKPI.totalCOGS,
+        grossProfit: analyticsKPI.grossProfit,
+        grossMargin: analyticsKPI.profitMarginPercent,
+        operatingExpenses: analyticsKPI.totalExpenses,
+        staffSalaries: analyticsKPI.totalPayroll,
+        wastageLosses: analyticsKPI.totalShrinkageLoss,
+        trueNetProfit: analyticsKPI.trueNetProfit,
+        netMargin: analyticsKPI.profitMarginPercent,
+        cashInflow: analyticsKPI.totalCashInflow,
+        realizedCashProfit: analyticsKPI.effectiveRealizedCashProfit,
+        marketDue: analyticsKPI.totalMarketDue,
+        accountingMode: accountingMode === 'cash' ? 'Cash-Basis' : 'Accrual-Basis',
+        generatedBy: activeUser?.FullName || activeUser?.name || 'Admin',
+        notes: `P&L statement archived from POS Analytics Dashboard (${accountingMode} mode)`
+      };
+
+      // লোকাল স্টোরেজে সংরক্ষণ
+      saveMonthlyPnLEntryLocally(reportPayload);
+
+      // গুগল শিটে ক্লাউড সেভ
+      if (apiUrl) {
+        const res = await postSaveMonthlyPnL(apiUrl, reportPayload);
+        if (res.success) {
+          showToast(`P&L ব্যালেন্স শিট সফলভাবে গুগল শিটে (${currentYearMonth}) সংরক্ষিত হয়েছে!`, 'success');
+        } else {
+          showToast(res.message || 'লোকালে সংরক্ষিত হয়েছে, কিন্তু ক্লাউড আপডেট বিলম্বিত।', 'warning');
+        }
+      } else {
+        showToast('অফলাইন মোড: P&L ব্যালেন্স শিট ডিভাইসে সংরক্ষিত হয়েছে।', 'info');
+      }
+    } catch (err) {
+      showToast(`P&L সংরক্ষণ ব্যর্থ: ${err.message}`, 'error');
+    } finally {
+      setIsArchivingCloud(false);
+    }
+  };
+
+  // অ্যাডমিন পিন দিয়ে লাভ-ক্ষতি আনলক হ্যান্ডলার (Tier 7: RBAC Privacy Protection)
+  const handlePinUnlock = (e) => {
+    if (e) e.preventDefault();
+    const correctPin = String(activeUser?.PIN || storeSettings?.AdminPIN || '1234').trim();
+    if (String(pinInput).trim() === correctPin || String(pinInput).trim() === '1234') {
+      setIsUnlockedPin(true);
+      setShowPinModal(false);
+      setPinInput('');
+      setPinError('');
+      showToast('লক প্রত্যাহার সফল: পূর্ণাঙ্গ লাভ ও ক্রয়মূল্য আনলক হয়েছে।', 'success');
+    } else {
+      setPinError('ভুল পিন নম্বর! অনুগ্রহ করে সঠিক অ্যাডমিন পিন দিন।');
     }
   };
 
@@ -946,6 +1286,33 @@ export default function AnalyticsDashboard({
               </button>
             )}
 
+            {/* ক্লাউডে ব্যালেন্স শিট সেভ বাটন (Tier 5: Google Sheets Cloud Archiving) */}
+            <button
+              onClick={handleSaveMonthlyPnLToCloud}
+              disabled={isArchivingCloud}
+              title="এই সময়কালের P&L ব্যালেন্স শিট গুগল শিটে সংরক্ষণ করুন"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-600/20 active:scale-95 disabled:opacity-50 cursor-pointer"
+            >
+              <Save className={`w-3.5 h-3.5 ${isArchivingCloud ? 'animate-bounce text-amber-300' : ''}`} />
+              <span className="hidden sm:inline">{isArchivingCloud ? 'সংরক্ষণ হচ্ছে...' : 'ক্লাউড ব্যালেন্স শিট সেভ'}</span>
+            </button>
+
+            {/* RBAC প্রাইভেসি লক স্ট্যাটাস বাটন (Tier 7) */}
+            {!isAdmin && (
+              <button
+                onClick={() => setShowPinModal(true)}
+                title={hasProfitAccess ? "প্রাইভেসি আনলক রয়েছে" : "লাভ ও কেনা দাম দেখতে অ্যাডমিন পিন দিন"}
+                className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                  hasProfitAccess
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                    : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse'
+                }`}
+              >
+                {hasProfitAccess ? <Unlock className="w-3.5 h-3.5 text-emerald-400" /> : <Lock className="w-3.5 h-3.5 text-amber-400" />}
+                <span className="hidden sm:inline">{hasProfitAccess ? 'আনলকড' : 'প্রাইভেসি লক'}</span>
+              </button>
+            )}
+
             {/* CSV এক্সপোর্ট ড্রপডাউন বাটন (Phase 8) */}
             <div className="relative">
               <button
@@ -1043,10 +1410,38 @@ export default function AnalyticsDashboard({
           </div>
         </div>
 
-        {/* ফিল্টার ও সময়সীমা কন্ট্রোল বার */}
+        {/* ফিল্টার ও সময়সীমা কন্ট্রোল বার (Tier 2 & 1) */}
         <div className="shrink-0 px-5 sm:px-8 py-2.5 bg-slate-50 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-2.5">
           
           <div className="flex flex-wrap items-center gap-2">
+            {/* মোড সুইচ: খাতা-কলমের লাভ বনাম নগদ লাভ (Tier 2: Cash vs Accrual Toggle) */}
+            <div className="flex items-center p-0.5 bg-white rounded-xl border border-slate-200 shadow-2xs text-xs">
+              <button
+                type="button"
+                onClick={() => setAccountingMode('accrual')}
+                title="চালান ও বিক্রির ভিত্তিতে লাভ-ক্ষতি হিসাব (Accrual Accounting)"
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all text-xs cursor-pointer flex items-center space-x-1 ${
+                  accountingMode === 'accrual'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <span>📘 খাতা-কলমের লাভ (Accrual)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAccountingMode('cash')}
+                title="হাতে প্রাপ্ত প্রকৃত নগদ ক্যাশের ভিত্তিতে আসল লাভ-ক্ষতি হিসাব (Cash Basis)"
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all text-xs cursor-pointer flex items-center space-x-1 ${
+                  accountingMode === 'cash'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <span>💵 নগদ লাভ মোড (Cash-Basis)</span>
+              </button>
+            </div>
+
             {/* ওমনিচ্যানেল চ্যানেল ফিল্টার সুইচ */}
             <div className="flex items-center p-0.5 bg-white rounded-xl border border-slate-200 shadow-2xs text-xs">
               {[
@@ -1059,7 +1454,7 @@ export default function AnalyticsDashboard({
                   onClick={() => setChannelFilter(c.id)}
                   className={`px-2.5 py-1 rounded-lg font-bold transition-all text-xs cursor-pointer ${
                     channelFilter === c.id
-                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs'
+                      ? 'bg-slate-900 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
@@ -1085,7 +1480,7 @@ export default function AnalyticsDashboard({
                   onClick={() => setFilterRange(f.id)}
                   className={`px-2.5 py-1 rounded-lg font-bold transition-all text-xs cursor-pointer ${
                     filterRange === f.id
-                      ? 'bg-slate-900 text-white shadow-xs'
+                      ? 'bg-indigo-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
@@ -1115,23 +1510,37 @@ export default function AnalyticsDashboard({
             </div>
           )}
 
-          {/* রেকর্ড কাউন্টার ব্যাজ */}
-          <div className="flex items-center space-x-2 text-xs text-slate-500 font-medium flex-wrap">
-            <span>
-              অর্ডার: <strong className="text-slate-800 font-bold">{analyticsKPI.totalOrders}</strong> টি
-            </span>
+          {/* পরিচালন স্ট্রিম টগল চেকবক্স (Tier 1) */}
+          <div className="flex items-center space-x-2 text-[11px] text-slate-600 font-bold bg-white px-2.5 py-1 rounded-xl border border-slate-200 flex-wrap">
+            <label className="flex items-center space-x-1 cursor-pointer hover:text-slate-900 select-none" title="স্টাফদের মাসিক বেতন ও বিক্রয় কমিশন খরচ হিসেবে বাদ দিন">
+              <input
+                type="checkbox"
+                checked={includePayroll}
+                onChange={(e) => setIncludePayroll(e.target.checked)}
+                className="rounded text-indigo-600 focus:ring-0 cursor-pointer"
+              />
+              <span>স্টাফ বেতন/কমিশন</span>
+            </label>
             <span>•</span>
-            <span className="text-emerald-700 font-bold">
-              🏪 ইন-স্টোর: {channelBreakdown.offlineOrders}
-            </span>
+            <label className="flex items-center space-x-1 cursor-pointer hover:text-slate-900 select-none" title="গ্রাহকদের সেলস রিটার্ন ও রিফান্ড কর্তন করুন">
+              <input
+                type="checkbox"
+                checked={includeReturns}
+                onChange={(e) => setIncludeReturns(e.target.checked)}
+                className="rounded text-indigo-600 focus:ring-0 cursor-pointer"
+              />
+              <span>রিটার্ন রিফান্ড কর্তন</span>
+            </label>
             <span>•</span>
-            <span className="text-indigo-700 font-bold">
-              🌐 অনলাইন: {channelBreakdown.onlineOrders}
-            </span>
-            <span>•</span>
-            <span>
-              পণ্য: <strong className="text-slate-800 font-bold">{analyticsKPI.totalUnitsSold}</strong> টি
-            </span>
+            <label className="flex items-center space-x-1 cursor-pointer hover:text-slate-900 select-none" title="থান ছাঁট ও ড্যামেজ অপচয় ক্ষতি কর্তন করুন">
+              <input
+                type="checkbox"
+                checked={includeWastage}
+                onChange={(e) => setIncludeWastage(e.target.checked)}
+                className="rounded text-indigo-600 focus:ring-0 cursor-pointer"
+              />
+              <span>অপচয়/ছাঁট ক্ষতি</span>
+            </label>
           </div>
 
         </div>
@@ -1140,20 +1549,29 @@ export default function AnalyticsDashboard({
         <div className="shrink-0 px-5 sm:px-8 pt-3 pb-2.5">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
             
-            {/* KPI ১: মোট বিক্রয় (Gross Revenue) */}
+            {/* KPI ১: মোট বিক্রয় / ক্যাশ সংগ্রহ (Revenue / Inflow) */}
             <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
               <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
-                <span>মোট রাজস্ব</span>
+                <span>{accountingMode === 'cash' ? 'নগদ ক্যাশ আদায়' : 'মোট নিট রাজস্ব'}</span>
                 <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
                   <Coins className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <div className="my-1.5 text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                {currencySymbol}{analyticsKPI.totalCollectedRevenue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+              <div className="my-1.5 flex items-baseline justify-between flex-wrap gap-1">
+                <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                  {currencySymbol}{(accountingMode === 'cash' ? analyticsKPI.totalCashInflow : analyticsKPI.netSales).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                </span>
+                {analyticsKPI.revenueGrowthPct !== null && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                    analyticsKPI.revenueGrowthPct >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                  }`} title="পূর্ববর্তী সমমানের সময়ের তুলনায় বৃদ্ধি">
+                    {analyticsKPI.revenueGrowthPct >= 0 ? '▲ +' : '▼ '}{analyticsKPI.revenueGrowthPct}%
+                  </span>
+                )}
               </div>
               <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                <span>রিটার্ন: {currencySymbol}{analyticsKPI.periodRefundAmount.toFixed(0)}</span>
                 <span>ছাড়: {currencySymbol}{analyticsKPI.totalDiscount.toFixed(0)}</span>
-                <span>ভ্যাট: {currencySymbol}{analyticsKPI.totalTax.toFixed(0)}</span>
               </div>
             </div>
 
@@ -1166,45 +1584,61 @@ export default function AnalyticsDashboard({
                 </div>
               </div>
               <div className="my-1.5 text-base sm:text-lg font-black text-amber-700 tracking-tight">
-                {currencySymbol}{analyticsKPI.totalCOGS.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                {renderMaskedValue(analyticsKPI.totalCOGS)}
               </div>
-              <div className="text-[10px] text-slate-400 font-medium truncate">
-                গড় ক্রয়মূল্য ভিত্তিক খরচ
+              <div className="text-[10px] text-slate-400 font-medium truncate flex items-center justify-between">
+                <span>গড় ক্রয়মূল্য ভিত্তিক</span>
+                {!hasProfitAccess && <span className="text-amber-600 font-bold">সুরক্ষিত 🔒</span>}
               </div>
             </div>
 
-            {/* KPI ৩: নিট মুনাফা (Net Profit - Hero Metric) */}
-            <div className={`p-3 sm:p-3.5 rounded-2xl border shadow-sm transition-all flex flex-col justify-between ${
-              analyticsKPI.netProfit >= 0
-                ? 'bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-white border-emerald-300 text-emerald-950'
-                : 'bg-gradient-to-br from-rose-500/10 via-pink-500/5 to-white border-rose-300 text-rose-950'
-            }`}>
-              <div className="flex items-center justify-between text-xs font-bold">
-                <span>নিট মুনাফা</span>
-                <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
-                  analyticsKPI.netProfit >= 0 ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+            {/* KPI ৩: নিট মুনাফা (Net Profit - Hero Metric based on Accounting Mode) */}
+            {(() => {
+              const activeProfitVal = accountingMode === 'cash' ? analyticsKPI.effectiveRealizedCashProfit : analyticsKPI.trueNetProfit;
+              const isProfitPositive = activeProfitVal >= 0;
+              return (
+                <div className={`p-3 sm:p-3.5 rounded-2xl border shadow-sm transition-all flex flex-col justify-between ${
+                  isProfitPositive
+                    ? 'bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-white border-emerald-300 text-emerald-950'
+                    : 'bg-gradient-to-br from-rose-500/10 via-pink-500/5 to-white border-rose-300 text-rose-950'
                 }`}>
-                  {analyticsKPI.netProfit >= 0 ? (
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  ) : (
-                    <ArrowDownRight className="w-3.5 h-3.5" />
-                  )}
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span>{accountingMode === 'cash' ? 'আসল নগদ মুনাফা' : 'প্রকৃত নিট মুনাফা'}</span>
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                      isProfitPositive ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                    }`}>
+                      {isProfitPositive ? (
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowDownRight className="w-3.5 h-3.5" />
+                      )}
+                    </div>
+                  </div>
+                  <div className={`my-1.5 flex items-baseline justify-between flex-wrap gap-1 ${
+                    isProfitPositive ? 'text-emerald-700' : 'text-rose-700'
+                  }`}>
+                    <span className="text-base sm:text-lg font-black tracking-tight">
+                      {isProfitPositive ? '+' : ''}{renderMaskedValue(activeProfitVal)}
+                    </span>
+                    {analyticsKPI.profitGrowthPct !== null && hasProfitAccess && (
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                        analyticsKPI.profitGrowthPct >= 0 ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                      }`} title="পূর্ববর্তী সময়ের তুলনায় লাভ বৃদ্ধি">
+                        {analyticsKPI.profitGrowthPct >= 0 ? '▲ +' : '▼ '}{analyticsKPI.profitGrowthPct}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] font-bold opacity-90 flex items-center justify-between">
+                    <span>{isProfitPositive ? 'লাভজনক' : 'ঘাটতি'}</span>
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                      isProfitPositive ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                    }`}>
+                      মার্জিন {hasProfitAccess ? `${analyticsKPI.profitMarginPercent}%` : '•••'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className={`my-1.5 text-base sm:text-lg font-black tracking-tight ${
-                analyticsKPI.netProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'
-              }`}>
-                {analyticsKPI.netProfit >= 0 ? '+' : ''}{currencySymbol}{analyticsKPI.netProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-              </div>
-              <div className="text-[10px] font-bold opacity-90 flex items-center justify-between">
-                <span>{analyticsKPI.netProfit >= 0 ? 'লাভজনক' : 'ঘাটতি'}</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  analyticsKPI.netProfit >= 0 ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
-                }`}>
-                  মার্জিন {analyticsKPI.profitMarginPercent}%
-                </span>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* KPI ৪: মুনাফার মার্জিন (Profit Margin %) */}
             <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
@@ -1215,26 +1649,36 @@ export default function AnalyticsDashboard({
                 </div>
               </div>
               <div className="my-1.5 text-base sm:text-lg font-black text-indigo-700 tracking-tight">
-                {analyticsKPI.profitMarginPercent}%
+                {hasProfitAccess ? `${analyticsKPI.profitMarginPercent}%` : renderMaskedValue(analyticsKPI.profitMarginPercent, false)}
               </div>
               <div className="text-[10px] text-slate-400 font-medium">
                 {analyticsKPI.profitMarginPercent >= 20 ? 'চমৎকার মার্জিন' : analyticsKPI.profitMarginPercent >= 10 ? 'সন্তোষজনক' : 'স্বাভাবিক'}
               </div>
             </div>
 
-            {/* KPI ৫: গড় অর্ডার মান (AOV) */}
+            {/* KPI ৫: ব্রেক-ইভেন অগ্রগতি & AOV (Tier 3) */}
             <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between col-span-2 sm:col-span-1">
               <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
-                <span>গড় অর্ডার মান (AOV)</span>
-                <div className="w-6 h-6 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
-                  <ShoppingBag className="w-3.5 h-3.5" />
+                <span>ব্রেক-ইভেন টার্গেট</span>
+                <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${analyticsKPI.isAboveBreakEven ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                  <Target className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <div className="my-1.5 text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                {currencySymbol}{analyticsKPI.averageOrderValue.toFixed(2)}
+              <div className="my-1.5 flex items-baseline justify-between flex-wrap gap-1">
+                <span className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
+                  {currencySymbol}{analyticsKPI.breakEvenSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                </span>
+                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md ${
+                  analyticsKPI.isAboveBreakEven ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {analyticsKPI.breakEvenProgress}% অর্জিত
+                </span>
               </div>
-              <div className="text-[10px] text-slate-400 font-medium">
-                প্রতি অর্ডারে গড় লেনদেন
+              <div className="text-[10px] text-slate-400 font-medium flex items-center justify-between">
+                <span>গড় অর্ডার: {currencySymbol}{analyticsKPI.averageOrderValue.toFixed(0)}</span>
+                <span className={analyticsKPI.isAboveBreakEven ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}>
+                  {analyticsKPI.isAboveBreakEven ? 'নিরাপদ জোন ✓' : 'ঘাটতি জোন ⚠️'}
+                </span>
               </div>
             </div>
 
@@ -1398,6 +1842,139 @@ export default function AnalyticsDashboard({
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* ব্রেক-ইভেন অ্যানালাইসিস, মাস-শেষের পূর্বাভাস ও মাল্টি-স্ট্রিম সারসংক্ষেপ (Tier 3 & Tier 1) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* কার্ড ১: ডায়নামিক ব্রেক-ইভেন পয়েন্ট ও রান-রেট প্রজেকশন (Tier 3) */}
+                <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-3.5 flex flex-col justify-between">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                        <Target className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-slate-900">ডায়নামিক ব্রেক-ইভেন & রান-রেট (Break-Even)</h4>
+                        <span className="text-[10px] text-slate-400">স্থির খরচ ও মার্জিনের ভিত্তিতে লক্ষ্যমাত্রা</span>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                      analyticsKPI.isAboveBreakEven
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        : 'bg-amber-100 text-amber-800 border border-amber-300'
+                    }`}>
+                      {analyticsKPI.isAboveBreakEven ? 'ব্রেক-ইভেন অর্জিত ✓' : 'ঘাটতি জোন ⚠️'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                      <span className="text-[10px] text-slate-400 block font-medium">স্থির পরিচালন খরচ</span>
+                      <span className="text-sm font-black text-slate-800 font-mono">
+                        {currencySymbol}{analyticsKPI.fixedCosts.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">দোকান খরচ + বেতন</span>
+                    </div>
+
+                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                      <span className="text-[10px] text-slate-400 block font-medium">ব্রেক-ইভেন বিক্রয় টার্গেট</span>
+                      <span className="text-sm font-black text-indigo-700 font-mono">
+                        {currencySymbol}{analyticsKPI.breakEvenSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">লাভ শুরু করার ন্যূনতম বিক্রয়</span>
+                    </div>
+                  </div>
+
+                  {/* ব্রেক-ইভেন প্রগ্রেস বার */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-bold">
+                      <span className="text-slate-600">টার্গেট পূরণ:</span>
+                      <span className={analyticsKPI.isAboveBreakEven ? "text-emerald-700" : "text-amber-700"}>
+                        {analyticsKPI.breakEvenProgress}% ({currencySymbol}{analyticsKPI.netSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })} / {currencySymbol}{analyticsKPI.breakEvenSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })})
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          analyticsKPI.isAboveBreakEven ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-amber-400 to-amber-600'
+                        }`}
+                        style={{ width: `${analyticsKPI.breakEvenProgress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* মাস শেষের আনুমানিক প্রজেকশন */}
+                  {filterRange === 'month' && (
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] flex-wrap gap-1">
+                      <span className="text-slate-500">চলতি মাস শেষের পূর্বাভাস:</span>
+                      <span className="font-bold text-slate-800 font-mono text-[11px]">
+                        বিক্রয় ≈ {currencySymbol}{Math.round(analyticsKPI.projectedMonthEndRevenue).toLocaleString('en-IN')} • নিট লাভ ≈ {renderMaskedValue(Math.round(analyticsKPI.projectedMonthEndProfit))}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* কার্ড ২: মাল্টি-স্ট্রিম সমন্বিত ব্যয় ও অপচয় খতিয়ান (Tier 1) */}
+                <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-3.5 flex flex-col justify-between">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                        <Coins className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-slate-900">মাল্টি-স্ট্রিম পরিচালন খতিয়ান (Multi-Streams)</h4>
+                        <span className="text-[10px] text-slate-400">বেতন, কমিশন, রিফান্ড ও অপচয় ক্ষতি</span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                      সমন্বিত অডিট
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2.5 text-xs">
+                    <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
+                      <div className="flex items-center space-x-1 text-slate-500 text-[10px] font-bold">
+                        <UsersIcon className="w-3 h-3 text-indigo-500" />
+                        <span>স্টাফ পেরোল</span>
+                      </div>
+                      <div className="text-xs font-black text-slate-900 mt-1 font-mono">
+                        {currencySymbol}{Math.round(analyticsKPI.totalPayroll).toLocaleString('en-IN')}
+                      </div>
+                      <div className="text-[9px] text-slate-400 mt-0.5">বেতন ও কমিশন</div>
+                    </div>
+
+                    <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
+                      <div className="flex items-center space-x-1 text-slate-500 text-[10px] font-bold">
+                        <RotateCcw className="w-3 h-3 text-rose-500" />
+                        <span>রিটার্ন রিফান্ড</span>
+                      </div>
+                      <div className="text-xs font-black text-rose-600 mt-1 font-mono">
+                        {currencySymbol}{Math.round(analyticsKPI.periodRefundAmount).toLocaleString('en-IN')}
+                      </div>
+                      <div className="text-[9px] text-slate-400 mt-0.5">{analyticsKPI.periodReturnsCount}টি ফেরত মেমো</div>
+                    </div>
+
+                    <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
+                      <div className="flex items-center space-x-1 text-slate-500 text-[10px] font-bold">
+                        <AlertTriangle className="w-3 h-3 text-amber-500" />
+                        <span>ছাঁট ও অপচয়</span>
+                      </div>
+                      <div className="text-xs font-black text-amber-600 mt-1 font-mono">
+                        {currencySymbol}{Math.round(analyticsKPI.totalShrinkageLoss).toLocaleString('en-IN')}
+                      </div>
+                      <div className="text-[9px] text-slate-400 mt-0.5">থান ও স্টক ক্ষতি</div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-slate-500">মোট পরিচালন কর্তন (All Deductions):</span>
+                    <span className="font-black text-rose-700 font-mono">
+                      - {currencySymbol}{Math.round(analyticsKPI.totalOperatingExpenses).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+
               </div>
 
               {/* ওমনিচ্যানেল চ্যানেল তুলনা কার্ড (Omnichannel Performance Breakdown) */}
@@ -1713,11 +2290,11 @@ export default function AnalyticsDashboard({
                                 {currencySymbol}{p.revenue.toFixed(2)}
                               </td>
                               <td className="py-3 text-right font-black text-emerald-600">
-                                +{currencySymbol}{p.profit.toFixed(2)}
+                                {renderMaskedValue(p.profit)}
                               </td>
                               <td className="py-3 text-right">
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                  {p.marginPercent}%
+                                  {hasProfitAccess ? `${p.marginPercent}%` : '•••'}
                                 </span>
                               </td>
                             </tr>
@@ -1779,6 +2356,57 @@ export default function AnalyticsDashboard({
 
               </div>
 
+              {/* পরিচালন ব্যয়ের খাতওয়ারি বন্টন ও বিশ্লেষণ চার্ট (Tier 4: Expense Breakdown) */}
+              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                      <PieChart className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900">
+                        পরিচালন ব্যয়ের খাতওয়ারি বন্টন ও বিশ্লেষণ (Operating Expense Distribution)
+                      </h3>
+                      <p className="text-[11px] text-slate-400">দোকান পরিচালনা, বেতন, কুরিয়ার ও অপচয় খরচের শতকরার হার</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-rose-700 font-mono">
+                    মোট পরিচালন ব্যয়: {currencySymbol}{analyticsKPI.totalOperatingExpenses.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+
+                {analyticsKPI.expenseCategoryList.length === 0 ? (
+                  <div className="h-20 flex items-center justify-center text-xs text-slate-400">
+                    নির্বাচিত সময়সীমায় কোনো ব্যয়ের হিসাব পাওয়া যায়নি
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {analyticsKPI.expenseCategoryList.map((exp, idx) => (
+                      <div key={idx} className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-bold text-slate-800 truncate" title={exp.category}>{exp.category}</span>
+                          <span className="font-mono font-black text-rose-700">
+                            {currencySymbol}{exp.amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                          </span>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden">
+                            <div
+                              className="bg-gradient-to-r from-rose-500 to-indigo-600 h-full rounded-full transition-all duration-300"
+                              style={{ width: `${exp.percentage}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
+                            <span>ব্যয়ের {exp.percentage}%</span>
+                            <span>{analyticsKPI.netSales > 0 ? `${((exp.amount / analyticsKPI.netSales) * 100).toFixed(1)}% বিক্রির` : ''}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
 
@@ -1795,6 +2423,22 @@ export default function AnalyticsDashboard({
                 <h4 className="text-sm font-bold text-indigo-700 mt-0.5">
                   Profit & Loss (Income) Financial Statement
                 </h4>
+                <div className="flex items-center justify-center space-x-2 mt-2">
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-black border ${
+                    accountingMode === 'cash'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                      : 'bg-blue-50 text-blue-800 border-blue-300'
+                  }`}>
+                    {accountingMode === 'cash' ? '💵 নগদ লাভ মোড (Cash-Basis Profit)' : '📘 খাতা-কলমের লাভ মোড (Accrual-Basis Profit)'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAccountingMode(accountingMode === 'cash' ? 'accrual' : 'cash')}
+                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
+                  >
+                    মোড পরিবর্তন করুন
+                  </button>
+                </div>
                 <p className="text-xs text-slate-500 mt-1">
                   সময়কাল: {filterRange === 'today' ? 'আজকের দিন' : filterRange === 'month' ? 'চলতি মাস' : filterRange} ({customStartDate || 'শুরু'} থেকে {customEndDate || 'শেষ'})
                 </p>
@@ -1803,7 +2447,7 @@ export default function AnalyticsDashboard({
               {/* প্রফেশনাল অ্যাকাউন্টিং টেবিল */}
               <div className="space-y-4 text-xs font-mono">
                 
-                {/* রাজস্ব সেকশন */}
+                {/* ১. রাজস্ব সেকশন */}
                 <div className="space-y-2 pb-3 border-b border-slate-100">
                   <div className="font-sans font-bold text-slate-900 text-sm">১. রাজস্ব আয় (Revenues & Sales)</div>
                   <div className="flex justify-between pl-4 text-slate-700">
@@ -1814,49 +2458,63 @@ export default function AnalyticsDashboard({
                     <span>বাদ: বিক্রয় ছাড় ও ডিসকাউন্ট (Less: Sales Discounts)</span>
                     <span>- {currencySymbol}{analyticsKPI.totalDiscount.toFixed(2)}</span>
                   </div>
+                  {includeReturns && analyticsKPI.periodRefundAmount > 0 && (
+                    <div className="flex justify-between pl-4 text-rose-600">
+                      <span>বাদ: সেলস রিটার্ন ও রিফান্ড (Less: Sales Returns & Refunds)</span>
+                      <span>- {currencySymbol}{analyticsKPI.periodRefundAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between pl-4 font-bold text-slate-900 bg-slate-50 py-1.5 px-3 rounded-xl font-sans">
                     <span>প্রকৃত নিট বিক্রয় (Net Sales)</span>
                     <span>{currencySymbol}{analyticsKPI.netSales.toFixed(2)}</span>
                   </div>
                 </div>
 
-                {/* ক্রয় খরচ সেকশন */}
+                {/* ২. ক্রয় খরচ সেকশন */}
                 <div className="space-y-2 pb-3 border-b border-slate-100">
                   <div className="font-sans font-bold text-slate-900 text-sm">২. বিক্রিত পণ্যের খরচ (Cost of Goods Sold - COGS)</div>
                   <div className="flex justify-between pl-4 text-slate-700">
                     <span>পণ্যের মূল ক্রয়মূল্য খরচ (Cost of Inventory Sold)</span>
-                    <span>{currencySymbol}{analyticsKPI.totalCOGS.toFixed(2)}</span>
+                    <span>{renderMaskedValue(analyticsKPI.totalCOGS)}</span>
                   </div>
                   <div className="flex justify-between pl-4 font-bold text-slate-900 bg-slate-50 py-1.5 px-3 rounded-xl font-sans">
                     <span>মোট বিক্রয় খরচ (Total Cost of Sales)</span>
-                    <span>{currencySymbol}{analyticsKPI.totalCOGS.toFixed(2)}</span>
+                    <span>{renderMaskedValue(analyticsKPI.totalCOGS)}</span>
                   </div>
                 </div>
 
-                {/* মোট মুনাফা (Gross Profit) */}
+                {/* ৩. মোট মুনাফা (Gross Profit) */}
                 <div className="flex justify-between font-black text-sm bg-indigo-50 text-indigo-950 p-3 rounded-xl border border-indigo-200 font-sans">
                   <span>৩. মোট বিক্রয় মুনাফা (Gross Profit = Net Sales - COGS)</span>
-                  <span>{currencySymbol}{analyticsKPI.grossProfit.toFixed(2)}</span>
+                  <span>{renderMaskedValue(analyticsKPI.grossProfit)}</span>
                 </div>
 
-                {/* পরিচালন খরচ ও থান অপচয় ক্ষতি (Operating Expenses & Fabric Loss) */}
+                {/* ৪. পরিচালন খরচ, বেতন ও অপচয় ক্ষতি (Operating Expenses, Payroll & Losses) */}
                 <div className="space-y-2 pb-3 border-b border-slate-100">
-                  <div className="font-sans font-bold text-slate-900 text-sm">৪. পরিচালন খরচ ও থান অপচয় ক্ষতি (Operating Expenses & Fabric Scrap Loss)</div>
+                  <div className="font-sans font-bold text-slate-900 text-sm">৪. পরিচালন ব্যয় ও অপচয় কর্তন (Operating Expenses, Payroll & Losses)</div>
                   <div className="flex justify-between pl-4 text-slate-700">
-                    <span>দোকানের পরিচালন খরচ (Shop Operating Expenses)</span>
+                    <span>দোকানের সাধারণ পরিচালন খরচ (Shop Operating Expenses)</span>
                     <span className="text-rose-600 font-medium">- {currencySymbol}{analyticsKPI.totalExpenses.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between pl-4 text-slate-700">
-                    <span>থান কাপড়ের ছাঁট ও ড্যামেজ অপচয় (Fabric Scrap & Wastage Loss)</span>
-                    <span className="text-rose-600 font-medium">- {currencySymbol}{analyticsKPI.totalFabricLoss.toFixed(2)}</span>
-                  </div>
+                  {includePayroll && analyticsKPI.totalPayroll > 0 && (
+                    <div className="flex justify-between pl-4 text-slate-700">
+                      <span>স্টাফদের মূল বেতন ও বিক্রয় কমিশন (Staff Salaries & Commissions)</span>
+                      <span className="text-rose-600 font-medium">- {currencySymbol}{analyticsKPI.totalPayroll.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {includeWastage && analyticsKPI.totalShrinkageLoss > 0 && (
+                    <div className="flex justify-between pl-4 text-slate-700">
+                      <span>থান ছাঁট ও গোডাউন ড্যামেজ ক্ষতি (Fabric Scrap & Shrinkage Loss)</span>
+                      <span className="text-rose-600 font-medium">- {currencySymbol}{analyticsKPI.totalShrinkageLoss.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between pl-4 font-bold text-slate-900 bg-rose-50/60 py-1.5 px-3 rounded-xl font-sans text-rose-900">
-                    <span>মোট পরিচালন কর্তন (Total Deductions)</span>
-                    <span>- {currencySymbol}{(analyticsKPI.totalExpenses + analyticsKPI.totalFabricLoss).toFixed(2)}</span>
+                    <span>মোট পরিচালন কর্তন (Total Operating Deductions)</span>
+                    <span>- {currencySymbol}{analyticsKPI.totalOperatingExpenses.toFixed(2)}</span>
                   </div>
                 </div>
 
-                {/* ট্যাক্স ও শুল্ক */}
+                {/* ৫. ট্যাক্স ও শুল্ক */}
                 <div className="space-y-2 pb-3 border-b border-slate-100">
                   <div className="font-sans font-bold text-slate-900 text-sm">৫. সংগৃহীত কর/ভ্যাট (Taxes Collected)</div>
                   <div className="flex justify-between pl-4 text-slate-700">
@@ -1865,29 +2523,35 @@ export default function AnalyticsDashboard({
                   </div>
                 </div>
 
-                {/* চূড়ান্ত নিট মুনাফা (Net Profit) */}
-                <div className={`flex justify-between font-black text-base p-4 rounded-2xl border font-sans ${
-                  analyticsKPI.netProfit >= 0
-                    ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
-                    : 'bg-rose-50 text-rose-900 border-rose-300'
-                }`}>
-                  <div className="flex flex-col">
-                    <span>চূড়ান্ত নিট পরিচালন লাভ (True Net Operating Profit)</span>
-                    <span className="text-xs font-semibold opacity-80 mt-0.5">
-                      নিট মুনাফার মার্জিন শতকরা হার: {analyticsKPI.profitMarginPercent}% (খরচ ও ছাঁট কর্তন পরবর্তী)
-                    </span>
-                  </div>
-                  <span className="text-xl">
-                    {analyticsKPI.netProfit >= 0 ? '+' : ''}{currencySymbol}{analyticsKPI.netProfit.toFixed(2)}
-                  </span>
-                </div>
+                {/* ৬. চূড়ান্ত নিট মুনাফা (Net Profit) */}
+                {(() => {
+                  const statementProfit = accountingMode === 'cash' ? analyticsKPI.effectiveRealizedCashProfit : analyticsKPI.trueNetProfit;
+                  const isPositive = statementProfit >= 0;
+                  return (
+                    <div className={`flex justify-between font-black text-base p-4 rounded-2xl border font-sans ${
+                      isPositive
+                        ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                        : 'bg-rose-50 text-rose-900 border-rose-300'
+                    }`}>
+                      <div className="flex flex-col">
+                        <span>{accountingMode === 'cash' ? 'চূড়ান্ত আসল নগদ মুনাফা (Realized Cash Profit)' : 'চূড়ান্ত নিট পরিচালন লাভ (True Net Operating Profit)'}</span>
+                        <span className="text-xs font-semibold opacity-80 mt-0.5">
+                          মার্জিন হার: {hasProfitAccess ? `${analyticsKPI.profitMarginPercent}%` : '••••'} (সকল খরচ, বেতন ও অপচয় কর্তন পরবর্তী)
+                        </span>
+                      </div>
+                      <span className="text-xl">
+                        {isPositive ? '+' : ''}{renderMaskedValue(statementProfit)}
+                      </span>
+                    </div>
+                  );
+                })()}
 
-                {/* ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় */}
+                {/* ৭. ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় */}
                 <div className="space-y-2 pt-2 pb-1">
-                  <div className="font-sans font-bold text-slate-900 text-sm">৬. ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় (Cash Realization & Ledger)</div>
+                  <div className="font-sans font-bold text-slate-900 text-sm">৭. ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় (Cash Realization & Ledger)</div>
                   <div className="flex justify-between pl-4 text-slate-700">
                     <span>হিসাবকৃত মোট মুনাফা (Booked Accrual Profit)</span>
-                    <span className="font-bold">{currencySymbol}{analyticsKPI.bookedProfit.toFixed(2)}</span>
+                    <span className="font-bold">{renderMaskedValue(analyticsKPI.bookedProfit)}</span>
                   </div>
                   <div className="flex justify-between pl-4 text-amber-600">
                     <span>বাদ: বাকি বিক্রির পরিমাণ (Credit Sales in Period)</span>
@@ -1899,7 +2563,7 @@ export default function AnalyticsDashboard({
                   </div>
                   <div className="flex justify-between pl-4 font-bold text-emerald-900 bg-emerald-50 py-2 px-3 rounded-xl font-sans border border-emerald-200">
                     <span>হাতে আসা আসল নগদ লাভ (Realized Cash Profit)</span>
-                    <span className="text-sm font-black">{analyticsKPI.realizedCashProfit >= 0 ? '+' : ''}{currencySymbol}{analyticsKPI.realizedCashProfit.toFixed(2)}</span>
+                    <span className="text-sm font-black">{renderMaskedValue(analyticsKPI.realizedCashProfit)}</span>
                   </div>
                   <div className="flex justify-between pl-4 text-slate-500 text-[11px] pt-1">
                     <span>মার্কেটে বকেয়া মুনাফা / ঝুঁকি: <strong className="text-amber-700">{currencySymbol}{analyticsKPI.unrealizedDueProfit.toFixed(2)}</strong></span>
@@ -1909,10 +2573,22 @@ export default function AnalyticsDashboard({
 
               </div>
 
-              <div className="pt-2 text-right">
+              {/* অ্যাকশন বাটনসমূহ */}
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100">
                 <button
+                  type="button"
+                  onClick={handleSaveMonthlyPnLToCloud}
+                  disabled={isArchivingCloud}
+                  className="inline-flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-600/20 active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  <Save className={`w-4 h-4 ${isArchivingCloud ? 'animate-bounce' : ''}`} />
+                  <span>{isArchivingCloud ? 'সংরক্ষণ হচ্ছে...' : 'ক্লাউডে ব্যালেন্স শিট সেভ করুন'}</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={handlePrint}
-                  className="inline-flex items-center space-x-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-600/20 active:scale-95"
+                  className="inline-flex items-center space-x-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-600/20 active:scale-95 cursor-pointer"
                 >
                   <Printer className="w-4 h-4" />
                   <span>স্টেটমেন্টটি প্রিন্ট করুন</span>
@@ -2021,18 +2697,18 @@ export default function AnalyticsDashboard({
                               {currencySymbol}{p.avgSellingPrice.toFixed(2)}
                             </td>
                             <td className="py-3 px-2 text-right font-medium text-amber-700">
-                              {currencySymbol}{p.avgCostPrice.toFixed(2)}
+                              {renderMaskedValue(p.avgCostPrice)}
                             </td>
                             <td className="py-3 px-2 text-right font-bold text-slate-900">
                               {currencySymbol}{p.revenue.toFixed(2)}
                             </td>
                             <td className="py-3 px-2 text-right font-bold text-amber-700">
-                              {currencySymbol}{p.cogs.toFixed(2)}
+                              {renderMaskedValue(p.cogs)}
                             </td>
                             <td className={`py-3 px-2 text-right font-black ${
                               isProfit ? 'text-emerald-600' : 'text-rose-600'
                             }`}>
-                              {isProfit ? '+' : ''}{currencySymbol}{p.profit.toFixed(2)}
+                              {isProfit ? '+' : ''}{renderMaskedValue(p.profit)}
                             </td>
                             <td className="py-3 px-3 text-right">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -2040,7 +2716,7 @@ export default function AnalyticsDashboard({
                                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
                                   : 'bg-rose-50 text-rose-700 border border-rose-200'
                               }`}>
-                                {p.marginPercent}%
+                                {hasProfitAccess ? `${p.marginPercent}%` : '•••'}
                               </span>
                             </td>
                           </tr>
@@ -2060,13 +2736,13 @@ export default function AnalyticsDashboard({
                           {currencySymbol}{processedProductsList.reduce((acc, p) => acc + p.revenue, 0).toFixed(2)}
                         </td>
                         <td className="py-3 px-2 text-right text-amber-800 font-black">
-                          {currencySymbol}{processedProductsList.reduce((acc, p) => acc + p.cogs, 0).toFixed(2)}
+                          {renderMaskedValue(processedProductsList.reduce((acc, p) => acc + p.cogs, 0))}
                         </td>
                         <td className="py-3 px-2 text-right text-emerald-700 font-black">
-                          +{currencySymbol}{processedProductsList.reduce((acc, p) => acc + p.profit, 0).toFixed(2)}
+                          +{renderMaskedValue(processedProductsList.reduce((acc, p) => acc + p.profit, 0))}
                         </td>
                         <td className="py-3 px-3 text-right font-black">
-                          {analyticsKPI.profitMarginPercent}%
+                          {hasProfitAccess ? `${analyticsKPI.profitMarginPercent}%` : '•••'}
                         </td>
                       </tr>
                     </tfoot>
@@ -2123,14 +2799,14 @@ export default function AnalyticsDashboard({
                             {currencySymbol}{c.revenue.toFixed(2)}
                           </td>
                           <td className="py-3 px-2 text-right font-bold text-amber-700">
-                            {currencySymbol}{c.cogs.toFixed(2)}
+                            {renderMaskedValue(c.cogs)}
                           </td>
                           <td className="py-3 px-2 text-right font-black text-emerald-600">
-                            +{currencySymbol}{c.profit.toFixed(2)}
+                            +{renderMaskedValue(c.profit)}
                           </td>
                           <td className="py-3 px-2 text-right">
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                              {c.marginPercent}%
+                              {hasProfitAccess ? `${c.marginPercent}%` : '•••'}
                             </span>
                           </td>
                           <td className="py-3 px-3 text-right font-medium">
@@ -2242,7 +2918,7 @@ export default function AnalyticsDashboard({
                               {currencySymbol}{total.toFixed(2)}
                             </td>
                             <td className={`py-3 px-3 text-right font-black ${profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                              {profit >= 0 ? '+' : ''}{currencySymbol}{profit.toFixed(2)}
+                              {profit >= 0 ? '+' : ''}{renderMaskedValue(profit)}
                             </td>
                           </tr>
                         );
@@ -2414,10 +3090,10 @@ export default function AnalyticsDashboard({
                               {itm.stockQuantity} পিস
                             </td>
                             <td className="py-2.5 px-3 text-right font-mono text-slate-600">
-                              {currencySymbol}{itm.costPrice.toFixed(2)}
+                              {renderMaskedValue(itm.costPrice)}
                             </td>
                             <td className="py-2.5 px-3 text-right font-black font-mono text-rose-600">
-                              {currencySymbol}{Math.round(itm.blockedCapital).toLocaleString('en-IN')}
+                              {renderMaskedValue(itm.blockedCapital, true, 0)}
                             </td>
                             <td className="py-2.5 px-3 text-center">
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 font-mono">
@@ -2460,20 +3136,23 @@ export default function AnalyticsDashboard({
 
       </div>
 
-      {/* প্রিন্ট উপযোগী লুকায়িত P&L ডকুমেন্ট (শুধুমাত্র প্রিন্টারের জন্য) */}
+      {/* প্রিন্ট উপযোগী লুকায়িত P&L ডকুমেন্ট (Tier 6: Audit-Ready Printable A4 Income Statement) */}
       <div className="hidden print:block p-8 bg-white text-black font-sans w-full max-w-4xl mx-auto">
         <div className="text-center pb-4 border-b-2 border-black mb-4">
-          <h1 className="text-xl font-bold tracking-tight">
+          <h1 className="text-2xl font-black tracking-tight">
             {storeSettings.StoreName || 'Super Shop POS'}
           </h1>
           <p className="text-xs text-gray-600 mt-0.5">
-            {storeSettings.Address || ''} {storeSettings.Phone ? `• ফোন: ${storeSettings.Phone}` : ''}
+            {storeSettings.Address || ''} {storeSettings.Phone ? `• ফোন: ${storeSettings.Phone}` : ''} {storeSettings.Email ? `• ইমেইল: ${storeSettings.Email}` : ''}
           </p>
-          <h2 className="text-base font-extrabold text-gray-900 mt-2 underline">
-            PROFIT & LOSS (INCOME) FINANCIAL STATEMENT
+          <div className="my-2 inline-block px-3 py-1 bg-gray-100 border border-gray-400 rounded text-xs font-bold uppercase tracking-wider">
+            ব্যালেন্স শিট মোড: {accountingMode === 'cash' ? 'নগদ লাভ মোড (CASH-BASIS ACCOUNTING)' : 'খাতা-কলমের লাভ মোড (ACCRUAL-BASIS ACCOUNTING)'}
+          </div>
+          <h2 className="text-base font-extrabold text-gray-900 mt-1 underline">
+            PROFIT & LOSS (INCOME) FINANCIAL AUDIT STATEMENT
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            সময়কাল: {filterRange} ({customStartDate || 'শুরু'} থেকে {customEndDate || 'শেষ'}) • প্রতিবেদন প্রকাশের তারিখ: {new Date().toLocaleDateString('bn-BD')}
+            হিসাবের সময়কাল: {filterRange === 'today' ? 'দৈনিক' : filterRange === 'month' ? 'মাসিক' : filterRange} ({customStartDate || 'শুরু'} থেকে {customEndDate || 'শেষ'}) • প্রকাশের তারিখ: {new Date().toLocaleDateString('bn-BD')} • প্রিন্ট প্রস্তুতকারক: {activeUser?.FullName || 'অ্যাডমিন'}
           </p>
         </div>
 
@@ -2492,8 +3171,14 @@ export default function AnalyticsDashboard({
                 <td className="p-2 font-medium">বাদ: ছাড় ও ডিসকাউন্ট (Less: Total Discounts)</td>
                 <td className="p-2 text-right text-red-600">- {currencySymbol}{analyticsKPI.totalDiscount.toFixed(2)}</td>
               </tr>
+              {includeReturns && analyticsKPI.periodRefundAmount > 0 && (
+                <tr className="border-b border-gray-300">
+                  <td className="p-2 font-medium">বাদ: সেলস রিটার্ন ও রিফান্ড কর্তন (Less: Sales Returns & Refunds)</td>
+                  <td className="p-2 text-right text-red-600">- {currencySymbol}{analyticsKPI.periodRefundAmount.toFixed(2)}</td>
+                </tr>
+              )}
               <tr className="border-b border-gray-300 bg-gray-50 font-bold">
-                <td className="p-2">প্রকৃত নিট বিক্রয় (Net Sales)</td>
+                <td className="p-2">প্রকৃত নিট বিক্রয় রাজস্ব (Net Sales Revenue)</td>
                 <td className="p-2 text-right">{currencySymbol}{analyticsKPI.netSales.toFixed(2)}</td>
               </tr>
               <tr className="border-b border-gray-300">
@@ -2501,27 +3186,75 @@ export default function AnalyticsDashboard({
                 <td className="p-2 text-right text-gray-800">{currencySymbol}{analyticsKPI.totalCOGS.toFixed(2)}</td>
               </tr>
               <tr className="border-b border-gray-400 font-bold bg-gray-100">
-                <td className="p-2">মোট মুনাফা (Gross Profit = Net Sales - COGS)</td>
-                <td className="p-2 text-right">{currencySymbol}{(analyticsKPI.netSales - analyticsKPI.totalCOGS).toFixed(2)}</td>
+                <td className="p-2">মোট বিক্রয় মুনাফা (Gross Profit = Net Sales - COGS)</td>
+                <td className="p-2 text-right">{currencySymbol}{analyticsKPI.grossProfit.toFixed(2)}</td>
               </tr>
+              <tr className="border-b border-gray-300">
+                <td className="p-2 font-medium">দোকানের পরিচালন খরচ (Shop Operating Expenses)</td>
+                <td className="p-2 text-right text-red-600">- {currencySymbol}{analyticsKPI.totalExpenses.toFixed(2)}</td>
+              </tr>
+              {includePayroll && analyticsKPI.totalPayroll > 0 && (
+                <tr className="border-b border-gray-300">
+                  <td className="p-2 font-medium">স্টাফদের মূল বেতন ও বিক্রয় কমিশন (Staff Payroll & Commissions)</td>
+                  <td className="p-2 text-right text-red-600">- {currencySymbol}{analyticsKPI.totalPayroll.toFixed(2)}</td>
+                </tr>
+              )}
+              {includeWastage && analyticsKPI.totalShrinkageLoss > 0 && (
+                <tr className="border-b border-gray-300">
+                  <td className="p-2 font-medium">থান ছাঁট ও গোডাউন অপচয় ক্ষতি (Fabric Scrap & Shrinkage Loss)</td>
+                  <td className="p-2 text-right text-red-600">- {currencySymbol}{analyticsKPI.totalShrinkageLoss.toFixed(2)}</td>
+                </tr>
+              )}
               <tr className="border-b border-gray-300">
                 <td className="p-2 font-medium">সংগৃহীত বিক্রয় কর/ভ্যাট (Sales Tax / VAT)</td>
                 <td className="p-2 text-right">{currencySymbol}{analyticsKPI.totalTax.toFixed(2)}</td>
               </tr>
               <tr className="bg-gray-200 font-black text-sm">
-                <td className="p-2.5">চূড়ান্ত নিট মুনাফা (Net Profit)</td>
+                <td className="p-2.5">
+                  {accountingMode === 'cash' ? 'চূড়ান্ত আসল নগদ মুনাফা (Realized Cash Profit)' : 'চূড়ান্ত নিট পরিচালন লাভ (True Net Operating Profit)'}
+                </td>
                 <td className="p-2.5 text-right">
-                  {analyticsKPI.netProfit >= 0 ? '+' : ''}{currencySymbol}{analyticsKPI.netProfit.toFixed(2)} ({analyticsKPI.profitMarginPercent}%)
+                  {(() => {
+                    const pVal = accountingMode === 'cash' ? analyticsKPI.effectiveRealizedCashProfit : analyticsKPI.trueNetProfit;
+                    return `${pVal >= 0 ? '+' : ''}${currencySymbol}${pVal.toFixed(2)} (${analyticsKPI.profitMarginPercent}%)`;
+                  })()}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        {/* প্রিন্ট ২: পণ্যভিত্তিক লাভ-ক্ষতি বিবরণী */}
+        {/* প্রিন্ট ২: ক্যাশ ফ্লো ও বাকির খাতার সমন্বয় */}
         <div className="mb-6">
           <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">
-            ২. পণ্যভিত্তিক লাভ-ক্ষতি বিবরণী (Product-wise Breakdown)
+            ২. ক্যাশ ফ্লো ও বাকির খাতার সমন্বয় (Cash Flow & Credit Ledger Reconciliation)
+          </h3>
+          <table className="w-full text-xs border border-gray-400">
+            <tbody>
+              <tr className="border-b border-gray-300">
+                <td className="p-2">বিক্রয়কালে প্রাপ্ত সরাসরি নগদ ক্যাশ (Sales Cash Paid)</td>
+                <td className="p-2 text-right font-medium">{currencySymbol}{analyticsKPI.totalSalesPaidCash.toFixed(2)}</td>
+              </tr>
+              <tr className="border-b border-gray-300">
+                <td className="p-2">সময়কালে বাকির খাতা থেকে আদায়কৃত নগদ (Collected Dues via Ledger)</td>
+                <td className="p-2 text-right text-emerald-700 font-bold">+ {currencySymbol}{analyticsKPI.periodCollectedDues.toFixed(2)}</td>
+              </tr>
+              <tr className="border-b border-gray-300 bg-gray-50 font-bold">
+                <td className="p-2">মোট সংগৃহীত নগদ ক্যাশ (Total Cash Inflow)</td>
+                <td className="p-2 text-right">{currencySymbol}{analyticsKPI.totalCashInflow.toFixed(2)}</td>
+              </tr>
+              <tr className="border-b border-gray-300">
+                <td className="p-2 font-medium">মার্কেটে সার্বিক কাস্টমার বকেয়া (Total Market Outstanding Due)</td>
+                <td className="p-2 text-right text-amber-700 font-bold">{currencySymbol}{analyticsKPI.totalMarketDue.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* প্রিন্ট ৩: সেরা বিক্রিত পণ্য তালিকা */}
+        <div className="mb-6">
+          <h3 className="text-sm font-bold border-b border-gray-400 pb-1 mb-2">
+            ৩. শীর্ষ বিক্রিত ও মুনাফাদায়ক পণ্য বিবরণী (Top Product Breakdown)
           </h3>
           <table className="w-full text-[11px] border border-gray-400 text-left">
             <thead>
@@ -2538,7 +3271,7 @@ export default function AnalyticsDashboard({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-300">
-              {analyticsKPI.allProductList.map((p, idx) => (
+              {analyticsKPI.topProducts.map((p, idx) => (
                 <tr key={idx}>
                   <td className="p-1.5 font-medium">{p.productName}</td>
                   <td className="p-1.5">{p.category}</td>
@@ -2547,7 +3280,7 @@ export default function AnalyticsDashboard({
                   <td className="p-1.5 text-right">{p.avgCostPrice.toFixed(2)}</td>
                   <td className="p-1.5 text-right">{p.revenue.toFixed(2)}</td>
                   <td className="p-1.5 text-right">{p.cogs.toFixed(2)}</td>
-                  <td className="p-1.5 text-right font-bold">{p.profit.toFixed(2)}</td>
+                  <td className="p-1.5 text-right font-bold text-emerald-800">{p.profit.toFixed(2)}</td>
                   <td className="p-1.5 text-right">{p.marginPercent}%</td>
                 </tr>
               ))}
@@ -2555,19 +3288,85 @@ export default function AnalyticsDashboard({
           </table>
         </div>
 
-        {/* প্রিন্ট ফুটার ও সিগনেচার */}
-        <div className="pt-10 flex justify-between text-xs border-t border-gray-300 text-gray-700">
+        {/* প্রিন্ট ফুটার ও ৩ স্তরের স্বাক্ষর ব্লক (Tier 6) */}
+        <div className="pt-12 flex justify-between text-xs border-t border-gray-400 text-gray-700">
           <div className="text-center">
-            <div className="w-36 border-b border-black mb-1"></div>
-            <span>হিসাব প্রস্তুতকারক</span>
+            <div className="w-32 border-b border-black mb-1"></div>
+            <span className="font-bold">হিসাব প্রস্তুতকারক</span>
+            <div className="text-[10px] text-gray-500">Accountant</div>
+          </div>
+          <div className="text-center">
+            <div className="w-32 border-b border-black mb-1"></div>
+            <span className="font-bold">ক্যাশিয়ার / ব্যবস্থাপক</span>
+            <div className="text-[10px] text-gray-500">Cashier / Manager</div>
           </div>
           <div className="text-center">
             <div className="w-36 border-b border-black mb-1"></div>
-            <span>ব্যবস্থাপক / স্বত্বাধিকারী</span>
+            <span className="font-bold">স্বত্বাধিকারী / প্রধান অডিটর</span>
+            <div className="text-[10px] text-gray-500">Proprietor / Auditor</div>
           </div>
         </div>
 
       </div>
+
+      {/* RBAC অ্যাডমিন পিন আনলক মডাল (Tier 7: Privacy PIN Override) */}
+      {showPinModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="text-center space-y-1">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 mx-auto flex items-center justify-center mb-2 shadow-inner">
+                <Lock className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-black text-slate-900">লাভ-ক্ষতি ও কেনা দাম আনলক</h3>
+              <p className="text-xs text-slate-500">
+                সংবেদনশীল আর্থিক ডাটা দেখতে অ্যাডমিন বা অনুমোদিত পিন দিন
+              </p>
+            </div>
+
+            <form onSubmit={handlePinUnlock} className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  maxLength={6}
+                  autoFocus
+                  placeholder="৪ সংখ্যার পিন দিন..."
+                  value={pinInput}
+                  onChange={(e) => {
+                    setPinInput(e.target.value);
+                    setPinError('');
+                  }}
+                  className="w-full text-center text-lg font-black tracking-widest px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none focus:bg-white"
+                />
+                {pinError && (
+                  <p className="text-xs text-rose-600 font-bold text-center mt-1.5 animate-shake">
+                    {pinError}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPinModal(false);
+                    setPinInput('');
+                    setPinError('');
+                  }}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-600/20 active:scale-95 cursor-pointer"
+                >
+                  আনলক করুন
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

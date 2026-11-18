@@ -2273,3 +2273,73 @@ export async function postAdjustAttendance(apiUrl, adjustmentData) {
   }
 }
 
+/**
+ * মাসিক বা সাময়িক P&L ব্যালেন্স শিট ক্লাউডে সংরক্ষণ API কল (action: 'saveMonthlyPnL')
+ * @param {string} apiUrl - Apps Script Web App URL
+ * @param {Object} reportPayload - P&L রিপোর্ট ডাটা
+ */
+export async function postSaveMonthlyPnL(apiUrl, reportPayload) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return {
+      success: true,
+      offline: true,
+      message: 'অফলাইন মোড: P&L ব্যালেন্স শিট স্থানীয় ডিভাইসে সংরক্ষিত হয়েছে।',
+      data: reportPayload,
+    };
+  }
+
+  const payload = {
+    action: 'saveMonthlyPnL',
+    ...reportPayload,
+  };
+
+  try {
+    const response = await fetch(apiUrl.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+
+    return await response.json();
+  } catch (err) {
+    return {
+      success: false,
+      message: `P&L ক্লাউড সংরক্ষণ ব্যর্থ: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * সংরক্ষিত P&L রিপোর্ট তালিকা আনা API কল (action: 'getMonthlyPnL')
+ * @param {string} apiUrl - Apps Script Web App URL
+ */
+export async function fetchMonthlyPnL(apiUrl) {
+  if (!apiUrl || !apiUrl.trim()) {
+    return { success: false, data: [] };
+  }
+
+  try {
+    const url = new URL(apiUrl.trim());
+    url.searchParams.append('action', 'getMonthlyPnL');
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      redirect: 'follow',
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (err) {
+    return {
+      success: false,
+      message: `P&L রিপোর্ট লোড ব্যর্থ: ${err.message}`,
+      data: [],
+    };
+  }
+}
+
