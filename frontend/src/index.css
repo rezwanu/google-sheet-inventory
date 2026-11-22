@@ -2,32 +2,103 @@
 @tailwind components;
 @tailwind utilities;
 
-/* গ্লোবাল স্ক্রোলবার কাস্টমাইজেশন */
+/* ==========================================================================
+   Editorial Minimalism Design Foundation (Linear & Stripe Inspired)
+   ========================================================================== */
+
+/* মিনিমাল ট্যাকটাইল স্ক্রোলবার */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #fafafa;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #e5e5e5;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #d4d4d4;
 }
 
-/* হাই-ডেনসিটি POS ইন্টারফেসের জন্য কম্প্যাক্ট স্টাইল */
+@layer base {
+  body {
+    @apply bg-[#FAFAFA] text-[#111111] font-sans antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
+
+  /* সংখ্যা ও টেবুলার ডাটার জন্য মনোস্পেস ডিফল্ট */
+  .font-tabular {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ট্যাকটাইল এডিটোরিয়াল রিইউজেবল ক্লাসেস */
 @layer components {
+  /* কার্ড ও সারফেস */
+  .editorial-card {
+    @apply bg-white border border-[#E5E5E5] rounded-md shadow-none;
+  }
+  
+  /* টাইপোগ্রাফি স্টাইল */
+  .editorial-title {
+    @apply font-heading font-medium tracking-tight text-[#111111];
+  }
+  .editorial-body {
+    @apply font-sans text-xs text-[#525252];
+  }
+  .editorial-muted {
+    @apply font-sans text-[11px] text-[#737373];
+  }
+
+  /* ইনপুট ও ফর্ম এলিমেন্ট */
+  .editorial-input {
+    @apply bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] placeholder-[#A3A3A3] focus:outline-none focus:border-[#0F172A] transition-colors duration-150;
+  }
+
+  /* এডিটোরিয়াল মিনিমালিজম বোতামসমূহ */
+  .btn-editorial-primary {
+    @apply inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-medium rounded-md text-white bg-[#0F172A] hover:bg-[#1E293B] focus:outline-none transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed shadow-none;
+  }
+  .btn-editorial-secondary {
+    @apply inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-medium rounded-md text-[#111111] bg-white border border-[#E5E5E5] hover:bg-[#F5F5F5] hover:border-[#D4D4D4] focus:outline-none transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed shadow-none;
+  }
+  .btn-editorial-highlight {
+    @apply inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-medium rounded-md text-white bg-[#B45309] hover:bg-[#92400E] focus:outline-none transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed shadow-none;
+  }
+
+  /* ফ্ল্যাট এডিটোরিয়াল ব্যাজ */
+  .editorial-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-sm text-[10.5px] font-mono font-medium border;
+  }
+  .editorial-badge-neutral {
+    @apply bg-[#F5F5F5] text-[#111111] border-[#E5E5E5];
+  }
+  .editorial-badge-warning {
+    @apply bg-[#FFFBEB] text-[#B45309] border-[#FEF3C7];
+  }
+  .editorial-badge-success {
+    @apply bg-[#F0FDF4] text-[#15803D] border-[#DCFCE7];
+  }
+  .editorial-badge-danger {
+    @apply bg-[#FEF2F2] text-[#B91C1C] border-[#FEE2E2];
+  }
+
+  /* ব্যাকওয়ার্ড কম্প্যাটিবিলিটির জন্য এক্সিস্টিং বাটন ক্লাস বহাল রাখা */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center px-3.5 py-2 border border-transparent text-xs font-medium rounded-md text-white bg-[#0F172A] hover:bg-[#1E293B] focus:outline-none transition-colors shadow-none disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors shadow-sm;
+    @apply inline-flex items-center justify-center px-3.5 py-2 border border-[#E5E5E5] text-xs font-medium rounded-md text-[#111111] bg-white hover:bg-[#F5F5F5] hover:border-[#D4D4D4] focus:outline-none transition-colors shadow-none;
   }
   .btn-emerald {
-    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center px-3.5 py-2 border border-transparent text-xs font-medium rounded-md text-white bg-[#0F172A] hover:bg-[#1E293B] focus:outline-none transition-colors shadow-none disabled:opacity-50 disabled:cursor-not-allowed;
   }
 }
 
