@@ -2259,18 +2259,18 @@ export default function StockTransferModal({
   if (!isOpen && !embedded) return null;
 
   return (
-    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/75 backdrop-blur-xs overflow-y-auto"}>
-      <div className={embedded ? "relative w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-[calc(100vh-6.5rem)]" : "relative w-full max-w-6xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto flex flex-col max-h-[94vh]"}>
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/40  overflow-y-auto"}>
+      <div className={embedded ? "relative w-full bg-white rounded-md shadow-sm border border-[#E5E5E5] overflow-hidden flex flex-col flex-1 min-h-[calc(100vh-6.5rem)]" : "relative w-full max-w-6xl bg-white rounded-lg shadow-none border border-[#E5E5E5] overflow-hidden my-auto flex flex-col max-h-[94vh]"}>
         
         {/* =================================================================== */}
         {/* হেডার ও প্রধান ৪টি ট্যাব নেভিগেশন (Modern Clean Header) */}
         {/* =================================================================== */}
-        <div className="px-6 py-4 bg-white border-b border-slate-200 text-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 shadow-2xs">
+        <div className="px-6 py-4 bg-white border-b border-[#E5E5E5] text-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 shadow-none">
           <div className="flex items-center space-x-3">
-            <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center shadow-2xs ${
+            <div className={`w-10 h-10 rounded-md border flex items-center justify-center shadow-none ${
               isShopStockView
-                ? 'bg-emerald-50 border-emerald-200/80 text-[#0da487]'
-                : 'bg-emerald-50 border-emerald-200/80 text-[#0da487]'
+                ? 'bg-emerald-50 border-emerald-200/80 text-[#0F172A]'
+                : 'bg-emerald-50 border-emerald-200/80 text-[#0F172A]'
             }`}>
               {isShopStockView ? <Store className="w-5 h-5" /> : <Warehouse className="w-5 h-5" />}
             </div>
@@ -2286,7 +2286,7 @@ export default function StockTransferModal({
                 <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                   isShopStockView
                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200/90'
-                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                    : 'bg-[#F5F5F5] text-slate-700 border-[#E5E5E5]'
                 }`}>
                   {initialTab === 'godown_stock' ? (
                     <>
@@ -2318,13 +2318,13 @@ export default function StockTransferModal({
 
           <div className="flex items-center space-x-2 flex-wrap">
             {/* ৪টি মূল ট্যাব */}
-            <div className="bg-slate-100/90 p-1 rounded-2xl flex items-center border border-slate-200/80 shadow-2xs overflow-x-auto gap-1">
+            <div className="bg-[#F5F5F5] p-1 rounded-md flex items-center border border-[#E5E5E5] shadow-none overflow-x-auto gap-1">
               <button
                 type="button"
                 onClick={() => { setActiveMainTab('overview'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
                   activeMainTab === 'overview'
-                    ? 'bg-[#0da487] text-white shadow-xs font-black'
+                    ? 'bg-[#0F172A] text-white shadow-none font-black'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                 }`}
               >
@@ -2335,16 +2335,16 @@ export default function StockTransferModal({
               <button
                 type="button"
                 onClick={() => { setActiveMainTab('transfers'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
                   activeMainTab === 'transfers'
-                    ? 'bg-[#0da487] text-white shadow-xs font-black'
+                    ? 'bg-[#0F172A] text-white shadow-none font-black'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                 }`}
               >
                 <Truck className="w-3.5 h-3.5" />
                 <span>চালান স্থানান্তর</span>
                 {stockKpis.inTransitChallans > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-amber-500 text-white font-mono font-black animate-pulse">
+                  <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-[#FFFBEB]0 text-white font-mono font-black animate-pulse">
                     {stockKpis.inTransitChallans}
                   </span>
                 )}
@@ -2354,9 +2354,9 @@ export default function StockTransferModal({
                 <button
                   type="button"
                   onClick={() => { setActiveMainTab('godown_outflow'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
                     activeMainTab === 'godown_outflow'
-                      ? 'bg-[#0da487] text-white shadow-xs font-black'
+                      ? 'bg-[#0F172A] text-white shadow-none font-black'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                   }`}
                 >
@@ -2369,9 +2369,9 @@ export default function StockTransferModal({
                 <button
                   type="button"
                   onClick={() => { setActiveMainTab('shop_outflow'); setPrintableChallan(null); setIsPrintableGodownOutflow(false); }}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
                     activeMainTab === 'shop_outflow'
-                      ? 'bg-[#0da487] text-white shadow-xs font-black'
+                      ? 'bg-[#0F172A] text-white shadow-none font-black'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                   }`}
                 >
@@ -2383,10 +2383,10 @@ export default function StockTransferModal({
 
             <button
               onClick={onClose}
-              className={`rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
+              className={`rounded-md transition-all cursor-pointer flex items-center space-x-1.5 ${
                 embedded
-                  ? 'px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200/80 shadow-2xs active:scale-95'
-                  : 'p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+                  ? 'px-3.5 py-1.5 bg-[#F5F5F5] hover:bg-slate-200 text-slate-700 font-bold text-xs border border-[#E5E5E5] shadow-none active:scale-95'
+                  : 'p-2 text-slate-400 hover:text-slate-700 hover:bg-[#F5F5F5]'
               }`}
               title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
             >
@@ -2406,15 +2406,15 @@ export default function StockTransferModal({
         {/* প্রিন্ট প্রিভিউ ভিউয়ার */}
         {/* =================================================================== */}
         {printableChallan ? (
-          <div className="flex-1 overflow-y-auto p-6 bg-slate-100 flex flex-col items-center">
-            <div id="printable-challan-container" className="w-full max-w-2xl bg-white rounded-2xl shadow-lg border border-slate-200 p-8 print:p-0 print:border-none print:shadow-none">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-6 print:hidden">
+          <div className="flex-1 overflow-y-auto p-6 bg-[#F5F5F5] flex flex-col items-center">
+            <div id="printable-challan-container" className="w-full max-w-2xl bg-white rounded-md shadow-none border border-[#E5E5E5] p-8 print:p-0 print:border-none print:shadow-none">
+              <div className="flex items-center justify-between pb-4 border-b border-[#E5E5E5] mb-6 print:hidden">
                 <span className="text-xs font-bold text-slate-600">ডেলিভারি চালান ও গেটপাস প্রিন্ট ভিউ</span>
                 <div className="flex items-center space-x-2">
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-sm cursor-pointer"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-sm cursor-pointer"
                   >
                     <Printer className="w-4 h-4" />
                     <span>চালান প্রিন্ট করুন</span>
@@ -2422,7 +2422,7 @@ export default function StockTransferModal({
                   <button
                     type="button"
                     onClick={() => { setPrintableChallan(null); handleResetChallan(); setTransferSubTab('list'); }}
-                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-md cursor-pointer"
                   >
                     বন্ধ করুন
                   </button>
@@ -2442,7 +2442,7 @@ export default function StockTransferModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="grid grid-cols-2 gap-3 p-3.5 bg-[#FAFAFA] rounded-md border border-[#E5E5E5]">
                   <div>
                     <span className="text-slate-400 block font-medium">চালান নম্বর:</span>
                     <span className="font-bold font-mono text-sm text-indigo-700">{printableChallan.ChallanNo}</span>
@@ -2469,7 +2469,7 @@ export default function StockTransferModal({
 
                 <table className="w-full text-xs text-left border-collapse">
                   <thead>
-                    <tr className="border-b-2 border-slate-300 text-slate-700 bg-slate-100">
+                    <tr className="border-b-2 border-[#E5E5E5] text-slate-700 bg-[#F5F5F5]">
                       <th className="py-2 px-3">ক্রমিক</th>
                       <th className="py-2 px-3">পণ্যের বিবরণ</th>
                       <th className="py-2 px-3 text-center">একক</th>
@@ -2494,7 +2494,7 @@ export default function StockTransferModal({
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="border-t-2 border-slate-900 bg-slate-50 font-bold">
+                    <tr className="border-t-2 border-slate-900 bg-[#FAFAFA] font-bold">
                       <td colSpan="3" className="py-2.5 px-3 text-right uppercase">মোট স্থানান্তর পরিমাণ:</td>
                       <td className="py-2.5 px-3 text-right font-black text-sm font-mono text-emerald-800">
                         {printableChallan.TotalQuantity || (printableChallan.Items || []).reduce((s, itm) => s + Number(itm.quantity), 0)}
@@ -2504,17 +2504,17 @@ export default function StockTransferModal({
                 </table>
 
                 {printableChallan.Notes && (
-                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs">
-                    <span className="font-bold text-amber-900 block">মন্তব্য:</span>
-                    <span className="text-amber-800">{printableChallan.Notes}</span>
+                  <div className="p-3 bg-[#FFFBEB] rounded-md border border-[#FEF3C7] text-xs">
+                    <span className="font-bold text-[#B45309] block">মন্তব্য:</span>
+                    <span className="text-[#B45309]">{printableChallan.Notes}</span>
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-10 pt-12 text-center text-xs text-slate-500">
-                  <div className="border-t border-slate-300 pt-2">
+                  <div className="border-t border-[#E5E5E5] pt-2">
                     <span className="block font-medium">প্রেরক / গোডাউন ইনচার্জ স্বাক্ষর</span>
                   </div>
-                  <div className="border-t border-slate-300 pt-2">
+                  <div className="border-t border-[#E5E5E5] pt-2">
                     <span className="block font-medium">প্রাপক / দোকান রিসিভার স্বাক্ষর</span>
                   </div>
                 </div>
@@ -2522,11 +2522,11 @@ export default function StockTransferModal({
             </div>
           </div>
         ) : isPrintableGodownOutflow ? (
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex flex-col items-center">
-            <div id="printable-godown-outflow-container" className="w-full max-w-4xl bg-white rounded-2xl shadow-lg border border-slate-200 p-6 sm:p-8 print:p-0 print:border-none print:shadow-none print:max-w-none">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#F5F5F5] flex flex-col items-center">
+            <div id="printable-godown-outflow-container" className="w-full max-w-4xl bg-white rounded-md shadow-none border border-[#E5E5E5] p-6 sm:p-8 print:p-0 print:border-none print:shadow-none print:max-w-none">
               
               {/* অ্যাকশন কন্ট্রোল বার (প্রিন্টে লুকানো থাকবে) */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-6 print:hidden">
+              <div className="flex items-center justify-between pb-4 border-b border-[#E5E5E5] mb-6 print:hidden">
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
                     <Printer className="w-4 h-4" />
@@ -2541,7 +2541,7 @@ export default function StockTransferModal({
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all"
+                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all"
                   >
                     <Printer className="w-4 h-4" />
                     <span>প্রিন্ট / PDF ডাউনলোড</span>
@@ -2549,7 +2549,7 @@ export default function StockTransferModal({
                   <button
                     type="button"
                     onClick={() => exportGodownOutflowExcelCSV(stockMovements, products)}
-                    className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-all"
+                    className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-none cursor-pointer transition-all"
                   >
                     <FileSpreadsheet className="w-4 h-4" />
                     <span>এক্সেল CSV</span>
@@ -2557,7 +2557,7 @@ export default function StockTransferModal({
                   <button
                     type="button"
                     onClick={() => setIsPrintableGodownOutflow(false)}
-                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-md cursor-pointer"
                   >
                     বন্ধ করুন
                   </button>
@@ -2580,7 +2580,7 @@ export default function StockTransferModal({
                 </div>
 
                 {/* ফিল্টার ও মেটা তথ্য বার */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-[11px]">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-[#FAFAFA] rounded-md border border-[#E5E5E5] text-[11px]">
                   <div>
                     <span className="text-slate-500 block font-medium">রিপোর্ট তৈরির সময়:</span>
                     <span className="font-bold text-slate-800">{new Date().toLocaleString('bn-BD')}</span>
@@ -2604,40 +2604,40 @@ export default function StockTransferModal({
                 </div>
 
                 {/* অডিট টেবিল */}
-                <table className="w-full text-xs text-left border-collapse border border-slate-300">
+                <table className="w-full text-xs text-left border-collapse border border-[#E5E5E5]">
                   <thead>
-                    <tr className="border-b-2 border-slate-300 text-slate-800 bg-slate-100 font-bold">
-                      <th className="py-2 px-2.5 border border-slate-300 text-center w-10">ক্রমিক</th>
-                      <th className="py-2 px-3 border border-slate-300">তারিখ ও সময়</th>
-                      <th className="py-2 px-3 border border-slate-300">পণ্যের বিবরণ</th>
-                      <th className="py-2 px-3 border border-slate-300">ভ্যারিয়েন্ট (রং / সাইজ)</th>
-                      <th className="py-2 px-3 border border-slate-300">কমার কারণ ও চালান নং</th>
-                      <th className="py-2 px-2.5 border border-slate-300 text-center">একক</th>
-                      <th className="py-2 px-3 border border-slate-300 text-right text-rose-900 bg-rose-50/50">কমেছে</th>
-                      <th className="py-2 px-2.5 border border-slate-300 text-center">পূর্বে</th>
-                      <th className="py-2 px-2.5 border border-slate-300 text-center">অবশিষ্ট</th>
-                      <th className="py-2 px-3 border border-slate-300">অনুমোদক / চালক</th>
+                    <tr className="border-b-2 border-[#E5E5E5] text-slate-800 bg-[#F5F5F5] font-bold">
+                      <th className="py-2 px-2.5 border border-[#E5E5E5] text-center w-10">ক্রমিক</th>
+                      <th className="py-2 px-3 border border-[#E5E5E5]">তারিখ ও সময়</th>
+                      <th className="py-2 px-3 border border-[#E5E5E5]">পণ্যের বিবরণ</th>
+                      <th className="py-2 px-3 border border-[#E5E5E5]">ভ্যারিয়েন্ট (রং / সাইজ)</th>
+                      <th className="py-2 px-3 border border-[#E5E5E5]">কমার কারণ ও চালান নং</th>
+                      <th className="py-2 px-2.5 border border-[#E5E5E5] text-center">একক</th>
+                      <th className="py-2 px-3 border border-[#E5E5E5] text-right text-rose-900 bg-rose-50/50">কমেছে</th>
+                      <th className="py-2 px-2.5 border border-[#E5E5E5] text-center">পূর্বে</th>
+                      <th className="py-2 px-2.5 border border-[#E5E5E5] text-center">অবশিষ্ট</th>
+                      <th className="py-2 px-3 border border-[#E5E5E5]">অনুমোদক / চালক</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
                     {godownOutflowData.length === 0 ? (
                       <tr>
-                        <td colSpan="10" className="py-8 text-center text-slate-400 font-medium border border-slate-200">
+                        <td colSpan="10" className="py-8 text-center text-slate-400 font-medium border border-[#E5E5E5]">
                           নির্বাচিত ফিল্টারে কোনো গোডাউন স্টক কমার রেকর্ড নেই।
                         </td>
                       </tr>
                     ) : (
                       godownOutflowData.map((m, idx) => (
-                        <tr key={m.id || idx} className="hover:bg-slate-50/50">
-                          <td className="py-2 px-2.5 text-center font-mono text-slate-500 border border-slate-200">{idx + 1}</td>
-                          <td className="py-2 px-3 text-slate-600 whitespace-nowrap border border-slate-200">
+                        <tr key={m.id || idx} className="hover:bg-[#FAFAFA]">
+                          <td className="py-2 px-2.5 text-center font-mono text-slate-500 border border-[#E5E5E5]">{idx + 1}</td>
+                          <td className="py-2 px-3 text-slate-600 whitespace-nowrap border border-[#E5E5E5]">
                             {new Date(m.timestamp).toLocaleString('bn-BD')}
                           </td>
-                          <td className="py-2 px-3 border border-slate-200">
+                          <td className="py-2 px-3 border border-[#E5E5E5]">
                             <strong className="text-slate-900 block">{m.productName}</strong>
                             {m.category && <span className="text-[10px] text-slate-500 block">{m.category}</span>}
                           </td>
-                          <td className="py-2 px-3 border border-slate-200">
+                          <td className="py-2 px-3 border border-[#E5E5E5]">
                             {m.variantName || m.color || m.size ? (
                               <div>
                                 {m.color && <span className="font-bold text-pink-700 block">রং: {m.color}</span>}
@@ -2648,7 +2648,7 @@ export default function StockTransferModal({
                               <span className="text-slate-400">সাধারণ</span>
                             )}
                           </td>
-                          <td className="py-2 px-3 border border-slate-200">
+                          <td className="py-2 px-3 border border-[#E5E5E5]">
                             <span className="font-medium text-slate-800 block">{m.reasonBangla}</span>
                             {m.referenceNo && (
                               <span className="text-[10px] font-mono text-indigo-600 font-bold block">
@@ -2656,17 +2656,17 @@ export default function StockTransferModal({
                               </span>
                             )}
                           </td>
-                          <td className="py-2 px-2.5 text-center text-slate-600 border border-slate-200">{m.unit || 'Pcs'}</td>
-                          <td className="py-2 px-3 text-right font-black font-mono text-rose-700 text-sm bg-rose-50/30 border border-slate-200">
+                          <td className="py-2 px-2.5 text-center text-slate-600 border border-[#E5E5E5]">{m.unit || 'Pcs'}</td>
+                          <td className="py-2 px-3 text-right font-black font-mono text-rose-700 text-sm bg-rose-50/30 border border-[#E5E5E5]">
                             -{m.quantity}
                           </td>
-                          <td className="py-2 px-2.5 text-center font-mono text-slate-500 border border-slate-200">
+                          <td className="py-2 px-2.5 text-center font-mono text-slate-500 border border-[#E5E5E5]">
                             {m.previousStock !== '-' ? m.previousStock : '-'}
                           </td>
-                          <td className="py-2 px-2.5 text-center font-mono font-bold text-slate-900 border border-slate-200">
+                          <td className="py-2 px-2.5 text-center font-mono font-bold text-slate-900 border border-[#E5E5E5]">
                             {m.remainingStock !== '-' ? m.remainingStock : '-'}
                           </td>
-                          <td className="py-2 px-3 text-slate-700 border border-slate-200">
+                          <td className="py-2 px-3 text-slate-700 border border-[#E5E5E5]">
                             <span className="block font-medium">{m.operatorName || 'Admin'}</span>
                             {m.notes && <span className="text-[10px] text-slate-400 block truncate max-w-[120px]">{m.notes}</span>}
                           </td>
@@ -2676,14 +2676,14 @@ export default function StockTransferModal({
                   </tbody>
                   {godownOutflowData.length > 0 && (
                     <tfoot>
-                      <tr className="border-t-2 border-slate-900 bg-slate-100 font-bold">
-                        <td colSpan="6" className="py-2.5 px-3 text-right uppercase border border-slate-300">
+                      <tr className="border-t-2 border-slate-900 bg-[#F5F5F5] font-bold">
+                        <td colSpan="6" className="py-2.5 px-3 text-right uppercase border border-[#E5E5E5]">
                           সর্বমোট কমার পরিমাণ:
                         </td>
-                        <td className="py-2.5 px-3 text-right font-black text-sm font-mono text-rose-800 border border-slate-300">
+                        <td className="py-2.5 px-3 text-right font-black text-sm font-mono text-rose-800 border border-[#E5E5E5]">
                           {godownOutflowSummary.totalQty}
                         </td>
-                        <td colSpan="3" className="border border-slate-300"></td>
+                        <td colSpan="3" className="border border-[#E5E5E5]"></td>
                       </tr>
                     </tfoot>
                   )}
@@ -2691,15 +2691,15 @@ export default function StockTransferModal({
 
                 {/* স্বাক্ষর ও ভেরিফিকেশন ব্লক */}
                 <div className="grid grid-cols-3 gap-8 pt-12 text-center text-xs text-slate-500">
-                  <div className="border-t border-slate-300 pt-2">
+                  <div className="border-t border-[#E5E5E5] pt-2">
                     <span className="block font-bold text-slate-800">রিপোর্ট প্রস্তুতকারক</span>
                     <span className="text-[10px] text-slate-400">{activeUser?.FullName || 'অপারেটর'}</span>
                   </div>
-                  <div className="border-t border-slate-300 pt-2">
+                  <div className="border-t border-[#E5E5E5] pt-2">
                     <span className="block font-bold text-slate-800">গোডাউন ইনচার্জ স্বাক্ষর</span>
                     <span className="text-[10px] text-slate-400">স্টক যাচাইকারী</span>
                   </div>
-                  <div className="border-t border-slate-300 pt-2">
+                  <div className="border-t border-[#E5E5E5] pt-2">
                     <span className="block font-bold text-slate-800">অনুমোদনকারী / স্বত্বাধিকারী</span>
                     <span className="text-[10px] text-slate-400">কর্তৃপক্ষ সিল ও স্বাক্ষর</span>
                   </div>
@@ -2709,11 +2709,11 @@ export default function StockTransferModal({
             </div>
           </div>
         ) : isPrintableShopStockAudit ? (
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex flex-col items-center">
-            <div id="printable-shop-stock-audit-container" className="w-full max-w-4xl bg-white rounded-2xl shadow-lg border border-slate-200 p-6 sm:p-8 print:p-0 print:border-none print:shadow-none print:max-w-none">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#F5F5F5] flex flex-col items-center">
+            <div id="printable-shop-stock-audit-container" className="w-full max-w-4xl bg-white rounded-md shadow-none border border-[#E5E5E5] p-6 sm:p-8 print:p-0 print:border-none print:shadow-none print:max-w-none">
               
               {/* অ্যাকশন কন্ট্রোল বার (প্রিন্টে লুকানো থাকবে) */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-6 print:hidden">
+              <div className="flex items-center justify-between pb-4 border-b border-[#E5E5E5] mb-6 print:hidden">
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
                     <ClipboardList className="w-4 h-4" />
@@ -2728,7 +2728,7 @@ export default function StockTransferModal({
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-sm cursor-pointer transition-all"
                   >
                     <Printer className="w-4 h-4" />
                     <span>প্রিন্ট / PDF ডাউনলোড</span>
@@ -2736,7 +2736,7 @@ export default function StockTransferModal({
                   <button
                     type="button"
                     onClick={() => exportLocationStockExcelCSV(products)}
-                    className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-all"
+                    className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-none cursor-pointer transition-all"
                   >
                     <FileSpreadsheet className="w-4 h-4" />
                     <span>এক্সেল CSV</span>
@@ -2744,7 +2744,7 @@ export default function StockTransferModal({
                   <button
                     type="button"
                     onClick={() => setIsPrintableShopStockAudit(false)}
-                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-md cursor-pointer"
                   >
                     বন্ধ করুন
                   </button>
@@ -2767,7 +2767,7 @@ export default function StockTransferModal({
                 </div>
 
                 {/* ফিল্টার ও মেটা তথ্য বার */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-[11px]">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-[#FAFAFA] rounded-md border border-[#E5E5E5] text-[11px]">
                   <div>
                     <span className="text-slate-500 block font-medium">অডিট তারিখ ও সময়:</span>
                     <span className="font-bold text-slate-800">{new Date().toLocaleString('bn-BD')}</span>
@@ -2791,23 +2791,23 @@ export default function StockTransferModal({
                 </div>
 
                 {/* অডিট টেবিল */}
-                <table className="w-full text-xs text-left border-collapse border border-slate-300">
+                <table className="w-full text-xs text-left border-collapse border border-[#E5E5E5]">
                   <thead>
-                    <tr className="border-b-2 border-slate-300 text-slate-800 bg-slate-100 font-bold">
-                      <th className="py-2 px-2 border border-slate-300 text-center w-8">ক্রমিক</th>
-                      <th className="py-2 px-3 border border-slate-300">পণ্যের বিবরণ ও ভ্যারিয়েন্ট</th>
-                      <th className="py-2 px-2.5 border border-slate-300 text-center">কোড / বারকোড</th>
-                      <th className="py-2 px-2 border border-slate-300 text-center">একক</th>
-                      <th className="py-2 px-3 border border-slate-300 text-center bg-emerald-50/60 text-emerald-950 font-bold">সিস্টেম রেকর্ড</th>
-                      <th className="py-2 px-3 border border-slate-300 text-center w-24 bg-amber-50/40 text-amber-950 font-bold">ফিজিক্যাল গণনা</th>
-                      <th className="py-2 px-3 border border-slate-300 text-center w-20">গরমিল (+ / -)</th>
-                      <th className="py-2 px-3 border border-slate-300">মন্তব্য (নষ্ট/কাটা স্যাম্পল)</th>
+                    <tr className="border-b-2 border-[#E5E5E5] text-slate-800 bg-[#F5F5F5] font-bold">
+                      <th className="py-2 px-2 border border-[#E5E5E5] text-center w-8">ক্রমিক</th>
+                      <th className="py-2 px-3 border border-[#E5E5E5]">পণ্যের বিবরণ ও ভ্যারিয়েন্ট</th>
+                      <th className="py-2 px-2.5 border border-[#E5E5E5] text-center">কোড / বারকোড</th>
+                      <th className="py-2 px-2 border border-[#E5E5E5] text-center">একক</th>
+                      <th className="py-2 px-3 border border-[#E5E5E5] text-center bg-emerald-50/60 text-emerald-950 font-bold">সিস্টেম রেকর্ড</th>
+                      <th className="py-2 px-3 border border-[#E5E5E5] text-center w-24 bg-[#FFFBEB]/40 text-amber-950 font-bold">ফিজিক্যাল গণনা</th>
+                      <th className="py-2 px-3 border border-[#E5E5E5] text-center w-20">গরমিল (+ / -)</th>
+                      <th className="py-2 px-3 border border-[#E5E5E5]">মন্তব্য (নষ্ট/কাটা স্যাম্পল)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
                     {filteredOverviewProducts.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="py-8 text-center text-slate-400 font-medium border border-slate-200">
+                        <td colSpan="8" className="py-8 text-center text-slate-400 font-medium border border-[#E5E5E5]">
                           তালিকাভুক্ত কোনো পণ্য নেই।
                         </td>
                       </tr>
@@ -2822,17 +2822,17 @@ export default function StockTransferModal({
                         if (vars.length > 0) {
                           return (
                             <React.Fragment key={p.ProductID}>
-                              <tr className="bg-slate-50/80 font-bold">
-                                <td className="py-1.5 px-2 text-center font-mono text-slate-600 border border-slate-200">{idx + 1}</td>
-                                <td colSpan="3" className="py-1.5 px-3 border border-slate-200 text-slate-900">
+                              <tr className="bg-[#FAFAFA] font-bold">
+                                <td className="py-1.5 px-2 text-center font-mono text-slate-600 border border-[#E5E5E5]">{idx + 1}</td>
+                                <td colSpan="3" className="py-1.5 px-3 border border-[#E5E5E5] text-slate-900">
                                   {p.ProductName} <span className="text-[10px] text-slate-500 font-normal">({p.Category}) — {vars.length}টি ভ্যারিয়েন্ট</span>
                                 </td>
-                                <td className="py-1.5 px-3 text-center font-mono font-bold text-emerald-800 border border-slate-200 bg-emerald-50/30">
+                                <td className="py-1.5 px-3 text-center font-mono font-bold text-emerald-800 border border-[#E5E5E5] bg-emerald-50/30">
                                   {sStock} {isThan ? `থান (${sStock * yardsPerThan} গজ)` : unit}
                                 </td>
-                                <td className="py-1.5 px-3 border border-slate-200 bg-white"></td>
-                                <td className="py-1.5 px-3 border border-slate-200"></td>
-                                <td className="py-1.5 px-3 border border-slate-200 text-[10px] text-slate-500"></td>
+                                <td className="py-1.5 px-3 border border-[#E5E5E5] bg-white"></td>
+                                <td className="py-1.5 px-3 border border-[#E5E5E5]"></td>
+                                <td className="py-1.5 px-3 border border-[#E5E5E5] text-[10px] text-slate-500"></td>
                               </tr>
                               {vars.map((v, vIdx) => {
                                 const vSStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : 0);
@@ -2841,25 +2841,25 @@ export default function StockTransferModal({
                                 const vLabel = [vColor && `রং: ${vColor}`, vSize && `সাইজ: ${vSize}`].filter(Boolean).join(' | ');
 
                                 return (
-                                  <tr key={v.VariantID || vIdx} className="hover:bg-slate-50/30">
-                                    <td className="py-1.5 px-2 text-center font-mono text-slate-400 border border-slate-200 text-[10px]">{idx + 1}.{vIdx + 1}</td>
-                                    <td className="py-1.5 px-3 pl-6 border border-slate-200">
+                                  <tr key={v.VariantID || vIdx} className="hover:bg-[#FAFAFA]">
+                                    <td className="py-1.5 px-2 text-center font-mono text-slate-400 border border-[#E5E5E5] text-[10px]">{idx + 1}.{vIdx + 1}</td>
+                                    <td className="py-1.5 px-3 pl-6 border border-[#E5E5E5]">
                                       <span className="font-semibold text-slate-800 block text-[11px]">{vLabel || v.VariantID}</span>
                                     </td>
-                                    <td className="py-1.5 px-2.5 text-center font-mono text-[10px] text-slate-500 border border-slate-200">
+                                    <td className="py-1.5 px-2.5 text-center font-mono text-[10px] text-slate-500 border border-[#E5E5E5]">
                                       {v.Barcode || p.Barcode || '—'}
                                     </td>
-                                    <td className="py-1.5 px-2 text-center text-slate-600 border border-slate-200 text-[10px]">{unit}</td>
-                                    <td className="py-1.5 px-3 text-center font-mono font-bold text-slate-800 border border-slate-200">
+                                    <td className="py-1.5 px-2 text-center text-slate-600 border border-[#E5E5E5] text-[10px]">{unit}</td>
+                                    <td className="py-1.5 px-3 text-center font-mono font-bold text-slate-800 border border-[#E5E5E5]">
                                       {vSStock} {isThan ? `থান (${vSStock * yardsPerThan} গজ)` : ''}
                                     </td>
-                                    <td className="py-1.5 px-3 border border-slate-200 bg-white text-center font-mono">
-                                      <div className="h-4 border-b border-dashed border-slate-300"></div>
+                                    <td className="py-1.5 px-3 border border-[#E5E5E5] bg-white text-center font-mono">
+                                      <div className="h-4 border-b border-dashed border-[#E5E5E5]"></div>
                                     </td>
-                                    <td className="py-1.5 px-3 border border-slate-200 text-center font-mono">
-                                      <div className="h-4 border-b border-dashed border-slate-300"></div>
+                                    <td className="py-1.5 px-3 border border-[#E5E5E5] text-center font-mono">
+                                      <div className="h-4 border-b border-dashed border-[#E5E5E5]"></div>
                                     </td>
-                                    <td className="py-1.5 px-3 border border-slate-200"></td>
+                                    <td className="py-1.5 px-3 border border-[#E5E5E5]"></td>
                                   </tr>
                                 );
                               })}
@@ -2868,17 +2868,17 @@ export default function StockTransferModal({
                         }
 
                         return (
-                          <tr key={p.ProductID} className="hover:bg-slate-50/30">
-                            <td className="py-2 px-2 text-center font-mono text-slate-500 border border-slate-200">{idx + 1}</td>
-                            <td className="py-2 px-3 border border-slate-200">
+                          <tr key={p.ProductID} className="hover:bg-[#FAFAFA]">
+                            <td className="py-2 px-2 text-center font-mono text-slate-500 border border-[#E5E5E5]">{idx + 1}</td>
+                            <td className="py-2 px-3 border border-[#E5E5E5]">
                               <span className="font-bold text-slate-900 block">{p.ProductName}</span>
                               <span className="text-[10px] text-slate-500 block">{p.Category}</span>
                             </td>
-                            <td className="py-2 px-2.5 text-center font-mono text-[10.5px] text-slate-600 border border-slate-200">
+                            <td className="py-2 px-2.5 text-center font-mono text-[10.5px] text-slate-600 border border-[#E5E5E5]">
                               {p.Barcode || p.ProductID}
                             </td>
-                            <td className="py-2 px-2 text-center text-slate-600 border border-slate-200">{unit}</td>
-                            <td className="py-2 px-3 text-center font-black font-mono text-emerald-800 bg-emerald-50/30 border border-slate-200">
+                            <td className="py-2 px-2 text-center text-slate-600 border border-[#E5E5E5]">{unit}</td>
+                            <td className="py-2 px-3 text-center font-black font-mono text-emerald-800 bg-emerald-50/30 border border-[#E5E5E5]">
                               {(() => {
                                 if (isThan) {
                                   const bd = calculateThanBreakdown(sStock, yardsPerThan, p.RemnantThreshold !== undefined ? p.RemnantThreshold : (p.remnantThreshold !== undefined ? p.remnantThreshold : 0));
@@ -2889,13 +2889,13 @@ export default function StockTransferModal({
                                 return `${sStock} ${unit}`;
                               })()}
                             </td>
-                            <td className="py-2 px-3 border border-slate-200 bg-white text-center font-mono text-[10px] text-slate-400">
-                              {isThan ? '[   ] থান + [   ] গজ [   ] গিরা' : <div className="h-4 border-b border-dashed border-slate-300"></div>}
+                            <td className="py-2 px-3 border border-[#E5E5E5] bg-white text-center font-mono text-[10px] text-slate-400">
+                              {isThan ? '[   ] থান + [   ] গজ [   ] গিরা' : <div className="h-4 border-b border-dashed border-[#E5E5E5]"></div>}
                             </td>
-                            <td className="py-2 px-3 border border-slate-200 text-center font-mono">
-                              <div className="h-4 border-b border-dashed border-slate-300"></div>
+                            <td className="py-2 px-3 border border-[#E5E5E5] text-center font-mono">
+                              <div className="h-4 border-b border-dashed border-[#E5E5E5]"></div>
                             </td>
-                            <td className="py-2 px-3 border border-slate-200"></td>
+                            <td className="py-2 px-3 border border-[#E5E5E5]"></td>
                           </tr>
                         );
                       })
@@ -2903,16 +2903,16 @@ export default function StockTransferModal({
                   </tbody>
                   {filteredOverviewProducts.length > 0 && (
                     <tfoot>
-                      <tr className="border-t-2 border-slate-900 bg-slate-100 font-bold">
-                        <td colSpan="4" className="py-2.5 px-3 text-right uppercase border border-slate-300">
+                      <tr className="border-t-2 border-slate-900 bg-[#F5F5F5] font-bold">
+                        <td colSpan="4" className="py-2.5 px-3 text-right uppercase border border-[#E5E5E5]">
                           সর্বমোট সিস্টেম দোকান মজুত:
                         </td>
-                        <td className="py-2.5 px-3 text-center font-black text-sm font-mono text-emerald-800 border border-slate-300">
+                        <td className="py-2.5 px-3 text-center font-black text-sm font-mono text-emerald-800 border border-[#E5E5E5]">
                           {stockKpis.fabricShopYards > 0 && stockKpis.generalShopPcs > 0
                             ? `${stockKpis.fabricShopYards.toLocaleString('bn-BD')} গজ + ${stockKpis.generalShopPcs.toLocaleString('bn-BD')} Pcs`
                             : (stockKpis.fabricShopYards > 0 ? `${stockKpis.fabricShopYards.toLocaleString('bn-BD')} গজ` : `${(stockKpis.totalShop || 0).toLocaleString('bn-BD')} Pcs`)}
                         </td>
-                        <td colSpan="3" className="border border-slate-300"></td>
+                        <td colSpan="3" className="border border-[#E5E5E5]"></td>
                       </tr>
                     </tfoot>
                   )}
@@ -2920,15 +2920,15 @@ export default function StockTransferModal({
 
                 {/* স্বাক্ষর ও ভেরিফিকেশন ব্লক */}
                 <div className="grid grid-cols-3 gap-8 pt-12 text-center text-xs text-slate-500">
-                  <div className="border-t border-slate-300 pt-2">
+                  <div className="border-t border-[#E5E5E5] pt-2">
                     <span className="block font-bold text-slate-800">স্টক গণনাকারী সেলসম্যান</span>
                     <span className="text-[10px] text-slate-400">স্বাক্ষর ও তারিখ</span>
                   </div>
-                  <div className="border-t border-slate-300 pt-2">
+                  <div className="border-t border-[#E5E5E5] pt-2">
                     <span className="block font-bold text-slate-800">দোকান / কাউন্টার ইনচার্জ</span>
                     <span className="text-[10px] text-slate-400">যাচাইকারী স্বাক্ষর</span>
                   </div>
-                  <div className="border-t border-slate-300 pt-2">
+                  <div className="border-t border-[#E5E5E5] pt-2">
                     <span className="block font-bold text-slate-800">মালিক / শাখা ব্যবস্থাপক</span>
                     <span className="text-[10px] text-slate-400">অনুমোদন সিল ও স্বাক্ষর</span>
                   </div>
@@ -2938,10 +2938,10 @@ export default function StockTransferModal({
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#FAFAFA]">
             
             {/* =============================================================== */}
-            {/* ট্যাব ১: 📦 স্টক খতিয়ান (গোডাউন বনাম দোকান ওভারভিউ) */}
+            {/* ট্যাব ১: স্টক খতিয়ান (গোডাউন বনাম দোকান ওভারভিউ) */}
             {/* =============================================================== */}
             {activeMainTab === 'overview' && (
               <div className="space-y-4">
@@ -2952,13 +2952,13 @@ export default function StockTransferModal({
                     {/* কার্ড ১: দোকান মোট মজুত */}
                     <div
                       onClick={() => setOverviewFilter('IN_SHOP')}
-                      className={`p-4 bg-white rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs ${
-                        overviewFilter === 'IN_SHOP' ? 'border-[#0da487] ring-2 ring-emerald-500/20' : 'border-slate-200 hover:border-slate-300'
+                      className={`p-4 bg-white rounded-md border transition-all cursor-pointer shadow-none hover:shadow-none ${
+                        overviewFilter === 'IN_SHOP' ? 'border-[#0F172A] ring-2 ring-[#0F172A]/15' : 'border-[#E5E5E5] hover:border-[#D4D4D4]'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">দোকান মোট মজুত</span>
-                        <span className="p-1.5 rounded-lg bg-emerald-50 text-[#0da487] border border-emerald-100">
+                        <span className="p-1.5 rounded-lg bg-emerald-50 text-[#0F172A] border border-emerald-100">
                           <Store className="w-4 h-4" />
                         </span>
                       </div>
@@ -2966,7 +2966,7 @@ export default function StockTransferModal({
                         <>
                           <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
                             <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight tabular-nums">
-                              {(stockKpis.fabricShopYards || 0).toLocaleString('bn-BD')} <span className="text-xs font-bold text-[#0da487]">গজ</span>
+                              {(stockKpis.fabricShopYards || 0).toLocaleString('bn-BD')} <span className="text-xs font-bold text-[#0F172A]">গজ</span>
                             </div>
                             <span className="text-sm font-bold text-slate-300">+</span>
                             <div className="text-2xl sm:text-3xl font-extrabold text-slate-800 font-mono tracking-tight tabular-nums">
@@ -2979,8 +2979,8 @@ export default function StockTransferModal({
                             const tot = (stockKpis.fabricShopYards || 0) + (stockKpis.generalShopPcs || 0);
                             const fabricPct = tot > 0 ? Math.round(((stockKpis.fabricShopYards || 0) / tot) * 100) : 100;
                             return (
-                              <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden flex mt-2.5" title={`কাপড়: ${fabricPct}% | রেডি পণ্য: ${100 - fabricPct}%`}>
-                                <div style={{ width: `${fabricPct}%` }} className="bg-[#0da487] h-full rounded-full" />
+                              <div className="w-full h-1 bg-[#F5F5F5] rounded-full overflow-hidden flex mt-2.5" title={`কাপড়: ${fabricPct}% | রেডি পণ্য: ${100 - fabricPct}%`}>
+                                <div style={{ width: `${fabricPct}%` }} className="bg-[#0F172A] h-full rounded-full" />
                                 <div style={{ width: `${100 - fabricPct}%` }} className="bg-slate-300 h-full rounded-full" />
                               </div>
                             );
@@ -3014,8 +3014,8 @@ export default function StockTransferModal({
                     {/* কার্ড ২: দোকানে কাপড়ের মোট থান ও গজ */}
                     <div
                       onClick={() => setOverviewFilter('SHOP_FABRIC')}
-                      className={`p-4 bg-white rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs ${
-                        overviewFilter === 'SHOP_FABRIC' ? 'border-[#0da487] ring-2 ring-emerald-500/20' : 'border-slate-200 hover:border-slate-300'
+                      className={`p-4 bg-white rounded-md border transition-all cursor-pointer shadow-none hover:shadow-none ${
+                        overviewFilter === 'SHOP_FABRIC' ? 'border-[#0F172A] ring-2 ring-[#0F172A]/15' : 'border-[#E5E5E5] hover:border-[#D4D4D4]'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -3025,15 +3025,15 @@ export default function StockTransferModal({
                         </span>
                       </div>
                       <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight tabular-nums">
-                        {(stockKpis.fabricShopYards || 0).toLocaleString('bn-BD')} <span className="text-xs font-bold text-[#0da487]">গজ</span>
+                        {(stockKpis.fabricShopYards || 0).toLocaleString('bn-BD')} <span className="text-xs font-bold text-[#0F172A]">গজ</span>
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-2.5 text-[11px]">
-                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold bg-slate-100 text-slate-800 border border-slate-200 font-mono">
+                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#F5F5F5] text-slate-800 border border-[#E5E5E5] font-mono">
                           <Package className="w-3 h-3 text-slate-600" />
                           <span>{stockKpis.fabricShopFullThans || 0}টি আস্ত থান</span>
                         </span>
                         {stockKpis.fabricShopRemnantsCount > 0 && (
-                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold bg-amber-50 text-amber-900 border border-amber-200 font-mono">
+                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7] font-mono">
                             <Scissors className="w-3 h-3 text-amber-700" />
                             <span>ছাঁট: {stockKpis.fabricShopRemnantsCount}টি</span>
                           </span>
@@ -3042,10 +3042,10 @@ export default function StockTransferModal({
                     </div>
 
                     {/* কার্ড ৩: দোকান মজুত সম্পদ মূল্য (Valuation) */}
-                    <div className="p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition-all shadow-2xs hover:shadow-xs">
+                    <div className="p-4 bg-white rounded-md border border-[#E5E5E5] hover:border-[#D4D4D4] transition-all shadow-none hover:shadow-none">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">দোকান মজুত সম্পদ মূল্য</span>
-                        <span className="p-1.5 rounded-lg bg-slate-50 text-slate-700 border border-slate-200">
+                        <span className="p-1.5 rounded-lg bg-[#FAFAFA] text-slate-700 border border-[#E5E5E5]">
                           <Sparkles className="w-4 h-4" />
                         </span>
                       </div>
@@ -3053,7 +3053,7 @@ export default function StockTransferModal({
                         {currencySymbol}{Math.round(stockKpis.totalShopCostValuation || 0).toLocaleString('bn-BD')}
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-2.5 text-[11px]">
-                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold bg-slate-100 text-slate-800 border border-slate-200 font-mono" title="সম্ভাব্য বিক্রয় মূল্য">
+                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#F5F5F5] text-slate-800 border border-[#E5E5E5] font-mono" title="সম্ভাব্য বিক্রয় মূল্য">
                           <Tag className="w-3 h-3 text-slate-600" />
                           <span>বিক্রয়: {currencySymbol}{Math.round(stockKpis.totalShopSellingValuation || 0).toLocaleString('bn-BD')}</span>
                         </span>
@@ -3068,10 +3068,10 @@ export default function StockTransferModal({
                     {/* কার্ড ৪: দোকানে ঘাটতি ও রি-অর্ডার অ্যালার্ট */}
                     <div
                       onClick={() => setOverviewFilter(stockKpis.shopZeroInGodownCount > 0 ? 'SHOP_ZERO_IN_GODOWN' : 'LOW_SHOP')}
-                      className={`p-4 bg-white rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs ${
+                      className={`p-4 bg-white rounded-md border transition-all cursor-pointer shadow-none hover:shadow-none ${
                         (overviewFilter === 'LOW_SHOP' || overviewFilter === 'SHOP_ZERO_IN_GODOWN')
                           ? 'border-rose-500 ring-2 ring-rose-500/20'
-                          : 'border-slate-200 hover:border-slate-300'
+                          : 'border-[#E5E5E5] hover:border-[#D4D4D4]'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -3098,7 +3098,7 @@ export default function StockTransferModal({
                           </span>
                         )}
                         {stockKpis.shopLowCount > 0 && (
-                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 font-mono">
+                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7] font-mono">
                             <span>কম: {stockKpis.shopLowCount}</span>
                           </span>
                         )}
@@ -3110,13 +3110,13 @@ export default function StockTransferModal({
                     {/* কার্ড ১: গোডাউন মোট মজুত */}
                     <div
                       onClick={() => setOverviewFilter('IN_GODOWN')}
-                      className={`p-4 bg-white rounded-2xl border transition-all cursor-pointer shadow-2xs hover:shadow-md hover:-translate-y-0.5 duration-200 ${
-                        overviewFilter === 'IN_GODOWN' ? 'border-[#0da487] ring-2 ring-emerald-500/20' : 'border-slate-200/80 hover:border-emerald-300'
+                      className={`p-4 bg-white rounded-md border transition-all cursor-pointer shadow-none hover:shadow-none hover:-translate-y-0.5 duration-200 ${
+                        overviewFilter === 'IN_GODOWN' ? 'border-[#0F172A] ring-2 ring-[#0F172A]/15' : 'border-[#E5E5E5] hover:border-emerald-300'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">গোডাউন মোট মজুত</span>
-                        <span className="p-2 rounded-xl bg-emerald-50 text-[#0da487] border border-emerald-100 shadow-2xs">
+                        <span className="p-2 rounded-md bg-emerald-50 text-[#0F172A] border border-emerald-100 shadow-none">
                           <Warehouse className="w-4 h-4" />
                         </span>
                       </div>
@@ -3125,7 +3125,7 @@ export default function StockTransferModal({
                         <>
                           <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
                             <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
-                              {(stockKpis.fabricGodownThans || 0).toLocaleString('bn-BD')} <span className="text-xs font-bold text-[#0da487]">থান</span>
+                              {(stockKpis.fabricGodownThans || 0).toLocaleString('bn-BD')} <span className="text-xs font-bold text-[#0F172A]">থান</span>
                             </div>
                             <span className="text-sm font-black text-slate-300">+</span>
                             <div className="text-2xl sm:text-3xl font-black text-slate-800 font-mono tracking-tight">
@@ -3138,8 +3138,8 @@ export default function StockTransferModal({
                             const tot = (stockKpis.fabricGodownThans || 0) + (stockKpis.generalGodownPcs || 0);
                             const fabricPct = tot > 0 ? Math.round(((stockKpis.fabricGodownThans || 0) / tot) * 100) : 100;
                             return (
-                              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden flex mt-2.5" title={`কাপড়: ${fabricPct}% | রেডি পণ্য: ${100 - fabricPct}%`}>
-                                <div style={{ width: `${fabricPct}%` }} className="bg-[#0da487] h-full rounded-full" />
+                              <div className="w-full h-1.5 bg-[#F5F5F5] rounded-full overflow-hidden flex mt-2.5" title={`কাপড়: ${fabricPct}% | রেডি পণ্য: ${100 - fabricPct}%`}>
+                                <div style={{ width: `${fabricPct}%` }} className="bg-[#0F172A] h-full rounded-full" />
                                 <div style={{ width: `${100 - fabricPct}%` }} className="bg-slate-300 h-full rounded-full" />
                               </div>
                             );
@@ -3160,11 +3160,11 @@ export default function StockTransferModal({
                         </span>
                         {stockKpis.fabricGodownYards > 0 && (
                           <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-teal-50 text-teal-800 border border-teal-200/80">
-                            📏 মোট {(stockKpis.fabricGodownYards || 0).toLocaleString('bn-BD')} গজ
+                            মোট {(stockKpis.fabricGodownYards || 0).toLocaleString('bn-BD')} গজ
                           </span>
                         )}
                         {stockKpis.generalGodownPcs > 0 && stockKpis.fabricGodownThans > 0 && (
-                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-800 border border-slate-200/80">
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-[#F5F5F5] text-slate-800 border border-[#E5E5E5]">
                             <Package className="w-3 h-3 text-slate-500 inline mr-1" />{(stockKpis.generalGodownPcs || 0).toLocaleString('bn-BD')} পিস রেডি
                           </span>
                         )}
@@ -3173,12 +3173,12 @@ export default function StockTransferModal({
 
                     {/* কার্ড ২: গোডাউন মোট মজুদ মূল্য (Valuation) */}
                     <div
-                      className="p-4 bg-white rounded-2xl border border-slate-200/80 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs hover:shadow-md hover:-translate-y-0.5 duration-200"
+                      className="p-4 bg-white rounded-md border border-[#E5E5E5] hover:border-emerald-300 transition-all cursor-pointer shadow-none hover:shadow-none hover:-translate-y-0.5 duration-200"
                       title="গোডাউন মোট সম্পদ মূল্য (ক্রয়মূল্য ভিত্তিক): কাপড়ের মোট গজ × মিল রেট + রেডি পণ্যের পিস × কেনা দাম"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">গোডাউন মোট সম্পদ মূল্য</span>
-                        <span className="p-2 rounded-xl bg-teal-50 text-teal-700 border border-teal-100/80 shadow-2xs">
+                        <span className="p-2 rounded-md bg-teal-50 text-teal-700 border border-teal-100/80 shadow-none">
                           <Sparkles className="w-4 h-4" />
                         </span>
                       </div>
@@ -3187,17 +3187,17 @@ export default function StockTransferModal({
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
                         {stockKpis.totalGodownSellingValuation > 0 && (
-                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-800 border border-slate-200/80 font-mono" title="গোডাউনের সকল পণ্যের সম্ভাব্য মোট বিক্রয়মূল্য">
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-[#F5F5F5] text-slate-800 border border-[#E5E5E5] font-mono" title="গোডাউনের সকল পণ্যের সম্ভাব্য মোট বিক্রয়মূল্য">
                             <Tag className="w-3 h-3 text-slate-500 inline mr-1" />বিক্রয়: {currencySymbol}{Math.round(stockKpis.totalGodownSellingValuation || 0).toLocaleString('bn-BD')}
                           </span>
                         )}
                         {stockKpis.totalGodownMinSellingValuation > 0 && (
-                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-amber-50 text-amber-900 border border-amber-200/90 font-mono" title="নূন্যতম বিক্রয়মূল্য (ফ্লোর প্রাইস) অনুযায়ী গোডাউনের মোট সম্পদ বিক্রয়মূল্য">
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7]/90 font-mono" title="নূন্যতম বিক্রয়মূল্য (ফ্লোর প্রাইস) অনুযায়ী গোডাউনের মোট সম্পদ বিক্রয়মূল্য">
                             নূন্যতম বিক্রয়: {currencySymbol}{Math.round(stockKpis.totalGodownMinSellingValuation || 0).toLocaleString('bn-BD')}
                           </span>
                         )}
                         {stockKpis.totalGodownPotentialProfit > 0 && (
-                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-emerald-50 text-[#0da487] border border-emerald-200/80 font-mono" title="সম্ভাব্য গ্রস লাভ মার্জিন">
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-emerald-50 text-[#0F172A] border border-emerald-200/80 font-mono" title="সম্ভাব্য গ্রস লাভ মার্জিন">
                             +{(Math.round((stockKpis.totalGodownPotentialProfit / (stockKpis.totalGodownValuation || 1)) * 100))}% মার্জিন
                           </span>
                         )}
@@ -3206,16 +3206,16 @@ export default function StockTransferModal({
                             <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60 font-mono">
                               <Layers className="w-3 h-3 text-emerald-600 inline mr-1" />কাপড়: {currencySymbol}{Math.round(stockKpis.fabricGodownValuation || 0).toLocaleString('bn-BD')}
                             </span>
-                            <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-slate-100 text-slate-800 border border-slate-200/80 font-mono">
+                            <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-[#F5F5F5] text-slate-800 border border-[#E5E5E5] font-mono">
                               <Package className="w-3 h-3 text-slate-500 inline mr-1" />পিস: {currencySymbol}{Math.round(stockKpis.generalGodownValuation || 0).toLocaleString('bn-BD')}
                             </span>
                           </>
                         ) : stockKpis.fabricGodownYards > 0 ? (
                           <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-teal-50 text-teal-800 border border-teal-200/70 font-mono" title="গজ কাপড়ের মোট গজ অনুযায়ী ক্রয়মূল্য">
-                            📏 {(stockKpis.fabricGodownYards || 0).toLocaleString('bn-BD')} গজ কাপড় (গজ দর ভিত্তিক)
+                            {(stockKpis.fabricGodownYards || 0).toLocaleString('bn-BD')} গজ কাপড় (গজ দর ভিত্তিক)
                           </span>
                         ) : stockKpis.generalGodownPcs > 0 ? (
-                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-slate-100 text-slate-800 border border-slate-200/80 font-mono">
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold bg-[#F5F5F5] text-slate-800 border border-[#E5E5E5] font-mono">
                             <Package className="w-3 h-3 text-slate-500 inline mr-1" />{(stockKpis.generalGodownPcs || 0).toLocaleString('bn-BD')} পিস রেডি পণ্য
                           </span>
                         ) : (
@@ -3229,13 +3229,13 @@ export default function StockTransferModal({
                     {/* কার্ড ৩: গোডাউন স্টক অ্যালার্ট ও ঘাটতি */}
                     <div
                       onClick={() => setOverviewFilter('LOW_GODOWN')}
-                      className={`p-4 bg-white rounded-2xl border transition-all cursor-pointer shadow-2xs hover:shadow-md hover:-translate-y-0.5 duration-200 ${
-                        overviewFilter === 'LOW_GODOWN' ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-200/80 hover:border-rose-300'
+                      className={`p-4 bg-white rounded-md border transition-all cursor-pointer shadow-none hover:shadow-none hover:-translate-y-0.5 duration-200 ${
+                        overviewFilter === 'LOW_GODOWN' ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-[#E5E5E5] hover:border-rose-300'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[11px] font-black uppercase tracking-wider text-rose-700">গোডাউনে ঘাটতি / সতর্কতা</span>
-                        <span className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shadow-2xs">
+                        <span className="p-2 rounded-md bg-rose-50 text-rose-600 border border-rose-100/80 shadow-none">
                           <AlertTriangle className="w-4 h-4" />
                         </span>
                       </div>
@@ -3247,7 +3247,7 @@ export default function StockTransferModal({
                           <AlertCircle className="w-3 h-3 text-rose-600 inline mr-1" />রিস্টক প্রয়োজন
                         </span>
                         {stockKpis.inTransitChallans > 0 && (
-                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80">
+                          <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7]">
                             <Truck className="w-3 h-3 text-amber-600 inline mr-1" />{stockKpis.inTransitChallans}টি ট্রানজিটে
                           </span>
                         )}
@@ -3257,7 +3257,7 @@ export default function StockTransferModal({
                 )}
 
                 {/* ২. ফিল্টার এবং কন্ট্রোল বার */}
-                <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col gap-3">
+                <div className="p-4 bg-white rounded-md border border-[#E5E5E5]/90 shadow-none flex flex-col gap-3">
                   <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
                     {/* সার্চ বক্স ও ক্যাটাগরি */}
                     <div className="flex items-center space-x-2 flex-1 min-w-[260px]">
@@ -3269,7 +3269,7 @@ export default function StockTransferModal({
                           value={overviewSearch}
                           onChange={(e) => setOverviewSearch(e.target.value)}
                           placeholder="পণ্য, কোড, রং বা বারকোড খুঁজুন (শর্টকাট: /)..."
-                          className="w-full pl-10 pr-16 py-2 bg-slate-50/70 hover:bg-slate-50 focus:bg-white text-xs font-semibold text-slate-800 border border-slate-200 hover:border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all shadow-2xs"
+                          className="w-full pl-10 pr-16 py-2 bg-[#FAFAFA]/70 hover:bg-[#FAFAFA] focus:bg-white text-xs font-semibold text-slate-800 border border-[#E5E5E5] hover:border-[#D4D4D4] rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-emerald-500 focus:outline-none transition-all shadow-none"
                         />
                         <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center space-x-1.5">
                           {overviewSearch ? (
@@ -3282,7 +3282,7 @@ export default function StockTransferModal({
                               <X className="w-3.5 h-3.5" />
                             </button>
                           ) : (
-                            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-100 rounded border border-slate-200" title="কীবোর্ড শর্টকাট">
+                            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-[#F5F5F5] rounded border border-[#E5E5E5]" title="কীবোর্ড শর্টকাট">
                               /
                             </kbd>
                           )}
@@ -3292,7 +3292,7 @@ export default function StockTransferModal({
                       <select
                         value={overviewCategory}
                         onChange={(e) => setOverviewCategory(e.target.value)}
-                        className="px-3 py-2 text-xs border border-slate-200 hover:border-slate-300 rounded-xl bg-slate-50/70 hover:bg-white text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none cursor-pointer shadow-2xs shrink-0"
+                        className="px-3 py-2 text-xs border border-[#E5E5E5] hover:border-[#D4D4D4] rounded-md bg-[#FAFAFA]/70 hover:bg-white text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none cursor-pointer shadow-none shrink-0"
                       >
                         <option value="ALL">সকল ক্যাটাগরি ({categories.length})</option>
                         {categories.map((c) => (
@@ -3304,20 +3304,20 @@ export default function StockTransferModal({
                     {/* ফিল্টার পিল সেগমেন্টেড কন্ট্রোল */}
                     <div className="flex items-center shrink-0 overflow-x-auto">
                       {isShopStockView ? (
-                        <div className="flex items-center bg-slate-100/90 p-1 rounded-xl text-xs font-bold border border-slate-200/70 overflow-x-auto shadow-2xs gap-1">
+                        <div className="flex items-center bg-[#F5F5F5] p-1 rounded-md text-xs font-bold border border-[#E5E5E5] overflow-x-auto shadow-none gap-1">
                           <button
                             type="button"
                             onClick={() => setOverviewFilter('IN_SHOP')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'IN_SHOP'
-                                ? 'bg-white text-[#0da487] shadow-xs font-bold border border-emerald-200/80'
+                                ? 'bg-white text-[#0F172A] shadow-none font-bold border border-emerald-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
                             <Store className="w-3.5 h-3.5 text-emerald-600" />
                             <span>দোকান পণ্য</span>
                             <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
-                              overviewFilter === 'IN_SHOP' ? 'bg-emerald-100 text-[#0da487] font-bold' : 'bg-slate-200/70 text-slate-600'
+                              overviewFilter === 'IN_SHOP' ? 'bg-emerald-100 text-[#0F172A] font-bold' : 'bg-slate-200/70 text-slate-600'
                             }`}>
                               {stockKpis.shopProductCount || 0}
                             </span>
@@ -3328,7 +3328,7 @@ export default function StockTransferModal({
                             onClick={() => setOverviewFilter('SHOP_ZERO_IN_GODOWN')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'SHOP_ZERO_IN_GODOWN'
-                                ? 'bg-white text-rose-700 shadow-xs font-bold border border-rose-200/80'
+                                ? 'bg-white text-rose-700 shadow-none font-bold border border-rose-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -3346,14 +3346,14 @@ export default function StockTransferModal({
                             onClick={() => setOverviewFilter('LOW_SHOP')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'LOW_SHOP'
-                                ? 'bg-white text-amber-800 shadow-xs font-bold border border-amber-200/80'
+                                ? 'bg-white text-[#B45309] shadow-none font-bold border border-[#FEF3C7]'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
                             <span>দোকানে কম</span>
                             {(stockKpis.shopLowCount || 0) > 0 && (
-                              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-amber-50 text-amber-800 border border-amber-200 font-bold">
+                              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7] font-bold">
                                 {stockKpis.shopLowCount || 0}
                               </span>
                             )}
@@ -3364,7 +3364,7 @@ export default function StockTransferModal({
                             onClick={() => setOverviewFilter('SHOP_FABRIC')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'SHOP_FABRIC'
-                                ? 'bg-white text-[#0da487] shadow-xs font-bold border border-emerald-200/80'
+                                ? 'bg-white text-[#0F172A] shadow-none font-bold border border-emerald-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -3378,7 +3378,7 @@ export default function StockTransferModal({
                               onClick={() => setOverviewFilter('SHOP_REMNANT')}
                               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                                 overviewFilter === 'SHOP_REMNANT'
-                                  ? 'bg-white text-amber-800 shadow-xs font-bold border border-amber-200/80'
+                                  ? 'bg-white text-[#B45309] shadow-none font-bold border border-[#FEF3C7]'
                                   : 'text-slate-600 hover:text-slate-900'
                               }`}
                             >
@@ -3393,7 +3393,7 @@ export default function StockTransferModal({
                               onClick={() => setOverviewFilter('SHOP_NEED_BOLT')}
                               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                                 overviewFilter === 'SHOP_NEED_BOLT'
-                                  ? 'bg-white text-rose-700 shadow-xs font-bold border border-rose-200/80'
+                                  ? 'bg-white text-rose-700 shadow-none font-bold border border-rose-200/80'
                                   : 'text-slate-600 hover:text-slate-900'
                               }`}
                             >
@@ -3403,13 +3403,13 @@ export default function StockTransferModal({
                           )}
                         </div>
                       ) : (
-                        <div className="flex items-center bg-slate-100/90 p-1 rounded-xl text-xs font-bold border border-slate-200/70 overflow-x-auto shadow-2xs gap-1">
+                        <div className="flex items-center bg-[#F5F5F5] p-1 rounded-md text-xs font-bold border border-[#E5E5E5] overflow-x-auto shadow-none gap-1">
                           <button
                             type="button"
                             onClick={() => setOverviewFilter('ALL')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'ALL'
-                                ? 'bg-white shadow-xs text-[#0da487] font-bold border border-emerald-200/80'
+                                ? 'bg-white shadow-none text-[#0F172A] font-bold border border-emerald-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -3425,7 +3425,7 @@ export default function StockTransferModal({
                             onClick={() => setOverviewFilter('IN_GODOWN')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'IN_GODOWN'
-                                ? 'bg-white text-[#0da487] shadow-xs font-bold border border-emerald-200/80'
+                                ? 'bg-white text-[#0F172A] shadow-none font-bold border border-emerald-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -3441,7 +3441,7 @@ export default function StockTransferModal({
                             onClick={() => setOverviewFilter('LOW_GODOWN')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'LOW_GODOWN'
-                                ? 'bg-white text-rose-800 shadow-xs font-bold border border-rose-200/80'
+                                ? 'bg-white text-rose-800 shadow-none font-bold border border-rose-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -3457,13 +3457,13 @@ export default function StockTransferModal({
                             onClick={() => setOverviewFilter('NEED_TRANSFER')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'NEED_TRANSFER'
-                                ? 'bg-white text-amber-900 shadow-xs font-bold border border-amber-200/80'
+                                ? 'bg-white text-[#B45309] shadow-none font-bold border border-[#FEF3C7]'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-600 inline mr-1" /><span>দোকানে ঘাটতি</span>
                             {(stockKpis.needTransferCount || 0) > 0 && (
-                              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-amber-100 text-amber-900 font-bold">
+                              <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono bg-amber-100 text-[#B45309] font-bold">
                                 {stockKpis.needTransferCount}
                               </span>
                             )}
@@ -3473,7 +3473,7 @@ export default function StockTransferModal({
                             onClick={() => setOverviewFilter('IN_SHOP')}
                             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap ${
                               overviewFilter === 'IN_SHOP'
-                                ? 'bg-white text-emerald-900 shadow-xs font-bold border border-emerald-200/80'
+                                ? 'bg-white text-emerald-900 shadow-none font-bold border border-emerald-200/80'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -3490,18 +3490,18 @@ export default function StockTransferModal({
                   </div>
 
                   {/* ভিউ মোড টগল ও অ্যাকশন স্ট্রিপ */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between pt-3 border-t border-slate-100 gap-3">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between pt-3 border-t border-[#E5E5E5] gap-3">
                     {/* ভিউ মোড ও বিস্তার/সংক্ষেপ */}
                     <div className="flex flex-wrap items-center gap-2.5">
                       <div className="flex items-center space-x-1.5">
                         <span className="text-[11.5px] font-bold text-slate-500 whitespace-nowrap">প্রদর্শন মোড:</span>
-                        <div className="flex items-center bg-slate-100/90 p-1 rounded-xl text-xs font-bold border border-slate-200/70 shadow-2xs">
+                        <div className="flex items-center bg-[#F5F5F5] p-1 rounded-md text-xs font-bold border border-[#E5E5E5] shadow-none">
                           <button
                             type="button"
                             onClick={() => setStockViewMode('grouped')}
                             className={`px-3 py-1 rounded-lg flex items-center space-x-1.5 transition-all cursor-pointer whitespace-nowrap ${
                               stockViewMode === 'grouped'
-                                ? 'bg-white shadow-xs text-[#0da487] font-black border border-emerald-200/60'
+                                ? 'bg-white shadow-none text-[#0F172A] font-black border border-emerald-200/60'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -3513,12 +3513,12 @@ export default function StockTransferModal({
                             onClick={() => setStockViewMode('variants')}
                             className={`px-3 py-1 rounded-lg flex items-center space-x-1.5 transition-all cursor-pointer whitespace-nowrap ${
                               stockViewMode === 'variants'
-                                ? 'bg-[#0da487] shadow-xs text-white font-black'
+                                ? 'bg-[#0F172A] shadow-none text-white font-black'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
                             <Palette className="w-3.5 h-3.5" />
-                            <span>🎨 ভ্যারিয়েন্ট বিস্তারিত ভিউ</span>
+                            <span>ভ্যারিয়েন্ট বিস্তারিত ভিউ</span>
                           </button>
                         </div>
                       </div>
@@ -3536,7 +3536,7 @@ export default function StockTransferModal({
                           <button
                             type="button"
                             onClick={handleCollapseAll}
-                            className="px-2.5 py-1 text-[11px] font-bold text-slate-600 bg-slate-100/80 hover:bg-slate-200 border border-slate-200 rounded-lg transition-all cursor-pointer flex items-center space-x-1"
+                            className="px-2.5 py-1 text-[11px] font-bold text-slate-600 bg-[#F5F5F5] hover:bg-slate-200 border border-[#E5E5E5] rounded-lg transition-all cursor-pointer flex items-center space-x-1"
                           >
                             <span>সংক্ষেপ</span>
                             <ChevronUp className="w-3 h-3" />
@@ -3554,7 +3554,7 @@ export default function StockTransferModal({
                           setActiveMainTab('transfers');
                           setTransferSubTab('new');
                         }}
-                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-sm hover:shadow transition-all cursor-pointer shrink-0"
+                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-sm hover:shadow transition-all cursor-pointer shrink-0"
                         title="গোডাউন থেকে দোকানে পণ্য পাঠানোর নতুন চালান তৈরি করুন (Alt + N)"
                       >
                         <Truck className="w-3.5 h-3.5 text-emerald-400" />
@@ -3567,7 +3567,7 @@ export default function StockTransferModal({
                         <button
                           type="button"
                           onClick={() => onOpenFabricWastageModal()}
-                          className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
+                          className="px-3 py-2 bg-white hover:bg-[#FAFAFA] text-slate-700 border border-[#E5E5E5] text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-none transition-all cursor-pointer shrink-0"
                           title="কাপড়ের ছাঁট ও ড্যামেজ হিসাব ট্র্যাকার ওপেন করুন"
                         >
                           <Scissors className="w-3.5 h-3.5 text-amber-600" />
@@ -3578,24 +3578,24 @@ export default function StockTransferModal({
                       <button
                         type="button"
                         onClick={() => exportLocationStockExcelCSV(products)}
-                        className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
+                        className="px-3 py-2 bg-white hover:bg-[#FAFAFA] text-slate-700 border border-[#E5E5E5] text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-none transition-all cursor-pointer shrink-0"
                         title="স্টক খতিয়ানের এক্সেল ফাইল ডাউনলোড করুন (Alt + E)"
                       >
                         <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
                         <span>এক্সেল</span>
-                        <kbd className="hidden sm:inline-block text-[9px] px-1 py-0.5 bg-slate-100 text-slate-500 rounded font-mono border border-slate-200">Alt+E</kbd>
+                        <kbd className="hidden sm:inline-block text-[9px] px-1 py-0.5 bg-[#F5F5F5] text-slate-500 rounded font-mono border border-[#E5E5E5]">Alt+E</kbd>
                       </button>
 
                       {isShopStockView && (
                         <button
                           type="button"
                           onClick={() => setIsPrintableShopStockAudit(true)}
-                          className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
+                          className="px-3 py-2 bg-white hover:bg-[#FAFAFA] text-slate-700 border border-[#E5E5E5] text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-none transition-all cursor-pointer shrink-0"
                           title="দোকানের ফিজিক্যাল স্টক অডিট ও ফ্লোর গণনা শিট প্রিন্ট করুন (Alt + A)"
                         >
                           <ClipboardList className="w-3.5 h-3.5 text-slate-600" />
                           <span>গণনা শিট</span>
-                          <kbd className="hidden sm:inline-block text-[9px] px-1 py-0.5 bg-slate-100 text-slate-500 rounded font-mono border border-slate-200">Alt+A</kbd>
+                          <kbd className="hidden sm:inline-block text-[9px] px-1 py-0.5 bg-[#F5F5F5] text-slate-500 rounded font-mono border border-[#E5E5E5]">Alt+A</kbd>
                         </button>
                       )}
                     </div>
@@ -3604,7 +3604,7 @@ export default function StockTransferModal({
 
                 {/* ইনলাইন এরর ব্যানার (Error State with Retry) */}
                 {inlineError && (
-                  <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between gap-3 text-xs text-rose-900 animate-in fade-in duration-150 shadow-2xs">
+                  <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-md flex items-center justify-between gap-3 text-xs text-rose-900 animate-in fade-in duration-150 shadow-none">
                     <div className="flex items-center space-x-2.5">
                       <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                       <span className="font-semibold">{inlineError.message}</span>
@@ -3635,10 +3635,10 @@ export default function StockTransferModal({
                 )}
 
                 {/* ৩. পণ্য স্টক তালিকা টেবিল (Human Pro Sticky Data Grid) */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+                <div className="bg-white rounded-md border border-[#E5E5E5] shadow-none overflow-hidden">
                   <div className="overflow-x-auto max-h-[calc(100vh-23rem)]">
                     <table className="w-full text-xs text-left border-collapse">
-                      <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-xs text-slate-700 border-b border-slate-200 font-bold uppercase tracking-wider text-[11px] shadow-2xs">
+                      <thead className="sticky top-0 z-10 bg-[#FAFAFA]/95  text-slate-700 border-b border-[#E5E5E5] font-bold uppercase tracking-wider text-[11px] shadow-none">
                         <tr>
                           <th className="py-3.5 px-4 min-w-[240px]">
                             {stockViewMode === 'grouped' ? 'পণ্য ও বিবরণ' : 'পণ্য ও ভ্যারিয়েন্ট বিবরণ'}
@@ -3651,7 +3651,7 @@ export default function StockTransferModal({
                                   <span>দোকান ফ্লোর মজুত</span>
                                 </div>
                               </th>
-                              <th className="py-3 px-4 text-center bg-slate-50 text-slate-700 font-bold min-w-[130px]">
+                              <th className="py-3 px-4 text-center bg-[#FAFAFA] text-slate-700 font-bold min-w-[130px]">
                                 <div className="inline-flex items-center space-x-1">
                                   <Warehouse className="w-3.5 h-3.5 text-slate-500" />
                                   <span>গোডাউন ব্যাকআপ</span>
@@ -3666,7 +3666,7 @@ export default function StockTransferModal({
                                   <span>গোডাউন মজুত</span>
                                 </div>
                               </th>
-                              <th className="py-3 px-4 text-center bg-slate-50 text-slate-700 font-bold min-w-[140px]">
+                              <th className="py-3 px-4 text-center bg-[#FAFAFA] text-slate-700 font-bold min-w-[140px]">
                                 <div className="inline-flex items-center space-x-1">
                                   <Store className="w-3.5 h-3.5 text-slate-500" />
                                   <span>দোকান স্টক</span>
@@ -3674,7 +3674,7 @@ export default function StockTransferModal({
                               </th>
                             </>
                           )}
-                          <th className="py-3 px-4 text-center text-slate-800 font-bold min-w-[130px] bg-slate-50">
+                          <th className="py-3 px-4 text-center text-slate-800 font-bold min-w-[130px] bg-[#FAFAFA]">
                             <div className="inline-flex items-center space-x-1">
                               <Boxes className="w-3.5 h-3.5 text-slate-500" />
                               <span>মোট মজুত</span>
@@ -3700,16 +3700,16 @@ export default function StockTransferModal({
                                   {[1, 2, 3, 4, 5, 6, 7, 8].map((sIdx) => (
                                     <div key={sIdx} className="px-5 py-4 flex items-center justify-between gap-4">
                                       <div className="flex items-center space-x-3 flex-1">
-                                        <div className="w-9 h-9 bg-slate-200 rounded-xl shrink-0"></div>
+                                        <div className="w-9 h-9 bg-slate-200 rounded-md shrink-0"></div>
                                         <div className="space-y-1.5 flex-1 max-w-xs">
                                           <div className="h-3.5 bg-slate-200 rounded w-3/4"></div>
-                                          <div className="h-2.5 bg-slate-100 rounded w-1/2"></div>
+                                          <div className="h-2.5 bg-[#F5F5F5] rounded w-1/2"></div>
                                         </div>
                                       </div>
                                       <div className="h-4 w-24 bg-slate-200 rounded shrink-0"></div>
                                       <div className="h-4 w-28 bg-slate-200 rounded shrink-0"></div>
                                       <div className="h-4 w-20 bg-slate-200 rounded shrink-0"></div>
-                                      <div className="h-8 w-24 bg-slate-200 rounded-xl shrink-0"></div>
+                                      <div className="h-8 w-24 bg-slate-200 rounded-md shrink-0"></div>
                                     </div>
                                   ))}
                                 </div>
@@ -3719,7 +3719,7 @@ export default function StockTransferModal({
                             <tr>
                               <td colSpan="6" className="py-16 text-center">
                                 <div className="max-w-md mx-auto flex flex-col items-center justify-center space-y-3 px-4">
-                                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                  <div className="w-12 h-12 rounded-md bg-[#F5F5F5] flex items-center justify-center text-slate-400 border border-[#E5E5E5]">
                                     <SearchX className="w-6 h-6 stroke-[1.75]" />
                                   </div>
                                   <div className="space-y-1">
@@ -3733,7 +3733,7 @@ export default function StockTransferModal({
                                   <button
                                     type="button"
                                     onClick={handleResetFilters}
-                                    className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer inline-flex items-center space-x-1.5 hover:border-slate-400"
+                                    className="px-4 py-2 bg-white hover:bg-[#FAFAFA] text-slate-700 border border-[#E5E5E5] rounded-md text-xs font-bold transition-all shadow-none cursor-pointer inline-flex items-center space-x-1.5 hover:border-slate-400"
                                   >
                                     <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
                                     <span>সার্চ ও ফিল্টার রিসেট করুন</span>
@@ -3868,7 +3868,7 @@ export default function StockTransferModal({
                                           <button
                                             type="button"
                                             onClick={() => toggleExpandProduct(p.ProductID)}
-                                            className="mt-0.5 p-1 rounded-lg text-slate-600 bg-slate-50 hover:bg-emerald-50 hover:text-[#0da487] border border-slate-200/80 transition-all cursor-pointer shadow-2xs"
+                                            className="mt-0.5 p-1 rounded-lg text-slate-600 bg-[#FAFAFA] hover:bg-emerald-50 hover:text-[#0F172A] border border-[#E5E5E5] transition-all cursor-pointer shadow-none"
                                             title={isExpanded ? 'সংক্ষেপ করুন' : 'ভ্যারিয়েন্ট বিস্তারিত দেখুন'}
                                           >
                                             {isExpanded ? (
@@ -3888,7 +3888,7 @@ export default function StockTransferModal({
                                                 <button
                                                   type="button"
                                                   onClick={() => toggleExpandProduct(p.ProductID)}
-                                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-[#0da487] border border-emerald-200/70 hover:bg-emerald-100 cursor-pointer transition-colors shadow-2xs"
+                                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-[#0F172A] border border-emerald-200/70 hover:bg-emerald-100 cursor-pointer transition-colors shadow-none"
                                                 >
                                                   <Palette className="w-2.5 h-2.5 mr-1" />
                                                   {vars.length}টি ভ্যারিয়েন্ট
@@ -3902,7 +3902,7 @@ export default function StockTransferModal({
                                                     return (
                                                       <span
                                                         key={v.VariantID || vIdx}
-                                                        className="inline-block w-3.5 h-3.5 rounded-full ring-2 ring-white shadow-2xs border border-black/10 shrink-0"
+                                                        className="inline-block w-3.5 h-3.5 rounded-full ring-2 ring-white shadow-none border border-black/10 shrink-0"
                                                         style={{ backgroundColor: hex || '#94a3b8' }}
                                                         title={col}
                                                       />
@@ -3921,11 +3921,11 @@ export default function StockTransferModal({
                                           {/* একীভূত মেটাডাটা সাব-ব্যাজ (ক্যাটাগরি, একক ও আইডি) */}
                                           <div className="mt-1 flex items-center space-x-1.5 flex-wrap gap-y-1">
                                             {p.Category && (
-                                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-slate-100 text-slate-700 border border-slate-200/80">
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-[#F5F5F5] text-slate-700 border border-[#E5E5E5]">
                                                 {p.Category}
                                               </span>
                                             )}
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-emerald-50 text-[#0da487] border border-emerald-200/70 font-mono">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-emerald-50 text-[#0F172A] border border-emerald-200/70 font-mono">
                                               {unit}{isThan && yardsPerThan > 0 ? ` (${yardsPerThan} গজ)` : ''}
                                             </span>
                                             <span className="text-[10px] font-mono text-slate-400">
@@ -3970,7 +3970,7 @@ export default function StockTransferModal({
 
                                             return (
                                               <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
-                                                <span className="inline-flex items-center space-x-1 text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-[11px] font-medium border border-slate-200">
+                                                <span className="inline-flex items-center space-x-1 text-slate-600 bg-[#F5F5F5] px-2 py-0.5 rounded text-[11px] font-medium border border-[#E5E5E5]">
                                                   <Layers className="w-3 h-3 text-slate-500" />
                                                   <span>১ থান = {ypt} গজ</span>
                                                 </span>
@@ -3980,7 +3980,7 @@ export default function StockTransferModal({
                                                     দোকানে {effectiveShopFullThans}টি আস্ত থান {effectiveShopCutYards > 0 ? `+ টেবিলে ${effectiveCutText} কাটা` : ''}
                                                   </span>
                                                 ) : effectiveShopCutYards > 0 ? (
-                                                  <span className="inline-flex items-center text-amber-800 bg-amber-50 px-2 py-0.5 rounded text-[11px] border border-amber-200 font-semibold font-mono">
+                                                  <span className="inline-flex items-center text-[#B45309] bg-[#FFFBEB] px-2 py-0.5 rounded text-[11px] border border-[#FEF3C7] font-semibold font-mono">
                                                     দোকানে ০টি আস্ত থান (টেবিলে {effectiveCutText} কাটা)
                                                   </span>
                                                 ) : (
@@ -4020,7 +4020,7 @@ export default function StockTransferModal({
                                                         remnantYards: effectiveShopCutYards
                                                       });
                                                     }}
-                                                    className="inline-flex items-center space-x-1 text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded border border-amber-200 font-semibold text-[11px] cursor-pointer transition-colors"
+                                                    className="inline-flex items-center space-x-1 text-[#B45309] bg-[#FFFBEB] hover:bg-amber-100 px-2 py-0.5 rounded border border-[#FEF3C7] font-semibold text-[11px] cursor-pointer transition-colors"
                                                     title="এই কাপড়ের ছাঁট রেকর্ড বা বান্ডেল তৈরি করতে ক্লিক করুন"
                                                   >
                                                     <Scissors className="w-3 h-3 text-amber-600" />
@@ -4089,7 +4089,7 @@ export default function StockTransferModal({
                                         </td>
 
                                         {/* গোডাউন ব্যাকআপ - সেকেন্ডারি রেফারেন্স */}
-                                        <td className="py-3 px-4 text-center bg-slate-50/30">
+                                        <td className="py-3 px-4 text-center bg-[#FAFAFA]">
                                           <div className="flex flex-col items-center">
                                             <span className={`text-xs font-mono font-bold tabular-nums ${
                                               effectiveGStock > 0
@@ -4118,7 +4118,7 @@ export default function StockTransferModal({
                                               <span className="text-xs font-semibold text-emerald-800 ml-1">{isThan ? 'থান' : unit}</span>
                                             </div>
                                             {isThan && yardsPerThan > 0 && effectiveGStock > 0 && (
-                                              <span className="mt-0.5 text-[10.5px] font-semibold text-[#0da487] font-mono">
+                                              <span className="mt-0.5 text-[10.5px] font-semibold text-[#0F172A] font-mono">
                                                 ({(effectiveGStock * yardsPerThan).toLocaleString('bn-BD')} গজ)
                                               </span>
                                             )}
@@ -4126,7 +4126,7 @@ export default function StockTransferModal({
                                         </td>
 
                                         {/* দোকান স্টক - সেকেন্ডারি রেফারেন্স */}
-                                        <td className="py-3 px-4 text-center bg-slate-50/30">
+                                        <td className="py-3 px-4 text-center bg-[#FAFAFA]">
                                           <div className="flex flex-col items-center">
                                             <span className={`text-xs font-mono font-bold tabular-nums ${
                                               isZeroShop ? 'text-rose-600' : isLowShop ? 'text-amber-700' : 'text-slate-800'
@@ -4197,13 +4197,13 @@ export default function StockTransferModal({
                                     {/* অবস্থা - সলিড ডট ইনডিকেটর পিল */}
                                     <td className="py-3 px-3 text-center">
                                       {isUnallocatedShopStock ? (
-                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-900 border border-amber-200" title="মূল পণ্যে দোকান স্টক রয়েছে কিন্তু ভ্যারিয়েন্টে বণ্টন করা হয়নি">
-                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7]" title="মূল পণ্যে দোকান স্টক রয়েছে কিন্তু ভ্যারিয়েন্টে বণ্টন করা হয়নি">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-[#FFFBEB]0" />
                                           <span>ভ্যারিয়েন্টে অবণ্টিত</span>
                                         </span>
                                       ) : isZeroShop && effectiveGStock > 0 ? (
-                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7]">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-[#FFFBEB]0" />
                                           <span>দোকানে আনুন</span>
                                         </span>
                                       ) : isZeroShop && effectiveGStock <= 0 ? (
@@ -4212,8 +4212,8 @@ export default function StockTransferModal({
                                           <span>স্টক শেষ</span>
                                         </span>
                                       ) : isLowShop && effectiveGStock > 0 ? (
-                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7]">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-[#FFFBEB]0" />
                                           <span>দোকানে কম</span>
                                         </span>
                                       ) : hasVars && vars.some(v => {
@@ -4261,21 +4261,21 @@ export default function StockTransferModal({
                                           type="button"
                                           disabled={effectiveGStock <= 0}
                                           onClick={() => handleOpenDirectTransfer(p)}
-                                          className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-all ${
+                                          className={`px-3 py-1.5 rounded-md text-xs font-bold inline-flex items-center space-x-1.5 shadow-none transition-all ${
                                             effectiveGStock <= 0
-                                              ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
-                                              : 'bg-[#0da487] hover:bg-[#0b8b72] active:scale-95 text-white cursor-pointer shadow-emerald-600/20'
+                                              ? 'bg-[#F5F5F5] text-slate-400 border border-[#E5E5E5] cursor-not-allowed shadow-none'
+                                              : 'bg-[#0F172A] hover:bg-[#1E293B] active:scale-95 text-white cursor-pointer shadow-emerald-600/20'
                                           }`}
                                           title={effectiveGStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে দোকানে পণ্য আনুন'}
                                         >
                                           <Truck className="w-3.5 h-3.5" />
                                           <span>চালান</span>
                                         </button>
-                                        <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-200/90 shadow-2xs">
+                                        <div className="flex items-center bg-[#FAFAFA] p-1 rounded-md border border-[#E5E5E5]/90 shadow-none">
                                           <button
                                             type="button"
                                             onClick={() => setPrintStickerProduct(p)}
-                                            className="p-1.5 hover:bg-white hover:text-[#0da487] text-slate-500 rounded-lg text-xs transition-colors cursor-pointer"
+                                            className="p-1.5 hover:bg-white hover:text-[#0F172A] text-slate-500 rounded-lg text-xs transition-colors cursor-pointer"
                                             title="প্রাইস ট্যাগ / বারকোড স্টিকার প্রিন্ট করুন"
                                           >
                                             <Printer className="w-3.5 h-3.5" />
@@ -4326,7 +4326,7 @@ export default function StockTransferModal({
                                                   remnantYards: bd ? bd.runningCutYards : 0
                                                 });
                                               }}
-                                              className="p-1.5 hover:bg-amber-100 hover:text-amber-800 text-amber-700 bg-amber-50 rounded-lg text-xs transition-colors cursor-pointer border border-amber-200"
+                                              className="p-1.5 hover:bg-amber-100 hover:text-[#B45309] text-amber-700 bg-[#FFFBEB] rounded-lg text-xs transition-colors cursor-pointer border border-[#FEF3C7]"
                                               title="এই কাপড়ের শেষ ছাঁট রেকর্ড করুন"
                                             >
                                               <Scissors className="w-3.5 h-3.5" />
@@ -4336,7 +4336,7 @@ export default function StockTransferModal({
                                             <button
                                               type="button"
                                               onClick={() => onEditProduct(p)}
-                                              className="p-1.5 hover:bg-white hover:text-[#0da487] text-slate-500 rounded-lg text-xs transition-colors cursor-pointer"
+                                              className="p-1.5 hover:bg-white hover:text-[#0F172A] text-slate-500 rounded-lg text-xs transition-colors cursor-pointer"
                                               title="পণ্য এডিট করুন"
                                             >
                                               <Edit3 className="w-3.5 h-3.5" />
@@ -4371,7 +4371,7 @@ export default function StockTransferModal({
 
                                   {/* ভ্যারিয়েন্ট বিস্তারিত সাব-টেবিল */}
                                   {hasVars && isExpanded && (
-                                    <tr className="bg-slate-50/60 border-y border-slate-200">
+                                    <tr className="bg-[#FAFAFA]/60 border-y border-[#E5E5E5]">
                                       <td colSpan="6" className="p-3 pl-6 sm:pl-10">
                                         {(() => {
                                           const sumVarGodown = vars.reduce((s, item) => s + (Number(item.GodownStock) || 0), 0);
@@ -4381,22 +4381,22 @@ export default function StockTransferModal({
                                           const isMismatch = (sumVarGodown !== pGodown) || (sumVarShop !== pShop);
 
                                           return (
-                                            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-                                              <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                                            <div className="bg-white rounded-md border border-[#E5E5E5] overflow-hidden shadow-none">
+                                              <div className="px-4 py-3 bg-[#FAFAFA] border-b border-[#E5E5E5] flex flex-wrap items-center justify-between gap-2">
                                                 <div className="flex items-center space-x-2">
-                                                  <span className="p-1.5 rounded-lg bg-[#0da487] text-white shadow-xs">
+                                                  <span className="p-1.5 rounded-lg bg-[#0F172A] text-white shadow-none">
                                                     <Palette className="w-3.5 h-3.5" />
                                                   </span>
                                                   <span className="text-xs font-bold text-slate-800">{p.ProductName} — ভ্যারিয়েন্ট অনুযায়ী আলাদা মজুত</span>
-                                                  <span className="text-[11px] text-slate-600 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md font-semibold">
+                                                  <span className="text-[11px] text-slate-600 bg-[#F5F5F5] border border-[#E5E5E5] px-2 py-0.5 rounded-md font-semibold">
                                                     মোট {vars.length}টি ভ্যারিয়েন্ট
                                                   </span>
                                                 </div>
                                                 <div className="flex items-center space-x-2 text-xs">
-                                                  <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[#0da487] font-semibold border border-emerald-200/80">
+                                                  <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[#0F172A] font-semibold border border-emerald-200/80">
                                                     ভ্যারিয়েন্ট গোডাউন মোট: <strong className="font-mono font-bold">{sumVarGodown}</strong> {isThan ? 'থান' : getProductDisplayUnit(p)}
                                                   </span>
-                                                  <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold border border-slate-200">
+                                                  <span className="px-2.5 py-1 rounded-lg bg-[#F5F5F5] text-slate-700 font-semibold border border-[#E5E5E5]">
                                                     ভ্যারিয়েন্ট দোকান মোট: <strong className="font-mono font-bold">{sumVarShop}</strong> {isThan ? 'গজ' : getProductDisplayUnit(p)}
                                                     {isThan && varFullThansSum > 0 && ` (${varFullThansSum}টি আস্ত থান${varRunningCutYardsSum > 0 ? ` + ${formatFabricQuantity(varRunningCutYardsSum, 'গজ', false)} খোলা` : ''})`}
                                                   </span>
@@ -4404,7 +4404,7 @@ export default function StockTransferModal({
                                                     <button
                                                       type="button"
                                                       onClick={() => handleOpenNewColor(p)}
-                                                      className="px-3 py-1 bg-[#0da487] hover:bg-[#0b8b72] text-white rounded-lg font-semibold inline-flex items-center space-x-1 shadow-xs cursor-pointer transition-all"
+                                                      className="px-3 py-1 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-lg font-semibold inline-flex items-center space-x-1 shadow-none cursor-pointer transition-all"
                                                       title="এই পণ্যে নতুন একটি ভ্যারিয়েন্ট যোগ করুন"
                                                     >
                                                       <Plus className="w-3 h-3" />
@@ -4416,12 +4416,12 @@ export default function StockTransferModal({
 
                                               {/* গরমিল নোটিশ ও ১-ক্লিক সমাধান বাটন */}
                                               {isMismatch && (
-                                                <div className="px-3 py-2 bg-amber-50/95 border-b border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                                                  <div className="flex items-center space-x-2 text-amber-900">
+                                                <div className="px-3 py-2 bg-[#FFFBEB]/95 border-b border-[#FEF3C7] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                                                  <div className="flex items-center space-x-2 text-[#B45309]">
                                                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                                                     <div>
                                                       <span className="font-bold">স্টক অমিল রয়েছে:</span>{' '}
-                                                      <span>মূল গোডাউন: <strong className="font-mono text-slate-900">{pGodown}</strong> vs ভ্যারিয়েন্ট গোডাউন: <strong className="font-mono text-[#0da487]">{sumVarGodown}</strong></span>
+                                                      <span>মূল গোডাউন: <strong className="font-mono text-slate-900">{pGodown}</strong> vs ভ্যারিয়েন্ট গোডাউন: <strong className="font-mono text-[#0F172A]">{sumVarGodown}</strong></span>
                                                       {pShop !== sumVarShop && (
                                                         <span className="ml-2 font-medium">| মূল দোকান: <strong className="font-mono text-slate-900">{pShop}</strong> vs ভ্যারিয়েন্ট দোকান: <strong className="font-mono text-slate-700">{sumVarShop}</strong></span>
                                                       )}
@@ -4431,7 +4431,7 @@ export default function StockTransferModal({
                                                     <button
                                                       type="button"
                                                       onClick={() => handleDistributeParentStockToVariants(p)}
-                                                      className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 cursor-pointer shadow-xs transition-all"
+                                                      className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 cursor-pointer shadow-none transition-all"
                                                       title="মূল গোডাউন স্টক সকল ভ্যারিয়েন্টে সমানভাবে বণ্টন করুন"
                                                     >
                                                       <Sparkles className="w-3 h-3" />
@@ -4440,7 +4440,7 @@ export default function StockTransferModal({
                                                     <button
                                                       type="button"
                                                       onClick={() => handleSyncParentFromVariants(p)}
-                                                      className="px-2.5 py-1 bg-[#0da487] hover:bg-[#0b8b72] text-white rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 cursor-pointer shadow-xs transition-all"
+                                                      className="px-2.5 py-1 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 cursor-pointer shadow-none transition-all"
                                                       title="ভ্যারিয়েন্টগুলোর বর্তমান যোগফল দিয়ে মূল পণ্যের স্টক আপডেট করুন"
                                                     >
                                                       <RefreshCw className="w-3 h-3" />
@@ -4451,7 +4451,7 @@ export default function StockTransferModal({
                                               )}
 
                                               <table className="w-full text-xs text-left">
-                                                <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] border-b border-slate-200">
+                                                <thead className="bg-[#FAFAFA] text-slate-600 font-bold uppercase text-[10px] border-b border-[#E5E5E5]">
                                                   <tr>
                                                     <th className="py-2.5 px-3">ভ্যারিয়েন্ট বিবরণ (রং / সাইজ)</th>
                                                     <th className="py-2.5 px-3">বারকোড</th>
@@ -4463,7 +4463,7 @@ export default function StockTransferModal({
                                                             <span>দোকান ফ্লোর</span>
                                                           </div>
                                                         </th>
-                                                        <th className="py-2.5 px-3 text-center bg-slate-50 text-slate-700 font-bold">
+                                                        <th className="py-2.5 px-3 text-center bg-[#FAFAFA] text-slate-700 font-bold">
                                                           <div className="inline-flex items-center space-x-1">
                                                             <Warehouse className="w-3 h-3 text-slate-500" />
                                                             <span>গোডাউন ব্যাকআপ</span>
@@ -4478,7 +4478,7 @@ export default function StockTransferModal({
                                                             <span>গোডাউন স্টক</span>
                                                           </div>
                                                         </th>
-                                                        <th className="py-2.5 px-3 text-center bg-slate-50 text-slate-700 font-bold">
+                                                        <th className="py-2.5 px-3 text-center bg-[#FAFAFA] text-slate-700 font-bold">
                                                           <div className="inline-flex items-center space-x-1">
                                                             <Store className="w-3 h-3 text-slate-500" />
                                                             <span>দোকান স্টক</span>
@@ -4519,14 +4519,14 @@ export default function StockTransferModal({
                                                         <td className="py-2.5 px-3">
                                                           <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                                                             {vColor && (
-                                                              <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-slate-800 border border-slate-200 shadow-2xs">
+                                                              <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-slate-800 border border-[#E5E5E5] shadow-none">
                                                                 <span
                                                                   className="w-2.5 h-2.5 rounded-full border border-black/10 shrink-0"
                                                                   style={{ backgroundColor: hexColor }}
                                                                 />
                                                                 <span>রং: {vColor}</span>
                                                                 {isThan && Number(v.YardsPerThan || v.yardsPerThan || 0) > 0 && (
-                                                                  <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200" title="এই ভ্যারিয়েন্টের বিশেষ থানের সাইজ">
+                                                                  <span className="text-[10px] font-bold text-amber-700 bg-[#FFFBEB] px-1.5 py-0.2 rounded border border-[#FEF3C7]" title="এই ভ্যারিয়েন্টের বিশেষ থানের সাইজ">
                                                                     {Number(v.YardsPerThan || v.yardsPerThan)} গজ/থান
                                                                   </span>
                                                                 )}
@@ -4540,7 +4540,7 @@ export default function StockTransferModal({
                                                             {v.Attributes && Object.entries(v.Attributes).map(([key, val]) => {
                                                               if (key === 'Color' || key === 'Size') return null;
                                                               return (
-                                                                <span key={key} className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600">
+                                                                <span key={key} className="px-1.5 py-0.5 rounded text-[10px] bg-[#F5F5F5] text-slate-600">
                                                                   {key}: {val}
                                                                 </span>
                                                               );
@@ -4583,7 +4583,7 @@ export default function StockTransferModal({
                                                                   </span>
                                                                 )}
                                                                 {isThan && vBd && vBd.isRemnant && (
-                                                                  <span className="inline-flex items-center space-x-0.5 text-amber-800 bg-amber-50 px-1.5 py-0.2 rounded text-[9.5px] font-semibold border border-amber-200 mt-0.5">
+                                                                  <span className="inline-flex items-center space-x-0.5 text-[#B45309] bg-[#FFFBEB] px-1.5 py-0.2 rounded text-[9.5px] font-semibold border border-[#FEF3C7] mt-0.5">
                                                                     <Scissors className="w-2.5 h-2.5 text-amber-600" />
                                                                     <span>শেষ ছাঁট</span>
                                                                   </span>
@@ -4592,7 +4592,7 @@ export default function StockTransferModal({
                                                             </td>
 
                                                             {/* ভ্যারিয়েন্ট গোডাউন ব্যাকআপ - সেকেন্ডারি রেফারেন্স */}
-                                                            <td className="py-2.5 px-3 text-center bg-slate-50/30">
+                                                            <td className="py-2.5 px-3 text-center bg-[#FAFAFA]">
                                                               <div className="flex flex-col items-center">
                                                                 <span className={`text-xs font-mono font-bold tabular-nums ${
                                                                   vGStock > 0 ? 'text-slate-800' : 'text-slate-400'
@@ -4613,7 +4613,7 @@ export default function StockTransferModal({
                                                             <td className="py-2.5 px-3 text-center bg-emerald-50/20 border-x border-emerald-100/50">
                                                               <div className="inline-flex flex-col items-center">
                                                                 <span className={`text-xs font-mono font-bold tabular-nums ${
-                                                                  vGStock > 0 ? 'text-[#0da487]' : 'text-slate-400'
+                                                                  vGStock > 0 ? 'text-[#0F172A]' : 'text-slate-400'
                                                                 }`}>
                                                                   {vGStock} {isThan ? 'থান' : unit}
                                                                 </span>
@@ -4626,7 +4626,7 @@ export default function StockTransferModal({
                                                             </td>
 
                                                             {/* ভ্যারিয়েন্ট দোকান স্টক - সেকেন্ডারি রেফারেন্স */}
-                                                            <td className="py-2.5 px-3 text-center bg-slate-50/40">
+                                                            <td className="py-2.5 px-3 text-center bg-[#FAFAFA]/40">
                                                               <div className="inline-flex flex-col items-center">
                                                                 <span className={`text-xs font-mono font-bold tabular-nums ${
                                                                   isVZero ? 'text-rose-600' : isVLow ? 'text-amber-700' : 'text-slate-800'
@@ -4686,8 +4686,8 @@ export default function StockTransferModal({
                                                         </td>
                                                         <td className="py-2.5 px-3 text-center">
                                                           {isVZero && vGStock > 0 ? (
-                                                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
-                                                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7]">
+                                                              <span className="w-1.5 h-1.5 rounded-full bg-[#FFFBEB]0" />
                                                               <span>দোকানে নেই</span>
                                                             </span>
                                                           ) : isVZero && vGStock <= 0 ? (
@@ -4696,7 +4696,7 @@ export default function StockTransferModal({
                                                               <span>শেষ</span>
                                                             </span>
                                                           ) : isThan && vBd?.needsRestock && vGStock > 0 ? (
-                                                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-800 border border-rose-200/80 shadow-2xs" title="টেবিলে কাপড়ের শেষ কাটা গজ চলছে, গোডাউন থেকে নতুন থান আনুন">
+                                                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-800 border border-rose-200/80 shadow-none" title="টেবিলে কাপড়ের শেষ কাটা গজ চলছে, গোডাউন থেকে নতুন থান আনুন">
                                                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                                                               <span>থান প্রয়োজন</span>
                                                             </span>
@@ -4713,10 +4713,10 @@ export default function StockTransferModal({
                                                               type="button"
                                                               disabled={vGStock <= 0}
                                                               onClick={() => handleOpenDirectTransfer(p, v)}
-                                                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold inline-flex items-center space-x-1 transition-all shadow-2xs ${
+                                                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold inline-flex items-center space-x-1 transition-all shadow-none ${
                                                                 vGStock <= 0
-                                                                  ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
-                                                                  : 'bg-[#0da487] hover:bg-[#0b8b72] active:scale-95 text-white cursor-pointer shadow-emerald-100'
+                                                                  ? 'bg-[#F5F5F5] text-slate-400 border border-[#E5E5E5] cursor-not-allowed shadow-none'
+                                                                  : 'bg-[#0F172A] hover:bg-[#1E293B] active:scale-95 text-white cursor-pointer shadow-emerald-100'
                                                               }`}
                                                               title={vGStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে এই ভ্যারিয়েন্ট দোকানে আনুন'}
                                                             >
@@ -4739,7 +4739,7 @@ export default function StockTransferModal({
                                                                       Price: v.SellingPrice || p.SellingPrice
                                                                     });
                                                                   }}
-                                                                  className="p-1 bg-slate-50 hover:bg-[#0da487]/10 text-slate-600 hover:text-[#0da487] border border-slate-200 rounded-lg text-xs transition-all cursor-pointer"
+                                                                  className="p-1 bg-[#FAFAFA] hover:bg-[#0F172A]/10 text-slate-600 hover:text-[#0F172A] border border-[#E5E5E5] rounded-lg text-xs transition-all cursor-pointer"
                                                                   title="এই ভ্যারিয়েন্টের প্রাইস ট্যাগ বা স্টিকার প্রিন্ট করুন"
                                                                 >
                                                                   <Printer className="w-3 h-3" />
@@ -4747,7 +4747,7 @@ export default function StockTransferModal({
                                                                 <button
                                                                   type="button"
                                                                   onClick={() => handleOpenVariantRestock(p, v, vIdx, 'Shop')}
-                                                                  className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                                  className="px-2 py-1 bg-[#FFFBEB] hover:bg-amber-100 text-[#B45309] border border-[#FEF3C7] rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                                                   title="দোকানের এই ভ্যারিয়েন্ট স্টক সমন্বয় করুন"
                                                                 >
                                                                   <SlidersHorizontal className="w-3 h-3 text-amber-600" />
@@ -4756,7 +4756,7 @@ export default function StockTransferModal({
                                                                 <button
                                                                   type="button"
                                                                   onClick={() => handleOpenEditVariant(p, v, vIdx)}
-                                                                  className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0da487] border border-emerald-200 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                                  className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0F172A] border border-emerald-200 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                                                   title="এই ভ্যারিয়েন্টের তথ্য ও কাটা থান (গজ/গিরা) এডিট করুন"
                                                                 >
                                                                   <Edit3 className="w-3 h-3" />
@@ -4776,7 +4776,7 @@ export default function StockTransferModal({
                                                                         remnantYards: vBd.runningCutYards
                                                                       });
                                                                     }}
-                                                                    className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                                    className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-[#B45309] border border-amber-300 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                                                     title="এই ভ্যারিয়েন্টের শেষ ছাঁট কাপড় ট্র্যাকার বা বান্ডেলে পাঠান"
                                                                   >
                                                                     <Scissors className="w-3 h-3 text-amber-700" />
@@ -4789,7 +4789,7 @@ export default function StockTransferModal({
                                                                 <button
                                                                   type="button"
                                                                   onClick={() => handleOpenVariantRestock(p, v, vIdx, 'Godown')}
-                                                                  className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0da487] border border-emerald-200 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                                  className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0F172A] border border-emerald-200 rounded-lg text-[10.5px] font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                                                   title="এই ভ্যারিয়েন্টে রিস্টক বা স্টক সমন্বয় করুন"
                                                                 >
                                                                   <PlusCircle className="w-3 h-3" />
@@ -4798,7 +4798,7 @@ export default function StockTransferModal({
                                                                 <button
                                                                   type="button"
                                                                   onClick={() => handleOpenEditVariant(p, v, vIdx)}
-                                                                  className="p-1 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-lg text-xs transition-all cursor-pointer"
+                                                                  className="p-1 bg-[#FAFAFA] hover:bg-[#F5F5F5] text-slate-600 border border-[#E5E5E5] rounded-lg text-xs transition-all cursor-pointer"
                                                                   title="ভ্যারিয়েন্ট এডিট করুন"
                                                                 >
                                                                   <Edit3 className="w-3 h-3" />
@@ -4820,13 +4820,13 @@ export default function StockTransferModal({
                                                   })}
                                                 </tbody>
                                                 {!isShopStockView && (
-                                                  <tfoot className="bg-slate-50 border-t border-slate-200">
+                                                  <tfoot className="bg-[#FAFAFA] border-t border-[#E5E5E5]">
                                                     <tr>
                                                       <td colSpan="7" className="py-2.5 px-3 text-center">
                                                         <button
                                                           type="button"
                                                           onClick={() => handleOpenNewColor(p)}
-                                                          className="w-full py-2 px-3 bg-emerald-50/50 hover:bg-emerald-50 text-[#0da487] border border-dashed border-emerald-300 rounded-xl text-xs font-bold inline-flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
+                                                          className="w-full py-2 px-3 bg-emerald-50/50 hover:bg-emerald-50 text-[#0F172A] border border-dashed border-emerald-300 rounded-md text-xs font-bold inline-flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
                                                         >
                                                           <Plus className="w-3.5 h-3.5" />
                                                           <span>+ এই পণ্যে নতুন ভ্যারিয়েন্ট যোগ করুন</span>
@@ -4857,16 +4857,16 @@ export default function StockTransferModal({
                                   {[1, 2, 3, 4, 5, 6, 7, 8].map((sIdx) => (
                                     <div key={sIdx} className="px-5 py-4 flex items-center justify-between gap-4">
                                       <div className="flex items-center space-x-3 flex-1">
-                                        <div className="w-9 h-9 bg-slate-200 rounded-xl shrink-0"></div>
+                                        <div className="w-9 h-9 bg-slate-200 rounded-md shrink-0"></div>
                                         <div className="space-y-1.5 flex-1 max-w-xs">
                                           <div className="h-3.5 bg-slate-200 rounded w-3/4"></div>
-                                          <div className="h-2.5 bg-slate-100 rounded w-1/2"></div>
+                                          <div className="h-2.5 bg-[#F5F5F5] rounded w-1/2"></div>
                                         </div>
                                       </div>
                                       <div className="h-4 w-24 bg-slate-200 rounded shrink-0"></div>
                                       <div className="h-4 w-28 bg-slate-200 rounded shrink-0"></div>
                                       <div className="h-4 w-20 bg-slate-200 rounded shrink-0"></div>
-                                      <div className="h-8 w-24 bg-slate-200 rounded-xl shrink-0"></div>
+                                      <div className="h-8 w-24 bg-slate-200 rounded-md shrink-0"></div>
                                     </div>
                                   ))}
                                 </div>
@@ -4876,7 +4876,7 @@ export default function StockTransferModal({
                             <tr>
                               <td colSpan="6" className="py-16 text-center">
                                 <div className="max-w-md mx-auto flex flex-col items-center justify-center space-y-3 px-4">
-                                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                  <div className="w-12 h-12 rounded-md bg-[#F5F5F5] flex items-center justify-center text-slate-400 border border-[#E5E5E5]">
                                     <SearchX className="w-6 h-6 stroke-[1.75]" />
                                   </div>
                                   <div className="space-y-1">
@@ -4890,7 +4890,7 @@ export default function StockTransferModal({
                                   <button
                                     type="button"
                                     onClick={handleResetFilters}
-                                    className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer inline-flex items-center space-x-1.5 hover:border-slate-400"
+                                    className="px-4 py-2 bg-white hover:bg-[#FAFAFA] text-slate-700 border border-[#E5E5E5] rounded-md text-xs font-bold transition-all shadow-none cursor-pointer inline-flex items-center space-x-1.5 hover:border-slate-400"
                                   >
                                     <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
                                     <span>সার্চ ও ফিল্টার রিসেট করুন</span>
@@ -4905,14 +4905,14 @@ export default function StockTransferModal({
                               const hexColor = getColorHex(item.color);
 
                               return (
-                                <tr key={item.variantId ? `${item.productId}_${item.variantId}` : `${item.productId}_${idx}`} className="hover:bg-slate-50/70 transition-colors">
+                                <tr key={item.variantId ? `${item.productId}_${item.variantId}` : `${item.productId}_${idx}`} className="hover:bg-[#FAFAFA]/70 transition-colors">
                                   <td className="py-3.5 px-4">
                                     <div className="font-bold text-slate-900 text-sm">
                                       {item.productName}
                                     </div>
                                     <div className="flex items-center space-x-1.5 mt-1 flex-wrap gap-y-1">
                                       {item.color && (
-                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-slate-800 border border-slate-200 shadow-2xs">
+                                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-slate-800 border border-[#E5E5E5] shadow-none">
                                           <span
                                             className="w-2.5 h-2.5 rounded-full border border-black/10 shrink-0"
                                             style={{ backgroundColor: hexColor }}
@@ -4926,12 +4926,12 @@ export default function StockTransferModal({
                                         </span>
                                       )}
                                       {item.otherAttrs && (
-                                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600">
+                                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-[#F5F5F5] text-slate-600">
                                           {item.otherAttrs}
                                         </span>
                                       )}
                                       {!item.isVariant && (
-                                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 italic">
+                                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-[#F5F5F5] text-slate-500 italic">
                                           সাধারণ পণ্য
                                         </span>
                                       )}
@@ -4939,10 +4939,10 @@ export default function StockTransferModal({
 
                                     {/* মেটাডাটা সাব-ব্যাজ (ক্যাটাগরি, একক ও আইডি) */}
                                     <div className="mt-1.5 flex items-center space-x-1.5 flex-wrap gap-y-1">
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-slate-100 text-slate-700 border border-slate-200/80">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-[#F5F5F5] text-slate-700 border border-[#E5E5E5]">
                                         {item.category || 'সাধারণ'}
                                       </span>
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-emerald-50 text-[#0da487] border border-emerald-200/70 font-mono">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-emerald-50 text-[#0F172A] border border-emerald-200/70 font-mono">
                                         {item.unit || getProductDisplayUnit(item.parentProduct)}{item.isThanUnit && item.yardsPerThan > 0 ? ` (${item.yardsPerThan} গজ)` : ''}
                                       </span>
                                       <span className="text-[10px] font-mono text-slate-400">
@@ -4972,7 +4972,7 @@ export default function StockTransferModal({
                                           const bd = calculateThanBreakdown(item.shopStock, ypt, remTh);
                                           return (
                                             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
-                                              <span className="inline-flex items-center space-x-1 text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-[11px] font-medium border border-slate-200">
+                                              <span className="inline-flex items-center space-x-1 text-slate-600 bg-[#F5F5F5] px-2 py-0.5 rounded text-[11px] font-medium border border-[#E5E5E5]">
                                                 <Layers className="w-3 h-3 text-slate-500" />
                                                 <span>১ থান = {ypt} গজ</span>
                                               </span>
@@ -4981,7 +4981,7 @@ export default function StockTransferModal({
                                                   দোকানে {bd.fullThans}টি আস্ত থান {bd.runningCutYards > 0 ? `+ টেবিলে ${bd.runningCutText} কাটা` : ''}
                                                 </span>
                                               ) : bd.runningCutYards > 0 ? (
-                                                <span className="inline-flex items-center text-amber-800 bg-amber-50 px-2 py-0.5 rounded text-[11px] border border-amber-200 font-semibold font-mono">
+                                                <span className="inline-flex items-center text-[#B45309] bg-[#FFFBEB] px-2 py-0.5 rounded text-[11px] border border-[#FEF3C7] font-semibold font-mono">
                                                   দোকানে ০টি আস্ত থান (টেবিলে {bd.runningCutText} কাটা)
                                                 </span>
                                               ) : (
@@ -4998,7 +4998,7 @@ export default function StockTransferModal({
                                                     ProductName: item.isVariant ? `${item.productName} - ${item.color || item.size || 'ভ্যারিয়েন্ট'}` : item.productName,
                                                     remnantYards: bd.runningCutYards
                                                   })}
-                                                  className="inline-flex items-center space-x-1 text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded text-[10px] font-semibold border border-amber-200 cursor-pointer transition-colors"
+                                                  className="inline-flex items-center space-x-1 text-[#B45309] bg-[#FFFBEB] hover:bg-amber-100 px-2 py-0.5 rounded text-[10px] font-semibold border border-[#FEF3C7] cursor-pointer transition-colors"
                                                   title="এই কাপড়ের ছাঁট রেকর্ড বা বান্ডেল তৈরি করতে ক্লিক করুন"
                                                 >
                                                   <Scissors className="w-2.5 h-2.5 text-amber-600" />
@@ -5017,11 +5017,11 @@ export default function StockTransferModal({
                                       ) : (
                                         item.isThanUnit && (
                                           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
-                                            <span className="inline-flex items-center text-[#0da487] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/70 font-medium">
+                                            <span className="inline-flex items-center text-[#0F172A] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/70 font-medium">
                                               <Layers className="w-3 h-3 text-slate-500 inline mr-1" />১ থান = {item.yardsPerThan || 25} গজ
                                             </span>
                                             {item.godownYards > 0 && (
-                                              <span className="inline-flex items-center text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60 font-medium">
+                                              <span className="inline-flex items-center text-slate-600 bg-[#F5F5F5] px-2 py-0.5 rounded-md border border-[#E5E5E5]/60 font-medium">
                                                 গোডাউনে মোট: {item.godownYards.toLocaleString('bn-BD')} গজ
                                               </span>
                                             )}
@@ -5067,7 +5067,7 @@ export default function StockTransferModal({
                                       </td>
 
                                       {/* গোডাউন ব্যাকআপ - সেকেন্ডারি রেফারেন্স */}
-                                      <td className="py-3 px-4 text-center bg-slate-50/30">
+                                      <td className="py-3 px-4 text-center bg-[#FAFAFA]">
                                         <div className="flex flex-col items-center">
                                           <span className={`text-xs font-mono font-bold tabular-nums ${
                                             item.godownStock > 0
@@ -5096,7 +5096,7 @@ export default function StockTransferModal({
                                             <span className="text-xs font-semibold text-emerald-800 ml-1">{item.unit || 'থান'}</span>
                                           </div>
                                           {item.isThanUnit && item.godownYards > 0 && (
-                                            <span className="mt-0.5 text-[10.5px] font-semibold text-[#0da487] font-mono">
+                                            <span className="mt-0.5 text-[10.5px] font-semibold text-[#0F172A] font-mono">
                                               ({item.godownYards.toLocaleString('bn-BD')} গজ)
                                             </span>
                                           )}
@@ -5104,7 +5104,7 @@ export default function StockTransferModal({
                                       </td>
 
                                       {/* দোকান স্টক - সেকেন্ডারি রেফারেন্স */}
-                                      <td className="py-3 px-4 text-center bg-slate-50/30">
+                                      <td className="py-3 px-4 text-center bg-[#FAFAFA]">
                                         <div className="flex flex-col items-center">
                                           <span className={`text-xs font-mono font-bold tabular-nums ${
                                             isZeroShop ? 'text-rose-600' : isLowShop ? 'text-amber-700' : 'text-slate-800'
@@ -5162,8 +5162,8 @@ export default function StockTransferModal({
                                   {/* অবস্থা - সলিড ডট ইনডিকেটর পিল */}
                                   <td className="py-3 px-3 text-center">
                                     {isZeroShop && item.godownStock > 0 ? (
-                                      <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                      <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7]">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#FFFBEB]0" />
                                         <span>দোকানে আনুন</span>
                                       </span>
                                     ) : isZeroShop && item.godownStock <= 0 ? (
@@ -5172,8 +5172,8 @@ export default function StockTransferModal({
                                         <span>স্টক শেষ</span>
                                       </span>
                                     ) : isLowShop && item.godownStock > 0 ? (
-                                      <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                      <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7]">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#FFFBEB]0" />
                                         <span>দোকানে কম</span>
                                       </span>
                                     ) : item.isThanUnit && item.thanBreakdown?.needsRestock && item.godownStock > 0 ? (
@@ -5196,10 +5196,10 @@ export default function StockTransferModal({
                                         type="button"
                                         disabled={item.godownStock <= 0}
                                         onClick={() => handleOpenDirectTransfer(item.parentProduct, item.variant)}
-                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-all ${
+                                        className={`px-3 py-1.5 rounded-md text-xs font-bold inline-flex items-center space-x-1.5 shadow-none transition-all ${
                                           item.godownStock <= 0
-                                            ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
-                                            : 'bg-[#0da487] hover:bg-[#0b8b72] active:scale-95 text-white cursor-pointer shadow-emerald-100'
+                                            ? 'bg-[#F5F5F5] text-slate-400 border border-[#E5E5E5] cursor-not-allowed shadow-none'
+                                            : 'bg-[#0F172A] hover:bg-[#1E293B] active:scale-95 text-white cursor-pointer shadow-emerald-100'
                                         }`}
                                         title={item.godownStock <= 0 ? 'গোডাউনে কোনো স্টক নেই' : 'গোডাউন থেকে এই ভ্যারিয়েন্ট সরাসরি দোকানে আনুন'}
                                       >
@@ -5207,7 +5207,7 @@ export default function StockTransferModal({
                                         <span>চালান</span>
                                       </button>
                                       {item.isVariant ? (
-                                        <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-200/90 shadow-2xs">
+                                        <div className="flex items-center bg-[#FAFAFA] p-1 rounded-md border border-[#E5E5E5]/90 shadow-none">
                                           {isShopStockView ? (
                                             <>
                                               <button
@@ -5222,7 +5222,7 @@ export default function StockTransferModal({
                                                     Price: item.sellingPrice || item.parentProduct?.SellingPrice
                                                   });
                                                 }}
-                                                className="p-1.5 hover:bg-white hover:text-[#0da487] text-slate-600 rounded-lg text-xs transition-colors cursor-pointer"
+                                                className="p-1.5 hover:bg-white hover:text-[#0F172A] text-slate-600 rounded-lg text-xs transition-colors cursor-pointer"
                                                 title="প্রাইস ট্যাগ বা স্টিকার প্রিন্ট করুন"
                                               >
                                                 <Printer className="w-3.5 h-3.5" />
@@ -5230,7 +5230,7 @@ export default function StockTransferModal({
                                               <button
                                                 type="button"
                                                 onClick={() => handleOpenVariantRestock(item.parentProduct, item.variant, item.variantIndex, 'Shop')}
-                                                className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                className="px-2 py-1 bg-[#FFFBEB] hover:bg-amber-100 text-[#B45309] border border-[#FEF3C7] rounded-lg text-xs font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                                 title="দোকানের স্টক সমন্বয় করুন"
                                               >
                                                 <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600" />
@@ -5239,7 +5239,7 @@ export default function StockTransferModal({
                                               <button
                                                 type="button"
                                                 onClick={() => handleOpenEditVariant(item.parentProduct, item.variant, item.variantIndex)}
-                                                className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0da487] border border-emerald-200 rounded-lg text-xs font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0F172A] border border-emerald-200 rounded-lg text-xs font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                                 title="এই ভ্যারিয়েন্টের তথ্য ও কাটা থান (গজ/গিরা) এডিট করুন"
                                               >
                                                 <Edit3 className="w-3.5 h-3.5" />
@@ -5270,7 +5270,7 @@ export default function StockTransferModal({
                                                         remnantYards: bd.runningCutYards
                                                       });
                                                     }}
-                                                    className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                    className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-[#B45309] border border-amber-300 rounded-lg text-xs font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                                     title="এই ভ্যারিয়েন্টের শেষ ছাঁট কাপড় ট্র্যাকার বা বান্ডেলে পাঠান"
                                                   >
                                                     <Scissors className="w-3.5 h-3.5 text-amber-700" />
@@ -5284,7 +5284,7 @@ export default function StockTransferModal({
                                               <button
                                                 type="button"
                                                 onClick={() => handleOpenVariantRestock(item.parentProduct, item.variant, item.variantIndex, 'Godown')}
-                                                className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0da487] border border-emerald-200 rounded-lg text-xs font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
+                                                className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0F172A] border border-emerald-200 rounded-lg text-xs font-bold inline-flex items-center space-x-1 transition-all cursor-pointer"
                                                 title="এই ভ্যারিয়েন্টে রিস্টক বা স্টক সমন্বয় করুন"
                                               >
                                                 <PlusCircle className="w-3 h-3" />
@@ -5293,7 +5293,7 @@ export default function StockTransferModal({
                                               <button
                                                 type="button"
                                                 onClick={() => handleOpenEditVariant(item.parentProduct, item.variant, item.variantIndex)}
-                                                className="p-1.5 hover:bg-white hover:text-[#0da487] text-slate-600 rounded-lg text-xs transition-colors cursor-pointer"
+                                                className="p-1.5 hover:bg-white hover:text-[#0F172A] text-slate-600 rounded-lg text-xs transition-colors cursor-pointer"
                                                 title="ভ্যারিয়েন্ট এডিট করুন"
                                               >
                                                 <Edit3 className="w-3.5 h-3.5" />
@@ -5310,11 +5310,11 @@ export default function StockTransferModal({
                                           )}
                                         </div>
                                       ) : (
-                                        <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-200/90 shadow-2xs">
+                                        <div className="flex items-center bg-[#FAFAFA] p-1 rounded-md border border-[#E5E5E5]/90 shadow-none">
                                           <button
                                             type="button"
                                             onClick={() => setPrintStickerProduct(item.parentProduct)}
-                                            className="p-1.5 hover:bg-white hover:text-[#0da487] text-slate-600 rounded-lg text-xs transition-colors cursor-pointer"
+                                            className="p-1.5 hover:bg-white hover:text-[#0F172A] text-slate-600 rounded-lg text-xs transition-colors cursor-pointer"
                                             title="প্রাইস ট্যাগ বা স্টিকার প্রিন্ট করুন"
                                           >
                                             <Printer className="w-3.5 h-3.5" />
@@ -5352,7 +5352,7 @@ export default function StockTransferModal({
                                                   ProductName: item.productName,
                                                   remnantYards: bd.runningCutYards
                                                 })}
-                                                className="p-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-xs transition-colors cursor-pointer"
+                                                className="p-1.5 bg-amber-100 hover:bg-amber-200 text-[#B45309] border border-amber-300 rounded-lg text-xs transition-colors cursor-pointer"
                                                 title="এই কাপড়ের শেষ ছাঁট ট্র্যাকার বা বান্ডেলে পাঠান"
                                               >
                                                 <Scissors className="w-3.5 h-3.5 text-amber-700" />
@@ -5377,21 +5377,21 @@ export default function StockTransferModal({
             )}
 
             {/* =============================================================== */}
-            {/* ট্যাব ২: 🚚 স্থানান্তর চালান (নতুন চালান ও তালিকা) */}
+            {/* ট্যাব ২: স্থানান্তর চালান (নতুন চালান ও তালিকা) */}
             {/* =============================================================== */}
             {activeMainTab === 'transfers' && (
               <div className="space-y-4">
                 
                 {/* সাব-ট্যাব বার */}
-                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3">
                   <div className="flex items-center space-x-2">
                     <button
                       type="button"
                       onClick={() => setTransferSubTab('new')}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                      className={`px-4 py-2 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                         transferSubTab === 'new'
-                          ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                          ? 'bg-indigo-600 text-white shadow-none'
+                          : 'bg-white text-slate-600 hover:bg-[#F5F5F5] border border-[#E5E5E5]'
                       }`}
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -5400,16 +5400,16 @@ export default function StockTransferModal({
                     <button
                       type="button"
                       onClick={() => setTransferSubTab('list')}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                      className={`px-4 py-2 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                         transferSubTab === 'list'
-                          ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                          ? 'bg-indigo-600 text-white shadow-none'
+                          : 'bg-white text-slate-600 hover:bg-[#F5F5F5] border border-[#E5E5E5]'
                       }`}
                     >
                       <Truck className="w-3.5 h-3.5" />
                       <span>দোকানে আসা চালান ও ট্র্যাকিং</span>
                       {stockTransfers.filter(t => t.Status === 'In Transit' || t.Status === 'Pending').length > 0 && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-mono font-bold animate-pulse shadow-xs">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#FFFBEB]0 text-white font-mono font-bold animate-pulse shadow-none">
                           {stockTransfers.filter(t => t.Status === 'In Transit' || t.Status === 'Pending').length}টি পথে
                         </span>
                       )}
@@ -5422,7 +5422,7 @@ export default function StockTransferModal({
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     
                     {/* চালান ফরম */}
-                    <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+                    <div className="lg:col-span-2 bg-white rounded-md border border-[#E5E5E5] p-5 shadow-none space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                         <div>
                           <label className="text-xs font-bold text-slate-700 block mb-1">চালান নম্বর</label>
@@ -5430,7 +5430,7 @@ export default function StockTransferModal({
                             type="text"
                             value={challanNo}
                             onChange={(e) => setChallanNo(e.target.value)}
-                            className="w-full px-3 py-2 text-xs font-mono font-bold border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 text-xs font-mono font-bold border border-[#E5E5E5] rounded-md bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         </div>
 
@@ -5440,7 +5440,7 @@ export default function StockTransferModal({
                             type="date"
                             value={transferDate}
                             onChange={(e) => setTransferDate(e.target.value)}
-                            className="w-full px-3 py-2 text-xs font-bold border border-slate-300 rounded-xl bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 text-xs font-bold border border-[#E5E5E5] rounded-md bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         </div>
 
@@ -5449,10 +5449,10 @@ export default function StockTransferModal({
                           <select
                             value={fromLocation}
                             onChange={(e) => setFromLocation(e.target.value)}
-                            className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           >
-                            <option value="Main Warehouse">🏭 কেন্দ্রীয় গোডাউন (Main Warehouse)</option>
-                            <option value="Main Shop">🏬 প্রধান দোকান (Main Shop)</option>
+                            <option value="Main Warehouse">কেন্দ্রীয় গোডাউন (Main Warehouse)</option>
+                            <option value="Main Shop">প্রধান দোকান (Main Shop)</option>
                           </select>
                         </div>
 
@@ -5461,16 +5461,16 @@ export default function StockTransferModal({
                           <select
                             value={toLocation}
                             onChange={(e) => setToLocation(e.target.value)}
-                            className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           >
-                            <option value="Main Shop">🏬 প্রধান দোকান (Main Shop)</option>
-                            <option value="Main Warehouse">🏭 কেন্দ্রীয় গোডাউন (Main Warehouse)</option>
+                            <option value="Main Shop">প্রধান দোকান (Main Shop)</option>
+                            <option value="Main Warehouse">কেন্দ্রীয় গোডাউন (Main Warehouse)</option>
                           </select>
                         </div>
                       </div>
 
                       {/* আইটেম পিকার বক্স */}
-                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                      <div className="p-4 bg-[#FAFAFA] rounded-md border border-[#E5E5E5] space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
                             <Package className="w-3.5 h-3.5 text-indigo-600" />
@@ -5489,7 +5489,7 @@ export default function StockTransferModal({
                             value={dropdownSearch}
                             onChange={(e) => setDropdownSearch(e.target.value)}
                             placeholder="ড্রপডাউনে পণ্য বা রঙের নাম দিয়ে দ্রুত খুঁজুন..."
-                            className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            className="w-full pl-8 pr-3 py-1.5 text-xs border border-[#E5E5E5] rounded-md bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                           />
                         </div>
 
@@ -5501,7 +5501,7 @@ export default function StockTransferModal({
                           <select
                             value={selectedItemKey}
                             onChange={(e) => handleSelectItemFromDropdown(e.target.value)}
-                            className="w-full px-3 py-2 text-xs border-2 border-indigo-300 rounded-xl bg-white font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                            className="w-full px-3 py-2 text-xs border-2 border-indigo-300 rounded-md bg-white font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-none"
                           >
                             <option value="">-- গোডাউনে মজুত থাকা ভ্যারিয়েন্ট বা পণ্য বেছে নিন --</option>
                             {filteredDropdownItems.map((item) => {
@@ -5511,9 +5511,9 @@ export default function StockTransferModal({
                                   key={item.key}
                                   value={item.key}
                                   disabled={isOut}
-                                  className={isOut ? 'text-slate-400 bg-slate-100' : 'text-slate-900 font-semibold'}
+                                  className={isOut ? 'text-slate-400 bg-[#F5F5F5]' : 'text-slate-900 font-semibold'}
                                 >
-                                  {item.productName} {item.variantName ? `➔ [ভ্যারিয়েন্ট: ${item.variantName}]` : '➔ [সাধারণ পণ্য]'} — 🏭 গোডাউন মজুত: {item.godownStock} {item.unit} {isOut ? '(মজুত শূন্য)' : ''}
+                                  {item.productName} {item.variantName ? `→ [ভ্যারিয়েন্ট: ${item.variantName}]` : '→ [সাধারণ পণ্য]'} — গোডাউন মজুত: {item.godownStock} {item.unit} {isOut ? '(মজুত শূন্য)' : ''}
                                 </option>
                               );
                             })}
@@ -5522,7 +5522,7 @@ export default function StockTransferModal({
 
                         {/* নির্বাচিত পণ্যের প্রিভিউ ও পরিমাণ নির্ধারণ */}
                         {selectedGodownItem && (
-                          <div className="p-3 bg-white rounded-xl border border-indigo-200 space-y-2 shadow-xs">
+                          <div className="p-3 bg-white rounded-md border border-indigo-200 space-y-2 shadow-none">
                             <div className="flex flex-wrap items-center justify-between gap-1">
                               <div>
                                 <span className="font-black text-slate-900 text-xs block">
@@ -5536,7 +5536,7 @@ export default function StockTransferModal({
                               </div>
                               <div className="text-right">
                                 <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-200 inline-block font-mono">
-                                  🏭 গোডাউনে মজুত: {selectedGodownItem.godownStock} {selectedGodownItem.unit}
+                                  গোডাউনে মজুত: {selectedGodownItem.godownStock} {selectedGodownItem.unit}
                                 </span>
                                 {selectedGodownItem.isThan && selectedGodownItem.yardsPerThan > 0 && (
                                   <span className="text-[10px] text-indigo-500 block font-semibold mt-0.5">
@@ -5546,7 +5546,7 @@ export default function StockTransferModal({
                               </div>
                             </div>
 
-                            <div className="flex items-center space-x-2 pt-1 border-t border-slate-100">
+                            <div className="flex items-center space-x-2 pt-1 border-t border-[#E5E5E5]">
                               <div className="flex-1">
                                 <label className="text-[10px] font-bold text-slate-500 block mb-1">
                                   চালানের পরিমাণ ({selectedGodownItem.unit}) — সর্বোচ্চ: {selectedGodownItem.godownStock}
@@ -5560,14 +5560,14 @@ export default function StockTransferModal({
                                     const val = Number(e.target.value) || 1;
                                     setTransferQty(Math.max(1, Math.min(selectedGodownItem.godownStock || 1, val)));
                                   }}
-                                  className="w-full px-3 py-1.5 text-xs font-mono font-bold border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-500"
+                                  className="w-full px-3 py-1.5 text-xs font-mono font-bold border border-[#E5E5E5] rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-500"
                                 />
                               </div>
                               <button
                                 type="button"
                                 disabled={selectedGodownItem.godownStock <= 0}
                                 onClick={handleAddItemToChallan}
-                                className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg flex items-center space-x-1.5 shadow-xs cursor-pointer"
+                                className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg flex items-center space-x-1.5 shadow-none cursor-pointer"
                               >
                                 <Plus className="w-3.5 h-3.5" />
                                 <span>চালানে যোগ করুন</span>
@@ -5585,19 +5585,19 @@ export default function StockTransferModal({
                         </div>
 
                         {challanItems.length === 0 ? (
-                          <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs">
+                          <div className="p-8 text-center text-slate-400 bg-[#FAFAFA] rounded-md border border-dashed border-[#E5E5E5] text-xs">
                             এখনও কোনো পণ্য চালানে যোগ করা হয়নি। উপরের বক্স থেকে পণ্য যোগ করুন।
                           </div>
                         ) : (
-                          <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
+                          <div className="border border-[#E5E5E5] rounded-md overflow-hidden divide-y divide-slate-100">
                             {challanItems.map((itm, i) => (
-                              <div key={i} className="p-2.5 flex items-center justify-between text-xs hover:bg-slate-50">
+                              <div key={i} className="p-2.5 flex items-center justify-between text-xs hover:bg-[#FAFAFA]">
                                 <div>
                                   <strong className="text-slate-900 block">{itm.productName}</strong>
                                   {itm.variantName && <span className="text-[10px] text-slate-400">{itm.variantName}</span>}
                                 </div>
                                 <div className="flex items-center space-x-3">
-                                  <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
+                                  <span className="font-mono font-bold text-slate-800 bg-[#F5F5F5] px-2 py-0.5 rounded">
                                     {itm.quantity} {itm.unit}
                                   </span>
                                   <button
@@ -5616,9 +5616,9 @@ export default function StockTransferModal({
                     </div>
 
                     {/* বাহক তথ্য ও সাবমিট */}
-                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4 flex flex-col justify-between">
+                    <div className="bg-white rounded-md border border-[#E5E5E5] p-5 shadow-none space-y-4 flex flex-col justify-between">
                       <div className="space-y-3">
-                        <span className="text-xs font-bold text-slate-900 block border-b border-slate-100 pb-2">
+                        <span className="text-xs font-bold text-slate-900 block border-b border-[#E5E5E5] pb-2">
                           বাহক ও গাড়ির তথ্য
                         </span>
 
@@ -5629,7 +5629,7 @@ export default function StockTransferModal({
                             value={driverName}
                             onChange={(e) => setDriverName(e.target.value)}
                             placeholder="যেমন: মোঃ রফিকুল ইসলাম"
-                            className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl"
+                            className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md"
                           />
                         </div>
 
@@ -5640,7 +5640,7 @@ export default function StockTransferModal({
                             value={driverPhone}
                             onChange={(e) => setDriverPhone(e.target.value)}
                             placeholder="017xxxxxxxx"
-                            className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl font-mono"
+                            className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md font-mono"
                           />
                         </div>
 
@@ -5651,7 +5651,7 @@ export default function StockTransferModal({
                             value={vehicleNo}
                             onChange={(e) => setVehicleNo(e.target.value)}
                             placeholder="ঢাকা মেট্রো-ন..."
-                            className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl"
+                            className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md"
                           />
                         </div>
 
@@ -5662,17 +5662,17 @@ export default function StockTransferModal({
                             onChange={(e) => setNotes(e.target.value)}
                             rows="2"
                             placeholder="প্রয়োজনীয় নির্দেশনা..."
-                            className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl"
+                            className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md"
                           />
                         </div>
                       </div>
 
-                      <div className="space-y-2 pt-4 border-t border-slate-100">
+                      <div className="space-y-2 pt-4 border-t border-[#E5E5E5]">
                         <button
                           type="button"
                           disabled={isSubmitting || challanItems.length === 0}
                           onClick={() => handleSubmitChallan(true)}
-                          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer"
+                          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-md flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer"
                         >
                           <Printer className="w-4 h-4" />
                           <span>চালান নিশ্চিত ও প্রিন্ট করুন</span>
@@ -5682,7 +5682,7 @@ export default function StockTransferModal({
                           type="button"
                           disabled={isSubmitting || challanItems.length === 0}
                           onClick={() => handleSubmitChallan(false)}
-                          className="w-full py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+                          className="w-full py-2 bg-[#F5F5F5] hover:bg-slate-200 disabled:opacity-50 text-slate-700 text-xs font-bold rounded-md cursor-pointer"
                         >
                           শুধুমাত্র সংরক্ষণ করুন
                         </button>
@@ -5695,7 +5695,7 @@ export default function StockTransferModal({
                 {/* ২.২ চালান তালিকা ভিউ */}
                 {transferSubTab === 'list' && (
                   <div className="space-y-4">
-                    <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between gap-3">
+                    <div className="p-3 bg-white rounded-md border border-[#E5E5E5] shadow-none flex items-center justify-between gap-3">
                       <div className="relative flex-1 max-w-md">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
@@ -5703,14 +5703,14 @@ export default function StockTransferModal({
                           value={listSearch}
                           onChange={(e) => setListSearch(e.target.value)}
                           placeholder="চালান নং বা লোকেশন দিয়ে খুঁজুন..."
-                          className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                          className="w-full pl-9 pr-3 py-2 text-xs border border-[#E5E5E5] rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                         />
                       </div>
 
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-semibold text-slate-700"
+                        className="px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-semibold text-slate-700"
                       >
                         <option value="ALL">সকল স্ট্যাটাস</option>
                         <option value="IN TRANSIT">ইন ট্রানজিট (পথে আছে)</option>
@@ -5720,7 +5720,7 @@ export default function StockTransferModal({
                     </div>
 
                     {filteredChallans.length === 0 ? (
-                      <div className="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
+                      <div className="p-12 text-center text-slate-400 bg-white rounded-md border border-[#E5E5E5]">
                         কোনো স্টক স্থানান্তর চালান পাওয়া যায়নি।
                       </div>
                     ) : (
@@ -5743,22 +5743,22 @@ export default function StockTransferModal({
                             : (ch.CreatedAt ? new Date(ch.CreatedAt).toLocaleDateString('bn-BD', { year: 'numeric', month: 'short', day: 'numeric' }) : 'তারিখহীন');
 
                           return (
-                            <div key={ch.TransferID || ch.ChallanNo} className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3 hover:shadow-xs transition-shadow">
+                            <div key={ch.TransferID || ch.ChallanNo} className="p-4 bg-white rounded-md border border-[#E5E5E5] shadow-none space-y-3 hover:shadow-none transition-shadow">
                               {/* কার্ড হেডার: চালান নং, তারিখ, স্ট্যাটাস ও রিমুভ আইকন */}
-                              <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                              <div className="flex items-start justify-between gap-2 border-b border-[#E5E5E5] pb-2.5">
                                 <div>
                                   <div className="flex items-center space-x-2">
                                     <span className="font-mono font-black text-sm text-indigo-700">#{ch.ChallanNo}</span>
                                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                                      isInTransit ? 'bg-amber-100 text-amber-800 border border-amber-200 animate-pulse' :
+                                      isInTransit ? 'bg-amber-100 text-[#B45309] border border-[#FEF3C7] animate-pulse' :
                                       isReceived ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                                      'bg-slate-100 text-slate-600'
+                                      'bg-[#F5F5F5] text-slate-600'
                                     }`}>
-                                      {isInTransit ? '🚚 পথে আছে (অপেক্ষমাণ)' : isReceived ? '✅ দোকানে রিসিভড' : '❌ বাতিল'}
+                                      {isInTransit ? 'পথে আছে (অপেক্ষমাণ)' : isReceived ? 'দোকানে রিসিভড' : 'বাতিল'}
                                     </span>
                                   </div>
                                   <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">
-                                    📅 চালানের তারিখ: {formattedDate}
+                                    চালানের তারিখ: {formattedDate}
                                   </span>
                                 </div>
 
@@ -5775,10 +5775,10 @@ export default function StockTransferModal({
                               </div>
 
                               {/* রুট ও বাহক বিবরণ */}
-                              <div className="p-2.5 bg-slate-50 rounded-xl text-xs space-y-1">
+                              <div className="p-2.5 bg-[#FAFAFA] rounded-md text-xs space-y-1">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-slate-500">প্রেরক ➔ প্রাপক:</span>
-                                  <strong className="text-slate-800">{ch.FromLocation} ➔ {ch.ToLocation}</strong>
+                                  <span className="text-slate-500">প্রেরক → প্রাপক:</span>
+                                  <strong className="text-slate-800">{ch.FromLocation} → {ch.ToLocation}</strong>
                                 </div>
                                 {ch.DriverName && (
                                   <div className="text-[11px] text-slate-500 truncate">
@@ -5793,8 +5793,8 @@ export default function StockTransferModal({
                               </div>
 
                               {/* কী কী প্রোডাক্ট ও ভ্যারিয়েন্ট দোকানে পাঠানো হয়েছে তার বিস্তারিত তালিকা */}
-                              <div className="bg-slate-50/90 rounded-xl border border-slate-200 overflow-hidden text-xs">
-                                <div className="px-3 py-1.5 bg-slate-100/90 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-700">
+                              <div className="bg-[#FAFAFA]/90 rounded-md border border-[#E5E5E5] overflow-hidden text-xs">
+                                <div className="px-3 py-1.5 bg-[#F5F5F5] border-b border-[#E5E5E5] flex items-center justify-between text-[11px] font-bold text-slate-700">
                                   <span className="flex items-center space-x-1">
                                     <Package className="w-3 h-3 text-indigo-600" />
                                     <span>চালানের পণ্য ও ভ্যারিয়েন্ট বিস্তারিত ({items.length}টি)</span>
@@ -5822,7 +5822,7 @@ export default function StockTransferModal({
                                               </span>
                                             )}
                                             {itm.variantId && !itm.variantName && (
-                                              <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-100 text-slate-600">
+                                              <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-[#F5F5F5] text-slate-600">
                                                 ID: {itm.variantId}
                                               </span>
                                             )}
@@ -5840,7 +5840,7 @@ export default function StockTransferModal({
                               </div>
 
                               {/* কার্ড ফুটার বাটনসমূহ */}
-                              <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                              <div className="flex items-center justify-between pt-1 border-t border-[#E5E5E5]">
                                 <button
                                   type="button"
                                   onClick={() => setPrintableChallan(ch)}
@@ -5855,7 +5855,7 @@ export default function StockTransferModal({
                                     <button
                                       type="button"
                                       onClick={() => handleReceiveChallan(ch)}
-                                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-xs cursor-pointer transition-all"
+                                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-bold flex items-center space-x-1.5 shadow-none cursor-pointer transition-all"
                                       title="দোকানে পণ্য বুঝে নিন এবং দোকানের স্টকে যুক্ত করুন"
                                     >
                                       <CheckCircle2 className="w-3.5 h-3.5" />
@@ -5884,21 +5884,21 @@ export default function StockTransferModal({
             )}
 
             {/* =============================================================== */}
-            {/* ট্যাব ৩: 🏭 গোডাউন স্টক কমার খাতা (ভ্যারিয়েন্ট ভিত্তিক ও পিডিএফ রিপোর্ট) */}
+            {/* ট্যাব ৩: গোডাউন স্টক কমার খাতা (ভ্যারিয়েন্ট ভিত্তিক ও পিডিএফ রিপোর্ট) */}
             {/* =============================================================== */}
             {activeMainTab === 'godown_outflow' && (
               <div className="space-y-4">
                 
                 {/* পরিচিতি ব্যানার */}
-                <div className="p-4 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent rounded-2xl border border-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="p-4 bg-white rounded-md border border-[#E5E5E5] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-none">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs">
+                    <div className="w-10 h-10 rounded-md bg-amber-600 text-white flex items-center justify-center shadow-none">
                       <TrendingDown className="w-5 h-5" />
                     </div>
                     <div>
                       <h3 className="text-sm font-black text-amber-950 flex items-center space-x-2">
                         <span>গোডাউনে ভ্যারিয়েন্ট অনুযায়ী স্টক কমার খাতা</span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-900 font-bold border border-amber-300">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-[#B45309] font-bold border border-amber-300">
                           ভ্যারিয়েন্ট অডিট
                         </span>
                       </h3>
@@ -5912,7 +5912,7 @@ export default function StockTransferModal({
                     <button
                       type="button"
                       onClick={() => setIsPrintableGodownOutflow(true)}
-                      className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-all"
+                      className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-none cursor-pointer transition-all"
                     >
                       <Printer className="w-4 h-4" />
                       <span>পিডিএফ ডাউনলোড / প্রিন্ট</span>
@@ -5921,7 +5921,7 @@ export default function StockTransferModal({
                     <button
                       type="button"
                       onClick={() => exportGodownOutflowExcelCSV(stockMovements, products)}
-                      className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-all"
+                      className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-none cursor-pointer transition-all"
                     >
                       <FileSpreadsheet className="w-4 h-4" />
                       <span>গোডাউন কমার এক্সেল রিপোর্ট</span>
@@ -5931,7 +5931,7 @@ export default function StockTransferModal({
 
                 {/* সারসংক্ষেপ কেপিআই কার্ডস */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                  <div className="p-3.5 bg-white rounded-md border border-[#E5E5E5] shadow-none">
                     <span className="text-[11px] font-bold text-slate-500 block mb-0.5">মোট কমার ঘটনা</span>
                     <div className="flex items-baseline space-x-1">
                       <span className="text-lg font-black font-mono text-slate-900">{godownOutflowSummary.count}</span>
@@ -5939,7 +5939,7 @@ export default function StockTransferModal({
                     </div>
                   </div>
 
-                  <div className="p-3.5 bg-rose-50/60 rounded-xl border border-rose-200/80 shadow-2xs">
+                  <div className="p-3.5 bg-rose-50/60 rounded-md border border-rose-200/80 shadow-none">
                     <span className="text-[11px] font-bold text-rose-800 block mb-0.5">মোট হ্রাসকৃত স্টক</span>
                     <div className="flex items-baseline space-x-1">
                       <span className="text-lg font-black font-mono text-rose-700">-{godownOutflowSummary.totalQty}</span>
@@ -5947,7 +5947,7 @@ export default function StockTransferModal({
                     </div>
                   </div>
 
-                  <div className="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-200/80 shadow-2xs">
+                  <div className="p-3.5 bg-indigo-50/60 rounded-md border border-indigo-200/80 shadow-none">
                     <span className="text-[11px] font-bold text-indigo-800 block mb-0.5">চালানে স্থানান্তর</span>
                     <div className="flex items-baseline space-x-1">
                       <span className="text-lg font-black font-mono text-indigo-700">-{godownOutflowSummary.transferQty}</span>
@@ -5955,8 +5955,8 @@ export default function StockTransferModal({
                     </div>
                   </div>
 
-                  <div className="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/80 shadow-2xs">
-                    <span className="text-[11px] font-bold text-amber-800 block mb-0.5">ড্যামেজ ও সমন্বয় হ্রাস</span>
+                  <div className="p-3.5 bg-[#FFFBEB]/60 rounded-md border border-[#FEF3C7] shadow-none">
+                    <span className="text-[11px] font-bold text-[#B45309] block mb-0.5">ড্যামেজ ও সমন্বয় হ্রাস</span>
                     <div className="flex items-baseline space-x-1">
                       <span className="text-lg font-black font-mono text-amber-700">
                         -{Math.round((godownOutflowSummary.damageQty + godownOutflowSummary.adjustQty) * 100) / 100}
@@ -5967,7 +5967,7 @@ export default function StockTransferModal({
                 </div>
 
                 {/* ফিল্টার বার */}
-                <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="p-3 bg-white rounded-md border border-[#E5E5E5] shadow-none flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div className="relative flex-1 w-full max-w-md">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
@@ -5975,7 +5975,7 @@ export default function StockTransferModal({
                       value={godownSearch}
                       onChange={(e) => setGodownSearch(e.target.value)}
                       placeholder="পণ্য, ভ্যারিয়েন্ট, রঙ, সাইজ বা চালান নং দিয়ে খুঁজুন..."
-                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-[#E5E5E5] rounded-md focus:ring-2 focus:ring-amber-500 focus:outline-none"
                     />
                   </div>
 
@@ -5983,7 +5983,7 @@ export default function StockTransferModal({
                     <select
                       value={godownReasonFilter}
                       onChange={(e) => setGodownReasonFilter(e.target.value)}
-                      className="px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-medium text-slate-700"
+                      className="px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-medium text-slate-700"
                     >
                       <option value="ALL">সকল কারণ</option>
                       <option value="TRANSFER_OUT">দোকানে স্থানান্তর চালান</option>
@@ -5994,7 +5994,7 @@ export default function StockTransferModal({
                     <select
                       value={godownDateFilter}
                       onChange={(e) => setGodownDateFilter(e.target.value)}
-                      className="px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-medium text-slate-700"
+                      className="px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-medium text-slate-700"
                     >
                       <option value="ALL">সকল সময়</option>
                       <option value="TODAY">আজকের</option>
@@ -6005,10 +6005,10 @@ export default function StockTransferModal({
                 </div>
 
                 {/* খতিয়ান টেবিল */}
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+                <div className="bg-white rounded-md border border-[#E5E5E5] overflow-hidden shadow-none">
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs text-left">
-                      <thead className="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold uppercase tracking-wider">
+                      <thead className="bg-[#F5F5F5] text-slate-700 border-b border-[#E5E5E5] font-bold uppercase tracking-wider">
                         <tr>
                           <th className="py-3 px-4">তারিখ ও সময়</th>
                           <th className="py-3 px-4">পণ্যের বিবরণ</th>
@@ -6029,7 +6029,7 @@ export default function StockTransferModal({
                           </tr>
                         ) : (
                           godownOutflowData.map((m) => (
-                            <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
+                            <tr key={m.id} className="hover:bg-[#FAFAFA] transition-colors">
                               <td className="py-3 px-4 text-slate-500 whitespace-nowrap">
                                 {new Date(m.timestamp).toLocaleString('bn-BD')}
                               </td>
@@ -6066,7 +6066,7 @@ export default function StockTransferModal({
                                     )}
                                   </div>
                                 ) : (
-                                  <span className="inline-block px-2 py-0.5 rounded text-[11px] text-slate-500 bg-slate-100 font-medium">
+                                  <span className="inline-block px-2 py-0.5 rounded text-[11px] text-slate-500 bg-[#F5F5F5] font-medium">
                                     সাধারণ / নন-ভ্যারিয়েন্ট
                                   </span>
                                 )}
@@ -6106,15 +6106,15 @@ export default function StockTransferModal({
             )}
 
             {/* =============================================================== */}
-            {/* ট্যাব ৪: 🏬 দোকান স্টক কমার খাতা */}
+            {/* ট্যাব ৪: দোকান স্টক কমার খাতা */}
             {/* =============================================================== */}
             {activeMainTab === 'shop_outflow' && (
               <div className="space-y-4">
                 
                 {/* পরিচিতি ব্যানার */}
-                <div className="p-4 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent rounded-2xl border border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="p-4 bg-white rounded-md border border-[#E5E5E5] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center space-x-3">
-                    <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                    <div className="w-9 h-9 rounded-md bg-emerald-600 text-white flex items-center justify-center shadow-none">
                       <Store className="w-5 h-5" />
                     </div>
                     <div>
@@ -6128,7 +6128,7 @@ export default function StockTransferModal({
                   <button
                     type="button"
                     onClick={() => exportShopOutflowExcelCSV(stockMovements)}
-                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer self-start sm:self-auto"
+                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-none cursor-pointer self-start sm:self-auto"
                   >
                     <FileSpreadsheet className="w-4 h-4" />
                     <span>দোকান কমার এক্সেল রিপোর্ট</span>
@@ -6136,7 +6136,7 @@ export default function StockTransferModal({
                 </div>
 
                 {/* ফিল্টার বার */}
-                <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="p-3 bg-white rounded-md border border-[#E5E5E5] shadow-none flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div className="relative flex-1 w-full max-w-md">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
@@ -6144,7 +6144,7 @@ export default function StockTransferModal({
                       value={shopSearch}
                       onChange={(e) => setShopSearch(e.target.value)}
                       placeholder="পণ্য, মেমো নং বা অর্ডার নং দিয়ে খুঁজুন..."
-                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-[#E5E5E5] rounded-md focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     />
                   </div>
 
@@ -6152,7 +6152,7 @@ export default function StockTransferModal({
                     <select
                       value={shopTypeFilter}
                       onChange={(e) => setShopTypeFilter(e.target.value)}
-                      className="px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-medium text-slate-700"
+                      className="px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-medium text-slate-700"
                     >
                       <option value="ALL">সকল উৎস</option>
                       <option value="SALE">কাউন্টার বিক্রয় (POS)</option>
@@ -6164,7 +6164,7 @@ export default function StockTransferModal({
                     <select
                       value={shopDateFilter}
                       onChange={(e) => setShopDateFilter(e.target.value)}
-                      className="px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-medium text-slate-700"
+                      className="px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-medium text-slate-700"
                     >
                       <option value="ALL">সকল সময়</option>
                       <option value="TODAY">আজকের</option>
@@ -6175,10 +6175,10 @@ export default function StockTransferModal({
                 </div>
 
                 {/* খতিয়ান টেবিল */}
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+                <div className="bg-white rounded-md border border-[#E5E5E5] overflow-hidden shadow-none">
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs text-left">
-                      <thead className="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold uppercase tracking-wider">
+                      <thead className="bg-[#F5F5F5] text-slate-700 border-b border-[#E5E5E5] font-bold uppercase tracking-wider">
                         <tr>
                           <th className="py-3 px-4">তারিখ ও সময়</th>
                           <th className="py-3 px-4">পণ্যের বিবরণ</th>
@@ -6198,7 +6198,7 @@ export default function StockTransferModal({
                           </tr>
                         ) : (
                           shopOutflowData.map((m) => (
-                            <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
+                            <tr key={m.id} className="hover:bg-[#FAFAFA] transition-colors">
                               <td className="py-3 px-4 text-slate-500 whitespace-nowrap">
                                 {new Date(m.timestamp).toLocaleString('bn-BD')}
                               </td>
@@ -6247,13 +6247,13 @@ export default function StockTransferModal({
         {/* দ্রুত স্টক অ্যাডজাস্টমেন্ট পপআপ সাব-মডাল (Modern Fastkart Style) */}
         {/* =================================================================== */}
         {adjustTargetProduct && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-            <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden p-6 space-y-4 animate-in zoom-in-95 duration-200 max-h-[95vh] overflow-y-auto">
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-black/40  animate-in fade-in duration-200">
+            <div className="w-full max-w-lg bg-white rounded-lg shadow-none border border-[#E5E5E5] overflow-hidden p-6 space-y-4 animate-in zoom-in-95 duration-200 max-h-[95vh] overflow-y-auto">
               
               {/* হেডার */}
-              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-3.5 border-b border-[#E5E5E5]">
                 <div className="flex items-center space-x-2.5">
-                  <div className="p-2.5 rounded-2xl bg-emerald-50 text-[#0da487] border border-emerald-100/80 shadow-2xs">
+                  <div className="p-2.5 rounded-md bg-emerald-50 text-[#0F172A] border border-emerald-100/80 shadow-none">
                     <SlidersHorizontal className="w-5 h-5" />
                   </div>
                   <div>
@@ -6264,17 +6264,17 @@ export default function StockTransferModal({
                 <button
                   type="button"
                   onClick={() => setAdjustTargetProduct(null)}
-                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-md hover:bg-[#F5F5F5] transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* পণ্য ও বর্তমান স্টক কার্ড */}
-              <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2">
+              <div className="p-3.5 bg-[#FAFAFA] rounded-md border border-[#E5E5E5] space-y-2">
                 <div className="flex items-center justify-between">
                   <strong className="text-slate-900 text-sm font-bold truncate">{adjustTargetProduct.ProductName}</strong>
-                  <span className="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200 shrink-0">
+                  <span className="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded-md border border-[#E5E5E5] shrink-0">
                     ID: {adjustTargetProduct.ProductID}
                   </span>
                 </div>
@@ -6285,14 +6285,14 @@ export default function StockTransferModal({
                   const gStk = Number(adjustTargetProduct.GodownStock || 0);
                   return (
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="p-2.5 bg-white rounded-xl border border-emerald-100 shadow-2xs">
-                        <span className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">🏬 বর্তমান দোকান</span>
+                      <div className="p-2.5 bg-white rounded-md border border-emerald-100 shadow-none">
+                        <span className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">বর্তমান দোকান</span>
                         <span className="text-sm font-black text-[#0b8b72] font-mono">
                           {sStk.toLocaleString('bn-BD')} {isT ? 'গজ' : u}
                         </span>
                       </div>
-                      <div className="p-2.5 bg-white rounded-xl border border-slate-200/90 shadow-2xs">
-                        <span className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">🏭 বর্তমান গোডাউন</span>
+                      <div className="p-2.5 bg-white rounded-md border border-[#E5E5E5]/90 shadow-none">
+                        <span className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">বর্তমান গোডাউন</span>
                         <span className="text-sm font-black text-slate-800 font-mono">
                           {gStk.toLocaleString('bn-BD')} {isT ? 'থান' : u}
                         </span>
@@ -6310,22 +6310,22 @@ export default function StockTransferModal({
                     <button
                       type="button"
                       onClick={() => { setAdjustLocation('Shop'); setAdjustReason('দোকান সেলফ গণনা সংশোধন'); }}
-                      className={`py-2.5 px-3 rounded-xl font-bold flex items-center justify-center space-x-1.5 border transition-all cursor-pointer ${
-                        adjustLocation === 'Shop' ? 'bg-[#0da487] text-white border-[#0da487] shadow-xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      className={`py-2.5 px-3 rounded-md font-bold flex items-center justify-center space-x-1.5 border transition-all cursor-pointer ${
+                        adjustLocation === 'Shop' ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-none' : 'bg-[#FAFAFA] text-slate-700 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                       }`}
                     >
                       <Store className="w-4 h-4" />
-                      <span>🏬 দোকান ফ্লোর</span>
+                      <span>দোকান ফ্লোর</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => { setAdjustLocation('Godown'); setAdjustReason('নতুন লট গোডাউনে আগমন'); }}
-                      className={`py-2.5 px-3 rounded-xl font-bold flex items-center justify-center space-x-1.5 border transition-all cursor-pointer ${
-                        adjustLocation === 'Godown' ? 'bg-[#0da487] text-white border-[#0da487] shadow-xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      className={`py-2.5 px-3 rounded-md font-bold flex items-center justify-center space-x-1.5 border transition-all cursor-pointer ${
+                        adjustLocation === 'Godown' ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-none' : 'bg-[#FAFAFA] text-slate-700 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                       }`}
                     >
                       <Warehouse className="w-4 h-4" />
-                      <span>🏭 গোডাউন</span>
+                      <span>গোডাউন</span>
                     </button>
                   </div>
                 </div>
@@ -6337,29 +6337,29 @@ export default function StockTransferModal({
                     <button
                       type="button"
                       onClick={() => setAdjustAction('ADD')}
-                      className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
-                        adjustAction === 'ADD' ? 'bg-emerald-50 text-emerald-950 border-emerald-300 font-black shadow-2xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      className={`py-2 rounded-md font-bold border transition-all cursor-pointer ${
+                        adjustAction === 'ADD' ? 'bg-emerald-50 text-emerald-950 border-emerald-300 font-black shadow-none' : 'bg-[#FAFAFA] text-slate-700 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                       }`}
                     >
-                      ➕ যোগ (ADD)
+                      যোগ (ADD)
                     </button>
                     <button
                       type="button"
                       onClick={() => setAdjustAction('DEDUCT')}
-                      className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
-                        adjustAction === 'DEDUCT' ? 'bg-rose-50 text-rose-950 border-rose-300 font-black shadow-2xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      className={`py-2 rounded-md font-bold border transition-all cursor-pointer ${
+                        adjustAction === 'DEDUCT' ? 'bg-rose-50 text-rose-950 border-rose-300 font-black shadow-none' : 'bg-[#FAFAFA] text-slate-700 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                       }`}
                     >
-                      ➖ হ্রাস (DEDUCT)
+                      হ্রাস (DEDUCT)
                     </button>
                     <button
                       type="button"
                       onClick={() => setAdjustAction('SET')}
-                      className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
-                        adjustAction === 'SET' ? 'bg-blue-50 text-blue-950 border-blue-300 font-black shadow-2xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      className={`py-2 rounded-md font-bold border transition-all cursor-pointer ${
+                        adjustAction === 'SET' ? 'bg-blue-50 text-blue-950 border-blue-300 font-black shadow-none' : 'bg-[#FAFAFA] text-slate-700 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                       }`}
                     >
-                      ✏️ নতুন মান (SET)
+                      নতুন মান (SET)
                     </button>
                   </div>
                 </div>
@@ -6376,7 +6376,7 @@ export default function StockTransferModal({
                       step="any"
                       value={adjustQty}
                       onChange={(e) => setAdjustQty(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-sm font-black font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0da487] focus:outline-hidden"
+                      className="w-full px-3.5 py-2.5 text-sm font-black font-mono border border-[#E5E5E5] rounded-md focus:ring-2 focus:ring-1 focus:ring-[#0F172A] focus:outline-hidden"
                     />
                     <span className="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400">
                       {/than|থান/i.test(getProductDisplayUnit(adjustTargetProduct))
@@ -6396,11 +6396,11 @@ export default function StockTransferModal({
                     else if (adjustAction === 'DEDUCT') next = Math.max(0, cur - q);
                     else if (adjustAction === 'SET') next = q;
                     return (
-                      <div className="mt-2 p-2.5 bg-emerald-50/50 rounded-xl border border-emerald-100 flex items-center justify-between text-xs text-emerald-950">
+                      <div className="mt-2 p-2.5 bg-emerald-50/50 rounded-md border border-emerald-100 flex items-center justify-between text-xs text-emerald-950">
                         <span className="text-slate-600 font-medium">হিসাব ফলাফল:</span>
                         <div className="font-mono font-bold flex items-center space-x-1.5">
                           <span className="text-slate-500 line-through">{cur}</span>
-                          <span className="text-[#0da487]">➔</span>
+                          <span className="text-[#0F172A]">→</span>
                           <span className="text-[#0b8b72] text-sm font-black underline">{next} {unitName}</span>
                         </div>
                       </div>
@@ -6432,8 +6432,8 @@ export default function StockTransferModal({
                         onClick={() => setAdjustReason(r)}
                         className={`px-2 py-1 rounded-lg text-[10.5px] font-semibold border transition-all cursor-pointer ${
                           adjustReason === r
-                            ? 'bg-[#0da487] text-white border-[#0da487] shadow-2xs font-bold'
-                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-none font-bold'
+                            : 'bg-white text-slate-600 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                         }`}
                       >
                         {r}
@@ -6444,7 +6444,7 @@ export default function StockTransferModal({
                     type="text"
                     value={adjustReason}
                     onChange={(e) => setAdjustReason(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#0da487] focus:outline-hidden"
+                    className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-medium focus:ring-2 focus:ring-1 focus:ring-[#0F172A] focus:outline-hidden"
                     placeholder="সরাসরি কারণ লিখুন বা উপরের বাটনে চাপ দিন..."
                   />
                 </div>
@@ -6457,7 +6457,7 @@ export default function StockTransferModal({
                     value={adjustNotes}
                     onChange={(e) => setAdjustNotes(e.target.value)}
                     placeholder="অতিরিক্ত কোনো তথ্য বা চালান নম্বর..."
-                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0da487] focus:outline-hidden"
+                    className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md focus:ring-2 focus:ring-1 focus:ring-[#0F172A] focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -6467,7 +6467,7 @@ export default function StockTransferModal({
                 <button
                   type="button"
                   onClick={handleExecuteStockAdjust}
-                  className="flex-1 py-2.5 bg-[#0da487] hover:bg-[#0b8b72] active:scale-95 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-all flex items-center justify-center space-x-1.5"
+                  className="flex-1 py-2.5 bg-[#0F172A] hover:bg-[#1E293B] active:scale-95 text-[#111111] font-medium text-sm font-heading rounded-md text-xs shadow-none shadow-emerald-600/20 cursor-pointer transition-all flex items-center justify-center space-x-1.5"
                 >
                   <Check className="w-4 h-4" />
                   <span>সমন্বয় নিশ্চিত ও ডাটাবেস সিঙ্ক</span>
@@ -6475,7 +6475,7 @@ export default function StockTransferModal({
                 <button
                   type="button"
                   onClick={() => setAdjustTargetProduct(null)}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer"
+                  className="px-4 py-2.5 bg-[#F5F5F5] hover:bg-slate-200 text-slate-700 font-bold rounded-md text-xs cursor-pointer"
                 >
                   বাতিল
                 </button>
@@ -6496,18 +6496,18 @@ export default function StockTransferModal({
           const varLabel = targetV.Color ? `রং: ${targetV.Color}` : targetV.Size ? `সাইজ: ${targetV.Size}` : (targetV.VariantID || `#${variantRestockModal.variantIdx + 1}`);
 
           return (
-            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-              <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200 max-h-[95vh] overflow-y-auto">
+            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-black/40  animate-in fade-in duration-200">
+              <div className="relative w-full max-w-md bg-white rounded-lg shadow-none border border-[#E5E5E5] overflow-hidden animate-in zoom-in-95 duration-200 max-h-[95vh] overflow-y-auto">
                 
                 {/* হেডার */}
-                <div className="px-5 py-4 bg-gradient-to-r from-[#0b8b72] via-[#0da487] to-teal-900 text-white flex items-center justify-between">
+                <div className="px-5 py-3.5 bg-white border-b border-[#E5E5E5] text-[#111111] flex items-center justify-between">
                   <div className="flex items-center space-x-2.5">
-                    <div className="p-2 bg-white/20 rounded-xl border border-white/20">
+                    <div className="p-2 bg-[#F5F5F5] rounded-sm border border-[#E5E5E5]">
                       <PlusCircle className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-white">ভ্যারিয়েন্ট রিস্টক ও সমন্বয়</h3>
-                      <p className="text-[11px] text-emerald-100 font-medium">
+                      <p className="text-[11px] text-[#525252] font-medium">
                         {prod.ProductName} — <span className="font-bold underline">{varLabel}</span>
                       </p>
                     </div>
@@ -6515,7 +6515,7 @@ export default function StockTransferModal({
                   <button
                     type="button"
                     onClick={() => setVariantRestockModal(null)}
-                    className="text-white/80 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                    className="text-[#737373] hover:text-[#111111] p-1 rounded-sm hover:bg-[#F5F5F5] transition-colors cursor-pointer"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -6525,9 +6525,9 @@ export default function StockTransferModal({
                 <form onSubmit={handleSaveVariantRestockSubmit} className="p-5 space-y-4">
                   
                   {/* বর্তমান স্টক কার্ড */}
-                  <div className="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-100/90 flex items-center justify-between">
+                  <div className="p-3 bg-emerald-50/60 rounded-md border border-emerald-100/90 flex items-center justify-between">
                     <div className="text-center flex-1 border-r border-emerald-200/60">
-                      <span className="text-[10.5px] font-semibold text-slate-500 block">🏭 বর্তমান গোডাউন</span>
+                      <span className="text-[10.5px] font-semibold text-slate-500 block">বর্তমান গোডাউন</span>
                       <span className="text-sm font-black text-slate-800 font-mono">
                         {targetV.GodownStock || 0} {isProdThan ? 'থান' : getProductDisplayUnit(prod)}
                       </span>
@@ -6538,12 +6538,12 @@ export default function StockTransferModal({
                       )}
                     </div>
                     <div className="text-center flex-1">
-                      <span className="text-[10.5px] font-semibold text-slate-500 block">🏬 বর্তমান দোকান</span>
+                      <span className="text-[10.5px] font-semibold text-slate-500 block">বর্তমান দোকান</span>
                       <span className="text-sm font-black text-[#0b8b72] font-mono">
                         {targetV.StockQuantity || 0} {isProdThan ? 'গজ' : getProductDisplayUnit(prod)}
                       </span>
                       {isProdThan && prodYardsPerThan > 0 && Number(targetV.StockQuantity || 0) > 0 && (
-                        <span className="text-[9.5px] text-[#0da487] block font-semibold">
+                        <span className="text-[9.5px] text-[#0F172A] block font-semibold">
                           ({calculateThanBreakdown(targetV.StockQuantity, prodYardsPerThan, 2).displayText})
                         </span>
                       )}
@@ -6561,14 +6561,14 @@ export default function StockTransferModal({
                           location: 'Shop',
                           reason: 'দোকান সেলফ বৃদ্ধি / সমন্বয়'
                         }))}
-                        className={`py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 border transition-all cursor-pointer ${
+                        className={`py-2 px-3 rounded-md font-bold text-xs flex items-center justify-center space-x-1.5 border transition-all cursor-pointer ${
                           variantRestockModal.location === 'Shop'
-                            ? 'bg-[#0da487] text-white border-[#0da487] shadow-xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-none'
+                            : 'bg-[#FAFAFA] text-slate-700 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                         }`}
                       >
                         <Store className="w-4 h-4" />
-                        <span>🏬 দোকান</span>
+                        <span>দোকান</span>
                       </button>
                       <button
                         type="button"
@@ -6577,14 +6577,14 @@ export default function StockTransferModal({
                           location: 'Godown',
                           reason: 'নতুন লট গোডাউনে আগমন'
                         }))}
-                        className={`py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 border transition-all cursor-pointer ${
+                        className={`py-2 px-3 rounded-md font-bold text-xs flex items-center justify-center space-x-1.5 border transition-all cursor-pointer ${
                           variantRestockModal.location === 'Godown'
-                            ? 'bg-[#0da487] text-white border-[#0da487] shadow-xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-none'
+                            : 'bg-[#FAFAFA] text-slate-700 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                         }`}
                       >
                         <Warehouse className="w-4 h-4" />
-                        <span>🏭 গোডাউন</span>
+                        <span>গোডাউন</span>
                       </button>
                     </div>
                   </div>
@@ -6596,35 +6596,35 @@ export default function StockTransferModal({
                       <button
                         type="button"
                         onClick={() => setVariantRestockModal(prev => ({ ...prev, action: 'ADD' }))}
-                        className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
+                        className={`py-2 rounded-md font-bold border transition-all cursor-pointer ${
                           variantRestockModal.action === 'ADD'
-                            ? 'bg-emerald-50 text-emerald-950 border-emerald-300 font-black shadow-2xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-emerald-50 text-emerald-950 border-emerald-300 font-black shadow-none'
+                            : 'bg-[#FAFAFA] text-slate-700 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                         }`}
                       >
-                        ➕ যোগ (ADD)
+                        যোগ (ADD)
                       </button>
                       <button
                         type="button"
                         onClick={() => setVariantRestockModal(prev => ({ ...prev, action: 'DEDUCT' }))}
-                        className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
+                        className={`py-2 rounded-md font-bold border transition-all cursor-pointer ${
                           variantRestockModal.action === 'DEDUCT'
-                            ? 'bg-rose-50 text-rose-950 border-rose-300 font-black shadow-2xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-rose-50 text-rose-950 border-rose-300 font-black shadow-none'
+                            : 'bg-[#FAFAFA] text-slate-700 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                         }`}
                       >
-                        ➖ বিয়োগ
+                        বিয়োগ
                       </button>
                       <button
                         type="button"
                         onClick={() => setVariantRestockModal(prev => ({ ...prev, action: 'SET' }))}
-                        className={`py-2 rounded-xl font-bold border transition-all cursor-pointer ${
+                        className={`py-2 rounded-md font-bold border transition-all cursor-pointer ${
                           variantRestockModal.action === 'SET'
-                            ? 'bg-blue-50 text-blue-950 border-blue-300 font-black shadow-2xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-blue-50 text-blue-950 border-blue-300 font-black shadow-none'
+                            : 'bg-[#FAFAFA] text-slate-700 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                         }`}
                       >
-                        ✏️ সরাসরি সেট
+                        সরাসরি সেট
                       </button>
                     </div>
                   </div>
@@ -6636,9 +6636,9 @@ export default function StockTransferModal({
                     </label>
 
                     {isProdThan && variantRestockModal.location === 'Shop' ? (
-                      <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 space-y-2">
+                      <div className="p-3 bg-emerald-50/70 rounded-md border border-emerald-200 space-y-2">
                         <div className="flex items-center justify-between text-[11px] font-bold text-emerald-950">
-                          <span>🏬 দোকানে গজ ও গিরা ইনপুট</span>
+                          <span>দোকানে গজ ও গিরা ইনপুট</span>
                           <span className="text-[10px] text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200">১ গজ = ১৬ গিরা</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -6660,7 +6660,7 @@ export default function StockTransferModal({
                                 }));
                               }}
                               placeholder="0"
-                              className="w-full px-3 py-2 text-xs font-bold font-mono border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-[#0da487]"
+                              className="w-full px-3 py-2 text-xs font-bold font-mono border border-[#E5E5E5] rounded-lg bg-white focus:ring-2 focus:ring-1 focus:ring-[#0F172A]"
                             />
                           </div>
                           <div>
@@ -6685,13 +6685,13 @@ export default function StockTransferModal({
                                 }));
                               }}
                               placeholder="0"
-                              className="w-full px-3 py-2 text-xs font-bold font-mono border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-[#0da487]"
+                              className="w-full px-3 py-2 text-xs font-bold font-mono border border-[#E5E5E5] rounded-lg bg-white focus:ring-2 focus:ring-1 focus:ring-[#0F172A]"
                             />
                           </div>
                         </div>
                         <div className="text-[11px] font-bold text-emerald-900 bg-white p-2 rounded-lg border border-emerald-200 flex items-center justify-between">
                           <span>মোট পরিমাণ:</span>
-                          <span className="font-mono text-xs font-bold text-[#0da487]">
+                          <span className="font-mono text-xs font-bold text-[#0F172A]">
                             {(Number(variantRestockModal.quantity) || 0).toLocaleString('bn-BD')} গজ
                           </span>
                         </div>
@@ -6705,7 +6705,7 @@ export default function StockTransferModal({
                           required
                           value={variantRestockModal.quantity}
                           onChange={(e) => setVariantRestockModal(prev => ({ ...prev, quantity: e.target.value }))}
-                          className="w-full px-3.5 py-2.5 text-sm font-black font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0da487] focus:outline-hidden"
+                          className="w-full px-3.5 py-2.5 text-sm font-black font-mono border border-[#E5E5E5] rounded-md focus:ring-2 focus:ring-1 focus:ring-[#0F172A] focus:outline-hidden"
                           placeholder="0"
                         />
                         <span className="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400">
@@ -6748,8 +6748,8 @@ export default function StockTransferModal({
                           onClick={() => setVariantRestockModal(prev => ({ ...prev, reason: r }))}
                           className={`px-2 py-0.5 rounded-lg text-[10.5px] font-semibold border transition-all cursor-pointer ${
                             variantRestockModal.reason === r
-                              ? 'bg-[#0da487] text-white border-[#0da487] shadow-2xs font-bold'
-                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                              ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-none font-bold'
+                              : 'bg-white text-slate-600 border-[#E5E5E5] hover:bg-[#F5F5F5]'
                           }`}
                         >
                           {r}
@@ -6760,7 +6760,7 @@ export default function StockTransferModal({
                       type="text"
                       value={variantRestockModal.reason}
                       onChange={(e) => setVariantRestockModal(prev => ({ ...prev, reason: e.target.value }))}
-                      className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0da487] focus:outline-hidden"
+                      className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md focus:ring-2 focus:ring-1 focus:ring-[#0F172A] focus:outline-hidden"
                       placeholder="যেমন: নতুন লট আগমন, গণনা ভুল সংশোধন..."
                     />
                   </div>
@@ -6772,13 +6772,13 @@ export default function StockTransferModal({
                       type="text"
                       value={variantRestockModal.notes}
                       onChange={(e) => setVariantRestockModal(prev => ({ ...prev, notes: e.target.value }))}
-                      className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0da487] focus:outline-hidden"
+                      className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md focus:ring-2 focus:ring-1 focus:ring-[#0F172A] focus:outline-hidden"
                       placeholder="চালান নম্বর বা অতিরিক্ত বিবরণ..."
                     />
                   </div>
 
                   {/* নতুন ভ্যারিয়েন্ট স্টক যোগ করার শর্টকাট */}
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <div className="pt-2 border-t border-[#E5E5E5] flex items-center justify-between text-xs">
                     <span className="text-slate-500 text-[11px]">অন্য নতুন কোনো ভ্যারিয়েন্টের স্টক বাড়াতে চান?</span>
                     <button
                       type="button"
@@ -6787,7 +6787,7 @@ export default function StockTransferModal({
                         setVariantRestockModal(null);
                         handleOpenNewColor(prod);
                       }}
-                      className="text-[#0da487] hover:text-[#0b8b72] font-bold inline-flex items-center space-x-1 cursor-pointer transition-colors"
+                      className="text-[#0F172A] hover:text-[#0b8b72] font-bold inline-flex items-center space-x-1 cursor-pointer transition-colors"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>+ নতুন ভ্যারিয়েন্ট স্টক যোগ করুন</span>
@@ -6799,7 +6799,7 @@ export default function StockTransferModal({
                     <button
                       type="submit"
                       disabled={isSubmittingVariantRestock}
-                      className="flex-1 py-2.5 bg-[#0da487] hover:bg-[#0b8b72] disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-all flex items-center justify-center space-x-1.5 disabled:cursor-not-allowed"
+                      className="flex-1 py-2.5 bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 text-[#111111] font-medium text-sm font-heading rounded-md text-xs shadow-none shadow-emerald-600/20 cursor-pointer transition-all flex items-center justify-center space-x-1.5 disabled:cursor-not-allowed"
                     >
                       {isSubmittingVariantRestock ? (
                         <span className="flex items-center space-x-2">
@@ -6817,7 +6817,7 @@ export default function StockTransferModal({
                       type="button"
                       disabled={isSubmittingVariantRestock}
                       onClick={() => setVariantRestockModal(null)}
-                      className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold rounded-xl text-xs cursor-pointer shadow-2xs transition-colors"
+                      className="px-4 py-2.5 bg-white hover:bg-[#FAFAFA] text-slate-700 border border-[#E5E5E5] font-bold rounded-md text-xs cursor-pointer shadow-none transition-colors"
                     >
                       বাতিল করে ফিরে যান
                     </button>
@@ -6856,10 +6856,10 @@ export default function StockTransferModal({
           const displayOptions = dbOptionsForType.length > 0 ? dbOptionsForType : fallbackOptions;
 
           return (
-            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-              <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-black/40  animate-in fade-in duration-200">
+              <div className="bg-white rounded-md shadow-none border border-[#E5E5E5] w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="px-5 py-3.5 bg-gradient-to-r from-indigo-700 to-indigo-800 text-white flex items-center justify-between">
+                <div className="px-5 py-3.5 bg-white border-b border-[#E5E5E5] text-[#111111] flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Layers className="w-5 h-5 text-indigo-200" />
                     <div>
@@ -6892,11 +6892,11 @@ export default function StockTransferModal({
                           variantName: '',
                           colorName: ''
                         }))}
-                        className="w-full px-3 py-2 bg-indigo-50/50 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        className="w-full px-3 py-2 bg-indigo-50/50 border border-indigo-200 rounded-md text-xs font-bold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                       >
-                        <option value="Color">🎨 রঙ / কালার (Color)</option>
-                        <option value="Size">📏 সাইজ / মাপ (Size)</option>
-                        <option value="Weight">⚖️ ওজন / পরিমাপ (Weight)</option>
+                        <option value="Color">রঙ / কালার (Color)</option>
+                        <option value="Size">সাইজ / মাপ (Size)</option>
+                        <option value="Weight">ওজন / পরিমাপ (Weight)</option>
                       </select>
                     </div>
 
@@ -6911,7 +6911,7 @@ export default function StockTransferModal({
                           const val = e.target.value;
                           setNewColorModal(prev => ({ ...prev, variantName: val, colorName: val }));
                         }}
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        className="w-full px-3 py-2 bg-white border border-[#E5E5E5] rounded-md text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                       >
                         <option value="">
                           -- {currentType === 'Color' ? 'রং নির্বাচন করুন' : currentType === 'Size' ? 'সাইজ নির্বাচন করুন' : 'ওজন নির্বাচন করুন'} --
@@ -6934,7 +6934,7 @@ export default function StockTransferModal({
                       placeholder={`যেমন: ${currentType === 'Color' ? 'ফিরোজা, ম্যাজেন্টা, জলপাই...' : currentType === 'Size' ? 'XL, XXL, 42...' : '1kg, 500gm, 25kg...'}`}
                       value={newColorModal.variantName || newColorModal.colorName || ''}
                       onChange={(e) => setNewColorModal(prev => ({ ...prev, variantName: e.target.value, colorName: e.target.value }))}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                      className="w-full px-3 py-2 bg-[#FAFAFA] border border-[#E5E5E5] rounded-md text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
                     />
                   </div>
 
@@ -6947,7 +6947,7 @@ export default function StockTransferModal({
                       </div>
                       <span className="text-[10px] text-indigo-600 font-semibold">{displayOptions.length}টি অপশন</span>
                     </div>
-                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 bg-slate-50 rounded-xl border border-slate-200">
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 bg-[#FAFAFA] rounded-md border border-[#E5E5E5]">
                       {displayOptions.map(c => {
                         const isSelected = (newColorModal.variantName || newColorModal.colorName) === c;
                         return (
@@ -6957,8 +6957,8 @@ export default function StockTransferModal({
                             onClick={() => setNewColorModal(prev => ({ ...prev, variantName: c, colorName: c }))}
                             className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-colors cursor-pointer border ${
                               isSelected
-                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                                : 'bg-white hover:bg-indigo-50 text-slate-700 border-slate-200'
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-none'
+                                : 'bg-white hover:bg-indigo-50 text-slate-700 border-[#E5E5E5]'
                             }`}
                           >
                             + {c}
@@ -6970,7 +6970,7 @@ export default function StockTransferModal({
 
                   {/* থান কাপড়ের জন্য বিশেষ গজ/থান ইনপুট */}
                   {isThan && (
-                    <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/70">
+                    <div className="p-3 bg-[#FFFBEB]/50 rounded-md border border-[#FEF3C7]/70">
                       <div className="flex items-center justify-between mb-1">
                         <label className="text-[11px] font-bold text-amber-950 flex items-center space-x-1.5">
                           <Scissors className="w-3.5 h-3.5 text-amber-600" />
@@ -6996,7 +6996,7 @@ export default function StockTransferModal({
                   )}
 
                   {/* প্রারম্ভিক স্টক ইনপুট */}
-                  <div className="grid grid-cols-2 gap-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                  <div className="grid grid-cols-2 gap-3 p-3 bg-indigo-50/50 rounded-md border border-indigo-100">
                     <div>
                       <label className="block text-[11px] font-bold text-indigo-900 mb-1">
                         গোডাউন স্টক ({isThan ? 'থান' : getProductDisplayUnit(prod)})
@@ -7046,7 +7046,7 @@ export default function StockTransferModal({
                         step="any"
                         value={newColorModal.costPrice}
                         onChange={(e) => setNewColorModal(prev => ({ ...prev, costPrice: e.target.value }))}
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold"
+                        className="w-full px-2 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-xs font-semibold"
                       />
                     </div>
                     <div>
@@ -7057,7 +7057,7 @@ export default function StockTransferModal({
                         step="any"
                         value={newColorModal.sellingPrice}
                         onChange={(e) => setNewColorModal(prev => ({ ...prev, sellingPrice: e.target.value }))}
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-indigo-700"
+                        className="w-full px-2 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-xs font-bold text-indigo-700"
                       />
                     </div>
                     <div>
@@ -7068,7 +7068,7 @@ export default function StockTransferModal({
                         step="any"
                         value={newColorModal.wholesalePrice}
                         onChange={(e) => setNewColorModal(prev => ({ ...prev, wholesalePrice: e.target.value }))}
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-amber-800"
+                        className="w-full px-2 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-xs font-bold text-[#B45309]"
                       />
                     </div>
                   </div>
@@ -7080,23 +7080,23 @@ export default function StockTransferModal({
                       value={newColorModal.barcode}
                       onChange={(e) => setNewColorModal(prev => ({ ...prev, barcode: e.target.value }))}
                       placeholder="বারকোড খালি রাখলে স্বয়ংক্রিয় তৈরি হবে"
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-mono"
+                      className="w-full px-2.5 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-[11px] font-mono"
                     />
                   </div>
 
                   {/* Footer buttons */}
-                  <div className="pt-3 border-t border-slate-200 flex items-center justify-end space-x-2">
+                  <div className="pt-3 border-t border-[#E5E5E5] flex items-center justify-end space-x-2">
                     <button
                       type="button"
                       onClick={() => setNewColorModal(null)}
-                      className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl font-bold transition-all cursor-pointer shadow-2xs"
+                      className="px-4 py-2 bg-white hover:bg-[#FAFAFA] text-slate-700 border border-[#E5E5E5] rounded-md font-bold transition-all cursor-pointer shadow-none"
                     >
                       বাতিল করে ফিরে যান
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmittingNewColor}
-                      className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-bold transition-all shadow-none flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSubmittingNewColor ? (
                         <>
@@ -7134,18 +7134,18 @@ export default function StockTransferModal({
           );
 
           return (
-            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
-              <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-black/40  animate-in fade-in duration-150">
+              <div className="relative w-full max-w-lg bg-white rounded-md shadow-none border border-[#E5E5E5] overflow-hidden animate-in zoom-in-95 duration-200">
                 
                 {/* মডাল হেডার */}
-                <div className="px-5 py-3.5 bg-gradient-to-r from-amber-600 via-amber-700 to-orange-700 text-white flex items-center justify-between">
+                <div className="px-5 py-3.5 bg-white border-b border-[#E5E5E5] text-[#111111] flex items-center justify-between">
                   <div className="flex items-center space-x-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-md bg-white/20 flex items-center justify-center">
                       <Edit3 className="w-4 h-4 text-white" />
                     </div>
                     <div>
                       <h3 className="text-sm font-black tracking-tight">ভ্যারিয়েন্ট এডিট ও স্টক আপডেট</h3>
-                      <p className="text-[11px] text-amber-100 font-medium truncate max-w-[280px]">
+                      <p className="text-[11px] text-[#525252] font-medium truncate max-w-[280px]">
                         {prod.ProductName} — {editVariantModal.colorName || 'ভ্যারিয়েন্ট'}
                       </p>
                     </div>
@@ -7172,13 +7172,13 @@ export default function StockTransferModal({
                       value={editVariantModal.colorName}
                       onChange={(e) => setEditVariantModal(prev => ({ ...prev, colorName: e.target.value }))}
                       placeholder="যেমন: লাল, নীল, কালো, White ইত্যাদি"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full px-3 py-2 bg-[#FAFAFA] border border-[#E5E5E5] rounded-md text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
 
                   {/* থান কাপড়ের জন্য বিশেষ গজ/থান ইনপুট */}
                   {isThan && (
-                    <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/70">
+                    <div className="p-3 bg-[#FFFBEB]/50 rounded-md border border-[#FEF3C7]/70">
                       <div className="flex items-center justify-between mb-1">
                         <label className="text-[11px] font-bold text-amber-950 flex items-center space-x-1.5">
                           <Scissors className="w-3.5 h-3.5 text-amber-600" />
@@ -7216,8 +7216,8 @@ export default function StockTransferModal({
                   )}
 
                   {/* গোডাউন ও দোকান স্টক ইনপুট */}
-                  <div className="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/80 space-y-2.5">
-                    <div className="text-[11px] font-bold text-amber-900 flex items-center space-x-1.5">
+                  <div className="p-3.5 bg-[#FFFBEB]/60 rounded-md border border-[#FEF3C7] space-y-2.5">
+                    <div className="text-[11px] font-bold text-[#B45309] flex items-center space-x-1.5">
                       <Layers className="w-3.5 h-3.5 text-amber-700" />
                       <span>মজুত সমন্বয় (একক: {currentUnit})</span>
                     </div>
@@ -7225,7 +7225,7 @@ export default function StockTransferModal({
                     <div className={isThan && effVariantYpt > 0 ? "space-y-3" : "grid grid-cols-2 gap-3"}>
                       <div>
                         <label className="block text-[11px] font-bold text-indigo-900 mb-1">
-                          🏭 গোডাউন স্টক ({currentUnit})
+                          গোডাউন স্টক ({currentUnit})
                         </label>
                         <input
                           type="number"
@@ -7244,13 +7244,13 @@ export default function StockTransferModal({
                       </div>
 
                       {isThan && effVariantYpt > 0 ? (
-                        <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200">
+                        <div className="p-3 bg-emerald-50/70 rounded-md border border-emerald-200">
                           <div className="flex items-center justify-between mb-2">
                             <label className="text-[11px] font-bold text-emerald-950 flex items-center space-x-1">
-                              <Store className="w-3.5 h-3.5 text-[#0da487]" />
-                              <span>🏬 দোকানে বর্তমান মজুত (আস্ত থান + কাটা থান গজ ও গিরা)</span>
+                              <Store className="w-3.5 h-3.5 text-[#0F172A]" />
+                              <span>দোকানে বর্তমান মজুত (আস্ত থান + কাটা থান গজ ও গিরা)</span>
                             </label>
-                            <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-200 shadow-2xs">
+                            <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-200 shadow-none">
                               ১ থান = {effVariantYpt} গজ | ১ গজ = ১৬ গিরা
                             </span>
                           </div>
@@ -7258,7 +7258,7 @@ export default function StockTransferModal({
                           <div className="grid grid-cols-3 gap-2">
                             <div>
                               <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
-                                📦 আস্ত থান
+                                আস্ত থান
                               </label>
                               <input
                                 type="number"
@@ -7277,7 +7277,7 @@ export default function StockTransferModal({
                                   }));
                                 }}
                                 placeholder="0"
-                                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#0da487]"
+                                className="w-full px-2.5 py-1.5 bg-white border border-[#E5E5E5] rounded-lg text-xs font-black text-slate-900 focus:ring-2 focus:ring-1 focus:ring-[#0F172A]"
                               />
                               <span className="text-[9.5px] text-slate-500 font-semibold block mt-0.5">
                                 = {((parseInt(editVariantModal.fullThans, 10) || 0) * effVariantYpt)} গজ
@@ -7286,7 +7286,7 @@ export default function StockTransferModal({
 
                             <div>
                               <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
-                                ✂️ কাটা গজ
+                                কাটা গজ
                               </label>
                               <input
                                 type="number"
@@ -7305,7 +7305,7 @@ export default function StockTransferModal({
                                   }));
                                 }}
                                 placeholder="0"
-                                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#0da487]"
+                                className="w-full px-2.5 py-1.5 bg-white border border-[#E5E5E5] rounded-lg text-xs font-black text-slate-900 focus:ring-2 focus:ring-1 focus:ring-[#0F172A]"
                               />
                               <span className="text-[9.5px] text-slate-500 font-semibold block mt-0.5">
                                 রানিং কাটা থান
@@ -7314,7 +7314,7 @@ export default function StockTransferModal({
 
                             <div>
                               <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
-                                📏 কাটা গিরা (০-১৫)
+                                কাটা গিরা (০-১৫)
                               </label>
                               <input
                                 type="number"
@@ -7337,7 +7337,7 @@ export default function StockTransferModal({
                                   }));
                                 }}
                                 placeholder="0"
-                                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#0da487]"
+                                className="w-full px-2.5 py-1.5 bg-white border border-[#E5E5E5] rounded-lg text-xs font-black text-slate-900 focus:ring-2 focus:ring-1 focus:ring-[#0F172A]"
                               />
                               <span className="text-[9.5px] text-slate-500 font-semibold block mt-0.5">
                                 = {((parseInt(editVariantModal.cutGira, 10) || 0) / 16).toFixed(4)} গজ
@@ -7348,7 +7348,7 @@ export default function StockTransferModal({
                           {/* লাইভ মোট গজ ও সম্পদ মূল্য প্রিভিউ */}
                           <div className="mt-2.5 p-2 bg-white rounded-lg border border-emerald-200/90 flex flex-wrap items-center justify-between gap-1.5">
                             <div className="text-[11px] font-black text-emerald-900">
-                              মোট দোকান গজ: <span className="font-mono text-xs text-[#0da487] font-bold">{Number(editVariantModal.shopStock || 0).toLocaleString('bn-BD')} গজ</span>
+                              মোট দোকান গজ: <span className="font-mono text-xs text-[#0F172A] font-bold">{Number(editVariantModal.shopStock || 0).toLocaleString('bn-BD')} গজ</span>
                               <span className="text-[10px] text-slate-500 font-medium ml-1.5">
                                 ({calculateThanBreakdown(editVariantModal.shopStock || 0, effVariantYpt, effRemTh).displayText})
                               </span>
@@ -7361,7 +7361,7 @@ export default function StockTransferModal({
                       ) : (
                         <div>
                           <label className="block text-[11px] font-bold text-emerald-900 mb-1">
-                            🏬 দোকান স্টক ({currentUnit})
+                            দোকান স্টক ({currentUnit})
                           </label>
                           <input
                             type="number"
@@ -7392,7 +7392,7 @@ export default function StockTransferModal({
                         step="any"
                         value={editVariantModal.costPrice}
                         onChange={(e) => setEditVariantModal(prev => ({ ...prev, costPrice: e.target.value }))}
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold"
+                        className="w-full px-2 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-xs font-semibold"
                       />
                     </div>
                     <div>
@@ -7403,7 +7403,7 @@ export default function StockTransferModal({
                         step="any"
                         value={editVariantModal.sellingPrice}
                         onChange={(e) => setEditVariantModal(prev => ({ ...prev, sellingPrice: e.target.value }))}
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-indigo-700"
+                        className="w-full px-2 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-xs font-bold text-indigo-700"
                       />
                     </div>
                     <div>
@@ -7414,7 +7414,7 @@ export default function StockTransferModal({
                         step="any"
                         value={editVariantModal.wholesalePrice}
                         onChange={(e) => setEditVariantModal(prev => ({ ...prev, wholesalePrice: e.target.value }))}
-                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-amber-800"
+                        className="w-full px-2 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-xs font-bold text-[#B45309]"
                       />
                     </div>
                   </div>
@@ -7427,23 +7427,23 @@ export default function StockTransferModal({
                       value={editVariantModal.barcode}
                       onChange={(e) => setEditVariantModal(prev => ({ ...prev, barcode: e.target.value }))}
                       placeholder="বারকোড বা খালি রাখলে আগের বারকোড বহাল থাকবে"
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-mono"
+                      className="w-full px-2.5 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-[11px] font-mono"
                     />
                   </div>
 
                   {/* Footer buttons */}
-                  <div className="pt-3 border-t border-slate-200 flex items-center justify-end space-x-2">
+                  <div className="pt-3 border-t border-[#E5E5E5] flex items-center justify-end space-x-2">
                     <button
                       type="button"
                       onClick={() => setEditVariantModal(null)}
-                      className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl font-bold transition-all cursor-pointer shadow-2xs"
+                      className="px-4 py-2 bg-white hover:bg-[#FAFAFA] text-slate-700 border border-[#E5E5E5] rounded-md font-bold transition-all cursor-pointer shadow-none"
                     >
                       বাতিল করে ফিরে যান
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmittingEditVariant}
-                      className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md font-bold transition-all shadow-none flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSubmittingEditVariant ? (
                         <>
@@ -7513,13 +7513,13 @@ export default function StockTransferModal({
             : 0;
 
           return (
-            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-              <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]">
+            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-black/40  animate-in fade-in duration-200">
+              <div className="bg-white rounded-lg shadow-none border border-[#E5E5E5] w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]">
                 
                 {/* ১. স্লিম ও পরিচ্ছন্ন হেডার */}
-                <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+                <div className="px-5 py-4 bg-slate-900 text-[#111111] flex items-center justify-between border-b border-slate-800">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-[#0da487] flex items-center justify-center shadow-inner shrink-0">
+                    <div className="w-10 h-10 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[#0F172A] flex items-center justify-center shadow-none shrink-0">
                       <Truck className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
@@ -7527,7 +7527,7 @@ export default function StockTransferModal({
                         <h3 className="text-sm sm:text-base font-black tracking-tight text-white">
                           দোকানে স্টক স্থানান্তর
                         </h3>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0da487]/20 text-emerald-300 border border-emerald-400/30">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0F172A]/20 text-emerald-300 border border-emerald-400/30">
                           সরাসরি চালান
                         </span>
                       </div>
@@ -7539,7 +7539,7 @@ export default function StockTransferModal({
                   <button
                     type="button"
                     onClick={() => setDirectTransferModal(null)}
-                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors cursor-pointer"
                     title="বন্ধ করুন"
                   >
                     <X className="w-5 h-5" />
@@ -7549,12 +7549,12 @@ export default function StockTransferModal({
                 {/* ২. ফর্ম বডি */}
                 <form onSubmit={handleConfirmDirectTransferSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-4 text-xs">
                   
-                  {/* ভিজ্যুয়াল মুভমেন্ট ফ্লো ব্যানার (উৎস ➔ গন্তব্য) */}
-                  <div className="p-3.5 bg-slate-50/90 rounded-2xl border border-slate-200/90 flex items-center justify-between shadow-2xs">
+                  {/* ভিজ্যুয়াল মুভমেন্ট ফ্লো ব্যানার (উৎস → গন্তব্য) */}
+                  <div className="p-3.5 bg-[#FAFAFA]/90 rounded-md border border-[#E5E5E5]/90 flex items-center justify-between shadow-none">
                     {/* উৎস: গোডাউন */}
                     <div className="text-left flex-1 min-w-0">
                       <span className="text-[10px] sm:text-[10.5px] font-bold text-slate-500 block uppercase tracking-wider">
-                        🏭 কেন্দ্রীয় গোডাউন
+                        কেন্দ্রীয় গোডাউন
                       </span>
                       <span className="text-base sm:text-lg font-black font-mono text-slate-900 block mt-0.5">
                         {currentAvailableGodown} <span className="text-xs font-bold text-slate-600">{unitLabel}</span>
@@ -7564,16 +7564,16 @@ export default function StockTransferModal({
 
                     {/* মাঝের মুভমেন্ট আইকন ও অ্যারো */}
                     <div className="flex flex-col items-center justify-center px-3 shrink-0">
-                      <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-200/80 text-[#0da487] flex items-center justify-center shadow-2xs">
+                      <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-200/80 text-[#0F172A] flex items-center justify-center shadow-none">
                         <ArrowRightLeft className="w-4 h-4" />
                       </div>
-                      <span className="text-[9px] font-bold text-[#0da487] mt-1 uppercase tracking-tight">স্থানান্তর</span>
+                      <span className="text-[9px] font-bold text-[#0F172A] mt-1 uppercase tracking-tight">স্থানান্তর</span>
                     </div>
 
                     {/* গন্তব্য: দোকান */}
                     <div className="text-right flex-1 min-w-0">
                       <span className="text-[10px] sm:text-[10.5px] font-bold text-slate-500 block uppercase tracking-wider">
-                        🏬 শপ ফ্লোর ও কাউন্টার
+                        শপ ফ্লোর ও কাউন্টার
                       </span>
                       <span className="text-base sm:text-lg font-black font-mono text-emerald-700 block mt-0.5">
                         {isThan ? `${currentShopStock} গজ` : `${currentShopStock} ${unitLabel}`}
@@ -7590,17 +7590,17 @@ export default function StockTransferModal({
                   {hasVars && (
                     <div className="space-y-3">
                       {/* মোড নির্বাচন: একক ভ্যারিয়েন্ট বনাম সকল ভ্যারিয়েন্ট */}
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-2">
                         <label className="text-xs font-bold text-slate-800">
                           স্থানান্তর মোড:
                         </label>
-                        <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-[11px] font-bold">
+                        <div className="flex items-center bg-[#F5F5F5] p-0.5 rounded-md border border-[#E5E5E5] text-[11px] font-bold">
                           <button
                             type="button"
                             onClick={() => setDirectTransferModal(prev => ({ ...prev, mode: 'single' }))}
                             className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                               directTransferModal.mode === 'single'
-                                ? 'bg-white text-slate-900 shadow-2xs font-black'
+                                ? 'bg-white text-slate-900 shadow-none font-black'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -7611,7 +7611,7 @@ export default function StockTransferModal({
                             onClick={() => setDirectTransferModal(prev => ({ ...prev, mode: 'all' }))}
                             className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                               directTransferModal.mode === 'all'
-                                ? 'bg-white text-slate-900 shadow-2xs font-black'
+                                ? 'bg-white text-slate-900 shadow-none font-black'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -7651,12 +7651,12 @@ export default function StockTransferModal({
                                           quantity: gStk > 0 ? (Number(prev.quantity) > gStk ? gStk : (Number(prev.quantity) || 1)) : 0
                                         }));
                                       }}
-                                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer border ${
+                                      className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer border ${
                                         isSelected
-                                          ? 'bg-[#0da487] text-white border-[#0da487] shadow-xs'
+                                          ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-none'
                                           : isOutOfStock
-                                          ? 'bg-slate-100 text-slate-400 border-slate-200/60 cursor-not-allowed opacity-60'
-                                          : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs'
+                                          ? 'bg-[#F5F5F5] text-slate-400 border-[#E5E5E5]/60 cursor-not-allowed opacity-60'
+                                          : 'bg-white hover:bg-[#FAFAFA] text-slate-700 border-[#E5E5E5] shadow-none'
                                       }`}
                                     >
                                       <span>{vName}</span>
@@ -7683,7 +7683,7 @@ export default function StockTransferModal({
                                     quantity: avail > 0 ? (Number(prev.quantity) > avail ? avail : (Number(prev.quantity) || 1)) : 0
                                   }));
                                 }}
-                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0da487]/20 focus:border-[#0da487] cursor-pointer"
+                                className="w-full px-3 py-2 bg-[#FAFAFA] border border-[#E5E5E5] rounded-md text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-1 focus:ring-[#0F172A]/15 focus:border-[#0F172A] cursor-pointer"
                               >
                                 {vars.map((v) => {
                                   const vId = v.VariantID || v.variantId;
@@ -7702,7 +7702,7 @@ export default function StockTransferModal({
                           </div>
 
                           {/* স্থানান্তরের পরিমাণ নির্ধারণ (Hero Stepper) */}
-                          <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/90 space-y-3">
+                          <div className="bg-[#FAFAFA] p-4 rounded-md border border-[#E5E5E5]/90 space-y-3">
                             <div className="flex items-center justify-between">
                               <label className="text-xs font-bold text-slate-800">
                                 দোকানে কত {unitLabel} আনতে চান? <span className="text-rose-500">*</span>
@@ -7718,7 +7718,7 @@ export default function StockTransferModal({
                                 type="button"
                                 disabled={transferQty <= 1}
                                 onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: Math.max(1, (Number(prev.quantity) || 1) - 1) }))}
-                                className="w-11 h-11 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 active:scale-95 flex items-center justify-center text-lg font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                                className="w-11 h-11 rounded-md bg-white border border-[#E5E5E5] text-slate-700 hover:bg-[#F5F5F5] active:scale-95 flex items-center justify-center text-lg font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-none"
                               >
                                 <Minus className="w-4 h-4" />
                               </button>
@@ -7733,7 +7733,7 @@ export default function StockTransferModal({
                                     const val = Math.max(0, Math.min(currentAvailableGodown, Number(e.target.value) || 0));
                                     setDirectTransferModal(prev => ({ ...prev, quantity: e.target.value === '' ? '' : val }));
                                   }}
-                                  className="w-full py-2.5 px-3 text-xl font-black font-mono text-center text-slate-900 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0da487]/30 focus:border-[#0da487] shadow-inner"
+                                  className="w-full py-2.5 px-3 text-xl font-black font-mono text-center text-slate-900 bg-white border border-[#E5E5E5] rounded-md focus:outline-none focus:ring-2 focus:ring-1 focus:ring-[#0F172A]/15 focus:border-[#0F172A] shadow-none"
                                   placeholder="1"
                                 />
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
@@ -7745,7 +7745,7 @@ export default function StockTransferModal({
                                 type="button"
                                 disabled={transferQty >= currentAvailableGodown}
                                 onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: Math.min(currentAvailableGodown, (Number(prev.quantity) || 0) + 1) }))}
-                                className="w-11 h-11 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 active:scale-95 flex items-center justify-center text-lg font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                                className="w-11 h-11 rounded-md bg-white border border-[#E5E5E5] text-slate-700 hover:bg-[#F5F5F5] active:scale-95 flex items-center justify-center text-lg font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-none"
                               >
                                 <Plus className="w-4 h-4" />
                               </button>
@@ -7761,8 +7761,8 @@ export default function StockTransferModal({
                                   onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: step }))}
                                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                                     Number(directTransferModal.quantity) === step
-                                      ? 'bg-slate-900 text-white shadow-2xs'
-                                      : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/90 disabled:opacity-30 disabled:cursor-not-allowed'
+                                      ? 'bg-slate-900 text-white shadow-none'
+                                      : 'bg-white hover:bg-[#F5F5F5] text-slate-700 border border-[#E5E5E5]/90 disabled:opacity-30 disabled:cursor-not-allowed'
                                   }`}
                                 >
                                   +{step}
@@ -7774,8 +7774,8 @@ export default function StockTransferModal({
                                 onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: currentAvailableGodown }))}
                                 className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
                                   Number(directTransferModal.quantity) === currentAvailableGodown && currentAvailableGodown > 0
-                                    ? 'bg-[#0da487] text-white shadow-xs'
-                                    : 'bg-emerald-50 hover:bg-emerald-100 text-[#0da487] border border-emerald-200/80 disabled:opacity-30 disabled:cursor-not-allowed'
+                                    ? 'bg-[#0F172A] text-white shadow-none'
+                                    : 'bg-emerald-50 hover:bg-emerald-100 text-[#0F172A] border border-emerald-200/80 disabled:opacity-30 disabled:cursor-not-allowed'
                                 }`}
                                 title="সম্পূর্ণ গোডাউন স্টক দোকানে আনুন"
                               >
@@ -7787,18 +7787,18 @@ export default function StockTransferModal({
                           {/* থান কাপড়ের জন্য গজ হিসাব ও স্থানান্তরের পর লাইভ ফলাফল */}
                           <div className="space-y-2">
                             {isThan && prodYardsPerThan > 0 && effectiveTransferQty > 0 && (
-                              <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200/80 text-amber-900 flex items-center justify-between text-xs">
+                              <div className="p-2.5 bg-[#FFFBEB] rounded-md border border-[#FEF3C7] text-[#B45309] flex items-center justify-between text-xs">
                                 <span className="font-bold flex items-center space-x-1.5">
                                   <Scissors className="w-3.5 h-3.5 text-amber-600" />
                                   <span>স্থানান্তরিত মোট কাপড়:</span>
                                 </span>
                                 <span className="font-mono font-black text-amber-950">
-                                  {effectiveYards} গজ <span className="font-normal text-[11px] text-amber-800">({effectiveTransferQty} থান × {currentTargetYpt} গজ)</span>
+                                  {effectiveYards} গজ <span className="font-normal text-[11px] text-[#B45309]">({effectiveTransferQty} থান × {currentTargetYpt} গজ)</span>
                                 </span>
                               </div>
                             )}
 
-                            <div className="px-3 py-2 bg-slate-100/70 rounded-xl border border-slate-200/70 flex items-center justify-between text-[11px]">
+                            <div className="px-3 py-2 bg-[#F5F5F5]/70 rounded-md border border-[#E5E5E5] flex items-center justify-between text-[11px]">
                               <span className="font-bold text-slate-500">স্থানান্তরের পর ব্যালেন্স:</span>
                               <div className="flex items-center space-x-2 font-mono">
                                 <span>গোডাউনে: <strong className="text-slate-800">{Math.max(0, currentAvailableGodown - transferQty)} {unitLabel}</strong></span>
@@ -7826,7 +7826,7 @@ export default function StockTransferModal({
                                   });
                                   setDirectTransferModal(prev => ({ ...prev, bulkQuantities: fill }));
                                 }}
-                                className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[10.5px] font-bold cursor-pointer transition-colors shadow-2xs"
+                                className="px-2.5 py-1 bg-white hover:bg-[#F5F5F5] text-slate-700 border border-[#E5E5E5] rounded-lg text-[10.5px] font-bold cursor-pointer transition-colors shadow-none"
                               >
                                 সবগুলোতে ১টি
                               </button>
@@ -7839,7 +7839,7 @@ export default function StockTransferModal({
                                   });
                                   setDirectTransferModal(prev => ({ ...prev, bulkQuantities: fill }));
                                 }}
-                                className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0da487] border border-emerald-200 rounded-lg text-[10.5px] font-bold cursor-pointer transition-colors shadow-2xs"
+                                className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#0F172A] border border-emerald-200 rounded-lg text-[10.5px] font-bold cursor-pointer transition-colors shadow-none"
                               >
                                 সব স্টক
                               </button>
@@ -7850,14 +7850,14 @@ export default function StockTransferModal({
                                   vars.forEach(v => { fill[v.VariantID || v.variantId] = 0; });
                                   setDirectTransferModal(prev => ({ ...prev, bulkQuantities: fill }));
                                 }}
-                                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10.5px] font-bold cursor-pointer transition-colors"
+                                className="px-2.5 py-1 bg-[#F5F5F5] hover:bg-slate-200 text-slate-600 rounded-lg text-[10.5px] font-bold cursor-pointer transition-colors"
                               >
                                 রিসেট
                               </button>
                             </div>
                           </div>
 
-                          <div className="max-h-56 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white">
+                          <div className="max-h-56 overflow-y-auto border border-[#E5E5E5] rounded-md divide-y divide-slate-100 bg-white">
                             {vars.map((v) => {
                               const vId = v.VariantID || v.variantId;
                               const attrs = v.Attributes || {};
@@ -7867,7 +7867,7 @@ export default function StockTransferModal({
                               const currentVal = directTransferModal.bulkQuantities[vId] !== undefined ? directTransferModal.bulkQuantities[vId] : 0;
 
                               return (
-                                <div key={vId} className="p-2.5 flex items-center justify-between hover:bg-slate-50/80 transition-colors">
+                                <div key={vId} className="p-2.5 flex items-center justify-between hover:bg-[#FAFAFA] transition-colors">
                                   <div className="min-w-0 flex-1 pr-2">
                                     <span className="font-bold text-slate-800 text-xs block truncate">
                                       {vName}
@@ -7895,7 +7895,7 @@ export default function StockTransferModal({
                                           bulkQuantities: { ...prev.bulkQuantities, [vId]: val }
                                         }));
                                       }}
-                                      className="w-16 px-2 py-1 text-xs font-bold text-center font-mono bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#0da487] focus:outline-none disabled:opacity-40"
+                                      className="w-16 px-2 py-1 text-xs font-bold text-center font-mono bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg focus:bg-white focus:ring-2 focus:ring-1 focus:ring-[#0F172A] focus:outline-none disabled:opacity-40"
                                       placeholder="0"
                                     />
                                     <span className="text-[10px] font-bold text-slate-400">{unitLabel}</span>
@@ -7905,7 +7905,7 @@ export default function StockTransferModal({
                             })}
                           </div>
 
-                          <div className="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200/80 flex items-center justify-between text-xs">
+                          <div className="p-2.5 bg-emerald-50/80 rounded-md border border-emerald-200/80 flex items-center justify-between text-xs">
                             <span className="font-bold text-emerald-950">মোট নির্বাচিত পরিমাণ:</span>
                             <span className="font-black font-mono text-emerald-950 text-sm">
                               {bulkTotalQty} {unitLabel} {isThan && prodYardsPerThan > 0 ? `(${effectiveYards} গজ)` : ''}
@@ -7920,7 +7920,7 @@ export default function StockTransferModal({
                   {!hasVars && (
                     <div className="space-y-3">
                       {/* স্থানান্তরের পরিমাণ নির্ধারণ (Hero Stepper) */}
-                      <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/90 space-y-3">
+                      <div className="bg-[#FAFAFA] p-4 rounded-md border border-[#E5E5E5]/90 space-y-3">
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-bold text-slate-800">
                             দোকানে কত {unitLabel} আনতে চান? <span className="text-rose-500">*</span>
@@ -7936,7 +7936,7 @@ export default function StockTransferModal({
                             type="button"
                             disabled={transferQty <= 1}
                             onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: Math.max(1, (Number(prev.quantity) || 1) - 1) }))}
-                            className="w-11 h-11 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 active:scale-95 flex items-center justify-center text-lg font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                            className="w-11 h-11 rounded-md bg-white border border-[#E5E5E5] text-slate-700 hover:bg-[#F5F5F5] active:scale-95 flex items-center justify-center text-lg font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-none"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
@@ -7951,7 +7951,7 @@ export default function StockTransferModal({
                                 const val = Math.max(0, Math.min(currentAvailableGodown, Number(e.target.value) || 0));
                                 setDirectTransferModal(prev => ({ ...prev, quantity: e.target.value === '' ? '' : val }));
                               }}
-                              className="w-full py-2.5 px-3 text-xl font-black font-mono text-center text-slate-900 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0da487]/30 focus:border-[#0da487] shadow-inner"
+                              className="w-full py-2.5 px-3 text-xl font-black font-mono text-center text-slate-900 bg-white border border-[#E5E5E5] rounded-md focus:outline-none focus:ring-2 focus:ring-1 focus:ring-[#0F172A]/15 focus:border-[#0F172A] shadow-none"
                               placeholder="1"
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
@@ -7963,7 +7963,7 @@ export default function StockTransferModal({
                             type="button"
                             disabled={transferQty >= currentAvailableGodown}
                             onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: Math.min(currentAvailableGodown, (Number(prev.quantity) || 0) + 1) }))}
-                            className="w-11 h-11 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 active:scale-95 flex items-center justify-center text-lg font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                            className="w-11 h-11 rounded-md bg-white border border-[#E5E5E5] text-slate-700 hover:bg-[#F5F5F5] active:scale-95 flex items-center justify-center text-lg font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-none"
                           >
                             <Plus className="w-4 h-4" />
                           </button>
@@ -7979,8 +7979,8 @@ export default function StockTransferModal({
                               onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: step }))}
                               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                                 Number(directTransferModal.quantity) === step
-                                  ? 'bg-slate-900 text-white shadow-2xs'
-                                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/90 disabled:opacity-30 disabled:cursor-not-allowed'
+                                  ? 'bg-slate-900 text-white shadow-none'
+                                  : 'bg-white hover:bg-[#F5F5F5] text-slate-700 border border-[#E5E5E5]/90 disabled:opacity-30 disabled:cursor-not-allowed'
                               }`}
                             >
                               +{step}
@@ -7992,8 +7992,8 @@ export default function StockTransferModal({
                             onClick={() => setDirectTransferModal(prev => ({ ...prev, quantity: currentAvailableGodown }))}
                             className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
                               Number(directTransferModal.quantity) === currentAvailableGodown && currentAvailableGodown > 0
-                                ? 'bg-[#0da487] text-white shadow-xs'
-                                : 'bg-emerald-50 hover:bg-emerald-100 text-[#0da487] border border-emerald-200/80 disabled:opacity-30 disabled:cursor-not-allowed'
+                                ? 'bg-[#0F172A] text-white shadow-none'
+                                : 'bg-emerald-50 hover:bg-emerald-100 text-[#0F172A] border border-emerald-200/80 disabled:opacity-30 disabled:cursor-not-allowed'
                             }`}
                             title="সম্পূর্ণ গোডাউন স্টক দোকানে আনুন"
                           >
@@ -8005,18 +8005,18 @@ export default function StockTransferModal({
                       {/* থান কাপড়ের জন্য গজ হিসাব ও স্থানান্তরের পর লাইভ ফলাফল */}
                       <div className="space-y-2">
                         {isThan && prodYardsPerThan > 0 && effectiveTransferQty > 0 && (
-                          <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200/80 text-amber-900 flex items-center justify-between text-xs">
+                          <div className="p-2.5 bg-[#FFFBEB] rounded-md border border-[#FEF3C7] text-[#B45309] flex items-center justify-between text-xs">
                             <span className="font-bold flex items-center space-x-1.5">
                               <Scissors className="w-3.5 h-3.5 text-amber-600" />
                               <span>স্থানান্তরিত মোট কাপড়:</span>
                             </span>
                             <span className="font-mono font-black text-amber-950">
-                              {effectiveYards} গজ <span className="font-normal text-[11px] text-amber-800">({effectiveTransferQty} থান × ${prodYardsPerThan} গজ)</span>
+                              {effectiveYards} গজ <span className="font-normal text-[11px] text-[#B45309]">({effectiveTransferQty} থান × ${prodYardsPerThan} গজ)</span>
                             </span>
                           </div>
                         )}
 
-                        <div className="px-3 py-2 bg-slate-100/70 rounded-xl border border-slate-200/70 flex items-center justify-between text-[11px]">
+                        <div className="px-3 py-2 bg-[#F5F5F5]/70 rounded-md border border-[#E5E5E5] flex items-center justify-between text-[11px]">
                           <span className="font-bold text-slate-500">স্থানান্তরের পর ব্যালেন্স:</span>
                           <div className="flex items-center space-x-2 font-mono">
                             <span>গোডাউনে: <strong className="text-slate-800">{Math.max(0, currentAvailableGodown - transferQty)} {unitLabel}</strong></span>
@@ -8038,16 +8038,16 @@ export default function StockTransferModal({
                       value={directTransferModal.notes}
                       onChange={(e) => setDirectTransferModal(prev => ({ ...prev, notes: e.target.value }))}
                       placeholder="চালান বিবরণ বা মন্তব্য লিখুন..."
-                      className="w-full px-3.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0da487]/20 focus:border-[#0da487] focus:bg-white transition-all shadow-2xs"
+                      className="w-full px-3.5 py-2 text-xs bg-[#FAFAFA]/70 border border-[#E5E5E5] rounded-md focus:outline-none focus:ring-2 focus:ring-1 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:bg-white transition-all shadow-none"
                     />
                   </div>
 
                   {/* ৬. অ্যাকশন বাটনসমূহ (Instant Feedback & Action Verbs) */}
-                  <div className="pt-2 border-t border-slate-100 space-y-2">
+                  <div className="pt-2 border-t border-[#E5E5E5] space-y-2">
                     <button
                       type="submit"
                       disabled={isSubmittingDirectTransfer || effectiveTransferQty <= 0}
-                      className="w-full py-3 bg-[#0da487] hover:bg-[#0b8b72] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed text-white font-black rounded-xl text-xs sm:text-sm shadow-md shadow-[#0da487]/20 cursor-pointer transition-all flex items-center justify-center space-x-2"
+                      className="w-full py-3 bg-[#0F172A] hover:bg-[#1E293B] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed text-white font-black rounded-md text-xs sm:text-sm shadow-none shadow-none cursor-pointer transition-all flex items-center justify-center space-x-2"
                     >
                       {isSubmittingDirectTransfer ? (
                         <span className="flex items-center space-x-2">
@@ -8075,7 +8075,7 @@ export default function StockTransferModal({
                       <button
                         type="button"
                         onClick={() => setDirectTransferModal(null)}
-                        className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold rounded-lg cursor-pointer shadow-2xs transition-colors text-xs"
+                        className="px-3.5 py-1.5 bg-white hover:bg-[#FAFAFA] text-slate-700 border border-[#E5E5E5] font-bold rounded-lg cursor-pointer shadow-none transition-colors text-xs"
                       >
                         বাতিল করে ফিরে যান
                       </button>
@@ -8102,11 +8102,11 @@ export default function StockTransferModal({
         {/* এন্টারপ্রাইজ কনফার্মেশন ডায়ালগ (Forgiving UX: Destructive Confirm) */}
         {/* =============================================================== */}
         {confirmDialog && (
-          <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-5 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-5 bg-slate-950/60  animate-in fade-in duration-150">
+            <div className="relative w-full max-w-md bg-white rounded-md shadow-none border border-[#E5E5E5] overflow-hidden animate-in zoom-in-95 duration-200">
               <div className="p-5 space-y-3.5">
                 <div className="flex items-start space-x-3">
-                  <div className={`p-2.5 rounded-xl shrink-0 ${confirmDialog.isDestructive ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}`}>
+                  <div className={`p-2.5 rounded-md shrink-0 ${confirmDialog.isDestructive ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-[#FFFBEB] text-amber-700 border border-amber-100'}`}>
                     <AlertTriangle className="w-5 h-5" />
                   </div>
                   <div>
@@ -8115,11 +8115,11 @@ export default function StockTransferModal({
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+                <div className="pt-3 border-t border-[#E5E5E5] flex items-center justify-end space-x-2">
                   <button
                     type="button"
                     onClick={() => setConfirmDialog(null)}
-                    className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                    className="px-4 py-2 bg-white hover:bg-[#FAFAFA] text-slate-700 border border-[#E5E5E5] rounded-md text-xs font-bold transition-all cursor-pointer shadow-none"
                   >
                     {confirmDialog.cancelLabel || 'না, ফিরে যান'}
                   </button>
@@ -8130,7 +8130,7 @@ export default function StockTransferModal({
                       setConfirmDialog(null);
                       if (typeof action === 'function') action();
                     }}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-xs cursor-pointer ${
+                    className={`px-4 py-2 rounded-md text-xs font-bold text-white transition-all shadow-none cursor-pointer ${
                       confirmDialog.isDestructive
                         ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
                         : 'bg-slate-900 hover:bg-slate-800'
@@ -8149,7 +8149,7 @@ export default function StockTransferModal({
         {/* =============================================================== */}
         {toast && (
           <div className="fixed bottom-6 right-6 z-[100] max-w-md animate-in slide-in-from-bottom-5 fade-in duration-200">
-            <div className={`p-4 rounded-2xl shadow-xl border flex items-start space-x-3 ${
+            <div className={`p-4 rounded-md shadow-none border flex items-start space-x-3 ${
               toast.type === 'error'
                 ? 'bg-white border-rose-200 text-rose-900 shadow-rose-500/10'
                 : toast.type === 'info'
@@ -8162,7 +8162,7 @@ export default function StockTransferModal({
                 ) : toast.type === 'info' ? (
                   <Info className="w-5 h-5 text-blue-600" />
                 ) : (
-                  <CheckCircle2 className="w-5 h-5 text-[#0da487]" />
+                  <CheckCircle2 className="w-5 h-5 text-[#0F172A]" />
                 )}
               </span>
               <div className="flex-1 text-xs">
