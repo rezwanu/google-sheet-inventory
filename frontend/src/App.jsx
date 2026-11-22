@@ -3816,7 +3816,11 @@ export default function App() {
           if (isReceived && isToShop) {
             const pUnit = getProductDisplayUnit(target);
             const isThan = /than|থান/i.test(pUnit);
-            const yardsPerThan = isThan ? (Number(target.YardsPerThan || target.yardsPerThan || 0) || 25) : 0;
+            let targetVarForYpt = null;
+            if (variantId && Array.isArray(target.Variants)) {
+              targetVarForYpt = target.Variants.find((v) => String(v.VariantID || '').trim() === String(variantId).trim());
+            }
+            const yardsPerThan = isThan ? (Number(itm.yardsPerThan || targetVarForYpt?.YardsPerThan || targetVarForYpt?.yardsPerThan || target.YardsPerThan || target.yardsPerThan || 0) || 25) : 0;
             const shopIncrease = (isThan && yardsPerThan > 0) ? (qty * yardsPerThan) : qty;
 
             const currentShop = Number(target.StockQuantity || 0);
@@ -3975,7 +3979,11 @@ export default function App() {
             const target = { ...updatedProducts[prodIdx] };
             const pUnit = getProductDisplayUnit(target);
             const isThan = /than|থান/i.test(pUnit);
-            const yardsPerThan = isThan ? (Number(target.YardsPerThan || target.yardsPerThan || 0) || 25) : 0;
+            let targetVarForYpt = null;
+            if (variantId && Array.isArray(target.Variants)) {
+              targetVarForYpt = target.Variants.find((v) => String(v.VariantID || '').trim() === String(variantId).trim());
+            }
+            const yardsPerThan = isThan ? (Number(itm.yardsPerThan || targetVarForYpt?.YardsPerThan || targetVarForYpt?.yardsPerThan || target.YardsPerThan || target.yardsPerThan || 0) || 25) : 0;
             const shopIncrease = (isThan && yardsPerThan > 0) ? (qty * yardsPerThan) : qty;
 
             const prevShop = Number(target.StockQuantity) || 0;
@@ -4339,6 +4347,10 @@ export default function App() {
           vName = Object.values(attrs).filter(Boolean).join(' / ') || vr.VariantID;
         }
       }
+      const targetV = Array.isArray(product.Variants)
+        ? product.Variants.find((v) => String(v.VariantID || v.variantId) === String(itm.variantId))
+        : null;
+      const vYpt = Number(itm.yardsPerThan || targetV?.YardsPerThan || targetV?.yardsPerThan || product.YardsPerThan || product.yardsPerThan || 25);
       return {
         productId: product.ProductID,
         productName: product.ProductName,
@@ -4346,6 +4358,7 @@ export default function App() {
         variantName: vName,
         quantity: Number(itm.quantity) || 1,
         unit: product.Unit || 'Pcs',
+        yardsPerThan: vYpt,
         costPrice: Number(product.CostPrice) || 0
       };
     });

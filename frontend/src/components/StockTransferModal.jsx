@@ -300,6 +300,14 @@ export default function StockTransferModal({
               : (v.floorPrice || parentMinSelling)))
       ) || parentMinSelling;
 
+      const vYpt = Number(
+        v.YardsPerThan !== undefined && v.YardsPerThan !== null && v.YardsPerThan !== ''
+          ? v.YardsPerThan
+          : (v.yardsPerThan !== undefined && v.yardsPerThan !== null && v.yardsPerThan !== ''
+            ? v.yardsPerThan
+            : 0)
+      );
+
       return {
         ...v,
         GodownStock: isNaN(gStock) ? 0 : gStock,
@@ -311,7 +319,9 @@ export default function StockTransferModal({
         SellingPrice: isNaN(vSell) ? parentSelling : vSell,
         sellingPrice: isNaN(vSell) ? parentSelling : vSell,
         MinSellingPrice: isNaN(vMinSell) ? parentMinSelling : vMinSell,
-        minSellingPrice: isNaN(vMinSell) ? parentMinSelling : vMinSell
+        minSellingPrice: isNaN(vMinSell) ? parentMinSelling : vMinSell,
+        YardsPerThan: vYpt > 0 ? vYpt : (v.YardsPerThan !== undefined ? v.YardsPerThan : (v.yardsPerThan || undefined)),
+        yardsPerThan: vYpt > 0 ? vYpt : (v.yardsPerThan !== undefined ? v.yardsPerThan : (v.YardsPerThan || undefined))
       };
     });
   };
@@ -545,9 +555,10 @@ export default function StockTransferModal({
 
         if (hasVars) {
           vars.forEach((v) => {
+            const vYpt = Number(v.YardsPerThan || v.yardsPerThan || 0) || yardsPerThan;
             const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
             const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
-            const vBd = calculateThanBreakdown(vS, yardsPerThan, remTh);
+            const vBd = calculateThanBreakdown(vS, vYpt, remTh);
             fabricShopFullThans += vBd.fullThans;
             fabricShopRunningCutYards += vBd.runningCutYards;
             fabricShopThanCount += (vBd.fullThans + (vBd.runningCutYards > 0 ? 1 : 0));
@@ -571,12 +582,20 @@ export default function StockTransferModal({
             if (vMinSell <= 0 && minSellingPrice > 0) vMinSell = minSellingPrice;
             if (vMinSell <= 0 && vSPrice > 0) vMinSell = vSPrice;
 
-            fabricGodownValuation += (vG * yardsPerThan * vC);
-            fabricGodownSellingValuation += (vG * yardsPerThan * vSPrice);
-            fabricGodownMinSellingValuation += (vG * yardsPerThan * vMinSell);
+            fabricGodownValuation += (vG * vYpt * vC);
+            fabricGodownSellingValuation += (vG * vYpt * vSPrice);
+            fabricGodownMinSellingValuation += (vG * vYpt * vMinSell);
             totalShopCostValuation += (vS * vC);
             totalShopSellingValuation += (vS * vSPrice);
           });
+          if (varGStockSum > 0) {
+            fabricGodownYards -= (effectiveGStock * yardsPerThan);
+            fabricGodownYards += vars.reduce((acc, v) => {
+              const vg = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
+              const vy = Number(v.YardsPerThan || v.yardsPerThan || 0) || yardsPerThan;
+              return acc + (vg * vy);
+            }, 0);
+          }
           // ফলব্যাক: যদি ভ্যারিয়েন্টগুলোতে আলাদা দোকান স্টক ০ থাকে কিন্তু প্যারেন্ট পণ্যে দোকান স্টক বিদ্যমান
           if (varSStockSum === 0 && effectiveSStock > 0) {
             totalShopCostValuation += (effectiveSStock * unitCost);
@@ -819,7 +838,8 @@ export default function StockTransferModal({
         if (hasVars) {
           matchFilter = vars.some((v) => {
             const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
-            return calculateThanBreakdown(vS, ypt, remTh).isRemnant;
+            const vYpt = Number(v.YardsPerThan || v.yardsPerThan || 0) || ypt;
+            return calculateThanBreakdown(vS, vYpt, remTh).isRemnant;
           });
         } else {
           const bd = calculateThanBreakdown(effectiveSStock, ypt, remTh);
@@ -840,7 +860,8 @@ export default function StockTransferModal({
           matchFilter = vars.some((v) => {
             const vS = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
             const vG = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock || 0)) || 0;
-            const bd = calculateThanBreakdown(vS, ypt, remTh);
+            const vYpt = Number(v.YardsPerThan || v.yardsPerThan || 0) || ypt;
+            const bd = calculateThanBreakdown(vS, vYpt, remTh);
             return bd.needsRestock && vG > 0;
           });
         } else {
@@ -884,8 +905,9 @@ export default function StockTransferModal({
           if (unitCost > 0 && vCost > unitCost * 10) vCost = unitCost;
           let vSelling = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : unitSelling)) || 0;
           if (vSelling <= 0 && unitSelling > 0) vSelling = unitSelling;
-          const vBd = isThan ? calculateThanBreakdown(vSStock, yardsPerThan, remTh) : null;
-          const vGodownYards = isThan ? (vGStock * yardsPerThan) : 0;
+          const vYpt = isThan ? (Number(v.YardsPerThan || v.yardsPerThan || 0) || yardsPerThan) : 0;
+          const vBd = isThan ? calculateThanBreakdown(vSStock, vYpt, remTh) : null;
+          const vGodownYards = isThan ? (vGStock * vYpt) : 0;
           const vShopYards = isThan ? vSStock : 0;
           const vTotalYards = isThan ? (vGodownYards + vShopYards) : 0;
           const vTotalThans = isThan ? (vGStock + (vBd ? vBd.fullThans : 0)) : (vGStock + vSStock);
@@ -936,7 +958,7 @@ export default function StockTransferModal({
             costPrice: vCost,
             sellingPrice: vSelling,
             isThanUnit: isThan,
-            yardsPerThan: yardsPerThan,
+            yardsPerThan: vYpt,
             remnantThreshold: remTh,
             thanBreakdown: vBd,
             godownStock: vGStock,
@@ -1024,6 +1046,7 @@ export default function StockTransferModal({
           const vLabelParts = [vColor && `রং: ${vColor}`, vSize && `সাইজ: ${vSize}`, otherAttrs].filter(Boolean);
           const vName = vLabelParts.length > 0 ? vLabelParts.join(' / ') : `ভ্যারিয়েন্ট #${vIdx + 1}`;
 
+          const vYpt = isThan ? (Number(v.YardsPerThan || v.yardsPerThan || 0) || yardsPerThan) : 0;
           list.push({
             key: `${p.ProductID}:::${v.VariantID || vIdx}`,
             productId: p.ProductID,
@@ -1037,7 +1060,7 @@ export default function StockTransferModal({
             shopStock: vSStock,
             unit: unit,
             isThan,
-            yardsPerThan,
+            yardsPerThan: vYpt,
             costPrice: Number(v.CostPrice || p.CostPrice || 0),
             barcode: v.Barcode || p.Barcode || '',
             parentProduct: p,
@@ -1359,10 +1382,12 @@ export default function StockTransferModal({
       }
       const attrs = targetVar.Attributes || {};
       const vName = Object.values(attrs).filter(Boolean).join(' / ') || targetVar.Color || targetVar.Size || targetVar.VariantID;
+      const vYpt = Number(targetVar.YardsPerThan || targetVar.yardsPerThan || product.YardsPerThan || product.yardsPerThan || 25);
       itemsToTransfer.push({
         variantId: targetVar.VariantID || targetVar.variantId,
         variantName: vName,
-        quantity: qty
+        quantity: qty,
+        yardsPerThan: vYpt
       });
     } else {
       // Bulk mode: all variants
@@ -1378,10 +1403,12 @@ export default function StockTransferModal({
           }
           const attrs = v.Attributes || {};
           const vName = Object.values(attrs).filter(Boolean).join(' / ') || v.Color || v.Size || vId;
+          const vYpt = Number(v.YardsPerThan || v.yardsPerThan || product.YardsPerThan || product.yardsPerThan || 25);
           itemsToTransfer.push({
             variantId: vId,
             variantName: vName,
-            quantity: qty
+            quantity: qty,
+            yardsPerThan: vYpt
           });
         }
       }
@@ -2006,6 +2033,7 @@ export default function StockTransferModal({
       variantType: defaultType,
       variantName: '',
       colorName: '',
+      yardsPerThan: '', // খালি রাখলে মূল পণ্যের গজ কার্যকর হবে
       godownStock: 1, // ডিফল্ট ১ থান বা ১ পিস
       shopStock: 0,
       costPrice: product.CostPrice || 0,
@@ -2019,7 +2047,7 @@ export default function StockTransferModal({
   const handleSaveNewColorSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!newColorModal || !onUpdateProductVariants) return;
-    const { product, variantType, variantName, colorName, godownStock, shopStock, costPrice, sellingPrice, wholesalePrice, barcode } = newColorModal;
+    const { product, variantType, variantName, colorName, godownStock, shopStock, costPrice, sellingPrice, wholesalePrice, barcode, yardsPerThan } = newColorModal;
     const vType = variantType || 'Color';
     const cleanVarName = String(variantName || colorName || '').trim();
     if (!cleanVarName) {
@@ -2058,6 +2086,7 @@ export default function StockTransferModal({
     const baseBarcode = product.Barcode || `pb-${product.ProductID}`;
     const finalBarcode = (barcode || `${baseBarcode}-${cleanVarName.toLowerCase()}`).trim().replace(/\s+/g, '-');
 
+    const cleanYpt = yardsPerThan !== undefined && yardsPerThan !== '' && !isNaN(Number(yardsPerThan)) && Number(yardsPerThan) > 0 ? Number(yardsPerThan) : null;
     const newVariantObj = {
       VariantID: `VAR-${vType.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-4)}-${cleanVarName.toUpperCase().replace(/\s+/g, '_')}`,
       Attributes: { [vType]: cleanVarName },
@@ -2072,7 +2101,8 @@ export default function StockTransferModal({
       godownStock: gStock,
       StockQuantity: sStock,
       stockQuantity: sStock,
-      TotalStock: gStock + sStock
+      TotalStock: gStock + sStock,
+      ...(cleanYpt ? { YardsPerThan: cleanYpt, yardsPerThan: cleanYpt } : {})
     };
 
     const updatedVariants = [...currentVariants, newVariantObj];
@@ -2103,7 +2133,10 @@ export default function StockTransferModal({
     const colorVal = variant.Color || variant.color || variant.Attributes?.Color || variant.Attributes?.color || '';
     const prodUnit = getProductDisplayUnit(product);
     const isThan = /than|থান/i.test(prodUnit);
-    const prodYardsPerThan = isThan ? (Number(product.YardsPerThan || product.yardsPerThan || 0) || 25) : 0;
+    const customYpt = variant.YardsPerThan !== undefined && variant.YardsPerThan !== null && variant.YardsPerThan !== ''
+      ? variant.YardsPerThan
+      : (variant.yardsPerThan !== undefined && variant.yardsPerThan !== null && variant.yardsPerThan !== '' ? variant.yardsPerThan : '');
+    const prodYardsPerThan = isThan ? (Number(customYpt || product.YardsPerThan || product.yardsPerThan || 0) || 25) : 0;
     const currentShopStock = Number(variant.StockQuantity !== undefined ? variant.StockQuantity : (variant.stockQuantity !== undefined ? variant.stockQuantity : (variant.ShopStock || 0))) || 0;
 
     let fullThans = 0;
@@ -2123,6 +2156,7 @@ export default function StockTransferModal({
       variantIdx,
       colorName: colorVal,
       barcode: variant.Barcode || variant.barcode || '',
+      yardsPerThan: customYpt !== undefined && customYpt !== '' ? customYpt : '',
       godownStock: Number(variant.GodownStock !== undefined ? variant.GodownStock : variant.godownStock) || 0,
       shopStock: currentShopStock,
       fullThans: fullThans,
@@ -2138,7 +2172,7 @@ export default function StockTransferModal({
   const handleSaveEditVariantSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!editVariantModal || !onUpdateProductVariants) return;
-    const { product, variantIdx, colorName, barcode, godownStock, shopStock, fullThans, cutGoj, cutGira, costPrice, sellingPrice, wholesalePrice } = editVariantModal;
+    const { product, variantIdx, colorName, barcode, godownStock, shopStock, fullThans, cutGoj, cutGira, costPrice, sellingPrice, wholesalePrice, yardsPerThan } = editVariantModal;
     const cleanColor = String(colorName || '').trim();
     if (!cleanColor) {
       showToast('দয়া করে রঙের নাম উল্লেখ করুন।', 'error');
@@ -2147,7 +2181,8 @@ export default function StockTransferModal({
 
     const prodUnit = getProductDisplayUnit(product);
     const isThan = /than|থান/i.test(prodUnit);
-    const prodYardsPerThan = isThan ? (Number(product.YardsPerThan || product.yardsPerThan || 0) || 25) : 0;
+    const cleanYpt = yardsPerThan !== undefined && yardsPerThan !== '' && !isNaN(Number(yardsPerThan)) && Number(yardsPerThan) > 0 ? Number(yardsPerThan) : null;
+    const effectiveYpt = isThan ? (cleanYpt || Number(product.YardsPerThan || product.yardsPerThan || 0) || 25) : 0;
 
     const currentVariants = getVariantsOfProduct(product);
     // অন্য কোনো ভ্যারিয়েন্টে একই নাম আছে কি না যাচাই
@@ -2162,13 +2197,13 @@ export default function StockTransferModal({
     }
 
     const gStock = Math.max(0, Number(godownStock) || 0);
-    const sStock = (isThan && prodYardsPerThan > 0)
-      ? calculateInitialShopYards(fullThans, cutGoj, cutGira, prodYardsPerThan)
+    const sStock = (isThan && effectiveYpt > 0)
+      ? calculateInitialShopYards(fullThans, cutGoj, cutGira, effectiveYpt)
       : Math.max(0, Number(shopStock) || 0);
 
     const updatedVariants = currentVariants.map((v, idx) => {
       if (idx === variantIdx) {
-        return {
+        const updated = {
           ...v,
           Color: cleanColor,
           Attributes: { ...(v.Attributes || {}), Color: cleanColor },
@@ -2188,6 +2223,14 @@ export default function StockTransferModal({
           WholesalePrice: Number(wholesalePrice) || 0,
           wholesalePrice: Number(wholesalePrice) || 0
         };
+        if (cleanYpt) {
+          updated.YardsPerThan = cleanYpt;
+          updated.yardsPerThan = cleanYpt;
+        } else {
+          delete updated.YardsPerThan;
+          delete updated.yardsPerThan;
+        }
+        return updated;
       }
       return v;
     });
@@ -3725,13 +3768,15 @@ export default function StockTransferModal({
                               const varFullThansSum = hasVars && isThan
                                 ? vars.reduce((sum, v) => {
                                     const vQty = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
-                                    return sum + (calculateThanBreakdown(vQty, yardsPerThan, remTh).fullThans || 0);
+                                    const vYpt = Number(v.YardsPerThan || v.yardsPerThan || 0) || yardsPerThan;
+                                    return sum + (calculateThanBreakdown(vQty, vYpt, remTh).fullThans || 0);
                                   }, 0)
                                 : 0;
                               const varRunningCutYardsSum = hasVars && isThan
                                 ? vars.reduce((sum, v) => {
                                     const vQty = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity || 0)) || 0;
-                                    return sum + (calculateThanBreakdown(vQty, yardsPerThan, remTh).runningCutYards || 0);
+                                    const vYpt = Number(v.YardsPerThan || v.yardsPerThan || 0) || yardsPerThan;
+                                    return sum + (calculateThanBreakdown(vQty, vYpt, remTh).runningCutYards || 0);
                                   }, 0)
                                 : 0;
 
@@ -3754,7 +3799,8 @@ export default function StockTransferModal({
                                 ? (hasVars
                                     ? vars.reduce((sum, v) => {
                                         const vGStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0));
-                                        const vGoj = vGStock * yardsPerThan;
+                                        const vYpt = Number(v.YardsPerThan || v.yardsPerThan || 0) || yardsPerThan;
+                                        const vGoj = vGStock * vYpt;
                                         let vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : unitCost)) || 0;
                                         if (vCost <= 0 && unitCost > 0) vCost = unitCost;
                                         if (unitCost > 0 && vCost > unitCost * 10) vCost = unitCost;
@@ -4459,11 +4505,12 @@ export default function StockTransferModal({
                                                     if (unitCost > 0 && vCost > unitCost * 10) vCost = unitCost;
                                                     const vColor = v.Attributes?.Color || v.Color || '';
                                                     const vSize = v.Attributes?.Size || v.Size || '';
-                                                    const vBd = isThan ? calculateThanBreakdown(vSStock, yardsPerThan, remTh) : null;
+                                                    const vYpt = isThan ? (Number(v.YardsPerThan || v.yardsPerThan || 0) || yardsPerThan) : 0;
+                                                    const vBd = isThan ? calculateThanBreakdown(vSStock, vYpt, remTh) : null;
                                                     const vTotal = isThan ? (vGStock + (vBd ? vBd.fullThans : 0)) : (vGStock + vSStock);
                                                     const isVZero = vSStock <= 0;
                                                     const isVLow = isThan
-                                                      ? (vBd ? (vBd.needsRestock || vBd.fullThans === 0 || vSStock <= yardsPerThan) : (vSStock <= 2))
+                                                      ? (vBd ? (vBd.needsRestock || vBd.fullThans === 0 || vSStock <= vYpt) : (vSStock <= 2))
                                                       : (vSStock <= 2);
                                                     const hexColor = getColorHex(vColor);
 
@@ -4478,6 +4525,11 @@ export default function StockTransferModal({
                                                                   style={{ backgroundColor: hexColor }}
                                                                 />
                                                                 <span>রং: {vColor}</span>
+                                                                {isThan && Number(v.YardsPerThan || v.yardsPerThan || 0) > 0 && (
+                                                                  <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200" title="এই ভ্যারিয়েন্টের বিশেষ থানের সাইজ">
+                                                                    {Number(v.YardsPerThan || v.yardsPerThan)} গজ/থান
+                                                                  </span>
+                                                                )}
                                                                </span>
                                                             )}
                                                             {vSize && (
@@ -4547,9 +4599,9 @@ export default function StockTransferModal({
                                                                 }`}>
                                                                   {vGStock} {isThan ? 'থান' : unit}
                                                                 </span>
-                                                                {isThan && yardsPerThan > 0 && vGStock > 0 && (
+                                                                {isThan && vYpt > 0 && vGStock > 0 && (
                                                                   <span className="text-[10px] text-slate-500 font-mono mt-0.5">
-                                                                    ({(vGStock * yardsPerThan).toLocaleString('bn-BD')} গজ)
+                                                                    ({(vGStock * vYpt).toLocaleString('bn-BD')} গজ)
                                                                   </span>
                                                                 )}
                                                               </div>
@@ -4565,9 +4617,9 @@ export default function StockTransferModal({
                                                                 }`}>
                                                                   {vGStock} {isThan ? 'থান' : unit}
                                                                 </span>
-                                                                {isThan && yardsPerThan > 0 && vGStock > 0 && (
+                                                                {isThan && vYpt > 0 && vGStock > 0 && (
                                                                   <span className="text-[10px] text-slate-500 font-medium mt-0.5 font-mono">
-                                                                    ({(vGStock * yardsPerThan).toLocaleString('bn-BD')} গজ)
+                                                                    ({(vGStock * vYpt).toLocaleString('bn-BD')} গজ)
                                                                   </span>
                                                                 )}
                                                               </div>
@@ -6783,6 +6835,7 @@ export default function StockTransferModal({
           const prodUnit = getProductDisplayUnit(prod);
           const isThan = /than|থান/i.test(prodUnit);
           const prodYardsPerThan = isThan ? (Number(prod.YardsPerThan || prod.yardsPerThan || 0) || 25) : 0;
+          const effNewColorYpt = isThan ? (Number(newColorModal.yardsPerThan) > 0 ? Number(newColorModal.yardsPerThan) : prodYardsPerThan) : 0;
           const currentType = newColorModal.variantType || 'Color';
 
           // ডাটাবেস থেকে নির্বাচিত টাইপের ভ্যারিয়েন্ট তালিকা ফিল্টার
@@ -6915,6 +6968,33 @@ export default function StockTransferModal({
                     </div>
                   </div>
 
+                  {/* থান কাপড়ের জন্য বিশেষ গজ/থান ইনপুট */}
+                  {isThan && (
+                    <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/70">
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-bold text-amber-950 flex items-center space-x-1.5">
+                          <Scissors className="w-3.5 h-3.5 text-amber-600" />
+                          <span>এই ভ্যারিয়েন্টের প্রতি থানের দৈর্ঘ্য (গজ)</span>
+                        </label>
+                        <span className="text-[10px] text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded font-medium">
+                          ঐচ্ছিক / বিশেষ সাইজ
+                        </span>
+                      </div>
+                      <input
+                        type="number"
+                        min="1"
+                        step="any"
+                        value={newColorModal.yardsPerThan !== undefined ? newColorModal.yardsPerThan : ''}
+                        onChange={(e) => setNewColorModal(prev => ({ ...prev, yardsPerThan: e.target.value }))}
+                        placeholder={`ডিফল্ট: ${prodYardsPerThan} গজ (মূল পণ্য)`}
+                        className="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        খালি রাখলে মূল পণ্যের ডিফল্ট ({prodYardsPerThan} গজ) কার্যকর থাকবে। বিশেষ সাইজ (যেমন ২০ বা ৩০ গজ) হলে লিখুন।
+                      </p>
+                    </div>
+                  )}
+
                   {/* প্রারম্ভিক স্টক ইনপুট */}
                   <div className="grid grid-cols-2 gap-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
                     <div>
@@ -6929,9 +7009,9 @@ export default function StockTransferModal({
                         onChange={(e) => setNewColorModal(prev => ({ ...prev, godownStock: e.target.value }))}
                         className="w-full px-3 py-2 bg-white border border-indigo-200 rounded-lg text-xs font-black text-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
-                      {isThan && prodYardsPerThan > 0 && (
+                      {isThan && effNewColorYpt > 0 && (
                         <div className="text-[10px] text-indigo-700 font-bold mt-1">
-                          = {(Number(newColorModal.godownStock) || 0) * prodYardsPerThan} গজ
+                          = {(Number(newColorModal.godownStock) || 0) * effNewColorYpt} গজ
                         </div>
                       )}
                     </div>
@@ -6948,9 +7028,9 @@ export default function StockTransferModal({
                         onChange={(e) => setNewColorModal(prev => ({ ...prev, shopStock: e.target.value }))}
                         className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-lg text-xs font-black text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
-                      {isThan && prodYardsPerThan > 0 && Number(newColorModal.shopStock || 0) > 0 && (
+                      {isThan && effNewColorYpt > 0 && Number(newColorModal.shopStock || 0) > 0 && (
                         <div className="text-[10px] text-emerald-700 font-bold mt-1">
-                          = {calculateThanBreakdown(newColorModal.shopStock, prodYardsPerThan, 2).displayText}
+                          = {calculateThanBreakdown(newColorModal.shopStock, effNewColorYpt, 2).displayText}
                         </div>
                       )}
                     </div>
@@ -7043,6 +7123,7 @@ export default function StockTransferModal({
           const prodUnit = getProductDisplayUnit(prod);
           const isThan = /than|থান/i.test(prodUnit);
           const prodYardsPerThan = isThan ? (Number(prod.YardsPerThan || prod.yardsPerThan || 0) || 25) : 0;
+          const effVariantYpt = isThan ? (Number(editVariantModal.yardsPerThan) > 0 ? Number(editVariantModal.yardsPerThan) : prodYardsPerThan) : 0;
           const currentUnit = isThan ? 'থান' : prodUnit;
           const effRemTh = Number(
             prod.RemnantThreshold !== undefined && prod.RemnantThreshold !== null && prod.RemnantThreshold !== '' && Number(prod.RemnantThreshold) > 0
@@ -7095,6 +7176,45 @@ export default function StockTransferModal({
                     />
                   </div>
 
+                  {/* থান কাপড়ের জন্য বিশেষ গজ/থান ইনপুট */}
+                  {isThan && (
+                    <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/70">
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-bold text-amber-950 flex items-center space-x-1.5">
+                          <Scissors className="w-3.5 h-3.5 text-amber-600" />
+                          <span>এই ভ্যারিয়েন্টের প্রতি থানের দৈর্ঘ্য (গজ)</span>
+                        </label>
+                        <span className="text-[10px] text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded font-medium">
+                          ঐচ্ছিক / বিশেষ সাইজ
+                        </span>
+                      </div>
+                      <input
+                        type="number"
+                        min="1"
+                        step="any"
+                        value={editVariantModal.yardsPerThan !== undefined ? editVariantModal.yardsPerThan : ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const newYpt = Number(val) > 0 ? Number(val) : prodYardsPerThan;
+                          const ft = Math.max(0, parseInt(editVariantModal.fullThans, 10) || 0);
+                          const cg = Math.max(0, parseInt(editVariantModal.cutGoj, 10) || 0);
+                          const cgi = Math.max(0, parseInt(editVariantModal.cutGira, 10) || 0);
+                          const totalYards = calculateInitialShopYards(ft, cg, cgi, newYpt);
+                          setEditVariantModal(prev => ({
+                            ...prev,
+                            yardsPerThan: val,
+                            shopStock: totalYards
+                          }));
+                        }}
+                        placeholder={`ডিফল্ট: ${prodYardsPerThan} গজ (মূল পণ্য)`}
+                        className="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        খালি রাখলে মূল পণ্যের ডিফল্ট ({prodYardsPerThan} গজ) কার্যকর থাকবে। বিশেষ সাইজ (যেমন ২০ বা ৩০ গজ) হলে লিখুন।
+                      </p>
+                    </div>
+                  )}
+
                   {/* গোডাউন ও দোকান স্টক ইনপুট */}
                   <div className="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/80 space-y-2.5">
                     <div className="text-[11px] font-bold text-amber-900 flex items-center space-x-1.5">
@@ -7102,7 +7222,7 @@ export default function StockTransferModal({
                       <span>মজুত সমন্বয় (একক: {currentUnit})</span>
                     </div>
 
-                    <div className={isThan && prodYardsPerThan > 0 ? "space-y-3" : "grid grid-cols-2 gap-3"}>
+                    <div className={isThan && effVariantYpt > 0 ? "space-y-3" : "grid grid-cols-2 gap-3"}>
                       <div>
                         <label className="block text-[11px] font-bold text-indigo-900 mb-1">
                           🏭 গোডাউন স্টক ({currentUnit})
@@ -7116,14 +7236,14 @@ export default function StockTransferModal({
                           onChange={(e) => setEditVariantModal(prev => ({ ...prev, godownStock: e.target.value }))}
                           className="w-full px-3 py-2 bg-white border border-indigo-300 rounded-lg text-xs font-black text-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
-                        {isThan && prodYardsPerThan > 0 && (
+                        {isThan && effVariantYpt > 0 && (
                           <div className="text-[10px] text-indigo-700 font-bold mt-1">
-                            = {(Number(editVariantModal.godownStock) || 0) * prodYardsPerThan} গজ
+                            = {(Number(editVariantModal.godownStock) || 0) * effVariantYpt} গজ
                           </div>
                         )}
                       </div>
 
-                      {isThan && prodYardsPerThan > 0 ? (
+                      {isThan && effVariantYpt > 0 ? (
                         <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200">
                           <div className="flex items-center justify-between mb-2">
                             <label className="text-[11px] font-bold text-emerald-950 flex items-center space-x-1">
@@ -7131,7 +7251,7 @@ export default function StockTransferModal({
                               <span>🏬 দোকানে বর্তমান মজুত (আস্ত থান + কাটা থান গজ ও গিরা)</span>
                             </label>
                             <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-200 shadow-2xs">
-                              ১ থান = {prodYardsPerThan} গজ | ১ গজ = ১৬ গিরা
+                              ১ থান = {effVariantYpt} গজ | ১ গজ = ১৬ গিরা
                             </span>
                           </div>
 
@@ -7149,7 +7269,7 @@ export default function StockTransferModal({
                                   const ft = Math.max(0, parseInt(e.target.value, 10) || 0);
                                   const cg = Math.max(0, parseInt(editVariantModal.cutGoj, 10) || 0);
                                   const cgi = Math.max(0, parseInt(editVariantModal.cutGira, 10) || 0);
-                                  const totalYards = calculateInitialShopYards(ft, cg, cgi, prodYardsPerThan);
+                                  const totalYards = calculateInitialShopYards(ft, cg, cgi, effVariantYpt);
                                   setEditVariantModal(prev => ({
                                     ...prev,
                                     fullThans: e.target.value,
@@ -7160,7 +7280,7 @@ export default function StockTransferModal({
                                 className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-900 focus:ring-2 focus:ring-[#0da487]"
                               />
                               <span className="text-[9.5px] text-slate-500 font-semibold block mt-0.5">
-                                = {((parseInt(editVariantModal.fullThans, 10) || 0) * prodYardsPerThan)} গজ
+                                = {((parseInt(editVariantModal.fullThans, 10) || 0) * effVariantYpt)} গজ
                               </span>
                             </div>
 
@@ -7177,7 +7297,7 @@ export default function StockTransferModal({
                                   const ft = Math.max(0, parseInt(editVariantModal.fullThans, 10) || 0);
                                   const cg = Math.max(0, parseInt(e.target.value, 10) || 0);
                                   const cgi = Math.max(0, parseInt(editVariantModal.cutGira, 10) || 0);
-                                  const totalYards = calculateInitialShopYards(ft, cg, cgi, prodYardsPerThan);
+                                  const totalYards = calculateInitialShopYards(ft, cg, cgi, effVariantYpt);
                                   setEditVariantModal(prev => ({
                                     ...prev,
                                     cutGoj: e.target.value,
@@ -7209,7 +7329,7 @@ export default function StockTransferModal({
                                   if (val > 15) val = 15;
                                   const ft = Math.max(0, parseInt(editVariantModal.fullThans, 10) || 0);
                                   const cg = Math.max(0, parseInt(editVariantModal.cutGoj, 10) || 0);
-                                  const totalYards = calculateInitialShopYards(ft, cg, val, prodYardsPerThan);
+                                  const totalYards = calculateInitialShopYards(ft, cg, val, effVariantYpt);
                                   setEditVariantModal(prev => ({
                                     ...prev,
                                     cutGira: val === 0 && e.target.value === '' ? '' : val,
@@ -7230,7 +7350,7 @@ export default function StockTransferModal({
                             <div className="text-[11px] font-black text-emerald-900">
                               মোট দোকান গজ: <span className="font-mono text-xs text-[#0da487] font-bold">{Number(editVariantModal.shopStock || 0).toLocaleString('bn-BD')} গজ</span>
                               <span className="text-[10px] text-slate-500 font-medium ml-1.5">
-                                ({calculateThanBreakdown(editVariantModal.shopStock || 0, prodYardsPerThan, effRemTh).displayText})
+                                ({calculateThanBreakdown(editVariantModal.shopStock || 0, effVariantYpt, effRemTh).displayText})
                               </span>
                             </div>
                             <div className="text-[11px] font-black text-slate-800">
@@ -7252,9 +7372,9 @@ export default function StockTransferModal({
                             onChange={(e) => setEditVariantModal(prev => ({ ...prev, shopStock: e.target.value }))}
                             className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-lg text-xs font-black text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                           />
-                          {isThan && prodYardsPerThan > 0 && Number(editVariantModal.shopStock || 0) > 0 && (
+                          {isThan && effVariantYpt > 0 && Number(editVariantModal.shopStock || 0) > 0 && (
                             <div className="text-[10px] text-emerald-700 font-bold mt-1">
-                              = {calculateThanBreakdown(editVariantModal.shopStock, prodYardsPerThan, effRemTh).displayText}
+                              = {calculateThanBreakdown(editVariantModal.shopStock, effVariantYpt, effRemTh).displayText}
                             </div>
                           )}
                         </div>
@@ -7361,6 +7481,10 @@ export default function StockTransferModal({
             ? vars.find((v) => String(v.VariantID || v.variantId) === String(directTransferModal.selectedVariantId)) || vars[0]
             : null;
 
+          const currentTargetYpt = isThan
+            ? (Number(currentTargetVar?.YardsPerThan || currentTargetVar?.yardsPerThan || prodYardsPerThan) || 25)
+            : 0;
+
           const currentAvailableGodown = currentTargetVar
             ? Number(currentTargetVar.GodownStock !== undefined ? currentTargetVar.GodownStock : 0)
             : Number(prod.GodownStock || 0);
@@ -7371,13 +7495,22 @@ export default function StockTransferModal({
 
           const transferQty = Math.max(0, Number(directTransferModal.quantity) || 0);
 
-          // বালক মোডে মোট পরিমাণ
+          // বালক মোডে মোট পরিমাণ ও মোট গজ
           const bulkTotalQty = Object.values(directTransferModal.bulkQuantities || {}).reduce(
             (sum, q) => sum + (Number(q) || 0), 0
           );
+          const bulkTotalYards = hasVars && isThan
+            ? vars.reduce((sum, v) => {
+                const q = Number(directTransferModal.bulkQuantities?.[v.VariantID || v.variantId] || 0);
+                const vy = Number(v.YardsPerThan || v.yardsPerThan || prodYardsPerThan) || 25;
+                return sum + (q * vy);
+              }, 0)
+            : 0;
 
           const effectiveTransferQty = directTransferModal.mode === 'all' ? bulkTotalQty : transferQty;
-          const effectiveYards = isThan ? (effectiveTransferQty * prodYardsPerThan) : 0;
+          const effectiveYards = isThan
+            ? (directTransferModal.mode === 'all' ? bulkTotalYards : (effectiveTransferQty * currentTargetYpt))
+            : 0;
 
           return (
             <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
@@ -7660,7 +7793,7 @@ export default function StockTransferModal({
                                   <span>স্থানান্তরিত মোট কাপড়:</span>
                                 </span>
                                 <span className="font-mono font-black text-amber-950">
-                                  {effectiveYards} গজ <span className="font-normal text-[11px] text-amber-800">({effectiveTransferQty} থান × ${prodYardsPerThan} গজ)</span>
+                                  {effectiveYards} গজ <span className="font-normal text-[11px] text-amber-800">({effectiveTransferQty} থান × {currentTargetYpt} গজ)</span>
                                 </span>
                               </div>
                             )}
@@ -7736,7 +7869,14 @@ export default function StockTransferModal({
                               return (
                                 <div key={vId} className="p-2.5 flex items-center justify-between hover:bg-slate-50/80 transition-colors">
                                   <div className="min-w-0 flex-1 pr-2">
-                                    <span className="font-bold text-slate-800 text-xs block truncate">{vName}</span>
+                                    <span className="font-bold text-slate-800 text-xs block truncate">
+                                      {vName}
+                                      {isThan && Number(v.YardsPerThan || v.yardsPerThan || 0) > 0 && (
+                                        <span className="text-[10px] text-amber-700 font-medium ml-1">
+                                          ({Number(v.YardsPerThan || v.yardsPerThan)} গজ/থান)
+                                        </span>
+                                      )}
+                                    </span>
                                     <span className="text-[10px] text-slate-400 font-mono">
                                       গোডাউন: <strong className="text-slate-700 font-bold">{gStk}</strong> | দোকান: <strong className="text-emerald-700 font-bold">{sStk}</strong>
                                     </span>
