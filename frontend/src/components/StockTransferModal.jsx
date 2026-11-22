@@ -40,7 +40,11 @@ import {
   RefreshCw,
   ClipboardList,
   AlertCircle,
-  Tag
+  Tag,
+  Loader2,
+  SearchX,
+  Info,
+  HelpCircle
 } from 'lucide-react';
 import BarcodeStickerModal from './BarcodeStickerModal';
 import {
@@ -93,6 +97,7 @@ export default function StockTransferModal({
   isOpen,
   onClose,
   embedded = false,
+  isLoading = false,
   products = [],
   stockTransfers = [],
   stockMovements = [],
@@ -122,6 +127,37 @@ export default function StockTransferModal({
 
   // ট্রান্সফার সাব-ট্যাব: 'new' | 'list'
   const [transferSubTab, setTransferSubTab] = useState(() => initialTransferSubTab || 'new');
+
+  // =========================================================================
+  // এন্টারপ্রাইজ UX ও ইন্টার‍্যাকশন স্টেটসমূহ (4 UI States, Feedback & Forgiving UX)
+  // =========================================================================
+  const [toast, setToast] = useState(null); // { id, message, type, title }
+  const [inlineError, setInlineError] = useState(null); // { message, onRetry }
+  const [confirmDialog, setConfirmDialog] = useState(null); // { title, message, confirmLabel, cancelLabel, isDestructive, onConfirm }
+
+  const showToast = (message, type = 'success', title = '') => {
+    setToast({
+      id: Date.now(),
+      message,
+      type,
+      title: title || (type === 'error' ? 'ত্রুটি' : type === 'info' ? 'তথ্য' : 'সফল হয়েছে')
+    });
+  };
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 4500);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const handleResetFilters = () => {
+    setOverviewSearch('');
+    setOverviewCategory('ALL');
+    setOverviewFilter(isShopStockView ? 'IN_SHOP' : 'ALL');
+  };
 
   // =========================================================================
   // ১. চালান তৈরি স্টেটসমূহ
@@ -278,18 +314,26 @@ export default function StockTransferModal({
 
   const searchInputRef = useRef(null);
 
-  // কীবোর্ড শর্টকাট লিসেনার (Human Pro POS Ergonomics)
+  // কীবোর্ড শর্টকাট লিসেনার (Human Pro POS Ergonomics & Accessibility)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen && !embedded) return;
 
     const handleKeyDown = (e) => {
-      // '/' চাপলে সার্চ বক্সে ফোকাস
+      // '/' চাপলে সার্চ বক্সে ফোকাস (যদি অন্য কোনো ইনপুটে ফোকাস না থাকে)
       if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
         e.preventDefault();
         if (searchInputRef.current) {
           searchInputRef.current.focus();
           searchInputRef.current.select();
         }
+      }
+      // Alt + N -> নতুন চালান তৈরি মোড
+      if (e.altKey && (e.key === 'n' || e.key === 'N')) {
+        e.preventDefault();
+        setActiveMainTab('transfers');
+        setTransferSubTab('new');
+        setPrintableChallan(null);
+        setIsPrintableGodownOutflow(false);
       }
       // Alt + A -> অডিট প্রিন্ট শিট
       if (e.altKey && (e.key === 'a' || e.key === 'A')) {
@@ -303,15 +347,59 @@ export default function StockTransferModal({
           exportLocationStockExcelCSV(products);
         }
       }
-      // Esc -> সার্চ ক্লিয়ার
-      if (e.key === 'Escape' && overviewSearch) {
-        setOverviewSearch('');
+      // Esc কি হ্যান্ডলার (হায়ারার্কিক্যাল ডিসমিস)
+      if (e.key === 'Escape') {
+        if (confirmDialog) {
+          e.preventDefault();
+          setConfirmDialog(null);
+        } else if (directTransferModal) {
+          e.preventDefault();
+          setDirectTransferModal(null);
+        } else if (editVariantModal) {
+          e.preventDefault();
+          setEditVariantModal(null);
+        } else if (variantRestockModal) {
+          e.preventDefault();
+          setVariantRestockModal(null);
+        } else if (newColorModal) {
+          e.preventDefault();
+          setNewColorModal(null);
+        } else if (isPrintableShopStockAudit) {
+          e.preventDefault();
+          setIsPrintableShopStockAudit(false);
+        } else if (printableChallan) {
+          e.preventDefault();
+          setPrintableChallan(null);
+        } else if (printStickerProduct) {
+          e.preventDefault();
+          setPrintStickerProduct(null);
+        } else if (overviewSearch) {
+          e.preventDefault();
+          setOverviewSearch('');
+        } else if (!embedded && onClose) {
+          e.preventDefault();
+          onClose();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, overviewSearch, products]);
+  }, [
+    isOpen,
+    embedded,
+    overviewSearch,
+    products,
+    confirmDialog,
+    directTransferModal,
+    editVariantModal,
+    variantRestockModal,
+    newColorModal,
+    isPrintableShopStockAudit,
+    printableChallan,
+    printStickerProduct,
+    onClose
+  ]);
 
   useEffect(() => {
     if (initialTab === 'godown_low_stock') {
@@ -1242,11 +1330,11 @@ export default function StockTransferModal({
       const qty = Number(quantity) || 0;
       const gStk = Number(product.GodownStock || 0);
       if (qty <= 0) {
-        alert('অনুগ্রহ করে সঠিক পরিমাণ (কমপক্ষে ১) উল্লেখ করুন!');
+        showToast('অনুগ্রহ করে সঠিক পরিমাণ (কমপক্ষে ১) উল্লেখ করুন!', 'error');
         return;
       }
       if (qty > gStk) {
-        alert(`গোডাউনে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${gStk} ${getProductDisplayUnit(product)} আছে।`);
+        showToast(`গোডাউনে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${gStk} ${getProductDisplayUnit(product)} আছে।`, 'error');
         return;
       }
       itemsToTransfer.push({
@@ -1257,17 +1345,17 @@ export default function StockTransferModal({
     } else if (mode === 'single') {
       const targetVar = vars.find((v) => String(v.VariantID || v.variantId) === String(selectedVariantId));
       if (!targetVar) {
-        alert('অনুগ্রহ করে একটি ভ্যারিয়েন্ট নির্বাচন করুন!');
+        showToast('অনুগ্রহ করে একটি ভ্যারিয়েন্ট নির্বাচন করুন!', 'error');
         return;
       }
       const qty = Number(quantity) || 0;
       const vGStk = Number(targetVar.GodownStock !== undefined ? targetVar.GodownStock : 0);
       if (qty <= 0) {
-        alert('অনুগ্রহ করে সঠিক পরিমাণ (কমপক্ষে ১) উল্লেখ করুন!');
+        showToast('অনুগ্রহ করে সঠিক পরিমাণ (কমপক্ষে ১) উল্লেখ করুন!', 'error');
         return;
       }
       if (qty > vGStk) {
-        alert(`এই ভ্যারিয়েন্টের গোডাউনে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${vGStk} ${getProductDisplayUnit(product)} আছে।`);
+        showToast(`এই ভ্যারিয়েন্টের গোডাউনে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${vGStk} ${getProductDisplayUnit(product)} আছে।`, 'error');
         return;
       }
       const attrs = targetVar.Attributes || {};
@@ -1286,7 +1374,7 @@ export default function StockTransferModal({
         if (qty > 0) {
           if (qty > vGStk) {
             const vName = v.Color || v.Size || vId;
-            alert(`ভ্যারিয়েন্ট '${vName}'-এর গোডাউন স্টক (${vGStk}) অতিক্রম করেছে!`);
+            showToast(`ভ্যারিয়েন্ট '${vName}'-এর গোডাউন স্টক (${vGStk}) অতিক্রম করেছে!`, 'error');
             return;
           }
           const attrs = v.Attributes || {};
@@ -1300,7 +1388,7 @@ export default function StockTransferModal({
       }
 
       if (itemsToTransfer.length === 0) {
-        alert('কমপক্ষে একটি ভ্যারিয়েন্টে স্থানান্তরের পরিমাণ বসান!');
+        showToast('কমপক্ষে একটি ভ্যারিয়েন্টে স্থানান্তরের পরিমাণ বসান!', 'error');
         return;
       }
     }
@@ -1337,9 +1425,10 @@ export default function StockTransferModal({
         await onSaveStockTransfer(payload);
       }
 
+      showToast('গোডাউন থেকে দোকানে পণ্য সফলভাবে স্থানান্তর সম্পন্ন হয়েছে!', 'success');
       setDirectTransferModal(null);
     } catch (err) {
-      alert(`স্থানান্তর ব্যর্থ হয়েছে: ${err.message}`);
+      showToast(`স্থানান্তর ব্যর্থ হয়েছে: ${err.message}`, 'error');
     } finally {
       setIsSubmittingDirectTransfer(false);
     }
@@ -1398,18 +1487,18 @@ export default function StockTransferModal({
     const targetProduct = selectedProduct || (targetItem ? targetItem.parentProduct : null);
 
     if (!targetProduct && !targetItem) {
-      alert('অনুগ্রহ করে গোডাউনে থাকা একটি পণ্য বা ভ্যারিয়েন্ট ড্রপডাউন থেকে নির্বাচন করুন।');
+      showToast('অনুগ্রহ করে গোডাউনে থাকা একটি পণ্য বা ভ্যারিয়েন্ট ড্রপডাউন থেকে নির্বাচন করুন।', 'error');
       return;
     }
 
     const qty = Number(transferQty) || 0;
     if (qty <= 0) {
-      alert('সঠিক স্থানান্তর পরিমাণ উল্লেখ করুন।');
+      showToast('সঠিক স্থানান্তর পরিমাণ উল্লেখ করুন।', 'error');
       return;
     }
 
     if (qty > availableSourceStock) {
-      alert(`প্রেরক স্থানে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${availableSourceStock} ${targetItem?.unit || getProductDisplayUnit(targetProduct)} মজুত আছে।`);
+      showToast(`প্রেরক স্থানে পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${availableSourceStock} ${targetItem?.unit || getProductDisplayUnit(targetProduct)} মজুত আছে।`, 'error');
       return;
     }
 
@@ -1437,7 +1526,7 @@ export default function StockTransferModal({
     if (existingIdx !== -1) {
       const updated = [...challanItems];
       if (updated[existingIdx].quantity + qty > availableSourceStock) {
-        alert(`মোট যোগ করা পরিমাণ (${updated[existingIdx].quantity + qty}) গোডাউনের মজুত (${availableSourceStock}) অতিক্রম করেছে!`);
+        showToast(`মোট যোগ করা পরিমাণ (${updated[existingIdx].quantity + qty}) গোডাউনের মজুত (${availableSourceStock}) অতিক্রম করেছে!`, 'error');
         return;
       }
       updated[existingIdx].quantity += qty;
@@ -1472,11 +1561,11 @@ export default function StockTransferModal({
   // চালান সাবমিট হ্যান্ডলার
   const handleSubmitChallan = async (shouldPrint = true) => {
     if (challanItems.length === 0) {
-      alert('চালানে অন্তত ১টি পণ্য যোগ করুন।');
+      showToast('চালানে অন্তত ১টি পণ্য যোগ করুন।', 'error');
       return;
     }
     if (fromLocation === toLocation) {
-      alert('উৎস এবং গন্তব্য একই হতে পারে না। অনুগ্রহ করে ভিন্ন লোকেশন নির্বাচন করুন।');
+      showToast('উৎস এবং গন্তব্য একই হতে পারে না। অনুগ্রহ করে ভিন্ন লোকেশন নির্বাচন করুন।', 'error');
       return;
     }
 
@@ -1500,13 +1589,13 @@ export default function StockTransferModal({
         if (shouldPrint) {
           setPrintableChallan(result.record);
         } else {
-          alert(`স্টক ট্রান্সফার চালান #${result.record.ChallanNo} সফলভাবে তৈরি হয়েছে!`);
+          showToast(`স্টক ট্রান্সফার চালান #${result.record.ChallanNo} সফলভাবে তৈরি হয়েছে!`, 'success');
           handleResetChallan();
           setTransferSubTab('list');
         }
       }
     } catch (e) {
-      alert(`চালান তৈরি ব্যর্থ: ${e.message}`);
+      showToast(`চালান তৈরি ব্যর্থ: ${e.message}`, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -1528,39 +1617,53 @@ export default function StockTransferModal({
     setPrintableChallan(null);
   };
 
-  // চালান রিসিভ ও স্টকে যোগ হ্যান্ডলার (কখনও অটো রিসিভ হবে না, বাটন প্রেস করতে হবে)
+  // চালান রিসিভ ও স্টকে যোগ হ্যান্ডলার (Forgiving UX Confirm Dialog)
   const handleReceiveChallan = async (challan) => {
     const cNo = challan.ChallanNo || challan.challanNo;
     const confirmMsg = `আপনি কি নিশ্চিত যে চালান #${cNo}-এর সকল পণ্য (${challan.TotalQuantity || challan.totalQuantity} পিস/গজ) বুঝে পেয়েছেন?\n\nএটি স্বয়ংক্রিয়ভাবে আপনার দোকানের স্টকে পণ্য যোগ করবে এবং রিসিভিং খতিয়ানে রেকর্ড করবে।`;
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      await onUpdateStockTransferStatus({
-        transferId: challan.TransferID || challan.transferId || cNo,
-        status: 'Received',
-        receivedBy: activeUser?.FullName || activeUser?.UserName || 'Manager'
-      });
-      alert(`চালান #${cNo} সফলভাবে গ্রহণ করা হয়েছে এবং দোকানের স্টকে যোগ হয়েছে!`);
-    } catch (e) {
-      alert(`চালান রিসিভ করতে সমস্যা হয়েছে: ${e.message}`);
-    }
+    setConfirmDialog({
+      title: 'চালান রিসিভ ও স্টকে যোগ',
+      message: confirmMsg,
+      confirmLabel: 'হ্যাঁ, পণ্য বুঝে পেয়েছি',
+      cancelLabel: 'না, পরে করব',
+      isDestructive: false,
+      onConfirm: async () => {
+        try {
+          await onUpdateStockTransferStatus({
+            transferId: challan.TransferID || challan.transferId || cNo,
+            status: 'Received',
+            receivedBy: activeUser?.FullName || activeUser?.UserName || 'Manager'
+          });
+          showToast(`চালান #${cNo} সফলভাবে গ্রহণ করা হয়েছে এবং দোকানের স্টকে যোগ হয়েছে!`, 'success');
+        } catch (e) {
+          showToast(`চালান রিসিভ করতে সমস্যা হয়েছে: ${e.message}`, 'error');
+        }
+      }
+    });
   };
 
   // চালান বাতিল হ্যান্ডলার
   const handleCancelChallan = async (challan) => {
     const cNo = challan.ChallanNo || challan.challanNo;
-    if (!window.confirm(`আপনি কি চালান #${cNo} বাতিল করতে চান?\n\nবাতিল করলে পণ্য পুনরায় গোডাউনের স্টকে ফেরত যাবে।`)) return;
-
-    try {
-      await onUpdateStockTransferStatus({
-        transferId: challan.TransferID || challan.transferId || cNo,
-        status: 'Cancelled',
-        receivedBy: activeUser?.FullName || activeUser?.UserName || 'Manager'
-      });
-      alert(`চালান #${cNo} বাতিল করা হয়েছে এবং গোডাউনে স্টক ফেরত দেওয়া হয়েছে।`);
-    } catch (e) {
-      alert(`চালান বাতিল করতে সমস্যা হয়েছে: ${e.message}`);
-    }
+    setConfirmDialog({
+      title: 'চালান বাতিল নিশ্চিতকরণ',
+      message: `আপনি কি চালান #${cNo} বাতিল করতে চান?\n\nবাতিল করলে পণ্য পুনরায় গোডাউনের স্টকে ফেরত যাবে।`,
+      confirmLabel: 'হ্যাঁ, চালান বাতিল করুন',
+      cancelLabel: 'না, ফিরে যান',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          await onUpdateStockTransferStatus({
+            transferId: challan.TransferID || challan.transferId || cNo,
+            status: 'Cancelled',
+            receivedBy: activeUser?.FullName || activeUser?.UserName || 'Manager'
+          });
+          showToast(`চালান #${cNo} বাতিল করা হয়েছে এবং গোডাউনে স্টক ফেরত দেওয়া হয়েছে।`, 'info');
+        } catch (e) {
+          showToast(`চালান বাতিল করতে সমস্যা হয়েছে: ${e.message}`, 'error');
+        }
+      }
+    });
   };
 
   // চালান মুছে ফেলা হ্যান্ডলার (ডাটাবেস ও লোকাল স্টোরেজ থেকে রিমুভ)
@@ -1570,15 +1673,23 @@ export default function StockTransferModal({
     const isTransit = challan.Status === 'In Transit' || challan.Status === 'Pending';
     const confirmMsg = `আপনি কি নিশ্চিত যে চালান #${cNo} মুছে ফেলতে চান?\n\nএটি ডাটাবেস থেকেও মুছে ফেলা হবে।${isTransit ? '\n(যেহেতু চালানটি এখনও দোকানে রিসিভ করা হয়নি, তাই পণ্যের স্টক গোডাউনে স্বয়ংক্রিয়ভাবে ফেরত যুক্ত হবে)' : ''}`;
 
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      if (onDeleteStockTransfer) {
-        await onDeleteStockTransfer({ transferId: trfId, challanNo: cNo });
+    setConfirmDialog({
+      title: 'চালান স্থায়ীভাবে মুছে ফেলা',
+      message: confirmMsg,
+      confirmLabel: 'হ্যাঁ, মুছে ফেলুন',
+      cancelLabel: 'না, ফিরে যান',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          if (onDeleteStockTransfer) {
+            await onDeleteStockTransfer({ transferId: trfId, challanNo: cNo });
+            showToast(`চালান #${cNo} সফলভাবে মুছে ফেলা হয়েছে।`, 'info');
+          }
+        } catch (e) {
+          showToast(`চালান মুছতে সমস্যা হয়েছে: ${e.message}`, 'error');
+        }
       }
-    } catch (e) {
-      alert(`চালান মুছতে সমস্যা হয়েছে: ${e.message}`);
-    }
+    });
   };
 
   // দ্রুত স্টক অ্যাডজাস্টমেন্ট সম্পন্ন করা
@@ -1694,38 +1805,47 @@ export default function StockTransferModal({
         reason: reason || `ভ্যারিয়েন্ট রিস্টক (${varLabel})`,
         notes: notes || `ভ্যারিয়েন্ট স্টক সমন্বয়: ${action} ${qty}`
       });
+      showToast(`ভ্যারিয়েন্ট '${varLabel}'-এর মজুত সফলভাবে সমন্বয় করা হয়েছে।`, 'success');
       setVariantRestockModal(null);
     } catch (err) {
-      alert(`স্টক সংরক্ষণ করতে সমস্যা হয়েছে: ${err.message}`);
+      showToast(`স্টক সংরক্ষণ করতে সমস্যা হয়েছে: ${err.message}`, 'error');
     } finally {
       setIsSubmittingVariantRestock(false);
     }
   };
 
-  // নির্দিষ্ট ভ্যারিয়েন্ট স্থায়ীভাবে অপসারণ (Remove Variant)
+  // নির্দিষ্ট ভ্যারিয়েন্ট স্থায়ীভাবে অপসারণ (Remove Variant - Forgiving UX)
   const handleRemoveVariant = async (product, variant, variantIdx) => {
     if (!onUpdateProductVariants) return;
     const varLabel = variant.Color ? `রং: ${variant.Color}` : variant.Size ? `সাইজ: ${variant.Size}` : (variant.VariantID || `#${variantIdx + 1}`);
     const confirmMsg = `আপনি কি নিশ্চিত যে '${product.ProductName}' পণ্যের ভ্যারিয়েন্ট (${varLabel}) স্থায়ীভাবে মুছে ফেলতে চান?\n\nএটি মুছে ফেললে মোট স্টক স্বয়ংক্রিয়ভাবে পুনর্গণনা হয়ে ডাটাবেসে সেভ হবে।`;
-    if (!window.confirm(confirmMsg)) return;
-
-    const currentVariants = getVariantsOfProduct(product);
-    const updatedVariants = currentVariants.filter((_, i) => i !== variantIdx);
-
-    try {
-      await onUpdateProductVariants(product.ProductID, updatedVariants, {
-        location: 'Godown',
-        type: 'ADJUSTMENT',
-        variantName: varLabel,
-        qty: Number(variant.GodownStock || 0) + Number(variant.StockQuantity || 0),
-        prevStock: Number(variant.GodownStock || 0),
-        newStock: 0,
-        reason: `ভ্যারিয়েন্ট অপসারণ (${varLabel})`,
-        notes: 'ভ্যারিয়েন্ট মুছে ফেলা হয়েছে'
-      });
-    } catch (err) {
-      alert(`ভ্যারিয়েন্ট মুছে ফেলতে সমস্যা হয়েছে: ${err.message}`);
-    }
+    
+    setConfirmDialog({
+      title: 'ভ্যারিয়েন্ট অপসারণ নিশ্চিতকরণ',
+      message: confirmMsg,
+      confirmLabel: 'হ্যাঁ, ভ্যারিয়েন্ট মুছে ফেলুন',
+      cancelLabel: 'না, ফিরে যান',
+      isDestructive: true,
+      onConfirm: async () => {
+        const currentVariants = getVariantsOfProduct(product);
+        const updatedVariants = currentVariants.filter((_, i) => i !== variantIdx);
+        try {
+          await onUpdateProductVariants(product.ProductID, updatedVariants, {
+            location: 'Godown',
+            type: 'ADJUSTMENT',
+            variantName: varLabel,
+            qty: Number(variant.GodownStock || 0) + Number(variant.StockQuantity || 0),
+            prevStock: Number(variant.GodownStock || 0),
+            newStock: 0,
+            reason: `ভ্যারিয়েন্ট অপসারণ (${varLabel})`,
+            notes: 'ভ্যারিয়েন্ট মুছে ফেলা হয়েছে'
+          });
+          showToast(`ভ্যারিয়েন্ট (${varLabel}) সফলভাবে মুছে ফেলা হয়েছে।`, 'info');
+        } catch (err) {
+          showToast(`ভ্যারিয়েন্ট মুছে ফেলতে সমস্যা হয়েছে: ${err.message}`, 'error');
+        }
+      }
+    });
   };
 
   // মূল গোডাউন ও দোকান স্টক ভ্যারিয়েন্টে সমান বণ্টন
@@ -1738,7 +1858,49 @@ export default function StockTransferModal({
     const parentShop = Number(product.StockQuantity || 0);
 
     const confirmMsg = `পণ্য '${product.ProductName}' এর মূল গোডাউন স্টক (${parentGodown}) এবং দোকান স্টক (${parentShop}) মোট ${currentVariants.length}টি ভ্যারিয়েন্টে সমানভাবে বণ্টন করতে চান?\n\nগোডাউন প্রতি ভ্যারিয়েন্টে: ${(parentGodown / currentVariants.length).toFixed(1)}\nদোকান প্রতি ভ্যারিয়েন্টে: ${(parentShop / currentVariants.length).toFixed(1)}\n\nএটি ডাটাবেস এবং ফ্রন্টএন্ডে অবিলম্বে সেভ হবে।`;
-    if (!window.confirm(confirmMsg)) return;
+    setConfirmDialog({
+      title: 'স্টক সমান বণ্টন নিশ্চিতকরণ',
+      message: confirmMsg,
+      confirmLabel: 'হ্যাঁ, বণ্টন করুন',
+      cancelLabel: 'না, ফিরে যান',
+      isDestructive: false,
+      onConfirm: async () => {
+        // Execute distribution
+        const count = currentVariants.length;
+        const unit = getProductDisplayUnit(product);
+        const isThan = /than|থান/i.test(unit);
+        const baseG = Math.floor(parentGodown / count);
+        const remG = parentGodown % count;
+        const baseS = Math.floor(parentShop / count);
+        const remS = parentShop % count;
+
+        const updatedVariants = currentVariants.map((v, idx) => ({
+          ...v,
+          GodownStock: baseG + (idx < remG ? 1 : 0),
+          godownStock: baseG + (idx < remG ? 1 : 0),
+          StockQuantity: baseS + (idx < remS ? 1 : 0),
+          stockQuantity: baseS + (idx < remS ? 1 : 0),
+          TotalStock: (baseG + (idx < remG ? 1 : 0)) + (baseS + (idx < remS ? 1 : 0)),
+          totalStock: (baseG + (idx < remG ? 1 : 0)) + (baseS + (idx < remS ? 1 : 0))
+        }));
+
+        try {
+          await onUpdateProductVariants(product.ProductID, updatedVariants, {
+            location: 'Godown',
+            type: 'ADJUSTMENT',
+            variantName: 'সকল ভ্যারিয়েন্ট',
+            qty: parentGodown,
+            prevStock: 0,
+            newStock: parentGodown,
+            reason: 'মূল স্টক সমান বণ্টন',
+            notes: 'সকল ভ্যারিয়েন্টে মূল স্টক সমান বণ্টন'
+          });
+          showToast('ভ্যারিয়েন্টগুলোতে স্টক সফলভাবে বণ্টন করা হয়েছে।', 'success');
+        } catch (err) {
+          showToast(`স্টক বণ্টনে সমস্যা হয়েছে: ${err.message}`, 'error');
+        }
+      }
+    });
 
     const count = currentVariants.length;
     const unit = getProductDisplayUnit(product);
@@ -1807,17 +1969,29 @@ export default function StockTransferModal({
     const sumS = currentVariants.reduce((sum, v) => sum + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0);
 
     const confirmMsg = `ভ্যারিয়েন্টগুলোর বর্তমান যোগফল অনুযায়ী পণ্যের মূল স্টক নির্ধারণ করতে চান?\n\nনূতন গোডাউন স্টক হবে: ${sumG}\nনূতন দোকান স্টক হবে: ${sumS}\n\nএটি ডাটাবেসে সেভ হবে ও ফ্রন্টএন্ড সিঙ্ক হবে।`;
-    if (!window.confirm(confirmMsg)) return;
-
-    await onUpdateProductVariants(product.ProductID, currentVariants, {
-      location: 'Godown',
-      type: 'ADJUSTMENT',
-      variantName: 'সকল ভ্যারিয়েন্ট',
-      qty: sumG,
-      prevStock: Number(product.GodownStock || 0),
-      newStock: sumG,
-      reason: 'ভ্যারিয়েন্ট যোগফল দিয়ে মূল স্টক সিঙ্ক',
-      notes: 'ভ্যারিয়েন্ট অনুযায়ী মোট স্টক সিঙ্ক'
+    setConfirmDialog({
+      title: 'মূল স্টক সিঙ্ক নিশ্চিতকরণ',
+      message: confirmMsg,
+      confirmLabel: 'হ্যাঁ, সিঙ্ক করুন',
+      cancelLabel: 'না, ফিরে যান',
+      isDestructive: false,
+      onConfirm: async () => {
+        try {
+          await onUpdateProductVariants(product.ProductID, currentVariants, {
+            location: 'Godown',
+            type: 'ADJUSTMENT',
+            variantName: 'সকল ভ্যারিয়েন্ট',
+            qty: sumG,
+            prevStock: Number(product.GodownStock || 0),
+            newStock: sumG,
+            reason: 'ভ্যারিয়েন্ট যোগফল দিয়ে মূল স্টক সিঙ্ক',
+            notes: 'ভ্যারিয়েন্ট অনুযায়ী মোট স্টক সিঙ্ক'
+          });
+          showToast('ভ্যারিয়েন্টের যোগফল অনুযায়ী মূল স্টক সফলভাবে সিঙ্ক হয়েছে।', 'success');
+        } catch (err) {
+          showToast(`সিঙ্ক করতে সমস্যা হয়েছে: ${err.message}`, 'error');
+        }
+      }
     });
   };
 
@@ -1850,7 +2024,7 @@ export default function StockTransferModal({
     const vType = variantType || 'Color';
     const cleanVarName = String(variantName || colorName || '').trim();
     if (!cleanVarName) {
-      alert(`দয়া করে ${vType === 'Color' ? 'রঙের' : vType === 'Size' ? 'সাইজের' : 'ভ্যারিয়েন্টের'} নাম ড্রপডাউন থেকে নির্বাচন করুন অথবা লিখুন।`);
+      showToast(`দয়া করে ${vType === 'Color' ? 'রঙের' : vType === 'Size' ? 'সাইজের' : 'ভ্যারিয়েন্টের'} নাম ড্রপডাউন থেকে নির্বাচন করুন অথবা লিখুন।`, 'error');
       return;
     }
 
@@ -1860,7 +2034,7 @@ export default function StockTransferModal({
       return String(c || '').trim().toLowerCase() === cleanVarName.toLowerCase();
     });
     if (isDuplicate) {
-      alert(`'${cleanVarName}' নামের একটি ভ্যারিয়েন্ট ইতোমধ্যে এই পণ্যে বিদ্যমান রয়েছে!`);
+      showToast(`'${cleanVarName}' নামের একটি ভ্যারিয়েন্ট ইতোমধ্যে এই পণ্যে বিদ্যমান রয়েছে!`, 'error');
       return;
     }
 
@@ -1916,9 +2090,10 @@ export default function StockTransferModal({
         reason: `নতুন ভ্যারিয়েন্ট যোগ ও রিস্টক (${cleanVarName})`,
         notes: `নতুন ভ্যারিয়েন্ট (${vType}): গোডাউন ${gStock}, দোকান ${sStock}`
       });
+      showToast(`নতুন ভ্যারিয়েন্ট '${cleanVarName}' সফলভাবে যুক্ত হয়েছে!`, 'success');
       setNewColorModal(null);
     } catch (err) {
-      alert(`নতুন ভ্যারিয়েন্ট সংরক্ষণ করতে সমস্যা হয়েছে: ${err.message}`);
+      showToast(`নতুন ভ্যারিয়েন্ট সংরক্ষণ করতে সমস্যা হয়েছে: ${err.message}`, 'error');
     } finally {
       setIsSubmittingNewColor(false);
     }
@@ -1967,7 +2142,7 @@ export default function StockTransferModal({
     const { product, variantIdx, colorName, barcode, godownStock, shopStock, fullThans, cutGoj, cutGira, costPrice, sellingPrice, wholesalePrice } = editVariantModal;
     const cleanColor = String(colorName || '').trim();
     if (!cleanColor) {
-      alert('দয়া করে রঙের নাম উল্লেখ করুন।');
+      showToast('দয়া করে রঙের নাম উল্লেখ করুন।', 'error');
       return;
     }
 
@@ -1983,7 +2158,7 @@ export default function StockTransferModal({
       return String(c).trim().toLowerCase() === cleanColor.toLowerCase();
     });
     if (isDuplicate) {
-      alert(`'${cleanColor}' নামের আরেকটি ভ্যারিয়েন্ট ইতোমধ্যে এই পণ্যে বিদ্যমান রয়েছে!`);
+      showToast(`'${cleanColor}' নামের আরেকটি ভ্যারিয়েন্ট ইতোমধ্যে এই পণ্যে বিদ্যমান রয়েছে!`, 'error');
       return;
     }
 
@@ -2030,9 +2205,10 @@ export default function StockTransferModal({
         reason: `ভ্যারিয়েন্ট এডিট (${cleanColor})`,
         notes: `ভ্যারিয়েন্ট তথ্য ও স্টক আপডেট: গোডাউন ${gStock} ${isThan ? 'থান' : prodUnit}, দোকান ${sStock} ${isThan ? 'গজ' : prodUnit}`
       });
+      showToast(`ভ্যারিয়েন্ট '${cleanColor}' সফলভাবে আপডেট করা হয়েছে।`, 'success');
       setEditVariantModal(null);
     } catch (err) {
-      alert(`ভ্যারিয়েন্ট আপডেট করতে সমস্যা হয়েছে: ${err.message}`);
+      showToast(`ভ্যারিয়েন্ট আপডেট করতে সমস্যা হয়েছে: ${err.message}`, 'error');
     } finally {
       setIsSubmittingEditVariant(false);
     }
@@ -3327,16 +3503,32 @@ export default function StockTransferModal({
                       )}
                     </div>
 
-                    {/* এক্সেল ও শিট অ্যাকশন বাটনসমূহ */}
+                    {/* ভিজ্যুয়াল হায়ারার্কি: ১টি মাত্র প্রাইমারি সলিড CTA + আউটলাইন সেকেন্ডারি অ্যাকশনস */}
                     <div className="flex items-center justify-end space-x-2 shrink-0">
+                      {/* একক প্রাইমারি সলিড CTA বাটন */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveMainTab('transfers');
+                          setTransferSubTab('new');
+                        }}
+                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-sm hover:shadow transition-all cursor-pointer shrink-0"
+                        title="গোডাউন থেকে দোকানে পণ্য পাঠানোর নতুন চালান তৈরি করুন (Alt + N)"
+                      >
+                        <Truck className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>+ নতুন চালান</span>
+                        <kbd className="hidden sm:inline-block text-[9px] px-1.5 py-0.5 bg-slate-800 rounded font-mono text-slate-300 border border-slate-700">Alt+N</kbd>
+                      </button>
+
+                      {/* সেকেন্ডারি আউটলাইন বাটনসমূহ */}
                       {onOpenFabricWastageModal && (
                         <button
                           type="button"
                           onClick={() => onOpenFabricWastageModal()}
-                          className="px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
+                          className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
                           title="কাপড়ের ছাঁট ও ড্যামেজ হিসাব ট্র্যাকার ওপেন করুন"
                         >
-                          <Scissors className="w-4 h-4 text-amber-700" />
+                          <Scissors className="w-3.5 h-3.5 text-amber-600" />
                           <span>ছাঁট ট্র্যাকার</span>
                         </button>
                       )}
@@ -3344,29 +3536,61 @@ export default function StockTransferModal({
                       <button
                         type="button"
                         onClick={() => exportLocationStockExcelCSV(products)}
-                        className="px-3 py-1.5 bg-[#0da487] hover:bg-[#0b8b72] active:bg-emerald-800 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs hover:shadow transition-all cursor-pointer shrink-0"
+                        className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
                         title="স্টক খতিয়ানের এক্সেল ফাইল ডাউনলোড করুন (Alt + E)"
                       >
-                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
                         <span>এক্সেল</span>
-                        <kbd className="hidden sm:inline-block text-[9px] px-1 py-0.2 bg-emerald-900/40 rounded font-mono">Alt+E</kbd>
+                        <kbd className="hidden sm:inline-block text-[9px] px-1 py-0.5 bg-slate-100 text-slate-500 rounded font-mono border border-slate-200">Alt+E</kbd>
                       </button>
 
                       {isShopStockView && (
                         <button
                           type="button"
                           onClick={() => setIsPrintableShopStockAudit(true)}
-                          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-xs hover:shadow transition-all cursor-pointer shrink-0"
+                          className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
                           title="দোকানের ফিজিক্যাল স্টক অডিট ও ফ্লোর গণনা শিট প্রিন্ট করুন (Alt + A)"
                         >
-                          <ClipboardList className="w-3.5 h-3.5 text-emerald-400" />
+                          <ClipboardList className="w-3.5 h-3.5 text-slate-600" />
                           <span>গণনা শিট</span>
-                          <kbd className="hidden sm:inline-block text-[9px] px-1 py-0.2 bg-slate-800 rounded font-mono text-slate-300">Alt+A</kbd>
+                          <kbd className="hidden sm:inline-block text-[9px] px-1 py-0.5 bg-slate-100 text-slate-500 rounded font-mono border border-slate-200">Alt+A</kbd>
                         </button>
                       )}
                     </div>
                   </div>
                 </div>
+
+                {/* ইনলাইন এরর ব্যানার (Error State with Retry) */}
+                {inlineError && (
+                  <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between gap-3 text-xs text-rose-900 animate-in fade-in duration-150 shadow-2xs">
+                    <div className="flex items-center space-x-2.5">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                      <span className="font-semibold">{inlineError.message}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 shrink-0">
+                      {inlineError.onRetry && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const fn = inlineError.onRetry;
+                            setInlineError(null);
+                            if (typeof fn === 'function') fn();
+                          }}
+                          className="px-3 py-1 bg-white hover:bg-rose-100 text-rose-800 border border-rose-300 rounded-lg font-bold text-[11px] cursor-pointer transition-colors"
+                        >
+                          পুনরায় চেষ্টা করুন
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setInlineError(null)}
+                        className="p-1 text-rose-500 hover:text-rose-800 rounded-lg cursor-pointer transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* ৩. পণ্য স্টক তালিকা টেবিল (Human Pro Sticky Data Grid) */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
@@ -3427,10 +3651,52 @@ export default function StockTransferModal({
                           // =========================================================
                           // ১. গ্রুপড ভিউ (পণ্য ভিত্তিক রো + এক্সপ্যান্ডেবল ভ্যারিয়েন্ট)
                           // =========================================================
-                          filteredOverviewProducts.length === 0 ? (
+                          isLoading ? (
                             <tr>
-                              <td colSpan="6" className="py-12 text-center text-slate-400 font-medium">
-                                কোনো পণ্য খুঁজে পাওয়া যায়নি।
+                              <td colSpan="6" className="p-0">
+                                <div className="divide-y divide-slate-100 animate-pulse">
+                                  {[1, 2, 3, 4, 5, 6, 7, 8].map((sIdx) => (
+                                    <div key={sIdx} className="px-5 py-4 flex items-center justify-between gap-4">
+                                      <div className="flex items-center space-x-3 flex-1">
+                                        <div className="w-9 h-9 bg-slate-200 rounded-xl shrink-0"></div>
+                                        <div className="space-y-1.5 flex-1 max-w-xs">
+                                          <div className="h-3.5 bg-slate-200 rounded w-3/4"></div>
+                                          <div className="h-2.5 bg-slate-100 rounded w-1/2"></div>
+                                        </div>
+                                      </div>
+                                      <div className="h-4 w-24 bg-slate-200 rounded shrink-0"></div>
+                                      <div className="h-4 w-28 bg-slate-200 rounded shrink-0"></div>
+                                      <div className="h-4 w-20 bg-slate-200 rounded shrink-0"></div>
+                                      <div className="h-8 w-24 bg-slate-200 rounded-xl shrink-0"></div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </td>
+                            </tr>
+                          ) : filteredOverviewProducts.length === 0 ? (
+                            <tr>
+                              <td colSpan="6" className="py-16 text-center">
+                                <div className="max-w-md mx-auto flex flex-col items-center justify-center space-y-3 px-4">
+                                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                    <SearchX className="w-6 h-6 stroke-[1.75]" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <h4 className="text-sm font-bold text-slate-800">কোনো পণ্য পাওয়া যায়নি</h4>
+                                    <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                                      {overviewSearch
+                                        ? `"${overviewSearch}" এর সাথে মিলে এমন কোনো পণ্য দোকানের বর্তমান মজুতে পাওয়া যায়নি।`
+                                        : "নির্বাচিত ফিল্টারে প্রদর্শনের মতো কোনো পণ্য বর্তমানে মজুত নেই।"}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={handleResetFilters}
+                                    className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer inline-flex items-center space-x-1.5 hover:border-slate-400"
+                                  >
+                                    <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>সার্চ ও ফিল্টার রিসেট করুন</span>
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ) : (
@@ -4035,9 +4301,17 @@ export default function StockTransferModal({
                                             <button
                                               type="button"
                                               onClick={() => {
-                                                if (window.confirm(`আপনি কি নিশ্চিত যে '${p.ProductName}' পণ্যটি মুছে ফেলতে চান?`)) {
-                                                  onDeleteProduct(p.ProductID);
-                                                }
+                                                setConfirmDialog({
+                                                  title: 'পণ্য মুছে ফেলা নিশ্চিতকরণ',
+                                                  message: `আপনি কি নিশ্চিত যে '${p.ProductName}' পণ্যটি মুছে ফেলতে চান?\n\nএতে পণ্যটি এবং সংশ্লিষ্ট সকল মজুদ তথ্য ডাটাবেস থেকে মুছে যাবে।`,
+                                                  confirmLabel: 'হ্যাঁ, পণ্য মুছে ফেলুন',
+                                                  cancelLabel: 'না, ফিরে যান',
+                                                  isDestructive: true,
+                                                  onConfirm: () => {
+                                                    onDeleteProduct(p.ProductID);
+                                                    showToast(`'${p.ProductName}' পণ্যটি মুছে ফেলা হয়েছে।`, 'info');
+                                                  }
+                                                });
                                               }}
                                               className="p-1.5 hover:bg-rose-50 hover:text-rose-600 text-slate-400 rounded-lg text-xs transition-colors cursor-pointer"
                                               title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
@@ -4525,10 +4799,52 @@ export default function StockTransferModal({
                           // =========================================================
                           // ২. ফ্ল্যাট ভ্যারিয়েন্ট ভিউ (সরাসরি প্রতিটি ভ্যারিয়েন্ট আলাদা রো আকারে)
                           // =========================================================
-                          flattenedVariantList.length === 0 ? (
+                          isLoading ? (
                             <tr>
-                              <td colSpan="6" className="py-12 text-center text-slate-400 font-medium">
-                                কোনো ভ্যারিয়েন্ট খুঁজে পাওয়া যায়নি।
+                              <td colSpan="6" className="p-0">
+                                <div className="divide-y divide-slate-100 animate-pulse">
+                                  {[1, 2, 3, 4, 5, 6, 7, 8].map((sIdx) => (
+                                    <div key={sIdx} className="px-5 py-4 flex items-center justify-between gap-4">
+                                      <div className="flex items-center space-x-3 flex-1">
+                                        <div className="w-9 h-9 bg-slate-200 rounded-xl shrink-0"></div>
+                                        <div className="space-y-1.5 flex-1 max-w-xs">
+                                          <div className="h-3.5 bg-slate-200 rounded w-3/4"></div>
+                                          <div className="h-2.5 bg-slate-100 rounded w-1/2"></div>
+                                        </div>
+                                      </div>
+                                      <div className="h-4 w-24 bg-slate-200 rounded shrink-0"></div>
+                                      <div className="h-4 w-28 bg-slate-200 rounded shrink-0"></div>
+                                      <div className="h-4 w-20 bg-slate-200 rounded shrink-0"></div>
+                                      <div className="h-8 w-24 bg-slate-200 rounded-xl shrink-0"></div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </td>
+                            </tr>
+                          ) : flattenedVariantList.length === 0 ? (
+                            <tr>
+                              <td colSpan="6" className="py-16 text-center">
+                                <div className="max-w-md mx-auto flex flex-col items-center justify-center space-y-3 px-4">
+                                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                    <SearchX className="w-6 h-6 stroke-[1.75]" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <h4 className="text-sm font-bold text-slate-800">কোনো ভ্যারিয়েন্ট পাওয়া যায়নি</h4>
+                                    <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                                      {overviewSearch
+                                        ? `"${overviewSearch}" এর সাথে মিলে এমন কোনো ভ্যারিয়েন্ট বর্তমান তালিকায় নেই।`
+                                        : "বর্তমান ফিল্টারে প্রদর্শনের মতো কোনো ভ্যারিয়েন্ট নেই।"}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={handleResetFilters}
+                                    className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer inline-flex items-center space-x-1.5 hover:border-slate-400"
+                                  >
+                                    <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>সার্চ ও ফিল্টার রিসেট করুন</span>
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ) : (
@@ -6432,14 +6748,17 @@ export default function StockTransferModal({
                     <button
                       type="submit"
                       disabled={isSubmittingVariantRestock}
-                      className="flex-1 py-2.5 bg-[#0da487] hover:bg-[#0b8b72] disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-all flex items-center justify-center space-x-1.5"
+                      className="flex-1 py-2.5 bg-[#0da487] hover:bg-[#0b8b72] disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-all flex items-center justify-center space-x-1.5 disabled:cursor-not-allowed"
                     >
                       {isSubmittingVariantRestock ? (
-                        <span>সংরক্ষণ ও সিঙ্ক হচ্ছে...</span>
+                        <span className="flex items-center space-x-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>মজুত সমন্বয় সংরক্ষণ হচ্ছে...</span>
+                        </span>
                       ) : (
                         <>
                           <Check className="w-4 h-4" />
-                          <span>সংরক্ষণ ও ডাটাবেস সিঙ্ক</span>
+                          <span>দোকানের মজুত সমন্বয় সংরক্ষণ করুন</span>
                         </>
                       )}
                     </button>
@@ -6447,9 +6766,9 @@ export default function StockTransferModal({
                       type="button"
                       disabled={isSubmittingVariantRestock}
                       onClick={() => setVariantRestockModal(null)}
-                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer"
+                      className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold rounded-xl text-xs cursor-pointer shadow-2xs transition-colors"
                     >
-                      বাতিল
+                      বাতিল করে ফিরে যান
                     </button>
                   </div>
 
@@ -6691,17 +7010,26 @@ export default function StockTransferModal({
                     <button
                       type="button"
                       onClick={() => setNewColorModal(null)}
-                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all cursor-pointer"
+                      className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl font-bold transition-all cursor-pointer shadow-2xs"
                     >
-                      বাতিল
+                      বাতিল করে ফিরে যান
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmittingNewColor}
-                      className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                      className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Check className="w-4 h-4" />
-                      <span>{isSubmittingNewColor ? 'সংরক্ষণ হচ্ছে...' : 'নতুন ভ্যারিয়েন্ট সংরক্ষণ করুন'}</span>
+                      {isSubmittingNewColor ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>ভ্যারিয়েন্ট তৈরি হচ্ছে...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>নতুন রঙের ভ্যারিয়েন্ট সংরক্ষণ করুন</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>
@@ -6989,17 +7317,26 @@ export default function StockTransferModal({
                     <button
                       type="button"
                       onClick={() => setEditVariantModal(null)}
-                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all cursor-pointer"
+                      className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl font-bold transition-all cursor-pointer shadow-2xs"
                     >
-                      বাতিল
+                      বাতিল করে ফিরে যান
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmittingEditVariant}
-                      className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                      className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Check className="w-4 h-4" />
-                      <span>{isSubmittingEditVariant ? 'সংরক্ষণ হচ্ছে...' : 'ভ্যারিয়েন্ট আপডেট সংরক্ষণ করুন'}</span>
+                      {isSubmittingEditVariant ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>তথ্য সংরক্ষণ হচ্ছে...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>ভ্যারিয়েন্টের বিবরণ সংরক্ষণ করুন</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>
@@ -7552,33 +7889,36 @@ export default function StockTransferModal({
                     </div>
                   )}
 
-                  {/* ৫. মন্তব্য বা নোট (ঐচ্ছিক) */}
+                  {/* ৫. মন্তব্য বা নোট (ঐচ্ছিক - দৃশ্যমান লেবেল সহ) */}
                   <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      স্থানান্তর নোট বা বিবরণ (ঐচ্ছিক)
+                    </label>
                     <input
                       type="text"
                       value={directTransferModal.notes}
                       onChange={(e) => setDirectTransferModal(prev => ({ ...prev, notes: e.target.value }))}
-                      placeholder="স্থানান্তর সংক্রান্ত নোট বা বিবরণ (ঐচ্ছিক)..."
+                      placeholder="চালান বিবরণ বা মন্তব্য লিখুন..."
                       className="w-full px-3.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0da487]/20 focus:border-[#0da487] focus:bg-white transition-all shadow-2xs"
                     />
                   </div>
 
-                  {/* ৬. অ্যাকশন বাটনসমূহ */}
+                  {/* ৬. অ্যাকশন বাটনসমূহ (Instant Feedback & Action Verbs) */}
                   <div className="pt-2 border-t border-slate-100 space-y-2">
                     <button
                       type="submit"
                       disabled={isSubmittingDirectTransfer || effectiveTransferQty <= 0}
-                      className="w-full py-3 bg-[#0da487] hover:bg-[#0b8b72] active:scale-[0.99] disabled:opacity-40 text-white font-black rounded-xl text-xs sm:text-sm shadow-md shadow-[#0da487]/20 cursor-pointer transition-all flex items-center justify-center space-x-2"
+                      className="w-full py-3 bg-[#0da487] hover:bg-[#0b8b72] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed text-white font-black rounded-xl text-xs sm:text-sm shadow-md shadow-[#0da487]/20 cursor-pointer transition-all flex items-center justify-center space-x-2"
                     >
                       {isSubmittingDirectTransfer ? (
                         <span className="flex items-center space-x-2">
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          <span>দোকানে স্থানান্তর হচ্ছে...</span>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>চালান স্থানান্তর সম্পন্ন হচ্ছে...</span>
                         </span>
                       ) : (
                         <>
                           <Check className="w-4 h-4" />
-                          <span>দোকানে স্থানান্তর নিশ্চিত করুন ({effectiveTransferQty} {unitLabel})</span>
+                          <span>চালান স্থানান্তর নিশ্চিত করুন ({effectiveTransferQty} {unitLabel})</span>
                         </>
                       )}
                     </button>
@@ -7591,14 +7931,14 @@ export default function StockTransferModal({
                         title="চালান গেটপাস ও ইন-ট্রানজিট মুভমেন্ট তৈরি করতে"
                       >
                         <Truck className="w-3.5 h-3.5 text-slate-400" />
-                        <span>অথবা ড্রাইভার চালান ও গেটপাস তৈরি করতে চান?</span>
+                        <span>ড্রাইভার চালান ও গেটপাস ভিউ</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setDirectTransferModal(null)}
-                        className="px-3 py-1 text-slate-500 hover:text-slate-800 font-bold rounded-lg cursor-pointer hover:bg-slate-100 transition-colors text-xs"
+                        className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold rounded-lg cursor-pointer shadow-2xs transition-colors text-xs"
                       >
-                        বাতিল
+                        বাতিল করে ফিরে যান
                       </button>
                     </div>
                   </div>
@@ -7617,6 +7957,88 @@ export default function StockTransferModal({
             currencySymbol={currencySymbol}
             storeName={storeSettings?.StoreName || 'Pabna Bostraloy'}
           />
+        )}
+
+        {/* =============================================================== */}
+        {/* এন্টারপ্রাইজ কনফার্মেশন ডায়ালগ (Forgiving UX: Destructive Confirm) */}
+        {/* =============================================================== */}
+        {confirmDialog && (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-5 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="p-5 space-y-3.5">
+                <div className="flex items-start space-x-3">
+                  <div className={`p-2.5 rounded-xl shrink-0 ${confirmDialog.isDestructive ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}`}>
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900">{confirmDialog.title || 'আপনি কি নিশ্চিত?'}</h4>
+                    <p className="text-xs text-slate-600 mt-1 font-medium whitespace-pre-line leading-relaxed">{confirmDialog.message}</p>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDialog(null)}
+                    className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                  >
+                    {confirmDialog.cancelLabel || 'না, ফিরে যান'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const action = confirmDialog.onConfirm;
+                      setConfirmDialog(null);
+                      if (typeof action === 'function') action();
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-xs cursor-pointer ${
+                      confirmDialog.isDestructive
+                        ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
+                        : 'bg-slate-900 hover:bg-slate-800'
+                    }`}
+                  >
+                    {confirmDialog.confirmLabel || 'হ্যাঁ, নিশ্চিত করুন'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =============================================================== */}
+        {/* এন্টারপ্রাইজ টোস্ট নোটিফিকেশন (Subtle Toast for Success & Info) */}
+        {/* =============================================================== */}
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-[100] max-w-md animate-in slide-in-from-bottom-5 fade-in duration-200">
+            <div className={`p-4 rounded-2xl shadow-xl border flex items-start space-x-3 ${
+              toast.type === 'error'
+                ? 'bg-white border-rose-200 text-rose-900 shadow-rose-500/10'
+                : toast.type === 'info'
+                ? 'bg-white border-blue-200 text-blue-900 shadow-blue-500/10'
+                : 'bg-white border-emerald-200 text-emerald-950 shadow-emerald-500/10'
+            }`}>
+              <span className="shrink-0 mt-0.5">
+                {toast.type === 'error' ? (
+                  <AlertCircle className="w-5 h-5 text-rose-600" />
+                ) : toast.type === 'info' ? (
+                  <Info className="w-5 h-5 text-blue-600" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5 text-[#0da487]" />
+                )}
+              </span>
+              <div className="flex-1 text-xs">
+                <p className="font-bold">{toast.title || (toast.type === 'error' ? 'ত্রুটি' : 'সফল হয়েছে')}</p>
+                <p className="text-slate-600 font-medium mt-0.5 leading-relaxed">{toast.message}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setToast(null)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors cursor-pointer shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         )}
 
       </div>
