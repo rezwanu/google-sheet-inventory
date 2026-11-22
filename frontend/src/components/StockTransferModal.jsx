@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   X,
   Truck,
@@ -38,7 +38,9 @@ import {
   PlusCircle,
   Sparkles,
   RefreshCw,
-  ClipboardList
+  ClipboardList,
+  AlertCircle,
+  Tag
 } from 'lucide-react';
 import BarcodeStickerModal from './BarcodeStickerModal';
 import {
