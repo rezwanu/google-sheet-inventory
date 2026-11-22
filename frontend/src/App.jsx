@@ -29,6 +29,7 @@ import SuppliersModal from './components/SuppliersModal';
 import PurchaseOrdersModal from './components/PurchaseOrdersModal';
 import BarcodePrintModal from './components/BarcodePrintModal';
 import ExpensesModal from './components/ExpensesModal';
+import BankManagementModal from './components/BankManagementModal';
 import CashRegisterModal from './components/CashRegisterModal';
 import AuditLogsModal from './components/AuditLogsModal';
 import ExpiryAlertModal from './components/ExpiryAlertModal';
@@ -140,6 +141,13 @@ import {
   saveLocalExpenses,
   saveOrUpdateExpenseLocally,
   deleteExpenseLocally,
+  getLocalBankAccounts,
+  saveLocalBankAccounts,
+  addBankAccountLocally,
+  updateBankAccountLocally,
+  getLocalBankTransactions,
+  saveLocalBankTransactions,
+  recordBankTransactionLocally,
   getLocalCashRegisters,
   saveLocalCashRegisters,
   getActiveCashRegister,
@@ -468,6 +476,29 @@ export default function App() {
   const [isExpensesModalOpen, setIsExpensesModalOpen] = useState(false);
   const [isCashRegisterModalOpen, setIsCashRegisterModalOpen] = useState(false);
   const [isAuditLogsModalOpen, setIsAuditLogsModalOpen] = useState(false);
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+
+  // ব্যাংক হিসাব ও লেনদেন খতিয়ান স্টেট
+  const [bankAccounts, setBankAccounts] = useState(() => {
+    try {
+      const ba = getLocalBankAccounts();
+      return Array.isArray(ba) ? ba : [];
+    } catch {
+      return [];
+    }
+  });
+  const [bankTransactions, setBankTransactions] = useState(() => {
+    try {
+      const bt = getLocalBankTransactions();
+      return Array.isArray(bt) ? bt : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const totalBankBalance = useMemo(() => {
+    return bankAccounts.reduce((sum, a) => sum + (Number(a.CurrentBalance) || 0), 0);
+  }, [bankAccounts]);
 
   // ফেজ ৬: মেয়াদ সতর্কতা ও ভ্যারিয়েন্ট সিলেক্টর মডাল স্টেট
   const [isExpiryAlertModalOpen, setIsExpiryAlertModalOpen] = useState(false);
@@ -3452,6 +3483,44 @@ export default function App() {
     }
   };
 
+  // ব্যাংক হিসাব ও ডিপোজিট লেনদেন হ্যান্ডলার
+  const handleSaveBankTransaction = async (txData) => {
+    try {
+      const res = recordBankTransactionLocally(txData);
+      setBankAccounts([...res.bankAccounts]);
+      setBankTransactions(getLocalBankTransactions());
+      setAuditLogs(getLocalAuditLogs());
+      return res;
+    } catch (err) {
+      console.error('Failed to record bank transaction:', err);
+      throw err;
+    }
+  };
+
+  const handleAddBankAccount = async (accData) => {
+    try {
+      const newAcc = addBankAccountLocally(accData);
+      setBankAccounts(getLocalBankAccounts());
+      setBankTransactions(getLocalBankTransactions());
+      setAuditLogs(getLocalAuditLogs());
+      return newAcc;
+    } catch (err) {
+      console.error('Failed to add bank account:', err);
+      throw err;
+    }
+  };
+
+  const handleUpdateBankAccount = async (accountId, updateData) => {
+    try {
+      const updated = updateBankAccountLocally(accountId, updateData);
+      setBankAccounts(getLocalBankAccounts());
+      return updated;
+    } catch (err) {
+      console.error('Failed to update bank account:', err);
+      throw err;
+    }
+  };
+
   // ফেজ ৫: সকালের ক্যাশ রেজিস্টার সেশন ওপেন
   const handleOpenCashRegister = async (sessionData) => {
     try {
@@ -5234,6 +5303,9 @@ export default function App() {
             onOpenPurchaseOrdersModal={() => setIsPurchaseOrdersModalOpen(true)}
             onOpenBarcodeModal={() => setIsBarcodeModalOpen(true)}
             onOpenExpensesModal={() => setIsExpensesModalOpen(true)}
+            onOpenBankModal={() => setIsBankModalOpen(true)}
+            totalBankBalance={totalBankBalance}
+            bankAccountsCount={bankAccounts.length}
             onOpenCashRegisterModal={() => setIsCashRegisterModalOpen(true)}
             onOpenAuditLogsModal={() => setIsAuditLogsModalOpen(true)}
             onOpenSalesReturnModal={() => setIsSalesReturnModalOpen(true)}
@@ -5610,6 +5682,23 @@ export default function App() {
               storeSettings={settings}
               onOpenRegister={handleOpenCashRegister}
               onCloseRegister={handleCloseCashRegister}
+            />
+          )}
+
+          {currentView === 'bank_accounts' && (
+            <BankManagementModal
+              embedded={true}
+              isOpen={true}
+              onClose={() => setCurrentView('pos')}
+              bankAccounts={bankAccounts}
+              bankTransactions={bankTransactions}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              activeUser={activeUser}
+              activeRegister={activeRegister}
+              storeSettings={settings}
+              onSaveBankTransaction={handleSaveBankTransaction}
+              onAddBankAccount={handleAddBankAccount}
+              onUpdateBankAccount={handleUpdateBankAccount}
             />
           )}
 
@@ -6225,6 +6314,21 @@ export default function App() {
         storeSettings={settings}
         onOpenRegister={handleOpenCashRegister}
         onCloseRegister={handleCloseCashRegister}
+      />
+
+      {/* ব্যাংক হিসাব ও ডিপোজিট লেনদেন খতিয়ান মডাল */}
+      <BankManagementModal
+        isOpen={isBankModalOpen}
+        onClose={() => setIsBankModalOpen(false)}
+        bankAccounts={bankAccounts}
+        bankTransactions={bankTransactions}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        activeUser={activeUser}
+        activeRegister={activeRegister}
+        storeSettings={settings}
+        onSaveBankTransaction={handleSaveBankTransaction}
+        onAddBankAccount={handleAddBankAccount}
+        onUpdateBankAccount={handleUpdateBankAccount}
       />
 
       {/* ফেজ ৫: অ্যাক্টিভিটি ও সিকিউরিটি অডিট ট্রেইল মডাল */}

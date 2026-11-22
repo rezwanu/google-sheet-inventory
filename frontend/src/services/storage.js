@@ -39,6 +39,8 @@ const STORAGE_KEYS = {
   STOCK_MOVEMENTS: 'pos_stock_movements',
   STAFF_ATTENDANCE: 'pos_staff_attendance',
   MONTHLY_PNL: 'pos_monthly_pnl',
+  BANK_ACCOUNTS: 'pos_bank_accounts',
+  BANK_TRANSACTIONS: 'pos_bank_transactions',
 };
 
 import {
@@ -3291,6 +3293,312 @@ export function closeCashRegisterLocally({
 
 /**
  * ============================================================================
+ * ব্যাংক হিসাব ও ডিপোজিট লেনদেন ব্যবস্থাপনা (Bank Accounts & Fund Management)
+ * ============================================================================
+ */
+
+export const BASELINE_BANK_ACCOUNTS = [
+  {
+    AccountID: 'BANK-01',
+    BankName: 'Islami Bank Bangladesh Ltd',
+    AccountName: 'Pabna Bostraloy',
+    AccountNumber: '2050213010045890',
+    Branch: 'Mohammadpur Branch',
+    AccountType: 'Current',
+    OpeningBalance: 50000,
+    CurrentBalance: 50000,
+    Status: 'Active',
+    CreatedAt: '2026-01-01T00:00:00.000Z'
+  },
+  {
+    AccountID: 'BANK-02',
+    BankName: 'Dutch-Bangla Bank Ltd (DBBL)',
+    AccountName: 'Pabna Bostraloy',
+    AccountNumber: '1161200054321',
+    Branch: 'Dhanmondi Branch',
+    AccountType: 'Current',
+    OpeningBalance: 30000,
+    CurrentBalance: 30000,
+    Status: 'Active',
+    CreatedAt: '2026-01-01T00:00:00.000Z'
+  },
+  {
+    AccountID: 'BANK-03',
+    BankName: 'bKash Merchant',
+    AccountName: 'Pabna Bostraloy Merchant',
+    AccountNumber: '01711002233',
+    Branch: 'Head Office',
+    AccountType: 'MFS Merchant',
+    OpeningBalance: 15000,
+    CurrentBalance: 15000,
+    Status: 'Active',
+    CreatedAt: '2026-01-01T00:00:00.000Z'
+  }
+];
+
+export function getLocalBankAccounts() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.BANK_ACCOUNTS);
+    if (Array.isArray(data) && data.length > 0) return data;
+    setSecureStorageItem(STORAGE_KEYS.BANK_ACCOUNTS, BASELINE_BANK_ACCOUNTS);
+    return BASELINE_BANK_ACCOUNTS;
+  } catch (e) {
+    return BASELINE_BANK_ACCOUNTS;
+  }
+}
+
+export function saveLocalBankAccounts(accounts) {
+  setSecureStorageItem(STORAGE_KEYS.BANK_ACCOUNTS, Array.isArray(accounts) ? accounts : []);
+}
+
+export function addBankAccountLocally({
+  bankName = '',
+  accountName = '',
+  accountNumber = '',
+  branch = '',
+  accountType = 'Current',
+  openingBalance = 0,
+  status = 'Active'
+}) {
+  const accounts = getLocalBankAccounts();
+  const numOpening = Math.max(0, Number(openingBalance) || 0);
+  const newAccount = {
+    AccountID: `BANK-${Date.now().toString().slice(-6)}`,
+    BankName: String(bankName).trim() || 'Bank Account',
+    AccountName: String(accountName).trim() || 'Account Holder',
+    AccountNumber: String(accountNumber).trim() || '0000',
+    Branch: String(branch).trim() || 'Main Branch',
+    AccountType: String(accountType).trim() || 'Current',
+    OpeningBalance: numOpening,
+    CurrentBalance: numOpening,
+    Status: status === 'Inactive' ? 'Inactive' : 'Active',
+    CreatedAt: new Date().toISOString()
+  };
+
+  accounts.push(newAccount);
+  saveLocalBankAccounts(accounts);
+
+  if (numOpening > 0) {
+    const transactions = getLocalBankTransactions();
+    const openingTx = {
+      TransactionID: `BTX-${Date.now().toString().slice(-6)}`,
+      Date: newAccount.CreatedAt,
+      AccountID: newAccount.AccountID,
+      BankName: newAccount.BankName,
+      AccountNumber: newAccount.AccountNumber,
+      Type: 'DEPOSIT',
+      Amount: numOpening,
+      BalanceAfter: numOpening,
+      ReferenceNo: 'OPENING-BAL',
+      Source: 'Opening Balance',
+      PerformedBy: 'Admin',
+      Notes: 'প্রারম্ভিক জমা ব্যালেন্স',
+      CreatedAt: newAccount.CreatedAt
+    };
+    transactions.unshift(openingTx);
+    saveLocalBankTransactions(transactions);
+  }
+
+  logAuditEventLocally({
+    actionType: 'CREATE_BANK_ACCOUNT',
+    module: 'BankManagement',
+    description: `নতুন ব্যাংক অ্যাকাউন্ট যুক্ত করা হয়েছে: ${newAccount.BankName} (${newAccount.AccountNumber})`,
+    details: newAccount
+  });
+
+  return newAccount;
+}
+
+export function updateBankAccountLocally(accountId, updateData) {
+  const accounts = getLocalBankAccounts();
+  const idx = accounts.findIndex(a => a.AccountID === accountId);
+  if (idx === -1) return null;
+
+  accounts[idx] = {
+    ...accounts[idx],
+    ...updateData,
+    AccountID: accountId,
+    CurrentBalance: updateData.CurrentBalance !== undefined ? Number(updateData.CurrentBalance) : accounts[idx].CurrentBalance
+  };
+
+  saveLocalBankAccounts(accounts);
+  return accounts[idx];
+}
+
+export function getLocalBankTransactions() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.BANK_TRANSACTIONS);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveLocalBankTransactions(transactions) {
+  setSecureStorageItem(STORAGE_KEYS.BANK_TRANSACTIONS, Array.isArray(transactions) ? transactions : []);
+}
+
+export function recordBankTransactionLocally({
+  accountId,
+  type = 'DEPOSIT',
+  amount = 0,
+  referenceNo = '',
+  source = 'Shop Cash Register',
+  slipImageUrl = '',
+  performedBy = 'Admin',
+  notes = '',
+  toAccountId = '',
+  date = null,
+  adjustCashRegister = false
+}) {
+  const numAmount = Math.max(0, Number(amount) || 0);
+  if (numAmount <= 0) {
+    throw new Error('টাকার পরিমাণ শূন্য হতে পারে না');
+  }
+
+  const accounts = getLocalBankAccounts();
+  const accIndex = accounts.findIndex(a => a.AccountID === accountId);
+  if (accIndex === -1) {
+    throw new Error('নির্বাচিত ব্যাংক অ্যাকাউন্ট পাওয়া যায়নি');
+  }
+
+  const targetAccount = accounts[accIndex];
+  const txDate = date ? new Date(date).toISOString() : new Date().toISOString();
+  let balanceAfter = Number(targetAccount.CurrentBalance || 0);
+
+  if (type === 'DEPOSIT') {
+    balanceAfter += numAmount;
+    targetAccount.CurrentBalance = balanceAfter;
+  } else if (type === 'WITHDRAW' || type === 'EXPENSE') {
+    if (balanceAfter < numAmount) {
+      throw new Error(`ব্যাংকে পর্যাপ্ত ব্যালেন্স নেই। বর্তমান ব্যালেন্স: ${balanceAfter} ৳`);
+    }
+    balanceAfter -= numAmount;
+    targetAccount.CurrentBalance = balanceAfter;
+  } else if (type === 'TRANSFER') {
+    if (!toAccountId || toAccountId === accountId) {
+      throw new Error('ফান্ড স্থানান্তরের জন্য অন্য একটি বৈধ ব্যাংক অ্যাকাউন্ট নির্বাচন করুন');
+    }
+    const toAccIndex = accounts.findIndex(a => a.AccountID === toAccountId);
+    if (toAccIndex === -1) {
+      throw new Error('প্রাপক ব্যাংক অ্যাকাউন্ট পাওয়া যায়নি');
+    }
+    if (balanceAfter < numAmount) {
+      throw new Error(`স্থানান্তরের জন্য অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই। বর্তমান ব্যালেন্স: ${balanceAfter} ৳`);
+    }
+
+    balanceAfter -= numAmount;
+    targetAccount.CurrentBalance = balanceAfter;
+
+    const destAccount = accounts[toAccIndex];
+    const destBalanceAfter = Number(destAccount.CurrentBalance || 0) + numAmount;
+    destAccount.CurrentBalance = destBalanceAfter;
+
+    const destTx = {
+      TransactionID: `BTX-${Date.now().toString().slice(-6)}-IN`,
+      Date: txDate,
+      AccountID: destAccount.AccountID,
+      BankName: destAccount.BankName,
+      AccountNumber: destAccount.AccountNumber,
+      Type: 'DEPOSIT',
+      Amount: numAmount,
+      BalanceAfter: destBalanceAfter,
+      ReferenceNo: referenceNo || `TRF-FROM-${targetAccount.AccountID}`,
+      Source: `Transfer from ${targetAccount.BankName}`,
+      SlipImageURL: slipImageUrl || '',
+      PerformedBy: performedBy,
+      Notes: notes ? `Transfer from ${targetAccount.BankName}: ${notes}` : `Transfer from ${targetAccount.BankName}`,
+      CreatedAt: txDate
+    };
+
+    const allTx = getLocalBankTransactions();
+    allTx.unshift(destTx);
+    saveLocalBankTransactions(allTx);
+  }
+
+  const txId = `BTX-${Date.now().toString().slice(-6)}`;
+  const transaction = {
+    TransactionID: txId,
+    Date: txDate,
+    AccountID: targetAccount.AccountID,
+    BankName: targetAccount.BankName,
+    AccountNumber: targetAccount.AccountNumber,
+    Type: type,
+    Amount: numAmount,
+    BalanceAfter: balanceAfter,
+    ReferenceNo: referenceNo || `REF-${Date.now().toString().slice(-5)}`,
+    Source: source,
+    SlipImageURL: slipImageUrl || '',
+    PerformedBy: performedBy,
+    Notes: notes,
+    CreatedAt: txDate
+  };
+
+  const transactions = getLocalBankTransactions();
+  transactions.unshift(transaction);
+
+  saveLocalBankAccounts(accounts);
+  saveLocalBankTransactions(transactions);
+
+  logAuditEventLocally({
+    actionType: type === 'DEPOSIT' ? 'BANK_DEPOSIT' : type === 'WITHDRAW' ? 'BANK_WITHDRAW' : 'BANK_TRANSFER',
+    module: 'BankManagement',
+    description: `ব্যাংক লেনদেন: ${targetAccount.BankName} — ${type === 'DEPOSIT' ? 'জমা' : type === 'WITHDRAW' ? 'উত্তোলন' : 'স্থানান্তর'} ৳${numAmount.toLocaleString('bn-BD')} (ব্যালেন্স: ৳${balanceAfter.toLocaleString('bn-BD')})`,
+    details: transaction
+  });
+
+  return {
+    transaction,
+    bankAccounts: accounts
+  };
+}
+
+export function exportBankTransactionsExcelCSV(transactions = [], bankAccounts = []) {
+  if (!transactions.length) return false;
+
+  const headers = [
+    'TransactionID',
+    'Date',
+    'Bank Name',
+    'Account Number',
+    'Transaction Type',
+    'Reference / Slip No',
+    'Credit (Deposit)',
+    'Debit (Withdraw/Expense)',
+    'Balance After',
+    'Source / Method',
+    'Performed By',
+    'Notes'
+  ];
+
+  const rows = transactions.map(t => {
+    const isCredit = t.Type === 'DEPOSIT';
+    const credit = isCredit ? t.Amount : 0;
+    const debit = !isCredit ? t.Amount : 0;
+    const typeLabel = t.Type === 'DEPOSIT' ? 'জমা (Deposit)' : t.Type === 'WITHDRAW' ? 'উত্তোলন (Withdraw)' : t.Type === 'TRANSFER' ? 'স্থানান্তর (Transfer)' : 'খরচ (Expense)';
+
+    return [
+      t.TransactionID,
+      new Date(t.Date || t.CreatedAt).toLocaleString('bn-BD'),
+      t.BankName || '',
+      t.AccountNumber || '',
+      typeLabel,
+      t.ReferenceNo || '',
+      credit,
+      debit,
+      t.BalanceAfter || 0,
+      t.Source || '',
+      t.PerformedBy || '',
+      t.Notes || ''
+    ];
+  });
+
+  exportToCSV(`Bank_Ledger_Statement_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+  return true;
+}
+
+/**
+ * ============================================================================
  * Phase 5: সিকিউরিটি ও অ্যাক্টিভিটি অডিট ট্রেইল (Activity Audit Trail)
  * ============================================================================
  */
@@ -4613,7 +4921,9 @@ export function exportDatabaseBackupJSON(storeName = 'Pabna Bostraloy') {
         tailoringOrders: getLocalTailoringOrders(),
         tailorMasters: getLocalTailorMasters(),
         fabricWastage: getLocalFabricWastage(),
-        stockMovements: getLocalStockMovements()
+        stockMovements: getLocalStockMovements(),
+        bankAccounts: getLocalBankAccounts(),
+        bankTransactions: getLocalBankTransactions()
       }
     };
 
@@ -4745,6 +5055,14 @@ export function restoreDatabaseFromJSON(jsonString) {
     if (Array.isArray(collections.stockMovements)) {
       saveLocalStockMovements(collections.stockMovements);
       counts.stockMovements = collections.stockMovements.length;
+    }
+    if (Array.isArray(collections.bankAccounts)) {
+      saveLocalBankAccounts(collections.bankAccounts);
+      counts.bankAccounts = collections.bankAccounts.length;
+    }
+    if (Array.isArray(collections.bankTransactions)) {
+      saveLocalBankTransactions(collections.bankTransactions);
+      counts.bankTransactions = collections.bankTransactions.length;
     }
 
     return { success: true, counts };

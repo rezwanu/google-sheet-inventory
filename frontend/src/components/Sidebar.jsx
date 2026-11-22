@@ -36,7 +36,8 @@ import {
   Database,
   Search,
   X,
-  Calculator
+  Calculator,
+  Landmark
 } from 'lucide-react';
 import { isAdminUser } from '../utils/permissionUtils';
 
@@ -97,6 +98,9 @@ export default function Sidebar({
   transfersInTransitCount = 0,
   isRegisterOpen = false,
   expensesCount = 0,
+  onOpenBankModal,
+  totalBankBalance = 0,
+  bankAccountsCount = 0,
   onOpenStockModal,
   onOpenProductModal,
   onOpenAnalyticsModal,
@@ -481,6 +485,17 @@ export default function Sidebar({
             : null
         },
         {
+          id: 'bank_management',
+          title: 'ব্যাংক হিসাব ও ডিপোজিট',
+          subTitle: 'একাধিক ব্যাংক ব্যালেন্স ও লেজার',
+          icon: Landmark,
+          isActive: currentView === 'bank_accounts',
+          onClick: () => onNavigate ? onNavigate('bank_accounts') : onOpenBankModal && onOpenBankModal(),
+          badge: totalBankBalance > 0
+            ? { text: `৳${Math.round(totalBankBalance).toLocaleString('bn-BD')}`, color: 'bg-slate-100 text-[#111111] font-mono border border-[#E5E5E5]' }
+            : null
+        },
+        {
           id: 'store_expenses',
           title: 'দোকানের খরচের খাতা',
           subTitle: 'ভাড়া, বিদ্যুৎ ও স্টাফ খরচ',
@@ -580,6 +595,8 @@ export default function Sidebar({
     onOpenCouponModal,
     onOpenUsersModal,
     onOpenAnalyticsModal,
+    onOpenBankModal,
+    totalBankBalance,
     onSwitchToCustomerMode,
     onOpenTailoringModal,
     tailoringOrdersCount
