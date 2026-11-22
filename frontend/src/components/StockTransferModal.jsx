@@ -119,6 +119,10 @@ export default function StockTransferModal({
   onAddVariantOption,
   onOpenFabricWastageModal
 }) {
+  // =========================================================================
+  // ১. সকল স্টেট ও রেফারেন্স (All State & Ref Declarations at Component Root)
+  // =========================================================================
+
   // প্রধান ট্যাব নেভিগেশন: 'overview' | 'transfers' | 'godown_outflow' | 'shop_outflow'
   const [activeMainTab, setActiveMainTab] = useState(() => {
     if (initialTab === 'godown_stock' || initialTab === 'shop_stock') return 'overview';
@@ -128,40 +132,12 @@ export default function StockTransferModal({
   // ট্রান্সফার সাব-ট্যাব: 'new' | 'list'
   const [transferSubTab, setTransferSubTab] = useState(() => initialTransferSubTab || 'new');
 
-  // =========================================================================
   // এন্টারপ্রাইজ UX ও ইন্টার‍্যাকশন স্টেটসমূহ (4 UI States, Feedback & Forgiving UX)
-  // =========================================================================
   const [toast, setToast] = useState(null); // { id, message, type, title }
   const [inlineError, setInlineError] = useState(null); // { message, onRetry }
   const [confirmDialog, setConfirmDialog] = useState(null); // { title, message, confirmLabel, cancelLabel, isDestructive, onConfirm }
 
-  const showToast = (message, type = 'success', title = '') => {
-    setToast({
-      id: Date.now(),
-      message,
-      type,
-      title: title || (type === 'error' ? 'ত্রুটি' : type === 'info' ? 'তথ্য' : 'সফল হয়েছে')
-    });
-  };
-
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => {
-        setToast(null);
-      }, 4500);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
-
-  const handleResetFilters = () => {
-    setOverviewSearch('');
-    setOverviewCategory('ALL');
-    setOverviewFilter(isShopStockView ? 'IN_SHOP' : 'ALL');
-  };
-
-  // =========================================================================
-  // ১. চালান তৈরি স্টেটসমূহ
-  // =========================================================================
+  // চালান তৈরি স্টেটসমূহ
   const [challanNo, setChallanNo] = useState(() => `CHL-${Date.now().toString().slice(-6)}`);
   const [transferDate, setTransferDate] = useState(() => {
     const today = new Date();
@@ -184,7 +160,7 @@ export default function StockTransferModal({
   const [challanItems, setChallanItems] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // প্রিন্ট প্রিভিউ
+  // প্রিন্ট প্রিভিউ স্টেট
   const [printableChallan, setPrintableChallan] = useState(null);
   const [isPrintableGodownOutflow, setIsPrintableGodownOutflow] = useState(false);
   const [isPrintableShopStockAudit, setIsPrintableShopStockAudit] = useState(false);
@@ -194,9 +170,7 @@ export default function StockTransferModal({
   const [listSearch, setListSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  // =========================================================================
-  // ২. লাইভ স্টক ওভারভিউ ফিল্টার স্টেট
-  // =========================================================================
+  // লাইভ স্টক ওভারভিউ ফিল্টার স্টেট
   const [overviewSearch, setOverviewSearch] = useState('');
   const [overviewFilter, setOverviewFilter] = useState(() => {
     if (initialTab === 'godown_low_stock' || initialFilter === 'LOW_GODOWN') return 'LOW_GODOWN';
@@ -205,6 +179,48 @@ export default function StockTransferModal({
     return initialFilter || 'ALL';
   });
   const [overviewCategory, setOverviewCategory] = useState('ALL');
+  const [stockViewMode, setStockViewMode] = useState('grouped'); // 'grouped' | 'variants'
+  const [expandedProductIds, setExpandedProductIds] = useState({});
+
+  // গোডাউন ও দোকান নির্গমন খাতা ফিল্টার স্টেট
+  const [godownSearch, setGodownSearch] = useState('');
+  const [godownReasonFilter, setGodownReasonFilter] = useState('ALL');
+  const [godownDateFilter, setGodownDateFilter] = useState('ALL'); // 'ALL' | 'TODAY' | '7DAYS' | '30DAYS'
+
+  const [shopSearch, setShopSearch] = useState('');
+  const [shopTypeFilter, setShopTypeFilter] = useState('ALL');
+  const [shopDateFilter, setShopDateFilter] = useState('ALL');
+
+  // স্টক অ্যাডজাস্টমেন্ট সাব-মডাল স্টেট
+  const [adjustTargetProduct, setAdjustTargetProduct] = useState(null);
+  const [adjustLocation, setAdjustLocation] = useState('Godown'); // 'Godown' | 'Shop'
+  const [adjustAction, setAdjustAction] = useState('ADD'); // 'ADD' | 'DEDUCT' | 'SET'
+  const [adjustQty, setAdjustQty] = useState(1);
+  const [adjustReason, setAdjustReason] = useState('নতুন লট গোডাউনে আগমন');
+  const [adjustNotes, setAdjustNotes] = useState('');
+
+  // ভ্যারিয়েন্ট লেভেল রিস্টক ও স্টক সমন্বয় সাব-মডাল স্টেট
+  const [variantRestockModal, setVariantRestockModal] = useState(null);
+  const [isSubmittingVariantRestock, setIsSubmittingVariantRestock] = useState(false);
+
+  // নতুন কালার / ভ্যারিয়েন্ট যোগ সাব-মডাল স্টেট
+  const [newColorModal, setNewColorModal] = useState(null);
+  const [isSubmittingNewColor, setIsSubmittingNewColor] = useState(false);
+
+  // ভ্যারিয়েন্ট এডিট সাব-মডাল স্টেট
+  const [editVariantModal, setEditVariantModal] = useState(null);
+  const [isSubmittingEditVariant, setIsSubmittingEditVariant] = useState(false);
+
+  // গোডাউন থেকে দোকানে সরাসরি পণ্য স্থানান্তর সাব-মডাল স্টেট
+  const [directTransferModal, setDirectTransferModal] = useState(null);
+  const [isSubmittingDirectTransfer, setIsSubmittingDirectTransfer] = useState(false);
+
+  // রেফারেন্স
+  const searchInputRef = useRef(null);
+
+  // =========================================================================
+  // ২. ড্রাইভড ভেরিয়েবলসমূহ (Derived Booleans)
+  // =========================================================================
 
   // দোকানে বর্তমান মজুদ ভিউ মোড কিনা
   const isShopStockView = initialTab === 'shop_stock' || initialTab === 'shop_outflow' || (
@@ -227,9 +243,24 @@ export default function StockTransferModal({
     ].includes(overviewFilter)
   );
 
-  // ভ্যারিয়েন্ট স্টক এক্সপ্যান্ড ও ভিউ মোড স্টেট
-  const [stockViewMode, setStockViewMode] = useState('grouped'); // 'grouped' | 'variants'
-  const [expandedProductIds, setExpandedProductIds] = useState({});
+  // =========================================================================
+  // ৩. হেল্পার ফাংশনসমূহ (Helpers)
+  // =========================================================================
+
+  const showToast = (message, type = 'success', title = '') => {
+    setToast({
+      id: Date.now(),
+      message,
+      type,
+      title: title || (type === 'error' ? 'ত্রুটি' : type === 'info' ? 'তথ্য' : 'সফল হয়েছে')
+    });
+  };
+
+  const handleResetFilters = () => {
+    setOverviewSearch('');
+    setOverviewCategory('ALL');
+    setOverviewFilter(isShopStockView ? 'IN_SHOP' : 'ALL');
+  };
 
   // পণ্য থেকে ভ্যারিয়েন্ট তালিকা নিরাপদ এক্সট্র্যাক্ট ও স্টক ফিল্ড স্বাভাবিকীকরণ
   const getVariantsOfProduct = (p) => {
@@ -255,13 +286,10 @@ export default function StockTransferModal({
     ) || parentSelling;
 
     return vars.map((v) => {
-      const gStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : 0)) || 0;
-      const sStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : (v.ShopStock !== undefined ? v.ShopStock : 0))) || 0;
-      let vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice !== undefined ? v.costPrice : parentCost)) || 0;
-      if (vCost <= 0 && parentCost > 0) vCost = parentCost;
-      if (parentCost > 0 && vCost > parentCost * 10) vCost = parentCost;
-      let vSell = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice !== undefined ? v.sellingPrice : parentSelling)) || 0;
-      if (vSell <= 0 && parentSelling > 0) vSell = parentSelling;
+      const gStock = Number(v.GodownStock !== undefined ? v.GodownStock : (v.godownStock !== undefined ? v.godownStock : (v.warehouseStock || 0)));
+      const sStock = Number(v.StockQuantity !== undefined ? v.StockQuantity : (v.stockQuantity !== undefined ? v.stockQuantity : (v.ShopStock !== undefined ? v.ShopStock : (v.shopStock || 0))));
+      let vCost = Number(v.CostPrice !== undefined ? v.CostPrice : (v.costPrice || parentCost));
+      let vSell = Number(v.SellingPrice !== undefined ? v.SellingPrice : (v.sellingPrice || (v.Price || (v.price || parentSelling))));
       let vMinSell = Number(
         v.MinSellingPrice !== undefined && v.MinSellingPrice !== null && v.MinSellingPrice !== ''
           ? v.MinSellingPrice
@@ -269,26 +297,21 @@ export default function StockTransferModal({
             ? v.minSellingPrice
             : (v.FloorPrice !== undefined && v.FloorPrice !== null && v.FloorPrice !== ''
               ? v.FloorPrice
-              : (v.floorPrice !== undefined && v.floorPrice !== null && v.floorPrice !== ''
-                ? v.floorPrice
-                : parentMinSelling)))
+              : (v.floorPrice || parentMinSelling)))
       ) || parentMinSelling;
-      if (vMinSell <= 0 && parentMinSelling > 0) vMinSell = parentMinSelling;
-      if (vMinSell <= 0 && vSell > 0) vMinSell = vSell;
 
       return {
         ...v,
-        CostPrice: vCost,
-        costPrice: vCost,
-        SellingPrice: vSell,
-        sellingPrice: vSell,
-        MinSellingPrice: vMinSell,
-        minSellingPrice: vMinSell,
-        GodownStock: gStock,
-        godownStock: gStock,
-        StockQuantity: sStock,
-        stockQuantity: sStock,
-        TotalStock: gStock + sStock
+        GodownStock: isNaN(gStock) ? 0 : gStock,
+        godownStock: isNaN(gStock) ? 0 : gStock,
+        StockQuantity: isNaN(sStock) ? 0 : sStock,
+        stockQuantity: isNaN(sStock) ? 0 : sStock,
+        CostPrice: isNaN(vCost) ? parentCost : vCost,
+        costPrice: isNaN(vCost) ? parentCost : vCost,
+        SellingPrice: isNaN(vSell) ? parentSelling : vSell,
+        sellingPrice: isNaN(vSell) ? parentSelling : vSell,
+        MinSellingPrice: isNaN(vMinSell) ? parentMinSelling : vMinSell,
+        minSellingPrice: isNaN(vMinSell) ? parentMinSelling : vMinSell
       };
     });
   };
@@ -312,7 +335,19 @@ export default function StockTransferModal({
     setExpandedProductIds({});
   };
 
-  const searchInputRef = useRef(null);
+  // =========================================================================
+  // ৪. সাইড ইফেক্ট ও হুকস (useEffect Hooks - Safe after all state initialized)
+  // =========================================================================
+
+  // টোস্ট নোটিফিকেশন অটো-ডিসমিস টাইমার
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 4500);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   // কীবোর্ড শর্টকাট লিসেনার (Human Pro POS Ergonomics & Accessibility)
   useEffect(() => {
@@ -401,6 +436,7 @@ export default function StockTransferModal({
     onClose
   ]);
 
+  // প্রাথমিক ট্যাব এবং ফিল্টার সিঙ্ক
   useEffect(() => {
     if (initialTab === 'godown_low_stock') {
       setActiveMainTab('overview');
@@ -419,43 +455,6 @@ export default function StockTransferModal({
       setTransferSubTab(initialTransferSubTab);
     }
   }, [initialTab, initialTransferSubTab, initialFilter, isOpen]);
-
-  // =========================================================================
-  // ৩. গোডাউন ও দোকান নির্গমন খাতা ফিল্টার স্টেট
-  // =========================================================================
-  const [godownSearch, setGodownSearch] = useState('');
-  const [godownReasonFilter, setGodownReasonFilter] = useState('ALL');
-  const [godownDateFilter, setGodownDateFilter] = useState('ALL'); // 'ALL' | 'TODAY' | '7DAYS' | '30DAYS'
-
-  const [shopSearch, setShopSearch] = useState('');
-  const [shopTypeFilter, setShopTypeFilter] = useState('ALL');
-  const [shopDateFilter, setShopDateFilter] = useState('ALL');
-
-  // =========================================================================
-  // ৪. স্টক অ্যাডজাস্টমেন্ট সাব-মডাল স্টেট
-  // =========================================================================
-  const [adjustTargetProduct, setAdjustTargetProduct] = useState(null);
-  const [adjustLocation, setAdjustLocation] = useState('Godown'); // 'Godown' | 'Shop'
-  const [adjustAction, setAdjustAction] = useState('ADD'); // 'ADD' | 'DEDUCT' | 'SET'
-  const [adjustQty, setAdjustQty] = useState(1);
-  const [adjustReason, setAdjustReason] = useState('নতুন লট গোডাউনে আগমন');
-  const [adjustNotes, setAdjustNotes] = useState('');
-
-  // ভ্যারিয়েন্ট লেভেল রিস্টক ও স্টক সমন্বয় সাব-মডাল স্টেট
-  const [variantRestockModal, setVariantRestockModal] = useState(null);
-  const [isSubmittingVariantRestock, setIsSubmittingVariantRestock] = useState(false);
-
-  // নতুন কালার / ভ্যারিয়েন্ট যোগ সাব-মডাল স্টেট
-  const [newColorModal, setNewColorModal] = useState(null);
-  const [isSubmittingNewColor, setIsSubmittingNewColor] = useState(false);
-
-  // ভ্যারিয়েন্ট এডিট সাব-মডাল স্টেট
-  const [editVariantModal, setEditVariantModal] = useState(null);
-  const [isSubmittingEditVariant, setIsSubmittingEditVariant] = useState(false);
-
-  // গোডাউন থেকে দোকানে সরাসরি পণ্য স্থানান্তর সাব-মডাল স্টেট
-  const [directTransferModal, setDirectTransferModal] = useState(null);
-  const [isSubmittingDirectTransfer, setIsSubmittingDirectTransfer] = useState(false);
 
   // =========================================================================
   // পরিগণিত মেট্রিক্স ও ফিল্টারসমূহ
