@@ -1557,6 +1557,22 @@ export default function StockTransferModal({
     setChallanItems((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleResetChallan = () => {
+    setChallanNo(`CHL-${Date.now().toString().slice(-6)}`);
+    setTransferDate(new Date().toISOString().split('T')[0]);
+    setSelectedItemKey('');
+    setDropdownSearch('');
+    setProductSearch('');
+    setSelectedProduct(null);
+    setSelectedVariantId('');
+    setChallanItems([]);
+    setDriverName('');
+    setDriverPhone('');
+    setVehicleNo('');
+    setNotes('');
+    setPrintableChallan(null);
+  };
+
   // চালান সাবমিট হ্যান্ডলার
   const handleSubmitChallan = async (shouldPrint = true) => {
     if (challanItems.length === 0) {
@@ -1598,22 +1614,6 @@ export default function StockTransferModal({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleResetChallan = () => {
-    setChallanNo(`CHL-${Date.now().toString().slice(-6)}`);
-    setTransferDate(new Date().toISOString().split('T')[0]);
-    setSelectedItemKey('');
-    setDropdownSearch('');
-    setProductSearch('');
-    setSelectedProduct(null);
-    setSelectedVariantId('');
-    setChallanItems([]);
-    setDriverName('');
-    setDriverPhone('');
-    setVehicleNo('');
-    setNotes('');
-    setPrintableChallan(null);
   };
 
   // চালান রিসিভ ও স্টকে যোগ হ্যান্ডলার (Forgiving UX Confirm Dialog)
