@@ -29,7 +29,9 @@ const SHEETS = {
   STOCK_TRANSFERS: 'StockTransfers',
   VARIANTS: 'Variants',
   ATTENDANCE: 'Attendance',
-  MONTHLY_PNL: 'MonthlyPnL'
+  MONTHLY_PNL: 'MonthlyPnL',
+  BANK_ACCOUNTS: 'BankAccounts',
+  BANK_TRANSACTIONS: 'BankTransactions'
 };
 
 /**
@@ -1014,6 +1016,86 @@ function ensureMonthlyPnLSheet(spreadsheet) {
   return pnlSheet;
 }
 
+/**
+ * BankAccounts (একাধিক ব্যাংক ও এমএফএস অ্যাকাউন্ট তালিকা) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} BankAccounts শিট অবজেক্ট
+ */
+function ensureBankAccountsSheet(spreadsheet) {
+  let bankSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.BANK_ACCOUNTS);
+  if (!bankSheet) {
+    bankSheet = spreadsheet.insertSheet(SHEETS.BANK_ACCOUNTS);
+  }
+
+  const expectedHeaders = [
+    'AccountID', 'BankName', 'AccountNumber', 'BranchName',
+    'AccountType', 'OpeningBalance', 'CurrentBalance', 'Status', 'UpdatedAt'
+  ];
+
+  if (bankSheet.getLastRow() === 0) {
+    bankSheet.appendRow(expectedHeaders);
+    // ডিফল্ট বেসলাইন অ্যাকাউন্ট যোগ
+    const now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+    bankSheet.appendRow(['BANK-IBBL-01', 'Islami Bank Bangladesh PLC', '205012345678901', 'Pabna Branch', 'Current', 50000, 50000, 'Active', now]);
+    bankSheet.appendRow(['BANK-DBBL-02', 'Dutch-Bangla Bank PLC', '1151200098765', 'Pabna Main', 'Savings', 25000, 25000, 'Active', now]);
+    bankSheet.appendRow(['BANK-BKASH-03', 'bKash Merchant Account', '01711000000', 'Digital Wallet', 'MFS Merchant', 15000, 15000, 'Active', now]);
+    return bankSheet;
+  }
+
+  const lastCol = bankSheet.getLastColumn();
+  if (lastCol > 0) {
+    const existingHeaders = bankSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    for (let h = 0; h < expectedHeaders.length; h++) {
+      const headerName = expectedHeaders[h];
+      const foundIdx = findCol(existingHeaders, headerName);
+      if (foundIdx === -1) {
+        bankSheet.getRange(1, bankSheet.getLastColumn() + 1).setValue(headerName);
+        existingHeaders.push(headerName);
+      }
+    }
+  }
+
+  return bankSheet;
+}
+
+/**
+ * BankTransactions (ব্যাংক লেনদেন ও পাসবুক খাতা) শিট নিশ্চিত করা
+ * @param {Spreadsheet} spreadsheet - অ্যাক্টিভ স্প্রেডশিট
+ * @return {Sheet} BankTransactions শিট অবজেক্ট
+ */
+function ensureBankTransactionsSheet(spreadsheet) {
+  let txnSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.BANK_TRANSACTIONS);
+  if (!txnSheet) {
+    txnSheet = spreadsheet.insertSheet(SHEETS.BANK_TRANSACTIONS);
+  }
+
+  const expectedHeaders = [
+    'TransactionID', 'Date', 'AccountID', 'BankName', 'Type',
+    'Amount', 'ReferenceNo', 'Source', 'SourceType', 'Notes',
+    'BalanceAfter', 'PerformedBy', 'Timestamp'
+  ];
+
+  if (txnSheet.getLastRow() === 0) {
+    txnSheet.appendRow(expectedHeaders);
+    return txnSheet;
+  }
+
+  const lastCol = txnSheet.getLastColumn();
+  if (lastCol > 0) {
+    const existingHeaders = txnSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    for (let h = 0; h < expectedHeaders.length; h++) {
+      const headerName = expectedHeaders[h];
+      const foundIdx = findCol(existingHeaders, headerName);
+      if (foundIdx === -1) {
+        txnSheet.getRange(1, txnSheet.getLastColumn() + 1).setValue(headerName);
+        existingHeaders.push(headerName);
+      }
+    }
+  }
+
+  return txnSheet;
+}
+
 
 /**
  * Customers শিট থেকে পূর্বে তৈরি হওয়া সমস্ত ডামি/নমুনা গ্রাহক সারি মুছে ফেলা
@@ -1428,6 +1510,12 @@ function ensureDatabaseSchema(spreadsheet) {
 
   // ২.১৫ MonthlyPnL (মাসিক ও সাময়িক লাভ-ক্ষতি বিবরণী খাতা) শিট নিশ্চিত করা
   ensureMonthlyPnLSheet(spreadsheet);
+
+  // ২.১৬ BankAccounts (একাধিক ব্যাংক ও এমএফএস অ্যাকাউন্ট তালিকা) শিট নিশ্চিত করা
+  ensureBankAccountsSheet(spreadsheet);
+
+  // ২.১৭ BankTransactions (ব্যাংক লেনদেন ও পাসবুক খাতা) শিট নিশ্চিত করা
+  ensureBankTransactionsSheet(spreadsheet);
 
   // ৩. Products শিটের সকল কলাম (SellingPrice সহ) নিশ্চিত করা
   const productsSheet = getSheetCaseInsensitive(spreadsheet, SHEETS.PRODUCTS);

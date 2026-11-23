@@ -8,7 +8,8 @@ import {
   Trash2,
   Plus,
   Minus,
-  Receipt
+  Receipt,
+  ShoppingCart
 } from 'lucide-react';
 import { calculateTotalYards, parseGojGira } from '../utils/fabricUtils';
 import { playCashChime } from '../utils/soundEffects';
@@ -16,6 +17,7 @@ import { playCashChime } from '../utils/soundEffects';
 export default function QuickCalculatorModal({
   isOpen = false,
   onClose,
+  onAddToCart,
   currencySymbol = '৳'
 }) {
   // ১. বর্তমান এন্ট্রি ইনপুট স্টেট
@@ -153,6 +155,51 @@ export default function QuickCalculatorModal({
       setCopiedGrandTotal(true);
       setTimeout(() => setCopiedGrandTotal(false), 1600);
     } catch (e) {}
+  };
+
+  // ১০.১ সরাসরি কার্টে পাঠানোর হ্যান্ডলার (Single Item)
+  const handleAddToCartCurrent = () => {
+    if (!onAddToCart) return;
+    onAddToCart({
+      ProductID: `CUT-${Date.now().toString().slice(-4)}`,
+      ProductName: `কাটা কাপড় (${currentCalculation.labelText})`,
+      SellingPrice: currentCalculation.roundedPrice,
+      sellingPrice: currentCalculation.roundedPrice,
+      CostPrice: Math.round(currentCalculation.roundedPrice * 0.8),
+      StockQuantity: 999,
+      Category: 'কাটা কাপড়',
+      Unit: 'গজ',
+      Quantity: 1,
+      quantity: 1,
+      TotalYards: currentCalculation.totalYards,
+      RatePerYard: currentCalculation.numRate
+    });
+    try { playCashChime(); } catch (e) {}
+    onClose && onClose();
+  };
+
+  // ১০.২ তালিকায় থাকা সমস্ত আইটেম কার্টে পাঠানোর হ্যান্ডলার (All Items)
+  const handleAddToCartAll = () => {
+    if (!onAddToCart || savedItems.length === 0) return;
+    savedItems.forEach((item, idx) => {
+      onAddToCart({
+        ProductID: `CUT-${item.id || Date.now() + idx}`,
+        ProductName: `কাটা কাপড় #${idx + 1} (${item.labelText})`,
+        SellingPrice: item.roundedPrice,
+        sellingPrice: item.roundedPrice,
+        CostPrice: Math.round(item.roundedPrice * 0.8),
+        StockQuantity: 999,
+        Category: 'কাটা কাপড়',
+        Unit: 'গজ',
+        Quantity: 1,
+        quantity: 1,
+        TotalYards: item.totalYards,
+        RatePerYard: item.rate
+      });
+    });
+    try { playCashChime(); } catch (e) {}
+    setSavedItems([]);
+    onClose && onClose();
   };
 
   // ১১. কীবোর্ড শর্টকাট (Esc দিয়ে ক্লোজ, Ctrl+Enter দিয়ে তালিকায় যোগ)
@@ -382,6 +429,18 @@ export default function QuickCalculatorModal({
                   <span>তালিকায় যোগ করুন</span>
                 </button>
 
+                {onAddToCart && (
+                  <button
+                    type="button"
+                    onClick={handleAddToCartCurrent}
+                    className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium inline-flex items-center space-x-1 transition-colors cursor-pointer shrink-0 shadow-xs"
+                    title="এই কাটা কাপড়টি সরাসরি পিওএস বিক্রয় কার্টে পাঠান"
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5 text-emerald-100" />
+                    <span>কার্টে পাঠান</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={handleCopyCurrentPrice}
@@ -509,6 +568,18 @@ export default function QuickCalculatorModal({
                         </>
                       )}
                     </button>
+
+                    {onAddToCart && (
+                      <button
+                        type="button"
+                        onClick={handleAddToCartAll}
+                        className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium inline-flex items-center space-x-1 transition-colors cursor-pointer shadow-xs"
+                        title="তালিকায় থাকা সমস্ত কাপড় এক ক্লিকে পিওএস কার্টে পাঠান"
+                      >
+                        <ShoppingCart className="w-3.5 h-3.5 text-emerald-100" />
+                        <span>সব কার্টে পাঠান</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

@@ -61,6 +61,7 @@ export default function BankManagementModal({
   const [txDate, setTxDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [referenceNo, setReferenceNo] = useState('');
   const [source, setSource] = useState('দোকানের ক্যাশ ড্রয়ার (Shop Cash)');
+  const [sourceType, setSourceType] = useState('cash_register'); // 'cash_register' | 'external'
   const [txNotes, setTxNotes] = useState('');
   const [isSubmittingTx, setIsSubmittingTx] = useState(false);
 
@@ -226,7 +227,9 @@ export default function BankManagementModal({
           type: txType,
           amount: numAmount,
           referenceNo: referenceNo.trim() || `SLIP-${Date.now().toString().slice(-5)}`,
-          source: source.trim() || 'দোকানের ক্যাশ ড্রয়ার',
+          source: source.trim() || (sourceType === 'cash_register' ? 'দোকানের ক্যাশ ড্রয়ার' : 'বাহ্যিক উৎস'),
+          sourceType: txType !== 'TRANSFER' ? sourceType : 'transfer',
+          destinationType: txType === 'WITHDRAW' ? sourceType : '',
           notes: txNotes.trim(),
           toAccountId: txType === 'TRANSFER' ? destinationAccountId : '',
           date: txDate,
@@ -643,16 +646,75 @@ export default function BankManagementModal({
                 {/* উৎস ও মন্তব্য */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-[#111111] mb-1">
-                      টাকার উৎস / খাত
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="দোকানের ক্যাশ ড্রয়ার"
-                      value={source}
-                      onChange={(e) => setSource(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
-                    />
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-medium text-[#111111]">
+                        {txType === 'DEPOSIT' ? 'টাকার উৎস / খাত' : txType === 'WITHDRAW' ? 'টাকা স্থানান্তরের গন্তব্য' : 'লেনদেনের বিবরণ'}
+                      </label>
+                      {activeRegister && (
+                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-mono">
+                          ক্যাশ ড্রয়ার সক্রিয়
+                        </span>
+                      )}
+                    </div>
+                    {txType !== 'TRANSFER' ? (
+                      <div className="space-y-1.5">
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSourceType('cash_register');
+                              setSource(txType === 'DEPOSIT' ? 'দোকানের ক্যাশ ড্রয়ার (Shop Cash)' : 'দোকানের ক্যাশ ড্রয়ারে জমা');
+                            }}
+                            className={`px-2 py-1.5 text-xs text-left rounded border transition-colors ${
+                              sourceType === 'cash_register'
+                                ? 'bg-[#0F172A] text-white border-[#0F172A] font-medium'
+                                : 'bg-white text-slate-700 border-[#E5E5E5] hover:bg-slate-50'
+                            }`}
+                          >
+                            {txType === 'DEPOSIT' ? 'দোকানের ক্যাশ ড্রয়ার' : 'দোকানের ক্যাশ ড্রয়ার'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSourceType('external');
+                              setSource(txType === 'DEPOSIT' ? 'বাহ্যিক তহবিল / মূলধন' : 'ব্যক্তিগত / অন্যান্য খরচ');
+                            }}
+                            className={`px-2 py-1.5 text-xs text-left rounded border transition-colors ${
+                              sourceType === 'external'
+                                ? 'bg-[#0F172A] text-white border-[#0F172A] font-medium'
+                                : 'bg-white text-slate-700 border-[#E5E5E5] hover:bg-slate-50'
+                            }`}
+                          >
+                            {txType === 'DEPOSIT' ? 'বাহ্যিক / মালিকের তহবিল' : 'অন্যান্য / ব্যক্তিগত খরচ'}
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder={txType === 'DEPOSIT' ? 'দোকানের ক্যাশ ড্রয়ার' : 'খরচ বা ব্যবহারের বিবরণ'}
+                          value={source}
+                          onChange={(e) => setSource(e.target.value)}
+                          className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                        />
+                        {sourceType === 'cash_register' && (
+                          <p className="text-[11px] text-emerald-700 flex items-center space-x-1">
+                            <span>●</span>
+                            <span>
+                              {txType === 'DEPOSIT'
+                                ? 'এই টাকাটি দৈনিক ক্যাশ ড্রয়ারের ব্যালেন্স থেকে কর্তন হবে (EOD শর্টেজ হবে না)।'
+                                : 'এই টাকাটি ক্যাশ ড্রয়ারের ব্যালেন্সে ক্যাশ-ইন হিসাবে জমা হবে।'}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="ফান্ড ট্রান্সফার বিবরণ"
+                        value={source}
+                        onChange={(e) => setSource(e.target.value)}
+                        className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                      />
+                    )}
                   </div>
 
                   <div>

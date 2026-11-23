@@ -25,6 +25,7 @@ export default function SuppliersModal({
   embedded = false,
   suppliers = [],
   supplierLedger = [],
+  bankAccounts = [],
   currencySymbol = '৳',
   onSaveSupplier,
   onDeleteSupplier,
@@ -53,6 +54,7 @@ export default function SuppliersModal({
   const [paymentSupplier, setPaymentSupplier] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [selectedBankAccountId, setSelectedBankAccountId] = useState('');
   const [paymentTrxId, setPaymentTrxId] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
@@ -137,6 +139,7 @@ export default function SuppliersModal({
     setPaymentSupplier(supplier);
     setPaymentAmount('');
     setPaymentMethod('Cash');
+    setSelectedBankAccountId('');
     setPaymentTrxId('');
     setPaymentNotes('');
     setIsPaymentModalOpen(true);
@@ -156,8 +159,10 @@ export default function SuppliersModal({
       if (onRecordPayment) {
         await onRecordPayment({
           supplierId: paymentSupplier.SupplierID,
+          supplierName: paymentSupplier.CompanyName || paymentSupplier.ContactPerson || '',
           amount: amount,
           paymentMethod: paymentMethod,
+          bankAccountId: paymentMethod !== 'Cash' ? selectedBankAccountId : '',
           trxId: paymentTrxId,
           notes: paymentNotes
         });
@@ -661,6 +666,31 @@ export default function SuppliersModal({
                   <option value="Cheque">Bank Cheque (চেক)</option>
                 </select>
               </div>
+
+              {paymentMethod !== 'Cash' && (
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      কোন ব্যাংক/MFS অ্যাকাউন্ট থেকে পরিশোধ হবে:
+                    </label>
+                    <span className="text-[10px] text-emerald-700 font-mono bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                      ব্যাংক থেকে কর্তন হবে
+                    </span>
+                  </div>
+                  <select
+                    value={selectedBankAccountId}
+                    onChange={(e) => setSelectedBankAccountId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-medium border border-slate-200 rounded-xl bg-white"
+                  >
+                    <option value="">-- ব্যাংক অ্যাকাউন্ট বাছাই করুন --</option>
+                    {(bankAccounts || []).map(b => (
+                      <option key={b.AccountID} value={b.AccountID}>
+                        {b.BankName} — {b.AccountNumber} (ব্যালেন্স: ৳{Number(b.CurrentBalance || 0).toLocaleString('bn-BD')})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">

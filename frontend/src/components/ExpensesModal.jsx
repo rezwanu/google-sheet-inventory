@@ -52,6 +52,9 @@ export default function ExpensesModal({
   onClose,
   embedded = false,
   expenses = [],
+  bankAccounts = [],
+  users = [],
+  attendance = [],
   currencySymbol = '৳',
   activeUser = null,
   onSaveExpense,
@@ -86,12 +89,25 @@ export default function ExpensesModal({
     category: 'Refreshments',
     amount: '',
     paymentMethod: 'Cash',
+    bankAccountId: '',
+    staffId: '',
     payee: '',
     description: '',
     receiptImage: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+
+  // নির্বাচিত স্টাফের চলতি মাসের উপস্থিতি দিন সংখ্যা
+  const selectedStaffAttendanceDays = useMemo(() => {
+    if (!formData.staffId || !Array.isArray(attendance)) return null;
+    const currentMonth = (formData.date || new Date().toISOString().split('T')[0]).slice(0, 7);
+    return attendance.filter(a =>
+      String(a.UserID || a.userId) === String(formData.staffId) &&
+      String(a.Date || a.date).startsWith(currentMonth) &&
+      (String(a.Status || a.status).toLowerCase() === 'present')
+    ).length;
+  }, [formData.staffId, formData.date, attendance]);
 
   // ফিল্টারকৃত খরচের তালিকা
   const filteredExpenses = useMemo(() => {
@@ -308,12 +324,17 @@ export default function ExpensesModal({
     setStatusMessage(null);
 
     try {
+      const selectedBank = (bankAccounts || []).find(b => b.AccountID === formData.bankAccountId);
+
       const payload = {
         ExpenseID: editingExpenseId || undefined,
         Date: formData.date,
         Category: formData.category,
         Amount: numAmount,
         PaymentMethod: formData.paymentMethod,
+        bankAccountId: formData.paymentMethod !== 'Cash' ? (formData.bankAccountId || '') : '',
+        bankAccountName: selectedBank ? `${selectedBank.BankName} (${selectedBank.AccountNumber})` : '',
+        staffId: formData.category === 'Salary' ? (formData.staffId || '') : '',
         Payee: formData.payee.trim(),
         Description: formData.description.trim(),
         ReceiptImage: formData.receiptImage,
@@ -336,6 +357,8 @@ export default function ExpensesModal({
         category: 'Refreshments',
         amount: '',
         paymentMethod: 'Cash',
+        bankAccountId: '',
+        staffId: '',
         payee: '',
         description: '',
         receiptImage: ''
@@ -1119,7 +1142,70 @@ export default function ExpensesModal({
                       </span>
                     </div>
                   )}
+
+                  {/* ব্যাংক ও ডিজিটাল মেথডে ব্যাংক অ্যাকাউন্ট নির্বাচন */}
+                  {formData.paymentMethod !== 'Cash' && (
+                    <div className="mt-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-semibold text-slate-700">
+                          পরিশোধের ব্যাংক বা MFS অ্যাকাউন্ট নির্বাচন করুন:
+                        </label>
+                        <span className="text-[10px] text-emerald-700 font-mono bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                          ব্যাংক ব্যালেন্স থেকে কর্তন হবে
+                        </span>
+                      </div>
+                      <select
+                        value={formData.bankAccountId}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bankAccountId: e.target.value }))}
+                        className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-rose-500 text-slate-800 font-medium"
+                      >
+                        <option value="">-- ব্যাংক অ্যাকাউন্ট বাছাই করুন --</option>
+                        {(bankAccounts || []).map(b => (
+                          <option key={b.AccountID} value={b.AccountID}>
+                            {b.BankName} — {b.AccountNumber} (বর্তমান ব্যালেন্স: ৳{Number(b.CurrentBalance || 0).toLocaleString('bn-BD')})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
+
+                {/* স্টাফ বেতন লিঙ্ক (যদি ক্যাটাগরি Salary হয়) */}
+                {formData.category === 'Salary' && (
+                  <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-indigo-900 flex items-center space-x-1.5">
+                        <Users className="w-4 h-4 text-indigo-600" />
+                        <span>বেতন গ্রহণকারী স্টাফ / সেলসম্যান নির্বাচন করুন:</span>
+                      </label>
+                      {selectedStaffAttendanceDays !== null && (
+                        <span className="text-[10px] font-semibold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-mono">
+                          চলতি মাসে {selectedStaffAttendanceDays} দিন উপস্থিত
+                        </span>
+                      )}
+                    </div>
+                    <select
+                      value={formData.staffId || ''}
+                      onChange={(e) => {
+                        const sId = e.target.value;
+                        const selectedUser = (users || []).find(u => String(u.UserID || u.id) === String(sId));
+                        setFormData(prev => ({
+                          ...prev,
+                          staffId: sId,
+                          payee: selectedUser ? `${selectedUser.FullName || selectedUser.Name} (${selectedUser.Role || 'Staff'})` : prev.payee
+                        }));
+                      }}
+                      className="w-full px-3 py-2 text-xs bg-white border border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-800 font-medium"
+                    >
+                      <option value="">-- স্টাফ নির্বাচন করুন (বা নিচে সরাসরি নাম লিখুন) --</option>
+                      {(users || []).map(u => (
+                        <option key={u.UserID || u.id} value={u.UserID || u.id}>
+                          {u.FullName || u.Name} — {u.Role || 'Staff'} {u.Phone ? `(${u.Phone})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {/* প্রাপক ও বিস্তারিত বিবরণ */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

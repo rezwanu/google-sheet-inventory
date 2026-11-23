@@ -2535,6 +2535,56 @@ export default function App() {
       saveSaleLocally(completedSaleRecord);
       setSalesHistory([completedSaleRecord, ...salesHistory]);
 
+      // ডিজিটাল বিক্রয়ের অর্থ স্বয়ংক্রিয়ভাবে ব্যাংক/MFS মার্চেন্ট অ্যাকাউন্টে ক্রেডিট (Auto-Credit to Bank)
+      try {
+        const pMethod = String(saleOrder.paymentMethod || '').toLowerCase();
+        let digitalAmt = 0;
+        let targetType = 'bKash';
+
+        if (saleOrder.splitPayments && typeof saleOrder.splitPayments === 'object') {
+          // স্প্লিট পেমেন্ট হ্যান্ডলিং
+          Object.entries(saleOrder.splitPayments).forEach(([k, val]) => {
+            const numVal = Number(val) || 0;
+            const lk = String(k).toLowerCase();
+            if (numVal > 0 && lk !== 'cash') {
+              digitalAmt += numVal;
+              if (lk.includes('bkash') || lk.includes('nagad')) targetType = 'bKash';
+              else if (lk.includes('card') || lk.includes('bank')) targetType = 'Bank';
+            }
+          });
+        } else if (pMethod !== 'cash') {
+          digitalAmt = salePaid;
+          if (pMethod.includes('bkash') || pMethod.includes('nagad')) targetType = 'bKash';
+          else if (pMethod.includes('card') || pMethod.includes('bank')) targetType = 'Bank';
+        }
+
+        if (digitalAmt > 0 && Array.isArray(bankAccounts) && bankAccounts.length > 0) {
+          const matchedAcc = bankAccounts.find(a =>
+            targetType === 'bKash'
+              ? (a.AccountType === 'MFS Merchant' || String(a.BankName || '').toLowerCase().includes('bkash'))
+              : (a.AccountType === 'Current' || a.AccountType === 'Savings')
+          ) || bankAccounts[0];
+
+          if (matchedAcc) {
+            recordBankTransactionLocally({
+              accountId: matchedAcc.AccountID,
+              type: 'DEPOSIT',
+              amount: digitalAmt,
+              referenceNo: localInvoiceNo,
+              source: `ডিজিটাল কাউন্টার বিক্রয় (${saleOrder.paymentMethod || 'Digital'})`,
+              notes: `ইনভয়েস: #${localInvoiceNo} | গ্রাহক: ${saleOrder.customerName || 'কাউন্টার কাস্টমার'}`,
+              date: new Date().toISOString().slice(0, 10),
+              performedBy: activeUser?.FullName || 'POS System',
+              sourceType: 'pos_sale'
+            });
+            setBankAccounts(getLocalBankAccounts());
+            setBankTransactions(getLocalBankTransactions());
+          }
+        }
+      } catch (bankAutoCreditErr) {
+        console.warn('Digital sale auto-credit to bank failed:', bankAutoCreditErr);
+      }
+
       // ছাঁট বান্ডেল বিক্রি হলে FabricWastage স্টেটাসে Sold মার্ক করা
       try {
         const curWastage = getLocalFabricWastage();
@@ -3300,6 +3350,28 @@ export default function App() {
       const updatedSuppliers = recordSupplierPaymentLocally(paymentData);
       setSuppliers(updatedSuppliers);
       setSupplierLedger(getLocalSupplierLedger());
+
+      // যদি পেমেন্টের সাথে কোনো ব্যাংক অ্যাকাউন্ট সিলেক্ট করা থাকে এবং পেমেন্ট ক্যাশ না হয়
+      if (paymentData.bankAccountId && String(paymentData.paymentMethod || paymentData.PaymentMethod || '').toLowerCase() !== 'cash') {
+        try {
+          recordBankTransactionLocally({
+            accountId: paymentData.bankAccountId,
+            type: 'WITHDRAW',
+            amount: Number(paymentData.amount || paymentData.Amount),
+            referenceNo: paymentData.trxId || `SUP-${Date.now().toString().slice(-5)}`,
+            source: 'মহাজন/সাপ্লায়ার বিল পরিশোধ',
+            notes: `সাপ্লায়ার আইডি: ${paymentData.supplierId || ''} | নোট: ${paymentData.notes || ''}`,
+            date: new Date().toISOString().slice(0, 10),
+            performedBy: activeUser?.FullName || 'Admin',
+            sourceType: 'supplier_payment'
+          });
+          setBankAccounts(getLocalBankAccounts());
+          setBankTransactions(getLocalBankTransactions());
+        } catch (bankErr) {
+          console.warn('Bank deduction for supplier payment failed:', bankErr);
+        }
+      }
+
       showToast(`৳${paymentData.amount || paymentData.Amount} সাপ্লায়ার পেমেন্ট সফলভাবে সংরক্ষিত হয়েছে!`, 'success');
 
       if (settings.apiUrl) {
@@ -3422,6 +3494,27 @@ export default function App() {
     try {
       const updatedExpenses = saveOrUpdateExpenseLocally(expenseData);
       setExpenses(updatedExpenses);
+
+      // যদি খরচের সাথে কোনো ব্যাংক অ্যাকাউন্ট সিলেক্ট করা থাকে এবং পেমেন্ট ক্যাশ না হয়, তবে ব্যাংক ব্যালেন্স থেকে কর্তন করা
+      if (expenseData.bankAccountId && String(expenseData.PaymentMethod || expenseData.paymentMethod || '').toLowerCase() !== 'cash') {
+        try {
+          recordBankTransactionLocally({
+            accountId: expenseData.bankAccountId,
+            type: 'WITHDRAW',
+            amount: Number(expenseData.Amount || expenseData.amount),
+            referenceNo: expenseData.ExpenseID || `EXP-${Date.now().toString().slice(-5)}`,
+            source: `দোকানের খরচ (${expenseData.Category || expenseData.category || 'Expense'})`,
+            notes: `প্রাপক: ${expenseData.Payee || expenseData.payee || ''} | বিবরণ: ${expenseData.Description || expenseData.description || ''}`,
+            date: expenseData.Date || expenseData.date || new Date().toISOString().slice(0, 10),
+            performedBy: activeUser?.FullName || 'Admin',
+            sourceType: 'expense'
+          });
+          setBankAccounts(getLocalBankAccounts());
+          setBankTransactions(getLocalBankTransactions());
+        } catch (bankErr) {
+          console.warn('Bank deduction for expense failed:', bankErr);
+        }
+      }
 
       // অডিট লগ
       const logEntry = logAuditEventLocally({
@@ -5487,6 +5580,8 @@ export default function App() {
               users={users}
               salesReturns={salesReturns}
               stockTransfers={stockTransfers}
+              bankAccounts={bankAccounts}
+              activeRegister={activeRegister}
               activeUser={activeUser}
               apiUrl={settings.ApiUrl || ''}
               showToast={showToast}
@@ -5639,6 +5734,7 @@ export default function App() {
               suppliers={suppliers}
               supplierLedger={supplierLedger}
               purchaseOrders={purchaseOrders}
+              bankAccounts={bankAccounts}
               currencySymbol={settings.CurrencySymbol || '৳'}
               storeName={settings.StoreName || 'Pabna Bostraloy'}
               onSaveSupplier={handleSaveSupplier}
@@ -5655,6 +5751,9 @@ export default function App() {
               isOpen={true}
               onClose={() => setCurrentView('pos')}
               expenses={expenses}
+              bankAccounts={bankAccounts}
+              users={users}
+              attendance={getLocalStaffAttendance()}
               currencySymbol={settings.CurrencySymbol || '৳'}
               activeUser={activeUser}
               onSaveExpense={handleSaveExpense}
@@ -5677,6 +5776,7 @@ export default function App() {
               supplierLedger={supplierLedger}
               expenses={expenses}
               tailoringOrders={tailoringOrders}
+              bankTransactions={bankTransactions}
               currencySymbol={settings.CurrencySymbol || '৳'}
               activeUser={activeUser}
               storeSettings={settings}
@@ -6020,6 +6120,8 @@ export default function App() {
         users={users}
         salesReturns={salesReturns}
         stockTransfers={stockTransfers}
+        bankAccounts={bankAccounts}
+        activeRegister={activeRegister}
         activeUser={activeUser}
         apiUrl={settings.ApiUrl || ''}
         showToast={showToast}
@@ -6246,6 +6348,7 @@ export default function App() {
         suppliers={suppliers}
         supplierLedger={supplierLedger}
         purchaseOrders={purchaseOrders}
+        bankAccounts={bankAccounts}
         currencySymbol={settings.CurrencySymbol || '৳'}
         storeName={settings.StoreName || 'Pabna Bostraloy'}
         onSaveSupplier={handleSaveSupplier}
@@ -6289,6 +6392,9 @@ export default function App() {
         isOpen={isExpensesModalOpen}
         onClose={() => setIsExpensesModalOpen(false)}
         expenses={expenses}
+        bankAccounts={bankAccounts}
+        users={users}
+        attendance={getLocalStaffAttendance()}
         currencySymbol={settings.CurrencySymbol || '৳'}
         activeUser={activeUser}
         onSaveExpense={handleSaveExpense}
@@ -6309,6 +6415,7 @@ export default function App() {
         supplierLedger={supplierLedger}
         expenses={expenses}
         tailoringOrders={tailoringOrders}
+        bankTransactions={bankTransactions}
         currencySymbol={settings.CurrencySymbol || '৳'}
         activeUser={activeUser}
         storeSettings={settings}
@@ -6564,6 +6671,7 @@ export default function App() {
         isOpen={isCalculatorOpen}
         onClose={() => setIsCalculatorOpen(false)}
         currencySymbol={settings.CurrencySymbol || '৳'}
+        onAddToCart={handleAddToCart}
       />
 
       {/* =========================================================================

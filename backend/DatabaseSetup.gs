@@ -93,6 +93,16 @@ function setupDatabase() {
   // ১০. MonthlyPnL (মাসিক ও সাময়িক লাভ-ক্ষতি বিবরণী খাতা) শিট তৈরি ও কলাম হেডার ইনিশিয়ালাইজেশন
   ensureMonthlyPnLSheet(spreadsheet);
 
+  // ১১. BankAccounts (একাধিক ব্যাংক ও এমএফএস অ্যাকাউন্ট তালিকা) শিট তৈরি
+  if (typeof ensureBankAccountsSheet === 'function') {
+    ensureBankAccountsSheet(spreadsheet);
+  }
+
+  // ১২. BankTransactions (ব্যাংক লেনদেন ও পাসবুক খাতা) শিট তৈরি
+  if (typeof ensureBankTransactionsSheet === 'function') {
+    ensureBankTransactionsSheet(spreadsheet);
+  }
+
   return 'সবগুলো শিট এবং হেডার সফলভাবে তৈরি করা হয়েছে!';
 }
 

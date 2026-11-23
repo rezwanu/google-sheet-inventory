@@ -54,6 +54,8 @@ export default function AnalyticsDashboard({
   users = [],
   salesReturns = [],
   stockTransfers = [],
+  bankAccounts = [],
+  activeRegister = null,
   activeUser = null,
   apiUrl = '',
   showToast = () => {},
@@ -77,6 +79,14 @@ export default function AnalyticsDashboard({
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
   const [showDeductionsMenu, setShowDeductionsMenu] = useState(false);
+
+  // সমন্বিত তরল মূলধন (Unified Liquid Assets)
+  const liquidAssets = useMemo(() => {
+    const cashInHand = activeRegister ? (Number(activeRegister.OpeningBalance || 0) + (Number(activeRegister.CashSales || 0) || 0)) : 0;
+    const totalBank = (Array.isArray(bankAccounts) ? bankAccounts : []).reduce((sum, b) => sum + (Number(b.CurrentBalance) || 0), 0);
+    const totalLiquid = cashInHand + totalBank;
+    return { cashInHand, totalBank, totalLiquid };
+  }, [activeRegister, bankAccounts]);
 
   // RBAC রোল ও পারমিশন চেক (Tier 7)
   const isAdmin = activeUser?.Role === 'Admin' || activeUser?.Role === 'SuperAdmin';
@@ -1555,6 +1565,42 @@ export default function AnalyticsDashboard({
             )}
           </div>
 
+        </div>
+
+        {/* সমন্বিত নগদ ও ব্যাংক তারল্য ওভারভিউ কার্ড (Unified Liquidity Card) */}
+        <div className="mx-5 sm:mx-6 mt-3.5 p-3.5 bg-slate-50/90 rounded-xl border border-slate-200/90 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-800 flex items-center justify-center shrink-0">
+              <Coins className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center space-x-1.5">
+                <span>মোট তরল মূলধন ও তারল্য স্থিতি (Unified Liquid Capital)</span>
+                {activeRegister && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" title="ক্যাশ ড্রয়ার ওপেন" />
+                )}
+              </div>
+              <div className="text-base sm:text-lg font-bold font-mono text-slate-900 tabular-nums">
+                {currencySymbol}{liquidAssets.totalLiquid.toLocaleString('bn-BD')}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-6 text-xs">
+            <div>
+              <span className="text-slate-400 block text-[10px] font-medium">কাউন্টার ক্যাশ ড্রয়ার (Cash in Hand)</span>
+              <span className="font-mono font-bold text-slate-700">
+                {currencySymbol}{liquidAssets.cashInHand.toLocaleString('bn-BD')}
+              </span>
+            </div>
+            <div className="h-6 w-px bg-slate-200" />
+            <div>
+              <span className="text-slate-400 block text-[10px] font-medium">ব্যাংক ও MFS ব্যালেন্স ({bankAccounts.length}টি অ্যাকাউন্ট)</span>
+              <span className="font-mono font-bold text-slate-700">
+                {currencySymbol}{liquidAssets.totalBank.toLocaleString('bn-BD')}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* ৫টি প্রধান আর্থিক KPI স্ট্রিপ কার্ড (Clean Executive Financial KPIs) */}

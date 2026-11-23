@@ -38,6 +38,7 @@ export default function CashRegisterModal({
   supplierLedger = [],
   expenses = [],
   tailoringOrders = [],
+  bankTransactions = [],
   currencySymbol = '৳',
   activeUser = null,
   storeSettings = {},
@@ -207,8 +208,41 @@ export default function CashRegisterModal({
       }
     });
 
-    const totalCashOut = cashOutExpenses + cashOutSuppliers;
-    const expectedCash = opening + cashSales + cashIn - totalCashOut;
+    // ৫. ব্যাংক ডিপোজিট (দোকানের কাউন্টার ড্রয়ার থেকে ব্যাংকে জমা -> Cash Out)
+    let cashOutBankDeposit = 0;
+    let bankDepositCount = 0;
+
+    // ৬. ব্যাংক উত্তোলন (ব্যাংক থেকে দোকানে আনা নগদ ক্যাশ -> Cash In)
+    let cashInBankWithdrawal = 0;
+    let bankWithdrawCount = 0;
+
+    (Array.isArray(bankTransactions) ? bankTransactions : []).forEach(tx => {
+      const timeVal = tx.Timestamp || tx.timestamp || tx.Date || tx.date || tx.CreatedAt;
+      if (!timeVal) return;
+      const txTime = new Date(timeVal).getTime();
+      if (isNaN(txTime) || txTime < sessionStart) return;
+
+      const tType = String(tx.Type || '').toUpperCase();
+      const tSource = String(tx.Source || tx.source || '').toLowerCase();
+      const tDest = String(tx.Destination || tx.destination || tx.toAccountName || '').toLowerCase();
+      const amt = Number(tx.Amount) || 0;
+      if (amt <= 0) return;
+
+      const isDrawerSource = tSource.includes('ক্যাশ ড্রয়ার') || tSource.includes('cash') || tx.sourceType === 'cash_register';
+      const isDrawerDest = tDest.includes('ক্যাশ ড্রয়ার') || tDest.includes('cash') || tx.destinationType === 'cash_register';
+
+      if (tType === 'DEPOSIT' && isDrawerSource) {
+        cashOutBankDeposit += amt;
+        bankDepositCount++;
+      } else if (tType === 'WITHDRAW' && (isDrawerDest || isDrawerSource)) {
+        cashInBankWithdrawal += amt;
+        bankWithdrawCount++;
+      }
+    });
+
+    const totalCashIn = cashIn + cashInBankWithdrawal;
+    const totalCashOut = cashOutExpenses + cashOutSuppliers + cashOutBankDeposit;
+    const expectedCash = Math.max(0, opening + cashSales + totalCashIn - totalCashOut);
 
     return {
       opening,
@@ -222,11 +256,16 @@ export default function CashRegisterModal({
       expensesCount,
       cashOutSuppliers,
       suppliersCount,
+      cashOutBankDeposit,
+      bankDepositCount,
+      cashInBankWithdrawal,
+      bankWithdrawCount,
+      totalCashIn,
       totalCashOut,
       expectedCash,
       sessionStartTime: activeRegister.OpeningDate || activeRegister.Timestamp
     };
-  }, [activeRegister, salesHistory, customerLedger, expenses, supplierLedger, tailoringOrders]);
+  }, [activeRegister, salesHistory, customerLedger, expenses, supplierLedger, tailoringOrders, bankTransactions]);
 
   // ফিল্টার করা পূর্ববর্তী ক্লোজিং রেকর্ডসমূহ
   const filteredRegisters = useMemo(() => {
@@ -775,10 +814,16 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                           <span className="text-slate-600">✂️ টেইলারিং অগ্রিম ও কালেকশন:</span>
                           <strong className="font-mono text-emerald-700">+{currencySymbol}{liveSessionMetrics.cashTailoring.toLocaleString('en-IN')}</strong>
                         </div>
-                        <div className="flex justify-between py-1">
+                        <div className="flex justify-between py-1 border-b border-slate-50">
                           <span className="text-slate-600">📥 কাস্টমার বকেয়া আদায় (ক্যাশ):</span>
                           <strong className="font-mono text-emerald-700">+{currencySymbol}{(liveSessionMetrics.cashIn - liveSessionMetrics.cashTailoring).toLocaleString('en-IN')}</strong>
                         </div>
+                        {liveSessionMetrics.cashInBankWithdrawal > 0 && (
+                          <div className="flex justify-between py-1">
+                            <span className="text-slate-600">🏦 ব্যাংক উত্তোলন (কাউন্টারে জমা):</span>
+                            <strong className="font-mono text-emerald-700">+{currencySymbol}{liveSessionMetrics.cashInBankWithdrawal.toLocaleString('en-IN')}</strong>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -793,10 +838,16 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                           <span className="text-slate-600">☕ দৈনন্দিন দোকান খরচ:</span>
                           <strong className="font-mono text-rose-700">-{currencySymbol}{liveSessionMetrics.cashOutExpenses.toLocaleString('en-IN')}</strong>
                         </div>
-                        <div className="flex justify-between py-1">
+                        <div className="flex justify-between py-1 border-b border-slate-50">
                           <span className="text-slate-600">🏭 মহাজন/সাপ্লায়ারকে নগদ প্রদান:</span>
                           <strong className="font-mono text-rose-700">-{currencySymbol}{liveSessionMetrics.cashOutSuppliers.toLocaleString('en-IN')}</strong>
                         </div>
+                        {liveSessionMetrics.cashOutBankDeposit > 0 && (
+                          <div className="flex justify-between py-1">
+                            <span className="text-slate-600">🏦 ব্যাংক ক্যাশ ডিপোজিট:</span>
+                            <strong className="font-mono text-rose-700">-{currencySymbol}{liveSessionMetrics.cashOutBankDeposit.toLocaleString('en-IN')}</strong>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
