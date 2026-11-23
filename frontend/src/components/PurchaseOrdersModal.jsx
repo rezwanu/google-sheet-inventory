@@ -32,7 +32,8 @@ export default function PurchaseOrdersModal({
   storeSettings = {},
   onCreatePO,
   onUpdatePOStatus,
-  onOpenSuppliersModal
+  onOpenSuppliersModal,
+  initialPrefill = null
 }) {
   const [activeTab, setActiveTab] = useState('list'); // 'list' | 'create'
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,13 +50,33 @@ export default function PurchaseOrdersModal({
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
   const [receiveImmediately, setReceiveImmediately] = useState(false);
+  const [receiveLocation, setReceiveLocation] = useState('Godown'); // 'Godown' | 'Shop' (Gap 3-গ)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Gap 3(খ ও গ): মালামাল গ্রহণ লোকেশন ডায়ালগ স্টেট
+  const [receiveModalPO, setReceiveModalPO] = useState(null); // { po, location: 'Godown' }
 
   // Item Picker in Create Form
   const [selectedProductId, setSelectedProductId] = useState('');
   const [itemQuantity, setItemQuantity] = useState(1);
   const [itemUnitCost, setItemUnitCost] = useState(0);
+
+  // Gap 2: প্রাক-পূরণ প্রপস হ্যান্ডলিং (১-ক্লিক PO ফ্লো)
+  useEffect(() => {
+    if (initialPrefill && initialPrefill.product) {
+      setActiveTab('create');
+      const prod = initialPrefill.product;
+      const qty = Number(initialPrefill.quantity) || 5;
+      const cost = Number(prod.CostPrice) || 0;
+      setSelectedProductId(prod.ProductID);
+      setItemQuantity(qty);
+      setItemUnitCost(cost);
+      if (prod.SupplierID) {
+        setSelectedSupplierId(prod.SupplierID);
+      }
+    }
+  }, [initialPrefill]);
 
   // Voucher / Printable Memo Preview State
   const [viewingPO, setViewingPO] = useState(null);
@@ -231,6 +252,7 @@ export default function PurchaseOrdersModal({
       Date: poDate,
       ExpectedDate: expectedDate || '',
       Status: receiveImmediately ? 'Received' : 'Ordered',
+      ReceivingLocation: receiveImmediately ? receiveLocation : 'Godown',
       Items: orderItems,
       TotalQuantity: orderItems.reduce((acc, i) => acc + (Number(i.Quantity) || 0), 0),
       Subtotal: itemsSubtotal,
@@ -577,17 +599,13 @@ export default function PurchaseOrdersModal({
 
                               <td className="py-3.5 px-4 text-center">
                                 <div className="flex items-center justify-center space-x-1.5">
-                                  {/* 1-Click Receive Stock Button */}
+                                  {/* 1-Click Receive Stock Button with Location Selector (Gap 3-খ ও ৩-গ) */}
                                   {isOrdered && onUpdatePOStatus && (
                                     <button
                                       type="button"
-                                      onClick={() => {
-                                        if (window.confirm(`আপনি কি নিশ্চিত যে "${po.PONumber}" অর্ডারের সমস্ত মালামাল গ্রহণ করেছেন? এটি স্বয়ংক্রিয়ভাবে ইনভেন্টরিতে স্টক বাড়িয়ে দেবে!`)) {
-                                          onUpdatePOStatus(po.PONumber, 'Received');
-                                        }
-                                      }}
+                                      onClick={() => setReceiveModalPO({ po, location: 'Godown' })}
                                       className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px] hover:bg-emerald-700 flex items-center space-x-1 shadow-2xs transition-colors cursor-pointer"
-                                      title="মালামাল গ্রহণ করে স্টক ইন করুন"
+                                      title="মালামাল গ্রহণ করে অবস্থান অনুযায়ী স্টক ইন করুন"
                                     >
                                       <PackageCheck className="w-3.5 h-3.5" />
                                       <span className="hidden md:inline">স্টক ইন</span>
@@ -858,23 +876,53 @@ export default function PurchaseOrdersModal({
                     />
                   </div>
 
-                  {/* Immediate Receive Checkbox */}
-                  <label className="flex items-start space-x-3 p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-2xl cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={receiveImmediately}
-                      onChange={(e) => setReceiveImmediately(e.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                    />
-                    <div>
-                      <span className="text-xs font-bold text-emerald-950 block">
-                        মালামাল এখনই ইনভেন্টরিতে সরাসরি যুক্ত করুন (Direct Stock Influx)
-                      </span>
-                      <span className="text-[11px] text-emerald-700">
-                        চেক করা থাকলে অর্ডার সংরক্ষণ করার সাথে সাথেই ইনভেন্টরিতে স্টক বেড়ে যাবে এবং স্ট্যাটাস "Received" হবে।
-                      </span>
-                    </div>
-                  </label>
+                  {/* Immediate Receive Checkbox (Gap 3-গ) */}
+                  <div className="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-2xl space-y-2">
+                    <label className="flex items-start space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={receiveImmediately}
+                        onChange={(e) => setReceiveImmediately(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <div>
+                        <span className="text-xs font-bold text-emerald-950 block">
+                          মালামাল এখনই ইনভেন্টরিতে সরাসরি যুক্ত করুন (Direct Stock Influx)
+                        </span>
+                        <span className="text-[11px] text-emerald-700">
+                          চেক করা থাকলে অর্ডার সংরক্ষণ করার সাথে সাথেই ইনভেন্টরিতে স্টক বেড়ে যাবে এবং স্ট্যাটাস "Received" হবে।
+                        </span>
+                      </div>
+                    </label>
+
+                    {receiveImmediately && (
+                      <div className="pt-2 border-t border-emerald-200/80 flex items-center space-x-4 text-xs">
+                        <span className="font-bold text-emerald-900">কোথায় স্টক জমা হবে:</span>
+                        <label className="flex items-center space-x-1.5 cursor-pointer font-semibold text-emerald-950">
+                          <input
+                            type="radio"
+                            name="createPoLocation"
+                            value="Godown"
+                            checked={receiveLocation === 'Godown'}
+                            onChange={() => setReceiveLocation('Godown')}
+                            className="text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span>🏭 কেন্দ্রীয় গোডাউন (Godown)</span>
+                        </label>
+                        <label className="flex items-center space-x-1.5 cursor-pointer font-semibold text-emerald-950">
+                          <input
+                            type="radio"
+                            name="createPoLocation"
+                            value="Shop"
+                            checked={receiveLocation === 'Shop'}
+                            onChange={() => setReceiveLocation('Shop')}
+                            className="text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span>🏬 বিক্রয় কাউন্টার (Shop)</span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Totals & Payment Calculations */}
@@ -1143,6 +1191,79 @@ export default function PurchaseOrdersModal({
 
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Gap 3(খ ও গ): মালামাল গ্রহণ অবস্থান (Location) নিশ্চিতকরণ মডাল */}
+      {receiveModalPO && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-inner">
+                <PackageCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-base font-black text-slate-900">মালামাল গ্রহণ ও স্টক ইন</h4>
+                <p className="text-xs text-slate-500 font-mono">অর্ডার: {receiveModalPO.po.PONumber}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              আপনি <strong>{receiveModalPO.po.SupplierName}</strong> থেকে পাঠানো মালামাল গ্রহণ করতে যাচ্ছেন। মালামাল কোন অবস্থানে (Location) প্রবেশ করবে তা নির্বাচন করুন:
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setReceiveModalPO(prev => ({ ...prev, location: 'Godown' }))}
+                className={`p-3.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center space-y-1.5 cursor-pointer ${
+                  receiveModalPO.location === 'Godown'
+                    ? 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="text-sm font-black">🏭 গোডাউন (Godown)</span>
+                <span className="text-[10px] text-emerald-700 font-normal">প্রধান ওয়্যারহাউজে লট বৃদ্ধি</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReceiveModalPO(prev => ({ ...prev, location: 'Shop' }))}
+                className={`p-3.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center space-y-1.5 cursor-pointer ${
+                  receiveModalPO.location === 'Shop'
+                    ? 'bg-indigo-50 border-indigo-500 text-indigo-950 ring-2 ring-indigo-500/20 shadow-xs'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="text-sm font-black">🏬 দোকান (Shop)</span>
+                <span className="text-[10px] text-indigo-700 font-normal">সরাসরি বিক্রয় কাউন্টারে যোগ</span>
+              </button>
+            </div>
+
+            <p className="text-[10.5px] text-slate-400 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              ℹ️ গ্রহণ নিশ্চিত করলে পণ্যের ওয়েইটেড এভারেজ কস্ট (WAC) সমন্বিত হবে এবং অডিট ট্রেইলে <strong>LOT_IN</strong> মুভমেন্ট সংরক্ষিত হবে।
+            </p>
+
+            <div className="pt-2 flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setReceiveModalPO(null)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onUpdatePOStatus(receiveModalPO.po.PONumber, 'Received', receiveModalPO.location);
+                  setReceiveModalPO(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+              >
+                গ্রহণ নিশ্চিত করুন
+              </button>
+            </div>
           </div>
         </div>
       )}

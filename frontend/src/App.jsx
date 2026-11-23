@@ -419,6 +419,34 @@ export default function App() {
     setIsStockTransferModalOpen(true);
   };
 
+  // ইনভেন্টরি ও স্টক হাব গ্যাপ ১ ও ২ হ্যান্ডলার (Gap 1 & Gap 2 Inter-module Actions)
+  const handleRequestStockTransferFromAlert = (product, deficitQty = 5) => {
+    setIsLowStockModalOpen(false);
+    handleOpenStockTransferModalWithConfig('shop_stock', 'new');
+    showToast(`'${product.ProductName}' এর জন্য গোডাউন চালান উইন্ডো খোলা হয়েছে।`, 'info');
+  };
+
+  const handleRequestPOFromAlert = (product, recommendedQty = 10) => {
+    setIsLowStockModalOpen(false);
+    setPrefilledPOProduct({ product, quantity: recommendedQty });
+    setIsPurchaseOrdersModalOpen(true);
+    showToast(`'${product.ProductName}' এর জন্য মহাজন পারচেজ অর্ডার প্রস্তুত করা হয়েছে।`, 'info');
+  };
+
+  const handleWriteOffDamageFromExpiry = (product) => {
+    setIsExpiryAlertModalOpen(false);
+    setFabricCutProduct(product);
+    setCurrentView('fabric_wastage');
+    showToast(`মেয়াদোত্তীর্ণ পণ্য '${product.ProductName}' ড্যামেজ ক্ষতি রাইট-অফ উইন্ডোতে খোলা হয়েছে।`, 'warning');
+  };
+
+  const handleReturnToSupplierFromExpiry = (product) => {
+    setIsExpiryAlertModalOpen(false);
+    setPrefilledPOProduct({ product, quantity: product.StockQuantity || 1 });
+    setIsPurchaseOrdersModalOpen(true);
+    showToast(`'${product.ProductName}' মহাজনকে ফেরত (RMA) পাঠানোর উইন্ডো খোলা হয়েছে।`, 'info');
+  };
+
   // ফেজ ৮: আরএফএম গ্রাহক সেগমেন্টেশন ও টার্গেটেড এসএমএস ক্যাম্পেইন মডাল স্টেট
   const [isRFMCampaignModalOpen, setIsRFMCampaignModalOpen] = useState(false);
 
@@ -504,6 +532,7 @@ export default function App() {
   const [isExpiryAlertModalOpen, setIsExpiryAlertModalOpen] = useState(false);
   const [variantSelectModalProduct, setVariantSelectModalProduct] = useState(null);
   const [fabricCutProduct, setFabricCutProduct] = useState(null);
+  const [prefilledPOProduct, setPrefilledPOProduct] = useState(null);
 
   // মেয়াদোত্তীর্ণ ও সন্নিকটে থাকা পণ্যের মোট সংখ্যা হিসাব
   const expiringProductsSummary = useMemo(() => {
@@ -2020,6 +2049,22 @@ export default function App() {
     // ৩. ছাঁট ও ড্যামেজ লগে সংরক্ষণ
     const saved = addFabricWastageLocally(payload);
     setFabricWastageList(getLocalFabricWastage());
+
+    // Gap 5: যদি ইউজার এই ক্ষতিটি খরচের খাতায় অন্তর্ভুক্ত করতে চান (Operational Loss Write-Off)
+    if (payload.RecordAsExpense && Number(payload.LossAmount) > 0) {
+      saveOrUpdateExpenseLocally({
+        ExpenseID: `EXP-LOSS-${Date.now().toString().slice(-6)}`,
+        Date: new Date().toISOString().split('T')[0],
+        Category: 'InventoryLoss',
+        Amount: Number(payload.LossAmount),
+        PaymentMethod: 'Non-Cash',
+        Payee: 'ইনভেন্টরি অপচয় ও ড্যামেজ ক্ষতি',
+        Description: `কাপড় ক্ষতি রাইট-অফ: ${payload.ProductName} (${payload.TotalYards || 0} গজ, ${payload.Reason || 'ড্যামেজ'})`,
+        CreatedBy: activeUser?.FullName || activeUser?.UserName || 'Admin'
+      });
+      setExpenses(getLocalExpenses());
+    }
+
     showToast(`ছাঁট/ড্যামেজ (${payload.TotalYards} গজ) রেকর্ড ও স্টক সফলভাবে সমন্বয় করা হয়েছে!`, 'success');
 
     // ৪. অডিট লগ
@@ -2364,7 +2409,12 @@ export default function App() {
           ...p,
           StockQuantity: newShopStock,
           StockQuantit: newShopStock,
+          CurrentStock: newShopStock,
+          ShopStock: newShopStock,
+          stock: newShopStock,
           GodownStock: newGodownStock,
+          godownStock: newGodownStock,
+          TotalStock: newShopStock + newGodownStock,
           CostPrice: weightedCost,
           Variants: updatedVariants || p.Variants,
           variants: updatedVariants || p.variants || p.Variants,
@@ -2383,6 +2433,56 @@ export default function App() {
 
     setProducts(updatedProducts);
     saveLocalProducts(updatedProducts);
+
+    // Gap 3(ক): যদি কোনো পেন্ডিং পারচেজ অর্ডারের মাল রিসিভ করা হয়ে থাকে, PO স্ট্যাটাস 'Received' এ আপডেট
+    const linkedPoNum = String(stockPayload.linkedPONumber || '').trim();
+    if (linkedPoNum) {
+      const updatedPOs = updatePurchaseOrderStatusLocally(linkedPoNum, 'Received', activeUser?.FullName || 'Admin');
+      setPurchaseOrders(updatedPOs);
+    }
+
+    // Gap 4: মহাজন বাকি (Due) বা পরিশোধিত ক্রয় বিল সরবরাহকারী খতিয়ান ও ব্যালেন্সে অন্তর্ভুক্তি
+    const targetSupId = String(stockPayload.supplierId || '').trim();
+    const isDue = stockPayload.paymentMode === 'Due';
+    const dueAmt = isDue ? (Number(stockPayload.dueAmount) || 0) : 0;
+    const paidAmt = !isDue ? (Number(stockPayload.paidAmount) || 0) : 0;
+
+    if (targetSupId && (dueAmt > 0 || paidAmt > 0)) {
+      const sups = getLocalSuppliers();
+      const supIdx = sups.findIndex(s => 
+        String(s.SupplierID).trim() === targetSupId ||
+        (stockPayload.supplierName && String(s.CompanyName || s.ContactPerson).trim().toLowerCase() === stockPayload.supplierName.toLowerCase())
+      );
+
+      let curPayable = 0;
+      if (supIdx !== -1) {
+        const totalP = Number(sups[supIdx].TotalPurchased || 0) + (isDue ? dueAmt : paidAmt);
+        const totalPd = Number(sups[supIdx].TotalPaid || 0) + (isDue ? 0 : paidAmt);
+        const curDue = Math.max(0, (Number(sups[supIdx].CurrentPayable || 0) + (isDue ? dueAmt : 0)));
+        sups[supIdx].TotalPurchased = totalP;
+        sups[supIdx].TotalPaid = totalPd;
+        sups[supIdx].CurrentPayable = curDue;
+        sups[supIdx].UpdatedAt = new Date().toISOString();
+        curPayable = curDue;
+        saveLocalSuppliers(sups);
+        setSuppliers(sups);
+      }
+
+      recordSupplierLedgerEntryLocally({
+        SupplierID: targetSupId,
+        SupplierName: stockPayload.supplierName || (supIdx !== -1 ? sups[supIdx].CompanyName : 'মহাজন'),
+        SupplierPhone: supIdx !== -1 ? sups[supIdx].Phone : '',
+        PO_ID: linkedPoNum || '',
+        EntryType: 'Purchase',
+        Debit: paidAmt,
+        Credit: isDue ? dueAmt : paidAmt,
+        Balance: curPayable,
+        PaymentMethod: stockPayload.paymentMethod || (isDue ? 'Due' : 'Cash'),
+        CollectedBy: activeUser?.FullName || 'Admin',
+        Notes: `রিস্টক চালান: ${stockPayload.productName || targetId} (+${incoming} ${isThanUnit ? 'থান' : 'Pcs'})${isDue ? ' [মহাজন বাকি বিল]' : ' [নগদ/ব্যাংক পরিশোধিত]'}`
+      });
+      setSupplierLedger(getLocalSupplierLedger());
+    }
 
     if (settings.apiUrl) {
       try {
@@ -3391,28 +3491,79 @@ export default function App() {
       const updatedPOs = saveOrUpdatePurchaseOrderLocally(poData);
       setPurchaseOrders(updatedPOs);
 
-      // যদি এখনই সরাসরি স্টক গ্রহণ করা হয় (receiveImmediately / Status === 'Received')
+      // Gap 3(খ ও গ): যদি এখনই সরাসরি স্টক গ্রহণ করা হয় (receiveImmediately / Status === 'Received')
       if (receiveImmediately || poData.Status === 'Received') {
         const items = Array.isArray(poData.Items) ? poData.Items : [];
         if (items.length > 0) {
           let currentProds = getLocalProducts();
+          const targetLoc = poData.ReceivingLocation || 'Godown';
+          const isGodown = targetLoc === 'Godown';
+
           items.forEach(item => {
-            const prodIdx = currentProds.findIndex(p => p.ProductID === item.ProductID || p.Barcode === item.Barcode);
+            const prodIdx = currentProds.findIndex(p => p.ProductID === item.ProductID || (p.Barcode && item.Barcode && p.Barcode === item.Barcode));
             if (prodIdx !== -1) {
-              const oldStock = Number(currentProds[prodIdx].StockQuantity) || 0;
+              const curP = currentProds[prodIdx];
               const incomingQty = Number(item.Quantity) || 0;
-              const newStock = oldStock + incomingQty;
-              const oldCost = Number(currentProds[prodIdx].CostPrice) || 0;
+              const prevShopStock = Number(curP.StockQuantity || curP.StockQuantit || 0);
+              const prevGodownStock = Number(curP.GodownStock !== undefined ? curP.GodownStock : (curP.godownStock || 0));
+
+              let newShopStock = prevShopStock;
+              let newGodownStock = prevGodownStock;
+              let prevTargetStock = 0;
+              let newTargetStock = 0;
+
+              if (isGodown) {
+                newGodownStock = prevGodownStock + incomingQty;
+                prevTargetStock = prevGodownStock;
+                newTargetStock = newGodownStock;
+              } else {
+                newShopStock = prevShopStock + incomingQty;
+                prevTargetStock = prevShopStock;
+                newTargetStock = newShopStock;
+              }
+
+              const oldCost = Number(curP.CostPrice) || 0;
               const incomingCost = Number(item.UnitCost) || oldCost;
-              const newCost = newStock > 0 ? ((oldStock * oldCost) + (incomingQty * incomingCost)) / newStock : incomingCost;
-              
-              currentProds[prodIdx].StockQuantity = newStock;
+              const totalStockBefore = prevShopStock + prevGodownStock;
+              const totalStockAfter = totalStockBefore + incomingQty;
+              const newCost = totalStockAfter > 0 ? ((totalStockBefore * oldCost) + (incomingQty * incomingCost)) / totalStockAfter : incomingCost;
+
+              currentProds[prodIdx].StockQuantity = newShopStock;
+              currentProds[prodIdx].StockQuantit = newShopStock;
+              currentProds[prodIdx].CurrentStock = newShopStock;
+              currentProds[prodIdx].ShopStock = newShopStock;
+              currentProds[prodIdx].stock = newShopStock;
+              currentProds[prodIdx].GodownStock = newGodownStock;
+              currentProds[prodIdx].godownStock = newGodownStock;
+              currentProds[prodIdx].TotalStock = newShopStock + newGodownStock;
               currentProds[prodIdx].CostPrice = Math.round(newCost * 100) / 100;
               currentProds[prodIdx].UpdatedAt = new Date().toISOString();
+
+              // অডিটযোগ্য LOT_IN মুভমেন্ট লগ নিশ্চিতকরণ (Gap 3-খ)
+              try {
+                recordStockMovementLocally({
+                  location: isGodown ? 'Godown' : 'Shop',
+                  type: 'LOT_IN',
+                  reasonBangla: `সরাসরি পারচেজ অর্ডার রিসিভ (${poData.PONumber || poData.PO_ID})`,
+                  productId: curP.ProductID,
+                  productName: curP.ProductName,
+                  barcode: curP.Barcode,
+                  unit: curP.Unit || 'Pcs',
+                  quantity: incomingQty,
+                  previousStock: prevTargetStock,
+                  remainingStock: newTargetStock,
+                  referenceNo: poData.PONumber || poData.PO_ID,
+                  operatorName: activeUser?.FullName || 'Admin',
+                  notes: `সাপ্লায়ার: ${poData.SupplierName || 'অজানা'}`
+                });
+              } catch (logErr) {
+                console.warn('Stock movement log error:', logErr);
+              }
             }
           });
           saveLocalProducts(currentProds);
           setProducts(currentProds);
+          setStockMovements(getLocalStockMovements());
         }
       }
 
@@ -3436,15 +3587,15 @@ export default function App() {
     }
   };
 
-  const handleUpdatePOStatus = async (poNumber, newStatus) => {
+  const handleUpdatePOStatus = async (poNumber, newStatus, targetLocation = 'Godown') => {
     try {
-      const currentPO = purchaseOrders.find(p => p.PONumber === poNumber);
+      const currentPO = purchaseOrders.find(p => p.PONumber === poNumber || p.PO_ID === poNumber);
       const prevStatus = currentPO?.Status;
 
-      const updatedPOs = updatePurchaseOrderStatusLocally(poNumber, newStatus);
+      const updatedPOs = updatePurchaseOrderStatusLocally(poNumber, newStatus, activeUser?.FullName || 'Admin');
       setPurchaseOrders(updatedPOs);
 
-      // যদি পূর্বে রিসিভ না হয়ে থাকে এবং এখন 'Received' স্ট্যাটাস হয় -> স্বয়ংক্রিয় স্টক বৃদ্ধি
+      // Gap 3(খ ও গ): যদি পূর্বে রিসিভ না হয়ে থাকে এবং এখন 'Received' স্ট্যাটাস হয় -> লোকেশন ভিত্তিক স্বয়ংক্রিয় স্টক বৃদ্ধি ও LOT_IN লগ
       if (newStatus === 'Received' && prevStatus !== 'Received' && currentPO) {
         let items = currentPO.Items;
         if (typeof items === 'string') {
@@ -3452,24 +3603,74 @@ export default function App() {
         }
         if (Array.isArray(items) && items.length > 0) {
           let currentProds = getLocalProducts();
+          const isGodown = targetLocation === 'Godown';
+
           items.forEach(item => {
-            const prodIdx = currentProds.findIndex(p => p.ProductID === item.ProductID || p.Barcode === item.Barcode);
+            const prodIdx = currentProds.findIndex(p => p.ProductID === item.ProductID || (p.Barcode && item.Barcode && p.Barcode === item.Barcode));
             if (prodIdx !== -1) {
-              const oldStock = Number(currentProds[prodIdx].StockQuantity) || 0;
+              const curP = currentProds[prodIdx];
               const incomingQty = Number(item.Quantity) || 0;
-              const newStock = oldStock + incomingQty;
-              const oldCost = Number(currentProds[prodIdx].CostPrice) || 0;
+              const prevShopStock = Number(curP.StockQuantity || curP.StockQuantit || 0);
+              const prevGodownStock = Number(curP.GodownStock !== undefined ? curP.GodownStock : (curP.godownStock || 0));
+
+              let newShopStock = prevShopStock;
+              let newGodownStock = prevGodownStock;
+              let prevTargetStock = 0;
+              let newTargetStock = 0;
+
+              if (isGodown) {
+                newGodownStock = prevGodownStock + incomingQty;
+                prevTargetStock = prevGodownStock;
+                newTargetStock = newGodownStock;
+              } else {
+                newShopStock = prevShopStock + incomingQty;
+                prevTargetStock = prevShopStock;
+                newTargetStock = newShopStock;
+              }
+
+              const oldCost = Number(curP.CostPrice) || 0;
               const incomingCost = Number(item.UnitCost) || oldCost;
-              const newCost = newStock > 0 ? ((oldStock * oldCost) + (incomingQty * incomingCost)) / newStock : incomingCost;
-              
-              currentProds[prodIdx].StockQuantity = newStock;
+              const totalStockBefore = prevShopStock + prevGodownStock;
+              const totalStockAfter = totalStockBefore + incomingQty;
+              const newCost = totalStockAfter > 0 ? ((totalStockBefore * oldCost) + (incomingQty * incomingCost)) / totalStockAfter : incomingCost;
+
+              currentProds[prodIdx].StockQuantity = newShopStock;
+              currentProds[prodIdx].StockQuantit = newShopStock;
+              currentProds[prodIdx].CurrentStock = newShopStock;
+              currentProds[prodIdx].ShopStock = newShopStock;
+              currentProds[prodIdx].stock = newShopStock;
+              currentProds[prodIdx].GodownStock = newGodownStock;
+              currentProds[prodIdx].godownStock = newGodownStock;
+              currentProds[prodIdx].TotalStock = newShopStock + newGodownStock;
               currentProds[prodIdx].CostPrice = Math.round(newCost * 100) / 100;
               currentProds[prodIdx].UpdatedAt = new Date().toISOString();
+
+              // অডিটযোগ্য LOT_IN মুভমেন্ট লগ নিশ্চিতকরণ (Gap 3-খ)
+              try {
+                recordStockMovementLocally({
+                  location: isGodown ? 'Godown' : 'Shop',
+                  type: 'LOT_IN',
+                  reasonBangla: `পারচেজ অর্ডার গ্রহণ (${poNumber})`,
+                  productId: curP.ProductID,
+                  productName: curP.ProductName,
+                  barcode: curP.Barcode,
+                  unit: curP.Unit || 'Pcs',
+                  quantity: incomingQty,
+                  previousStock: prevTargetStock,
+                  remainingStock: newTargetStock,
+                  referenceNo: poNumber,
+                  operatorName: activeUser?.FullName || 'Admin',
+                  notes: `সাপ্লায়ার: ${currentPO.SupplierName || 'অজানা'}, চালান: ${poNumber}`
+                });
+              } catch (logErr) {
+                console.warn('Stock movement log error:', logErr);
+              }
             }
           });
           saveLocalProducts(currentProds);
           setProducts(currentProds);
-          showToast(`মালামাল গ্রহণ সম্পন্ন! পণ্যের স্টক ইনভেন্টরিতে বৃদ্ধি করা হয়েছে।`, 'info');
+          setStockMovements(getLocalStockMovements());
+          showToast(`মালামাল গ্রহণ সম্পন্ন! ${isGodown ? '🏭 গোডাউনে' : '🏬 দোকানে'} স্টক ও LOT_IN মুভমেন্ট সফলভাবে সংরক্ষিত হয়েছে।`, 'info');
         }
       }
 
@@ -5713,7 +5914,10 @@ export default function App() {
             <PurchaseOrdersModal
               embedded={true}
               isOpen={true}
-              onClose={() => setCurrentView('pos')}
+              onClose={() => {
+                setPrefilledPOProduct(null);
+                setCurrentView('pos');
+              }}
               purchaseOrders={purchaseOrders}
               suppliers={suppliers}
               products={products}
@@ -5723,6 +5927,7 @@ export default function App() {
               onCreatePO={handleCreatePurchaseOrder}
               onUpdatePOStatus={handleUpdatePOStatus}
               onOpenSuppliersModal={() => setCurrentView('suppliers')}
+              initialPrefill={prefilledPOProduct}
             />
           )}
 
@@ -5879,6 +6084,7 @@ export default function App() {
               currencySymbol={settings.CurrencySymbol || '৳'}
               settings={settings}
               onQuickRestock={handleQuickRestock}
+              onRequestPO={handleRequestPOFromAlert}
             />
           )}
 
@@ -5893,6 +6099,8 @@ export default function App() {
               onEditProduct={(prod) => {
                 handleOpenEditProduct(prod);
               }}
+              onWriteOffDamage={handleWriteOffDamageFromExpiry}
+              onReturnToSupplier={handleReturnToSupplierFromExpiry}
               settings={settings}
             />
           )}
@@ -5962,6 +6170,7 @@ export default function App() {
               onSaveSupplier={handleSaveSupplier}
               variantAttributes={variantAttributes}
               onAddVariantOption={handleAddVariantOption}
+              purchaseOrders={purchaseOrders}
             />
           )}
 
@@ -6138,6 +6347,8 @@ export default function App() {
         currencySymbol={settings.CurrencySymbol || '৳'}
         onQuickRestock={handleQuickRestock}
         onAddToCart={handleAddToCart}
+        onRequestStockTransfer={handleRequestStockTransferFromAlert}
+        onRequestPO={handleRequestPOFromAlert}
       />
 
       {/* ইনভয়েস প্রিন্ট জেনারেটর মডাল (Thermal 80mm & A4) */}
@@ -6166,6 +6377,7 @@ export default function App() {
         onSaveSupplier={handleSaveSupplier}
         variantAttributes={variantAttributes}
         onAddVariantOption={handleAddVariantOption}
+        purchaseOrders={purchaseOrders}
       />
 
       <AddProductModal
@@ -6363,7 +6575,10 @@ export default function App() {
       {/* ফেজ ৪: পারচেজ অর্ডার ও স্টক প্রকিউরমেন্ট রিস্টক মডাল */}
       <PurchaseOrdersModal
         isOpen={isPurchaseOrdersModalOpen}
-        onClose={() => setIsPurchaseOrdersModalOpen(false)}
+        onClose={() => {
+          setIsPurchaseOrdersModalOpen(false);
+          setPrefilledPOProduct(null);
+        }}
         purchaseOrders={purchaseOrders}
         suppliers={suppliers}
         products={products}
@@ -6376,6 +6591,7 @@ export default function App() {
           setIsPurchaseOrdersModalOpen(false);
           setIsSuppliersModalOpen(true);
         }}
+        initialPrefill={prefilledPOProduct}
       />
 
       {/* ফেজ ৪: থার্মাল বারকোড লেবেল ও প্রাইস ট্যাগ জেনারেটর মডাল */}
@@ -6456,6 +6672,8 @@ export default function App() {
           setIsExpiryAlertModalOpen(false);
           handleOpenEditProduct(prod);
         }}
+        onWriteOffDamage={handleWriteOffDamageFromExpiry}
+        onReturnToSupplier={handleReturnToSupplierFromExpiry}
         settings={settings}
       />
 

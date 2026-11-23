@@ -3032,7 +3032,10 @@ export function saveOrUpdatePurchaseOrderLocally(poData) {
 export function updatePurchaseOrderStatusLocally(poId, newStatus = 'Received', receivedBy = 'Admin') {
   if (!poId) return getLocalPurchaseOrders();
   const list = getLocalPurchaseOrders();
-  const idx = list.findIndex(p => String(p.PO_ID || '').trim() === String(poId).trim());
+  const idx = list.findIndex(p => 
+    String(p.PO_ID || '').trim() === String(poId).trim() || 
+    String(p.PONumber || '').trim() === String(poId).trim()
+  );
   if (idx !== -1) {
     const now = new Date().toISOString();
     list[idx].Status = newStatus;
@@ -3101,6 +3104,7 @@ export const EXPENSE_CATEGORIES = [
   { id: 'Packaging', name: 'প্যাকেজিং সামগ্রী ও ব্যাগ (Packaging)', icon: 'Package', color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
   { id: 'Maintenance', name: 'মেরামত ও পরিচ্ছন্নতা (Maintenance)', icon: 'Wrench', color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
   { id: 'Marketing', name: 'বিজ্ঞাপন ও প্রচারণা (Marketing)', icon: 'Megaphone', color: 'text-pink-600 bg-pink-50 border-pink-200' },
+  { id: 'InventoryLoss', name: 'ইনভেন্টরি অপচয় ও ড্যামেজ ক্ষতি (Loss Write-Off)', icon: 'Scissors', color: 'text-rose-600 bg-rose-50 border-rose-200' },
   { id: 'Other', name: 'অন্যান্য সাধারণ ব্যয় (Other)', icon: 'FileText', color: 'text-slate-600 bg-slate-50 border-slate-200' }
 ];
 

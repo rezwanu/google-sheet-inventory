@@ -26,11 +26,12 @@ import {
   Palette,
   Building2,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  ClipboardList
 } from 'lucide-react';
 import BarcodeScannerModal from './BarcodeScannerModal';
 import BarcodeStickerModal from './BarcodeStickerModal';
-import { getLocalSuppliers, saveOrUpdateSupplierLocally } from '../services/storage';
+import { getLocalSuppliers, saveOrUpdateSupplierLocally, getLocalPurchaseOrders } from '../services/storage';
 
 // রঙের বাংলা/ইংরেজি নাম থেকে হেক্স কালার বের করার হেল্পার
 const getColorHex = (colorName = '') => {
@@ -79,7 +80,8 @@ export default function AddStockModal({
   suppliers = [],
   onSaveSupplier,
   variantAttributes = [],
-  onAddVariantOption
+  onAddVariantOption,
+  purchaseOrders = []
 }) {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [barcodeSearchQuery, setBarcodeSearchQuery] = useState('');
@@ -92,6 +94,14 @@ export default function AddStockModal({
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mobileTab, setMobileTab] = useState('form'); // 'form' | 'analytics'
+
+  // Gap 3(ক): পেন্ডিং PO লিঙ্ক স্টেট
+  const [linkedPONumber, setLinkedPONumber] = useState('');
+
+  // Gap 4: পেমেন্ট মোড ও মহাজন দেনা স্টেট
+  const [paymentMode, setPaymentMode] = useState('Paid'); // 'Paid' | 'Due'
+  const [paidAmount, setPaidAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
 
   // রিস্টক গন্তব্য (গোডাউন ওয়্যারহাউজ বনাম দোকান কাউন্টার)
   const [targetLocation, setTargetLocation] = useState('Godown'); // 'Godown' | 'Shop'
@@ -177,6 +187,9 @@ export default function AddStockModal({
       setSupplierName('');
       setSelectedSupplierId('');
       setNotes('');
+      setLinkedPONumber('');
+      setPaymentMode('Paid');
+      setPaidAmount('');
       setMobileTab('form');
       setCustomAddedVariants([]);
       setIsAddingNewColorOpen(false);
@@ -207,6 +220,54 @@ export default function AddStockModal({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Gap 3(ক): পেন্ডিং পারচেজ অর্ডার ফিল্টার ও হ্যান্ডলার
+  const pendingPOs = useMemo(() => {
+    const list = Array.isArray(purchaseOrders) && purchaseOrders.length > 0
+      ? purchaseOrders
+      : (typeof getLocalPurchaseOrders === 'function' ? getLocalPurchaseOrders() : []);
+    return list.filter(po => po.Status === 'Ordered');
+  }, [purchaseOrders]);
+
+  const handleSelectPendingPO = (e) => {
+    const poNum = e.target.value;
+    setLinkedPONumber(poNum);
+    if (!poNum) return;
+
+    const po = pendingPOs.find(p => (p.PONumber || p.PO_ID) === poNum);
+    if (!po) return;
+
+    if (po.SupplierID) {
+      setSelectedSupplierId(po.SupplierID);
+      setSupplierName(po.SupplierName || '');
+    }
+
+    let items = po.Items;
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch { items = []; }
+    }
+    if (Array.isArray(items) && items.length > 0) {
+      const firstItem = items[0];
+      const matchedProd = products.find(p => p.ProductID === firstItem.ProductID || (p.Barcode && firstItem.Barcode && p.Barcode === firstItem.Barcode));
+      if (matchedProd) {
+        setSelectedProductId(matchedProd.ProductID);
+        setIncomingQty(String(firstItem.Quantity || ''));
+        if (firstItem.UnitCost) {
+          setUnitCost(String(firstItem.UnitCost));
+        }
+      }
+    }
+
+    if (po.Notes) {
+      setNotes(`PO ${poNum} মাল গ্রহণ: ${po.Notes}`);
+    } else {
+      setNotes(`PO ${poNum} থেকে মালামাল গ্রহণ`);
+    }
+
+    if (Number(po.DueAmount) > 0) {
+      setPaymentMode('Due');
+    }
+  };
 
   // নির্বাচিত প্রোডাক্টের তথ্য
   const selectedProduct = useMemo(() => {
@@ -639,6 +700,12 @@ export default function AddStockModal({
         isThanUnit: isThanUnit,
         incomingThans: isThanUnit ? qtyNumber : 0,
         incomingYards: isThanUnit ? effectiveTotalYards : 0,
+        // Gap 3(ক) ও Gap 4:
+        linkedPONumber: linkedPONumber || '',
+        paymentMode: paymentMode,
+        paidAmount: paymentMode === 'Paid' ? (Number(paidAmount) || calculations?.incomingBatchValue || (qtyNumber * (unitCost !== '' ? Number(unitCost) : Number(selectedProduct.CostPrice)))) : 0,
+        dueAmount: paymentMode === 'Due' ? (calculations?.incomingBatchValue || (qtyNumber * (unitCost !== '' ? Number(unitCost) : Number(selectedProduct.CostPrice)))) : 0,
+        paymentMethod: paymentMethod
       });
 
       const restockedProd = {
@@ -660,6 +727,9 @@ export default function AddStockModal({
       setSupplierName('');
       setSelectedSupplierId('');
       setNotes('');
+      setLinkedPONumber('');
+      setPaymentMode('Paid');
+      setPaidAmount('');
 
       if (autoPrintStickersOnRestock && restockedProd.Barcode) {
         setPendingPrintProduct(restockedProd);
@@ -792,6 +862,38 @@ export default function AddStockModal({
             {/* বাম কলাম: স্টক ইনপুট ফর্ম (৭ কলাম) */}
             <div className={`lg:col-span-7 p-5 sm:p-7 space-y-5 ${mobileTab === 'analytics' ? 'hidden lg:block' : 'block'}`}>
               
+              {/* Gap 3(ক): পেন্ডিং পারচেজ অর্ডার সিলেক্টর */}
+              {pendingPOs.length > 0 && (
+                <div className="bg-indigo-50/70 border border-indigo-200 rounded-3xl p-4 sm:p-5 space-y-2.5 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-indigo-950 flex items-center space-x-2">
+                      <ClipboardList className="w-4 h-4 text-indigo-600" />
+                      <span>পেন্ডিং পারচেজ অর্ডার থেকে মাল গ্রহণ (ঐচ্ছিক)</span>
+                    </span>
+                    <span className="text-[10px] font-bold bg-indigo-200/80 text-indigo-800 px-2.5 py-0.5 rounded-full">
+                      {pendingPOs.length}টি অর্ডার অপেক্ষমান
+                    </span>
+                  </div>
+                  <select
+                    value={linkedPONumber}
+                    onChange={handleSelectPendingPO}
+                    className="w-full text-xs font-semibold bg-white border border-indigo-300 rounded-2xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  >
+                    <option value="">-- কোনো অর্ডার ছাড়া সাধারণ রিস্টক --</option>
+                    {pendingPOs.map((po) => (
+                      <option key={po.PONumber || po.PO_ID} value={po.PONumber || po.PO_ID}>
+                        {po.PONumber || po.PO_ID} - {po.SupplierName} (মোট: {currencySymbol}{po.TotalAmount} | {po.TotalQuantity || po.Items?.length || 0} আইটেম)
+                      </option>
+                    ))}
+                  </select>
+                  {linkedPONumber && (
+                    <p className="text-[10.5px] text-indigo-700 font-medium">
+                      ✓ এই লটটি সেভ হলে সংশ্লিষ্ট পারচেজ অর্ডার ({linkedPONumber}) স্বয়ংক্রিয়ভাবে <strong>Received</strong> হয়ে যাবে।
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* সেকশন ১: স্মার্ট কম্বোবক্স ও পণ্য নির্বাচন (Smart Combobox) */}
               <div className="bg-slate-50/80 border border-slate-200 rounded-3xl p-4 sm:p-5 space-y-4 shadow-2xs">
                 <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
@@ -1855,6 +1957,86 @@ export default function AddStockModal({
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* সেকশন ৪: পেমেন্ট মোড ও মহাজন দেনা (Gap 4: Payment & Supplier Ledger) */}
+              <div className="bg-slate-50/80 border border-slate-200 rounded-3xl p-4 sm:p-5 space-y-4 shadow-2xs">
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
+                  <span className="text-xs font-black text-slate-800 flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span>৪. পেমেন্ট ও মহাজন দেনা হিসাব (Payment & Ledger)</span>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode('Paid')}
+                    className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center space-y-1 cursor-pointer ${
+                      paymentMode === 'Paid'
+                        ? 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>পরিশোধিত (ক্যাশ/ব্যাংক)</span>
+                    <span className="text-[10px] font-normal text-emerald-700">নগদে বা ব্যাংকে পরিশোধ</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode('Due')}
+                    className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center space-y-1 cursor-pointer ${
+                      paymentMode === 'Due'
+                        ? 'bg-rose-50 border-rose-500 text-rose-950 ring-2 ring-rose-500/20 shadow-xs'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>মহাজন বাকি (Payable Bill)</span>
+                    <span className="text-[10px] font-normal text-rose-700">লেজারে দেনা হিসেবে যুক্ত হবে</span>
+                  </button>
+                </div>
+
+                {paymentMode === 'Paid' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">পেমেন্ট মাধ্যম</label>
+                      <select
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800"
+                      >
+                        <option value="Cash">নগদ (Cash Drawer)</option>
+                        <option value="Bank">ব্যাংক অ্যাকাউন্ট</option>
+                        <option value="bKash">বিকাশ (bKash)</option>
+                        <option value="Nagad">নগদ (Nagad)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">পরিশোধের পরিমাণ ({currencySymbol})</label>
+                      <input
+                        type="number"
+                        value={paidAmount}
+                        onChange={(e) => setPaidAmount(e.target.value)}
+                        placeholder={`মোট: ${calculations ? calculations.incomingBatchValue.toFixed(2) : '0'}`}
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {paymentMode === 'Due' && (
+                  <div className="p-3 bg-rose-50/70 rounded-2xl border border-rose-200 text-xs text-rose-900 space-y-1">
+                    <div className="flex justify-between items-center font-bold">
+                      <span>মহাজনের খতিয়ানে প্রদেয় বিল যোগ হবে:</span>
+                      <span className="font-mono text-sm text-rose-950 font-black">
+                        {currencySymbol}{calculations ? calculations.incomingBatchValue.toFixed(2) : '0'}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-rose-700 leading-relaxed">
+                      রিস্টক সম্পন্ন হলে সরবরাহকারী <strong>{supplierName || 'মহাজন'}</strong>-এর লেজারে ক্রয় বিল বাবদ বকেয়া নথিভুক্ত হবে।
+                    </p>
+                  </div>
+                )}
               </div>
 
             </div>

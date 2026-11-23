@@ -17,7 +17,9 @@ import {
   FileText,
   Download,
   Eye,
-  X
+  X,
+  PlusCircle,
+  ClipboardList
 } from 'lucide-react';
 import { getProductDisplayUnit } from '../services/storage';
 
@@ -26,7 +28,8 @@ export default function GodownStockAlertView({
   products = [],
   currencySymbol = '৳',
   settings = {},
-  onQuickRestock
+  onQuickRestock,
+  onRequestPO
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'OUT_OF_STOCK' | 'LOW_STOCK'
@@ -1098,12 +1101,13 @@ export default function GodownStockAlertView({
                   <th className="py-3 px-4 text-center bg-rose-50/70 text-rose-950 font-black">বর্তমান পরিমাণ</th>
                   <th className="py-3 px-4 text-center">সতর্কতা / অবস্থা</th>
                   <th className="py-3 px-4 text-center">প্রয়োজনীয় রিস্টক</th>
+                  <th className="py-3 px-4 text-center">অ্যাকশন</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="py-12 text-center text-slate-400 font-medium">
+                    <td colSpan="7" className="py-12 text-center text-slate-400 font-medium">
                       <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
                       <p className="font-bold text-slate-700 text-sm">গোডাউনে কোনো ঘাটতি বা কম স্টক পণ্য নেই!</p>
                       <p className="text-xs text-slate-400 mt-0.5">সবগুলো ভ্যারিয়েন্ট ও পণ্য পর্যাপ্ত মজুতে রয়েছে।</p>
@@ -1178,6 +1182,35 @@ export default function GodownStockAlertView({
                             <td className="py-3 px-4 text-center text-slate-400 text-xs font-bold">
                               নিচে বিস্তারিত দেখুন ↓
                             </td>
+                            <td className="py-3 px-4 text-center">
+                              <div className="flex items-center justify-center space-x-1.5">
+                                {onRequestPO && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onRequestPO(p.parentProduct, 10)}
+                                    className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] rounded-lg shadow-2xs flex items-center space-x-1 transition-all cursor-pointer"
+                                    title="মহাজনকে ১-ক্লিক পারচেজ অর্ডার দিন"
+                                  >
+                                    <ClipboardList className="w-3 h-3" />
+                                    <span>PO দিন</span>
+                                  </button>
+                                )}
+                                {onQuickRestock && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      onQuickRestock(p.parentProduct);
+                                      onClose();
+                                    }}
+                                    className="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] rounded-lg shadow-2xs flex items-center space-x-1 transition-all cursor-pointer"
+                                    title="গোডাউনে স্টক ইনপুট দিন"
+                                  >
+                                    <PlusCircle className="w-3 h-3" />
+                                    <span>রিস্টক</span>
+                                  </button>
+                                )}
+                              </div>
+                            </td>
                           </tr>
 
                           {/* প্যারেন্ট পণ্যের নামের অধীনে প্রতিটি ভ্যারিয়েন্ট সাব-রো */}
@@ -1229,6 +1262,21 @@ export default function GodownStockAlertView({
                                 <span className="px-2.5 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs shadow-2xs">
                                   {v.recommendedRestockQty} {p.unit}
                                 </span>
+                              </td>
+                              <td className="py-2.5 px-4 text-center">
+                                <div className="flex items-center justify-center space-x-1">
+                                  {onRequestPO && (
+                                    <button
+                                      type="button"
+                                      onClick={() => onRequestPO(p.parentProduct, parseInt(v.recommendedRestockQty) || 5)}
+                                      className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] rounded shadow-2xs flex items-center space-x-0.5 transition-all cursor-pointer"
+                                      title="এই ভ্যারিয়েন্টের জন্য PO দিন"
+                                    >
+                                      <ClipboardList className="w-2.5 h-2.5" />
+                                      <span>PO</span>
+                                    </button>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -1292,6 +1340,35 @@ export default function GodownStockAlertView({
                           <span className="px-2.5 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs shadow-2xs">
                             {p.recommendedRestockQty} {p.unit}
                           </span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex items-center justify-center space-x-1.5">
+                            {onRequestPO && (
+                              <button
+                                type="button"
+                                onClick={() => onRequestPO(p.parentProduct, parseInt(p.recommendedRestockQty) || 10)}
+                                className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] rounded-lg shadow-2xs flex items-center space-x-1 transition-all cursor-pointer"
+                                title="মহাজনকে ১-ক্লিক পারচেজ অর্ডার দিন"
+                              >
+                                <ClipboardList className="w-3 h-3" />
+                                <span>PO দিন</span>
+                              </button>
+                            )}
+                            {onQuickRestock && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onQuickRestock(p.parentProduct);
+                                  onClose();
+                                }}
+                                className="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] rounded-lg shadow-2xs flex items-center space-x-1 transition-all cursor-pointer"
+                                title="গোডাউনে রিস্টক করুন"
+                              >
+                                <PlusCircle className="w-3 h-3" />
+                                <span>রিস্টক</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

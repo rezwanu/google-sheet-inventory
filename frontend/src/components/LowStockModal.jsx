@@ -10,7 +10,10 @@ import {
   ShoppingCart,
   Sparkles,
   Coins,
-  ShieldAlert
+  ShieldAlert,
+  ArrowRightLeft,
+  ClipboardList,
+  Warehouse
 } from 'lucide-react';
 
 export default function LowStockModal({
@@ -20,7 +23,9 @@ export default function LowStockModal({
   products = [],
   currencySymbol = '৳',
   onQuickRestock,
-  onAddToCart
+  onAddToCart,
+  onRequestStockTransfer,
+  onRequestPO
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'OUT_OF_STOCK' | 'LOW_STOCK'
@@ -465,6 +470,17 @@ export default function LowStockModal({
                         />
                       </div>
 
+                      {/* গোডাউন স্টক ও ঘাটতি সূচক (Gap 1) */}
+                      <div className="flex items-center justify-between text-[11px] font-semibold bg-slate-100/90 px-2 py-1 rounded-lg border border-slate-200/80">
+                        <span className="text-slate-600 flex items-center space-x-1">
+                          <Warehouse className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>গোডাউনে আছে:</span>
+                        </span>
+                        <span className={`font-mono font-black ${Number(prod.GodownStock !== undefined ? prod.GodownStock : (prod.godownStock || 0)) > 0 ? 'text-indigo-600' : 'text-slate-400'}`}>
+                          {Number(prod.GodownStock !== undefined ? prod.GodownStock : (prod.godownStock || 0))} {unit}
+                        </span>
+                      </div>
+
                       <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
                         <span>রিফিল প্রয়োজন: <strong className="text-slate-700">+{refillNeeded} {unit}</strong></span>
                         <span>বাজেট: <strong className="text-teal-700 font-bold">{currencySymbol}{estimatedCostForRefill.toFixed(0)}</strong></span>
@@ -472,9 +488,41 @@ export default function LowStockModal({
                     </div>
 
                     {/* ডান পাশ: অ্যাকশন বাটনসমূহ */}
-                    <div className="flex items-center justify-end space-x-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 shrink-0">
+                    <div className="flex items-center justify-end space-x-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 shrink-0 flex-wrap gap-y-1.5">
                       
-                      {/* দ্রুত কার্টে যোগ বাটন (যদি স্টক থাকে) */}
+                      {/* Gap 1: ১-ক্লিক গোডাউন চালান রিকুইজিশন বাটন (যদি গোডাউনে মাল থাকে) */}
+                      {Number(prod.GodownStock !== undefined ? prod.GodownStock : (prod.godownStock || 0)) > 0 && onRequestStockTransfer && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onRequestStockTransfer(prod, refillNeeded);
+                            onClose();
+                          }}
+                          className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 transition-all flex items-center space-x-1.5 active:scale-95 shrink-0 cursor-pointer"
+                          title="গোডাউন থেকে দোকানে চালানের রিকুইজিশন তৈরি করুন"
+                        >
+                          <ArrowRightLeft className="w-3.5 h-3.5" />
+                          <span>গোডাউন চালান</span>
+                        </button>
+                      )}
+
+                      {/* Gap 2: ১-ক্লিক পারচেজ অর্ডার বাটন (মহাজনকে অর্ডার দিতে) */}
+                      {onRequestPO && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onRequestPO(prod, refillNeeded);
+                            onClose();
+                          }}
+                          className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-md shadow-amber-500/20 transition-all flex items-center space-x-1.5 active:scale-95 shrink-0 cursor-pointer"
+                          title="মহাজনকে ১-ক্লিক পারচেজ অর্ডার ড্রাফট তৈরি করুন"
+                        >
+                          <ClipboardList className="w-3.5 h-3.5" />
+                          <span>মহাজন PO</span>
+                        </button>
+                      )}
+
+                      {/* দ্রুত কার্টে যোগ বাটন (যদি দোকানে স্টক থাকে) */}
                       {onAddToCart && !isZero && (
                         <button
                           type="button"
@@ -494,7 +542,7 @@ export default function LowStockModal({
                           onQuickRestock(prod);
                           onClose();
                         }}
-                        className="px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-teal-600/20 transition-all flex items-center space-x-1.5 active:scale-95 shrink-0"
+                        className="px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-teal-600/20 transition-all flex items-center space-x-1.5 active:scale-95 shrink-0 cursor-pointer"
                       >
                         <PlusCircle className="w-4 h-4" />
                         <span>স্টক ইনপুট</span>

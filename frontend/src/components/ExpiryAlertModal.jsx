@@ -11,7 +11,9 @@ import {
   ArrowUpRight,
   Layers,
   PackageCheck,
-  ShieldAlert
+  ShieldAlert,
+  Trash2,
+  RotateCcw
 } from 'lucide-react';
 import { calculateExpiryStatus } from '../services/storage';
 
@@ -23,7 +25,9 @@ export default function ExpiryAlertModal({
   currencySymbol = '৳',
   onAddToCart,
   onQuickRestock,
-  onEditProduct
+  onEditProduct,
+  onWriteOffDamage,
+  onReturnToSupplier
 }) {
   const [filterTab, setFilterTab] = useState('ALL'); // 'ALL' | 'EXPIRED' | '7_DAYS' | '15_DAYS' | '30_DAYS'
   const [searchQuery, setSearchQuery] = useState('');
@@ -348,8 +352,9 @@ export default function ExpiryAlertModal({
                     </div>
 
                     {/* অ্যাকশন বাটনসমূহ */}
-                    <div className="flex items-center space-x-1.5">
-                      {stock > 0 && onAddToCart && (
+                    <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                      {/* Gap 6: মেয়াদোত্তীর্ণ না হলে এবং স্টক থাকলে ক্লিয়ারেন্স কার্টে নেওয়ার অনুমতি */}
+                      {stock > 0 && onAddToCart && !isExpired && (
                         <button
                           type="button"
                           onClick={() => onAddToCart(p)}
@@ -359,6 +364,34 @@ export default function ExpiryAlertModal({
                           <ShoppingCart className="w-3.5 h-3.5" />
                           <span>কার্টে নিন</span>
                         </button>
+                      )}
+
+                      {/* Gap 6: মেয়াদ শেষ (EXPIRED) পণ্যের জন্য ১-ক্লিক ড্যামেজ রাইট-অফ ও RMA মহাজন রিটার্ন বাটন */}
+                      {isExpired && (
+                        <>
+                          {onWriteOffDamage && (
+                            <button
+                              type="button"
+                              onClick={() => onWriteOffDamage(p)}
+                              title="মেয়াদোত্তীর্ণ পণ্য অপচয় ও ড্যামেজ হিসেবে বাতিল করুন"
+                              className="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>ড্যামেজ বাতিল</span>
+                            </button>
+                          )}
+                          {onReturnToSupplier && (
+                            <button
+                              type="button"
+                              onClick={() => onReturnToSupplier(p)}
+                              title="মহাজনকে ফেরত পাঠান (RMA Return)"
+                              className="px-2.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>মহাজনে ফেরত</span>
+                            </button>
+                          )}
+                        </>
                       )}
 
                       {onEditProduct && (

@@ -72,6 +72,7 @@ export default function FabricWastageModal({
   const [notes, setNotes] = useState('');
   const [createClearanceBundle, setCreateClearanceBundle] = useState(false);
   const [bundlePrice, setBundlePrice] = useState(100);
+  const [recordAsExpense, setRecordAsExpense] = useState(true);
 
   // বারকোড স্টিকার প্রিন্ট মডাল স্টেট
   const [printStickerProduct, setPrintStickerProduct] = useState(null);
@@ -344,6 +345,7 @@ export default function FabricWastageModal({
       ActionTaken: createClearanceBundle ? 'ClearanceBundle' : 'WrittenOff',
       LoggedBy: activeUser?.FullName || activeUser?.UserName || 'Admin',
       Notes: notes.trim(),
+      RecordAsExpense: Boolean(recordAsExpense && entryType === 'Damaged'),
       CreateBundle: createClearanceBundle && entryType === 'Remnant',
       BundleProductID: createClearanceBundle ? bundleId : '',
       BundleBarcode: createClearanceBundle ? bundleBarcode : '',
@@ -1771,6 +1773,28 @@ export default function FabricWastageModal({
                     </div>
                   </div>
                 </div>
+
+                {/* Gap 5: অপশন: ড্যামেজ কাপড়ের আর্থিক ক্ষতি খরচের খাতায় অপচয় ক্ষতি (Loss Write-Off) হিসেবে এন্ট্রি */}
+                {entryType === 'Damaged' && (
+                  <div className="bg-rose-50/80 p-4 rounded-2xl border border-rose-200/90 space-y-2 text-xs">
+                    <label className="flex items-start space-x-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={recordAsExpense}
+                        onChange={(e) => setRecordAsExpense(e.target.checked)}
+                        className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-rose-300 mt-0.5 cursor-pointer"
+                      />
+                      <div>
+                        <span className="font-bold text-rose-950 text-xs block">
+                          📉 পরিচালন ক্ষতি (Loss Write-Off) হিসেবে ব্যয়ের খাতায় অন্তর্ভুক্ত করুন
+                        </span>
+                        <span className="text-[11px] text-rose-700 block mt-0.5">
+                          সক্রিয় থাকলে খরচের খাতায় ({currencySymbol}{lossAmount.toLocaleString('bn-BD')}) টাকা নন-ক্যাশ পরিচালন অপচয় ক্ষতি হিসেবে এন্ট্রি হবে, যা প্রফিট-লস রিপোর্টে সঠিক ক্ষতি প্রদর্শন করবে।
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                )}
 
                 {/* অপশন: ক্লিয়ারেন্স ছাঁট প্যাক হিসেবে কম দামে বিক্রি */}
                 {entryType === 'Remnant' && location === 'Shop' && (
