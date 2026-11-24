@@ -87,6 +87,7 @@ import {
   getLocalSalesHistory,
   saveSaleLocally,
   saveLocalSalesHistory,
+  updateSaleStatusLocally,
   getLocalCustomers,
   saveLocalCustomers,
   saveOrUpdateCustomerLocally,
@@ -573,6 +574,7 @@ export default function App() {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [salesReturnPreloadInvoice, setSalesReturnPreloadInvoice] = useState(null); // GAP 5
   const [isLowStockModalOpen, setIsLowStockModalOpen] = useState(false);
   const [quickRestockProductId, setQuickRestockProductId] = useState('');
 
@@ -1358,6 +1360,27 @@ export default function App() {
     saveLocalCart(cart);
   }, [cart]);
 
+  // GAP 10: হোল্ড করা অর্ডার দীর্ঘসময় (২ ঘণ্টার বেশি) থাকলে স্বয়ংক্রিয়ভাবে অসম্পূর্ণ কার্টে স্থানান্তর
+  useEffect(() => {
+    const checkHeldCartTimeout = () => {
+      const currentHeld = getLocalHeldCarts();
+      if (!Array.isArray(currentHeld) || currentHeld.length === 0) return;
+      const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+      const now = Date.now();
+
+      currentHeld.forEach((hCart) => {
+        const heldTime = new Date(hCart.createdAt || hCart.timestamp || now).getTime();
+        if (now - heldTime > TWO_HOURS_MS) {
+          handleMoveHeldCartToAbandoned(hCart.id);
+        }
+      });
+    };
+
+    checkHeldCartTimeout();
+    const interval = setInterval(checkHeldCartTimeout, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [heldCarts]);
+
   // ফেজ ১: সাউন্ড এফেক্ট টগল হ্যান্ডলার
   const handleToggleSound = () => {
     const nextState = !isSoundActive;
@@ -1672,39 +1695,87 @@ export default function App() {
     showToast('হোল্ডকৃত অর্ডারটি মুছে ফেলা হয়েছে।', 'info');
   };
 
+  // GAP 10: হোল্ড করা অর্ডারকে অসম্পূর্ণ কার্ট তালিকায় স্থানান্তর হ্যান্ডলার
+  const handleMoveHeldCartToAbandoned = (heldCartId) => {
+    const target = heldCarts.find((h) => h.id === heldCartId);
+    if (!target) return;
+
+    const rawItems = Array.isArray(target.items) ? target.items : [];
+    const abandonedPayload = {
+      cartId: `ABN-${Date.now().toString().slice(-6)}`,
+      customerName: target.customerName || target.token || 'হোল্ড কার্ট কাস্টমার',
+      customerPhone: target.customerPhone || '',
+      items: rawItems,
+      subTotal: target.subTotal || rawItems.reduce((acc, it) => acc + (Number(it.sellingPrice) || 0) * (Number(it.quantity) || 0), 0),
+      discountAmount: target.discountAmount || 0,
+      itemCount: rawItems.length,
+      recoveryStatus: 'Pending',
+      lastStep: 'Held Cart Expiry',
+      source: 'HeldCartTimeout',
+      notes: `হোল্ড কার্ট (${target.token || target.id}) থেকে স্থানান্তরিত`
+    };
+
+    saveOrUpdateAbandonedCartLocally(abandonedPayload);
+    setAbandonedCarts(getLocalAbandonedCarts());
+
+    const remaining = deleteHeldCartLocally(heldCartId);
+    setHeldCarts(remaining);
+
+    showToast(`কার্ট '${target.token || heldCartId}' অসম্পূর্ণ কার্ট তালিকায় স্থানান্তরিত হয়েছে।`, 'info');
+  };
+
   // ==========================================================================
   // ফেজ ২: টেইলারিং ও সেলাই অর্ডার ব্যবস্থাপনা হ্যান্ডলারসমূহ
   // ==========================================================================
 
   const handleSaveTailoringOrder = (orderPayload) => {
-    // ১. দোকানের থান কাপড় ব্যবহার হলে স্টক স্বয়ংক্রিয়ভাবে কর্তন করা
+    // ১. থান কাপড় ব্যবহার হলে লোকেশন (দোকান বা গোডাউন) অনুযায়ী স্টক কর্তন (GAP 3 সমাধান)
     if (orderPayload.FabricSource === 'store' && orderPayload.FabricProductID && Number(orderPayload.FabricYards) > 0) {
       const pIdx = products.findIndex((p) => String(p.ProductID || p.id).trim() === String(orderPayload.FabricProductID).trim());
       if (pIdx !== -1) {
         const curP = products[pIdx];
-        const curStock = Number(curP.StockQuantity !== undefined ? curP.StockQuantity : (curP.CurrentStock || curP.stock || 0));
-        const newStock = Math.max(0, Math.round((curStock - Number(orderPayload.FabricYards)) * 10000) / 10000);
+        const cutYards = Number(orderPayload.FabricYards);
+        const location = orderPayload.FabricLocation === 'Godown' ? 'Godown' : 'Shop';
+
+        let curStock = 0;
+        let newStock = 0;
         const updatedProds = [...products];
-        updatedProds[pIdx] = {
-          ...curP,
-          StockQuantity: newStock,
-          CurrentStock: newStock,
-          stock: newStock,
-          UpdatedAt: new Date().toISOString()
-        };
+
+        if (location === 'Godown') {
+          const curGodown = Number(curP.GodownStock !== undefined ? curP.GodownStock : (curP.godownStock || 0));
+          newStock = Math.max(0, Math.round((curGodown - cutYards) * 10000) / 10000);
+          curStock = curGodown;
+          updatedProds[pIdx] = {
+            ...curP,
+            GodownStock: newStock,
+            godownStock: newStock,
+            UpdatedAt: new Date().toISOString()
+          };
+        } else {
+          const curShop = Number(curP.StockQuantity !== undefined ? curP.StockQuantity : (curP.CurrentStock || curP.stock || 0));
+          newStock = Math.max(0, Math.round((curShop - cutYards) * 10000) / 10000);
+          curStock = curShop;
+          updatedProds[pIdx] = {
+            ...curP,
+            StockQuantity: newStock,
+            CurrentStock: newStock,
+            stock: newStock,
+            UpdatedAt: new Date().toISOString()
+          };
+        }
         setProducts(updatedProds);
         saveLocalProducts(updatedProds);
 
-        // দোকান স্টক কমার খতিয়ানে টেইলারিং থান কাপড় কর্তন সংরক্ষণ
+        // স্টক কমার খতিয়ানে টেইলারিং থান কাপড় কর্তন সংরক্ষণ
         recordStockMovementLocally({
-          location: 'Shop',
+          location: location,
           type: 'TAILORING',
-          reasonBangla: `টেইলারিং কার্যাদেশ (অর্ডার #${orderPayload.OrderNumber || orderPayload.TokenNo || 'TLR'})`,
+          reasonBangla: `টেইলারিং কার্যাদেশ (${location === 'Godown' ? 'গোডাউন' : 'দোকান'} থেকে কাপড় কর্তন, অর্ডার #${orderPayload.OrderNumber || orderPayload.TokenNo || 'TLR'})`,
           productId: curP.ProductID,
           productName: curP.ProductName,
           barcode: curP.Barcode,
           unit: curP.Unit || 'গজ',
-          quantity: Number(orderPayload.FabricYards),
+          quantity: cutYards,
           previousStock: curStock,
           remainingStock: newStock,
           referenceNo: orderPayload.OrderNumber || orderPayload.TokenNo || '',
@@ -1735,6 +1806,51 @@ export default function App() {
     if (updated) {
       setTailoringOrders(getLocalTailoringOrders());
       showToast(`অর্ডার #${updated.TokenNo} এর স্ট্যাটাস আপডেট: ${newStatus}`, 'info');
+
+      // GAP 8: টেইলারিং ডেলিভারি হলে SalesHistory-তে TAILORING_SALE রেকর্ড তৈরি
+      if (newStatus === 'Delivered') {
+        const history = getLocalSalesHistory();
+        const invoiceNo = `INV-TLR-${updated.TokenNo || String(updated.OrderID).slice(-6)}`;
+        const exists = history.some(
+          (s) => String(s.InvoiceNo || s.invoiceNo).toLowerCase() === invoiceNo.toLowerCase()
+        );
+        if (!exists) {
+          const totalAmt = Number(updated.TotalAmount) || 0;
+          const paidAmt = Number(updated.AdvancePaid) || totalAmt;
+          const tailoringSale = {
+            InvoiceNo: invoiceNo,
+            OrderID: updated.OrderID,
+            Date: new Date().toISOString(),
+            Timestamp: new Date().toISOString(),
+            CustomerID: updated.CustomerID || 'GUEST',
+            CustomerName: updated.CustomerName || 'টেইলারিং গ্রাহক',
+            CustomerPhone: updated.CustomerPhone || '',
+            CustomerType: 'Retail',
+            PaymentMethod: updated.PaymentMethod || 'Cash',
+            Subtotal: totalAmt,
+            GrandTotal: totalAmt,
+            PaidAmount: paidAmt,
+            DueAmount: Math.max(0, totalAmt - paidAmt),
+            Items: [
+              {
+                productId: updated.FabricProductID || 'TAILORING_SERVICE',
+                productName: `টেইলারিং সেবা (${updated.GarmentType || 'পোশাক'}) - অর্ডার #${updated.TokenNo}`,
+                quantity: Number(updated.Quantity) || 1,
+                unitPrice: Number(updated.StitchingCharge) || totalAmt,
+                total: totalAmt,
+                unit: 'পিস'
+              }
+            ],
+            SaleType: 'TAILORING_SALE',
+            Type: 'TAILORING_SALE',
+            Cashier: activeUser?.FullName || 'Tailor Master',
+            Status: 'Delivered',
+            Note: `টেইলারিং ডেলিভারি (কারিগর: ${updated.TailorMaster || 'N/A'})`
+          };
+          saveSaleLocally(tailoringSale);
+          setSalesHistory(getLocalSalesHistory());
+        }
+      }
 
       logAuditEventLocally({
         ActionType: 'UPDATE_TAILORING_STATUS',
@@ -3034,6 +3150,14 @@ export default function App() {
       // ২. লোকাল স্টোরেজে স্ট্যাটাস আপডেট
       const updatedOrders = updateOrderStatusLocally(orderId, newStatus, trackingId, courierName);
       setOrders(updatedOrders);
+
+      // GAP 7: অর্ডার স্ট্যাটাস পরিবর্তনের সাথে সাথে SalesHistory সিঙ্ক করা
+      updateSaleStatusLocally(orderId, newStatus);
+      if (targetOrder.InvoiceNo) {
+        updateSaleStatusLocally(targetOrder.InvoiceNo, newStatus);
+      }
+      setSalesHistory(getLocalSalesHistory());
+
       showToast(`অর্ডার ${orderId} স্ট্যাটাস '${newStatus}'-এ পরিবর্তিত হয়েছে।`, 'success');
 
       // ৩. ক্লাউড সিঙ্ক
@@ -3061,8 +3185,10 @@ export default function App() {
       let latestOrders = getLocalOrders();
       for (const id of orderIds) {
         latestOrders = updateOrderStatusLocally(id, newStatus, null, null, activeUser?.FullName || 'Admin');
+        updateSaleStatusLocally(id, newStatus);
       }
       setOrders(latestOrders);
+      setSalesHistory(getLocalSalesHistory());
       showToast(`${orderIds.length}টি অর্ডারের স্ট্যাটাস সফলভাবে '${newStatus}'-এ আপডেট হয়েছে!`, 'success');
 
       if (settings.apiUrl) {
@@ -3400,6 +3526,19 @@ export default function App() {
     } catch (err) {
       showToast(`কার্ট লোড করতে সমস্যা: ${err.message}`, 'error');
     }
+  };
+
+  // GAP 4: অসম্পূর্ণ কার্ট গ্রাহককে ১-ক্লিক SMS পাঠানোর হ্যান্ডলার
+  const handleSendAbandonedCartSms = async (phone, message) => {
+    return await handleSendSmsNotification({ phone, message });
+  };
+
+  // GAP 5: বিক্রয় ইতিহাস থেকে সরাসরি রিটার্ন শুরু করার হ্যান্ডলার
+  const handleInitiateReturnFromHistory = (sale) => {
+    setSalesReturnPreloadInvoice(sale);
+    setIsHistoryModalOpen(false);
+    setCurrentView('sales_returns');
+    setIsSalesReturnModalOpen(true);
   };
 
   // ==========================================
@@ -3935,6 +4074,59 @@ export default function App() {
         setProducts(updatedProducts);
         saveLocalProducts(updatedProducts);
       }
+
+      // GAP 1: যদি কোনো পণ্য নষ্ট/ত্রুটিপূর্ণ (Damaged / NonResellable) হিসেবে ফেরত আসে, তবে Expenses-এ InventoryLoss ভাউচার তৈরি
+      const damagedReturnItems = returnItems.filter(
+        (itm) => itm.condition === 'Damaged' || itm.condition === 'NonResellable'
+      );
+      if (damagedReturnItems.length > 0) {
+        const totalLoss = damagedReturnItems.reduce(
+          (sum, itm) => sum + ((Number(itm.quantity) || 1) * (Number(itm.returnPrice || itm.sellingPrice || itm.unitPrice) || 0)),
+          0
+        );
+        if (totalLoss > 0) {
+          saveOrUpdateExpenseLocally({
+            ExpenseID: `EXP-LOSS-RET-${Date.now().toString().slice(-6)}`,
+            Date: new Date().toISOString().split('T')[0],
+            Category: 'InventoryLoss',
+            Amount: totalLoss,
+            PaymentMethod: 'Non-Cash',
+            Payee: 'পণ্য রিটার্ন অপচয় ও ড্যামেজ ক্ষতি',
+            Description: `রিটার্ন ক্ষতি রাইট-অফ (ইনভয়েস #${returnPayload.invoiceNo || 'RET'}): ${damagedReturnItems.map((d) => `${d.productName || d.name || 'পণ্য'} (${d.quantity}টি)`).join(', ')}`,
+            CreatedBy: activeUser?.FullName || activeUser?.UserName || 'Admin'
+          });
+          setExpenses(getLocalExpenses());
+        }
+      }
+
+      // রিটার্ন পণ্যের স্টক মুভমেন্ট লগ (StockMovements ট্র্যাকিং)
+      returnItems.forEach((itm) => {
+        const qty = Number(itm.quantity) || 1;
+        const pid = String(itm.productId || '').trim();
+        const pObj = products.find(
+          (p) => String(p.ProductID || '').trim() === pid || String(p.Barcode || '').trim() === pid
+        );
+        if (pObj) {
+          const isResellable = itm.condition === 'Resellable';
+          recordStockMovementLocally({
+            location: 'Shop',
+            type: isResellable ? 'RETURN' : 'WASTAGE',
+            reasonBangla: isResellable
+              ? `বিক্রয় রিটার্ন থেকে দোকানে পণ্য পুনরুদ্ধার (ইনভয়েস #${returnPayload.invoiceNo || ''})`
+              : `নষ্ট/ত্রুটিপূর্ণ রিটার্ন মাল ড্যামেজ হিসেবে রাইট-অফ (ইনভয়েস #${returnPayload.invoiceNo || ''})`,
+            productId: pObj.ProductID,
+            productName: pObj.ProductName,
+            barcode: pObj.Barcode,
+            unit: pObj.Unit || 'Pcs',
+            quantity: qty,
+            previousStock: pObj.StockQuantity,
+            remainingStock: isResellable ? (Number(pObj.StockQuantity) || 0) + qty : pObj.StockQuantity,
+            referenceNo: returnPayload.invoiceNo || '',
+            operatorName: activeUser?.FullName || 'Admin'
+          });
+        }
+      });
+      setStockMovements(getLocalStockMovements());
 
       // ২. যদি রিফান্ড মেথড DeductDue হয়, তবে কাস্টমারের বকেয়া কমিয়ে লেজারে এন্ট্রি দেওয়া
       if (returnPayload.refundMethod === 'DeductDue' && returnPayload.customerId && returnPayload.customerId !== 'GUEST') {
@@ -5830,7 +6022,10 @@ export default function App() {
             <SalesReturnModal
               embedded={true}
               isOpen={true}
-              onClose={() => setCurrentView('pos')}
+              onClose={() => {
+                setSalesReturnPreloadInvoice(null);
+                setCurrentView('pos');
+              }}
               salesHistory={salesHistory}
               customers={customers}
               products={products}
@@ -5838,6 +6033,7 @@ export default function App() {
               currencySymbol={settings.CurrencySymbol || '৳'}
               activeUser={activeUser}
               storeSettings={settings}
+              initialInvoice={salesReturnPreloadInvoice}
               onSaveSalesReturn={handleSaveSalesReturn}
               onRedeemStoreCredit={handleRedeemStoreCredit}
             />
@@ -6014,6 +6210,7 @@ export default function App() {
               onClose={() => setCurrentView('pos')}
               coupons={coupons}
               products={products}
+              salesHistory={salesHistory}
               currencySymbol={settings.CurrencySymbol || '৳'}
               onSaveCoupon={handleSaveCoupon}
               onDeleteCoupon={handleDeleteCoupon}
@@ -6030,6 +6227,7 @@ export default function App() {
               onUpdateStatus={handleUpdateAbandonedCartStatus}
               onDeleteCart={handleDeleteAbandonedCart}
               onConvertToOrder={handleConvertToOrderFromAbandoned}
+              onSendSms={handleSendAbandonedCartSms}
               currencySymbol={settings.CurrencySymbol || '৳'}
               settings={settings}
               showToast={showToast}
@@ -6415,6 +6613,7 @@ export default function App() {
           setIsHistoryModalOpen(false);
           handleOpenInvoiceLookup(sale.invoiceNo);
         }}
+        onInitiateReturn={handleInitiateReturnFromHistory}
       />
 
       {/* ইনভয়েস অনুসন্ধান ও পূর্ণাঙ্গ বিস্তারিত মেমো মডাল */}
@@ -6472,6 +6671,7 @@ export default function App() {
         onClose={() => setIsCouponModalOpen(false)}
         coupons={coupons}
         products={products}
+        salesHistory={salesHistory}
         currencySymbol={settings.CurrencySymbol || '৳'}
         onSaveCoupon={handleSaveCoupon}
         onDeleteCoupon={handleDeleteCoupon}
@@ -6550,7 +6750,10 @@ export default function App() {
         onUpdateStatus={handleUpdateAbandonedCartStatus}
         onDeleteCart={handleDeleteAbandonedCart}
         onConvertToOrder={handleConvertToOrderFromAbandoned}
+        onSendSms={handleSendAbandonedCartSms}
         currencySymbol={settings.CurrencySymbol || '৳'}
+        settings={settings}
+        showToast={showToast}
       />
 
       {/* ফেজ ৪: সাপ্লায়ার ও ভেন্ডর প্রোফাইল এবং দেনা খাতা মডাল */}
@@ -6705,7 +6908,10 @@ export default function App() {
       {/* ফেজ ৭: পণ্য বিক্রয় রিটার্ন ও স্টোর ক্রেডিট ভাউচার মডাল */}
       <SalesReturnModal
         isOpen={isSalesReturnModalOpen}
-        onClose={() => setIsSalesReturnModalOpen(false)}
+        onClose={() => {
+          setSalesReturnPreloadInvoice(null);
+          setIsSalesReturnModalOpen(false);
+        }}
         salesHistory={salesHistory}
         customers={customers}
         products={products}
@@ -6713,6 +6919,7 @@ export default function App() {
         currencySymbol={settings.CurrencySymbol || '৳'}
         activeUser={activeUser}
         storeSettings={settings}
+        initialInvoice={salesReturnPreloadInvoice}
         onSaveSalesReturn={handleSaveSalesReturn}
         onRedeemStoreCredit={handleRedeemStoreCredit}
       />
@@ -6766,6 +6973,7 @@ export default function App() {
         onHoldCurrentCart={handleHoldCurrentCart}
         onResumeHeldCart={handleResumeHeldCart}
         onDeleteHeldCart={handleDeleteHeldCart}
+        onMoveToAbandonedCart={handleMoveHeldCartToAbandoned}
       />
 
       {/* ফেজ ১: ক্যাশিয়ার কিবোর্ড শর্টকাট সহায়িকা মডাল */}

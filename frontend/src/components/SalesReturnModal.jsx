@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   X,
   RotateCcw,
@@ -26,6 +26,7 @@ export default function SalesReturnModal({
   currencySymbol = '৳',
   activeUser = null,
   storeSettings = {},
+  initialInvoice = null,
   onSaveSalesReturn,
   onRedeemStoreCredit
 }) {
@@ -91,6 +92,14 @@ export default function SalesReturnModal({
     });
     setReturnItemsState(initialItemsState);
   };
+
+  // GAP 5: প্রিলোড ইনভয়েস অটো-সিলেক্ট
+  useEffect(() => {
+    if (initialInvoice && (isOpen || embedded)) {
+      handleSelectInvoice(initialInvoice);
+      setActiveTab('new');
+    }
+  }, [initialInvoice, isOpen, embedded]);
 
   // আইটেম রিটার্ন কোয়ান্টিটি চেঞ্জ
   const handleQtyChange = (key, val) => {

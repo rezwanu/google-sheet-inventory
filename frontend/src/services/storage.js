@@ -1558,6 +1558,33 @@ export function saveLocalSalesHistory(history) {
   setSecureStorageItem(STORAGE_KEYS.SALES_HISTORY, normalized.slice(0, 1000));
 }
 
+// অর্ডার স্ট্যাটাস পরিবর্তনের সাথে সেলস হিস্ট্রি লাইভ সিঙ্ক (GAP 7 সমাধান)
+export function updateSaleStatusLocally(identifier, newStatus) {
+  if (!identifier) return getLocalSalesHistory();
+  const history = getLocalSalesHistory();
+  const idStr = String(identifier).trim().toLowerCase();
+  let updated = false;
+  const newHistory = history.map((sale) => {
+    const inv = String(sale.InvoiceNo || sale.invoiceNo || sale.InvoiceID || '').trim().toLowerCase();
+    const ord = String(sale.OrderID || sale.orderId || '').trim().toLowerCase();
+    if (inv === idStr || ord === idStr) {
+      updated = true;
+      return {
+        ...sale,
+        Status: newStatus,
+        status: newStatus,
+        OrderStatus: newStatus,
+        UpdatedAt: new Date().toISOString()
+      };
+    }
+    return sale;
+  });
+  if (updated) {
+    saveLocalSalesHistory(newHistory);
+  }
+  return newHistory;
+}
+
 // অফলাইন কিউ মেথড (নেটওয়ার্ক না থাকলে জমা রাখার জন্য)
 export function getOfflineQueue() {
   try {
@@ -3237,7 +3264,12 @@ export function closeCashRegisterLocally({
   cashOut = 0,
   expectedCash = 0,
   closedBy = 'Admin',
-  notes = ''
+  notes = '',
+  totalExpenses = 0,
+  expensesCount = 0,
+  cashSalesCount = 0,
+  dueCollectionCount = 0,
+  reconciliation = null
 }) {
   const registers = getLocalCashRegisters();
   const now = new Date().toISOString();
@@ -3261,6 +3293,11 @@ export function closeCashRegisterLocally({
       CashSales: Number(cashSales) || 0,
       CashIn: Number(cashIn) || 0,
       CashOut: Number(cashOut) || 0,
+      TotalExpenses: Number(totalExpenses) || 0,
+      ExpensesCount: Number(expensesCount) || 0,
+      CashSalesCount: Number(cashSalesCount) || 0,
+      DueCollectionCount: Number(dueCollectionCount) || 0,
+      Reconciliation: reconciliation || null,
       ExpectedCash: numExpected,
       ActualCash: numActual,
       Difference: diff,
@@ -3279,6 +3316,11 @@ export function closeCashRegisterLocally({
       CashSales: Number(cashSales) || 0,
       CashIn: Number(cashIn) || 0,
       CashOut: Number(cashOut) || 0,
+      TotalExpenses: Number(totalExpenses) || 0,
+      ExpensesCount: Number(expensesCount) || 0,
+      CashSalesCount: Number(cashSalesCount) || 0,
+      DueCollectionCount: Number(dueCollectionCount) || 0,
+      Reconciliation: reconciliation || null,
       ExpectedCash: numExpected,
       ActualCash: numActual,
       Difference: diff,

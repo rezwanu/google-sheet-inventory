@@ -567,9 +567,17 @@ export default function CheckoutPage({
 
           {/* গ্রাহক বাকির তথ্য ও ক্রেডিট লিমিট কার্ড (Customer Due & Credit Limit Pill) */}
           {selectedCustomerObj && (Number(selectedCustomerObj.CurrentDue) > 0 || Number(selectedCustomerObj.CreditLimit) > 0) && (
-            <div className="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50/60 border border-amber-200/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in duration-200">
+            <div className={`p-3.5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in duration-200 border ${
+              Number(selectedCustomerObj.CreditLimit) > 0 && Number(selectedCustomerObj.CurrentDue) > Number(selectedCustomerObj.CreditLimit)
+                ? 'bg-rose-50 border-rose-300 text-rose-950'
+                : 'bg-gradient-to-r from-amber-50 to-orange-50/60 border-amber-200/90 text-slate-800'
+            }`}>
               <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                  Number(selectedCustomerObj.CreditLimit) > 0 && Number(selectedCustomerObj.CurrentDue) > Number(selectedCustomerObj.CreditLimit)
+                    ? 'bg-rose-200 text-rose-800'
+                    : 'bg-amber-100 text-amber-700'
+                }`}>
                   <AlertTriangle className="w-4 h-4" />
                 </div>
                 <div>
@@ -586,6 +594,15 @@ export default function CheckoutPage({
                     <span className="text-[10px] text-slate-400 block font-bold uppercase">নির্ধারিত ক্রেডিট লিমিট</span>
                     <span className="font-bold text-slate-800 font-mono">
                       {currencySymbol}{Number(selectedCustomerObj.CreditLimit).toLocaleString()}
+                    </span>
+                    <span className={`block text-[10px] font-bold font-mono ${
+                      Number(selectedCustomerObj.CurrentDue) >= Number(selectedCustomerObj.CreditLimit)
+                        ? 'text-rose-600'
+                        : 'text-emerald-600'
+                    }`}>
+                      {Number(selectedCustomerObj.CurrentDue) >= Number(selectedCustomerObj.CreditLimit)
+                        ? `সীমা অতিক্রান্ত (-${currencySymbol}${(Number(selectedCustomerObj.CurrentDue) - Number(selectedCustomerObj.CreditLimit)).toLocaleString()})`
+                        : `অবশিষ্ট: ${currencySymbol}${(Number(selectedCustomerObj.CreditLimit) - Number(selectedCustomerObj.CurrentDue)).toLocaleString()}`}
                     </span>
                   </div>
                 ) : (
@@ -1071,6 +1088,28 @@ export default function CheckoutPage({
                 </div>
               </div>
             )}
+
+            {/* GAP 6: ক্রেডিট লিমিট অতিক্রান্ত লাইভ সতর্কবার্তা */}
+            {(() => {
+              const currentDueAmt = paymentMethod === 'Due' ? grandTotal : (paymentMethod === 'Split' ? (Number(splitPayments.due) || 0) : 0);
+              const isOverLimit = customerCreditLimit > 0 && currentDueAmt > 0 && (customerCurrentDue + currentDueAmt > customerCreditLimit);
+              const exceededBy = (customerCurrentDue + currentDueAmt) - customerCreditLimit;
+              if (!isOverLimit) return null;
+              return (
+                <div className="p-4 rounded-2xl bg-rose-100 border-2 border-rose-500 flex items-start space-x-3 text-rose-950 text-xs animate-in fade-in duration-150 shadow-sm">
+                  <AlertCircle className="w-5 h-5 text-rose-700 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-black text-sm text-rose-900">⚠️ ক্রেডিট লিমিট অতিক্রান্ত! (Credit Limit Exceeded)</h4>
+                    <p className="text-rose-800 mt-0.5 font-semibold">
+                      গ্রাহকের ক্রেডিট লিমিট: <strong>{currencySymbol}{customerCreditLimit.toLocaleString()}</strong> | পূর্বের বকেয়া: <strong>{currencySymbol}{customerCurrentDue.toLocaleString()}</strong> | নতুন বাকি: <strong>{currencySymbol}{currentDueAmt.toLocaleString()}</strong>
+                    </p>
+                    <p className="text-rose-950 font-black mt-1">
+                      মোট বকেয়া হবে {currencySymbol}{(customerCurrentDue + currentDueAmt).toLocaleString()} (নির্ধারিত সীমার চেয়ে {currencySymbol}{exceededBy.toLocaleString()} টাকা অতিরিক্ত)।
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
 
           </div>
 

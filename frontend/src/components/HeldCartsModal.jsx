@@ -12,7 +12,9 @@ import {
   ChevronDown,
   ChevronUp,
   Receipt,
-  PauseCircle
+  PauseCircle,
+  Archive,
+  AlertTriangle
 } from 'lucide-react';
 import { formatFabricQuantity } from '../utils/fabricUtils';
 
@@ -28,7 +30,8 @@ export default function HeldCartsModal({
   currencySymbol = '৳',
   onHoldCurrentCart,
   onResumeHeldCart,
-  onDeleteHeldCart
+  onDeleteHeldCart,
+  onMoveToAbandonedCart
 }) {
   const [expandedCartId, setExpandedCartId] = useState(null);
   const [holdNoteInput, setHoldNoteInput] = useState('');
@@ -203,6 +206,7 @@ export default function HeldCartsModal({
                     (acc, it) => acc + (Number(it.sellingPrice) || 0) * (Number(it.quantity) || 0),
                     0
                   );
+                  const isOldHold = held.createdAt && (Date.now() - new Date(held.createdAt).getTime()) > 30 * 60 * 1000;
 
                   return (
                     <div
@@ -230,6 +234,12 @@ export default function HeldCartsModal({
                                 <Clock className="w-3 h-3" />
                                 <span>{getRelativeTime(held.createdAt)}</span>
                               </span>
+                              {isOldHold && (
+                                <span className="text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded-md flex items-center gap-0.5">
+                                  <AlertTriangle className="w-2.5 h-2.5" />
+                                  <span>৩০+ মি. বিলম্ব</span>
+                                </span>
+                              )}
                             </div>
 
                             <div className="flex items-center gap-3 mt-1 text-xs text-slate-600 font-semibold">
@@ -251,6 +261,22 @@ export default function HeldCartsModal({
                             <span>পণ্য দেখুন ({itemsList.length})</span>
                             {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                           </button>
+
+                          {onMoveToAbandonedCart && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`আপনি কি '${held.token || 'এই হোল্ড অর্ডারটি'}' অসম্পূর্ণ কার্ট (Abandoned Cart) তালিকায় স্থানান্তর করতে চান?`)) {
+                                  onMoveToAbandonedCart(held.id);
+                                }
+                              }}
+                              className="px-2.5 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 hover:text-amber-900 rounded-xl border border-amber-200 transition-all flex items-center gap-1 cursor-pointer"
+                              title="অসম্পূর্ণ কার্ট (Abandoned Cart) তালিকায় স্থানান্তর করুন"
+                            >
+                              <Archive className="w-3.5 h-3.5 text-amber-600" />
+                              <span className="hidden sm:inline">অসম্পূর্ণ কার্টে সরান</span>
+                            </button>
+                          )}
 
                           <button
                             type="button"

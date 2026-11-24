@@ -192,6 +192,7 @@ export default function TailoringModal({
   const [fabricSource, setFabricSource] = useState('store'); // 'store' | 'customer'
   const [fabricProductId, setFabricProductId] = useState('');
   const [fabricName, setFabricName] = useState('');
+  const [fabricLocation, setFabricLocation] = useState('Shop'); // 'Shop' | 'Godown' (GAP 3)
   const [fabricYards, setFabricYards] = useState(2.5);
   const [tailorMaster, setTailorMaster] = useState(tailorMasters[0]?.Name || 'মাস্টার বশির আহমেদ');
   const [measurements, setMeasurements] = useState({});
@@ -242,6 +243,9 @@ export default function TailoringModal({
         setFabricProductId(initialPreload.fabricItem.id || initialPreload.fabricItem.ProductID || '');
         setFabricName(initialPreload.fabricItem.name || initialPreload.fabricItem.ProductName || '');
         setFabricYards(Number(initialPreload.fabricItem.quantity || 2.5));
+        if (initialPreload.fabricItem.location) {
+          setFabricLocation(initialPreload.fabricItem.location);
+        }
       }
       setActiveTab('new');
     }
@@ -313,6 +317,7 @@ export default function TailoringModal({
       GarmentType: garmentType,
       Quantity: Number(quantity) || 1,
       FabricSource: fabricSource,
+      FabricLocation: fabricSource === 'store' ? fabricLocation : 'Shop',
       FabricProductID: fabricSource === 'store' ? fabricProductId : '',
       FabricName: fabricSource === 'store' ? (fabricName || 'দোকানের কাপড়') : (fabricName || 'গ্রাহকের কাপড়'),
       FabricYards: Number(fabricYards) || 0,
@@ -1084,7 +1089,36 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
 
                   {/* কাপড় বিবরণ বা সিলেকশন */}
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">কাপড়ের বিবরণ / থান</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-700 font-bold">কাপড়ের বিবরণ / থান</label>
+                      {fabricSource === 'store' && (
+                        <div className="flex items-center space-x-1.5 text-[10px]">
+                          <span className="text-slate-400 font-semibold">স্টক উৎস:</span>
+                          <button
+                            type="button"
+                            onClick={() => setFabricLocation('Shop')}
+                            className={`px-2 py-0.5 rounded font-bold cursor-pointer transition-all ${
+                              fabricLocation === 'Shop'
+                                ? 'bg-indigo-600 text-white shadow-2xs'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            }`}
+                          >
+                            দোকান
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFabricLocation('Godown')}
+                            className={`px-2 py-0.5 rounded font-bold cursor-pointer transition-all ${
+                              fabricLocation === 'Godown'
+                                ? 'bg-indigo-600 text-white shadow-2xs'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            }`}
+                          >
+                            গোডাউন
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     {fabricSource === 'store' && fabricProducts.length > 0 ? (
                       <select
                         value={fabricProductId}
@@ -1093,14 +1127,18 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                           setFabricProductId(e.target.value);
                           if (p) setFabricName(p.ProductName || p.name);
                         }}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium text-xs"
                       >
                         <option value="">দোকানের থান কাপড় নির্বাচন করুন...</option>
-                        {fabricProducts.map((p) => (
-                          <option key={p.ProductID || p.id} value={p.ProductID || p.id}>
-                            {p.ProductName || p.name} (মজুত: {p.CurrentStock || p.stock || 0} গজ)
-                          </option>
-                        ))}
+                        {fabricProducts.map((p) => {
+                          const shopStock = Number(p.StockQuantity !== undefined ? p.StockQuantity : (p.CurrentStock || p.stock || 0));
+                          const godownStock = Number(p.GodownStock !== undefined ? p.GodownStock : (p.godownStock || 0));
+                          return (
+                            <option key={p.ProductID || p.id} value={p.ProductID || p.id}>
+                              {p.ProductName || p.name} (দোকান: {shopStock} গজ | গোডাউন: {godownStock} গজ)
+                            </option>
+                          );
+                        })}
                       </select>
                     ) : (
                       <input

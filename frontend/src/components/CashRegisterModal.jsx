@@ -376,13 +376,35 @@ export default function CashRegisterModal({
         registerId: activeRegister?.RegisterID,
         openingBalance: liveSessionMetrics.opening,
         cashSales: liveSessionMetrics.cashSales,
+        cashSalesCount: liveSessionMetrics.cashSalesCount,
         cashIn: liveSessionMetrics.cashIn,
+        dueCollectionCount: liveSessionMetrics.dueCollectionCount,
         cashOut: liveSessionMetrics.totalCashOut,
+        totalExpenses: liveSessionMetrics.cashOutExpenses,
+        expensesCount: liveSessionMetrics.expensesCount,
+        cashOutSuppliers: liveSessionMetrics.cashOutSuppliers,
+        suppliersCount: liveSessionMetrics.suppliersCount,
         expectedCash: numExpected,
         actualCash: numActual,
         difference: diff,
         closedBy: activeUser?.FullName || activeUser?.UserName || 'Admin',
-        notes: closeNotes.trim()
+        notes: closeNotes.trim(),
+        reconciliation: {
+          opening: liveSessionMetrics.opening,
+          cashSales: liveSessionMetrics.cashSales,
+          cashSalesCount: liveSessionMetrics.cashSalesCount,
+          cashIn: liveSessionMetrics.cashIn,
+          dueCollectionCount: liveSessionMetrics.dueCollectionCount,
+          totalExpenses: liveSessionMetrics.cashOutExpenses,
+          expensesCount: liveSessionMetrics.expensesCount,
+          totalSuppliers: liveSessionMetrics.cashOutSuppliers,
+          suppliersCount: liveSessionMetrics.suppliersCount,
+          bankDeposit: liveSessionMetrics.cashOutBankDeposit,
+          bankWithdraw: liveSessionMetrics.cashInBankWithdrawal,
+          expectedCash: numExpected,
+          actualCash: numActual,
+          difference: diff
+        }
       };
 
       if (typeof onCloseRegister === 'function') {
@@ -867,6 +889,44 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                 </div>
 
                 <form onSubmit={handleCloseRegisterSubmit} className="space-y-4">
+                  {/* GAP 2: ক্যাশ রিকনসিলিয়েশন অডিট ও লাইভ হিসাব বিবরণী */}
+                  <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-black text-slate-800 pb-1.5 border-b border-slate-200">
+                      <span className="flex items-center space-x-1.5">
+                        <Receipt className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>ক্যাশ রিকনসিলিয়েশন সারসংক্ষেপ (Cash Reconciliation)</span>
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">হিসাব মিলান</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                      <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
+                        <span className="text-slate-400 font-semibold block text-[10px]">প্রারম্ভিক ক্যাশ (+)</span>
+                        <strong className="text-slate-800 font-mono font-bold text-xs">
+                          {currencySymbol}{liveSessionMetrics.opening.toLocaleString('en-IN')}
+                        </strong>
+                      </div>
+                      <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
+                        <span className="text-emerald-600 font-semibold block text-[10px]">ক্যাশ বিক্রয় ({liveSessionMetrics.cashSalesCount}টি) (+)</span>
+                        <strong className="text-emerald-700 font-mono font-bold text-xs">
+                          +{currencySymbol}{liveSessionMetrics.cashSales.toLocaleString('en-IN')}
+                        </strong>
+                      </div>
+                      <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
+                        <span className="text-rose-600 font-semibold block text-[10px]">দৈনন্দিন খরচ ({liveSessionMetrics.expensesCount}টি) (-)</span>
+                        <strong className="text-rose-700 font-mono font-bold text-xs">
+                          -{currencySymbol}{liveSessionMetrics.cashOutExpenses.toLocaleString('en-IN')}
+                        </strong>
+                      </div>
+                      <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
+                        <span className="text-blue-600 font-semibold block text-[10px]">প্রত্যাশিত ব্যালেন্স (=)</span>
+                        <strong className="text-blue-700 font-mono font-black text-xs">
+                          {currencySymbol}{liveSessionMetrics.expectedCash.toLocaleString('en-IN')}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-xs font-bold text-slate-800">

@@ -17,7 +17,9 @@ import {
   Clock,
   Wand2,
   Zap,
-  Award
+  Award,
+  BarChart3,
+  TrendingUp
 } from 'lucide-react';
 
 /**
@@ -29,18 +31,73 @@ export default function CouponModal({
   embedded = false,
   coupons = [],
   products = [],
+  salesHistory = [],
   currencySymbol = '৳',
   onSaveCoupon,
   onDeleteCoupon,
   onRefreshCoupons,
 }) {
-  const [activeTab, setActiveTab] = useState('list'); // 'list' | 'create'
+  const [activeTab, setActiveTab] = useState('list'); // 'list' | 'create' | 'analytics'
   const [searchQuery, setSearchQuery] = useState('');
   const [filterScope, setFilterScope] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'SPECIFIC' | 'STOREWIDE'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copiedCode, setCopiedCode] = useState(null);
   const [productSearch, setProductSearch] = useState('');
+
+  // GAP 9: কুপন ব্যবহারের পূর্ণাঙ্গ অ্যানালিটিক্স হিসাব
+  const couponAnalytics = useMemo(() => {
+    const statsMap = {};
+    (Array.isArray(coupons) ? coupons : []).forEach((c) => {
+      const code = String(c.CouponCode || '').trim().toUpperCase();
+      if (!code) return;
+      statsMap[code] = {
+        code,
+        coupon: c,
+        usageCount: Number(c.UsedCount) || 0,
+        totalDiscount: 0,
+        totalRevenue: 0,
+        lastUsed: null
+      };
+    });
+
+    (Array.isArray(salesHistory) ? salesHistory : []).forEach((s) => {
+      const saleCoupon = String(s.CouponCode || s.couponCode || s.Coupon || s.coupon || '').trim().toUpperCase();
+      if (!saleCoupon) return;
+      if (!statsMap[saleCoupon]) {
+        statsMap[saleCoupon] = {
+          code: saleCoupon,
+          coupon: null,
+          usageCount: 0,
+          totalDiscount: 0,
+          totalRevenue: 0,
+          lastUsed: null
+        };
+      }
+      const stat = statsMap[saleCoupon];
+      stat.usageCount += 1;
+      stat.totalDiscount += Number(s.CouponDiscount || s.couponDiscount || s.DiscountAmount || s.discountAmount || 0);
+      stat.totalRevenue += Number(s.GrandTotal || s.grandTotal || 0);
+      const saleTime = s.Timestamp || s.Date || s.timestamp || s.createdAt;
+      if (saleTime) {
+        if (!stat.lastUsed || new Date(saleTime) > new Date(stat.lastUsed)) {
+          stat.lastUsed = saleTime;
+        }
+      }
+    });
+
+    const list = Object.values(statsMap);
+    const totalUsage = list.reduce((sum, item) => sum + item.usageCount, 0);
+    const totalDiscountGiven = list.reduce((sum, item) => sum + item.totalDiscount, 0);
+    const totalSalesGenerated = list.reduce((sum, item) => sum + item.totalRevenue, 0);
+
+    return {
+      list: list.sort((a, b) => b.usageCount - a.usageCount),
+      totalUsage,
+      totalDiscountGiven,
+      totalSalesGenerated
+    };
+  }, [coupons, salesHistory]);
 
   // ফর্ম প্রাথমিক স্টেট
   const initialFormState = {
@@ -388,6 +445,18 @@ export default function CouponModal({
             >
               <Plus className="w-4 h-4" />
               <span>{formData.CouponID ? 'কুপন সম্পাদনা' : 'নতুন কুপন তৈরি'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('analytics')}
+              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center space-x-2 cursor-pointer ${
+                activeTab === 'analytics'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30 scale-100'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>কুপন অ্যানালিটিক্স ({couponAnalytics.list.length})</span>
             </button>
           </div>
 
@@ -1299,6 +1368,134 @@ export default function CouponModal({
                 </div>
               </div>
 
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* ৪. কুপন অ্যানালিটিক্স ও ব্যবহার রিপোর্ট (GAP 9 সমাধান) */}
+          {/* ========================================================= */}
+          {activeTab === 'analytics' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* ৩টি মূল মেট্রিক্স কার্ড */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 sm:p-5 bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-2xl border border-indigo-200 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-indigo-700">মোট কুপন ব্যবহার</span>
+                    <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                      <Ticket className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <span className="text-2xl font-black text-indigo-950 font-mono block mt-2">
+                    {couponAnalytics.totalUsage} বার
+                  </span>
+                  <span className="text-[11px] text-indigo-600 font-medium mt-0.5 block">
+                    সর্বমোট {couponAnalytics.list.length}টি কুপনের মধ্যে
+                  </span>
+                </div>
+
+                <div className="p-4 sm:p-5 bg-gradient-to-br from-rose-50 to-rose-100/50 rounded-2xl border border-rose-200 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-rose-700">মোট ছাড় দেওয়া হয়েছে</span>
+                    <div className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs">
+                      <TrendingUp className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <span className="text-2xl font-black text-rose-950 font-mono block mt-2">
+                    {currencySymbol}{couponAnalytics.totalDiscountGiven.toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-[11px] text-rose-600 font-medium mt-0.5 block">
+                    গ্রাহকদের দেওয়া মোট ডিসকাউন্ট মূল্য
+                  </span>
+                </div>
+
+                <div className="p-4 sm:p-5 bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl border border-emerald-200 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-700">কুপনের মাধ্যমে মোট বিক্রয়</span>
+                    <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                      <Award className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <span className="text-2xl font-black text-emerald-950 font-mono block mt-2">
+                    {currencySymbol}{couponAnalytics.totalSalesGenerated.toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-[11px] text-emerald-600 font-medium mt-0.5 block">
+                    কুপন ব্যবহার করে অর্জিত মোট রেভেনিউ
+                  </span>
+                </div>
+              </div>
+
+              {/* কুপন পারফরম্যান্স বিশ্লেষণ টেবিল */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <BarChart3 className="w-4 h-4 text-indigo-600" />
+                    <h3 className="text-sm font-black text-slate-900">কুপনভিত্তিক বিস্তারিত কার্যকারিতা তালিকা</h3>
+                  </div>
+                  <span className="text-xs font-bold text-slate-500 font-mono">
+                    মোট {couponAnalytics.list.length}টি কুপন বিশ্লেষিত
+                  </span>
+                </div>
+
+                {couponAnalytics.list.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-xs font-medium">
+                    এখনও কোনো কুপন তৈরি বা ব্যবহার করা হয়নি।
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-100/70 text-slate-600 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                        <tr>
+                          <th className="py-3 px-4">কুপন কোড</th>
+                          <th className="py-3 px-4">অফার টাইপ</th>
+                          <th className="py-3 px-4 text-center">ব্যবহার সংখ্যা</th>
+                          <th className="py-3 px-4 text-right">মোট ছাড়</th>
+                          <th className="py-3 px-4 text-right">মোট বিক্রয়</th>
+                          <th className="py-3 px-4 text-center">শেষ ব্যবহারের তারিখ</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {couponAnalytics.list.map((item, idx) => (
+                          <tr key={item.code} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-orange-50 text-orange-700 border border-orange-200/80">
+                                  {item.code}
+                                </span>
+                                {idx === 0 && item.usageCount > 0 && (
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                    ★ সেরা জনপ্রিয়
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 font-semibold text-slate-600">
+                              {item.coupon ? (
+                                item.coupon.DiscountType === 'Percentage'
+                                  ? `${item.coupon.DiscountValue}% ছাড়`
+                                  : `${currencySymbol}${item.coupon.DiscountValue} ফ্ল্যাট ছাড়`
+                              ) : (
+                                'পূর্বের কুপন'
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-center font-mono font-bold text-slate-800">
+                              {item.usageCount} বার
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-mono font-bold text-rose-600">
+                              {currencySymbol}{item.totalDiscount.toLocaleString('en-IN')}
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-mono font-black text-emerald-700">
+                              {currencySymbol}{item.totalRevenue.toLocaleString('en-IN')}
+                            </td>
+                            <td className="py-3.5 px-4 text-center text-slate-500 font-mono text-[11px]">
+                              {item.lastUsed ? new Date(item.lastUsed).toLocaleDateString() : 'ব্যবহার হয়নি'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

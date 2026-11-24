@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, History, Search, Receipt, Calendar, CreditCard, Printer, Eye } from 'lucide-react';
+import { X, History, Search, Receipt, Calendar, CreditCard, Printer, Eye, RotateCcw } from 'lucide-react';
 import { normalizeSale } from '../services/storage';
 
 export default function SalesHistoryModal({
@@ -8,7 +8,8 @@ export default function SalesHistoryModal({
   salesHistory = [],
   currencySymbol = '৳',
   onReprintInvoice,
-  onViewInvoiceDetails
+  onViewInvoiceDetails,
+  onInitiateReturn
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -113,6 +114,18 @@ export default function SalesHistoryModal({
                       <Printer className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">প্রিন্ট</span>
                     </button>
+
+                    {/* GAP 5: সরাসরি রিটার্ন শুরু করার ১-ক্লিক বাটন */}
+                    {onInitiateReturn && (
+                      <button
+                        onClick={() => onInitiateReturn(sale)}
+                        title="এই বিক্রয়ের জন্য রিটার্ন প্রসেস শুরু করুন"
+                        className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold flex items-center space-x-1 shadow-2xs transition-colors"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">রিটার্ন</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
