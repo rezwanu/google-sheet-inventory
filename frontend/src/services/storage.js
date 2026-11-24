@@ -41,6 +41,8 @@ const STORAGE_KEYS = {
   MONTHLY_PNL: 'pos_monthly_pnl',
   BANK_ACCOUNTS: 'pos_bank_accounts',
   BANK_TRANSACTIONS: 'pos_bank_transactions',
+  RECURRING_BILLS: 'pos_recurring_bills',
+  EXPENSE_BUDGETS: 'pos_expense_budgets',
 };
 
 import {
@@ -3162,11 +3164,18 @@ export function saveOrUpdateExpenseLocally(expenseData) {
     Category: expenseData.Category || expenseData.category || 'Other',
     Amount: Number(expenseData.Amount !== undefined ? expenseData.Amount : expenseData.amount) || 0,
     PaymentMethod: expenseData.PaymentMethod || expenseData.paymentMethod || 'Cash',
+    bankAccountId: expenseData.bankAccountId || expenseData.BankAccountId || '',
+    bankAccountName: expenseData.bankAccountName || expenseData.BankAccountName || '',
+    staffId: expenseData.staffId || expenseData.StaffId || '',
     Payee: expenseData.Payee || expenseData.payee || '',
     Description: expenseData.Description || expenseData.description || '',
     ReceiptImage: expenseData.ReceiptImage || expenseData.receiptImage || '',
     CreatedBy: expenseData.CreatedBy || expenseData.createdBy || 'Admin',
-    Timestamp: expenseData.Timestamp || now
+    Timestamp: expenseData.Timestamp || now,
+    isQuickPreset: Boolean(expenseData.isQuickPreset),
+    isKhuraki: Boolean(expenseData.isKhuraki),
+    recurringBillId: expenseData.recurringBillId || null,
+    sourceType: expenseData.sourceType || 'EXPENSES_MODAL'
   };
 
   const existingIdx = expenses.findIndex(e => String(e.ExpenseID).trim() === String(expenseId).trim());
@@ -3186,6 +3195,71 @@ export function deleteExpenseLocally(expenseId) {
   const filtered = expenses.filter(e => String(e.ExpenseID).trim() !== String(expenseId).trim());
   saveLocalExpenses(filtered);
   return filtered;
+}
+
+// ডিফল্ট মাসিক নির্ধারিত বিল (Monthly Recurring Bills Baseline)
+export const DEFAULT_RECURRING_BILLS = [
+  { id: 'REC-RENT', title: 'দোকান ভাড়া', category: 'Rent', defaultAmount: 40000, dueDay: 5, payee: 'দোকান মালিক' },
+  { id: 'REC-ELEC', title: 'বিদ্যুৎ বিল (DESCO/NESCO)', category: 'Utility', defaultAmount: 4500, dueDay: 10, payee: 'বিদ্যুৎ অফিস' },
+  { id: 'REC-WIFI', title: 'ইন্টারনেট ও ডিশ বিল', category: 'Utility', defaultAmount: 1000, dueDay: 1, payee: 'ব্রডব্যান্ড সার্ভিস' },
+  { id: 'REC-ASSOC', title: 'মার্কেট সমিতি ও দারোয়ান চাঁদা', category: 'Maintenance', defaultAmount: 1500, dueDay: 15, payee: 'মার্কেট সমিতি' }
+];
+
+export function getLocalRecurringBills() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.RECURRING_BILLS);
+    if (Array.isArray(data) && data.length > 0) return data;
+    setSecureStorageItem(STORAGE_KEYS.RECURRING_BILLS, DEFAULT_RECURRING_BILLS);
+    return DEFAULT_RECURRING_BILLS;
+  } catch (e) {
+    return DEFAULT_RECURRING_BILLS;
+  }
+}
+
+export function saveLocalRecurringBills(bills) {
+  setSecureStorageItem(STORAGE_KEYS.RECURRING_BILLS, Array.isArray(bills) ? bills : DEFAULT_RECURRING_BILLS);
+}
+
+// ডিফল্ট মাসিক খাতের বাজেট (Monthly Category Budgets Baseline)
+export const DEFAULT_EXPENSE_BUDGETS = {
+  Refreshments: 4000,
+  Transport: 3000,
+  Packaging: 5000,
+  Maintenance: 3000,
+  Utility: 8000,
+  Marketing: 5000
+};
+
+export function getLocalExpenseBudgets() {
+  try {
+    const data = getSecureStorageItem(STORAGE_KEYS.EXPENSE_BUDGETS);
+    if (data && typeof data === 'object') return { ...DEFAULT_EXPENSE_BUDGETS, ...data };
+    setSecureStorageItem(STORAGE_KEYS.EXPENSE_BUDGETS, DEFAULT_EXPENSE_BUDGETS);
+    return DEFAULT_EXPENSE_BUDGETS;
+  } catch (e) {
+    return DEFAULT_EXPENSE_BUDGETS;
+  }
+}
+
+export function saveLocalExpenseBudgets(budgets) {
+  setSecureStorageItem(STORAGE_KEYS.EXPENSE_BUDGETS, budgets || DEFAULT_EXPENSE_BUDGETS);
+}
+
+// স্টাফের চলতি মাসের গৃহীত মোট খোরাকি / অগ্রিম হিসাব
+export function getStaffKhurakiSummary(staffId, targetMonth) {
+  if (!staffId) return { totalKhuraki: 0, entries: [] };
+  const expenses = getLocalExpenses();
+  const month = targetMonth || new Date().toISOString().slice(0, 7);
+
+  const staffKhurakiEntries = expenses.filter(e => {
+    const isThisStaff = String(e.staffId || '').trim() === String(staffId).trim();
+    const isThisMonth = String(e.Date || e.date || '').startsWith(month);
+    const isKhurakiOrAdvance = Boolean(e.isKhuraki) || String(e.Description || '').toLowerCase().includes('খোরাকি') || String(e.Description || '').toLowerCase().includes('অগ্রিম');
+    return isThisStaff && isThisMonth && isKhurakiOrAdvance;
+  });
+
+  const totalKhuraki = staffKhurakiEntries.reduce((acc, curr) => acc + (Number(curr.Amount) || 0), 0);
+  return { totalKhuraki, entries: staffKhurakiEntries };
 }
 
 /**

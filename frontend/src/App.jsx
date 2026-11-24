@@ -47,6 +47,7 @@ import AdminPinModal from './components/AdminPinModal';
 import CartDrawer from './components/CartDrawer';
 import PosCartPanel from './components/PosCartPanel';
 import QuickCalculatorModal from './components/QuickCalculatorModal';
+import PosQuickExpenseModal from './components/PosQuickExpenseModal';
 import { isAdminUser } from './utils/permissionUtils';
 import { isFabricUnit, calculateThanBreakdown, formatFabricQuantity } from './utils/fabricUtils';
 import { Clock, CheckCircle2, AlertCircle, X, ChevronRight } from 'lucide-react';
@@ -328,6 +329,7 @@ export default function App() {
   const [fabricWastagePreloadData, setFabricWastagePreloadData] = useState(null);
   const [tailoringPreloadData, setTailoringPreloadData] = useState(null);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [isPosQuickExpenseModalOpen, setIsPosQuickExpenseModalOpen] = useState(false);
 
   // ফেজ ৪: সাপ্লায়ার ও ভেন্ডর, পারচেজ অর্ডার এবং লেজার স্টেট
   const [suppliers, setSuppliers] = useState(() => {
@@ -1434,10 +1436,17 @@ export default function App() {
           setIsCalculatorOpen(false);
           return;
         }
+        if (isPosQuickExpenseModalOpen) {
+          setIsPosQuickExpenseModalOpen(false);
+          return;
+        }
       }
 
       // ফাংশন কি-সমূহ (F1 - F10) ও কীবোর্ড শর্টকাট
-      if ((e.altKey && (e.key === 'c' || e.key === 'C')) || e.key === 'F6') {
+      if ((e.altKey && (e.key === 'e' || e.key === 'E')) || e.key === 'F5') {
+        e.preventDefault();
+        setIsPosQuickExpenseModalOpen((prev) => !prev);
+      } else if ((e.altKey && (e.key === 'c' || e.key === 'C')) || e.key === 'F6') {
         e.preventDefault();
         setIsCalculatorOpen((prev) => !prev);
       } else if (e.key === 'F1') {
@@ -1500,6 +1509,7 @@ export default function App() {
     isTailoringModalOpen,
     isFabricWastageModalOpen,
     isCalculatorOpen,
+    isPosQuickExpenseModalOpen,
     fabricCutProduct
   ]);
 
@@ -5888,6 +5898,7 @@ export default function App() {
                   onSendToTailoring={handleSendToTailoringFromCart}
                   onNavigateToCheckout={() => setCurrentView('checkout')}
                   onQuickCashCheckout={() => setCurrentView('checkout')}
+                  onOpenQuickExpenseModal={() => setIsPosQuickExpenseModalOpen(true)}
                 />
               </div>
             </div>
@@ -7098,6 +7109,15 @@ export default function App() {
         onClose={() => setIsCalculatorOpen(false)}
         currencySymbol={settings.CurrencySymbol || '৳'}
         onAddToCart={handleAddToCart}
+      />
+
+      {/* কাউন্টার মিনি ক্যাশ-আউট ও কুইক খরচ মডাল (Alt + E বা F5) */}
+      <PosQuickExpenseModal
+        isOpen={isPosQuickExpenseModalOpen}
+        onClose={() => setIsPosQuickExpenseModalOpen(false)}
+        onSaveExpense={handleSaveExpense}
+        currencySymbol={settings.CurrencySymbol || '৳'}
+        activeUser={activeUser}
       />
 
       {/* =========================================================================

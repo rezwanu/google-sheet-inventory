@@ -29,6 +29,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
       title: '🧾 নেভিগেশন ও সাধারণ (General & Invoices)',
       items: [
         { key: 'Alt + C / F6', description: 'কাটা কাপড় গজ-গিরা ক্যালকুলেটর চালু করুন', icon: Scissors },
+        { key: 'Alt + E / F5', description: 'কাউন্টার কুইক খরচ ও মিনি ক্যাশ-আউট পপআপ', icon: Receipt },
         { key: 'F10', description: 'ইনভয়েস অনুসন্ধান ও মেমো লুকআপ মডাল', icon: Receipt },
         { key: 'Shift + ?', description: 'কিবোর্ড শর্টকাট সহায়িকা গাইড খুলুন', icon: Keyboard },
         { key: 'Esc', description: 'যেকোনো খোলা মডাল বা পপআপ বন্ধ করুন', icon: X },

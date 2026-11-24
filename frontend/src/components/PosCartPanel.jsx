@@ -16,7 +16,8 @@ import {
   User,
   ShoppingBag,
   Percent,
-  X
+  X,
+  Coins
 } from 'lucide-react';
 import { isFabricUnit, formatFabricQuantity } from '../utils/fabricUtils';
 
@@ -46,7 +47,8 @@ export default function PosCartPanel({
   onSendToTailoring,
   onNavigateToCheckout,
   onQuickCashCheckout,
-  onOpenCustomerSelect
+  onOpenCustomerSelect,
+  onOpenQuickExpenseModal
 }) {
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [couponError, setCouponError] = useState('');
@@ -177,6 +179,18 @@ export default function PosCartPanel({
 
         {/* হেডার অ্যাকশন: হোল্ড কার্ট ও কার্ট খালি */}
         <div className="flex items-center space-x-1.5">
+          {onOpenQuickExpenseModal && (
+            <button
+              type="button"
+              onClick={onOpenQuickExpenseModal}
+              className="px-2 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-400/30 text-[10px] font-bold transition-all flex items-center space-x-1 cursor-pointer"
+              title="কুইক খরচ ও ক্যাশ ড্রয়ার আউট (Alt + E)"
+            >
+              <Coins className="w-3 h-3 text-rose-300" />
+              <span>খরচ [Alt+E]</span>
+            </button>
+          )}
+
           {heldCarts.length > 0 && onOpenHeldCartsModal && (
             <button
               type="button"

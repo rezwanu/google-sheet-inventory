@@ -30,9 +30,25 @@ import {
   ArrowDownRight,
   Banknote,
   Eye,
-  Info
+  Info,
+  Camera,
+  Copy,
+  Check,
+  Share2,
+  TrendingUp,
+  AlertTriangle,
+  Clock,
+  CalendarDays,
+  BookmarkCheck
 } from 'lucide-react';
-import { EXPENSE_CATEGORIES } from '../services/storage';
+import {
+  EXPENSE_CATEGORIES,
+  getLocalRecurringBills,
+  saveLocalRecurringBills,
+  getLocalExpenseBudgets,
+  saveLocalExpenseBudgets,
+  getStaffKhurakiSummary
+} from '../services/storage';
 
 // ক্যাটাগরি আইকন ম্যাপার
 const CATEGORY_ICONS = {
@@ -63,14 +79,14 @@ export default function ExpensesModal({
   storeAddress = '',
   storePhone = ''
 }) {
-  const [activeTab, setActiveTab] = useState('list'); // 'list' | 'add'
+  const [activeTab, setActiveTab] = useState('list'); // 'list' | 'add' | 'recurring'
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
   const [selectedMethodFilter, setSelectedMethodFilter] = useState('all');
   const [dateRangeFilter, setDateRangeFilter] = useState('month'); // 'today' | 'month' | 'all' | 'custom'
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
-  const [quickChip, setQuickChip] = useState('month'); // 'all' | 'today' | 'month' | 'cash' | 'digital'
+  const [quickChip, setQuickChip] = useState('month'); // 'all' | 'today' | 'month' | 'cash' | 'digital' | 'khuraki'
 
   // এডিটিং স্টেট
   const [editingExpenseId, setEditingExpenseId] = useState(null);
@@ -83,6 +99,23 @@ export default function ExpensesModal({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
+  // স্মার্ট ইনপুট ও পুনরাবৃত্ত বিল স্টেট
+  const [smartInputText, setSmartInputText] = useState('');
+  const [recurringBills, setRecurringBills] = useState(() => getLocalRecurringBills());
+  const [expenseBudgets, setExpenseBudgets] = useState(() => getLocalExpenseBudgets());
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [copiedWhatsApp, setCopiedWhatsApp] = useState(false);
+
+  // ১-ক্লিক এক্সপ্রেস প্রিসেটস
+  const QUICK_PRESETS = [
+    { title: 'চা-নাস্তা ৫০৳', amount: 50, category: 'Refreshments', icon: Coffee, desc: 'দোকানের চা-নাস্তা খরচ' },
+    { title: 'চা-নাস্তা ১০০৳', amount: 100, category: 'Refreshments', icon: Coffee, desc: 'দোকানের চা-নাস্তা খরচ' },
+    { title: 'যাতায়াত ৫০৳', amount: 50, category: 'Transport', icon: Truck, desc: 'মালামাল/স্টাফ যাতায়াত' },
+    { title: 'কুরিয়ার ১৫০৳', amount: 150, category: 'Transport', icon: Truck, desc: 'পার্সেল বুকিং ফি' },
+    { title: 'পরিচ্ছন্নতা ১০০৳', amount: 100, category: 'Maintenance', icon: Wrench, desc: 'দোকান ঝাড়ু/পরিচ্ছন্নতা' },
+    { title: 'পলিথিন ব্যাগ ৫০০৳', amount: 500, category: 'Packaging', icon: Package, desc: 'প্যাকেজিং পলিথিন/ব্যাগ' }
+  ];
+
   // খরচের ফর্ম স্টেট
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -93,7 +126,9 @@ export default function ExpensesModal({
     staffId: '',
     payee: '',
     description: '',
-    receiptImage: ''
+    receiptImage: '',
+    isKhuraki: false,
+    recurringBillId: null
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
@@ -124,6 +159,7 @@ export default function ExpensesModal({
       if (quickChip === 'month' && !itemDate.startsWith(currentYearMonth)) return false;
       if (quickChip === 'cash' && method !== 'Cash') return false;
       if (quickChip === 'digital' && method === 'Cash') return false;
+      if (quickChip === 'khuraki' && !item.isKhuraki && !String(item.Description || '').toLowerCase().includes('খোরাকি')) return false;
 
       // তারিখ ড্রপডাউন ফিল্টার (যদি কুইক চিপ 'all' হয় তবে কাজ করবে)
       if (quickChip === 'all') {
@@ -259,9 +295,120 @@ export default function ExpensesModal({
       topCategory: topCat,
       topCategoryAmount: maxCatAmt,
       filteredTotalSum,
-      filteredCashSum
+      filteredCashSum,
+      catSums
     };
   }, [expenses, filteredExpenses]);
+
+  // নির্বাচিত স্টাফের চলতি মাসের খোরাকি / অগ্রিম হিসাব
+  const currentStaffKhuraki = useMemo(() => {
+    if (!formData.staffId) return { totalKhuraki: 0, entries: [] };
+    const month = (formData.date || new Date().toISOString().split('T')[0]).slice(0, 7);
+    return getStaffKhurakiSummary(formData.staffId, month);
+  }, [formData.staffId, formData.date, expenses]);
+
+  // ১-ক্লিক এক্সপ্রেস প্রিসেট হ্যান্ডলার
+  const handleQuickPresetSave = async (preset) => {
+    setIsSubmitting(true);
+    setStatusMessage({ type: 'info', text: `${preset.title} সংরক্ষণ হচ্ছে...` });
+    try {
+      const payload = {
+        ExpenseID: `EXP-QCK-${Date.now().toString().slice(-6)}`,
+        Date: new Date().toISOString().split('T')[0],
+        Category: preset.category,
+        Amount: preset.amount,
+        PaymentMethod: 'Cash',
+        Payee: 'কাউন্টার ক্যাশ',
+        Description: preset.desc,
+        CreatedBy: activeUser?.FullName || activeUser?.UserName || 'Admin',
+        isQuickPreset: true,
+        sourceType: 'EXPENSES_MODAL_PRESET'
+      };
+      if (typeof onSaveExpense === 'function') {
+        await onSaveExpense(payload);
+      }
+      setStatusMessage({ type: 'success', text: `✓ ${preset.title} সফলভাবে ক্যাশ ড্রয়ার ও খরচে সংরক্ষিত হয়েছে!` });
+      setTimeout(() => setStatusMessage(null), 2500);
+    } catch (err) {
+      setStatusMessage({ type: 'error', text: `সংরক্ষণে ত্রুটি: ${err.message}` });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // স্মার্ট ন্যাচারাল ল্যাঙ্গুয়েজ টেক্সট পার্সার
+  const parseSmartExpense = (text) => {
+    if (!text || !text.trim()) return null;
+    const t = text.toLowerCase().trim();
+    const bnToEnMap = { '০':'0', '১':'1', '২':'2', '৩':'3', '৪':'4', '৫':'5', '৬':'6', '৭':'7', '৮':'8', '৯':'9' };
+    const normalizedText = t.replace(/[০-৯]/g, d => bnToEnMap[d] || d);
+    const matchAmount = normalizedText.match(/\b\d+(\.\d+)?\b/);
+    const parsedAmount = matchAmount ? matchAmount[0] : '';
+
+    let detectedCat = 'Other';
+    if (/চা|নাস্তা|কফি|মিষ্টি|বিস্কুট|আপ্যায়ন|refreshment/.test(t)) detectedCat = 'Refreshments';
+    else if (/রিকশা|ভাড়া|যাতায়াত|কুরিয়ার|পার্সেল|transport|truck/.test(t)) detectedCat = 'Transport';
+    else if (/বিদ্যুৎ|ডেসকো|নেসকো|কারেন্ট|ওয়াইফাই|ইন্টারনেট|ডিশ|utility|bill/.test(t)) detectedCat = 'Utility';
+    else if (/দোকান ভাড়া|ঘর ভাড়া|rent/.test(t)) detectedCat = 'Rent';
+    else if (/বেতন|খোরাকি|বোনাস|অগ্রিম|salary|staff/.test(t)) detectedCat = 'Salary';
+    else if (/ব্যাগ|পলিথিন|প্যাকেট|প্যাকেজিং|packaging/.test(t)) detectedCat = 'Packaging';
+    else if (/ঝাড়ু|পরিচ্ছন্ন|মেরামত|লাইট|সুইচ|সাবান|maintenance|clean/.test(t)) detectedCat = 'Maintenance';
+    else if (/বিজ্ঞাপন|ফেসবুক|পোস্টার|প্রচার|marketing/.test(t)) detectedCat = 'Marketing';
+
+    let detectedMethod = 'Cash';
+    if (/বিকাশ|bkash/.test(t)) detectedMethod = 'bKash';
+    else if (/নগদ|nagad/.test(t)) detectedMethod = 'Nagad';
+    else if (/ব্যাংক|bank|চেক|check/.test(t)) detectedMethod = 'Bank';
+    else if (/কার্ড|card/.test(t)) detectedMethod = 'Card';
+
+    const isKhurakiDetected = /খোরাকি|অগ্রিম/.test(t);
+
+    return {
+      amount: parsedAmount,
+      category: detectedCat,
+      paymentMethod: detectedMethod,
+      isKhuraki: isKhurakiDetected,
+      description: text.trim()
+    };
+  };
+
+  const handleApplySmartInput = () => {
+    const parsed = parseSmartExpense(smartInputText);
+    if (!parsed || !parsed.amount) {
+      alert('অনুগ্রহ করে খরচের টাকার পরিমাণ সহ লিখুন (যেমন: "চা নাস্তা ৬০" বা "ডেসকো ৪৫০০ বিকাশ")');
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      amount: parsed.amount,
+      category: parsed.category,
+      paymentMethod: parsed.paymentMethod,
+      isKhuraki: parsed.isKhuraki,
+      description: parsed.description
+    }));
+    setActiveTab('add');
+    setStatusMessage({ type: 'success', text: `স্মার্ট পার্স সম্পন্ন: ${parsed.category} - ৳${parsed.amount} (${parsed.paymentMethod})` });
+  };
+
+  // রিকারিং বিল ১-ক্লিকে পরিশোধ প্রিপেয়ার
+  const handlePayRecurringBill = (bill) => {
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      category: bill.category,
+      amount: String(bill.defaultAmount || ''),
+      paymentMethod: 'Cash',
+      bankAccountId: '',
+      staffId: '',
+      payee: bill.payee || '',
+      description: `${bill.title} পরিশোধ (চলতি মাস)`,
+      receiptImage: '',
+      isKhuraki: false,
+      recurringBillId: bill.id
+    });
+    setEditingExpenseId(null);
+    setStatusMessage(null);
+    setActiveTab('add');
+  };
 
   // ফর্ম এডিটিং সেটআপ
   const handleStartEdit = (expense) => {
@@ -271,9 +418,13 @@ export default function ExpensesModal({
       category: expense.Category || expense.category || 'Other',
       amount: String(expense.Amount !== undefined ? expense.Amount : ''),
       paymentMethod: expense.PaymentMethod || expense.paymentMethod || 'Cash',
+      bankAccountId: expense.bankAccountId || expense.BankAccountId || '',
+      staffId: expense.staffId || expense.StaffId || '',
       payee: expense.Payee || expense.payee || '',
       description: expense.Description || expense.description || '',
-      receiptImage: expense.ReceiptImage || expense.receiptImage || ''
+      receiptImage: expense.ReceiptImage || expense.receiptImage || '',
+      isKhuraki: Boolean(expense.isKhuraki),
+      recurringBillId: expense.recurringBillId || null
     });
     setStatusMessage(null);
     setActiveTab('add');
@@ -286,9 +437,13 @@ export default function ExpensesModal({
       category: 'Refreshments',
       amount: '',
       paymentMethod: 'Cash',
+      bankAccountId: '',
+      staffId: '',
       payee: '',
       description: '',
-      receiptImage: ''
+      receiptImage: '',
+      isKhuraki: false,
+      recurringBillId: null
     });
     setStatusMessage(null);
     setActiveTab('list');
@@ -338,7 +493,10 @@ export default function ExpensesModal({
         Payee: formData.payee.trim(),
         Description: formData.description.trim(),
         ReceiptImage: formData.receiptImage,
-        CreatedBy: activeUser?.FullName || activeUser?.UserName || 'Admin'
+        CreatedBy: activeUser?.FullName || activeUser?.UserName || 'Admin',
+        isKhuraki: Boolean(formData.isKhuraki),
+        recurringBillId: formData.recurringBillId || null,
+        sourceType: 'EXPENSES_MODAL'
       };
 
       if (typeof onSaveExpense === 'function') {
@@ -361,7 +519,9 @@ export default function ExpensesModal({
         staffId: '',
         payee: '',
         description: '',
-        receiptImage: ''
+        receiptImage: '',
+        isKhuraki: false,
+        recurringBillId: null
       });
       setEditingExpenseId(null);
 
@@ -466,6 +626,17 @@ export default function ExpensesModal({
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* হোয়াটসঅ্যাপ সারাংশ বাটন */}
+            <button
+              type="button"
+              onClick={() => setShowWhatsAppModal(true)}
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold border border-emerald-500 transition-all cursor-pointer shadow-xs"
+              title="আজকের খরচের হোয়াটসঅ্যাপ সারাংশ দেখুন ও কপি করুন"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">WhatsApp সারাংশ</span>
+            </button>
+
             {/* কুইক অ্যাকশন বাটন */}
             {activeTab === 'list' && (
               <>
@@ -586,6 +757,38 @@ export default function ExpensesModal({
         </div>
 
         {/* =========================================================================
+            ২.৫. ৩-সেকেন্ড ১-ট্যাপ কুইক এক্সপ্রেস বার (Quick Presets)
+            ========================================================================= */}
+        <div className="bg-gradient-to-r from-rose-50 via-pink-50 to-amber-50 px-4 sm:px-6 py-2.5 border-b border-rose-200/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 shrink-0">
+          <div className="flex items-center space-x-2 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
+            <span className="text-xs font-black text-rose-950 flex items-center gap-1">
+              <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+              <span>১-ট্যাপ কুইক খরচ (৩ সেকেন্ড):</span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+            {QUICK_PRESETS.map((preset, pIdx) => {
+              const IconComp = preset.icon;
+              return (
+                <button
+                  key={pIdx}
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => handleQuickPresetSave(preset)}
+                  className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-rose-600 text-slate-800 hover:text-white border border-rose-200 hover:border-rose-600 text-xs font-bold transition-all shadow-2xs flex items-center space-x-1.5 shrink-0 cursor-pointer active:scale-95 disabled:opacity-50"
+                  title={`${preset.desc} — ক্লিক করলেই ক্যাশ ড্রয়ার ও খরচে সেভ হবে`}
+                >
+                  <IconComp className="w-3.5 h-3.5 text-rose-600 group-hover:text-white" />
+                  <span>{preset.title}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* =========================================================================
             ৩. ট্যাব নেভিগেশন
             ========================================================================= */}
         <div className="flex items-center justify-between border-b border-slate-200 px-4 sm:px-6 bg-white shrink-0">
@@ -616,6 +819,20 @@ export default function ExpensesModal({
             >
               <PlusCircle className="w-4 h-4" />
               <span>{editingExpenseId ? `ভাউচার সংশোধন (#${editingExpenseId})` : 'নতুন খরচ যোগ করুন'}</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('recurring');
+                setEditingExpenseId(null);
+              }}
+              className={`py-3 px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer ${
+                activeTab === 'recurring'
+                  ? 'border-rose-600 text-rose-700'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" />
+              <span>মাসিক ফিক্সড বিল ({recurringBills.length})</span>
             </button>
           </div>
 
@@ -667,6 +884,7 @@ export default function ExpensesModal({
                       { id: 'today', label: 'আজকের' },
                       { id: 'cash', label: 'ক্যাশ খরচ' },
                       { id: 'digital', label: 'ডিজিটাল/ব্যাংক' },
+                      { id: 'khuraki', label: 'স্টাফ খোরাকি' },
                       { id: 'all', label: 'সকল ভাউচার' }
                     ].map(chip => (
                       <button
@@ -838,10 +1056,22 @@ export default function ExpensesModal({
 
                               {/* ক্যাটাগরি */}
                               <td className="py-3 px-3.5 whitespace-nowrap">
-                                <span className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${catObj.color}`}>
-                                  <IconComp className="w-3.5 h-3.5" />
-                                  <span>{catObj.name.split(' ')[0]}</span>
-                                </span>
+                                <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                                  <span className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${catObj.color}`}>
+                                    <IconComp className="w-3.5 h-3.5" />
+                                    <span>{catObj.name.split(' ')[0]}</span>
+                                  </span>
+                                  {exp.isKhuraki && (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200 shrink-0">
+                                      খোরাকি
+                                    </span>
+                                  )}
+                                  {exp.isQuickPreset && (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shrink-0" title="১-ট্যাপ এক্সপ্রেস">
+                                      ⚡ কুইক
+                                    </span>
+                                  )}
+                                </div>
                               </td>
 
                               {/* প্রাপক ও বিবরণ */}
@@ -1019,6 +1249,43 @@ export default function ExpensesModal({
                 </div>
               )}
 
+              {/* স্মার্ট ন্যাচারাল ল্যাঙ্গুয়েজ টেক্সট বক্স */}
+              {!editingExpenseId && (
+                <div className="p-3 bg-gradient-to-r from-indigo-50 to-rose-50 rounded-2xl border border-indigo-200/80 mb-4 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-indigo-950">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-indigo-600" />
+                      <span>স্মার্ট কুইক এন্ট্রি (বাংলায় লিখুন, সিস্টেম একা বুঝে নেবে):</span>
+                    </span>
+                    <span className="text-[10px] text-indigo-600 font-semibold hidden sm:inline">
+                      যেমন: "চা নাস্তা ৬০" বা "ডেসকো ৪৫০০ বিকাশ"
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={smartInputText}
+                      onChange={(e) => setSmartInputText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleApplySmartInput();
+                        }
+                      }}
+                      placeholder='যেমন লিখুন: "চা নাস্তা ৬০" অথবা "রিকশা ৫০" অথবা "ডেসকো ৪৫০০ বিকাশ"'
+                      className="flex-1 px-3 py-2 text-xs sm:text-sm rounded-xl border border-indigo-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-semibold"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplySmartInput}
+                      className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0"
+                    >
+                      পার্স ও প্রয়োগ
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 
                 {/* ব্যয়ের খাত (Category) নির্বাচন */}
@@ -1172,38 +1439,94 @@ export default function ExpensesModal({
 
                 {/* স্টাফ বেতন লিঙ্ক (যদি ক্যাটাগরি Salary হয়) */}
                 {formData.category === 'Salary' && (
-                  <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-indigo-900 flex items-center space-x-1.5">
-                        <Users className="w-4 h-4 text-indigo-600" />
-                        <span>বেতন গ্রহণকারী স্টাফ / সেলসম্যান নির্বাচন করুন:</span>
-                      </label>
+                  <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100/80 pb-2">
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center space-x-1.5 text-xs font-bold text-indigo-950 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="salaryMode"
+                            checked={!formData.isKhuraki}
+                            onChange={() => setFormData(prev => ({ ...prev, isKhuraki: false }))}
+                            className="text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span>মাসিক মূল বেতন (Final Settlement)</span>
+                        </label>
+                        <label className="flex items-center space-x-1.5 text-xs font-bold text-purple-700 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="salaryMode"
+                            checked={formData.isKhuraki}
+                            onChange={() => setFormData(prev => ({ ...prev, isKhuraki: true }))}
+                            className="text-purple-600 focus:ring-purple-500"
+                          />
+                          <span>দৈনিক খোরাকি / অগ্রিম (Khuraki / Advance)</span>
+                        </label>
+                      </div>
+
                       {selectedStaffAttendanceDays !== null && (
-                        <span className="text-[10px] font-semibold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-mono">
+                        <span className="text-[10px] font-semibold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-mono shrink-0">
                           চলতি মাসে {selectedStaffAttendanceDays} দিন উপস্থিত
                         </span>
                       )}
                     </div>
-                    <select
-                      value={formData.staffId || ''}
-                      onChange={(e) => {
-                        const sId = e.target.value;
-                        const selectedUser = (users || []).find(u => String(u.UserID || u.id) === String(sId));
-                        setFormData(prev => ({
-                          ...prev,
-                          staffId: sId,
-                          payee: selectedUser ? `${selectedUser.FullName || selectedUser.Name} (${selectedUser.Role || 'Staff'})` : prev.payee
-                        }));
-                      }}
-                      className="w-full px-3 py-2 text-xs bg-white border border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-800 font-medium"
-                    >
-                      <option value="">-- স্টাফ নির্বাচন করুন (বা নিচে সরাসরি নাম লিখুন) --</option>
-                      {(users || []).map(u => (
-                        <option key={u.UserID || u.id} value={u.UserID || u.id}>
-                          {u.FullName || u.Name} — {u.Role || 'Staff'} {u.Phone ? `(${u.Phone})` : ''}
-                        </option>
-                      ))}
-                    </select>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-indigo-900 mb-1">
+                        স্টাফ / সেলসম্যান নির্বাচন করুন:
+                      </label>
+                      <select
+                        value={formData.staffId || ''}
+                        onChange={(e) => {
+                          const sId = e.target.value;
+                          const selectedUser = (users || []).find(u => String(u.UserID || u.id) === String(sId));
+                          setFormData(prev => ({
+                            ...prev,
+                            staffId: sId,
+                            payee: selectedUser ? `${selectedUser.FullName || selectedUser.Name} (${selectedUser.Role || 'Staff'})` : prev.payee
+                          }));
+                        }}
+                        className="w-full px-3 py-2 text-xs bg-white border border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-800 font-medium"
+                      >
+                        <option value="">-- স্টাফ নির্বাচন করুন (বা নিচে সরাসরি নাম লিখুন) --</option>
+                        {(users || []).map(u => (
+                          <option key={u.UserID || u.id} value={u.UserID || u.id}>
+                            {u.FullName || u.Name} — {u.Role || 'Staff'} {u.Phone ? `(${u.Phone})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* যদি ফাইনাল বেতন মোড হয় এবং স্টাফের খোরাকি থাকে */}
+                    {!formData.isKhuraki && currentStaffKhuraki.totalKhuraki > 0 && (
+                      <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 animate-in fade-in">
+                        <div>
+                          <p className="font-bold">
+                            চলতি মাসে এই স্টাফ মোট ৳{currentStaffKhuraki.totalKhuraki.toLocaleString('en-IN')} খোরাকি/অগ্রিম নিয়েছেন ({currentStaffKhuraki.entries.length} টি ভাউচার)।
+                          </p>
+                          {Number(formData.amount) > 0 && (
+                            <p className="text-[11px] text-purple-700 mt-0.5">
+                              মূল বেতন {currencySymbol}{Number(formData.amount).toLocaleString('en-IN')} হলে খোরাকি বাদে নিট প্রদেয়: <strong className="text-purple-950 font-bold">{currencySymbol}{Math.max(0, Number(formData.amount) - currentStaffKhuraki.totalKhuraki).toLocaleString('en-IN')}</strong>
+                            </p>
+                          )}
+                        </div>
+                        {Number(formData.amount) > currentStaffKhuraki.totalKhuraki && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                amount: String(Math.max(0, Number(prev.amount) - currentStaffKhuraki.totalKhuraki)),
+                                description: `মূল বেতন থেকে খোরাকি ৳${currentStaffKhuraki.totalKhuraki} কর্তনপূর্বক নিট বেতন পরিশোধ`
+                              }));
+                            }}
+                            className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[11px] font-bold shadow-2xs shrink-0 cursor-pointer"
+                          >
+                            খোরাকি বাদ দিন
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1229,7 +1552,7 @@ export default function ExpensesModal({
                     <div className="flex items-center space-x-2">
                       <label className="flex-1 px-3 py-2 text-xs rounded-xl border border-dashed border-slate-300 hover:border-rose-400 bg-slate-50 text-slate-600 hover:text-rose-700 flex items-center justify-center space-x-1.5 cursor-pointer transition-colors">
                         <Upload className="w-3.5 h-3.5" />
-                        <span>{formData.receiptImage ? 'ছবি পরিবর্তন করুন' : 'ছবি আপলোড করুন (Max 2MB)'}</span>
+                        <span>{formData.receiptImage ? 'ছবি পরিবর্তন' : 'ফাইল আপলোড (2MB)'}</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -1237,6 +1560,23 @@ export default function ExpensesModal({
                           className="hidden"
                         />
                       </label>
+
+                      {/* মোবাইল ক্যামেরা ডাইরেক্ট স্ন্যাপ */}
+                      <label
+                        className="px-2.5 py-2 text-xs rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 flex items-center space-x-1 cursor-pointer transition-colors shrink-0"
+                        title="সরাসরি ক্যামেরা দিয়ে ছবি তুলুন"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">ক্যামেরা স্ন্যাপ</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={handleReceiptImageUpload}
+                          className="hidden"
+                        />
+                      </label>
+
                       {formData.receiptImage && (
                         <div className="flex items-center space-x-1">
                           <button
@@ -1301,6 +1641,109 @@ export default function ExpensesModal({
                 </div>
               </form>
 
+            </div>
+          )}
+
+          {/* ট্যাব ৩: মাসিক ফিক্সড বিল ও চেকলিস্ট ভিউ */}
+          {activeTab === 'recurring' && (
+            <div className="space-y-4 max-w-4xl mx-auto">
+              {/* ব্যানার */}
+              <div className="bg-gradient-to-r from-indigo-900 to-slate-900 text-white p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-300 shrink-0">
+                    <CalendarDays className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold">মাসিক নির্ধারিত ও পুনরাবৃত্ত বিল চেকলিস্ট</h3>
+                    <p className="text-xs text-slate-300">
+                      দোকান ভাড়া, বিদ্যুৎ ও ইন্টারনেট বিল চলতি মাসে পরিশোধ হয়েছে কিনা তা নিশ্চিত করুন
+                    </p>
+                  </div>
+                </div>
+                <div className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/10 text-slate-200 border border-white/10 shrink-0">
+                  চলতি মাস: <strong className="text-white">{new Date().toLocaleString('bn-BD', { month: 'long', year: 'numeric' })}</strong>
+                </div>
+              </div>
+
+              {/* বিল তালিকা কার্ডসমূহ */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {recurringBills.map((bill) => {
+                  const currentMonth = new Date().toISOString().slice(0, 7);
+                  // চেক করুন চলতি মাসে এই বিল পরিশোধ হয়েছে কিনা
+                  const paidRecord = expenses.find(e => {
+                    const eDate = String(e.Date || e.date || '');
+                    const isSameMonth = eDate.startsWith(currentMonth);
+                    const isSameRecId = e.recurringBillId && e.recurringBillId === bill.id;
+                    const isSameCategory = e.Category === bill.category && String(e.Description || '').includes(bill.title);
+                    return isSameMonth && (isSameRecId || isSameCategory);
+                  });
+
+                  const isPaid = Boolean(paidRecord);
+
+                  return (
+                    <div
+                      key={bill.id}
+                      className={`p-4 rounded-2xl border transition-all shadow-xs ${
+                        isPaid
+                          ? 'bg-emerald-50/60 border-emerald-200 hover:border-emerald-300'
+                          : 'bg-white border-slate-200 hover:border-rose-300'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center space-x-2.5">
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                              isPaid ? 'bg-emerald-600 text-white' : 'bg-rose-100 text-rose-700'
+                            }`}
+                          >
+                            {isPaid ? <CheckCircle2 className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
+                          </div>
+                          <div>
+                            <h4 className="text-xs sm:text-sm font-bold text-slate-900">{bill.title}</h4>
+                            <p className="text-[11px] text-slate-500">
+                              প্রাপক: <strong className="text-slate-700">{bill.payee}</strong> • প্রতি মাসের {bill.dueDay} তারিখ
+                            </p>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 ${
+                            isPaid
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : 'bg-rose-100 text-rose-800 border border-rose-300 animate-pulse'
+                          }`}
+                        >
+                          {isPaid ? 'পরিশোধিত ✓' : 'বকেয়া'}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                        <div>
+                          <span className="text-[11px] text-slate-500 block">আনুমানিক বিল</span>
+                          <span className="text-sm font-bold text-slate-900 font-mono">
+                            {currencySymbol}{bill.defaultAmount.toLocaleString('en-IN')}
+                          </span>
+                        </div>
+
+                        {isPaid ? (
+                          <div className="text-right text-[11px] text-emerald-700 font-semibold">
+                            <span>পরিশোধ তারিখ: {paidRecord.Date || paidRecord.date}</span>
+                            <span className="block font-mono text-[10px] text-slate-500">#{paidRecord.ExpenseID}</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handlePayRecurringBill(bill)}
+                            className="px-3.5 py-1.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
+                          >
+                            ১-ক্লিকে পরিশোধ করুন
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -1470,6 +1913,106 @@ export default function ExpensesModal({
                 className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg cursor-pointer"
               >
                 ঠিক আছে
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          ৮. WhatsApp ও SMS দৈনিক ব্যয়ের সারাংশ কপি মডাল
+          ========================================================================= */}
+      {showWhatsAppModal && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 z-[120] animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 flex flex-col max-h-[85vh]">
+            <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center space-x-2">
+                <Share2 className="w-4 h-4 text-emerald-400" />
+                <span className="font-bold text-sm">দৈনিক ব্যয়ের হোয়াটসঅ্যাপ সারাংশ</span>
+              </div>
+              <button
+                onClick={() => {
+                  setShowWhatsAppModal(false);
+                  setCopiedWhatsApp(false);
+                }}
+                className="w-7 h-7 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3 bg-slate-50 overflow-y-auto">
+              <p className="text-xs text-slate-600">
+                নিচের টেক্সটটি কপি করে দোকান মালিকের হোয়াটসঅ্যাপ বা মেসেজে সরাসরি পাঠানো যাবে:
+              </p>
+
+              {/* টেক্সট এরিয়া */}
+              <div className="p-3 bg-white border border-slate-300 rounded-xl font-mono text-xs text-slate-800 whitespace-pre-wrap leading-relaxed shadow-inner select-all">
+{(() => {
+  const today = new Date().toISOString().split('T')[0];
+  const todayList = (expenses || []).filter(e => String(e.Date || e.date || '') === today);
+  const catBreakdown = {};
+  todayList.forEach(e => {
+    const c = e.Category || 'Other';
+    catBreakdown[c] = (catBreakdown[c] || 0) + (Number(e.Amount) || 0);
+  });
+
+  const catLines = Object.entries(catBreakdown).map(([cat, amt]) => {
+    const found = EXPENSE_CATEGORIES.find(c => c.id === cat);
+    const name = found ? found.name.split(' ')[0] : cat;
+    return `• ${name}: ৳${amt.toLocaleString('en-IN')}`;
+  }).join('\n');
+
+  return `🏪 ${storeName || 'পাবনা বস্ত্রালয়'} — দৈনিক ব্যয়ের সারাংশ
+তারিখ: ${new Date().toLocaleDateString('bn-BD')}
+------------------------------------
+মোট ব্যয়: ৳${stats.totalToday.toLocaleString('en-IN')} (মোট ${todayList.length}টি ভাউচার)
+• ক্যাশ ড্রয়ার থেকে: ৳${stats.cashToday.toLocaleString('en-IN')}
+• ব্যাংক/ডিজিটাল: ৳${(stats.totalToday - stats.cashToday).toLocaleString('en-IN')}
+------------------------------------
+খাতভিত্তিক বিবরণ:
+${catLines || '• আজ কোনো খরচ হয়নি'}
+------------------------------------
+রিপোর্ট প্রস্তুতকারী: ${activeUser?.FullName || 'Admin'}`;
+})()}
+              </div>
+            </div>
+
+            <div className="p-3 bg-white border-t border-slate-200 flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWhatsAppModal(false);
+                  setCopiedWhatsApp(false);
+                }}
+                className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                বন্ধ করুন
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date().toISOString().split('T')[0];
+                  const todayList = (expenses || []).filter(e => String(e.Date || e.date || '') === today);
+                  const catBreakdown = {};
+                  todayList.forEach(e => {
+                    const c = e.Category || 'Other';
+                    catBreakdown[c] = (catBreakdown[c] || 0) + (Number(e.Amount) || 0);
+                  });
+                  const catLines = Object.entries(catBreakdown).map(([cat, amt]) => {
+                    const found = EXPENSE_CATEGORIES.find(c => c.id === cat);
+                    const name = found ? found.name.split(' ')[0] : cat;
+                    return `• ${name}: ৳${amt.toLocaleString('en-IN')}`;
+                  }).join('\n');
+                  const text = `🏪 ${storeName || 'পাবনা বস্ত্রালয়'} — দৈনিক ব্যয়ের সারাংশ\nতারিখ: ${new Date().toLocaleDateString('bn-BD')}\n------------------------------------\nমোট ব্যয়: ৳${stats.totalToday.toLocaleString('en-IN')} (মোট ${todayList.length}টি ভাউচার)\n• ক্যাশ ড্রয়ার থেকে: ৳${stats.cashToday.toLocaleString('en-IN')}\n• ব্যাংক/ডিজিটাল: ৳${(stats.totalToday - stats.cashToday).toLocaleString('en-IN')}\n------------------------------------\nখাতভিত্তিক বিবরণ:\n${catLines || '• আজ কোনো খরচ হয়নি'}\n------------------------------------\nরিপোর্ট প্রস্তুতকারী: ${activeUser?.FullName || 'Admin'}`;
+                  navigator.clipboard.writeText(text);
+                  setCopiedWhatsApp(true);
+                  setTimeout(() => setCopiedWhatsApp(false), 2000);
+                }}
+                className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-sm"
+              >
+                {copiedWhatsApp ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedWhatsApp ? 'কপি হয়েছে!' : 'টেক্সট কপি করুন'}</span>
               </button>
             </div>
           </div>
