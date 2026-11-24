@@ -12,6 +12,7 @@ import {
   ArrowDownRight,
   Zap
 } from 'lucide-react';
+import { getLocalExpenseCategories } from '../services/storage';
 
 /**
  * পিওএস কাউন্টার মিনি ক্যাশ-আউট ও কুইক খরচ মডাল (POS Mini Cash-Out Studio)
@@ -26,6 +27,7 @@ export default function PosQuickExpenseModal({
 }) {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Refreshments');
+  const [categories, setCategories] = useState(() => getLocalExpenseCategories());
   const [payee, setPayee] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,6 +35,7 @@ export default function PosQuickExpenseModal({
 
   useEffect(() => {
     if (isOpen) {
+      setCategories(getLocalExpenseCategories());
       setAmount('');
       setCategory('Refreshments');
       setPayee('');
@@ -251,12 +254,9 @@ export default function PosQuickExpenseModal({
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-rose-500 text-slate-800 font-semibold"
                 >
-                  <option value="Refreshments">আপ্যায়ন ও চা-নাস্তা (Refreshments)</option>
-                  <option value="Transport">যাতায়াত ও কুরিয়ার (Transport)</option>
-                  <option value="Maintenance">মেরামত ও পরিচ্ছন্নতা (Maintenance)</option>
-                  <option value="Packaging">প্যাকেজিং ও ব্যাগ (Packaging)</option>
-                  <option value="Utility">বিদ্যুৎ ও ইন্টারনেট (Utility)</option>
-                  <option value="Other">অন্যান্য সাধারণ ব্যয় (Other)</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
                 </select>
               </div>
             </div>

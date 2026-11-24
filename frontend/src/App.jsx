@@ -3911,15 +3911,22 @@ export default function App() {
       });
       setAuditLogs(getLocalAuditLogs());
 
-      showToast('খরচের ভাউচারটি সফলভাবে মুছে ফেলা হয়েছে!', 'info');
-
       if (settings.apiUrl) {
         try {
-          await postDeleteExpense(settings.apiUrl, expenseId);
+          const apiRes = await postDeleteExpense(settings.apiUrl, expenseId);
+          if (apiRes && apiRes.success === false) {
+            console.warn('Google Sheet delete warning:', apiRes.message);
+            showToast(`লোকাল থেকে মুছেছে কিন্তু গুগল শিটে সতর্কবার্তা: ${apiRes.message || 'রেকর্ড পাওয়া যায়নি'}`, 'warning');
+          } else {
+            showToast('খরচের ভাউচারটি লোকাল ও গুগল শিট উভয় স্থান থেকেই সফলভাবে মুছে ফেলা হয়েছে!', 'success');
+          }
           postLogAuditEvent(settings.apiUrl, logEntry).catch(() => {});
         } catch (apiErr) {
           console.warn('Expense delete sync delayed:', apiErr);
+          showToast(`লোকাল থেকে মুছেছে কিন্তু ক্লাউড সিঙ্ক বিলম্বিত: ${apiErr.message}`, 'warning');
         }
+      } else {
+        showToast('খরচের ভাউচারটি লোকাল স্টোরেজ থেকে সফলভাবে মুছে ফেলা হয়েছে (অফলাইন)!', 'info');
       }
     } catch (err) {
       showToast(`খরচ ডিলিট ব্যর্থ: ${err.message}`, 'error');

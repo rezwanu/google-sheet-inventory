@@ -43,6 +43,7 @@ const STORAGE_KEYS = {
   BANK_TRANSACTIONS: 'pos_bank_transactions',
   RECURRING_BILLS: 'pos_recurring_bills',
   EXPENSE_BUDGETS: 'pos_expense_budgets',
+  CUSTOM_EXPENSE_CATEGORIES: 'pos_custom_expense_categories',
 };
 
 import {
@@ -3136,6 +3137,51 @@ export const EXPENSE_CATEGORIES = [
   { id: 'InventoryLoss', name: 'ইনভেন্টরি অপচয় ও ড্যামেজ ক্ষতি (Loss Write-Off)', icon: 'Scissors', color: 'text-rose-600 bg-rose-50 border-rose-200' },
   { id: 'Other', name: 'অন্যান্য সাধারণ ব্যয় (Other)', icon: 'FileText', color: 'text-slate-600 bg-slate-50 border-slate-200' }
 ];
+
+export function getLocalExpenseCategories() {
+  try {
+    const custom = getSecureStorageItem(STORAGE_KEYS.CUSTOM_EXPENSE_CATEGORIES);
+    const customList = Array.isArray(custom) ? custom : [];
+    return [...EXPENSE_CATEGORIES, ...customList];
+  } catch (e) {
+    return EXPENSE_CATEGORIES;
+  }
+}
+
+export function saveCustomExpenseCategory(name) {
+  if (!name || !name.trim()) return null;
+  const cleanName = name.trim();
+  const custom = getSecureStorageItem(STORAGE_KEYS.CUSTOM_EXPENSE_CATEGORIES);
+  const customList = Array.isArray(custom) ? custom : [];
+
+  const all = [...EXPENSE_CATEGORIES, ...customList];
+  const existing = all.find(c => c.name.toLowerCase() === cleanName.toLowerCase() || c.id.toLowerCase() === cleanName.toLowerCase());
+  if (existing) return existing;
+
+  const newCat = {
+    id: `CUSTOM_${Date.now().toString().slice(-4)}`,
+    name: `${cleanName}`,
+    isCustom: true,
+    icon: 'FileText',
+    color: 'text-purple-600 bg-purple-50 border-purple-200'
+  };
+
+  const updated = [...customList, newCat];
+  setSecureStorageItem(STORAGE_KEYS.CUSTOM_EXPENSE_CATEGORIES, updated);
+  return newCat;
+}
+
+export function deleteCustomExpenseCategory(categoryId) {
+  try {
+    const custom = getSecureStorageItem(STORAGE_KEYS.CUSTOM_EXPENSE_CATEGORIES);
+    const customList = Array.isArray(custom) ? custom : [];
+    const filtered = customList.filter(c => c.id !== categoryId);
+    setSecureStorageItem(STORAGE_KEYS.CUSTOM_EXPENSE_CATEGORIES, filtered);
+    return getLocalExpenseCategories();
+  } catch (e) {
+    return getLocalExpenseCategories();
+  }
+}
 
 export function getLocalExpenses() {
   try {

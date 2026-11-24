@@ -301,6 +301,25 @@ function getSheetRowsAsObjects(sheetName) {
       }
     }
 
+    // Expenses শিটের জন্য ফিল্ড নর্মালাইজেশন ও আইডি ভ্যারিয়েশন হ্যান্ডলিং
+    if (sheetName === SHEETS.EXPENSES) {
+      if (!rowObj.ExpenseID) {
+        rowObj.ExpenseID = rowObj['Expense ID'] || rowObj['Expense_ID'] || rowObj.ID || rowObj.id || rowObj.VoucherID || rowObj.VoucherNo || '';
+      }
+      if (!rowObj.Category) {
+        rowObj.Category = rowObj.category || rowObj['Category Name'] || 'Other';
+      }
+      if (rowObj.Amount === undefined) {
+        rowObj.Amount = rowObj.amount !== undefined ? rowObj.amount : 0;
+      }
+      if (!rowObj.Date) {
+        rowObj.Date = rowObj.date || '';
+      }
+      if (!rowObj.PaymentMethod) {
+        rowObj.PaymentMethod = rowObj.paymentMethod || rowObj['Payment Method'] || 'Cash';
+      }
+    }
+
     // দ্রুত আপডেটের জন্য গুগল শিটের সারি নম্বর সংরক্ষণ (১-ইনডেক্সড)
     rowObj._rowIndex = i + 1;
     rows.push(rowObj);
@@ -6867,21 +6886,48 @@ function handleSaveExpense(spreadsheet, payload) {
  */
 function handleDeleteExpense(spreadsheet, payload) {
   const expensesSheet = ensureExpensesSheet(spreadsheet);
-  const expenseId = payload.expenseId || payload.ExpenseID;
+  const expenseId = String(payload.expenseId || payload.ExpenseID || payload.id || '').trim();
   if (!expenseId) {
-    return { success: false, message: 'খরচের আইডি প্রদান করা হয়নি।' };
+    return { success: false, message: 'খরচের ভাউচার আইডি প্রদান করা হয়নি।' };
   }
 
+  // ১. অবজেক্ট ভিত্তিক অনুসন্ধান
   const rows = getSheetRowsAsObjects(SHEETS.EXPENSES);
-  const existing = rows.find(r => String(r.ExpenseID).trim() === String(expenseId).trim());
+  let targetRowIndex = null;
+  const existing = rows.find(r => {
+    const id = String(r.ExpenseID || r['Expense ID'] || r.expenseId || r.ID || '').trim();
+    return id.toLowerCase() === expenseId.toLowerCase();
+  });
 
   if (existing && existing._rowIndex) {
-    expensesSheet.deleteRow(existing._rowIndex);
-    SpreadsheetApp.flush();
-    return { success: true, message: 'খরচটি সফলভাবে মুছে ফেলা হয়েছে।' };
+    targetRowIndex = existing._rowIndex;
+  } else {
+    // ২. ফলব্যাক: সরাসরি শিটের সেল স্ক্যান (যদি হেডারে বা অবজেক্ট পার্সিংয়ে কোনো সমস্যা হয়)
+    const lastRow = expensesSheet.getLastRow();
+    const lastCol = expensesSheet.getLastColumn();
+    if (lastRow > 1 && lastCol > 0) {
+      const values = expensesSheet.getRange(1, 1, lastRow, lastCol).getValues();
+      const headers = values[0];
+      let idColIdx = findCol(headers, 'ExpenseID', 'Expense ID', 'Expense_ID', 'ID', 'VoucherID');
+      if (idColIdx === -1) idColIdx = 0; // ফলব্যাক প্রথম কলাম
+
+      for (let r = 1; r < values.length; r++) {
+        const cellVal = String(values[r][idColIdx] || '').trim();
+        if (cellVal.toLowerCase() === expenseId.toLowerCase()) {
+          targetRowIndex = r + 1; // ১-ইনডেক্সড
+          break;
+        }
+      }
+    }
   }
 
-  return { success: false, message: 'খরচের রেকর্ড পাওয়া যায়নি।' };
+  if (targetRowIndex) {
+    expensesSheet.deleteRow(targetRowIndex);
+    SpreadsheetApp.flush();
+    return { success: true, message: `ভাউচার #${expenseId} গুগল শিট থেকে সফলভাবে মুছে ফেলা হয়েছে।` };
+  }
+
+  return { success: false, message: `ভাউচার #${expenseId} গুগল শিটে খুঁজে পাওয়া যায়নি।` };
 }
 
 /**

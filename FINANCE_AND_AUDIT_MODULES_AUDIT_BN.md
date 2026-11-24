@@ -191,11 +191,51 @@ flowchart TD
 5. `frontend/src/components/KeyboardShortcutsModal.jsx` — `Alt + E / F5` শর্টকাট গাইড যুক্ত।
 6. `frontend/src/App.jsx` — শর্টকাট লিসেনার ও মিনি পপআপ মডাল ওয়্যারিং সম্পন্ন।
 
-### বিল্ড ভেরিফিকেশন ফলাফল:
+### বিল্ড ভেরিফিকেশন ফলাফল (v3.0):
 ```bash
 > enterprise-pos-inventory@1.0.0 build
 > vite build
 ✓ 2116 modules transformed.
 dist/assets/index-D15b5MPZ.js   3,111.55 kB │ gzip: 661.99 kB
 ✓ built in 8.13s (Zero Errors)
+```
+
+---
+
+## 🚀 সংস্করণ ৪.০ (Version 4.0) — ডাটাবেস ডিলিট সমন্বয়, ডাইনামিক ক্যাটাগরি ও ইনস্ট্যান্ট কুইক এন্ট্রি বার
+
+### ১. ডাটাবেস ডিলিট সমন্বয় ও ফিক্স (Database Delete & Sync Fix):
+- **সমস্যা সমাধান:** পূর্বে খরচের ভাউচার ডিলিট করলে লোকালস্টোরেজ থেকে মুছলেও গুগল শিটের Apps Script আপডেট না থাকা বা কলাম হেডারের নামের তারতম্য (`ExpenseID` বনাম `Expense ID`) থাকায় গুগল শিটের সারি ডিলিট হতো না এবং পেজ রিফ্রেশ দিলে খরচটি আবার ফিরে আসত।
+- **ব্যাকএন্ড ফিক্স (`backend/Code.gs`):**
+  - `handleDeleteExpense`-এ শক্তিশালী ডুয়েল স্ক্যানার যুক্ত করা হয়েছে (প্রথমে অবজেক্টভিত্তিক এবং ফলব্যাক হিসেবে সরাসরি শিট কলাম স্ক্যান)। ফলে হেডারে স্পেস বা কেস অমিল থাকলেও নিখুঁতভাবে সারি চিহ্নিত করে `deleteRow` ও `SpreadsheetApp.flush()` সম্পন্ন হয়।
+  - `getSheetRowsAsObjects`-এ `SHEETS.EXPENSES` নর্মালাইজেশন যুক্ত করা হয়েছে।
+- **ফ্রন্টএন্ড ফিক্স (`frontend/src/App.jsx`):**
+  - `handleDeleteExpense`-এ এপিআই রেসপন্স ভ্যালিডেশন যুক্ত করা হয়েছে। গুগল শিট থেকে সফলভাবে ডিলিট হলে সবুজ কনফার্মেশন এবং কোনো কারণে আটকে গেলে হলুদ সতর্কবার্তা দেখানো হবে।
+  - ডিলিট করার পূর্বে বিস্তারিত সতর্কতা পপআপ ডায়ালগ যুক্ত করা হয়েছে।
+
+### ২. কাস্টম ক্যাটাগরি তৈরি ও ডাইনামিক ব্যবস্থাপনা (Custom Categories):
+- **ফিচার:** ব্যবহারকারী এখন ৯টি ডিফল্ট ক্যাটাগরির বাইরে নিজের ইচ্ছেমতো যেকোনো নতুন খরচের খাত (যেমন: "দোকানের ডেকোরেশন", "ট্রেড লাইসেন্স", "ফটোকপি ও স্টেশনারি", "দান ও সদকা") স্থায়ীভাবে তৈরি করতে পারবেন।
+- **স্টোরেজ লেয়ার (`frontend/src/services/storage.js`):** `CUSTOM_EXPENSE_CATEGORIES` কী যোগ করা হয়েছে এবং `getLocalExpenseCategories()`, `saveCustomExpenseCategory()`, `deleteCustomExpenseCategory()` ফাংশন সংযুক্ত করা হয়েছে।
+- **পপআপ মডাল (`ExpensesModal.jsx`):** "+ নতুন ব্যয়ের খাত তৈরি" বাটন চাপলে একটি সুন্দর কাস্টম ক্যাটাগরি পপআপ খোলে।
+
+### ৩. ইনস্ট্যান্ট ১-লাইন কুইক ইনপুট বার (Direct 1-Line Quick Entry Bar):
+- **অবস্থান:** `ExpensesModal.jsx`-এর প্রথম পেজ (ট্যাব ১: খরচের তালিকা)-এর শীর্ষে একটি স্থায়ী কুইক ইনপুট বার যোগ করা হয়েছে।
+- **সুবিধা:** ব্যবহারকারীকে আর আলাদা করে কোনো ট্যাবে যেতে হবে না। প্রথম স্ক্রিনেই টাকার পরিমাণ, ক্যাটাগরি ড্রপডাউন এবং বিবরণ লিখে এন্টার দিলেই ৩ সেকেন্ডে খরচ সেভ এবং ক্যাশ ড্রয়ারে সমন্বয় হয়ে যাবে।
+- **কাউন্টার কুইক মডাল (`PosQuickExpenseModal.jsx`):** এখানেও নতুন তৈরি করা সব কাস্টম ক্যাটাগরি স্বয়ংক্রিয়ভাবে ড্রপডাউনে পাওয়া যাবে।
+
+### পরিবর্তিত ফাইলসমূহ (v4.0):
+1. `backend/Code.gs` — `handleDeleteExpense` ফলব্যাক স্ক্যান ও `SHEETS.EXPENSES` ফিল্ড নর্মালাইজেশন।
+2. `frontend/src/services/storage.js` — `CUSTOM_EXPENSE_CATEGORIES` ও ক্যাটাগরি ম্যানেজমেন্ট মেথড।
+3. `frontend/src/services/api.js` — `postDeleteExpense` ক্লাউড সিঙ্ক।
+4. `frontend/src/App.jsx` — `handleDeleteExpense` রেসপন্স হ্যান্ডলিং ও নির্ভুল টোস্ট ফিডব্যাক।
+5. `frontend/src/components/ExpensesModal.jsx` — ১-লাইন ইনস্ট্যান্ট কুইক এন্ট্রি বার, কাস্টম ক্যাটাগরি মডাল ও নিরাপদ ডিলিট অ্যালার্ট।
+6. `frontend/src/components/PosQuickExpenseModal.jsx` — ডাইনামিক ক্যাটাগরি লোডিং।
+
+### বিল্ড ভেরিফিকেশন ফলাফল (v4.0):
+```bash
+> enterprise-pos-inventory@1.0.0 build
+> vite build
+✓ 2116 modules transformed.
+dist/assets/index-CItoouwH.js   3,120.72 kB │ gzip: 663.78 kB
+✓ built in 7.62s (Zero Errors)
 ```
