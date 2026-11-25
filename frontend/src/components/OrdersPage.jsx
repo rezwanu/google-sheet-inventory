@@ -160,13 +160,13 @@ ${trackUrl}
   window.open(waUrl, '_blank');
 }
 
-const AVATAR_GRADIENTS = [
-  'from-indigo-500 to-violet-600',
-  'from-blue-500 to-cyan-600',
-  'from-emerald-500 to-teal-600',
-  'from-amber-500 to-orange-600',
-  'from-rose-500 to-pink-600',
-  'from-purple-500 to-fuchsia-600'
+const AVATAR_STYLES = [
+  'bg-[#0F172A] text-white',
+  'bg-slate-700 text-white',
+  'bg-emerald-50 text-[#15803D] border border-emerald-200/80',
+  'bg-amber-50 text-[#B45309] border border-amber-200/80',
+  'bg-[#F5F5F5] text-[#111111] border border-neutral-200/80',
+  'bg-slate-100 text-[#0F172A] border border-slate-200/80'
 ];
 
 function getCustomerInitials(name) {
@@ -180,62 +180,62 @@ function getCustomerInitials(name) {
 }
 
 function getCustomerAvatarGradient(name) {
-  if (!name) return AVATAR_GRADIENTS[0];
+  if (!name) return AVATAR_STYLES[0];
   let sum = 0;
   for (let i = 0; i < name.length; i++) {
     sum += name.charCodeAt(i);
   }
-  return AVATAR_GRADIENTS[sum % AVATAR_GRADIENTS.length];
+  return AVATAR_STYLES[sum % AVATAR_STYLES.length];
 }
 
 function getCourierBadge(courierName) {
   switch (courierName) {
     case 'Steadfast':
       return {
-        bg: 'bg-sky-50 text-sky-800 border-sky-200/80',
-        dot: 'bg-sky-500',
+        bg: 'bg-emerald-50 text-[#15803D] border-emerald-200/80',
+        dot: 'bg-[#15803D]',
         name: 'Steadfast'
       };
     case 'Pathao':
       return {
-        bg: 'bg-rose-50 text-rose-800 border-rose-200/80',
-        dot: 'bg-rose-500',
+        bg: 'bg-red-50 text-[#B91C1C] border-red-200/80',
+        dot: 'bg-[#B91C1C]',
         name: 'Pathao'
       };
     case 'RedX':
       return {
-        bg: 'bg-red-50 text-red-800 border-red-200/80',
-        dot: 'bg-red-500',
+        bg: 'bg-red-50 text-[#B91C1C] border-red-200/80',
+        dot: 'bg-[#B91C1C]',
         name: 'RedX'
       };
     case 'Paperfly':
       return {
-        bg: 'bg-indigo-50 text-indigo-800 border-indigo-200/80',
-        dot: 'bg-indigo-500',
+        bg: 'bg-[#F5F5F5] text-[#0F172A] border-neutral-200/80',
+        dot: 'bg-[#0F172A]',
         name: 'Paperfly'
       };
     case 'Sundarban':
       return {
-        bg: 'bg-amber-50 text-amber-800 border-amber-200/80',
-        dot: 'bg-amber-500',
+        bg: 'bg-amber-50 text-[#B45309] border-amber-200/80',
+        dot: 'bg-[#B45309]',
         name: 'সুন্দরবন'
       };
     case 'Self':
       return {
-        bg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
-        dot: 'bg-emerald-500',
+        bg: 'bg-emerald-50 text-[#15803D] border-emerald-200/80',
+        dot: 'bg-[#15803D]',
         name: 'নিজস্ব'
       };
     case 'Counter Pickup':
       return {
-        bg: 'bg-teal-50 text-teal-800 border-teal-200/80',
-        dot: 'bg-teal-500',
+        bg: 'bg-[#F5F5F5] text-[#111111] border-neutral-200/80',
+        dot: 'bg-[#0F172A]',
         name: 'কাউন্টার পিকআপ'
       };
     default:
       return {
-        bg: 'bg-slate-100 text-slate-800 border-slate-200',
-        dot: 'bg-slate-500',
+        bg: 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80',
+        dot: 'bg-neutral-500',
         name: courierName || 'কুরিয়ার'
       };
   }
@@ -263,13 +263,13 @@ const ORDER_SOURCES = [
 ];
 
 const ORDER_STATUSES = [
-  { id: 'Pending', label: 'অপেক্ষমান', color: 'bg-amber-100 text-amber-800 border-amber-300' },
-  { id: 'Confirmed', label: 'কনফার্মড', color: 'bg-blue-100 text-blue-800 border-blue-300' },
-  { id: 'Packaging', label: 'প্যাকিং চলছে', color: 'bg-indigo-100 text-indigo-800 border-indigo-300' },
-  { id: 'Shipped', label: 'কুরিয়ারে আছে', color: 'bg-purple-100 text-purple-800 border-purple-300' },
-  { id: 'Delivered', label: 'ডেলিভার্ড', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
-  { id: 'Returned', label: 'রিটার্ন', color: 'bg-rose-100 text-rose-800 border-rose-300' },
-  { id: 'Cancelled', label: 'বাতিল', color: 'bg-slate-100 text-slate-700 border-slate-300' }
+  { id: 'Pending', label: 'অপেক্ষমান', color: 'bg-amber-50 text-[#B45309] border-amber-200/80' },
+  { id: 'Confirmed', label: 'কনফার্মড', color: 'bg-[#F5F5F5] text-[#0F172A] border-neutral-200/80' },
+  { id: 'Packaging', label: 'প্যাকিং চলছে', color: 'bg-slate-100 text-[#0F172A] border-slate-200/80' },
+  { id: 'Shipped', label: 'কুরিয়ারে আছে', color: 'bg-slate-100 text-[#0F172A] border-slate-300' },
+  { id: 'Delivered', label: 'ডেলিভার্ড', color: 'bg-emerald-50 text-[#15803D] border-emerald-200/80' },
+  { id: 'Returned', label: 'রিটার্ন', color: 'bg-red-50 text-[#B91C1C] border-red-200/80' },
+  { id: 'Cancelled', label: 'বাতিল', color: 'bg-[#F5F5F5] text-[#737373] border-neutral-200/80' }
 ];
 
 export default function OrdersPage({
@@ -455,48 +455,45 @@ export default function OrdersPage({
   };
 
   return (
-    <div className="space-y-5 pb-16">
-      {/* ১. শীর্ষ হেডার ও প্রধান অ্যাকশন বার (Ultra-Modern Glassmorphic Hero) */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-7 text-white shadow-xl border border-white/10">
-        {/* ব্যাকগ্রাউন্ড ডেকোরেটিভ গ্লো */}
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-72 h-72 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-20 w-80 h-80 bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="flex items-start sm:items-center space-x-4">
+    <div className="space-y-5 pb-16 bg-[#FAFAFA]">
+      {/* ১. শীর্ষ হেডার ও প্রধান অ্যাকশন বার */}
+      <div className="bg-white rounded-lg p-5 sm:p-6 text-[#111111] border border-neutral-200/80">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center space-x-3.5">
             <div className="relative shrink-0">
-              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 via-violet-500 to-fuchsia-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/40 border border-white/20">
-                <Truck className="w-7 h-7 sm:w-8 sm:h-8 animate-pulse" />
+              <div className="w-12 h-12 rounded-md bg-[#0F172A] text-white flex items-center justify-center">
+                <Truck className="w-6 h-6" />
               </div>
-              <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-slate-900 ring-2 ring-emerald-400/50" />
+              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#15803D] border-2 border-white" />
             </div>
 
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white">
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#111111]">
                   অর্ডার ও ডেলিভারি ম্যানেজমেন্ট
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-violet-400 to-indigo-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-xs flex items-center space-x-1">
-                  <Sparkles className="w-3 h-3 text-slate-950" />
+                <span className="px-2 py-0.5 rounded-md bg-[#F5F5F5] text-[#111111] text-[10px] font-medium uppercase tracking-wider border border-neutral-200/80 flex items-center space-x-1">
+                  <Sparkles className="w-3 h-3 text-[#0F172A]" />
                   <span>AI Engine 2.0</span>
                 </span>
-                <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-white/10 text-emerald-300 text-[10px] font-bold border border-white/10">
-                  ● লাইভ সিঙ্ক অ্যাক্টিভ
+                <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-[#15803D] text-[10px] font-medium border border-emerald-200/80">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#15803D]" />
+                  <span>লাইভ সিঙ্ক অ্যাক্টিভ</span>
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1">
+              <p className="text-xs sm:text-sm text-[#525252] mt-1">
                 স্মার্ট ফ্রড রিক্স স্কোরিং • মাল্টি-কুরিয়ার অটো ট্র্যাকিং • প্রি-অর্ডার ও সেলফ-সার্ভিস রিটার্ন (RMA) পোর্টাল
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0 pt-2 lg:pt-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 pt-2 lg:pt-0">
             {/* গ্রাহক ট্র্যাকিং পোর্টাল বাটন */}
             <button
               onClick={() => setCustomerTrackingOrderId('ANY')}
-              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold rounded-2xl transition-all backdrop-blur-md border border-white/15 flex items-center space-x-2 cursor-pointer shadow-xs active:scale-95"
+              className="min-h-[44px] sm:min-h-[36px] px-4 py-2 bg-white hover:bg-[#F5F5F5] text-[#111111] text-xs sm:text-sm font-medium rounded-md transition-colors border border-neutral-200/80 flex items-center space-x-2 cursor-pointer"
             >
-              <ExternalLink className="w-4 h-4 text-indigo-300" />
+              <ExternalLink className="w-4 h-4 text-[#525252]" />
               <span>গ্রাহক ট্র্যাকিং পোর্টাল</span>
             </button>
 
@@ -506,151 +503,151 @@ export default function OrdersPage({
                 setEditingOrder(null);
                 setIsCreateModalOpen(true);
               }}
-              className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white text-xs sm:text-sm font-black rounded-2xl shadow-xl shadow-indigo-500/30 active:scale-95 transition-all flex items-center space-x-2 cursor-pointer border border-indigo-400/30"
+              className="min-h-[44px] sm:min-h-[36px] px-4 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs sm:text-sm font-medium rounded-md transition-colors flex items-center space-x-2 cursor-pointer border border-[#0F172A]"
             >
-              <Plus className="w-4 h-4 stroke-[3]" />
+              <Plus className="w-4 h-4" />
               <span>নতুন অর্ডার তৈরি করুন</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* ২. হাই-কনভার্টিং সারাংশ মেট্রিক কার্ডসমূহ (Bento Metric Cards) */}
+      {/* ২. সারাংশ মেট্রিক কার্ডসমূহ */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {/* মোট অর্ডার */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 p-4 sm:p-4.5 rounded-3xl text-white shadow-md border border-slate-700/60 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
+        <div className="bg-white p-4 rounded-lg border border-neutral-200/80">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">মোট অর্ডার</span>
-            <div className="w-7 h-7 rounded-xl bg-white/10 flex items-center justify-center text-indigo-300">
+            <span className="text-[10px] sm:text-[11px] font-medium text-[#525252] uppercase tracking-wider">মোট অর্ডার</span>
+            <div className="w-7 h-7 rounded-md bg-[#F5F5F5] border border-neutral-200/80 flex items-center justify-center text-[#0F172A]">
               <ShoppingBag className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline space-x-1.5">
-            <span className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">{metrics.total}</span>
-            <span className="text-[10px] text-slate-400 font-medium">টি</span>
+            <span className="text-2xl font-semibold text-[#111111] font-mono tabular-nums tracking-tight">{metrics.total}</span>
+            <span className="text-[10px] text-[#737373] font-medium">টি</span>
           </div>
-          <div className="mt-1.5 flex items-center text-[10px] text-indigo-300 font-medium">
+          <div className="mt-1.5 flex items-center text-[10px] text-[#525252] font-medium font-mono tabular-nums">
             <span>সফলতা রেট: {metrics.successRate}%</span>
           </div>
         </div>
 
         {/* অপেক্ষমান */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white p-4 sm:p-4.5 rounded-3xl border border-amber-200/80 shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+        <div className="bg-white p-4 rounded-lg border border-neutral-200/80">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold text-amber-800 uppercase tracking-wider">অপেক্ষমান</span>
-            <div className="w-7 h-7 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-700">
+            <span className="text-[10px] sm:text-[11px] font-medium text-[#525252] uppercase tracking-wider">অপেক্ষমান</span>
+            <div className="w-7 h-7 rounded-md bg-amber-50 border border-amber-200/80 flex items-center justify-center text-[#B45309]">
               <Clock className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline space-x-1.5">
-            <span className="text-2xl sm:text-3xl font-black text-amber-950 font-mono tracking-tight">{metrics.pending}</span>
-            <span className="text-[10px] text-amber-700 font-medium">টি</span>
+            <span className="text-2xl font-semibold text-[#B45309] font-mono tabular-nums tracking-tight">{metrics.pending}</span>
+            <span className="text-[10px] text-[#737373] font-medium">টি</span>
           </div>
-          <div className="mt-1.5 flex items-center space-x-1 text-[10px] text-amber-700 font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+          <div className="mt-1.5 flex items-center space-x-1.5 text-[10px] text-[#B45309] font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#B45309]" />
             <span>যাচাই প্রয়োজন</span>
           </div>
         </div>
 
         {/* কুরিয়ারে আছে */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-white p-4 sm:p-4.5 rounded-3xl border border-purple-200/80 shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+        <div className="bg-white p-4 rounded-lg border border-neutral-200/80">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold text-purple-800 uppercase tracking-wider">কুরিয়ারে আছে</span>
-            <div className="w-7 h-7 rounded-xl bg-purple-500/15 flex items-center justify-center text-purple-700">
+            <span className="text-[10px] sm:text-[11px] font-medium text-[#525252] uppercase tracking-wider">কুরিয়ারে আছে</span>
+            <div className="w-7 h-7 rounded-md bg-[#F5F5F5] border border-neutral-200/80 flex items-center justify-center text-[#0F172A]">
               <Truck className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline space-x-1.5">
-            <span className="text-2xl sm:text-3xl font-black text-purple-950 font-mono tracking-tight">{metrics.shipped}</span>
-            <span className="text-[10px] text-purple-700 font-medium">টি</span>
+            <span className="text-2xl font-semibold text-[#111111] font-mono tabular-nums tracking-tight">{metrics.shipped}</span>
+            <span className="text-[10px] text-[#737373] font-medium">টি</span>
           </div>
-          <div className="mt-1.5 text-[10px] text-purple-700 font-medium truncate">
+          <div className="mt-1.5 text-[10px] text-[#525252] font-medium truncate">
             <span>ডেলিভারির পথে চলমান</span>
           </div>
         </div>
 
         {/* প্রি-অর্ডার */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-white p-4 sm:p-4.5 rounded-3xl border border-violet-200/80 shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+        <div className="bg-white p-4 rounded-lg border border-neutral-200/80">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold text-violet-800 uppercase tracking-wider">প্রি-অর্ডার</span>
-            <div className="w-7 h-7 rounded-xl bg-violet-500/15 flex items-center justify-center text-violet-700">
+            <span className="text-[10px] sm:text-[11px] font-medium text-[#525252] uppercase tracking-wider">প্রি-অর্ডার</span>
+            <div className="w-7 h-7 rounded-md bg-[#F5F5F5] border border-neutral-200/80 flex items-center justify-center text-[#0F172A]">
               <Bookmark className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline space-x-1.5">
-            <span className="text-2xl sm:text-3xl font-black text-violet-950 font-mono tracking-tight">{metrics.preOrders}</span>
-            <span className="text-[10px] text-violet-700 font-medium">টি</span>
+            <span className="text-2xl font-semibold text-[#111111] font-mono tabular-nums tracking-tight">{metrics.preOrders}</span>
+            <span className="text-[10px] text-[#737373] font-medium">টি</span>
           </div>
-          <div className="mt-1.5 text-[10px] text-violet-700 font-bold">
+          <div className="mt-1.5 text-[10px] text-[#525252] font-medium">
             <span>অগ্রিম বুকিং</span>
           </div>
         </div>
 
         {/* ডেলিভার্ড */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-white p-4 sm:p-4.5 rounded-3xl border border-emerald-200/80 shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+        <div className="bg-white p-4 rounded-lg border border-neutral-200/80">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase tracking-wider">ডেলিভার্ড</span>
-            <div className="w-7 h-7 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-700">
+            <span className="text-[10px] sm:text-[11px] font-medium text-[#525252] uppercase tracking-wider">ডেলিভার্ড</span>
+            <div className="w-7 h-7 rounded-md bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-[#15803D]">
               <CheckCircle2 className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline space-x-1.5">
-            <span className="text-2xl sm:text-3xl font-black text-emerald-950 font-mono tracking-tight">{metrics.delivered}</span>
-            <span className="text-[10px] text-emerald-700 font-medium">টি</span>
+            <span className="text-2xl font-semibold text-[#15803D] font-mono tabular-nums tracking-tight">{metrics.delivered}</span>
+            <span className="text-[10px] text-[#737373] font-medium">টি</span>
           </div>
-          <div className="mt-1.5 text-[10px] text-emerald-700 font-bold">
+          <div className="mt-1.5 text-[10px] text-[#15803D] font-medium">
             <span>সফল ডেলিভারি</span>
           </div>
         </div>
 
         {/* সংগ্রহযোগ্য COD */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-white p-4 sm:p-4.5 rounded-3xl border border-rose-200/80 shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+        <div className="bg-white p-4 rounded-lg border border-neutral-200/80">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-bold text-rose-800 uppercase tracking-wider">বাকি COD</span>
-            <div className="w-7 h-7 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-700">
+            <span className="text-[10px] sm:text-[11px] font-medium text-[#525252] uppercase tracking-wider">বাকি COD</span>
+            <div className="w-7 h-7 rounded-md bg-red-50 border border-red-200/80 flex items-center justify-center text-[#B91C1C]">
               <DollarSign className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-2">
-            <span className="text-lg sm:text-xl font-black text-rose-950 font-mono tracking-tight block truncate">
+            <span className="text-lg sm:text-xl font-semibold text-[#B91C1C] font-mono tabular-nums tracking-tight block truncate">
               {currencySymbol}{metrics.totalDueCod.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
           </div>
-          <div className="mt-1 text-[10px] text-rose-700 font-bold">
+          <div className="mt-1.5 text-[10px] text-[#B91C1C] font-medium">
             <span>উত্তোলনীয় ক্যাশ</span>
           </div>
         </div>
       </div>
 
       {/* ৩. ট্যাব বার ও ফিল্টার কন্ট্রোল (Tabs & Filter Controls) */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
+      <div className="bg-white rounded-lg p-4 sm:p-5 border border-neutral-200/80 space-y-4">
         {/* ওমনিচ্যানেল চ্যানেল ফিল্টার কন্ট্রোল (All vs Online vs In-Store POS) */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
-          <div className="flex items-center space-x-2">
-            <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center space-x-1.5">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600" />
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-neutral-200/80">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-[#525252] uppercase tracking-wider flex items-center space-x-1.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#0F172A]" />
               <span>বিক্রয় চ্যানেল:</span>
             </span>
-            <div className="flex items-center p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
+            <div className="flex flex-wrap items-center gap-1 p-1 bg-[#F5F5F5] rounded-md border border-neutral-200/80">
               {[
                 { id: 'all', label: 'সকল চ্যানেল (All)', count: metrics.total },
-                { id: 'online', label: '🌐 অনলাইন ডেলিভারি', count: metrics.onlineCount },
-                { id: 'offline', label: '🏪 ইন-স্টোর / কাউন্টার (POS)', count: metrics.offlineCount },
+                { id: 'online', label: 'অনলাইন ডেলিভারি', count: metrics.onlineCount },
+                { id: 'offline', label: 'ইন-স্টোর / কাউন্টার (POS)', count: metrics.offlineCount },
               ].map((c) => {
                 const isActive = channelFilter === c.id;
                 return (
                   <button
                     key={c.id}
                     onClick={() => setChannelFilter(c.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center space-x-1.5 cursor-pointer border ${
                       isActive
-                        ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'border-[#0F172A] bg-[#0F172A] text-white'
+                        : 'border-transparent text-[#525252] hover:text-[#111111]'
                     }`}
                   >
                     <span>{c.label}</span>
-                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                      isActive ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-200 text-slate-600'
+                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono tabular-nums font-medium ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-white text-[#525252] border border-neutral-200/80'
                     }`}>
                       {c.count}
                     </span>
@@ -660,22 +657,22 @@ export default function OrdersPage({
             </div>
           </div>
 
-          <div className="text-xs text-slate-500 font-medium">
-            ফিল্টারকৃত: <strong className="text-slate-800 font-bold">{filteredOrders.length}</strong> টি অর্ডার
+          <div className="text-xs text-[#525252] font-medium">
+            ফিল্টারকৃত: <strong className="text-[#111111] font-semibold font-mono tabular-nums">{filteredOrders.length}</strong> টি অর্ডার
           </div>
         </div>
 
         {/* ৩.১ স্ট্যাটাস ট্যাবসমূহ */}
-        <div className="flex items-center space-x-1.5 sm:space-x-2 overflow-x-auto pb-1.5 scrollbar-none border-b border-slate-100">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 overflow-x-auto pb-2 scrollbar-none border-b border-neutral-200/80">
           {[
             { id: 'all', label: 'সব অর্ডার', count: metrics.total, icon: ShoppingBag },
-            { id: 'Pending', label: 'অপেক্ষমান', count: metrics.pending, icon: Clock, badgeClass: 'bg-amber-100 text-amber-800' },
+            { id: 'Pending', label: 'অপেক্ষমান', count: metrics.pending, icon: Clock, badgeClass: 'bg-amber-50 text-[#B45309] border border-amber-200/80' },
             { id: 'Confirmed', label: 'কনফার্মড', count: orders.filter(o => o.Status === 'Confirmed').length, icon: CheckCircle2 },
             { id: 'Packaging', label: 'প্যাকিং', count: orders.filter(o => o.Status === 'Packaging').length, icon: Package },
-            { id: 'Shipped', label: 'কুরিয়ারে আছে', count: metrics.shipped, icon: Truck, badgeClass: 'bg-purple-100 text-purple-800' },
-            { id: 'Delivered', label: 'ডেলিভার্ড', count: metrics.delivered, icon: Check, badgeClass: 'bg-emerald-100 text-emerald-800' },
-            { id: 'PreOrder', label: 'প্রি-অর্ডার', count: metrics.preOrders, icon: Bookmark, badgeColor: 'bg-violet-600 text-white shadow-xs' },
-            { id: 'RMA', label: 'রিটার্ন আবেদন', count: metrics.rmaPending, icon: RotateCcw, badgeColor: 'bg-gradient-to-r from-orange-500 to-rose-500 text-white animate-pulse' },
+            { id: 'Shipped', label: 'কুরিয়ারে আছে', count: metrics.shipped, icon: Truck, badgeClass: 'bg-slate-100 text-[#0F172A] border border-slate-200/80' },
+            { id: 'Delivered', label: 'ডেলিভার্ড', count: metrics.delivered, icon: Check, badgeClass: 'bg-emerald-50 text-[#15803D] border border-emerald-200/80' },
+            { id: 'PreOrder', label: 'প্রি-অর্ডার', count: metrics.preOrders, icon: Bookmark, badgeClass: 'bg-[#F5F5F5] text-[#111111] border border-neutral-200/80' },
+            { id: 'RMA', label: 'রিটার্ন আবেদন', count: metrics.rmaPending, icon: RotateCcw, badgeClass: 'bg-red-50 text-[#B91C1C] border border-red-200/80' },
             { id: 'Returned', label: 'রিটার্ন', count: orders.filter(o => o.Status === 'Returned').length, icon: RotateCcw },
             { id: 'Cancelled', label: 'বাতিল', count: orders.filter(o => o.Status === 'Cancelled').length, icon: Trash2 },
           ].map((tab) => {
@@ -685,23 +682,21 @@ export default function OrdersPage({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap flex items-center space-x-1.5 cursor-pointer shrink-0 ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap flex items-center space-x-1.5 cursor-pointer shrink-0 border ${
                   isActive
-                    ? 'bg-slate-900 text-white shadow-md shadow-slate-900/20 ring-2 ring-slate-900/10'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    ? 'border-[#0F172A] bg-[#0F172A] text-white'
+                    : 'border-transparent text-[#525252] hover:bg-[#F5F5F5] hover:text-[#111111]'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-400' : 'text-slate-400'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-[#737373]'}`} />
                 <span>{tab.label}</span>
                 <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                    tab.badgeColor
-                      ? tab.badgeColor
-                      : isActive
+                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono tabular-nums font-medium ${
+                    isActive
                       ? 'bg-white/20 text-white'
                       : tab.badgeClass
                       ? tab.badgeClass
-                      : 'bg-slate-200/80 text-slate-700'
+                      : 'bg-[#F5F5F5] text-[#525252] border border-neutral-200/80'
                   }`}
                 >
                   {tab.count}
@@ -714,23 +709,23 @@ export default function OrdersPage({
         {/* ৩.২ সার্চ বার, ড্রপডাউন ও ভিউ মোড সুইচার */}
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
           <div className="sm:col-span-4 relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#737373] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="অর্ডার আইডি, ফোন বা নাম দিয়ে খুঁজুন..."
-              className="w-full pl-10 pr-16 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-medium"
+              className="w-full min-h-[44px] sm:min-h-[36px] pl-10 pr-16 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] placeholder-[#737373] focus:outline-none focus:bg-white focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] transition-colors font-medium"
             />
             {searchQuery ? (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#111111] cursor-pointer p-1"
               >
                 <X className="w-4 h-4" />
               </button>
             ) : (
-              <span className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 bg-slate-200/60 text-slate-500 text-[10px] font-mono rounded">
+              <span className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 bg-[#F5F5F5] border border-neutral-200/80 text-[#737373] text-[10px] font-mono rounded-md">
                 Ctrl+K
               </span>
             )}
@@ -740,9 +735,9 @@ export default function OrdersPage({
             <select
               value={courierFilter}
               onChange={(e) => setCourierFilter(e.target.value)}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-700 font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+              className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] font-medium focus:outline-none focus:bg-white focus:border-[#0F172A] cursor-pointer"
             >
-              <option value="all">🚚 সকল কুরিয়ার</option>
+              <option value="all">সকল কুরিয়ার</option>
               {COURIER_LIST.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -753,9 +748,9 @@ export default function OrdersPage({
             <select
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value)}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-700 font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+              className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] font-medium focus:outline-none focus:bg-white focus:border-[#0F172A] cursor-pointer"
             >
-              <option value="all">🌐 সকল সোর্স</option>
+              <option value="all">সকল সোর্স</option>
               {ORDER_SOURCES.map((s) => (
                 <option key={s.id} value={s.id}>{s.label}</option>
               ))}
@@ -766,24 +761,24 @@ export default function OrdersPage({
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-700 font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+              className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] font-medium focus:outline-none focus:bg-white focus:border-[#0F172A] cursor-pointer"
             >
-              <option value="all">📅 সব সময়</option>
-              <option value="today">☀️ আজকের অর্ডার</option>
-              <option value="yesterday">⌛ গতকাল</option>
-              <option value="last7">📆 বিগত ৭ দিন</option>
-              <option value="thisMonth">🗓️ এই চলতি মাস</option>
+              <option value="all">সব সময়</option>
+              <option value="today">আজকের অর্ডার</option>
+              <option value="yesterday">গতকাল</option>
+              <option value="last7">বিগত ৭ দিন</option>
+              <option value="thisMonth">এই চলতি মাস</option>
             </select>
           </div>
 
           {/* ভিউ সুইচ কন্ট্রোল (টেবিল বনাম কার্ডস) */}
           <div className="sm:col-span-2 flex items-center justify-end">
-            <div className="flex items-center p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
+            <div className="flex items-center p-0.5 bg-[#F5F5F5] rounded-md border border-neutral-200/80">
               <button
                 type="button"
                 onClick={() => setViewMode('table')}
-                className={`p-1.5 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
-                  viewMode === 'table' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                className={`min-h-[44px] sm:min-h-[36px] px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center space-x-1 cursor-pointer ${
+                  viewMode === 'table' ? 'bg-[#0F172A] text-white' : 'text-[#525252] hover:text-[#111111]'
                 }`}
                 title="টেবিল ভিউ"
               >
@@ -793,8 +788,8 @@ export default function OrdersPage({
               <button
                 type="button"
                 onClick={() => setViewMode('cards')}
-                className={`p-1.5 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
-                  viewMode === 'cards' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                className={`min-h-[44px] sm:min-h-[36px] px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center space-x-1 cursor-pointer ${
+                  viewMode === 'cards' ? 'bg-[#0F172A] text-white' : 'text-[#525252] hover:text-[#111111]'
                 }`}
                 title="কার্ড গ্রিড ভিউ"
               >
@@ -808,13 +803,13 @@ export default function OrdersPage({
 
       {/* ৪. অর্ডার তালিকা ও ডিসপ্লে সেকশন (Orders Presentation) */}
       {filteredOrders.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center space-y-4 border border-slate-200 shadow-sm">
-          <div className="w-16 h-16 rounded-3xl bg-indigo-50 text-indigo-500 flex items-center justify-center mx-auto shadow-inner">
-            <ShoppingBag className="w-8 h-8 stroke-[1.5]" />
+        <div className="bg-white rounded-lg p-12 text-center space-y-4 border border-neutral-200/80">
+          <div className="w-14 h-14 rounded-lg bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center mx-auto">
+            <ShoppingBag className="w-7 h-7 stroke-[1.5]" />
           </div>
           <div>
-            <h3 className="text-base font-black text-slate-800">কোনো অর্ডার পাওয়া যায়নি</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+            <h3 className="text-base font-semibold tracking-tight text-[#111111]">কোনো অর্ডার পাওয়া যায়নি</h3>
+            <p className="text-xs text-[#525252] max-w-sm mx-auto mt-1">
               {searchQuery || activeTab !== 'all' || courierFilter !== 'all' || sourceFilter !== 'all' || dateFilter !== 'all'
                 ? 'আপনার সার্চ বা নির্বাচিত ফিল্টারের সাথে মিল রয়েছে এমন কোনো অর্ডার পাওয়া যায়নি।'
                 : 'এখনো কোনো ডেলিভারি অর্ডার এন্ট্রি করা হয়নি। নতুন অর্ডার নিতে উপরের বাটনে চাপুন।'}
@@ -829,7 +824,7 @@ export default function OrdersPage({
                 setSourceFilter('all');
                 setDateFilter('all');
               }}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] px-4 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium rounded-md transition-colors cursor-pointer"
             >
               ফিল্টার রিসেট করুন
             </button>
@@ -838,17 +833,17 @@ export default function OrdersPage({
       ) : (
         <>
           {/* ৪.১ ডেস্কটপ ডাটা টেবিল ভিউ (Table View) */}
-          <div className={`${viewMode === 'table' ? 'hidden md:block' : 'hidden'} bg-white rounded-3xl shadow-sm border border-slate-200/90 overflow-hidden`}>
+          <div className={`${viewMode === 'table' ? 'hidden md:block' : 'hidden'} bg-white rounded-lg border border-neutral-200/80 overflow-hidden`}>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50/90 border-b border-slate-200/90 text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">
+                  <tr className="bg-[#F5F5F5] border-b border-neutral-200/80 text-[#525252] font-medium uppercase tracking-wider text-[10px]">
                     <th className="p-4 pl-4 w-10 text-center">
                       <input
                         type="checkbox"
                         checked={isAllSelected}
                         onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
+                        className="w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A] cursor-pointer accent-[#0F172A]"
                         title="সব অর্ডার সিলেক্ট করুন"
                       />
                     </th>
@@ -861,7 +856,7 @@ export default function OrdersPage({
                     <th className="p-4 pr-6 whitespace-nowrap min-w-[140px] text-center">অ্যাকশন</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                <tbody className="divide-y divide-neutral-200/80 font-medium text-[#525252]">
                   {filteredOrders.map((order) => {
                     const statusObj = ORDER_STATUSES.find(s => s.id === order.Status) || ORDER_STATUSES[0];
                     const courierBadge = getCourierBadge(order.CourierName);
@@ -873,34 +868,34 @@ export default function OrdersPage({
 
                     // এআই ফ্রড ও রিটার্ন রিস্ক বিশ্লেষণ
                     const risk = calculateOrderRisk(order, orders);
-                    const avatarGradient = getCustomerAvatarGradient(order.CustomerName);
+                    const avatarStyle = getCustomerAvatarGradient(order.CustomerName);
                     const initials = getCustomerInitials(order.CustomerName);
 
                     return (
-                      <tr key={order.OrderID} className="hover:bg-indigo-50/20 transition-colors group">
+                      <tr key={order.OrderID} className="hover:bg-[#FAFAFA] transition-colors group">
                         {/* সিলেকশন চেকবক্স */}
                         <td className="p-4 pl-4 align-top text-center w-10" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={selectedOrderIds.includes(order.OrderID)}
                             onChange={(e) => toggleSelectOrder(order.OrderID, e)}
-                            className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600 mt-1"
+                            className="w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A] cursor-pointer accent-[#0F172A] mt-1"
                           />
                         </td>
 
                         {/* অর্ডার আইডি ও সোর্স */}
                         <td className="p-4 pl-2 align-top whitespace-nowrap min-w-[140px]">
                           <div className="flex items-center space-x-1.5">
-                            <span className="font-mono font-extrabold text-indigo-700 text-xs tracking-tight whitespace-nowrap">
+                            <span className="font-mono tabular-nums font-semibold text-[#111111] text-xs tracking-tight whitespace-nowrap">
                               {order.OrderID}
                             </span>
                             <button
                               onClick={() => handleCopyId(order.OrderID)}
                               title="আইডি কপি করুন"
-                              className="text-slate-400 hover:text-slate-600 cursor-pointer p-0.5 rounded hover:bg-slate-100"
+                              className="text-[#737373] hover:text-[#111111] cursor-pointer p-0.5 rounded-md hover:bg-[#F5F5F5]"
                             >
                               {copiedId === order.OrderID ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <Check className="w-3.5 h-3.5 text-[#15803D]" />
                               ) : (
                                 <Copy className="w-3.5 h-3.5" />
                               )}
@@ -908,19 +903,19 @@ export default function OrdersPage({
                           </div>
 
                           <div className="flex flex-col items-start gap-1 mt-1">
-                            <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{formattedDate}</span>
+                            <span className="text-[10px] text-[#737373] font-mono tabular-nums font-medium whitespace-nowrap">{formattedDate}</span>
                             {order.OrderSource === 'In-Store / POS' || order.OrderSource === 'Walk-in' || order.CourierName === 'Counter Pickup' ? (
-                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md text-[9px] font-bold whitespace-nowrap">
-                                🏪 ইন-স্টোর (POS)
+                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 bg-emerald-50 text-[#15803D] border border-emerald-200/80 rounded-md text-[9px] font-medium whitespace-nowrap">
+                                ইন-স্টোর (POS)
                               </span>
                             ) : (
-                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[9px] font-bold whitespace-nowrap">
-                                🌐 {order.OrderSource || 'অনলাইন'}
+                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 rounded-md text-[9px] font-medium whitespace-nowrap">
+                                {order.OrderSource || 'অনলাইন'}
                               </span>
                             )}
 
                             {order.IsPreOrder && (
-                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md text-[9px] font-black bg-violet-100 text-violet-800 border border-violet-200 whitespace-nowrap">
+                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-amber-50 text-[#B45309] border border-amber-200/80 whitespace-nowrap">
                                 <Bookmark className="w-2.5 h-2.5" />
                                 <span>প্রি-অর্ডার</span>
                               </span>
@@ -931,30 +926,30 @@ export default function OrdersPage({
                         {/* কাস্টমার তথ্য ও এআই রিস্ক স্কোর */}
                         <td className="p-4 align-top min-w-[190px]">
                           <div className="flex items-start space-x-2.5">
-                            <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${avatarGradient} text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs mt-0.5`}>
+                            <div className={`w-8 h-8 rounded-md ${avatarStyle} font-semibold text-xs flex items-center justify-center shrink-0 mt-0.5`}>
                               {initials}
                             </div>
 
                             <div className="space-y-1 min-w-0">
                               <div className="flex items-center flex-wrap gap-1.5">
-                                <span className="font-bold text-slate-900 text-xs truncate max-w-[150px]" title={order.CustomerName}>
+                                <span className="font-semibold text-[#111111] text-xs truncate max-w-[150px]" title={order.CustomerName}>
                                   {order.CustomerName}
                                 </span>
 
                                 {/* এআই রিস্ক ব্যাজ */}
                                 <span
-                                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold border shrink-0 cursor-help ${
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-medium border shrink-0 cursor-help ${
                                     risk.level === 'High'
-                                      ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-2xs'
+                                      ? 'bg-red-50 text-[#B91C1C] border-red-200/80'
                                       : risk.level === 'Medium'
-                                      ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      ? 'bg-amber-50 text-[#B45309] border-amber-200/80'
+                                      : 'bg-emerald-50 text-[#15803D] border-emerald-200/80'
                                   }`}
                                   title={risk.flags.length > 0 ? risk.flags.join(' • ') : risk.recommendation}
                                 >
                                   {risk.level === 'High' ? (
                                     <>
-                                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#B91C1C] shrink-0" />
                                       <span className="whitespace-nowrap">উচ্চ ঝুঁকি</span>
                                     </>
                                   ) : risk.level === 'Medium' ? (
@@ -972,37 +967,37 @@ export default function OrdersPage({
                               </div>
 
                               {order.CustomerPhone ? (
-                                <div className="flex items-center space-x-1 text-slate-500 text-[11px] font-mono">
+                                <div className="flex items-center space-x-1 text-[#525252] text-[11px] font-mono tabular-nums">
                                   <a
                                     href={`tel:${order.CustomerPhone}`}
-                                    className="hover:text-indigo-600 flex items-center space-x-1"
+                                    className="hover:text-[#0F172A] flex items-center space-x-1"
                                     title="কল করতে ক্লিক করুন"
                                   >
-                                    <Phone className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                                    <Phone className="w-2.5 h-2.5 text-[#737373] shrink-0" />
                                     <span>{order.CustomerPhone}</span>
                                   </a>
                                 </div>
                               ) : (
-                                <span className="text-[10px] text-slate-400 italic block">ফোন নম্বর নেই</span>
+                                <span className="text-[10px] text-[#737373] italic block">ফোন নম্বর নেই</span>
                               )}
 
                               {order.CustomerAddress && (
-                                <div className="flex items-start space-x-1 text-slate-400 text-[10px] max-w-[200px] truncate" title={order.CustomerAddress}>
-                                  <MapPin className="w-2.5 h-2.5 text-slate-400 shrink-0 mt-0.5" />
+                                <div className="flex items-start space-x-1 text-[#737373] text-[10px] max-w-[200px] truncate" title={order.CustomerAddress}>
+                                  <MapPin className="w-2.5 h-2.5 text-[#737373] shrink-0 mt-0.5" />
                                   <span className="truncate">{order.CustomerAddress}</span>
                                 </div>
                               )}
 
                               {order.RmaRequest && (
                                 <div className="pt-0.5">
-                                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black border ${
+                                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium border ${
                                     order.RmaRequest.status === 'Approved'
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80'
                                       : order.RmaRequest.status === 'Rejected'
-                                      ? 'bg-slate-100 text-slate-600 border-slate-200'
-                                      : 'bg-orange-50 text-orange-700 border-orange-200 animate-pulse'
+                                      ? 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80'
+                                      : 'bg-amber-50 text-[#B45309] border-amber-200/80'
                                   }`}>
-                                    {order.RmaRequest.status === 'Approved' ? '✓ রিটার্ন গৃহীত' : order.RmaRequest.status === 'Rejected' ? '✕ রিটার্ন বাতিল' : '⚡ রিটার্ন আবেদন এসেছে'}
+                                    {order.RmaRequest.status === 'Approved' ? 'রিটার্ন গৃহীত' : order.RmaRequest.status === 'Rejected' ? 'রিটার্ন বাতিল' : 'রিটার্ন আবেদন এসেছে'}
                                   </span>
                                 </div>
                               )}
@@ -1014,17 +1009,17 @@ export default function OrdersPage({
                         <td className="p-4 align-top min-w-[180px] max-w-[260px]">
                           <div className="space-y-1.5">
                             {(order.Items || []).slice(0, 2).map((item, idx) => (
-                              <div key={idx} className="text-[11px] text-slate-700 flex items-center justify-between gap-1.5 bg-slate-50/70 p-1.5 rounded-xl border border-slate-100">
-                                <span className="font-semibold truncate" title={item.productName || item.ProductName}>
+                              <div key={idx} className="text-[11px] text-[#111111] flex items-center justify-between gap-1.5 bg-[#FAFAFA] p-1.5 rounded-md border border-neutral-200/80">
+                                <span className="font-medium truncate" title={item.productName || item.ProductName}>
                                   {item.productName || item.ProductName}
                                 </span>
-                                <span className="font-mono font-bold text-slate-600 bg-white border border-slate-200 px-1.5 py-0.2 rounded text-[10px] shrink-0">
+                                <span className="font-mono tabular-nums font-semibold text-[#525252] bg-white border border-neutral-200/80 px-1.5 py-0.5 rounded-md text-[10px] shrink-0">
                                   ×{item.quantity || item.Quantity}
                                 </span>
                               </div>
                             ))}
                             {(order.Items || []).length > 2 && (
-                              <span className="text-[10px] font-bold text-indigo-600 block pl-1">
+                              <span className="text-[10px] font-medium text-[#525252] font-mono tabular-nums block pl-1">
                                 + আরো {(order.Items || []).length - 2}টি আইটেম
                               </span>
                             )}
@@ -1034,43 +1029,43 @@ export default function OrdersPage({
                         {/* কুরিয়ার ও ট্র্যাকিং */}
                         <td className="p-4 align-top whitespace-nowrap min-w-[140px]">
                           <div className="space-y-1">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-bold border whitespace-nowrap shadow-2xs ${courierBadge.bg}`}>
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium border whitespace-nowrap ${courierBadge.bg}`}>
                               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${courierBadge.dot}`} />
                               <span className="whitespace-nowrap">{courierBadge.name}</span>
                             </span>
 
                             {order.TrackingID ? (
                               <div className="flex items-center space-x-1 pt-0.5">
-                                <span className="font-mono text-[10px] text-indigo-700 bg-indigo-50/80 px-1.5 py-0.5 rounded-md border border-indigo-100 font-bold whitespace-nowrap">
+                                <span className="font-mono tabular-nums text-[10px] text-[#111111] bg-[#F5F5F5] px-1.5 py-0.5 rounded-md border border-neutral-200/80 font-medium whitespace-nowrap">
                                   {order.TrackingID}
                                 </span>
                                 <button
                                   onClick={() => handleCopyId(order.TrackingID)}
                                   title="ট্র্যাকিং কোড কপি করুন"
-                                  className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                                  className="text-[#737373] hover:text-[#111111] p-0.5 rounded-md cursor-pointer"
                                 >
                                   {copiedId === order.TrackingID ? (
-                                    <Check className="w-3 h-3 text-emerald-600" />
+                                    <Check className="w-3 h-3 text-[#15803D]" />
                                   ) : (
                                     <Copy className="w-3 h-3" />
                                   )}
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-[10px] text-slate-400 italic block pt-0.5">
+                              <span className="text-[10px] text-[#737373] italic block pt-0.5">
                                 ট্র্যাকিং নেই
                               </span>
                             )}
 
                             {order.ConsignmentID && (
-                              <div className="text-[9px] text-slate-500 font-mono">
-                                CID: <span className="font-bold text-slate-700">{order.ConsignmentID}</span>
+                              <div className="text-[9px] text-[#737373] font-mono tabular-nums">
+                                CID: <span className="font-semibold text-[#111111]">{order.ConsignmentID}</span>
                               </div>
                             )}
 
                             {order.SmsStatus && (
                               <div className="pt-0.5">
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-violet-50 text-violet-700 rounded text-[9px] font-bold border border-violet-200">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#F5F5F5] text-[#111111] rounded-md text-[9px] font-medium border border-neutral-200/80">
                                   <MessageSquare className="w-2.5 h-2.5" />
                                   <span>SMS: {order.SmsStatus}</span>
                                 </span>
@@ -1081,21 +1076,21 @@ export default function OrdersPage({
 
                         {/* টাকার হিসাব (COD / Due) */}
                         <td className="p-4 align-top text-right whitespace-nowrap min-w-[130px]">
-                          <div className="text-[11px] font-bold text-slate-700">
-                            মোট: <span className="font-extrabold text-slate-900 font-mono">{currencySymbol}{Number(order.TotalAmount || 0).toLocaleString('en-US')}</span>
+                          <div className="text-[11px] font-medium text-[#525252]">
+                            মোট: <span className="font-semibold text-[#111111] font-mono tabular-nums">{currencySymbol}{Number(order.TotalAmount || 0).toLocaleString('en-US')}</span>
                           </div>
                           {Number(order.AdvancePaid || 0) > 0 && (
-                            <div className="text-[10px] text-emerald-700 font-medium mt-0.5">
-                              অগ্রিম: <span className="font-bold font-mono">{currencySymbol}{Number(order.AdvancePaid || 0).toLocaleString('en-US')}</span>
+                            <div className="text-[10px] text-[#15803D] font-medium mt-0.5">
+                              অগ্রিম: <span className="font-semibold font-mono tabular-nums">{currencySymbol}{Number(order.AdvancePaid || 0).toLocaleString('en-US')}</span>
                             </div>
                           )}
                           <div className="mt-1">
                             {Number(order.DueAmount || 0) > 0 ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200 font-mono">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-red-50 text-[#B91C1C] border border-red-200/80 font-mono tabular-nums">
                                 COD: {currencySymbol}{Number(order.DueAmount || 0).toLocaleString('en-US')}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-emerald-50 text-[#15803D] border border-emerald-200/80">
                                 <Check className="w-2.5 h-2.5" />
                                 <span>পরিশোধিত</span>
                               </span>
@@ -1111,7 +1106,7 @@ export default function OrdersPage({
                                 setActionMenuOrderId(null);
                                 setStatusDropdownOrderId(statusDropdownOrderId === order.OrderID ? null : order.OrderID);
                               }}
-                              className={`px-3 py-1 rounded-xl text-[10px] font-black border transition-all flex items-center space-x-1 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${statusObj.color}`}
+                              className={`min-h-[36px] px-3 py-1 rounded-md text-[10px] font-medium border transition-colors flex items-center space-x-1 cursor-pointer ${statusObj.color}`}
                             >
                               <span>{statusObj.label}</span>
                               <ChevronDown className="w-3 h-3 ml-0.5 opacity-70" />
@@ -1120,17 +1115,17 @@ export default function OrdersPage({
                             {statusDropdownOrderId === order.OrderID && (
                               <>
                                 <div className="fixed inset-0 z-20" onClick={() => setStatusDropdownOrderId(null)} />
-                                <div className="absolute left-1/2 -translate-x-1/2 mt-1 w-36 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-30 animate-in fade-in zoom-in-95">
+                                <div className="absolute left-1/2 -translate-x-1/2 mt-1 w-36 bg-white rounded-lg border border-neutral-200/80 py-1.5 z-30 animate-in fade-in zoom-in-95">
                                   {ORDER_STATUSES.map((st) => (
                                     <button
                                       key={st.id}
                                       onClick={() => handleQuickStatusChange(order, st.id)}
-                                      className={`w-full text-left px-3 py-1.5 text-xs font-bold hover:bg-slate-50 flex items-center justify-between cursor-pointer ${
-                                        order.Status === st.id ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-700'
+                                      className={`w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-[#F5F5F5] flex items-center justify-between cursor-pointer ${
+                                        order.Status === st.id ? 'text-[#0F172A] bg-[#F5F5F5] font-semibold' : 'text-[#525252]'
                                       }`}
                                     >
                                       <span>{st.label}</span>
-                                      {order.Status === st.id && <Check className="w-3.5 h-3.5" />}
+                                      {order.Status === st.id && <Check className="w-3.5 h-3.5 text-[#0F172A]" />}
                                     </button>
                                   ))}
                                 </div>
@@ -1146,7 +1141,7 @@ export default function OrdersPage({
                             <button
                               onClick={() => setSelectedOrderDetails(order)}
                               title="অর্ডারের বিস্তারিত বিবরণ"
-                              className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl transition-all hover:scale-105 cursor-pointer shadow-2xs"
+                              className="min-h-[36px] min-w-[36px] p-1.5 bg-[#F5F5F5] hover:bg-neutral-200/70 text-[#0F172A] border border-neutral-200/80 rounded-md transition-colors cursor-pointer flex items-center justify-center"
                             >
                               <Eye className="w-3.5 h-3.5" />
                             </button>
@@ -1158,7 +1153,7 @@ export default function OrdersPage({
                                 setIsCreateModalOpen(true);
                               }}
                               title="অর্ডারের তথ্য, আইটেম ও পেমেন্ট এডিট করুন"
-                              className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl transition-all hover:scale-105 cursor-pointer shadow-2xs"
+                              className="min-h-[36px] min-w-[36px] p-1.5 bg-amber-50 hover:bg-amber-100 text-[#B45309] border border-amber-200/80 rounded-md transition-colors cursor-pointer flex items-center justify-center"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
@@ -1167,7 +1162,7 @@ export default function OrdersPage({
                             <button
                               onClick={() => openOrderWhatsApp(order, settings.StoreName, currencySymbol)}
                               title="গ্রাহককে হোয়াটসঅ্যাপ বার্তা পাঠান"
-                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl transition-all hover:scale-105 cursor-pointer shadow-2xs"
+                              className="min-h-[36px] min-w-[36px] p-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#15803D] border border-emerald-200/80 rounded-md transition-colors cursor-pointer flex items-center justify-center"
                             >
                               <MessageCircle className="w-3.5 h-3.5" />
                             </button>
@@ -1180,7 +1175,7 @@ export default function OrdersPage({
                                   setActionMenuOrderId(actionMenuOrderId === order.OrderID ? null : order.OrderID);
                                 }}
                                 title="আরো অ্যাকশন"
-                                className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all hover:scale-105 cursor-pointer shadow-2xs"
+                                className="min-h-[36px] min-w-[36px] p-1.5 bg-white hover:bg-[#F5F5F5] text-[#525252] border border-neutral-200/80 rounded-md transition-colors cursor-pointer flex items-center justify-center"
                               >
                                 <MoreVertical className="w-3.5 h-3.5" />
                               </button>
@@ -1188,7 +1183,7 @@ export default function OrdersPage({
                               {actionMenuOrderId === order.OrderID && (
                                 <>
                                   <div className="fixed inset-0 z-20" onClick={() => setActionMenuOrderId(null)} />
-                                  <div className="absolute right-0 mt-1 w-52 bg-white rounded-2xl shadow-2xl border border-slate-200 py-1.5 z-30 animate-in fade-in zoom-in-95 text-left divide-y divide-slate-100">
+                                  <div className="absolute right-0 mt-1 w-52 bg-white rounded-lg border border-neutral-200/80 py-1.5 z-30 animate-in fade-in zoom-in-95 text-left divide-y divide-neutral-200/80">
                                     
                                     {/* মেসেজিং ও ট্র্যাকিং সেকশন */}
                                     <div className="py-1">
@@ -1197,9 +1192,9 @@ export default function OrdersPage({
                                           setActionMenuOrderId(null);
                                           setSingleSmsModalOrder(order);
                                         }}
-                                        className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-violet-50 hover:text-violet-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                        className="w-full px-3 py-1.5 text-xs font-medium text-[#111111] hover:bg-[#F5F5F5] flex items-center space-x-2 cursor-pointer transition-colors"
                                       >
-                                        <MessageSquare className="w-3.5 h-3.5 text-violet-600" />
+                                        <MessageSquare className="w-3.5 h-3.5 text-[#525252]" />
                                         <span>SMS বার্তা পাঠান</span>
                                       </button>
 
@@ -1209,9 +1204,9 @@ export default function OrdersPage({
                                             setActionMenuOrderId(null);
                                             setTrackingModalOrder(order);
                                           }}
-                                          className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                          className="w-full px-3 py-1.5 text-xs font-medium text-[#111111] hover:bg-[#F5F5F5] flex items-center space-x-2 cursor-pointer transition-colors"
                                         >
-                                          <Truck className="w-3.5 h-3.5 text-sky-600" />
+                                          <Truck className="w-3.5 h-3.5 text-[#15803D]" />
                                           <span>Steadfast লাইভ ট্র্যাকিং</span>
                                         </button>
                                       )}
@@ -1221,9 +1216,9 @@ export default function OrdersPage({
                                           setActionMenuOrderId(null);
                                           setCustomerTrackingOrderId(order.OrderID);
                                         }}
-                                        className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                        className="w-full px-3 py-1.5 text-xs font-medium text-[#111111] hover:bg-[#F5F5F5] flex items-center space-x-2 cursor-pointer transition-colors"
                                       >
-                                        <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
+                                        <ExternalLink className="w-3.5 h-3.5 text-[#525252]" />
                                         <span>গ্রাহক ট্র্যাকিং পেজ</span>
                                       </button>
 
@@ -1232,9 +1227,9 @@ export default function OrdersPage({
                                           setActionMenuOrderId(null);
                                           handleCopyTrackingLink(order.OrderID);
                                         }}
-                                        className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                        className="w-full px-3 py-1.5 text-xs font-medium text-[#111111] hover:bg-[#F5F5F5] flex items-center space-x-2 cursor-pointer transition-colors"
                                       >
-                                        <Share2 className="w-3.5 h-3.5 text-amber-600" />
+                                        <Share2 className="w-3.5 h-3.5 text-[#B45309]" />
                                         <span>ট্র্যাকিং লিংক কপি</span>
                                       </button>
                                     </div>
@@ -1246,9 +1241,9 @@ export default function OrdersPage({
                                           setActionMenuOrderId(null);
                                           setLabelPrintOrder(order);
                                         }}
-                                        className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                        className="w-full px-3 py-1.5 text-xs font-medium text-[#111111] hover:bg-[#F5F5F5] flex items-center space-x-2 cursor-pointer transition-colors"
                                       >
-                                        <Tag className="w-3.5 h-3.5 text-indigo-600" />
+                                        <Tag className="w-3.5 h-3.5 text-[#525252]" />
                                         <span>শিপিং লেবেল প্রিন্ট</span>
                                       </button>
 
@@ -1257,9 +1252,9 @@ export default function OrdersPage({
                                           setActionMenuOrderId(null);
                                           setChallanPrintOrder(order);
                                         }}
-                                        className="w-full px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 flex items-center space-x-2 cursor-pointer transition-colors"
+                                        className="w-full px-3 py-1.5 text-xs font-medium text-[#111111] hover:bg-[#F5F5F5] flex items-center space-x-2 cursor-pointer transition-colors"
                                       >
-                                        <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                                        <FileText className="w-3.5 h-3.5 text-[#15803D]" />
                                         <span>ডেলিভারি চালান প্রিন্ট</span>
                                       </button>
                                     </div>
@@ -1274,9 +1269,9 @@ export default function OrdersPage({
                                               onDeleteOrder(order.OrderID);
                                             }
                                           }}
-                                          className="w-full px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center space-x-2 cursor-pointer transition-colors"
+                                          className="w-full px-3 py-1.5 text-xs font-medium text-[#B91C1C] hover:bg-red-50 flex items-center space-x-2 cursor-pointer transition-colors"
                                         >
-                                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                          <Trash2 className="w-3.5 h-3.5 text-[#B91C1C]" />
                                           <span>অর্ডার মুছে ফেলুন</span>
                                         </button>
                                       </div>
@@ -1308,49 +1303,49 @@ export default function OrdersPage({
                 year: 'numeric'
               });
               const risk = calculateOrderRisk(order, orders);
-              const avatarGradient = getCustomerAvatarGradient(order.CustomerName);
+              const avatarStyle = getCustomerAvatarGradient(order.CustomerName);
               const initials = getCustomerInitials(order.CustomerName);
 
               return (
                 <div
                   key={order.OrderID}
-                  className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md transition-all space-y-4 relative group"
+                  className="bg-white rounded-lg p-5 border border-neutral-200/80 space-y-4 relative group"
                 >
                   {/* কার্ড হেডার */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center justify-between border-b border-neutral-200/80 pb-3">
                     <div className="flex items-center space-x-2.5">
                       <input
                         type="checkbox"
                         checked={selectedOrderIds.includes(order.OrderID)}
                         onChange={(e) => toggleSelectOrder(order.OrderID, e)}
-                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
+                        className="w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A] cursor-pointer accent-[#0F172A]"
                         title="অর্ডার নির্বাচন করুন"
                       />
                       <div>
                         <div className="flex items-center space-x-1.5">
-                          <span className="font-mono font-black text-indigo-700 text-sm tracking-tight">
+                          <span className="font-mono tabular-nums font-semibold text-[#111111] text-sm tracking-tight">
                             {order.OrderID}
                           </span>
                           <button
                             onClick={() => handleCopyId(order.OrderID)}
-                            className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                            className="text-[#737373] hover:text-[#111111] p-1 rounded-md cursor-pointer"
                           >
                             {copiedId === order.OrderID ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              <Check className="w-3.5 h-3.5 text-[#15803D]" />
                             ) : (
                               <Copy className="w-3.5 h-3.5" />
                             )}
                           </button>
                         </div>
                         <div className="flex items-center space-x-1.5 mt-0.5 flex-wrap gap-y-0.5">
-                          <span className="text-[10px] text-slate-400">{formattedDate}</span>
+                          <span className="text-[10px] text-[#737373] font-mono tabular-nums">{formattedDate}</span>
                           {order.OrderSource === 'In-Store / POS' || order.OrderSource === 'Walk-in' || order.CourierName === 'Counter Pickup' ? (
-                            <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded text-[9px] font-black">
-                              🏪 ইন-স্টোর (POS)
+                            <span className="px-1.5 py-0.5 bg-emerald-50 text-[#15803D] border border-emerald-200/80 rounded-md text-[9px] font-medium">
+                              ইন-স্টোর (POS)
                             </span>
                           ) : (
-                            <span className="px-1.5 py-0.2 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded text-[9px] font-black">
-                              🌐 {order.OrderSource || 'অনলাইন'}
+                            <span className="px-1.5 py-0.5 bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 rounded-md text-[9px] font-medium">
+                              {order.OrderSource || 'অনলাইন'}
                             </span>
                           )}
                         </div>
@@ -1359,11 +1354,11 @@ export default function OrdersPage({
 
                     <div className="flex items-center space-x-1.5">
                       {order.IsPreOrder && (
-                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black bg-violet-100 text-violet-800 border border-violet-200">
+                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-amber-50 text-[#B45309] border border-amber-200/80">
                           প্রি-অর্ডার
                         </span>
                       )}
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${statusObj.color}`}>
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium border ${statusObj.color}`}>
                         {statusObj.label}
                       </span>
                     </div>
@@ -1371,21 +1366,21 @@ export default function OrdersPage({
 
                   {/* গ্রাহক তথ্য বক্স */}
                   <div className="flex items-start space-x-3">
-                    <div className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${avatarGradient} text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs`}>
+                    <div className={`w-10 h-10 rounded-md ${avatarStyle} font-semibold text-sm flex items-center justify-center shrink-0`}>
                       {initials}
                     </div>
                     <div className="min-w-0 flex-1 space-y-0.5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-900 text-sm truncate">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-[#111111] text-sm truncate">
                           {order.CustomerName}
                         </span>
                         <span
-                          className={`px-1.5 py-0.2 rounded-md text-[9px] font-black border flex items-center space-x-0.5 ${
+                          className={`px-2 py-0.5 rounded-md text-[9px] font-medium border flex items-center space-x-0.5 shrink-0 ${
                             risk.level === 'High'
-                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              ? 'bg-red-50 text-[#B91C1C] border-red-200/80'
                               : risk.level === 'Medium'
-                              ? 'bg-amber-50 text-amber-700 border-amber-200'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              ? 'bg-amber-50 text-[#B45309] border-amber-200/80'
+                              : 'bg-emerald-50 text-[#15803D] border-emerald-200/80'
                           }`}
                         >
                           {risk.level === 'High' ? 'উচ্চ ঝুঁকি' : risk.level === 'Medium' ? 'সতর্কতা' : 'নিরাপদ'}
@@ -1393,19 +1388,19 @@ export default function OrdersPage({
                       </div>
 
                       {order.CustomerPhone ? (
-                        <div className="flex items-center space-x-1 text-slate-500 text-xs font-mono">
-                          <a href={`tel:${order.CustomerPhone}`} className="hover:text-indigo-600 flex items-center space-x-1">
-                            <Phone className="w-3 h-3 text-slate-400" />
+                        <div className="flex items-center space-x-1 text-[#525252] text-xs font-mono tabular-nums">
+                          <a href={`tel:${order.CustomerPhone}`} className="hover:text-[#0F172A] flex items-center space-x-1">
+                            <Phone className="w-3 h-3 text-[#737373]" />
                             <span>{order.CustomerPhone}</span>
                           </a>
                         </div>
                       ) : (
-                        <span className="text-[10px] text-slate-400 italic block">ফোন নম্বর নেই</span>
+                        <span className="text-[10px] text-[#737373] italic block">ফোন নম্বর নেই</span>
                       )}
 
                       {order.CustomerAddress && (
-                        <div className="flex items-start space-x-1 text-slate-400 text-xs truncate">
-                          <MapPin className="w-3 h-3 text-slate-400 shrink-0 mt-0.5" />
+                        <div className="flex items-start space-x-1 text-[#737373] text-xs truncate">
+                          <MapPin className="w-3 h-3 text-[#737373] shrink-0 mt-0.5" />
                           <span className="truncate">{order.CustomerAddress}</span>
                         </div>
                       )}
@@ -1413,45 +1408,45 @@ export default function OrdersPage({
                   </div>
 
                   {/* পণ্য ও কুরিয়ার তথ্য */}
-                  <div className="bg-slate-50/80 rounded-2xl p-3 border border-slate-100 text-xs space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border whitespace-nowrap ${courierBadge.bg}`}>
+                  <div className="bg-[#F5F5F5] rounded-md p-3 border border-neutral-200/80 text-xs space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-medium border whitespace-nowrap ${courierBadge.bg}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${courierBadge.dot}`} />
                         <span>{courierBadge.name}</span>
                       </span>
 
                       {order.TrackingID ? (
-                        <div className="flex items-center space-x-1 font-mono text-[10px] text-indigo-700 bg-white px-2 py-0.5 rounded-md border border-slate-200 font-bold">
+                        <div className="flex items-center space-x-1 font-mono tabular-nums text-[10px] text-[#111111] bg-white px-2 py-0.5 rounded-md border border-neutral-200/80 font-medium">
                           <span>{order.TrackingID}</span>
                           <button onClick={() => handleCopyId(order.TrackingID)} className="cursor-pointer">
-                            <Copy className="w-2.5 h-2.5 text-slate-400" />
+                            <Copy className="w-2.5 h-2.5 text-[#737373]" />
                           </button>
                         </div>
                       ) : (
-                        <span className="text-[10px] text-slate-400 italic">ট্র্যাকিং কোড নেই</span>
+                        <span className="text-[10px] text-[#737373] italic">ট্র্যাকিং কোড নেই</span>
                       )}
                     </div>
 
-                    <div className="space-y-1 pt-1 border-t border-slate-200/50">
+                    <div className="space-y-1 pt-1 border-t border-neutral-200/80">
                       {(order.Items || []).map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-[11px] text-slate-600">
-                          <span className="truncate">{item.productName || item.ProductName}</span>
-                          <span className="font-mono text-slate-500">×{item.quantity || item.Quantity}</span>
+                        <div key={idx} className="flex justify-between text-[11px] text-[#525252]">
+                          <span className="truncate text-[#111111]">{item.productName || item.ProductName}</span>
+                          <span className="font-mono tabular-nums text-[#525252]">×{item.quantity || item.Quantity}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   {/* ক্যাশ ও পেমেন্ট ফুটার */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between pt-2 border-t border-neutral-200/80">
                     <div>
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">কালেকশন (COD)</span>
+                      <span className="text-[10px] text-[#737373] uppercase tracking-wider block font-medium">কালেকশন (COD)</span>
                       {Number(order.DueAmount || 0) > 0 ? (
-                        <span className="text-lg font-black text-rose-600 font-mono">
+                        <span className="text-lg font-semibold text-[#B91C1C] font-mono tabular-nums">
                           {currencySymbol}{Number(order.DueAmount || 0).toLocaleString('en-US')}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200 mt-1">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-[#15803D] border border-emerald-200/80 mt-1">
                           <Check className="w-3 h-3" />
                           <span>পরিশোধিত</span>
                         </span>
@@ -1459,22 +1454,22 @@ export default function OrdersPage({
                     </div>
 
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 block">মোট বিল</span>
-                      <span className="text-xs font-bold text-slate-700 font-mono">
+                      <span className="text-[10px] text-[#737373] block">মোট বিল</span>
+                      <span className="text-xs font-semibold text-[#111111] font-mono tabular-nums">
                         {currencySymbol}{Number(order.TotalAmount || 0).toLocaleString('en-US')}
                       </span>
                     </div>
                   </div>
 
                   {/* অ্যাকশন বাটনসমূহ */}
-                  <div className="grid grid-cols-6 gap-1 pt-1">
+                  <div className="grid grid-cols-4 gap-1.5 pt-1">
                     <button
                       onClick={() => setSelectedOrderDetails(order)}
-                      className="py-2 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                      className="min-h-[44px] sm:min-h-[36px] py-2 bg-[#F5F5F5] hover:bg-neutral-200/70 text-[#111111] border border-neutral-200/80 text-xs font-medium rounded-md flex items-center justify-center space-x-1 cursor-pointer transition-colors"
                       title="বিস্তারিত ও অডিট লগ"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline text-[10px]">ভিউ</span>
+                      <span className="text-[10px]">ভিউ</span>
                     </button>
 
                     <button
@@ -1482,67 +1477,67 @@ export default function OrdersPage({
                         setEditingOrder(order);
                         setIsCreateModalOpen(true);
                       }}
-                      className="py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                      className="min-h-[44px] sm:min-h-[36px] py-2 bg-amber-50 hover:bg-amber-100 text-[#B45309] border border-amber-200/80 text-xs font-medium rounded-md flex items-center justify-center space-x-1 cursor-pointer transition-colors"
                       title="অর্ডার এডিট করুন"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline text-[10px]">এডিট</span>
+                      <span className="text-[10px]">এডিট</span>
                     </button>
 
                     <button
                       onClick={() => openOrderWhatsApp(order, settings.StoreName, currencySymbol)}
-                      className="py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                      className="min-h-[44px] sm:min-h-[36px] py-2 bg-emerald-50 hover:bg-emerald-100 text-[#15803D] border border-emerald-200/80 text-xs font-medium rounded-md flex items-center justify-center space-x-1 cursor-pointer transition-colors"
                       title="হোয়াটসঅ্যাপে পাঠান"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline text-[10px]">WA</span>
+                      <span className="text-[10px]">WA</span>
                     </button>
 
                     {(order.TrackingID || order.ConsignmentID) && (
                       <button
                         onClick={() => setTrackingModalOrder(order)}
-                        className="py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                        className="min-h-[44px] sm:min-h-[36px] py-2 bg-emerald-50 hover:bg-emerald-100 text-[#15803D] border border-emerald-200/80 text-xs font-medium rounded-md flex items-center justify-center space-x-1 cursor-pointer transition-colors"
                         title="Steadfast লাইভ ট্র্যাকিং"
                       >
-                        <Truck className="w-3.5 h-3.5 text-emerald-700" />
-                        <span className="hidden sm:inline text-[10px]">Steadfast</span>
+                        <Truck className="w-3.5 h-3.5 text-[#15803D]" />
+                        <span className="text-[10px]">Steadfast</span>
                       </button>
                     )}
 
                     <button
                       onClick={() => setSingleSmsModalOrder(order)}
-                      className="py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                      className="min-h-[44px] sm:min-h-[36px] py-2 bg-[#F5F5F5] hover:bg-neutral-200/70 text-[#111111] border border-neutral-200/80 text-xs font-medium rounded-md flex items-center justify-center space-x-1 cursor-pointer transition-colors"
                       title="গ্রাহককে SMS পাঠান"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline text-[10px]">SMS</span>
+                      <span className="text-[10px]">SMS</span>
                     </button>
 
                     <button
                       onClick={() => setCustomerTrackingOrderId(order.OrderID)}
-                      className="py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                      className="min-h-[44px] sm:min-h-[36px] py-2 bg-[#F5F5F5] hover:bg-neutral-200/70 text-[#111111] border border-neutral-200/80 text-xs font-medium rounded-md flex items-center justify-center space-x-1 cursor-pointer transition-colors"
                       title="লাইভ ট্র্যাক"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline text-[10px]">ট্র্যাক</span>
+                      <span className="text-[10px]">ট্র্যাক</span>
                     </button>
 
                     <button
                       onClick={() => setLabelPrintOrder(order)}
-                      className="py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                      className="min-h-[44px] sm:min-h-[36px] py-2 bg-[#F5F5F5] hover:bg-neutral-200/70 text-[#111111] border border-neutral-200/80 text-xs font-medium rounded-md flex items-center justify-center space-x-1 cursor-pointer transition-colors"
                       title="শিপিং স্টিকার"
                     >
                       <Tag className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline text-[10px]">লেবেল</span>
+                      <span className="text-[10px]">লেবেল</span>
                     </button>
 
                     <button
                       onClick={() => setChallanPrintOrder(order)}
-                      className="py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                      className="min-h-[44px] sm:min-h-[36px] py-2 bg-[#F5F5F5] hover:bg-neutral-200/70 text-[#111111] border border-neutral-200/80 text-xs font-medium rounded-md flex items-center justify-center space-x-1 cursor-pointer transition-colors"
                       title="চালান প্রিন্ট"
                     >
                       <FileText className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline text-[10px]">চালান</span>
+                      <span className="text-[10px]">চালান</span>
                     </button>
                   </div>
                 </div>
@@ -1554,18 +1549,18 @@ export default function OrdersPage({
 
       {/* ফ্লোটিং বাল্ক অ্যাকশন বার (Floating Bulk Operations Bar) */}
       {selectedOrderIds.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border border-white/20 flex flex-wrap items-center justify-between gap-4 max-w-4xl w-[92vw] animate-in fade-in slide-in-from-bottom-5">
+        <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#0F172A] text-white px-4 sm:px-5 py-3 rounded-lg border border-slate-800 flex flex-wrap items-center justify-between gap-3 max-w-4xl w-[94vw] animate-in fade-in slide-in-from-bottom-5">
           <div className="flex items-center space-x-3">
-            <span className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 text-white font-black text-xs flex items-center justify-center shadow-md shadow-indigo-500/30">
+            <span className="w-7 h-7 rounded-md bg-white text-[#0F172A] font-mono tabular-nums font-semibold text-xs flex items-center justify-center">
               {selectedOrderIds.length}
             </span>
             <div className="leading-tight">
-              <span className="text-xs font-black block">
-                {selectedOrderIds.length}টি অর্ডার সিলেক্ট করা হয়েছে
+              <span className="text-xs font-semibold block">
+                <span className="font-mono tabular-nums">{selectedOrderIds.length}</span>টি অর্ডার সিলেক্ট করা হয়েছে
               </span>
               <button
                 onClick={() => setSelectedOrderIds([])}
-                className="text-[10px] text-indigo-300 hover:text-white underline cursor-pointer"
+                className="text-[10px] text-slate-300 hover:text-white underline cursor-pointer"
               >
                 সিলেকশন ক্লিয়ার করুন
               </button>
@@ -1578,15 +1573,15 @@ export default function OrdersPage({
               <button
                 type="button"
                 onClick={() => setBulkStatusDropdownOpen(!bulkStatusDropdownOpen)}
-                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all shadow-sm active:scale-95"
+                className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-white hover:bg-neutral-100 text-[#0F172A] text-xs font-medium rounded-md flex items-center space-x-1.5 cursor-pointer transition-colors"
               >
                 <span>স্ট্যাটাস পরিবর্তন</span>
                 <ChevronDown className="w-3.5 h-3.5" />
               </button>
 
               {bulkStatusDropdownOpen && (
-                <div className="absolute right-0 bottom-full mb-2 w-48 bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 py-1.5 z-50 animate-in fade-in zoom-in-95">
-                  <span className="text-[10px] font-bold text-slate-400 px-3 py-1 block uppercase">
+                <div className="absolute right-0 bottom-full mb-2 w-48 bg-white text-[#111111] rounded-lg border border-neutral-200/80 py-1.5 z-50 animate-in fade-in zoom-in-95">
+                  <span className="text-[10px] font-medium text-[#737373] px-3 py-1 block uppercase">
                     একসাথে স্ট্যাটাস বদলান:
                   </span>
                   {ORDER_STATUSES.filter(s => ['Confirmed', 'Packaging', 'Shipped', 'Delivered', 'Cancelled'].includes(s.id)).map((st) => (
@@ -1601,9 +1596,9 @@ export default function OrdersPage({
                         }
                         setSelectedOrderIds([]);
                       }}
-                      className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-indigo-50 hover:text-indigo-600 flex items-center space-x-2 cursor-pointer"
+                      className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-[#F5F5F5] text-[#111111] flex items-center space-x-2 cursor-pointer"
                     >
-                      <span className={`w-2 h-2 rounded-full ${st.id === 'Delivered' ? 'bg-emerald-500' : st.id === 'Shipped' ? 'bg-purple-500' : 'bg-indigo-500'}`} />
+                      <span className={`w-2 h-2 rounded-full ${st.id === 'Delivered' ? 'bg-[#15803D]' : st.id === 'Cancelled' ? 'bg-neutral-400' : 'bg-[#0F172A]'}`} />
                       <span>{st.label}</span>
                     </button>
                   ))}
@@ -1614,30 +1609,30 @@ export default function OrdersPage({
             {/* ১-ক্লিক Steadfast API বাল্ক বুকিং */}
             <button
               onClick={() => setIsBulkCourierModalOpen(true)}
-              className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all shadow-md shadow-emerald-600/30 active:scale-95"
+              className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-[#15803D] hover:bg-emerald-800 text-white text-xs font-medium rounded-md flex items-center space-x-1.5 cursor-pointer transition-colors"
               title="Steadfast API-তে ১-ক্লিকে সরাসরি বুকিং দিন ও ট্র্যাকিং আইডি সংগ্রহ করুন"
             >
-              <Truck className="w-3.5 h-3.5 text-emerald-200" />
+              <Truck className="w-3.5 h-3.5 text-white" />
               <span>Steadfast বুকিং</span>
             </button>
 
             {/* বাল্ক SMS ও WhatsApp নোটিফিকেশন */}
             <button
               onClick={() => setIsBulkSmsModalOpen(true)}
-              className="px-3.5 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white text-xs font-black rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all shadow-md shadow-violet-600/30 active:scale-95"
+              className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-md flex items-center space-x-1.5 cursor-pointer transition-colors border border-slate-700"
               title="নির্বাচিত সব কাস্টমারকে একসাথে SMS বা WhatsApp বার্তা পাঠান"
             >
-              <MessageSquare className="w-3.5 h-3.5 text-violet-200" />
+              <MessageSquare className="w-3.5 h-3.5 text-slate-200" />
               <span>বাল্ক SMS / WA</span>
             </button>
 
             {/* বাল্ক শিপিং লেবেল প্রিন্ট */}
             <button
               onClick={() => setIsBulkLabelModalOpen(true)}
-              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all border border-white/10 active:scale-95"
+              className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-md flex items-center space-x-1.5 cursor-pointer transition-colors border border-slate-700"
               title="নির্বাচিত সব পার্সেলের স্টিকার লেবেল একসাথে প্রিন্ট করুন"
             >
-              <Printer className="w-3.5 h-3.5 text-indigo-300" />
+              <Printer className="w-3.5 h-3.5 text-slate-200" />
               <span>লেবেল প্রিন্ট</span>
             </button>
 
@@ -1647,7 +1642,7 @@ export default function OrdersPage({
                 exportCourierBulkCsv(selectedOrdersList, courierFilter === 'all' ? 'All' : courierFilter);
                 if (showToast) showToast(`${selectedOrdersList.length}টি অর্ডারের কুরিয়ার CSV ফাইল ডাউনলোড হয়েছে!`, 'success');
               }}
-              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer transition-all border border-white/15 active:scale-95"
+              className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-md flex items-center space-x-1.5 cursor-pointer transition-colors border border-slate-700"
               title="Steadfast / Pathao বাল্ক আপলোডের জন্য CSV ডাউনলোড করুন"
             >
               <Download className="w-3.5 h-3.5" />
@@ -2025,50 +2020,50 @@ function CreateOrderModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-neutral-900/40 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-neutral-200/80 animate-in fade-in zoom-in-95">
         {/* মডাল হেডার */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-10">
+        <div className="p-4 sm:p-5 border-b border-neutral-200/80 flex items-center justify-between sticky top-0 bg-[#FAFAFA] z-10">
           <div className="flex items-center space-x-2.5">
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isEditMode ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
-              {isEditMode ? <Edit3 className="w-5 h-5 stroke-[2.5]" /> : <Plus className="w-5 h-5 stroke-[2.5]" />}
+            <div className={`w-9 h-9 rounded-md flex items-center justify-center border ${isEditMode ? 'bg-amber-50 text-[#B45309] border-amber-200/80' : 'bg-white text-[#0F172A] border-neutral-200/80'}`}>
+              {isEditMode ? <Edit3 className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
             </div>
             <div>
-              <h2 className="text-base font-black text-slate-800">
-                {isEditMode ? `অর্ডার সম্পাদনা: ${initialOrder.OrderID}` : 'নতুন ডেলিভারি অর্ডার এন্ট্রি'}
+              <h2 className="text-base font-semibold tracking-tight text-[#111111]">
+                {isEditMode ? <>অর্ডার সম্পাদনা: <span className="font-mono tabular-nums">{initialOrder.OrderID}</span></> : 'নতুন ডেলিভারি অর্ডার এন্ট্রি'}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#525252]">
                 {isEditMode ? 'গ্রাহকের তথ্য, অর্ডারকৃত পণ্য বা পেমেন্ট আপডেট করুন' : 'অনলাইন বা ফোন কল অর্ডারের বিস্তারিত তথ্য দিন'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer transition-colors"
+            className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] rounded-md hover:bg-neutral-200/60 text-[#525252] hover:text-[#111111] flex items-center justify-center cursor-pointer transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* ফর্ম কন্টেন্ট */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-6">
+        <form onSubmit={handleSubmit} className="p-5 space-y-6 bg-white">
           {/* লাইভ এআই রিস্ক সতর্কতা ব্যানার (যদি নম্বর বা অর্ডারে সমস্যা থাকে) */}
           {customerPhone.length >= 5 && liveRisk.level !== 'Low' && (
-            <div className={`p-4 rounded-2xl border text-xs space-y-1.5 animate-in fade-in ${
+            <div className={`p-4 rounded-lg border text-xs space-y-1.5 animate-in fade-in ${
               liveRisk.level === 'High'
-                ? 'bg-rose-50 border-rose-200 text-rose-900'
-                : 'bg-amber-50 border-amber-200 text-amber-900'
+                ? 'bg-red-50 border-red-200/80 text-[#B91C1C]'
+                : 'bg-amber-50 border-amber-200/80 text-[#B45309]'
             }`}>
-              <div className="flex items-center space-x-2 font-black">
+              <div className="flex items-center space-x-2 font-semibold">
                 <ShieldAlert className="w-4 h-4 shrink-0" />
                 <span>AI Risk Alert: {liveRisk.level === 'High' ? 'উচ্চ ঝুঁকি চিহ্নিত হয়েছে!' : 'সতর্কতা'}</span>
               </div>
-              <ul className="list-disc list-inside space-y-0.5 text-[11px] font-medium opacity-90">
+              <ul className="list-disc list-inside space-y-0.5 text-[11px] font-medium">
                 {liveRisk.flags.map((flag, idx) => (
                   <li key={idx}>{flag}</li>
                 ))}
               </ul>
-              <p className="text-[11px] font-bold mt-1 text-slate-700">
+              <p className="text-[11px] font-semibold mt-1 text-[#111111]">
                 পরামর্শ: {liveRisk.recommendation}
               </p>
             </div>
@@ -2076,49 +2071,49 @@ function CreateOrderModal({
 
           {/* ১. কাস্টমার তথ্য */}
           <div className="space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">১. গ্রাহকের তথ্য</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#525252]">১. গ্রাহকের তথ্য</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">গ্রাহকের পুরো নাম *</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">গ্রাহকের পুরো নাম *</label>
                 <input
                   type="text"
                   required
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="যেমন: মো. কামরুল হাসান"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 font-medium"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-medium"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">মোবাইল নম্বর *</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">মোবাইল নম্বর *</label>
                 <input
                   type="tel"
                   required
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   placeholder="01XXXXXXXXX"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 font-mono"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-mono tabular-nums"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">বিকল্প মোবাইল নম্বর (ঐচ্ছিক)</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">বিকল্প মোবাইল নম্বর (ঐচ্ছিক)</label>
                 <input
                   type="tel"
                   value={altPhone}
                   onChange={(e) => setAltPhone(e.target.value)}
                   placeholder="জরুরি যোগাযোগের নম্বর"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 font-mono"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-mono tabular-nums"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">অর্ডার সোর্স</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">অর্ডার সোর্স</label>
                 <select
                   value={orderSource}
                   onChange={handleOrderSourceChange}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 font-medium cursor-pointer"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#0F172A] font-medium cursor-pointer"
                 >
                   {ORDER_SOURCES.map((s) => (
                     <option key={s.id} value={s.id}>{s.label}</option>
@@ -2127,14 +2122,14 @@ function CreateOrderModal({
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1">বিস্তারিত ডেলিভারি ঠিকানা *</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">বিস্তারিত ডেলিভারি ঠিকানা *</label>
                 <textarea
                   required
                   rows={2}
                   value={customerAddress}
                   onChange={(e) => setCustomerAddress(e.target.value)}
                   placeholder="বাসা নং, রোড নং, এলাকা, থানা ও ল্যান্ডমার্ক..."
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 font-medium"
+                  className="w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-medium"
                 />
               </div>
             </div>
@@ -2142,48 +2137,48 @@ function CreateOrderModal({
 
           {/* ২. পণ্য নির্বাচন ও কার্ট */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">২. অর্ডারকৃত পণ্যসমূহ</h3>
-              <label className="flex items-center space-x-2 cursor-pointer bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-200">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#525252]">২. অর্ডারকৃত পণ্যসমূহ</h3>
+              <label className="flex items-center space-x-2 cursor-pointer bg-amber-50 px-2.5 py-1.5 rounded-md border border-amber-200/80">
                 <input
                   type="checkbox"
                   checked={isPreOrder}
                   onChange={(e) => setIsPreOrder(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded text-violet-600 focus:ring-violet-500"
+                  className="w-3.5 h-3.5 rounded accent-[#0F172A]"
                 />
-                <span className="text-[11px] font-black text-violet-900">
-                  ★ প্রি-অর্ডার (Pre-Order) হিসেবে বুকিং করুন
+                <span className="text-[11px] font-medium text-[#B45309]">
+                  প্রি-অর্ডার (Pre-Order) হিসেবে বুকিং করুন
                 </span>
               </label>
             </div>
             
             {/* পণ্য অনুসন্ধান ও নির্বাচন */}
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#737373] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
                 placeholder="পণ্যের নাম বা বারকোড লিখে অনুসন্ধান করুন..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 font-medium"
+                className="w-full min-h-[44px] sm:min-h-[36px] pl-10 pr-4 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] placeholder-[#737373] focus:outline-none focus:bg-white focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-medium"
               />
 
               {searchedProducts.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-20 max-h-48 overflow-y-auto">
+                <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg border border-neutral-200/80 py-1.5 z-20 max-h-48 overflow-y-auto divide-y divide-neutral-200/80">
                   {searchedProducts.map((p) => (
                     <button
                       type="button"
                       key={p.ProductID}
                       onClick={() => handleAddItem(p)}
-                      className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center justify-between text-xs cursor-pointer"
+                      className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-left hover:bg-[#F5F5F5] flex items-center justify-between text-xs cursor-pointer"
                     >
                       <div>
-                        <span className="font-bold text-slate-800 block">{p.ProductName}</span>
-                        <span className={`text-[10px] ${Number(p.StockQuantity) <= 0 ? 'text-rose-600 font-bold' : 'text-slate-400'}`}>
+                        <span className="font-semibold text-[#111111] block">{p.ProductName}</span>
+                        <span className={`text-[10px] font-mono tabular-nums ${Number(p.StockQuantity) <= 0 ? 'text-[#B91C1C] font-medium' : 'text-[#737373]'}`}>
                           {Number(p.StockQuantity) <= 0 ? 'স্টক শেষ (প্রি-অর্ডার সম্ভব)' : `স্টক: ${p.StockQuantity || 0} ${p.Unit || 'Pcs'}`}
                         </span>
                       </div>
-                      <span className="font-bold text-indigo-600 font-mono">
+                      <span className="font-semibold text-[#111111] font-mono tabular-nums">
                         {currencySymbol}{p.SellingPrice}
                       </span>
                     </button>
@@ -2194,49 +2189,49 @@ function CreateOrderModal({
 
             {/* নির্বাচিত পণ্যের তালিকা */}
             {selectedItems.length === 0 ? (
-              <p className="text-xs text-slate-400 italic text-center py-2">
+              <p className="text-xs text-[#737373] italic text-center py-2">
                 এখনো কোনো পণ্য যোগ করা হয়নি। উপরের সার্চ বার থেকে পণ্য যোগ করুন।
               </p>
             ) : (
-              <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200 space-y-2">
+              <div className="bg-[#F5F5F5] rounded-lg p-3 border border-neutral-200/80 space-y-2">
                 {selectedItems.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200/80 text-xs">
-                    <div className="flex-1 pr-2">
-                      <span className="font-bold text-slate-800 block truncate">{item.productName}</span>
-                      <span className="text-[10px] text-slate-400 font-mono">
+                  <div key={idx} className="flex items-center justify-between bg-white p-2.5 rounded-md border border-neutral-200/80 text-xs">
+                    <div className="flex-1 pr-2 min-w-0">
+                      <span className="font-semibold text-[#111111] block truncate">{item.productName}</span>
+                      <span className="text-[10px] text-[#737373] font-mono tabular-nums">
                         {currencySymbol}{item.sellingPrice} / {item.unit}
                       </span>
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                      <div className="flex items-center border border-neutral-200/80 rounded-md overflow-hidden bg-[#FAFAFA]">
                         <button
                           type="button"
                           onClick={() => handleUpdateItemQuantity(idx, -1)}
-                          className="px-2 py-0.5 text-slate-600 hover:bg-slate-200 font-bold"
+                          className="min-h-[36px] px-2.5 py-1 text-[#111111] hover:bg-neutral-200/60 font-semibold cursor-pointer"
                         >
                           -
                         </button>
-                        <span className="px-2 font-mono font-bold text-slate-800 text-xs">
+                        <span className="px-2 font-mono tabular-nums font-semibold text-[#111111] text-xs">
                           {item.quantity}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleUpdateItemQuantity(idx, 1)}
-                          className="px-2 py-0.5 text-slate-600 hover:bg-slate-200 font-bold"
+                          className="min-h-[36px] px-2.5 py-1 text-[#111111] hover:bg-neutral-200/60 font-semibold cursor-pointer"
                         >
                           +
                         </button>
                       </div>
 
-                      <span className="font-bold text-slate-800 font-mono w-16 text-right">
+                      <span className="font-semibold text-[#111111] font-mono tabular-nums w-16 text-right">
                         {currencySymbol}{item.sellingPrice * item.quantity}
                       </span>
 
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(idx)}
-                        className="text-rose-500 hover:text-rose-700 p-1"
+                        className="min-h-[36px] min-w-[36px] text-[#B91C1C] hover:bg-red-50 rounded-md p-1.5 flex items-center justify-center cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -2249,14 +2244,14 @@ function CreateOrderModal({
 
           {/* ৩. কুরিয়ার ও পেমেন্ট হিসাব */}
           <div className="space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">৩. কুরিয়ার ও বিলিং হিসাব</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#525252]">৩. কুরিয়ার ও বিলিং হিসাব</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">কুরিয়ার নির্বাচন</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">কুরিয়ার নির্বাচন</label>
                 <select
                   value={courierName}
                   onChange={handleCourierChange}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-medium cursor-pointer"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] font-medium cursor-pointer focus:outline-none focus:bg-white focus:border-[#0F172A]"
                 >
                   {COURIER_LIST.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -2265,11 +2260,11 @@ function CreateOrderModal({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">জেলা / শহর</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">জেলা / শহর</label>
                 <select
                   value={district}
                   onChange={handleDistrictChange}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-medium cursor-pointer"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] font-medium cursor-pointer focus:outline-none focus:bg-white focus:border-[#0F172A]"
                 >
                   <option value="ঢাকা">ঢাকা সিটি (ইনসাইড)</option>
                   <option value="চট্টগ্রাম">চট্টগ্রাম</option>
@@ -2285,21 +2280,21 @@ function CreateOrderModal({
                   <button
                     type="button"
                     onClick={() => handleDistrictChange({ target: { value: 'ঢাকা' } })}
-                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border cursor-pointer transition-all ${district === 'ঢাকা' ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'}`}
+                    className={`min-h-[36px] px-2.5 py-0.5 rounded-md text-[10px] font-medium border cursor-pointer transition-colors ${district === 'ঢাকা' ? 'border-[#0F172A] bg-[#0F172A] text-white' : 'bg-white text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'}`}
                   >
                     ঢাকা
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDistrictChange({ target: { value: 'চট্টগ্রাম' } })}
-                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border cursor-pointer transition-all ${district === 'চট্টগ্রাম' ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'}`}
+                    className={`min-h-[36px] px-2.5 py-0.5 rounded-md text-[10px] font-medium border cursor-pointer transition-colors ${district === 'চট্টগ্রাম' ? 'border-[#0F172A] bg-[#0F172A] text-white' : 'bg-white text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'}`}
                   >
                     চট্টগ্রাম
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDistrictChange({ target: { value: 'ঢাকার বাইরে' } })}
-                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border cursor-pointer transition-all ${district === 'ঢাকার বাইরে' ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'}`}
+                    className={`min-h-[36px] px-2.5 py-0.5 rounded-md text-[10px] font-medium border cursor-pointer transition-colors ${district === 'ঢাকার বাইরে' ? 'border-[#0F172A] bg-[#0F172A] text-white' : 'bg-white text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'}`}
                   >
                     অন্যান্য জেলা
                   </button>
@@ -2307,86 +2302,86 @@ function CreateOrderModal({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">কুরিয়ার ট্র্যাকিং কোড (ঐচ্ছিক)</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">কুরিয়ার ট্র্যাকিং কোড (ঐচ্ছিক)</label>
                 <input
                   type="text"
                   value={trackingId}
                   onChange={(e) => setTrackingId(e.target.value)}
                   placeholder="যেমন: STEAD-8921"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-mono"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] font-mono tabular-nums focus:outline-none focus:bg-white focus:border-[#0F172A]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">ডেলিভারি চার্জ (৳)</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">ডেলিভারি চার্জ (৳)</label>
                 <input
                   type="number"
                   min="0"
                   value={deliveryCharge}
                   onChange={(e) => setDeliveryCharge(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-mono font-bold"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] font-mono tabular-nums font-semibold focus:outline-none focus:bg-white focus:border-[#0F172A]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">ছাড় / ডিসকাউন্ট (৳)</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">ছাড় / ডিসকাউন্ট (৳)</label>
                 <input
                   type="number"
                   min="0"
                   value={discountAmount}
                   onChange={(e) => setDiscountAmount(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-mono"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] font-mono tabular-nums focus:outline-none focus:bg-white focus:border-[#0F172A]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">অগ্রিম পরিশোধ (৳)</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">অগ্রিম পরিশোধ (৳)</label>
                 <input
                   type="number"
                   min="0"
                   value={advancePaid}
                   onChange={(e) => setAdvancePaid(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-emerald-700 font-mono font-bold"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#15803D] font-mono tabular-nums font-semibold focus:outline-none focus:bg-white focus:border-[#0F172A]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">পেমেন্ট মেথড</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">পেমেন্ট মেথড</label>
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-bold cursor-pointer"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] font-medium cursor-pointer focus:outline-none focus:bg-white focus:border-[#0F172A]"
                 >
-                  <option value="COD">💵 ক্যাশ অন ডেলিভারি (COD)</option>
-                  <option value="bKash">📱 বিকাশ (bKash)</option>
-                  <option value="Nagad">🟠 নগদ (Nagad)</option>
-                  <option value="Rocket">🟣 রকেট (Rocket)</option>
-                  <option value="Bank">🏦 ব্যাংক ট্রান্সফার</option>
-                  <option value="Cash">💰 ক্যাশ পেমেন্ট</option>
+                  <option value="COD">ক্যাশ অন ডেলিভারি (COD)</option>
+                  <option value="bKash">বিকাশ (bKash)</option>
+                  <option value="Nagad">নগদ (Nagad)</option>
+                  <option value="Rocket">রকেট (Rocket)</option>
+                  <option value="Bank">ব্যাংক ট্রান্সফার</option>
+                  <option value="Cash">ক্যাশ পেমেন্ট</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">ট্রানজেকশন আইডি (TrxID) / রেফারেন্স</label>
+                <label className="block text-xs font-medium text-[#525252] mb-1">ট্রানজেকশন আইডি (TrxID) / রেফারেন্স</label>
                 <input
                   type="text"
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
                   placeholder="যেমন: 9J37A2KLM (যদি থাকে)"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-mono"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] font-mono focus:outline-none focus:bg-white focus:border-[#0F172A]"
                 />
               </div>
             </div>
 
             {/* সংক্ষিপ্ত রসিদ কার্ড */}
-            <div className="bg-slate-900 text-white rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="text-xs space-y-1">
-                <span className="text-slate-400 block">সাবটোটাল: {currencySymbol}{subTotal} | ডেলিভারি: +{currencySymbol}{deliveryCharge}</span>
-                <span className="text-slate-400 block">অগ্রিম পরিশোধ: -{currencySymbol}{advancePaid}</span>
+            <div className="bg-[#0F172A] text-white rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3 border border-slate-800">
+              <div className="text-xs space-y-1 font-mono tabular-nums">
+                <span className="text-slate-300 block">সাবটোটাল: {currencySymbol}{subTotal} | ডেলিভারি: +{currencySymbol}{deliveryCharge}</span>
+                <span className="text-slate-300 block">অগ্রিম পরিশোধ: -{currencySymbol}{advancePaid}</span>
               </div>
-              <div className="text-right">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">ক্যাশ অন ডেলিভারি (সংগ্রহযোগ্য)</span>
-                <span className="text-xl sm:text-2xl font-black text-white">
+              <div className="text-center sm:text-right">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-slate-300 block">ক্যাশ অন ডেলিভারি (সংগ্রহযোগ্য)</span>
+                <span className="text-xl sm:text-2xl font-semibold text-white font-mono tabular-nums">
                   {currencySymbol}{dueAmount}
                 </span>
               </div>
@@ -2396,13 +2391,13 @@ function CreateOrderModal({
           {/* ডেলিভারি নির্দেশিকা ও স্টক রিজার্ভ */}
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">ডেলিভারি নোট / বিশেষ নির্দেশনা</label>
+              <label className="block text-xs font-medium text-[#525252] mb-1">ডেলিভারি নোট / বিশেষ নির্দেশনা</label>
               <input
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="যেমন: দুপুরের পর ডেলিভারি দিতে হবে"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800"
+                className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#0F172A]"
               />
             </div>
 
@@ -2412,9 +2407,9 @@ function CreateOrderModal({
                   type="checkbox"
                   checked={reserveStock}
                   onChange={(e) => setReserveStock(e.target.checked)}
-                  className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  className="w-4 h-4 rounded accent-[#0F172A] cursor-pointer"
                 />
-                <span className="text-xs font-bold text-slate-700">
+                <span className="text-xs font-medium text-[#111111]">
                   অর্ডার সেভ করার সাথে সাথে মূল ইনভেন্টরি থেকে স্টক স্বয়ংক্রিয়ভাবে মাইনাস (রিজার্ভ) করুন
                 </span>
               </label>
@@ -2422,17 +2417,17 @@ function CreateOrderModal({
           </div>
 
           {/* ফুটার অ্যাকশন বাটন */}
-          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-neutral-200/80">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] px-4 py-2 text-xs font-medium text-[#111111] bg-white hover:bg-[#F5F5F5] border border-neutral-200/80 rounded-md cursor-pointer"
             >
               বাতিল
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black rounded-xl shadow-md shadow-indigo-600/30 active:scale-95 transition-all cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] px-6 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer"
             >
               {isEditMode ? 'পরিবর্তন সংরক্ষণ করুন' : 'অর্ডার নিশ্চিত করুন'}
             </button>
@@ -2494,95 +2489,95 @@ function OrderDetailsModal({
   const statusObj = ORDER_STATUSES.find(s => s.id === currentStatus) || ORDER_STATUSES[0];
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-neutral-900/40 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-neutral-200/80 animate-in fade-in zoom-in-95">
         {/* হেডার */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-10">
-          <div className="flex items-center space-x-2.5">
-            <span className="font-mono font-black text-indigo-700 text-base">
+        <div className="p-4 sm:p-5 border-b border-neutral-200/80 flex items-center justify-between sticky top-0 bg-[#FAFAFA] z-10">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-mono tabular-nums font-semibold text-[#111111] text-base">
               {order.OrderID}
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${statusObj.color}`}>
+            <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium border ${statusObj.color}`}>
               {statusObj.label}
             </span>
             {order.IsPreOrder && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-violet-100 text-violet-800 border border-violet-200">
-                ★ প্রি-অর্ডার
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-50 text-[#B45309] border border-amber-200/80">
+                প্রি-অর্ডার
               </span>
             )}
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] rounded-md hover:bg-neutral-200/60 text-[#525252] hover:text-[#111111] flex items-center justify-center cursor-pointer transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-5 space-y-6">
+        <div className="p-5 space-y-6 bg-white">
           {/* এআই ফ্রড ও রিস্ক কার্ড (AI Risk Card) */}
-          <div className={`p-4 rounded-2xl border text-xs space-y-2 ${
+          <div className={`p-4 rounded-lg border text-xs space-y-2 ${
             risk.level === 'High'
-              ? 'bg-rose-50 border-rose-200 text-rose-900'
+              ? 'bg-red-50 border-red-200/80 text-[#B91C1C]'
               : risk.level === 'Medium'
-              ? 'bg-amber-50 border-amber-200 text-amber-900'
-              : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              ? 'bg-amber-50 border-amber-200/80 text-[#B45309]'
+              : 'bg-emerald-50 border-emerald-200/80 text-[#15803D]'
           }`}>
-            <div className="flex items-center justify-between font-black">
+            <div className="flex items-center justify-between font-semibold">
               <div className="flex items-center space-x-2">
                 {risk.level === 'High' ? (
-                  <AlertTriangle className="w-4 h-4 text-rose-600" />
+                  <AlertTriangle className="w-4 h-4 text-[#B91C1C]" />
                 ) : risk.level === 'Medium' ? (
-                  <Clock className="w-4 h-4 text-amber-600" />
+                  <Clock className="w-4 h-4 text-[#B45309]" />
                 ) : (
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <ShieldCheck className="w-4 h-4 text-[#15803D]" />
                 )}
                 <span>AI Risk Assessment: {risk.level === 'High' ? 'উচ্চ ঝুঁকি (High Risk)' : risk.level === 'Medium' ? 'মাঝারি সতর্কতা (Medium Risk)' : 'নিরাপদ অর্ডার (Low Risk)'}</span>
               </div>
-              <span className="font-mono text-xs">স্কোর: {risk.score}/100</span>
+              <span className="font-mono tabular-nums text-xs">স্কোর: {risk.score}/100</span>
             </div>
 
             {risk.flags.length > 0 && (
-              <ul className="list-disc list-inside space-y-0.5 text-[11px] font-medium opacity-90">
+              <ul className="list-disc list-inside space-y-0.5 text-[11px] font-medium">
                 {risk.flags.map((flag, idx) => (
                   <li key={idx}>{flag}</li>
                 ))}
               </ul>
             )}
 
-            <p className="text-[11px] font-bold text-slate-700 pt-1 border-t border-slate-200/60">
-              💡 সুপারিশ: {risk.recommendation}
+            <p className="text-[11px] font-semibold text-[#111111] pt-1.5 border-t border-neutral-200/80">
+              সুপারিশ: {risk.recommendation}
             </p>
           </div>
 
           {/* আরএমএ রিটার্ন আবেদন ব্যানার (যদি গ্রাহক আবেদন করে থাকে) */}
           {order.RmaRequest && (
-            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-200 space-y-2 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="font-black text-orange-900 flex items-center space-x-1.5">
+            <div className="bg-amber-50 p-4 rounded-lg border border-amber-200/80 space-y-2 text-xs">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold text-[#B45309] flex items-center space-x-1.5">
                   <RotateCcw className="w-4 h-4" />
                   <span>গ্রাহক কর্তৃক {order.RmaRequest.type === 'Exchange' ? 'এক্সচেঞ্জ' : 'রিটার্ন'} আবেদন</span>
                 </span>
-                <span className="font-bold px-2 py-0.5 bg-orange-200 text-orange-900 rounded-md text-[10px]">
+                <span className="font-medium px-2 py-0.5 bg-white text-[#B45309] border border-amber-200/80 rounded-md text-[10px]">
                   স্ট্যাটাস: {order.RmaRequest.status}
                 </span>
               </div>
-              <p className="text-slate-700">কারণ: <strong>{order.RmaRequest.reason}</strong></p>
+              <p className="text-[#111111]">কারণ: <strong>{order.RmaRequest.reason}</strong></p>
               {order.RmaRequest.details && (
-                <p className="text-slate-600 italic">"{order.RmaRequest.details}"</p>
+                <p className="text-[#525252] italic">"{order.RmaRequest.details}"</p>
               )}
 
               {order.RmaRequest.status === 'Pending' && (
-                <div className="flex items-center space-x-2 pt-2 border-t border-orange-200">
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-amber-200/80">
                   <button
                     onClick={handleApproveRma}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 bg-[#15803D] hover:bg-emerald-800 text-white rounded-md font-medium cursor-pointer transition-colors"
                   >
                     রিটার্ন অনুমোদন ও রিস্টক করুন
                   </button>
                   <button
                     onClick={handleRejectRma}
-                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 bg-[#B91C1C] hover:bg-red-800 text-white rounded-md font-medium cursor-pointer transition-colors"
                   >
                     আবেদন প্রত্যাখ্যান করুন
                   </button>
@@ -2592,22 +2587,22 @@ function OrderDetailsModal({
           )}
 
           {/* গ্রাহক ও শিপিং তথ্য */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#F5F5F5] p-4 rounded-lg border border-neutral-200/80 text-xs">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">গ্রাহকের বিবরণ</span>
-              <span className="text-sm font-bold text-slate-800 mt-1 block">{order.CustomerName}</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-[#737373] block">গ্রাহকের বিবরণ</span>
+              <span className="text-sm font-semibold text-[#111111] mt-1 block">{order.CustomerName}</span>
               <div className="flex items-center space-x-2 mt-1">
                 <a
                   href={`tel:${order.CustomerPhone}`}
-                  className="text-slate-600 hover:text-indigo-600 font-mono text-xs flex items-center space-x-1"
+                  className="text-[#525252] hover:text-[#0F172A] font-mono tabular-nums text-xs flex items-center space-x-1"
                 >
-                  <Phone className="w-3 h-3 text-slate-400" />
+                  <Phone className="w-3 h-3 text-[#737373]" />
                   <span>{order.CustomerPhone}</span>
                 </a>
                 <button
                   type="button"
                   onClick={() => openOrderWhatsApp(order, 'Pabna Bostraloy', currencySymbol)}
-                  className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-bold flex items-center space-x-1 cursor-pointer transition-colors"
+                  className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-[#15803D] border border-emerald-200/80 rounded-md text-[10px] font-medium flex items-center space-x-1 cursor-pointer transition-colors"
                   title="হোয়াটসঅ্যাপে সরাসরি মেসেজ পাঠান"
                 >
                   <MessageCircle className="w-3 h-3" />
@@ -2615,31 +2610,31 @@ function OrderDetailsModal({
                 </button>
               </div>
               {order.AltPhone && (
-                <span className="text-slate-500 font-mono text-[11px] block mt-0.5">বিকল্প: {order.AltPhone}</span>
+                <span className="text-[#525252] font-mono tabular-nums text-[11px] block mt-0.5">বিকল্প: {order.AltPhone}</span>
               )}
             </div>
 
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">ডেলিভারি ঠিকানা</span>
-              <span className="text-slate-700 mt-1 block font-medium leading-relaxed">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-[#737373] block">ডেলিভারি ঠিকানা</span>
+              <span className="text-[#111111] mt-1 block font-medium leading-relaxed">
                 {order.CustomerAddress || 'ঠিকানা দেওয়া হয়নি'}
               </span>
-              <span className="text-indigo-600 text-[11px] font-bold mt-1 block">
+              <span className="text-[#525252] text-[11px] font-medium mt-1 block">
                 জেলা: {order.District || 'ঢাকা'} | সোর্স: {order.OrderSource}
               </span>
             </div>
           </div>
 
           {/* স্ট্যাটাস ও ট্র্যাকিং আপডেট সেকশন */}
-          <div className="bg-indigo-50/60 p-4 rounded-2xl border border-indigo-100 space-y-3">
-            <span className="text-xs font-bold text-indigo-900 block">স্ট্যাটাস ও কুরিয়ার আপডেট করুন</span>
+          <div className="bg-[#FAFAFA] p-4 rounded-lg border border-neutral-200/80 space-y-3">
+            <span className="text-xs font-semibold text-[#111111] block">স্ট্যাটাস ও কুরিয়ার আপডেট করুন</span>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">অর্ডার স্ট্যাটাস</label>
+                <label className="block text-[11px] font-medium text-[#525252] mb-1">অর্ডার স্ট্যাটাস</label>
                 <select
                   value={currentStatus}
                   onChange={(e) => setCurrentStatus(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs font-bold text-slate-800"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-medium text-[#111111] focus:outline-none focus:border-[#0F172A]"
                 >
                   {ORDER_STATUSES.map((s) => (
                     <option key={s.id} value={s.id}>{s.label}</option>
@@ -2648,11 +2643,11 @@ function OrderDetailsModal({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">কুরিয়ার</label>
+                <label className="block text-[11px] font-medium text-[#525252] mb-1">কুরিয়ার</label>
                 <select
                   value={courierName}
                   onChange={(e) => setCourierName(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs font-bold text-slate-800"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-medium text-[#111111] focus:outline-none focus:border-[#0F172A]"
                 >
                   {COURIER_LIST.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -2661,26 +2656,26 @@ function OrderDetailsModal({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">ট্র্যাকিং কোড</label>
+                <label className="block text-[11px] font-medium text-[#525252] mb-1">ট্র্যাকিং কোড</label>
                 <input
                   type="text"
                   value={trackingId}
                   onChange={(e) => setTrackingId(e.target.value)}
                   placeholder="Tracking ID"
-                  className="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs font-mono"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums text-[#111111] focus:outline-none focus:border-[#0F172A]"
                 />
               </div>
             </div>
 
             {currentStatus === 'Returned' && (
-              <p className="text-[11px] text-rose-700 bg-rose-50 p-2 rounded-xl border border-rose-200 font-medium">
-                ⚠️ সতর্কতা: স্ট্যাটাস "রিটার্ন" করলে অর্ডারকৃত পণ্যগুলো স্বয়ংক্রিয়ভাবে মূল ইনভেন্টরি স্টকে ফেরত আনা হবে।
+              <p className="text-[11px] text-[#B91C1C] bg-red-50 p-2.5 rounded-md border border-red-200/80 font-medium">
+                সতর্কতা: স্ট্যাটাস "রিটার্ন" করলে অর্ডারকৃত পণ্যগুলো স্বয়ংক্রিয়ভাবে মূল ইনভেন্টরি স্টকে ফেরত আনা হবে।
               </p>
             )}
 
             <button
               onClick={handleSaveStatus}
-              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] px-4 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-medium cursor-pointer transition-colors"
             >
               পরিবর্তন সংরক্ষণ করুন
             </button>
@@ -2688,17 +2683,17 @@ function OrderDetailsModal({
 
           {/* পণ্যের তালিকা */}
           <div className="space-y-2">
-            <span className="text-xs font-bold text-slate-800 block">অর্ডারকৃত পণ্যসমূহ</span>
-            <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 text-xs">
+            <span className="text-xs font-semibold text-[#111111] block">অর্ডারকৃত পণ্যসমূহ</span>
+            <div className="border border-neutral-200/80 rounded-lg overflow-hidden divide-y divide-neutral-200/80 text-xs bg-white">
               {(order.Items || []).map((item, idx) => (
                 <div key={idx} className="p-3 flex items-center justify-between">
                   <div>
-                    <span className="font-bold text-slate-800 block">{item.productName || item.ProductName}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">
+                    <span className="font-semibold text-[#111111] block">{item.productName || item.ProductName}</span>
+                    <span className="text-[10px] text-[#737373] font-mono tabular-nums">
                       {currencySymbol}{item.sellingPrice} × {item.quantity} {item.unit || 'Pcs'}
                     </span>
                   </div>
-                  <span className="font-bold text-slate-800 font-mono">
+                  <span className="font-semibold text-[#111111] font-mono tabular-nums">
                     {currencySymbol}{Number(item.sellingPrice) * Number(item.quantity)}
                   </span>
                 </div>
@@ -2707,45 +2702,45 @@ function OrderDetailsModal({
           </div>
 
           {/* আর্থিক হিসাব */}
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1.5 text-xs">
-            <div className="flex justify-between text-slate-600">
+          <div className="bg-[#F5F5F5] p-4 rounded-lg border border-neutral-200/80 space-y-1.5 text-xs">
+            <div className="flex justify-between text-[#525252]">
               <span>সাবটোটাল:</span>
-              <span className="font-mono">{currencySymbol}{order.SubTotal}</span>
+              <span className="font-mono tabular-nums text-[#111111]">{currencySymbol}{order.SubTotal}</span>
             </div>
             {order.DeliveryCharge > 0 && (
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-[#525252]">
                 <span>ডেলিভারি চার্জ:</span>
-                <span className="font-mono">+{currencySymbol}{order.DeliveryCharge}</span>
+                <span className="font-mono tabular-nums text-[#111111]">+{currencySymbol}{order.DeliveryCharge}</span>
               </div>
             )}
             {order.DiscountAmount > 0 && (
-              <div className="flex justify-between text-emerald-600 font-medium">
+              <div className="flex justify-between text-[#15803D] font-medium">
                 <span>ছাড় / ডিসকাউন্ট:</span>
-                <span className="font-mono">-{currencySymbol}{order.DiscountAmount}</span>
+                <span className="font-mono tabular-nums">-{currencySymbol}{order.DiscountAmount}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-slate-800 pt-1 border-t border-slate-200">
+            <div className="flex justify-between font-semibold text-[#111111] pt-1.5 border-t border-neutral-200/80">
               <span>সর্বমোট মূল্য:</span>
-              <span className="font-mono text-sm">{currencySymbol}{order.TotalAmount}</span>
+              <span className="font-mono tabular-nums text-sm">{currencySymbol}{order.TotalAmount}</span>
             </div>
             {order.AdvancePaid > 0 && (
-              <div className="flex justify-between text-emerald-700 font-medium">
+              <div className="flex justify-between text-[#15803D] font-medium">
                 <span>অগ্রিম পরিশোধিত:</span>
-                <span className="font-mono">-{currencySymbol}{order.AdvancePaid}</span>
+                <span className="font-mono tabular-nums">-{currencySymbol}{order.AdvancePaid}</span>
               </div>
             )}
-            <div className="flex justify-between font-black text-rose-600 text-sm pt-1 border-t border-slate-200">
+            <div className="flex justify-between font-semibold text-[#B91C1C] text-sm pt-1.5 border-t border-neutral-200/80">
               <span>ক্যাশ অন ডেলিভারি (বাকি):</span>
-              <span className="font-mono">{currencySymbol}{order.DueAmount}</span>
+              <span className="font-mono tabular-nums">{currencySymbol}{order.DueAmount}</span>
             </div>
-            <div className="flex justify-between text-slate-500 pt-1 border-t border-slate-200 text-[11px]">
+            <div className="flex justify-between text-[#525252] pt-1.5 border-t border-neutral-200/80 text-[11px]">
               <span>পেমেন্ট মাধ্যম:</span>
-              <span className="font-bold text-slate-800">{order.PaymentMethod || 'COD'}</span>
+              <span className="font-semibold text-[#111111]">{order.PaymentMethod || 'COD'}</span>
             </div>
             {order.TransactionID && (
-              <div className="flex justify-between text-slate-500 text-[11px]">
+              <div className="flex justify-between text-[#525252] text-[11px]">
                 <span>ট্রানজেকশন আইডি (TrxID):</span>
-                <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">{order.TransactionID}</span>
+                <span className="font-mono tabular-nums font-semibold text-[#111111] bg-white px-1.5 py-0.5 rounded-md border border-neutral-200/80">{order.TransactionID}</span>
               </div>
             )}
           </div>
@@ -2753,29 +2748,29 @@ function OrderDetailsModal({
           {/* টাইমলাইন অডিট লগ (Audit Activity History) */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-slate-800 flex items-center space-x-1.5 uppercase tracking-wider">
-                <History className="w-4 h-4 text-indigo-600" />
+              <span className="text-xs font-semibold text-[#111111] flex items-center space-x-1.5 uppercase tracking-wider">
+                <History className="w-4 h-4 text-[#0F172A]" />
                 <span>অর্ডার অ্যাক্টিভিটি টাইমলাইন (Audit Trail)</span>
               </span>
-              <span className="text-[10px] text-slate-400 font-mono">
+              <span className="text-[10px] text-[#737373] font-mono tabular-nums">
                 {(order.ActivityLog || []).length || 1}টি ইভেন্ট
               </span>
             </div>
 
-            <div className="bg-slate-50/80 p-4 sm:p-5 rounded-3xl border border-slate-200/90 relative">
-              <div className="relative pl-5 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-indigo-200">
+            <div className="bg-[#FAFAFA] p-4 sm:p-5 rounded-lg border border-neutral-200/80 relative">
+              <div className="relative pl-5 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-neutral-300">
                 {(order.ActivityLog || [
                   { timestamp: order.CreatedAt, action: 'অর্ডার তৈরি হয়েছে', actor: order.CreatedBy || 'Admin' }
                 ]).map((log, idx) => (
                   <div key={idx} className="relative group">
-                    <div className="absolute -left-5 top-1.5 w-2.5 h-2.5 rounded-full bg-indigo-600 ring-4 ring-indigo-100" />
+                    <div className="absolute -left-5 top-1.5 w-2.5 h-2.5 rounded-full bg-[#0F172A] ring-4 ring-neutral-200" />
                     <div>
-                      <span className="font-bold text-slate-800 text-xs block">{log.action}</span>
+                      <span className="font-semibold text-[#111111] text-xs block">{log.action}</span>
                       <div className="flex items-center space-x-2 mt-0.5">
-                        <span className="text-[10px] text-slate-400 font-mono">
+                        <span className="text-[10px] text-[#737373] font-mono tabular-nums">
                           {new Date(log.timestamp).toLocaleString('bn-BD')}
                         </span>
-                        <span className="text-[9px] px-1.5 py-0.2 bg-slate-200/70 text-slate-600 rounded-md font-bold">
+                        <span className="text-[9px] px-1.5 py-0.5 bg-white border border-neutral-200/80 text-[#525252] rounded-md font-medium">
                           {log.actor || 'Admin'}
                         </span>
                       </div>
@@ -2791,7 +2786,7 @@ function OrderDetailsModal({
             {onEditOrder && (
               <button
                 onClick={onEditOrder}
-                className="py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-[#B45309] font-medium rounded-md text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
               >
                 <Edit3 className="w-4 h-4" />
                 <span>এডিট করুন</span>
@@ -2800,7 +2795,7 @@ function OrderDetailsModal({
 
             <button
               onClick={onOpenCustomerTracking}
-              className="py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] py-2 bg-[#F5F5F5] hover:bg-neutral-200/70 border border-neutral-200/80 text-[#111111] font-medium rounded-md text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             >
               <Truck className="w-4 h-4" />
               <span>লাইভ ট্র্যাক</span>
@@ -2808,7 +2803,7 @@ function OrderDetailsModal({
 
             <button
               onClick={onPrintLabel}
-              className="py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] py-2 bg-[#F5F5F5] hover:bg-neutral-200/70 border border-neutral-200/80 text-[#111111] font-medium rounded-md text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             >
               <Tag className="w-4 h-4" />
               <span>কুরিয়ার স্টিকার</span>
@@ -2816,7 +2811,7 @@ function OrderDetailsModal({
 
             <button
               onClick={onPrintChallan}
-              className="py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] py-2 bg-[#0F172A] hover:bg-slate-800 text-white font-medium rounded-md text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span>ডেলিভারি চালান</span>
@@ -2839,74 +2834,74 @@ function ShippingLabelModal({ order, settings = {}, onClose, currencySymbol = '�
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between no-print">
-          <span className="text-xs font-bold text-slate-700">কুরিয়ার শিপিং লেবেল প্রিভিউ</span>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full cursor-pointer">
+    <div className="fixed inset-0 z-50 bg-neutral-900/40 flex items-center justify-center p-3 overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-md w-full border border-neutral-200/80 overflow-hidden animate-in fade-in zoom-in-95">
+        <div className="p-4 border-b border-neutral-200/80 bg-[#FAFAFA] flex items-center justify-between no-print">
+          <span className="text-xs font-semibold text-[#111111]">কুরিয়ার শিপিং লেবেল প্রিভিউ</span>
+          <button onClick={onClose} className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-1 hover:bg-neutral-200/60 text-[#525252] rounded-md cursor-pointer flex items-center justify-center">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* প্রিন্টেবল লেবেল এলাকা */}
-        <div className="p-6 bg-white font-sans text-slate-900" id="shipping-label-printable">
-          <div className="border-2 border-slate-900 rounded-2xl p-4 space-y-3">
+        <div className="p-6 bg-white font-sans text-[#111111]" id="shipping-label-printable">
+          <div className="border-2 border-[#0F172A] rounded-lg p-4 space-y-3">
             {/* প্রেরক ও কুরিয়ার হেডার */}
-            <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2.5">
+            <div className="flex items-center justify-between border-b-2 border-[#0F172A] pb-2.5">
               <div>
-                <span className="text-sm font-black text-slate-900 block uppercase tracking-tight">
+                <span className="text-sm font-semibold text-[#111111] block uppercase tracking-tight">
                   {settings.StoreName || 'Pabna Bostraloy'}
                 </span>
-                <span className="text-[10px] text-slate-600 block mt-0.5">
+                <span className="text-[10px] text-[#525252] font-mono tabular-nums block mt-0.5">
                   মোবাইল: {settings.Phone || '01675934919'}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-xs font-black text-white bg-slate-900 px-2 py-0.5 rounded-md inline-block">
+                <span className="text-xs font-semibold text-white bg-[#0F172A] px-2 py-0.5 rounded-md inline-block">
                   {order.CourierName}
                 </span>
-                <span className="text-[9px] text-slate-500 block font-mono mt-0.5">
+                <span className="text-[9px] text-[#525252] block font-mono tabular-nums mt-0.5">
                   {order.OrderID}
                 </span>
               </div>
             </div>
 
             {/* প্রাপক / গ্রাহক বক্স */}
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-300">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">প্রাপক / To:</span>
-              <span className="text-base font-black text-slate-900 mt-0.5 block">{order.CustomerName}</span>
-              <span className="text-xs font-black text-slate-900 font-mono block mt-0.5">
+            <div className="bg-[#F5F5F5] p-3 rounded-md border border-neutral-300">
+              <span className="text-[10px] font-medium text-[#525252] uppercase tracking-wider block">প্রাপক / To:</span>
+              <span className="text-base font-semibold text-[#111111] mt-0.5 block">{order.CustomerName}</span>
+              <span className="text-xs font-semibold text-[#111111] font-mono tabular-nums block mt-0.5">
                 মোবাইল: {order.CustomerPhone} {order.AltPhone ? `| ${order.AltPhone}` : ''}
               </span>
-              <span className="text-xs text-slate-800 font-medium block mt-1 leading-snug">
+              <span className="text-xs text-[#111111] font-medium block mt-1 leading-snug">
                 {order.CustomerAddress}
               </span>
-              <span className="text-[11px] font-black text-indigo-700 block mt-1">
+              <span className="text-[11px] font-semibold text-[#111111] block mt-1">
                 জেলা: {order.District || 'ঢাকা'}
               </span>
             </div>
 
             {/* বিশাল COD এমাউন্ট ব্যানার */}
-            <div className="bg-slate-900 text-white p-3 rounded-xl text-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
+            <div className="bg-[#0F172A] text-white p-3 rounded-md text-center">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-slate-300 block">
                 ক্যাশ অন ডেলিভারি (সংগ্রহযোগ্য টাকা)
               </span>
-              <span className="text-2xl font-black block mt-0.5 font-mono">
+              <span className="text-2xl font-semibold block mt-0.5 font-mono tabular-nums">
                 {currencySymbol} {order.DueAmount}
               </span>
             </div>
 
             {/* প্যাকেজ আইটেম সারসংক্ষেপ ও বারকোড সিমুলেশন */}
-            <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px]">
+            <div className="pt-2 border-t border-neutral-200/80 flex items-center justify-between text-[10px]">
               <div>
-                <span className="text-slate-500 font-bold block">পণ্য সংখ্যা:</span>
-                <span className="font-bold text-slate-800">{(order.Items || []).length}টি আইটেম</span>
+                <span className="text-[#525252] font-medium block">পণ্য সংখ্যা:</span>
+                <span className="font-semibold font-mono tabular-nums text-[#111111]">{(order.Items || []).length}টি আইটেম</span>
               </div>
               <div className="text-right">
-                <span className="text-slate-400 font-mono text-[9px] block">
+                <span className="text-[#737373] font-mono tabular-nums text-[9px] block">
                   {new Date(order.CreatedAt).toLocaleDateString('bn-BD')}
                 </span>
-                <span className="text-[10px] font-bold text-slate-600 block">
+                <span className="text-[10px] font-semibold font-mono tabular-nums text-[#111111] block">
                   {order.TrackingID || order.OrderID}
                 </span>
               </div>
@@ -2915,16 +2910,16 @@ function ShippingLabelModal({ order, settings = {}, onClose, currencySymbol = '�
         </div>
 
         {/* প্রিন্ট অ্যাকশন বাটন */}
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3 no-print">
+        <div className="p-4 bg-[#FAFAFA] border-t border-neutral-200/80 flex items-center justify-end space-x-3 no-print">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-xl cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] px-4 py-2 text-xs font-medium text-[#111111] bg-white hover:bg-[#F5F5F5] border border-neutral-200/80 rounded-md cursor-pointer"
           >
             বন্ধ করুন
           </button>
           <button
             onClick={handlePrint}
-            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl shadow-md flex items-center space-x-2 cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] px-5 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium rounded-md flex items-center space-x-2 cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             <span>প্রিন্ট করুন</span>
@@ -2946,25 +2941,25 @@ function DeliveryChallanModal({ order, settings = {}, onClose, currencySymbol = 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between no-print">
-          <span className="text-xs font-bold text-slate-700">ডেলিভারি চালান প্রিভিউ</span>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full cursor-pointer">
+    <div className="fixed inset-0 z-50 bg-neutral-900/40 flex items-center justify-center p-3 overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-xl w-full border border-neutral-200/80 overflow-hidden animate-in fade-in zoom-in-95">
+        <div className="p-4 border-b border-neutral-200/80 bg-[#FAFAFA] flex items-center justify-between no-print">
+          <span className="text-xs font-semibold text-[#111111]">ডেলিভারি চালান প্রিভিউ</span>
+          <button onClick={onClose} className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-1 hover:bg-neutral-200/60 text-[#525252] rounded-md cursor-pointer flex items-center justify-center">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* চালান কন্টেন্ট */}
-        <div className="p-6 bg-white font-sans text-slate-800 space-y-4" id="delivery-challan-printable">
+        <div className="p-6 bg-white font-sans text-[#111111] space-y-4" id="delivery-challan-printable">
           {/* হেডার */}
-          <div className="text-center border-b-2 border-slate-800 pb-3">
-            <h2 className="text-xl font-black text-slate-900 uppercase">
+          <div className="text-center border-b-2 border-[#0F172A] pb-3">
+            <h2 className="text-xl font-semibold tracking-tight text-[#111111] uppercase">
               {settings.StoreName || 'Pabna Bostraloy'}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">{settings.Address}</p>
-            <p className="text-xs text-slate-500 font-mono">মোবাইল: {settings.Phone} | ইমেইল: {settings.Email}</p>
-            <span className="inline-block mt-2 px-3 py-0.5 bg-slate-900 text-white rounded-full text-xs font-bold uppercase tracking-wider">
+            <p className="text-xs text-[#525252] mt-0.5">{settings.Address}</p>
+            <p className="text-xs text-[#525252] font-mono tabular-nums">মোবাইল: {settings.Phone} | ইমেইল: {settings.Email}</p>
+            <span className="inline-block mt-2 px-3 py-0.5 bg-[#0F172A] text-white rounded-md text-xs font-medium uppercase tracking-wider">
               ডেলিভারি চালান / Delivery Challan
             </span>
           </div>
@@ -2972,94 +2967,96 @@ function DeliveryChallanModal({ order, settings = {}, onClose, currencySymbol = 
           {/* মেমো ইনফো ও কাস্টমার */}
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
-              <span className="font-bold text-slate-400 block text-[10px] uppercase">গ্রাহকের নাম ও ঠিকানা:</span>
-              <span className="font-bold text-slate-900 block mt-0.5">{order.CustomerName}</span>
-              <span className="text-slate-600 font-mono block">{order.CustomerPhone}</span>
-              <span className="text-slate-600 block mt-0.5 leading-snug">{order.CustomerAddress}</span>
+              <span className="font-medium text-[#737373] block text-[10px] uppercase">গ্রাহকের নাম ও ঠিকানা:</span>
+              <span className="font-semibold text-[#111111] block mt-0.5">{order.CustomerName}</span>
+              <span className="text-[#525252] font-mono tabular-nums block">{order.CustomerPhone}</span>
+              <span className="text-[#525252] block mt-0.5 leading-snug">{order.CustomerAddress}</span>
             </div>
 
             <div className="text-right">
-              <span className="font-bold text-slate-400 block text-[10px] uppercase">চালান বিবরণ:</span>
-              <span className="font-mono font-bold text-slate-900 block mt-0.5">অর্ডার: {order.OrderID}</span>
-              <span className="text-slate-600 block text-[11px]">
+              <span className="font-medium text-[#737373] block text-[10px] uppercase">চালান বিবরণ:</span>
+              <span className="font-mono tabular-nums font-semibold text-[#111111] block mt-0.5">অর্ডার: {order.OrderID}</span>
+              <span className="text-[#525252] font-mono tabular-nums block text-[11px]">
                 তারিখ: {new Date(order.CreatedAt).toLocaleDateString('bn-BD')}
               </span>
-              <span className="text-slate-600 block text-[11px]">
-                কুরিয়ার: <strong className="text-slate-800">{order.CourierName}</strong>
+              <span className="text-[#525252] block text-[11px]">
+                কুরিয়ার: <strong className="text-[#111111]">{order.CourierName}</strong>
               </span>
             </div>
           </div>
 
           {/* পণ্যের টেবিল */}
-          <table className="w-full text-xs border border-slate-300">
-            <thead>
-              <tr className="bg-slate-100 border-b border-slate-300 text-slate-700 font-bold">
-                <th className="p-2 text-center w-10">নং</th>
-                <th className="p-2 text-left">পণ্যের বিবরণ</th>
-                <th className="p-2 text-center w-16">পরিমাণ</th>
-                <th className="p-2 text-right w-20">দর</th>
-                <th className="p-2 text-right w-24">মোট</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 font-medium">
-              {(order.Items || []).map((item, idx) => (
-                <tr key={idx}>
-                  <td className="p-2 text-center font-mono text-slate-500">{idx + 1}</td>
-                  <td className="p-2 font-bold text-slate-800">{item.productName || item.ProductName}</td>
-                  <td className="p-2 text-center font-mono">{item.quantity} {item.unit || 'Pcs'}</td>
-                  <td className="p-2 text-right font-mono">{currencySymbol}{item.sellingPrice}</td>
-                  <td className="p-2 text-right font-mono font-bold">{currencySymbol}{item.sellingPrice * item.quantity}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border border-neutral-300">
+              <thead>
+                <tr className="bg-[#F5F5F5] border-b border-neutral-300 text-[#111111] font-semibold">
+                  <th className="p-2 text-center w-10">নং</th>
+                  <th className="p-2 text-left">পণ্যের বিবরণ</th>
+                  <th className="p-2 text-center w-16">পরিমাণ</th>
+                  <th className="p-2 text-right w-20">দর</th>
+                  <th className="p-2 text-right w-24">মোট</th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t border-slate-300">
-                <td colSpan={4} className="p-2 text-right font-bold text-slate-600">সাবটোটাল:</td>
-                <td className="p-2 text-right font-mono font-bold">{currencySymbol}{order.SubTotal}</td>
-              </tr>
-              {order.DeliveryCharge > 0 && (
-                <tr>
-                  <td colSpan={4} className="p-2 text-right font-bold text-slate-600">ডেলিভারি চার্জ:</td>
-                  <td className="p-2 text-right font-mono font-bold">+{currencySymbol}{order.DeliveryCharge}</td>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 font-medium">
+                {(order.Items || []).map((item, idx) => (
+                  <tr key={idx}>
+                    <td className="p-2 text-center font-mono tabular-nums text-[#737373]">{idx + 1}</td>
+                    <td className="p-2 font-semibold text-[#111111]">{item.productName || item.ProductName}</td>
+                    <td className="p-2 text-center font-mono tabular-nums">{item.quantity} {item.unit || 'Pcs'}</td>
+                    <td className="p-2 text-right font-mono tabular-nums">{currencySymbol}{item.sellingPrice}</td>
+                    <td className="p-2 text-right font-mono tabular-nums font-semibold">{currencySymbol}{item.sellingPrice * item.quantity}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-neutral-300">
+                  <td colSpan={4} className="p-2 text-right font-medium text-[#525252]">সাবটোটাল:</td>
+                  <td className="p-2 text-right font-mono tabular-nums font-semibold">{currencySymbol}{order.SubTotal}</td>
                 </tr>
-              )}
-              {order.AdvancePaid > 0 && (
-                <tr>
-                  <td colSpan={4} className="p-2 text-right font-bold text-emerald-700">অগ্রিম পরিশোধ:</td>
-                  <td className="p-2 text-right font-mono font-bold text-emerald-700">-{currencySymbol}{order.AdvancePaid}</td>
+                {order.DeliveryCharge > 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-2 text-right font-medium text-[#525252]">ডেলিভারি চার্জ:</td>
+                    <td className="p-2 text-right font-mono tabular-nums font-semibold">+{currencySymbol}{order.DeliveryCharge}</td>
+                  </tr>
+                )}
+                {order.AdvancePaid > 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-2 text-right font-medium text-[#15803D]">অগ্রিম পরিশোধ:</td>
+                    <td className="p-2 text-right font-mono tabular-nums font-semibold text-[#15803D]">-{currencySymbol}{order.AdvancePaid}</td>
+                  </tr>
+                )}
+                <tr className="bg-[#F5F5F5] font-semibold">
+                  <td colSpan={4} className="p-2 text-right text-[#B91C1C]">ক্যাশ অন ডেলিভারি (বাকি):</td>
+                  <td className="p-2 text-right font-mono tabular-nums text-[#B91C1C] text-sm">{currencySymbol}{order.DueAmount}</td>
                 </tr>
-              )}
-              <tr className="bg-slate-100 font-black">
-                <td colSpan={4} className="p-2 text-right text-rose-700">ক্যাশ অন ডেলিভারি (বাকি):</td>
-                <td className="p-2 text-right font-mono text-rose-700 text-sm">{currencySymbol}{order.DueAmount}</td>
-              </tr>
-            </tfoot>
-          </table>
+              </tfoot>
+            </table>
+          </div>
 
           {/* স্বাক্ষর ও নোট */}
-          <div className="pt-8 flex items-center justify-between text-xs text-slate-500">
+          <div className="pt-8 flex items-center justify-between text-xs text-[#525252]">
             <div className="text-center">
-              <div className="w-28 border-t border-slate-400 mb-1" />
+              <div className="w-28 border-t border-neutral-400 mb-1" />
               <span>ক্রেতার স্বাক্ষর</span>
             </div>
             <div className="text-center">
-              <div className="w-28 border-t border-slate-400 mb-1" />
+              <div className="w-28 border-t border-neutral-400 mb-1" />
               <span>কর্তৃপক্ষের স্বাক্ষর</span>
             </div>
           </div>
         </div>
 
         {/* প্রিন্ট অ্যাকশন বাটন */}
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3 no-print">
+        <div className="p-4 bg-[#FAFAFA] border-t border-neutral-200/80 flex items-center justify-end space-x-3 no-print">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-xl cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] px-4 py-2 text-xs font-medium text-[#111111] bg-white hover:bg-[#F5F5F5] border border-neutral-200/80 rounded-md cursor-pointer"
           >
             বন্ধ করুন
           </button>
           <button
             onClick={handlePrint}
-            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl shadow-md flex items-center space-x-2 cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] px-5 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium rounded-md flex items-center space-x-2 cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             <span>প্রিন্ট করুন</span>
@@ -3089,29 +3086,29 @@ function BulkShippingLabelsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 flex flex-col">
+    <div className="fixed inset-0 z-50 bg-neutral-900/40 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-neutral-200/80 animate-in fade-in zoom-in-95 flex flex-col">
         {/* হেডার */}
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between no-print sticky top-0 bg-white z-10">
+        <div className="p-4 border-b border-neutral-200/80 flex items-center justify-between no-print sticky top-0 bg-[#FAFAFA] z-10">
           <div>
-            <h3 className="text-sm font-black text-slate-800">
-              বাল্ক শিপিং লেবেল প্রিন্ট ({orders.length}টি পার্সেল)
+            <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
+              বাল্ক শিপিং লেবেল প্রিন্ট (<span className="font-mono tabular-nums">{orders.length}</span>টি পার্সেল)
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#525252]">
               স্টিকার পেপারে প্রিন্ট করার উপযোগী ২-কলাম গ্রিড লেআউট
             </p>
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl shadow-md flex items-center space-x-1.5 cursor-pointer active:scale-95"
+              className="min-h-[44px] sm:min-h-[36px] px-4 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium rounded-md flex items-center space-x-1.5 cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>একসাথে প্রিন্ট করুন</span>
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-1.5 hover:bg-neutral-200/60 text-[#525252] hover:text-[#111111] rounded-md cursor-pointer flex items-center justify-center"
             >
               <X className="w-4 h-4" />
             </button>
@@ -3119,7 +3116,7 @@ function BulkShippingLabelsModal({
         </div>
 
         {/* প্রিন্ট এলাকা: ২-কলাম স্টিকার শিট */}
-        <div className="p-6 overflow-y-auto flex-1 bg-slate-50/50" id="bulk-shipping-labels-printable">
+        <div className="p-6 overflow-y-auto flex-1 bg-[#FAFAFA]" id="bulk-shipping-labels-printable">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {orders.map((order) => {
               const formattedDate = new Date(order.CreatedAt || order.OrderDate || Date.now()).toLocaleDateString('bn-BD', {
@@ -3131,57 +3128,57 @@ function BulkShippingLabelsModal({
               return (
                 <div
                   key={order.OrderID}
-                  className="bg-white border-2 border-slate-900 rounded-2xl p-4 text-slate-900 shadow-xs space-y-3 print:break-inside-avoid print:mb-4"
+                  className="bg-white border-2 border-[#0F172A] rounded-lg p-4 text-[#111111] space-y-3 print:break-inside-avoid print:mb-4"
                 >
                   {/* প্রেরক ও কুরিয়ার */}
-                  <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2">
+                  <div className="flex items-center justify-between border-b-2 border-[#0F172A] pb-2">
                     <div>
-                      <span className="text-[9px] font-bold text-slate-500 uppercase block tracking-wider">প্রেরক / FROM:</span>
-                      <strong className="text-xs font-black block">{settings.StoreName || 'Pabna Bostraloy'}</strong>
-                      <span className="text-[10px] text-slate-600 block">{settings.Phone || '01712345678'}</span>
+                      <span className="text-[9px] font-medium text-[#525252] uppercase block tracking-wider">প্রেরক / FROM:</span>
+                      <strong className="text-xs font-semibold block">{settings.StoreName || 'Pabna Bostraloy'}</strong>
+                      <span className="text-[10px] text-[#525252] font-mono tabular-nums block">{settings.Phone || '01712345678'}</span>
                     </div>
                     <div className="text-right">
-                      <span className="inline-block px-2.5 py-0.5 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase">
+                      <span className="inline-block px-2.5 py-0.5 bg-[#0F172A] text-white rounded-md text-[10px] font-medium uppercase">
                         {order.CourierName || 'Steadfast'}
                       </span>
-                      <span className="text-[9px] font-mono block text-slate-500 mt-0.5">{formattedDate}</span>
+                      <span className="text-[9px] font-mono tabular-nums block text-[#525252] mt-0.5">{formattedDate}</span>
                     </div>
                   </div>
 
                   {/* প্রাপক / গ্রাহক */}
                   <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">প্রাপক / TO (CUSTOMER):</span>
-                    <strong className="text-sm font-black text-slate-900 block leading-tight">{order.CustomerName}</strong>
-                    <span className="font-mono text-xs font-black text-slate-800 block">{order.CustomerPhone}</span>
+                    <span className="text-[9px] font-medium text-[#525252] uppercase tracking-wider block">প্রাপক / TO (CUSTOMER):</span>
+                    <strong className="text-sm font-semibold text-[#111111] block leading-tight">{order.CustomerName}</strong>
+                    <span className="font-mono tabular-nums text-xs font-semibold text-[#111111] block">{order.CustomerPhone}</span>
                     {order.AltPhone && (
-                      <span className="font-mono text-[10px] text-slate-500 block">বিকল্প: {order.AltPhone}</span>
+                      <span className="font-mono tabular-nums text-[10px] text-[#525252] block">বিকল্প: {order.AltPhone}</span>
                     )}
-                    <p className="text-xs text-slate-700 leading-snug pt-0.5">{order.CustomerAddress}</p>
-                    <span className="text-[10px] font-bold text-indigo-700 block">জেলা: {order.District || 'ঢাকা'}</span>
+                    <p className="text-xs text-[#525252] leading-snug pt-0.5">{order.CustomerAddress}</p>
+                    <span className="text-[10px] font-semibold text-[#111111] block">জেলা: {order.District || 'ঢাকা'}</span>
                   </div>
 
                   {/* COD সংগ্রহযোগ্য টাকা */}
-                  <div className="bg-slate-100 rounded-xl p-2.5 text-center border border-slate-300">
-                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-wider block">
+                  <div className="bg-[#F5F5F5] rounded-md p-2.5 text-center border border-neutral-300">
+                    <span className="text-[9px] font-medium text-[#525252] uppercase tracking-wider block">
                       ক্যাশ অন ডেলিভারি (সংগ্রহযোগ্য টাকা)
                     </span>
-                    <span className="text-xl font-black block mt-0.5 font-mono text-rose-600">
+                    <span className="text-xl font-semibold block mt-0.5 font-mono tabular-nums text-[#B91C1C]">
                       {currencySymbol} {Number(order.DueAmount || 0).toLocaleString('en-US')}
                     </span>
                   </div>
 
                   {/* প্যাকেজ ও ট্র্যাকিং কোড */}
-                  <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px]">
+                  <div className="pt-2 border-t border-neutral-200/80 flex items-center justify-between text-[10px]">
                     <div>
-                      <span className="text-slate-500 font-bold block">পণ্য: {(order.Items || []).length}টি আইটেম</span>
+                      <span className="text-[#525252] font-medium block font-mono tabular-nums">পণ্য: {(order.Items || []).length}টি আইটেম</span>
                       {order.Notes && (
-                        <span className="text-slate-600 text-[9px] italic block truncate max-w-[160px]">
+                        <span className="text-[#525252] text-[9px] italic block truncate max-w-[160px]">
                           নোট: {order.Notes}
                         </span>
                       )}
                     </div>
                     <div className="text-right">
-                      <span className="font-mono font-bold text-slate-900 text-[11px] block">
+                      <span className="font-mono tabular-nums font-semibold text-[#111111] text-[11px] block">
                         {order.TrackingID || order.OrderID}
                       </span>
                     </div>
@@ -3193,16 +3190,16 @@ function BulkShippingLabelsModal({
         </div>
 
         {/* ফুটার */}
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3 no-print">
+        <div className="p-4 bg-[#FAFAFA] border-t border-neutral-200/80 flex items-center justify-end space-x-3 no-print">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-xl cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] px-4 py-2 text-xs font-medium text-[#111111] bg-white hover:bg-[#F5F5F5] border border-neutral-200/80 rounded-md cursor-pointer"
           >
             বন্ধ করুন
           </button>
           <button
             onClick={handlePrint}
-            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl shadow-md flex items-center space-x-2 cursor-pointer active:scale-95"
+            className="min-h-[44px] sm:min-h-[36px] px-5 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium rounded-md flex items-center space-x-2 cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             <span>প্রিন্ট করুন</span>

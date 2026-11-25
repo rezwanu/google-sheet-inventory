@@ -175,7 +175,7 @@ export default function GodownStockAlertView({
               currentQty: vGStock,
               isOut,
               isLow,
-              alertStatusText: isOut ? '🚨 সম্পূর্ণ স্টক শেষ' : '⚠️ সংকটজনক কম',
+              alertStatusText: isOut ? 'সম্পূর্ণ স্টক শেষ' : 'সংকটজনক কম',
               recommendedRestockQty: `+${neededQty}`,
               rawVariant: v
             });
@@ -224,7 +224,7 @@ export default function GodownStockAlertView({
             currentQty: gStock,
             isOut,
             isLow,
-            alertStatusText: isOut ? '🚨 সম্পূর্ণ স্টক শেষ' : '⚠️ সংকটজনক কম',
+            alertStatusText: isOut ? 'সম্পূর্ণ স্টক শেষ' : 'সংকটজনক কম',
             recommendedRestockQty: `+${neededQty}`,
             parentProduct: p
           });
@@ -417,7 +417,7 @@ export default function GodownStockAlertView({
                 ID: ${p.productId} ${p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ঘাটতি: ${p.alertVariants.length}টি
               </div>
               <div style="margin-top: 5px; font-size: 11px; color: #1e293b; line-height: 1.5;">
-                <strong style="color: #4338ca;">${variantData.type}:</strong> ${variantData.text}
+                <strong style="color: #0f172a;">${variantData.type}:</strong> ${variantData.text}
               </div>
             </td>
             <td style="text-align: center; font-family: monospace; font-size: 11px; color: #334155; padding: 8px 10px; word-break: break-word;">
@@ -489,7 +489,7 @@ export default function GodownStockAlertView({
               padding: 3px 14px;
               background: #0f172a;
               color: #ffffff;
-              border-radius: 9999px;
+              border-radius: 6px;
               font-size: 11px;
               font-weight: bold;
               text-transform: uppercase;
@@ -603,8 +603,8 @@ export default function GodownStockAlertView({
 
           <div class="summary-box">
             <span>সর্বমোট ঘাটতি আইটেম: ${stats.totalAlertItems}টি</span>
-            <span style="color: #b91c1c;">🚨 সম্পূর্ণ স্টক শেষ: ${stats.outCount}টি</span>
-            <span style="color: #b45309;">⚠️ সংকটজনক কম স্টক: ${stats.lowCount}টি</span>
+            <span style="color: #b91c1c;">সম্পূর্ণ স্টক শেষ: ${stats.outCount}টি</span>
+            <span style="color: #b45309;">সংকটজনক কম স্টক: ${stats.lowCount}টি</span>
             <span>সিস্টেম অডিট কপি</span>
           </div>
 
@@ -636,36 +636,36 @@ export default function GodownStockAlertView({
     const storePhone = settings?.Phone || '০১৬৭৫৯৩৪৯১৯';
 
     return (
-      <div className="flex-1 bg-slate-200 min-h-screen p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200 select-none">
+      <div className="flex-1 bg-[#FAFAFA] min-h-screen p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200 select-none">
         <div className="max-w-4xl mx-auto space-y-4">
 
           {/* পিডিএফ কন্ট্রোল বার (প্রিন্টে অদৃশ্য) */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-300 shadow-md flex flex-wrap items-center justify-between gap-3 print:hidden">
+          <div className="bg-white p-4 rounded-lg border border-neutral-200/80 flex flex-wrap items-center justify-between gap-3 print:hidden">
             <div className="flex items-center space-x-3">
               <button
                 type="button"
                 onClick={() => setIsPdfPreviewMode(false)}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-2 rounded-md bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#111111] transition-colors flex items-center justify-center cursor-pointer"
                 title="সাধারণ তালিকায় ফিরে যান"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
-                <h3 className="text-sm font-black text-slate-900 flex items-center space-x-1.5">
-                  <FileText className="w-4 h-4 text-rose-600" />
+                <h3 className="text-sm font-semibold tracking-tight text-[#111111] flex items-center space-x-1.5">
+                  <FileText className="w-4 h-4 text-[#B91C1C]" />
                   <span>গোডাউন স্টক অ্যালার্ট - A4 PDF প্রিভিউ</span>
                 </h3>
-                <p className="text-[11px] text-slate-500">
-                  ব্রাউজারের প্রিন্ট ডায়ালগ থেকে সরাসরি <strong className="text-slate-800">"Save as PDF"</strong> নির্বাচন করে ডাউনলোড করুন
+                <p className="text-[11px] text-[#525252]">
+                  ব্রাউজারের প্রিন্ট ডায়ালগ থেকে সরাসরি <strong className="text-[#111111]">"Save as PDF"</strong> নির্বাচন করে ডাউনলোড করুন
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-wrap gap-y-1">
               <button
                 type="button"
                 onClick={handlePrint}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black inline-flex items-center space-x-1.5 shadow-md shadow-rose-600/20 transition-all cursor-pointer active:scale-95"
+                className="min-h-[44px] sm:min-h-[36px] px-4 py-2 bg-[#B91C1C] hover:bg-red-800 text-white rounded-md text-xs font-semibold inline-flex items-center space-x-1.5 transition-colors cursor-pointer"
                 title="PDF আকারে সেভ বা প্রিন্ট করুন"
               >
                 <Printer className="w-4 h-4" />
@@ -675,7 +675,7 @@ export default function GodownStockAlertView({
               <button
                 type="button"
                 onClick={handleDirectPDFWindow}
-                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-semibold inline-flex items-center space-x-1.5 transition-colors cursor-pointer"
                 title="নতুন ট্যাবে সরাসরি PDF উইন্ডো খুলুন"
               >
                 <FileText className="w-4 h-4" />
@@ -685,7 +685,7 @@ export default function GodownStockAlertView({
               <button
                 type="button"
                 onClick={handleExportCSV}
-                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-[#15803D] hover:bg-emerald-800 text-white rounded-md text-xs font-semibold inline-flex items-center space-x-1.5 transition-colors cursor-pointer"
                 title="এক্সেল সিএসভি ফাইল ডাউনলোড করুন"
               >
                 <FileSpreadsheet className="w-4 h-4" />
@@ -695,7 +695,7 @@ export default function GodownStockAlertView({
               <button
                 type="button"
                 onClick={() => setIsPdfPreviewMode(false)}
-                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#111111] text-xs font-semibold rounded-md cursor-pointer"
               >
                 বন্ধ করুন
               </button>
@@ -705,140 +705,142 @@ export default function GodownStockAlertView({
           {/* বাস্তব A4 কাগজের মতো দৃশ্যমান শীট (A4 Printable Document Container) */}
           <div
             id="godown-alert-a4-sheet"
-            className="bg-white rounded-2xl shadow-xl border border-slate-300 p-6 sm:p-10 mx-auto print:p-0 print:border-none print:shadow-none print:m-0 print:rounded-none"
+            className="bg-white rounded-lg border border-neutral-200/80 p-6 sm:p-10 mx-auto print:p-0 print:border-none print:m-0 print:rounded-none"
             style={{ minHeight: '297mm' }}
           >
             {/* অফিশিয়াল রিপোর্ট হেডার */}
-            <div className="text-center pb-4 border-b-2 border-slate-900 mb-5">
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            <div className="text-center pb-4 border-b-2 border-[#0F172A] mb-5">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-[#111111] tracking-tight">
                 {storeName}
               </h1>
-              <p className="text-xs text-slate-600 mt-1">{storeAddress} • মোবাইল: {storePhone}</p>
-              <div className="inline-block mt-3 px-5 py-1.5 bg-slate-900 text-white rounded-full text-xs font-black uppercase tracking-wider">
+              <p className="text-xs text-[#525252] mt-1 font-mono tabular-nums">{storeAddress} • মোবাইল: {storePhone}</p>
+              <div className="inline-block mt-3 px-5 py-1.5 bg-[#0F172A] text-white rounded-md text-xs font-semibold uppercase tracking-wider">
                 গোডাউন স্টক অ্যালার্ট ও ঘাটতি খতিয়ান অডিট রিপোর্ট
               </div>
             </div>
 
             {/* রিপোর্ট মেটা ইনফো গ্রিড */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs mb-5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-[#FAFAFA] rounded-lg border border-neutral-200/80 text-xs mb-5">
               <div>
-                <span className="text-slate-500 block text-[10.5px]">রিপোর্ট তৈরির সময়:</span>
-                <span className="font-bold text-slate-800 font-mono">{new Date().toLocaleString('bn-BD')}</span>
+                <span className="text-[#525252] block text-[10.5px]">রিপোর্ট তৈরির সময়:</span>
+                <span className="font-semibold text-[#111111] font-mono tabular-nums">{new Date().toLocaleString('bn-BD')}</span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[10.5px]">ফিল্টার স্ট্যাটাস:</span>
-                <span className="font-bold text-slate-800">
+                <span className="text-[#525252] block text-[10.5px]">ফিল্টার স্ট্যাটাস:</span>
+                <span className="font-semibold text-[#111111]">
                   {filterType === 'ALL' ? 'সকল ঘাটতি পণ্য' : filterType === 'OUT_OF_STOCK' ? 'সম্পূর্ণ স্টক শেষ' : 'সংকটজনক কম স্টক'}
                 </span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[10.5px]">আক্রান্ত মূল পণ্য:</span>
-                <span className="font-bold text-slate-800">{stats.totalAlertProducts}টি মূল পণ্য</span>
+                <span className="text-[#525252] block text-[10.5px]">আক্রান্ত মূল পণ্য:</span>
+                <span className="font-semibold font-mono tabular-nums text-[#111111]">{stats.totalAlertProducts}টি মূল পণ্য</span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[10.5px]">মোট ঘাটতি আইটেম:</span>
-                <span className="font-bold text-rose-700 font-mono">
+                <span className="text-[#525252] block text-[10.5px]">মোট ঘাটতি আইটেম:</span>
+                <span className="font-semibold text-[#B91C1C] font-mono tabular-nums">
                   {stats.totalAlertItems}টি (শেষ: {stats.outCount}, কম: {stats.lowCount})
                 </span>
               </div>
             </div>
 
             {/* ৩ কলাম বিশিষ্ট স্টক অ্যালার্ট টেবিল */}
-            <div className="border border-slate-300 rounded-xl overflow-hidden mb-6">
-              <table className="w-full text-xs text-left border-collapse">
-                <thead className="bg-slate-100 text-slate-800 font-bold uppercase text-[11px] border-b border-slate-300">
-                  <tr>
-                    <th className="py-2.5 px-3 w-14 text-center border-r border-slate-200">ক্রমিক</th>
-                    <th className="py-2.5 px-4 border-r border-slate-200">মূল পণ্য ও ভ্যারিয়েন্ট বিবরণ</th>
-                    <th className="py-2.5 px-3 w-40 text-center">বারকোড</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {filteredProducts.length === 0 ? (
+            <div className="border border-neutral-200/80 rounded-lg overflow-hidden mb-6">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead className="bg-[#F5F5F5] text-[#111111] font-semibold uppercase text-[11px] border-b border-neutral-200/80">
                     <tr>
-                      <td colSpan="3" className="py-8 text-center text-slate-400 font-bold">
-                        কোনো ঘাটতি বা স্টক সতর্কতা পাওয়া যায়নি।
-                      </td>
+                      <th className="py-2.5 px-3 w-14 text-center border-r border-neutral-200/80">ক্রমিক</th>
+                      <th className="py-2.5 px-4 border-r border-neutral-200/80">মূল পণ্য ও ভ্যারিয়েন্ট বিবরণ</th>
+                      <th className="py-2.5 px-3 w-40 text-center">বারকোড</th>
                     </tr>
-                  ) : (
-                    filteredProducts.map((p, idx) => {
-                      const rowNum = idx + 1;
-                      const parentBarcode = (p.barcode && p.barcode !== '—') ? p.barcode : (p.parentProduct?.Barcode || p.parentProduct?.barcode || '—');
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200/80">
+                    {filteredProducts.length === 0 ? (
+                      <tr>
+                        <td colSpan="3" className="py-8 text-center text-[#737373] font-semibold">
+                          কোনো ঘাটতি বা স্টক সতর্কতা পাওয়া যায়নি।
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredProducts.map((p, idx) => {
+                        const rowNum = idx + 1;
+                        const parentBarcode = (p.barcode && p.barcode !== '—') ? p.barcode : (p.parentProduct?.Barcode || p.parentProduct?.barcode || '—');
 
-                      if (p.hasVariants) {
-                        const variantData = getVariantTypeAndValues(p.alertVariants);
+                        if (p.hasVariants) {
+                          const variantData = getVariantTypeAndValues(p.alertVariants);
 
+                          return (
+                            <tr key={p.productId} className="bg-white hover:bg-[#FAFAFA] border-t border-neutral-200/80">
+                              <td className="py-3 px-3 text-center text-[#525252] font-mono tabular-nums font-semibold border-r border-neutral-200/80">
+                                {rowNum}
+                              </td>
+                              <td className="py-3 px-4 border-r border-neutral-200/80">
+                                <div className="text-sm font-semibold text-[#111111]">{p.productName}</div>
+                                <div className="text-[10px] font-mono tabular-nums text-[#525252] font-normal mt-0.5">
+                                  ID: {p.productId} {p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ঘাটতি: {p.alertVariants.length}টি
+                                </div>
+                                <div className="mt-2 text-xs text-[#111111] leading-relaxed">
+                                  <span className="font-semibold text-[#0F172A]">{variantData.type}: </span>
+                                  <span className="font-medium text-[#525252]">{variantData.text}</span>
+                                </div>
+                              </td>
+                              <td className="py-3 px-3 text-center font-mono tabular-nums text-[#525252] text-xs break-all">
+                                {parentBarcode}
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        // সাধারণ পণ্য (ভ্যারিয়েন্ট ছাড়া)
                         return (
-                          <tr key={p.productId} className="bg-white hover:bg-slate-50 border-t border-slate-200">
-                            <td className="py-3 px-3 text-center text-slate-700 font-mono font-bold border-r border-slate-200">
+                          <tr key={p.productId} className="bg-white hover:bg-[#FAFAFA] border-t border-neutral-200/80">
+                            <td className="py-3 px-3 text-center text-[#525252] font-mono tabular-nums font-semibold border-r border-neutral-200/80">
                               {rowNum}
                             </td>
-                            <td className="py-3 px-4 border-r border-slate-200">
-                              <div className="text-sm font-black text-slate-900">{p.productName}</div>
-                              <div className="text-[10px] text-slate-500 font-normal mt-0.5">
-                                ID: {p.productId} {p.category ? `| ক্যাটাগরি: ${p.category}` : ''} | মোট ঘাটতি: {p.alertVariants.length}টি
+                            <td className="py-3 px-4 border-r border-neutral-200/80">
+                              <div className="text-sm font-semibold text-[#111111] flex items-center space-x-2">
+                                <span>{p.productName}</span>
+                                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-normal bg-[#F5F5F5] text-[#525252] border border-neutral-200/80">
+                                  সাধারণ পণ্য
+                                </span>
                               </div>
-                              <div className="mt-2 text-xs text-slate-800 leading-relaxed">
-                                <span className="font-bold text-indigo-700">{variantData.type}: </span>
-                                <span className="font-medium text-slate-700">{variantData.text}</span>
+                              <div className="text-[10px] font-mono tabular-nums text-[#525252] font-normal mt-0.5">
+                                ID: {p.productId} {p.category ? `| ক্যাটাগরি: ${p.category}` : ''}
                               </div>
                             </td>
-                            <td className="py-3 px-3 text-center font-mono text-slate-700 text-xs break-all">
-                              {parentBarcode}
+                            <td className="py-3 px-3 text-center font-mono tabular-nums text-[#525252] text-xs break-all">
+                              {p.barcode || '—'}
                             </td>
                           </tr>
                         );
-                      }
-
-                      // সাধারণ পণ্য (ভ্যারিয়েন্ট ছাড়া)
-                      return (
-                        <tr key={p.productId} className="bg-white hover:bg-slate-50 border-t border-slate-200">
-                          <td className="py-3 px-3 text-center text-slate-700 font-mono font-bold border-r border-slate-200">
-                            {rowNum}
-                          </td>
-                          <td className="py-3 px-4 border-r border-slate-200">
-                            <div className="text-sm font-black text-slate-900 flex items-center space-x-2">
-                              <span>{p.productName}</span>
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-normal bg-slate-100 text-slate-600 border border-slate-200">
-                                সাধারণ পণ্য
-                              </span>
-                            </div>
-                            <div className="text-[10px] text-slate-500 font-normal mt-0.5">
-                              ID: {p.productId} {p.category ? `| ক্যাটাগরি: ${p.category}` : ''}
-                            </div>
-                          </td>
-                          <td className="py-3 px-3 text-center font-mono text-slate-700 text-xs break-all">
-                            {p.barcode || '—'}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* সামারি ফুটার বক্স */}
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-slate-700 mb-8">
-              <span>সর্বমোট ঘাটতি আইটেম: <strong className="text-slate-900 font-mono">{stats.totalAlertItems}টি</strong></span>
-              <span className="text-rose-700">🚨 সম্পূর্ণ স্টক শেষ: <strong className="font-mono">{stats.outCount}টি</strong></span>
-              <span className="text-amber-700">⚠️ সংকটজনক কম স্টক: <strong className="font-mono">{stats.lowCount}টি</strong></span>
-              <span className="text-slate-400 font-normal">সিস্টেম স্বয়ংক্রিয় অডিট কপি</span>
+            <div className="p-3 bg-[#FAFAFA] rounded-lg border border-neutral-200/80 flex flex-wrap items-center justify-between gap-3 text-xs font-semibold text-[#525252] mb-8">
+              <span>সর্বমোট ঘাটতি আইটেম: <strong className="text-[#111111] font-mono tabular-nums">{stats.totalAlertItems}টি</strong></span>
+              <span className="text-[#B91C1C]">সম্পূর্ণ স্টক শেষ: <strong className="font-mono tabular-nums">{stats.outCount}টি</strong></span>
+              <span className="text-[#B45309]">সংকটজনক কম স্টক: <strong className="font-mono tabular-nums">{stats.lowCount}টি</strong></span>
+              <span className="text-[#737373] font-normal">সিস্টেম স্বয়ংক্রিয় অডিট কপি</span>
             </div>
 
             {/* অফিশিয়াল স্বাক্ষর ব্লক */}
-            <div className="grid grid-cols-2 gap-16 pt-10 text-center text-xs text-slate-600">
+            <div className="grid grid-cols-2 gap-16 pt-10 text-center text-xs text-[#525252]">
               <div>
-                <div className="border-t border-dashed border-slate-400 pt-2 font-bold text-slate-800">
+                <div className="border-t border-dashed border-neutral-300 pt-2 font-semibold text-[#111111]">
                   গোডাউন ইনচার্জ / অডিটর স্বাক্ষর
                 </div>
-                <span className="text-[10px] text-slate-400 mt-0.5 block">তারিখ সহ</span>
+                <span className="text-[10px] text-[#737373] mt-0.5 block">তারিখ সহ</span>
               </div>
               <div>
-                <div className="border-t border-dashed border-slate-400 pt-2 font-bold text-slate-800">
+                <div className="border-t border-dashed border-neutral-300 pt-2 font-semibold text-[#111111]">
                   স্টোর ম্যানেজার / প্রোপ্রাইটর স্বাক্ষর
                 </div>
-                <span className="text-[10px] text-slate-400 mt-0.5 block">অনুমোদন সীল সহ</span>
+                <span className="text-[10px] text-[#737373] mt-0.5 block">অনুমোদন সীল সহ</span>
               </div>
             </div>
 
@@ -884,35 +886,35 @@ export default function GodownStockAlertView({
   // ২. সাধারণ ড্যাশবোর্ড মোড (স্বাভাবিক ভিউ)
   // ==========================================
   return (
-    <div className="flex-1 bg-slate-50 min-h-screen p-3 sm:p-6 select-none animate-in fade-in duration-200">
+    <div className="flex-1 bg-[#FAFAFA] min-h-screen p-3 sm:p-6 select-none animate-in fade-in duration-200">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
         {/* টপ হেডার বার */}
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="bg-white p-4 sm:p-5 rounded-lg border border-neutral-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
             {onClose && (
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-2 rounded-md bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#111111] transition-colors flex items-center justify-center cursor-pointer"
                 title="ড্যাশবোর্ডে ফিরে যান"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
             )}
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="p-1.5 rounded-lg bg-rose-100 text-rose-700">
+              <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                <span className="p-1.5 rounded-md bg-red-50 border border-red-200 text-[#B91C1C]">
                   <AlertTriangle className="w-5 h-5" />
                 </span>
-                <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+                <h1 className="text-lg sm:text-xl font-semibold text-[#111111] tracking-tight">
                   গোডাউন স্টক অ্যালার্ট
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 animate-pulse">
+                <span className="px-2.5 py-0.5 rounded-md text-xs font-mono tabular-nums font-semibold bg-red-50 text-[#B91C1C] border border-red-200">
                   {stats.totalAlertItems}টি ঘাটতি ({stats.totalAlertProducts}টি পণ্যে)
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-1 font-medium">
+              <p className="text-xs text-[#525252] mt-1 font-medium">
                 গোডাউনে যেসব পণ্যের মূল নামের অধীনে ভ্যারিয়েন্টগুলোর মজুত শেষ বা কমে গেছে তাদের খতিয়ান
               </p>
             </div>
@@ -923,7 +925,7 @@ export default function GodownStockAlertView({
             <button
               type="button"
               onClick={() => setIsPdfPreviewMode(true)}
-              className="px-3.5 py-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white rounded-xl text-xs font-black inline-flex items-center space-x-1.5 shadow-md shadow-rose-600/20 transition-all cursor-pointer active:scale-95"
+              className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-[#B91C1C] hover:bg-red-800 text-white rounded-md text-xs font-semibold inline-flex items-center space-x-1.5 transition-colors cursor-pointer"
               title="A4 পিডিএফ রিপোর্ট তৈরি ও প্রিভিউ দেখুন"
             >
               <FileText className="w-4 h-4" />
@@ -934,10 +936,10 @@ export default function GodownStockAlertView({
             <button
               type="button"
               onClick={handleDirectPDFWindow}
-              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 transition-colors cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#111111] rounded-md text-xs font-semibold inline-flex items-center space-x-1.5 transition-colors cursor-pointer"
               title="নতুন ট্যাবে সরাসরি PDF ডাউনলোড ডায়ালগ খুলুন"
             >
-              <Printer className="w-4 h-4 text-slate-600" />
+              <Printer className="w-4 h-4 text-[#525252]" />
               <span className="hidden sm:inline">দ্রুত প্রিন্ট / PDF</span>
             </button>
 
@@ -945,7 +947,7 @@ export default function GodownStockAlertView({
             <button
               type="button"
               onClick={handleExportCSV}
-              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-[#15803D] hover:bg-emerald-800 text-white rounded-md text-xs font-semibold inline-flex items-center space-x-1.5 transition-colors cursor-pointer"
               title="এক্সেল বা সিএসভি ফাইল ডাউনলোড করুন"
             >
               <FileSpreadsheet className="w-4 h-4" />
@@ -958,72 +960,72 @@ export default function GodownStockAlertView({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div
             onClick={() => setFilterType('ALL')}
-            className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+            className={`p-4 rounded-lg border transition-colors cursor-pointer ${
               filterType === 'ALL'
-                ? 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-300 ring-2 ring-indigo-500/20 shadow-xs'
-                : 'bg-white border-slate-200 hover:border-slate-300'
+                ? 'bg-white border-[#0F172A]'
+                : 'bg-white border-neutral-200/80 hover:border-neutral-300'
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-600">মোট ঘাটতি আইটেম</span>
-              <span className="p-2 rounded-xl bg-indigo-100 text-indigo-700">
+              <span className="text-xs font-semibold text-[#525252]">মোট ঘাটতি আইটেম</span>
+              <span className="p-2 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A]">
                 <AlertTriangle className="w-4 h-4" />
               </span>
             </div>
-            <div className="text-2xl font-black text-indigo-950 mt-2 font-mono">
-              {stats.totalAlertItems.toLocaleString('bn-BD')} <span className="text-xs font-normal text-slate-500">টি আইটেম ({stats.totalAlertProducts}টি মূল পণ্যে)</span>
+            <div className="text-2xl font-semibold text-[#111111] mt-2 font-mono tabular-nums">
+              {stats.totalAlertItems.toLocaleString('bn-BD')} <span className="text-xs font-sans font-normal text-[#525252]">টি আইটেম ({stats.totalAlertProducts}টি মূল পণ্যে)</span>
             </div>
           </div>
 
           <div
             onClick={() => setFilterType('OUT_OF_STOCK')}
-            className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+            className={`p-4 rounded-lg border transition-colors cursor-pointer ${
               filterType === 'OUT_OF_STOCK'
-                ? 'bg-gradient-to-br from-rose-50 to-pink-50 border-rose-300 ring-2 ring-rose-500/20 shadow-xs'
-                : 'bg-white border-slate-200 hover:border-slate-300'
+                ? 'bg-white border-[#B91C1C]'
+                : 'bg-white border-neutral-200/80 hover:border-neutral-300'
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-rose-700">🚨 সম্পূর্ণ স্টক শেষ</span>
-              <span className="p-2 rounded-xl bg-rose-100 text-rose-700">
+              <span className="text-xs font-semibold text-[#B91C1C]">সম্পূর্ণ স্টক শেষ</span>
+              <span className="p-2 rounded-md bg-red-50 border border-red-200 text-[#B91C1C]">
                 <PackageX className="w-4 h-4" />
               </span>
             </div>
-            <div className="text-2xl font-black text-rose-950 mt-2 font-mono">
-              {stats.outCount.toLocaleString('bn-BD')} <span className="text-xs font-normal text-slate-500">টি আইটেম</span>
+            <div className="text-2xl font-semibold text-[#B91C1C] mt-2 font-mono tabular-nums">
+              {stats.outCount.toLocaleString('bn-BD')} <span className="text-xs font-sans font-normal text-[#525252]">টি আইটেম</span>
             </div>
           </div>
 
           <div
             onClick={() => setFilterType('LOW_STOCK')}
-            className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+            className={`p-4 rounded-lg border transition-colors cursor-pointer ${
               filterType === 'LOW_STOCK'
-                ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-300 ring-2 ring-amber-500/20 shadow-xs'
-                : 'bg-white border-slate-200 hover:border-slate-300'
+                ? 'bg-white border-[#B45309]'
+                : 'bg-white border-neutral-200/80 hover:border-neutral-300'
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-700">⚠️ সংকটজনক কম স্টক</span>
-              <span className="p-2 rounded-xl bg-amber-100 text-amber-700">
+              <span className="text-xs font-semibold text-[#B45309]">সংকটজনক কম স্টক</span>
+              <span className="p-2 rounded-md bg-amber-50 border border-amber-200 text-[#B45309]">
                 <AlertCircle className="w-4 h-4" />
               </span>
             </div>
-            <div className="text-2xl font-black text-amber-950 mt-2 font-mono">
-              {stats.lowCount.toLocaleString('bn-BD')} <span className="text-xs font-normal text-slate-500">টি আইটেম</span>
+            <div className="text-2xl font-semibold text-[#B45309] mt-2 font-mono tabular-nums">
+              {stats.lowCount.toLocaleString('bn-BD')} <span className="text-xs font-sans font-normal text-[#525252]">টি আইটেম</span>
             </div>
           </div>
         </div>
 
         {/* সার্চ ও ফিল্টার বার */}
-        <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-neutral-200/80 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative flex-1 w-full max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="মূল পণ্য, ভ্যারিয়েন্ট, রং, সাইজ বা বারকোড দিয়ে খুঁজুন..."
-              className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full min-h-[44px] sm:min-h-[36px] pl-9 pr-3 py-1.5 text-xs bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] focus:outline-none text-[#111111]"
             />
           </div>
 
@@ -1033,7 +1035,7 @@ export default function GodownStockAlertView({
               <button
                 type="button"
                 onClick={expandAll}
-                className="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold transition-all flex items-center space-x-1 cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1.5 rounded-md bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#111111] font-semibold transition-colors flex items-center space-x-1 cursor-pointer"
                 title="সকল ভ্যারিয়েন্ট বিস্তার করে দেখুন"
               >
                 <span>সব বিস্তার</span>
@@ -1042,7 +1044,7 @@ export default function GodownStockAlertView({
               <button
                 type="button"
                 onClick={collapseAll}
-                className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-all flex items-center space-x-1 cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1.5 rounded-md bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#525252] font-semibold transition-colors flex items-center space-x-1 cursor-pointer"
                 title="ভ্যারিয়েন্টগুলো সংক্ষেপ করুন"
               >
                 <span>সংক্ষেপ</span>
@@ -1055,10 +1057,10 @@ export default function GodownStockAlertView({
               <button
                 type="button"
                 onClick={() => setFilterType('ALL')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md text-xs font-semibold font-mono tabular-nums transition-colors cursor-pointer ${
                   filterType === 'ALL'
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-[#0F172A] text-white'
+                    : 'bg-[#F5F5F5] text-[#525252] hover:bg-neutral-200 border border-neutral-200/80'
                 }`}
               >
                 সকল ({stats.totalAlertItems})
@@ -1066,51 +1068,51 @@ export default function GodownStockAlertView({
               <button
                 type="button"
                 onClick={() => setFilterType('OUT_OF_STOCK')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md text-xs font-semibold font-mono tabular-nums transition-colors cursor-pointer ${
                   filterType === 'OUT_OF_STOCK'
-                    ? 'bg-rose-600 text-white shadow-xs'
-                    : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                    ? 'bg-[#B91C1C] text-white'
+                    : 'bg-red-50 text-[#B91C1C] hover:bg-red-100 border border-red-200'
                 }`}
               >
-                🚨 শেষ ({stats.outCount})
+                শেষ ({stats.outCount})
               </button>
               <button
                 type="button"
                 onClick={() => setFilterType('LOW_STOCK')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md text-xs font-semibold font-mono tabular-nums transition-colors cursor-pointer ${
                   filterType === 'LOW_STOCK'
-                    ? 'bg-amber-600 text-white shadow-xs'
-                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                    ? 'bg-[#B45309] text-white'
+                    : 'bg-amber-50 text-[#B45309] hover:bg-amber-100 border border-amber-200'
                 }`}
               >
-                ⚠️ কম ({stats.lowCount})
+                কম ({stats.lowCount})
               </button>
             </div>
           </div>
         </div>
 
         {/* পণ্য ভিত্তিক ও ভ্যারিয়েন্ট খতিয়ান টেবিল (প্যারেন্ট প্রডাক্ট নামের অধীনে ভ্যারিয়েন্ট তালিকা) */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-2xs">
+        <div className="bg-white rounded-lg border border-neutral-200/80 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold uppercase tracking-wider">
+              <thead className="bg-[#F5F5F5] text-[#525252] border-b border-neutral-200/80 font-semibold uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-4 w-14 text-center">ক্রমিক</th>
                   <th className="py-3 px-4">পণ্য ও ভ্যারিয়েন্ট বিবরণ</th>
                   <th className="py-3 px-4">বারকোড</th>
-                  <th className="py-3 px-4 text-center bg-rose-50/70 text-rose-950 font-black">বর্তমান পরিমাণ</th>
+                  <th className="py-3 px-4 text-center bg-red-50/70 text-[#B91C1C] font-semibold">বর্তমান পরিমাণ</th>
                   <th className="py-3 px-4 text-center">সতর্কতা / অবস্থা</th>
                   <th className="py-3 px-4 text-center">প্রয়োজনীয় রিস্টক</th>
                   <th className="py-3 px-4 text-center">অ্যাকশন</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-neutral-200/80">
                 {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="py-12 text-center text-slate-400 font-medium">
-                      <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
-                      <p className="font-bold text-slate-700 text-sm">গোডাউনে কোনো ঘাটতি বা কম স্টক পণ্য নেই!</p>
-                      <p className="text-xs text-slate-400 mt-0.5">সবগুলো ভ্যারিয়েন্ট ও পণ্য পর্যাপ্ত মজুতে রয়েছে।</p>
+                    <td colSpan="7" className="py-12 text-center text-[#737373] font-medium">
+                      <CheckCircle2 className="w-8 h-8 text-[#15803D] mx-auto mb-2" />
+                      <p className="font-semibold text-[#111111] text-sm">গোডাউনে কোনো ঘাটতি বা কম স্টক পণ্য নেই!</p>
+                      <p className="text-xs text-[#525252] mt-0.5">সবগুলো ভ্যারিয়েন্ট ও পণ্য পর্যাপ্ত মজুতে রয়েছে।</p>
                     </td>
                   </tr>
                 ) : (
@@ -1121,16 +1123,16 @@ export default function GodownStockAlertView({
                       return (
                         <React.Fragment key={p.productId}>
                           {/* মূল প্যারেন্ট পণ্য রো */}
-                          <tr className="bg-slate-50/90 hover:bg-slate-100 border-t border-slate-200 transition-colors">
-                            <td className="py-3 px-4 text-center font-mono font-bold text-slate-600">
+                          <tr className="bg-[#FAFAFA] hover:bg-[#F5F5F5] border-t border-neutral-200/80 transition-colors">
+                            <td className="py-3 px-4 text-center font-mono tabular-nums font-semibold text-[#525252]">
                               {idx + 1}
                             </td>
-                            <td className="py-3 px-4 font-bold text-slate-900">
+                            <td className="py-3 px-4 font-semibold text-[#111111]">
                               <div className="flex items-center space-x-2">
                                 <button
                                   type="button"
                                   onClick={() => toggleExpand(p.productId)}
-                                  className="p-1 rounded-md text-indigo-600 hover:bg-indigo-100 transition-all cursor-pointer"
+                                  className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-1 rounded-md text-[#111111] hover:bg-neutral-200 transition-colors flex items-center justify-center cursor-pointer"
                                   title={expanded ? 'সংক্ষেপ করুন' : 'ভ্যারিয়েন্ট তালিকা বিস্তার করুন'}
                                 >
                                   {expanded ? (
@@ -1139,47 +1141,47 @@ export default function GodownStockAlertView({
                                     <ChevronRight className="w-4 h-4 stroke-[2.5]" />
                                   )}
                                 </button>
-                                <span className="text-sm font-black text-slate-900 tracking-tight">
+                                <span className="text-sm font-semibold text-[#111111] tracking-tight">
                                   {p.productName}
                                 </span>
                                 <span
                                   onClick={() => toggleExpand(p.productId)}
-                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 cursor-pointer shadow-2xs"
+                                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono tabular-nums font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 hover:bg-neutral-200 cursor-pointer"
                                 >
                                   <Palette className="w-2.5 h-2.5 mr-1" />
                                   {p.alertVariants.length}টি ভ্যারিয়েন্ট ঘাটতি
                                   {p.totalVariantsCount > p.alertVariants.length ? ` (মোট ${p.totalVariantsCount}টির মধ্যে)` : ''}
                                 </span>
                                 {p.category && (
-                                  <span className="px-2 py-0.5 rounded-md text-[10px] bg-slate-200/80 text-slate-700 font-medium">
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] bg-[#F5F5F5] border border-neutral-200/80 text-[#525252] font-medium">
                                     {p.category}
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[10px] font-mono text-slate-400 mt-0.5 ml-7">
+                              <div className="text-[10px] font-mono tabular-nums text-[#737373] mt-0.5 ml-10">
                                 ID: {p.productId} {p.barcode && p.barcode !== '—' ? `| #${p.barcode}` : ''}
                               </div>
                             </td>
-                            <td className="py-3 px-4 font-mono text-slate-400 text-center text-xs">
+                            <td className="py-3 px-4 font-mono tabular-nums text-[#737373] text-center text-xs">
                               —
                             </td>
-                            <td className="py-3 px-4 text-center bg-rose-50/20">
-                              <span className="text-xs font-mono font-bold text-slate-700">
+                            <td className="py-3 px-4 text-center bg-red-50/20">
+                              <span className="text-xs font-mono tabular-nums font-semibold text-[#111111]">
                                 মোট গোডাউন: {p.totalGodownStock} {p.unit}
                               </span>
                             </td>
                             <td className="py-3 px-4 text-center">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold ${
                                 p.alertVariants.some(v => v.isOut)
-                                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
-                                  : 'bg-amber-100 text-amber-800 border border-amber-200'
+                                  ? 'bg-red-50 text-[#B91C1C] border border-red-200'
+                                  : 'bg-amber-50 text-[#B45309] border border-amber-200'
                               }`}>
                                 {p.alertVariants.some(v => v.isOut)
-                                  ? '🚨 কিছু ভ্যারিয়েন্টে স্টক শেষ'
-                                  : '⚠️ কিছু ভ্যারিয়েন্টে কম স্টক'}
+                                  ? 'কিছু ভ্যারিয়েন্টে স্টক শেষ'
+                                  : 'কিছু ভ্যারিয়েন্টে কম স্টক'}
                               </span>
                             </td>
-                            <td className="py-3 px-4 text-center text-slate-400 text-xs font-bold">
+                            <td className="py-3 px-4 text-center text-[#737373] text-xs font-semibold">
                               নিচে বিস্তারিত দেখুন ↓
                             </td>
                             <td className="py-3 px-4 text-center">
@@ -1188,7 +1190,7 @@ export default function GodownStockAlertView({
                                   <button
                                     type="button"
                                     onClick={() => onRequestPO(p.parentProduct, 10)}
-                                    className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] rounded-lg shadow-2xs flex items-center space-x-1 transition-all cursor-pointer"
+                                    className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 bg-[#B45309] hover:bg-amber-800 text-white font-semibold text-[11px] rounded-md flex items-center space-x-1 transition-colors cursor-pointer"
                                     title="মহাজনকে ১-ক্লিক পারচেজ অর্ডার দিন"
                                   >
                                     <ClipboardList className="w-3 h-3" />
@@ -1202,7 +1204,7 @@ export default function GodownStockAlertView({
                                       onQuickRestock(p.parentProduct);
                                       onClose();
                                     }}
-                                    className="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] rounded-lg shadow-2xs flex items-center space-x-1 transition-all cursor-pointer"
+                                    className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 bg-[#15803D] hover:bg-emerald-800 text-white font-semibold text-[11px] rounded-md flex items-center space-x-1 transition-colors cursor-pointer"
                                     title="গোডাউনে স্টক ইনপুট দিন"
                                   >
                                     <PlusCircle className="w-3 h-3" />
@@ -1217,31 +1219,31 @@ export default function GodownStockAlertView({
                           {expanded && p.alertVariants.map((v, vIdx) => (
                             <tr
                               key={v.key}
-                              className={`hover:bg-indigo-50/40 transition-colors border-t border-slate-100 ${
-                                v.isOut ? 'bg-rose-50/20' : 'bg-white'
+                              className={`hover:bg-[#F5F5F5] transition-colors border-t border-neutral-200/80 ${
+                                v.isOut ? 'bg-red-50/20' : 'bg-white'
                               }`}
                             >
-                              <td className="py-2.5 px-4 text-center text-slate-400 font-mono text-[11px]">
+                              <td className="py-2.5 px-4 text-center text-[#737373] font-mono tabular-nums text-[11px]">
                                 {idx + 1}.{vIdx + 1}
                               </td>
                               <td className="py-2.5 px-4 pl-10">
                                 <div className="flex items-center space-x-2">
-                                  <CornerDownRight className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-indigo-50/90 text-indigo-900 border border-indigo-200/80 font-bold text-xs shadow-2xs">
-                                    <Palette className="w-3 h-3 text-indigo-600 mr-1.5" />
+                                  <CornerDownRight className="w-3.5 h-3.5 text-[#737373] shrink-0" />
+                                  <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 font-semibold text-xs">
+                                    <Palette className="w-3 h-3 text-[#525252] mr-1.5" />
                                     {v.variantDesc}
                                   </span>
                                 </div>
                               </td>
-                              <td className="py-2.5 px-4 font-mono font-bold text-slate-600 text-xs">
+                              <td className="py-2.5 px-4 font-mono tabular-nums font-semibold text-[#525252] text-xs">
                                 {v.barcode}
                               </td>
-                              <td className="py-2.5 px-4 text-center bg-rose-50/30">
+                              <td className="py-2.5 px-4 text-center bg-red-50/20">
                                 <span
-                                  className={`inline-block px-2.5 py-0.5 rounded-lg font-mono font-black text-xs ${
+                                  className={`inline-block px-2.5 py-0.5 rounded-md font-mono tabular-nums font-semibold text-xs ${
                                     v.isOut
-                                      ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                                      : 'bg-amber-100 text-amber-800 border border-amber-300'
+                                      ? 'bg-red-50 text-[#B91C1C] border border-red-200'
+                                      : 'bg-amber-50 text-[#B45309] border border-amber-200'
                                   }`}
                                 >
                                   {v.currentQty} {p.unit}
@@ -1249,17 +1251,17 @@ export default function GodownStockAlertView({
                               </td>
                               <td className="py-2.5 px-4 text-center">
                                 <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold ${
                                     v.isOut
-                                      ? 'bg-rose-100 text-rose-800 border border-rose-200'
-                                      : 'bg-amber-100 text-amber-800 border border-amber-200'
+                                      ? 'bg-red-50 text-[#B91C1C] border border-red-200'
+                                      : 'bg-amber-50 text-[#B45309] border border-amber-200'
                                   }`}
                                 >
                                   {v.alertStatusText}
                                 </span>
                               </td>
-                              <td className="py-2.5 px-4 text-center font-mono font-bold text-indigo-700">
-                                <span className="px-2.5 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs shadow-2xs">
+                              <td className="py-2.5 px-4 text-center font-mono tabular-nums font-semibold text-[#111111]">
+                                <span className="px-2.5 py-0.5 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#111111] text-xs">
                                   {v.recommendedRestockQty} {p.unit}
                                 </span>
                               </td>
@@ -1269,7 +1271,7 @@ export default function GodownStockAlertView({
                                     <button
                                       type="button"
                                       onClick={() => onRequestPO(p.parentProduct, parseInt(v.recommendedRestockQty) || 5)}
-                                      className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] rounded shadow-2xs flex items-center space-x-0.5 transition-all cursor-pointer"
+                                      className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 bg-[#B45309] hover:bg-amber-800 text-white font-semibold text-[10px] rounded-md flex items-center space-x-0.5 transition-colors cursor-pointer"
                                       title="এই ভ্যারিয়েন্টের জন্য PO দিন"
                                     >
                                       <ClipboardList className="w-2.5 h-2.5" />
@@ -1288,38 +1290,38 @@ export default function GodownStockAlertView({
                     return (
                       <tr
                         key={p.productId}
-                        className={`hover:bg-slate-50/80 transition-colors border-t border-slate-200 ${
-                          p.isOut ? 'bg-rose-50/30' : 'bg-white'
+                        className={`hover:bg-[#FAFAFA] transition-colors border-t border-neutral-200/80 ${
+                          p.isOut ? 'bg-red-50/20' : 'bg-white'
                         }`}
                       >
-                        <td className="py-3 px-4 text-center font-mono font-bold text-slate-600">
+                        <td className="py-3 px-4 text-center font-mono tabular-nums font-semibold text-[#525252]">
                           {idx + 1}
                         </td>
-                        <td className="py-3 px-4 font-bold text-slate-900">
+                        <td className="py-3 px-4 font-semibold text-[#111111]">
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-black text-slate-900">{p.productName}</span>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                            <span className="text-sm font-semibold text-[#111111]">{p.productName}</span>
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F5F5F5] text-[#525252] border border-neutral-200/80">
                               সাধারণ পণ্য
                             </span>
                             {p.category && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] bg-slate-200/80 text-slate-700 font-medium">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] bg-[#FAFAFA] border border-neutral-200/80 text-[#525252] font-medium">
                                 {p.category}
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                          <div className="text-[10px] font-mono tabular-nums text-[#737373] mt-0.5">
                             ID: {p.productId}
                           </div>
                         </td>
-                        <td className="py-3 px-4 font-mono font-bold text-slate-600 text-xs">
+                        <td className="py-3 px-4 font-mono tabular-nums font-semibold text-[#525252] text-xs">
                           {p.barcode}
                         </td>
-                        <td className="py-3 px-4 text-center bg-rose-50/40">
+                        <td className="py-3 px-4 text-center bg-red-50/20">
                           <span
-                            className={`inline-block px-2.5 py-0.5 rounded-lg font-mono font-black text-xs ${
+                            className={`inline-block px-2.5 py-0.5 rounded-md font-mono tabular-nums font-semibold text-xs ${
                               p.isOut
-                                ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                                : 'bg-amber-100 text-amber-800 border border-amber-300'
+                                ? 'bg-red-50 text-[#B91C1C] border border-red-200'
+                                : 'bg-amber-50 text-[#B45309] border border-amber-200'
                             }`}
                           >
                             {p.currentQty} {p.unit}
@@ -1327,17 +1329,17 @@ export default function GodownStockAlertView({
                         </td>
                         <td className="py-3 px-4 text-center">
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold ${
                               p.isOut
-                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
-                                : 'bg-amber-100 text-amber-800 border border-amber-200'
+                                ? 'bg-red-50 text-[#B91C1C] border border-red-200'
+                                : 'bg-amber-50 text-[#B45309] border border-amber-200'
                             }`}
                           >
                             {p.alertStatusText}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-center font-mono font-bold text-indigo-700">
-                          <span className="px-2.5 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs shadow-2xs">
+                        <td className="py-3 px-4 text-center font-mono tabular-nums font-semibold text-[#111111]">
+                          <span className="px-2.5 py-0.5 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#111111] text-xs">
                             {p.recommendedRestockQty} {p.unit}
                           </span>
                         </td>
@@ -1347,7 +1349,7 @@ export default function GodownStockAlertView({
                               <button
                                 type="button"
                                 onClick={() => onRequestPO(p.parentProduct, parseInt(p.recommendedRestockQty) || 10)}
-                                className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] rounded-lg shadow-2xs flex items-center space-x-1 transition-all cursor-pointer"
+                                className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 bg-[#B45309] hover:bg-amber-800 text-white font-semibold text-[11px] rounded-md flex items-center space-x-1 transition-colors cursor-pointer"
                                 title="মহাজনকে ১-ক্লিক পারচেজ অর্ডার দিন"
                               >
                                 <ClipboardList className="w-3 h-3" />
@@ -1361,7 +1363,7 @@ export default function GodownStockAlertView({
                                   onQuickRestock(p.parentProduct);
                                   onClose();
                                 }}
-                                className="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] rounded-lg shadow-2xs flex items-center space-x-1 transition-all cursor-pointer"
+                                className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 bg-[#15803D] hover:bg-emerald-800 text-white font-semibold text-[11px] rounded-md flex items-center space-x-1 transition-colors cursor-pointer"
                                 title="গোডাউনে রিস্টক করুন"
                               >
                                 <PlusCircle className="w-3 h-3" />

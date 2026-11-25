@@ -30,14 +30,14 @@ const MODULE_ICONS = {
 };
 
 const ACTION_COLORS = {
-  SALE: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  STOCK: 'bg-blue-100 text-blue-800 border-blue-200',
-  PRICE: 'bg-amber-100 text-amber-800 border-amber-200',
-  EXPENSE: 'bg-rose-100 text-rose-800 border-rose-200',
-  REGISTER: 'bg-purple-100 text-purple-800 border-purple-200',
-  DELETE: 'bg-red-100 text-red-800 border-red-200',
-  PAYMENT: 'bg-cyan-100 text-cyan-800 border-cyan-200',
-  GENERAL: 'bg-slate-100 text-slate-800 border-slate-200'
+  SALE: 'bg-emerald-50 text-[#15803D] border-emerald-200/80',
+  STOCK: 'bg-[#F5F5F5] text-[#111111] border-neutral-200/80',
+  PRICE: 'bg-amber-50 text-[#B45309] border-amber-200/80',
+  EXPENSE: 'bg-red-50 text-[#B91C1C] border-red-200/80',
+  REGISTER: 'bg-slate-100 text-[#0F172A] border-slate-200/80',
+  DELETE: 'bg-red-50 text-[#B91C1C] border-red-200/80',
+  PAYMENT: 'bg-emerald-50 text-[#15803D] border-emerald-200/80',
+  GENERAL: 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80'
 };
 
 export default function AuditLogsModal({
@@ -124,34 +124,34 @@ export default function AuditLogsModal({
 
   return (
     <div
-      className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 z-[100] animate-fadeIn"}
+      className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent" : "fixed inset-0 bg-neutral-900/40 flex items-center justify-center p-3 sm:p-5 z-[100]"}
       style={embedded ? {} : { zIndex: 100 }}
     >
-      <div className={embedded ? "bg-white w-full flex-1 min-h-[calc(100vh-6.5rem)] rounded-2xl shadow-sm flex flex-col overflow-hidden border border-slate-200/90" : "bg-white w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-100"}>
+      <div className={embedded ? "bg-white w-full flex-1 min-h-[calc(100vh-6.5rem)] rounded-lg flex flex-col overflow-hidden border border-neutral-200/80" : "bg-white w-full max-w-4xl rounded-lg flex flex-col max-h-[92vh] overflow-hidden border border-neutral-200/80"}>
         
         {/* মোডাল হেডার */}
-        <div className="bg-gradient-to-r from-slate-800 via-indigo-950 to-slate-900 text-white px-6 py-4 flex items-center justify-between shadow-md shrink-0">
+        <div className="bg-[#FAFAFA] border-b border-neutral-200/80 text-[#111111] px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-xs border border-white/20">
-              <ShieldAlert className="w-5 h-5 text-indigo-300" />
+            <div className="w-10 h-10 rounded-md bg-[#F5F5F5] flex items-center justify-center border border-neutral-200/80 text-[#0F172A]">
+              <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight">অ্যাক্টিভিটি ও সিকিউরিটি অডিট ট্রেইল</h2>
-              <p className="text-xs text-indigo-200">বিক্রি, স্টক হ্রাস-বৃদ্ধি, খরচ ও ব্যবহারকারীদের সকল কার্যক্রমের অডিট ইতিহাস</p>
+              <h2 className="text-base sm:text-lg font-semibold tracking-tight text-[#111111]">অ্যাক্টিভিটি ও সিকিউরিটি অডিট ট্রেইল</h2>
+              <p className="text-xs text-[#525252]">বিক্রি, স্টক হ্রাস-বৃদ্ধি, খরচ ও ব্যবহারকারীদের সকল কার্যক্রমের অডিট ইতিহাস</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className={`transition-all cursor-pointer flex items-center space-x-1 ${
+            className={`transition-colors cursor-pointer flex items-center space-x-1 rounded-md min-h-[44px] sm:min-h-[36px] border border-neutral-200/80 ${
               embedded
-                ? 'px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/10 shadow-xs'
-                : 'w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white/90 hover:text-white justify-center'
+                ? 'px-3 py-1.5 bg-white hover:bg-[#F5F5F5] text-[#111111] font-medium text-xs'
+                : 'min-w-[44px] sm:min-w-[36px] bg-white hover:bg-[#F5F5F5] text-[#737373] hover:text-[#111111] justify-center'
             }`}
             title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
           >
             {embedded ? (
               <>
-                <span className="text-sm font-bold">←</span>
+                <span className="text-sm font-semibold">←</span>
                 <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
               </>
             ) : (
@@ -161,37 +161,37 @@ export default function AuditLogsModal({
         </div>
 
         {/* কেপিআই সামারি স্ট্রিপ */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50 border-b border-slate-200 shrink-0">
-          <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-            <p className="text-xs font-medium text-slate-500">মোট অডিট রেকর্ড</p>
-            <p className="text-lg font-bold text-slate-800 mt-0.5">{stats.total} টি</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#FAFAFA] border-b border-neutral-200/80 shrink-0">
+          <div className="bg-white p-3 rounded-lg border border-neutral-200/80">
+            <p className="text-xs font-medium text-[#525252]">মোট অডিট রেকর্ড</p>
+            <p className="text-lg font-semibold font-mono tabular-nums text-[#111111] mt-0.5">{stats.total} টি</p>
           </div>
-          <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-            <p className="text-xs font-medium text-slate-500">আজকের কার্যক্রম</p>
-            <p className="text-lg font-bold text-indigo-600 mt-0.5">{stats.today} টি</p>
+          <div className="bg-white p-3 rounded-lg border border-neutral-200/80">
+            <p className="text-xs font-medium text-[#525252]">আজকের কার্যক্রম</p>
+            <p className="text-lg font-semibold font-mono tabular-nums text-[#0F172A] mt-0.5">{stats.today} টি</p>
           </div>
-          <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-            <p className="text-xs font-medium text-slate-500">অ্যাক্টিভ স্টাফ সংখ্যা</p>
-            <p className="text-lg font-bold text-emerald-600 mt-0.5">{stats.usersCount} জন</p>
+          <div className="bg-white p-3 rounded-lg border border-neutral-200/80">
+            <p className="text-xs font-medium text-[#525252]">অ্যাক্টিভ স্টাফ সংখ্যা</p>
+            <p className="text-lg font-semibold font-mono tabular-nums text-[#15803D] mt-0.5">{stats.usersCount} জন</p>
           </div>
-          <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-            <p className="text-xs font-medium text-slate-500">সংবেদনশীল অ্যাকশন</p>
-            <p className="text-lg font-bold text-amber-600 mt-0.5">{stats.critical} টি</p>
+          <div className="bg-white p-3 rounded-lg border border-neutral-200/80">
+            <p className="text-xs font-medium text-[#525252]">সংবেদনশীল অ্যাকশন</p>
+            <p className="text-lg font-semibold font-mono tabular-nums text-[#B45309] mt-0.5">{stats.critical} টি</p>
           </div>
         </div>
 
         {/* ফিল্টার কন্ট্রোল বার */}
-        <div className="p-4 bg-white border-b border-slate-200 flex flex-wrap gap-2.5 items-center justify-between shrink-0">
+        <div className="p-4 bg-white border-b border-neutral-200/80 flex flex-wrap gap-2.5 items-center justify-between shrink-0">
           
           {/* সার্চ বক্স */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#737373] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="বিবরণ, ইউজার বা অ্যাকশন দিয়ে খুঁজুন..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-md border border-neutral-200/80 bg-[#FAFAFA] focus:bg-white text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
             />
           </div>
 
@@ -199,7 +199,7 @@ export default function AuditLogsModal({
           <select
             value={selectedModule}
             onChange={(e) => setSelectedModule(e.target.value)}
-            className="text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+            className="text-xs sm:text-sm px-3 py-1.5 rounded-md border border-neutral-200/80 bg-white text-[#111111] focus:outline-none focus:border-[#0F172A] cursor-pointer min-h-[44px] sm:min-h-[36px]"
           >
             <option value="all">সকল মডিউল</option>
             <option value="Sales">Sales (বিক্রয়)</option>
@@ -216,7 +216,7 @@ export default function AuditLogsModal({
           <select
             value={selectedActionType}
             onChange={(e) => setSelectedActionType(e.target.value)}
-            className="text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+            className="text-xs sm:text-sm px-3 py-1.5 rounded-md border border-neutral-200/80 bg-white text-[#111111] focus:outline-none focus:border-[#0F172A] cursor-pointer min-h-[44px] sm:min-h-[36px]"
           >
             <option value="all">সকল অ্যাকশন</option>
             <option value="SALE">SALE (বিক্রি)</option>
@@ -230,7 +230,7 @@ export default function AuditLogsModal({
           {/* এক্সপোর্ট বাটন */}
           <button
             onClick={handleExportJSON}
-            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1 cursor-pointer"
+            className="px-3 py-1.5 bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] text-[#111111] rounded-md text-xs font-medium transition-colors flex items-center space-x-1.5 cursor-pointer min-h-[44px] sm:min-h-[36px]"
             title="JSON হিসেবে ডাউনলোড করুন"
           >
             <Download className="w-3.5 h-3.5" />
@@ -239,14 +239,14 @@ export default function AuditLogsModal({
         </div>
 
         {/* বডি টাইমলাইন ভিউ */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#FAFAFA]">
           {filteredLogs.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center">
-              <div className="w-14 h-14 mx-auto rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
-                <ShieldAlert className="w-7 h-7" />
+            <div className="bg-white rounded-lg border border-dashed border-neutral-200/80 p-12 text-center">
+              <div className="w-12 h-12 mx-auto rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center mb-3">
+                <ShieldAlert className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-800">কোনো অডিট রেকর্ড পাওয়া যায়নি</h3>
-              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              <h3 className="text-base font-semibold tracking-tight text-[#111111]">কোনো অডিট রেকর্ড পাওয়া যায়নি</h3>
+              <p className="text-xs text-[#525252] mt-1 max-w-sm mx-auto">
                 সিস্টেমে কোনো নতুন বিক্রি, স্টক পরিবর্তন বা ক্যাশ ক্লোজিং সম্পন্ন হলে স্বয়ংক্রিয়ভাবে এখানে লগ প্রদর্শিত হবে।
               </p>
             </div>
@@ -270,36 +270,36 @@ export default function AuditLogsModal({
                 return (
                   <div
                     key={log.LogID || Math.random()}
-                    className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs hover:border-slate-300 transition-all"
+                    className="bg-white rounded-lg border border-neutral-200/80 p-4 hover:border-neutral-300 transition-colors"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-start space-x-3">
-                        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 shrink-0 mt-0.5">
+                        <div className="w-9 h-9 rounded-md bg-[#F5F5F5] border border-neutral-200/80 flex items-center justify-center text-[#525252] shrink-0 mt-0.5">
                           <IconComp className="w-4 h-4" />
                         </div>
                         <div>
                           <div className="flex items-center space-x-2 flex-wrap gap-1">
-                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${actionBadgeClass}`}>
+                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-medium border ${actionBadgeClass}`}>
                               {log.ActionType || 'ACTION'}
                             </span>
-                            <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                            <span className="text-xs font-medium text-[#525252] bg-[#F5F5F5] border border-neutral-200/80 px-2 py-0.5 rounded-md">
                               {log.Module || 'Core'}
                             </span>
-                            <span className="text-xs font-bold text-slate-800">
+                            <span className="text-xs font-semibold text-[#111111]">
                               {log.UserName || 'System'}
                             </span>
-                            <span className="text-[11px] text-slate-400">
+                            <span className="text-[11px] text-[#737373]">
                               ({log.UserRole || 'Admin'})
                             </span>
                           </div>
-                          <p className="text-xs sm:text-sm text-slate-800 mt-1 font-medium">
+                          <p className="text-xs sm:text-sm text-[#111111] mt-1 font-medium">
                             {log.Description}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center space-x-3 self-end sm:self-center shrink-0">
-                        <span className="text-xs text-slate-400 font-mono flex items-center space-x-1">
+                        <span className="text-xs text-[#737373] font-mono tabular-nums flex items-center space-x-1">
                           <Clock className="w-3.5 h-3.5" />
                           <span>{log.Timestamp ? new Date(log.Timestamp).toLocaleString('bn-BD') : 'N/A'}</span>
                         </span>
@@ -307,7 +307,7 @@ export default function AuditLogsModal({
                         {formattedDetails && (
                           <button
                             onClick={() => setExpandedLogId(isExpanded ? null : log.LogID)}
-                            className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-md hover:bg-[#F5F5F5] text-[#525252] hover:text-[#111111] border border-transparent hover:border-neutral-200/80 transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
                             title="বিস্তারিত দেখুন"
                           >
                             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -318,9 +318,9 @@ export default function AuditLogsModal({
 
                     {/* এক্সপ্যান্ডেবল ডিটেইলস */}
                     {isExpanded && formattedDetails && (
-                      <div className="mt-3 pt-3 border-t border-slate-100">
-                        <p className="text-[11px] font-semibold text-slate-500 mb-1">অ্যাকশন ডাটা পে-লোড:</p>
-                        <pre className="bg-slate-900 text-emerald-400 p-3 rounded-lg text-xs font-mono overflow-x-auto max-h-48">
+                      <div className="mt-3 pt-3 border-t border-neutral-200/80">
+                        <p className="text-[11px] font-medium text-[#525252] mb-1">অ্যাকশন ডাটা পে-লোড:</p>
+                        <pre className="bg-[#0F172A] text-emerald-400 p-3 rounded-md text-xs font-mono overflow-x-auto max-h-48">
                           {formattedDetails}
                         </pre>
                       </div>
@@ -333,11 +333,11 @@ export default function AuditLogsModal({
         </div>
 
         {/* মোডাল ফুটার */}
-        <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 shrink-0">
+        <div className="bg-[#FAFAFA] px-6 py-3 border-t border-neutral-200/80 flex items-center justify-between text-xs text-[#525252] shrink-0">
           <p>অডিট ট্রেইল অপরিবর্তনীয় এবং স্বচ্ছ হিসাব নিশ্চিত করতে ক্লাউড ডাটাবেসের সাথে সিঙ্ক থাকে।</p>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg font-medium cursor-pointer"
+            className="px-4 py-1.5 bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] text-[#111111] rounded-md font-medium cursor-pointer min-h-[44px] sm:min-h-[36px]"
           >
             বন্ধ করুন
           </button>

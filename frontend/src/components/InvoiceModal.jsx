@@ -11,10 +11,8 @@ export default function InvoiceModal({
   settings,
   autoPrint = false
 }) {
-  // প্রিন্ট ফরম্যাট: 'thermal' (80mm) অথবা 'a4' (Standard A4)
   const [printFormat, setPrintFormat] = useState('thermal');
 
-  // স্টোর লোগো URL ও ফলব্যাক ক্যান্ডিডেট প্রস্তুত করা
   const rawLogo = settings?.LogoUrl || settings?.logoUrl;
   const candidates = useMemo(() => getDriveImageCandidates(rawLogo), [rawLogo]);
   const [candidateIdx, setCandidateIdx] = useState(0);
@@ -27,15 +25,22 @@ export default function InvoiceModal({
   const hasValidLogo = Boolean(currentLogoSrc && candidateIdx < candidates.length);
 
   const handleLogoError = () => {
-    setCandidateIdx(prev => prev + 1);
+    setCandidateIdx((prev) => prev + 1);
   };
 
-  // পণ্যের তালিকা নিরাপদভাবে বের করা
   const items = useMemo(() => {
     return extractAndNormalizeItems(saleData);
   }, [saleData]);
 
-  // মডাল খুললে যদি autoPrint সত্য হয়, তবে সাথে সাথে ব্রাউজারের প্রিন্ট ডায়ালগ ওপেন করা
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e) => {
+      if (e.key === 'Escape' && onClose) onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
+
   useEffect(() => {
     if (isOpen && autoPrint && saleData) {
       const timer = setTimeout(() => {
@@ -50,16 +55,12 @@ export default function InvoiceModal({
   const currencySymbol = settings?.CurrencySymbol || '৳';
   const taxRate = Number(saleData.taxPercent || settings?.TaxRatePercent || 0);
 
-  // প্রিন্ট হ্যান্ডলার
   const handlePrint = () => {
-    // প্রিন্ট মোড অনুযায়ী বডিতে ক্লাস যুক্ত করা
     document.body.classList.remove('print-mode-thermal', 'print-mode-a4');
     document.body.classList.add(printFormat === 'thermal' ? 'print-mode-thermal' : 'print-mode-a4');
-    
     window.print();
   };
 
-  // হোয়াটসঅ্যাপ ডিজিটাল মেমো হ্যান্ডলার
   const handleSendWhatsApp = () => {
     if (!saleData) return;
     const phone = saleData.CustomerPhone || saleData.customerPhone || '';
@@ -77,84 +78,76 @@ export default function InvoiceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white print:static">
-      
-      {/* স্ক্রিন প্রিভিউ কন্টেইনার (প্রিন্টের সময় স্ক্রিনের অপ্রয়োজনীয় এলিমেন্ট ছাড়া মূল অংশ প্রিন্ট হবে) */}
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full overflow-hidden flex flex-col max-h-[95vh] print:max-h-none print:shadow-none print:border-none print:w-full print:rounded-none">
-        
-        {/* টপ টুলবার (প্রিন্টের সময় লুকায়িত থাকবে) */}
-        <div className="no-print px-6 py-3.5 bg-slate-800 text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-700">
-          <div className="flex items-center space-x-2">
-            <Printer className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-sm font-bold tracking-wide">
-              ইনভয়েস প্রিভিউ ও প্রিন্ট জেনারেটর
+    <div className="fixed inset-0 z-[100] overflow-y-auto bg-neutral-950/40 flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white print:static">
+      <div className="bg-white rounded-lg border border-neutral-200/80 max-w-4xl w-full overflow-hidden flex flex-col max-h-[95vh] print:max-h-none print:border-none print:w-full print:rounded-none">
+        {/* টপ টুলবার (Utilitarian Minimalism) */}
+        <div className="no-print px-5 py-3 bg-white border-b border-neutral-200/80 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Printer className="w-4 h-4 text-[#111111]" />
+            <h3 className="text-sm font-semibold font-heading tracking-tight text-[#111111]">
+              Invoice Preview
             </h3>
           </div>
 
-          {/* পেপার সাইজ টগল বাটন (৮০মিমি থার্মাল বনাম এ৪) */}
-          <div className="flex items-center bg-slate-900/80 p-1 rounded-xl border border-slate-700 text-xs">
+          {/* 80mm Thermal vs Standard A4 Switch */}
+          <div className="flex items-center bg-[#FAFAFA] p-1 rounded-md border border-neutral-200/80 text-xs">
             <button
+              type="button"
               onClick={() => setPrintFormat('thermal')}
-              className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+              className={`min-h-[32px] px-3 py-1 rounded-sm font-medium transition-colors cursor-pointer ${
                 printFormat === 'thermal'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-300 hover:text-white'
+                  ? 'bg-[#0F172A] text-white'
+                  : 'text-[#525252] hover:text-[#111111]'
               }`}
             >
-              80mm Thermal (POS রোল)
+              80mm Thermal
             </button>
             <button
+              type="button"
               onClick={() => setPrintFormat('a4')}
-              className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+              className={`min-h-[32px] px-3 py-1 rounded-sm font-medium transition-colors cursor-pointer ${
                 printFormat === 'a4'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-300 hover:text-white'
+                  ? 'bg-[#0F172A] text-white'
+                  : 'text-[#525252] hover:text-[#111111]'
               }`}
             >
-              Standard A4 সাইজ
+              Standard A4
             </button>
           </div>
 
-          {/* অ্যাকশন বাটনসমূহ */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleSendWhatsApp}
-              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
-              title="হোয়াটসঅ্যাপে পেপারলেস ডিজিটাল মেমো পাঠান"
+              className="min-h-[36px] px-3 py-1.5 bg-white hover:bg-neutral-100 text-[#15803D] border border-emerald-200 text-xs font-medium rounded-md flex items-center gap-1.5 cursor-pointer"
             >
-              <MessageCircle className="w-4 h-4" />
-              <span>WhatsApp মেমো</span>
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>WhatsApp</span>
             </button>
             <button
+              type="button"
               onClick={handlePrint}
-              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+              className="min-h-[36px] px-3.5 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium rounded-md flex items-center gap-1.5 cursor-pointer"
             >
-              <Printer className="w-4 h-4" />
-              <span>প্রিন্ট / PDF সংরক্ষণ</span>
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print / PDF</span>
             </button>
             <button
+              type="button"
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+              className="min-w-[36px] min-h-[36px] flex items-center justify-center text-[#525252] hover:text-[#111111] rounded-md border border-neutral-200/80 hover:bg-neutral-100 cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* প্রিন্টেবল প্রিভিউ এরিয়া */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex justify-center print:p-0 print:bg-white print:overflow-visible">
-          
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#FAFAFA] flex justify-center print:p-0 print:bg-white print:overflow-visible">
           <div id="printable-invoice-container" className="w-full flex justify-center">
-            
-            {/* ---------------------------------------------------------------- */}
-            {/* লেআউট ১: 80mm থার্মাল রিসিট লেআউট (Thermal 80mm Format) */}
-            {/* ---------------------------------------------------------------- */}
             {printFormat === 'thermal' && (
-              <div className="invoice-thermal-sheet w-[80mm] max-w-[80mm] bg-white p-4 text-slate-900 shadow-md font-mono text-[12px] leading-tight border border-slate-200 print:shadow-none print:border-none print:p-2 print:w-[80mm]">
-                
-                {/* স্টোর ব্র্যান্ডিং */}
-                <div className="text-center pb-2 border-b border-dashed border-slate-400">
+              <div className="invoice-thermal-sheet w-[80mm] max-w-[80mm] bg-white p-4 text-[#111111] font-mono tabular-nums text-[12px] leading-tight border border-neutral-200 print:border-none print:p-2 print:w-[80mm]">
+                <div className="text-center pb-2 border-b border-dashed border-neutral-400">
                   {hasValidLogo && (
                     <img
                       src={currentLogoSrc}
@@ -163,63 +156,59 @@ export default function InvoiceModal({
                       onError={handleLogoError}
                     />
                   )}
-                  <h2 className="text-base font-extrabold uppercase tracking-tight text-slate-950">
-                    {settings?.StoreName || 'AMAR POS STORE'}
+                  <h2 className="text-base font-bold uppercase tracking-tight text-[#111111]">
+                    {settings?.StoreName || 'ENTERPRISE POS'}
                   </h2>
-                  <p className="text-[11px] text-slate-600 mt-0.5">{settings?.Address}</p>
+                  <p className="text-[11px] text-[#525252] mt-0.5 font-sans">{settings?.Address}</p>
                   {settings?.Phone && (
-                    <p className="text-[11px] text-slate-600">ফোন: {settings.Phone}</p>
+                    <p className="text-[11px] text-[#525252]">Tel: {settings.Phone}</p>
                   )}
                 </div>
 
-                {/* ইনভয়েস মেটাডাটা */}
-                <div className="py-2 border-b border-dashed border-slate-400 text-[11px] space-y-0.5">
+                <div className="py-2 border-b border-dashed border-neutral-400 text-[11px] space-y-0.5">
                   <div className="flex justify-between">
-                    <span className="text-slate-600">ইনভয়েস নং:</span>
+                    <span className="text-[#525252]">Invoice:</span>
                     <span className="font-bold">{saleData.invoiceNo}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600">তারিখ:</span>
+                    <span className="text-[#525252]">Date:</span>
                     <span>{new Date(saleData.timestamp || Date.now()).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600">ক্রেতা:</span>
-                    <span className="truncate max-w-[140px] font-medium">
+                    <span className="text-[#525252]">Customer:</span>
+                    <span className="truncate max-w-[140px] font-sans font-medium">
                       {saleData.customerName || 'Walk-in'}
                     </span>
                   </div>
                   {saleData.customerPhone && (
                     <div className="flex justify-between">
-                      <span className="text-slate-600">মোবাইল:</span>
+                      <span className="text-[#525252]">Phone:</span>
                       <span>{saleData.customerPhone}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-slate-600">পেমেন্ট:</span>
+                    <span className="text-[#525252]">Payment:</span>
                     <span className="font-semibold">{saleData.paymentMethod || 'Cash'}</span>
                   </div>
                 </div>
 
-                {/* আইটেম তালিকা */}
-                <div className="py-2 border-b border-dashed border-slate-400">
+                <div className="py-2 border-b border-dashed border-neutral-400">
                   <table className="w-full text-[11px]">
                     <thead>
-                      <tr className="border-b border-slate-300 pb-1 text-slate-600 font-bold">
-                        <th className="text-left pb-1">আইটেম</th>
-                        <th className="text-center pb-1">পরিমাণ</th>
-                        <th className="text-right pb-1">দর</th>
-                        <th className="text-right pb-1">মোট</th>
+                      <tr className="border-b border-neutral-300 text-[#525252] font-bold">
+                        <th className="text-left pb-1">Item</th>
+                        <th className="text-center pb-1">Qty</th>
+                        <th className="text-right pb-1">Rate</th>
+                        <th className="text-right pb-1">Total</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-dotted divide-slate-200">
+                    <tbody className="divide-y divide-dotted divide-neutral-200">
                       {items.map((item, index) => (
                         <tr key={index} className="align-top py-1">
                           <td className="text-left py-1 pr-1 font-sans text-[11px] leading-tight">
                             <span>{item.productName}</span>
                             {item.variantName && (
-                              <span className="block text-[9px] text-slate-500 font-normal">
-                                ({item.variantName})
-                              </span>
+                              <span className="block text-[9px] text-[#525252]">({item.variantName})</span>
                             )}
                           </td>
                           <td className="text-center py-1 whitespace-nowrap">
@@ -229,7 +218,7 @@ export default function InvoiceModal({
                             {Number(item.sellingPrice).toFixed(1)}
                           </td>
                           <td className="text-right py-1 font-bold whitespace-nowrap">
-                            {Number(item.total || (item.sellingPrice * item.quantity)).toFixed(1)}
+                            {Number(item.total || item.sellingPrice * item.quantity).toFixed(1)}
                           </td>
                         </tr>
                       ))}
@@ -237,150 +226,132 @@ export default function InvoiceModal({
                   </table>
                 </div>
 
-                {/* মোট হিসাব ও ট্যাক্স */}
-                <div className="py-2 border-b border-dashed border-slate-400 text-[11px] space-y-1">
+                <div className="py-2 border-b border-dashed border-neutral-400 text-[11px] space-y-1">
                   <div className="flex justify-between">
-                    <span>উপ-মোট (SubTotal):</span>
+                    <span>Subtotal:</span>
                     <span>{currencySymbol}{Number(saleData.subTotal).toFixed(2)}</span>
                   </div>
                   {Number(saleData.discountAmount) > 0 && (
-                    <div className="flex justify-between text-slate-700">
-                      <span>ছাড় (Discount):</span>
+                    <div className="flex justify-between">
+                      <span>Discount:</span>
                       <span>-{currencySymbol}{Number(saleData.discountAmount).toFixed(2)}</span>
                     </div>
                   )}
                   {taxRate > 0 && (
                     <div className="flex justify-between">
-                      <span>ভ্যাট/ট্যাক্স ({taxRate}%):</span>
+                      <span>Tax ({taxRate}%):</span>
                       <span>{currencySymbol}{Number(saleData.taxAmount).toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm font-black border-t border-slate-800 pt-1.5 mt-1">
-                    <span>সর্বমোট:</span>
+                  <div className="flex justify-between text-sm font-bold border-t border-[#111111] pt-1.5 mt-1">
+                    <span>Grand Total:</span>
                     <span>{currencySymbol}{Number(saleData.grandTotal).toFixed(2)}</span>
                   </div>
                 </div>
 
-                {/* ইনভয়েস ফুটার ও বারকোড ডামি */}
-                <div className="pt-3 text-center text-[10px] space-y-1 text-slate-600">
-                  <div className="font-mono tracking-widest text-[11px] font-bold text-slate-800">
+                <div className="pt-3 text-center text-[10px] space-y-1 text-[#525252]">
+                  <div className="tracking-widest text-[11px] font-bold text-[#111111]">
                     *{saleData.invoiceNo}*
                   </div>
-                  <p className="font-sans font-medium text-slate-800">
+                  <p className="font-sans font-medium text-[#111111]">
                     {settings?.ReceiptFooter || 'ধন্যবাদ! আবার আসবেন।'}
                   </p>
-                  <p className="text-[9px] text-slate-400">Powered by Enterprise POS</p>
                 </div>
-
               </div>
             )}
 
-            {/* ---------------------------------------------------------------- */}
-            {/* লেআউট ২: Standard A4 সাইজ ইনভয়েস (A4 Size Format) */}
-            {/* ---------------------------------------------------------------- */}
             {printFormat === 'a4' && (
-              <div className="invoice-a4-sheet w-full max-w-3xl bg-white p-8 sm:p-12 text-slate-900 shadow-xl font-sans text-sm border border-slate-200 print:shadow-none print:border-none print:p-6 print:max-w-none print:w-full">
-                
-                {/* A4 হেডার: লোগো, প্রতিষ্ঠানের নাম ও ঠিকানা */}
-                <div className="flex justify-between items-start pb-6 border-b-2 border-slate-900">
+              <div className="invoice-a4-sheet w-full max-w-3xl bg-white p-8 sm:p-10 text-[#111111] font-sans text-sm border border-neutral-200 print:border-none print:p-6 print:max-w-none print:w-full">
+                <div className="flex justify-between items-start pb-6 border-b border-[#111111]">
                   <div className="flex items-center space-x-4">
                     {hasValidLogo && (
                       <img
                         src={currentLogoSrc}
                         alt={settings?.StoreName || 'লোগো'}
-                        className="h-14 w-auto object-contain rounded-md"
+                        className="h-12 w-auto object-contain rounded-sm"
                         onError={handleLogoError}
                       />
                     )}
                     <div>
-                      <h1 className="text-2xl font-black text-slate-950 tracking-tight">
-                        {settings?.StoreName || 'স্টোর ক্যাশ মেমো'}
+                      <h1 className="text-xl font-semibold font-heading text-[#111111] tracking-tight">
+                        {settings?.StoreName || 'ENTERPRISE POS'}
                       </h1>
-                      <p className="text-xs text-slate-500 mt-1 max-w-sm">{settings?.Address}</p>
-                      <p className="text-xs text-slate-500">
-                        মোবাইল: {settings?.Phone} | ইমেইল: {settings?.Email}
+                      <p className="text-xs text-[#525252] mt-1 max-w-sm">{settings?.Address}</p>
+                      <p className="text-xs font-mono text-[#525252]">
+                        {settings?.Phone} {settings?.Email ? `• ${settings.Email}` : ''}
                       </p>
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <span className="inline-block px-3 py-1 bg-slate-900 text-white text-xs font-bold tracking-wider rounded-md uppercase">
-                      INVOICE / বিল চালান
+                    <span className="inline-block px-2.5 py-1 bg-[#0F172A] text-white text-[11px] font-medium tracking-wider rounded-sm uppercase">
+                      INVOICE
                     </span>
-                    <p className="text-lg font-black font-mono text-indigo-700 mt-2">
+                    <p className="text-base font-semibold font-mono tabular-nums text-[#111111] mt-2">
                       {saleData.invoiceNo}
                     </p>
-                    <p className="text-xs text-slate-500">
-                      তারিখ: {new Date(saleData.timestamp || Date.now()).toLocaleDateString('bn-BD', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                    <p className="text-xs font-mono tabular-nums text-[#525252]">
+                      {new Date(saleData.timestamp || Date.now()).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
 
-                {/* বিলিং ইনফরমেশন গ্রিড */}
-                <div className="grid grid-cols-2 gap-6 py-6 border-b border-slate-200 text-xs">
+                <div className="grid grid-cols-2 gap-6 py-5 border-b border-neutral-200 text-xs">
                   <div>
-                    <h4 className="font-bold text-slate-400 uppercase tracking-wider mb-1">
-                      গ্রাহকের বিবরণ (Billed To):
+                    <h4 className="font-medium text-[#737373] uppercase tracking-wider mb-1 text-[10.5px]">
+                      Billed To
                     </h4>
-                    <p className="text-sm font-bold text-slate-900">
+                    <p className="text-sm font-semibold text-[#111111]">
                       {saleData.customerName || 'Walk-in Customer'}
                     </p>
                     {saleData.customerPhone && (
-                      <p className="text-slate-600 mt-0.5">মোবাইল: {saleData.customerPhone}</p>
+                      <p className="text-[#525252] font-mono mt-0.5">{saleData.customerPhone}</p>
                     )}
                   </div>
                   <div className="text-right">
-                    <h4 className="font-bold text-slate-400 uppercase tracking-wider mb-1">
-                      পেমেন্ট সংক্রান্ত তথ্য:
+                    <h4 className="font-medium text-[#737373] uppercase tracking-wider mb-1 text-[10.5px]">
+                      Payment Info
                     </h4>
-                    <p className="text-slate-700">
-                      পরিশোধ মাধ্যম: <span className="font-bold text-slate-900">{saleData.paymentMethod || 'Cash'}</span>
+                    <p className="text-[#525252]">
+                      Method: <span className="font-mono font-semibold text-[#111111]">{saleData.paymentMethod || 'Cash'}</span>
                     </p>
-                    <p className="text-slate-700 mt-0.5">
-                      স্ট্যাটাস: <span className="font-bold text-emerald-700">পরিশোধিত (PAID)</span>
+                    <p className="text-[#525252] mt-0.5">
+                      Status: <span className="font-semibold text-[#15803D]">PAID</span>
                     </p>
-                    {saleData.cashierEmail && (
-                      <p className="text-slate-500 mt-0.5">ক্যাশিয়ার: {saleData.cashierEmail}</p>
-                    )}
                   </div>
                 </div>
 
-                {/* আইটেম টেবিল */}
-                <div className="py-6">
+                <div className="py-5">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-slate-100 text-slate-700 font-bold border-y border-slate-200">
-                        <th className="py-3 px-3">ক্র নং</th>
-                        <th className="py-3 px-3">পণ্যের বিবরণ</th>
-                        <th className="py-3 px-3 text-center">পরিমাণ</th>
-                        <th className="py-3 px-3 text-right">একক মূল্য</th>
-                        <th className="py-3 px-3 text-right">মোট টাকা</th>
+                      <tr className="bg-[#FAFAFA] text-[#525252] font-medium border-y border-neutral-200">
+                        <th className="py-2.5 px-3">#</th>
+                        <th className="py-2.5 px-3">Item Description</th>
+                        <th className="py-2.5 px-3 text-center">Qty</th>
+                        <th className="py-2.5 px-3 text-right">Unit Price</th>
+                        <th className="py-2.5 px-3 text-right">Total</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-neutral-200">
                       {items.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50/50">
-                          <td className="py-3 px-3 font-mono text-slate-400">{idx + 1}</td>
-                          <td className="py-3 px-3 font-medium text-slate-900">
+                        <tr key={idx}>
+                          <td className="py-2.5 px-3 font-mono tabular-nums text-[#737373]">{idx + 1}</td>
+                          <td className="py-2.5 px-3 font-medium text-[#111111]">
                             {item.productName}
                             {item.barcode && (
-                              <span className="block text-[10px] font-mono text-slate-400">
+                              <span className="block text-[10px] font-mono text-[#737373]">
                                 SKU: {item.barcode}
                               </span>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center font-bold">
+                          <td className="py-2.5 px-3 text-center font-mono tabular-nums">
                             {formatFabricQuantity(item.quantity, item.unit, true)}
                           </td>
-                          <td className="py-3 px-3 text-right">
+                          <td className="py-2.5 px-3 text-right font-mono tabular-nums">
                             {currencySymbol}{Number(item.sellingPrice).toFixed(2)}
                           </td>
-                          <td className="py-3 px-3 text-right font-bold text-slate-900">
-                            {currencySymbol}{Number(item.total || (item.sellingPrice * item.quantity)).toFixed(2)}
+                          <td className="py-2.5 px-3 text-right font-mono tabular-nums font-semibold text-[#111111]">
+                            {currencySymbol}{Number(item.total || item.sellingPrice * item.quantity).toFixed(2)}
                           </td>
                         </tr>
                       ))}
@@ -388,56 +359,52 @@ export default function InvoiceModal({
                   </table>
                 </div>
 
-                {/* সামারি এবং সিগনেচার সেকশন */}
-                <div className="pt-4 border-t border-slate-200 flex justify-between items-start">
-                  
-                  {/* শর্ত ও কৃতজ্ঞতা প্রকাশ */}
-                  <div className="max-w-xs text-xs text-slate-500 space-y-1">
-                    <p className="font-bold text-slate-700">নোট ও শর্তাবলী:</p>
-                    <p>{settings?.ReceiptFooter || 'পণ্য ক্রয়ের জন্য ধন্যবাদ! বিক্রিত পণ্য ৭ দিনের মধ্যে পরিবর্তনযোগ্য।'}</p>
+                <div className="pt-4 border-t border-neutral-200 flex justify-between items-start">
+                  <div className="max-w-xs text-xs text-[#525252] space-y-1">
+                    <p className="font-semibold text-[#111111]">Terms & Footer</p>
+                    <p>{settings?.ReceiptFooter || 'ধন্যবাদ! আবার আসবেন।'}</p>
                     <div className="pt-8">
-                      <div className="w-36 border-b border-slate-400"></div>
-                      <p className="text-[10px] text-slate-400 mt-1">কর্তৃপক্ষের স্বাক্ষর</p>
+                      <div className="w-36 border-b border-neutral-400" />
+                      <p className="text-[10px] text-[#737373] mt-1">Authorized Signature</p>
                     </div>
                   </div>
 
-                  {/* হিসাব বিবরণী */}
-                  <div className="w-64 space-y-2 text-xs">
-                    <div className="flex justify-between text-slate-600">
-                      <span>সাব-টোটাল:</span>
-                      <span className="font-semibold">{currencySymbol}{Number(saleData.subTotal).toFixed(2)}</span>
+                  <div className="w-64 space-y-1.5 text-xs">
+                    <div className="flex justify-between text-[#525252]">
+                      <span>Subtotal</span>
+                      <span className="font-mono tabular-nums font-medium text-[#111111]">
+                        {currencySymbol}{Number(saleData.subTotal).toFixed(2)}
+                      </span>
                     </div>
                     {Number(saleData.discountAmount) > 0 && (
-                      <div className="flex justify-between text-rose-600 font-medium">
-                        <span>ডিসকাউন্ট:</span>
-                        <span>-{currencySymbol}{Number(saleData.discountAmount).toFixed(2)}</span>
+                      <div className="flex justify-between text-[#B91C1C]">
+                        <span>Discount</span>
+                        <span className="font-mono tabular-nums">
+                          -{currencySymbol}{Number(saleData.discountAmount).toFixed(2)}
+                        </span>
                       </div>
                     )}
                     {taxRate > 0 && (
-                      <div className="flex justify-between text-slate-600">
-                        <span>ভ্যাট / ট্যাক্স ({taxRate}%):</span>
-                        <span>{currencySymbol}{Number(saleData.taxAmount).toFixed(2)}</span>
+                      <div className="flex justify-between text-[#525252]">
+                        <span>Tax ({taxRate}%)</span>
+                        <span className="font-mono tabular-nums">
+                          {currencySymbol}{Number(saleData.taxAmount).toFixed(2)}
+                        </span>
                       </div>
                     )}
-                    <div className="flex justify-between text-base font-extrabold text-slate-900 pt-2 border-t-2 border-slate-900">
-                      <span>সর্বমোট প্রদেয়:</span>
-                      <span className="text-indigo-600">
+                    <div className="flex justify-between text-base font-semibold text-[#111111] pt-2 border-t border-[#111111]">
+                      <span>Grand Total</span>
+                      <span className="font-mono tabular-nums">
                         {currencySymbol}{Number(saleData.grandTotal).toFixed(2)}
                       </span>
                     </div>
                   </div>
-
                 </div>
-
               </div>
             )}
-
           </div>
-
         </div>
-
       </div>
     </div>
   );
 }
-

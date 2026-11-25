@@ -149,7 +149,7 @@ export default function RichTextEditor({
       for (let i = 0; i < links.length; i++) {
         links[i].setAttribute('target', '_blank');
         links[i].setAttribute('rel', 'noopener noreferrer');
-        links[i].classList.add('text-indigo-600', 'underline', 'hover:text-indigo-800');
+        links[i].classList.add('text-[#0F172A]', 'underline', 'hover:text-slate-700');
       }
       handleInput();
     }
@@ -215,10 +215,10 @@ export default function RichTextEditor({
   const currentPreviewSrc = imageInputMode === 'upload' ? selectedFileDataUrl : imageUrlInput.trim();
 
   return (
-    <div className="border border-slate-300 rounded-xl overflow-hidden bg-white focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all relative">
+    <div className="border border-neutral-200/80 rounded-lg overflow-hidden bg-white focus-within:ring-2 focus-within:ring-[#0F172A]/15 focus-within:border-[#0F172A] transition-colors relative">
       
       {/* রিচ টেক্সট ফরম্যাটিং টুলবার */}
-      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-slate-50 border-b border-slate-200 text-slate-600">
+      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-[#FAFAFA] border-b border-neutral-200/80 text-[#525252]">
         
         {/* বোল্ড */}
         <button
@@ -228,7 +228,7 @@ export default function RichTextEditor({
             executeCommand('bold');
           }}
           title="বোল্ড (Bold)"
-          className="p-1.5 rounded-lg hover:bg-slate-200 active:bg-slate-300 text-slate-700 transition-colors"
+          className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md hover:bg-[#F5F5F5] active:bg-neutral-200 text-[#111111] transition-colors cursor-pointer"
         >
           <Bold className="w-3.5 h-3.5" />
         </button>
@@ -241,7 +241,7 @@ export default function RichTextEditor({
             executeCommand('italic');
           }}
           title="ইটালিক (Italic)"
-          className="p-1.5 rounded-lg hover:bg-slate-200 active:bg-slate-300 text-slate-700 transition-colors"
+          className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md hover:bg-[#F5F5F5] active:bg-neutral-200 text-[#111111] transition-colors cursor-pointer"
         >
           <Italic className="w-3.5 h-3.5" />
         </button>
@@ -254,12 +254,12 @@ export default function RichTextEditor({
             executeCommand('underline');
           }}
           title="আন্ডারলাইন (Underline)"
-          className="p-1.5 rounded-lg hover:bg-slate-200 active:bg-slate-300 text-slate-700 transition-colors"
+          className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md hover:bg-[#F5F5F5] active:bg-neutral-200 text-[#111111] transition-colors cursor-pointer"
         >
           <Underline className="w-3.5 h-3.5" />
         </button>
 
-        <span className="w-px h-4 bg-slate-300 mx-1" />
+        <span className="w-px h-4 bg-neutral-300 mx-1" />
 
         {/* বামে অ্যালাইন */}
         <button
@@ -269,7 +269,7 @@ export default function RichTextEditor({
             executeCommand('justifyLeft');
           }}
           title="বামে অ্যালাইন (Align Left)"
-          className="p-1.5 rounded-lg hover:bg-slate-200 active:bg-slate-300 text-slate-700 transition-colors"
+          className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md hover:bg-[#F5F5F5] active:bg-neutral-200 text-[#111111] transition-colors cursor-pointer"
         >
           <AlignLeft className="w-3.5 h-3.5" />
         </button>
@@ -282,7 +282,7 @@ export default function RichTextEditor({
             executeCommand('justifyCenter');
           }}
           title="মাঝে অ্যালাইন (Align Center)"
-          className="p-1.5 rounded-lg hover:bg-slate-200 active:bg-slate-300 text-slate-700 transition-colors"
+          className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md hover:bg-[#F5F5F5] active:bg-neutral-200 text-[#111111] transition-colors cursor-pointer"
         >
           <AlignCenter className="w-3.5 h-3.5" />
         </button>
@@ -295,12 +295,12 @@ export default function RichTextEditor({
             executeCommand('justifyRight');
           }}
           title="ডানে অ্যালাইন (Align Right)"
-          className="p-1.5 rounded-lg hover:bg-slate-200 active:bg-slate-300 text-slate-700 transition-colors"
+          className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md hover:bg-[#F5F5F5] active:bg-neutral-200 text-[#111111] transition-colors cursor-pointer"
         >
           <AlignRight className="w-3.5 h-3.5" />
         </button>
 
-        <span className="w-px h-4 bg-slate-300 mx-1" />
+        <span className="w-px h-4 bg-neutral-300 mx-1" />
 
         {/* বুলেট লিস্ট */}
         <button
@@ -310,7 +310,7 @@ export default function RichTextEditor({
             executeCommand('insertUnorderedList');
           }}
           title="বুলেট লিস্ট (Bullet List)"
-          className="p-1.5 rounded-lg hover:bg-slate-200 active:bg-slate-300 text-slate-700 transition-colors"
+          className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md hover:bg-[#F5F5F5] active:bg-neutral-200 text-[#111111] transition-colors cursor-pointer"
         >
           <List className="w-3.5 h-3.5" />
         </button>
@@ -323,12 +323,12 @@ export default function RichTextEditor({
             executeCommand('insertOrderedList');
           }}
           title="নম্বর লিস্ট (Numbered List)"
-          className="p-1.5 rounded-lg hover:bg-slate-200 active:bg-slate-300 text-slate-700 transition-colors"
+          className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md hover:bg-[#F5F5F5] active:bg-neutral-200 text-[#111111] transition-colors cursor-pointer"
         >
           <ListOrdered className="w-3.5 h-3.5" />
         </button>
 
-        <span className="w-px h-4 bg-slate-300 mx-1" />
+        <span className="w-px h-4 bg-neutral-300 mx-1" />
 
         {/* লিংক যুক্ত */}
         <button
@@ -338,7 +338,7 @@ export default function RichTextEditor({
             handleInsertLink();
           }}
           title="লিংক যুক্ত করুন (Insert Link)"
-          className="p-1.5 rounded-lg hover:bg-slate-200 active:bg-slate-300 text-indigo-600 hover:text-indigo-800 transition-colors"
+          className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md hover:bg-[#F5F5F5] active:bg-neutral-200 text-[#0F172A] transition-colors cursor-pointer"
         >
           <LinkIcon className="w-3.5 h-3.5" />
         </button>
@@ -351,12 +351,12 @@ export default function RichTextEditor({
             executeCommand('unlink');
           }}
           title="লিংক অপসারণ করুন (Remove Link)"
-          className="p-1.5 rounded-lg hover:bg-slate-200 active:bg-slate-300 text-slate-500 transition-colors"
+          className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md hover:bg-[#F5F5F5] active:bg-neutral-200 text-[#525252] transition-colors cursor-pointer"
         >
           <Unlink className="w-3.5 h-3.5" />
         </button>
 
-        <span className="w-px h-4 bg-slate-300 mx-1" />
+        <span className="w-px h-4 bg-neutral-300 mx-1" />
 
         {/* ছবি যুক্ত করুন */}
         <button
@@ -366,10 +366,10 @@ export default function RichTextEditor({
             handleOpenImageModal();
           }}
           title="ছবি যুক্ত করুন (Insert Image)"
-          className="flex items-center space-x-1 px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium text-xs transition-colors border border-indigo-200"
+          className="min-h-[44px] sm:min-h-[36px] flex items-center space-x-1 px-2.5 py-1 rounded-md bg-[#F5F5F5] hover:bg-neutral-200/70 text-[#111111] font-medium text-xs transition-colors border border-neutral-200/80 cursor-pointer"
         >
-          <ImageIcon className="w-3.5 h-3.5" />
-          <span className="text-[11px] font-bold">ছবি</span>
+          <ImageIcon className="w-3.5 h-3.5 text-[#0F172A]" />
+          <span className="text-[11px] font-semibold">ছবি</span>
         </button>
 
       </div>
@@ -380,25 +380,25 @@ export default function RichTextEditor({
         contentEditable
         onInput={handleInput}
         data-placeholder={placeholder}
-        className="rich-editor-content min-h-[110px] max-h-[220px] overflow-y-auto px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none leading-relaxed empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:pointer-events-none"
+        className="rich-editor-content min-h-[110px] max-h-[220px] overflow-y-auto px-3.5 py-2.5 text-xs text-[#111111] focus:outline-none leading-relaxed empty:before:content-[attr(data-placeholder)] empty:before:text-[#737373] empty:before:pointer-events-none"
         style={{ wordBreak: 'break-word' }}
       />
 
       {/* ছবি যুক্ত করার পূর্ণাঙ্গ মডাল ডায়ালগ */}
       {isImageModalOpen && (
-        <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-[60] bg-neutral-900/40 flex items-center justify-center p-3 animate-in fade-in duration-150">
+          <div className="bg-white rounded-lg border border-neutral-200/80 max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-150">
             
             {/* মডাল হেডার */}
-            <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+            <div className="px-5 py-3.5 border-b border-neutral-200/80 flex items-center justify-between bg-[#FAFAFA]">
               <div className="flex items-center space-x-2">
-                <ImageIcon className="w-4 h-4 text-indigo-600" />
-                <h4 className="text-sm font-bold text-slate-900">বিবরণীতে ছবি যুক্ত করুন</h4>
+                <ImageIcon className="w-4 h-4 text-[#0F172A]" />
+                <h4 className="text-sm font-semibold tracking-tight text-[#111111]">বিবরণীতে ছবি যুক্ত করুন</h4>
               </div>
               <button
                 type="button"
                 onClick={() => setIsImageModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-200 transition-colors"
+                className="min-h-[44px] sm:min-h-[36px] px-2 text-[#737373] hover:text-[#111111] rounded-md hover:bg-[#F5F5F5] transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -408,17 +408,17 @@ export default function RichTextEditor({
             <div className="p-5 space-y-4">
               
               {/* ট্যাব সিলেকশন: কম্পিউটার আপলোড বনাম ওয়েব লিঙ্ক */}
-              <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl">
+              <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#F5F5F5] rounded-lg border border-neutral-200/80">
                 <button
                   type="button"
                   onClick={() => {
                     setImageInputMode('upload');
                     setImageError('');
                   }}
-                  className={`flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all ${
+                  className={`min-h-[44px] sm:min-h-[36px] flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                     imageInputMode === 'upload'
-                      ? 'bg-white text-indigo-700 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-[#0F172A] text-white'
+                      : 'text-[#525252] hover:text-[#111111]'
                   }`}
                 >
                   <Upload className="w-3.5 h-3.5" />
@@ -430,10 +430,10 @@ export default function RichTextEditor({
                     setImageInputMode('url');
                     setImageError('');
                   }}
-                  className={`flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all ${
+                  className={`min-h-[44px] sm:min-h-[36px] flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                     imageInputMode === 'url'
-                      ? 'bg-white text-indigo-700 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-[#0F172A] text-white'
+                      : 'text-[#525252] hover:text-[#111111]'
                   }`}
                 >
                   <Globe className="w-3.5 h-3.5" />
@@ -443,7 +443,7 @@ export default function RichTextEditor({
 
               {/* এরর মেসেজ (যদি থাকে) */}
               {imageError && (
-                <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg flex items-center space-x-2 text-rose-700 text-xs">
+                <div className="p-2.5 bg-red-50 border border-red-200 rounded-md flex items-center space-x-2 text-[#B91C1C] text-xs">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{imageError}</span>
                 </div>
@@ -461,41 +461,41 @@ export default function RichTextEditor({
                   />
 
                   {isCompressing ? (
-                    <div className="h-32 border-2 border-dashed border-indigo-200 rounded-xl flex flex-col items-center justify-center bg-indigo-50/50 text-indigo-600">
-                      <Loader2 className="w-7 h-7 animate-spin mb-2" />
+                    <div className="h-32 border-2 border-dashed border-neutral-300 rounded-lg flex flex-col items-center justify-center bg-[#FAFAFA] text-[#525252]">
+                      <Loader2 className="w-7 h-7 animate-spin mb-2 text-[#0F172A]" />
                       <span className="text-xs font-medium">ছবি অপটিমাইজ ও প্রস্তুত করা হচ্ছে...</span>
                     </div>
                   ) : selectedFileDataUrl ? (
-                    <div className="relative border border-slate-200 rounded-xl overflow-hidden bg-slate-50 p-2 flex flex-col items-center">
+                    <div className="relative border border-neutral-200/80 rounded-lg overflow-hidden bg-[#FAFAFA] p-2 flex flex-col items-center">
                       <img
                         src={selectedFileDataUrl}
                         alt="Preview"
-                        className="max-h-40 object-contain rounded-lg shadow-2xs"
+                        className="max-h-40 object-contain rounded-md border border-neutral-200/80"
                       />
                       <button
                         type="button"
                         onClick={() => setSelectedFileDataUrl('')}
-                        className="absolute top-3 right-3 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md transition-colors"
+                        className="min-h-[44px] sm:min-h-[36px] px-2 absolute top-3 right-3 bg-[#B91C1C] hover:bg-red-800 text-white rounded-md transition-colors cursor-pointer flex items-center justify-center"
                         title="ছবি পরিবর্তন করুন"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
-                      <span className="text-[11px] text-emerald-600 font-semibold mt-2 flex items-center">
+                      <span className="text-[11px] text-[#15803D] font-semibold mt-2 flex items-center">
                         <Check className="w-3 h-3 mr-1" /> ছবি প্রস্তুত হয়েছে
                       </span>
                     </div>
                   ) : (
                     <div
                       onClick={() => fileInputRef.current?.click()}
-                      className="h-32 border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-xl flex flex-col items-center justify-center bg-slate-50 hover:bg-indigo-50/30 cursor-pointer transition-all p-4 text-center group"
+                      className="h-32 border-2 border-dashed border-neutral-300 hover:border-[#0F172A] rounded-lg flex flex-col items-center justify-center bg-[#FAFAFA] hover:bg-[#F5F5F5] cursor-pointer transition-colors p-4 text-center group"
                     >
-                      <div className="p-2 rounded-full bg-white shadow-2xs group-hover:scale-110 transition-transform mb-2">
-                        <Upload className="w-5 h-5 text-indigo-600" />
+                      <div className="p-2 rounded-md bg-white border border-neutral-200/80 mb-2">
+                        <Upload className="w-5 h-5 text-[#0F172A]" />
                       </div>
-                      <span className="text-xs font-semibold text-slate-700">
+                      <span className="text-xs font-semibold text-[#111111]">
                         কম্পিউটার বা ডিভাইস থেকে ছবি নির্বাচন করুন
                       </span>
-                      <span className="text-[10px] text-slate-400 mt-0.5">
+                      <span className="text-[10px] text-[#737373] mt-0.5">
                         PNG, JPG, WebP (স্বয়ংক্রিয়ভাবে অপটিমাইজ করা হবে)
                       </span>
                     </div>
@@ -507,7 +507,7 @@ export default function RichTextEditor({
               {imageInputMode === 'url' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs font-semibold text-[#111111] mb-1">
                       অনলাইন ছবির URL লিখুন
                     </label>
                     <input
@@ -515,17 +515,17 @@ export default function RichTextEditor({
                       value={imageUrlInput}
                       onChange={(e) => setImageUrlInput(e.target.value)}
                       placeholder="https://example.com/product-image.jpg"
-                      className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 text-xs bg-white border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:outline-none text-[#111111]"
                     />
                   </div>
 
                   {/* প্রিভিউ */}
                   {imageUrlInput.trim() && (
-                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 p-2 flex flex-col items-center">
+                    <div className="border border-neutral-200/80 rounded-lg overflow-hidden bg-[#FAFAFA] p-2 flex flex-col items-center">
                       <img
                         src={imageUrlInput.trim()}
                         alt="URL Preview"
-                        className="max-h-36 object-contain rounded-lg shadow-2xs"
+                        className="max-h-36 object-contain rounded-md border border-neutral-200/80"
                         onError={(e) => {
                           e.target.onerror = null;
                           setImageError('ছবির লিঙ্কটি লোড করা সম্ভব হয়নি। সঠিক URL দিন।');
@@ -539,7 +539,7 @@ export default function RichTextEditor({
 
               {/* অল্টারনেট টেক্সট / ক্যাপশন (ঐচ্ছিক) */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-[#111111] mb-1">
                   ছবির বিবরণ / ক্যাপশন (ঐচ্ছিক)
                 </label>
                 <input
@@ -547,18 +547,18 @@ export default function RichTextEditor({
                   value={imageAltInput}
                   onChange={(e) => setImageAltInput(e.target.value)}
                   placeholder="যেমন: পণ্যের পেছনের ভিউ অথবা ব্যবহারবিধি"
-                  className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-1.5 text-xs bg-white border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:outline-none text-[#111111]"
                 />
               </div>
 
             </div>
 
             {/* মডাল ফুটার বাটন */}
-            <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end space-x-2">
+            <div className="px-5 py-3 border-t border-neutral-200/80 bg-[#FAFAFA] flex items-center justify-end space-x-2">
               <button
                 type="button"
                 onClick={() => setIsImageModalOpen(false)}
-                className="px-3.5 py-1.5 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-100 transition-colors"
+                className="min-h-[44px] sm:min-h-[36px] px-3.5 py-1.5 border border-neutral-200/80 bg-white text-[#525252] hover:text-[#111111] text-xs font-semibold rounded-md hover:bg-[#F5F5F5] transition-colors cursor-pointer"
               >
                 বাতিল
               </button>
@@ -566,7 +566,7 @@ export default function RichTextEditor({
                 type="button"
                 onClick={handleConfirmInsertImage}
                 disabled={!currentPreviewSrc || isCompressing}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center space-x-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="min-h-[44px] sm:min-h-[36px] px-4 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-semibold rounded-md transition-colors flex items-center space-x-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>ছবি যুক্ত করুন</span>

@@ -268,18 +268,18 @@ export default function BarcodeScannerModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-60 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-60 bg-neutral-900/40 flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200">
+      <div className="bg-white rounded-lg border border-neutral-200/80 max-w-lg w-full overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
         
         {/* হেডার বার */}
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white select-none">
+        <div className="px-5 py-3.5 border-b border-neutral-200/80 flex items-center justify-between bg-[#FAFAFA] text-[#111111] select-none">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-md bg-emerald-50 text-[#15803D] border border-emerald-200 flex items-center justify-center shrink-0">
               <Camera className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-black tracking-tight">{title}</h3>
-              <p className="text-[11px] text-slate-300">পণ্যটির বারকোড ক্যামেরার সামনে ধরুন</p>
+              <h3 className="text-sm sm:text-base font-semibold tracking-tight text-[#111111]">{title}</h3>
+              <p className="text-[11px] text-[#525252]">পণ্যটির বারকোড ক্যামেরার সামনে ধরুন</p>
             </div>
           </div>
 
@@ -289,7 +289,7 @@ export default function BarcodeScannerModal({
               <button
                 type="button"
                 onClick={handleSwitchCamera}
-                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center transition-all cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] text-[#525252] hover:text-[#111111] flex items-center justify-center transition-colors cursor-pointer"
                 title="ক্যামেরা পরিবর্তন করুন"
               >
                 <FlipHorizontal className="w-4 h-4" />
@@ -301,8 +301,10 @@ export default function BarcodeScannerModal({
               <button
                 type="button"
                 onClick={handleToggleTorch}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
-                  torchOn ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                className={`min-h-[44px] sm:min-h-[36px] px-2 rounded-md border flex items-center justify-center transition-colors cursor-pointer ${
+                  torchOn
+                    ? 'bg-amber-50 border-amber-200 text-[#B45309]'
+                    : 'bg-white border-neutral-200/80 hover:bg-[#F5F5F5] text-[#525252] hover:text-[#111111]'
                 }`}
                 title={torchOn ? 'ফ্ল্যাশলাইট বন্ধ করুন' : 'ফ্ল্যাশলাইট চালু করুন'}
               >
@@ -314,17 +316,17 @@ export default function BarcodeScannerModal({
             <button
               type="button"
               onClick={() => setIsMuted(!isMuted)}
-              className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center transition-all cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] text-[#525252] hover:text-[#111111] flex items-center justify-center transition-colors cursor-pointer"
               title={isMuted ? 'সাউন্ড চালু করুন' : 'সাউন্ড বন্ধ করুন'}
             >
-              {isMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+              {isMuted ? <VolumeX className="w-4 h-4 text-[#737373]" /> : <Volume2 className="w-4 h-4 text-[#15803D]" />}
             </button>
 
             {/* ক্লোজ বাটন */}
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer ml-1"
+              className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md bg-white border border-neutral-200/80 hover:bg-red-50 hover:border-red-200 text-[#525252] hover:text-[#B91C1C] flex items-center justify-center transition-colors cursor-pointer ml-1"
               title="বন্ধ করুন"
             >
               <X className="w-4 h-4" />
@@ -333,7 +335,7 @@ export default function BarcodeScannerModal({
         </div>
 
         {/* ক্যামেরা ভিউফাইন্ডার এরিয়া */}
-        <div className="relative bg-slate-950 flex flex-col items-center justify-center overflow-hidden min-h-[300px] sm:min-h-[340px]">
+        <div className="relative bg-neutral-950 flex flex-col items-center justify-center overflow-hidden min-h-[300px] sm:min-h-[340px]">
           
           {/* ক্যামেরা কন্টেইনার */}
           <div 
@@ -343,9 +345,9 @@ export default function BarcodeScannerModal({
 
           {/* লোডিং ইন্ডিকেটর */}
           {isInitializing && (
-            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center text-white space-y-2 z-20">
+            <div className="absolute inset-0 bg-neutral-900/85 flex flex-col items-center justify-center text-white space-y-2 z-20">
               <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
-              <span className="text-xs font-bold tracking-wide">ক্যামেরা সংযোগ হচ্ছে...</span>
+              <span className="text-xs font-semibold tracking-wide">ক্যামেরা সংযোগ হচ্ছে...</span>
             </div>
           )}
 
@@ -353,7 +355,7 @@ export default function BarcodeScannerModal({
           {!isInitializing && !errorMessage && !scannedResult && (
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10 p-6">
               {/* ফোকাস ফ্রেম */}
-              <div className="w-[85%] max-w-[340px] h-[160px] border-2 border-emerald-400/80 rounded-2xl relative shadow-[0_0_20px_rgba(16,185,129,0.35)] overflow-hidden bg-emerald-500/5">
+              <div className="w-[85%] max-w-[340px] h-[160px] border-2 border-[#15803D] rounded-lg relative overflow-hidden bg-emerald-500/5">
                 {/* কোণা মার্কারসমূহ */}
                 <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-emerald-400"></div>
                 <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-emerald-400"></div>
@@ -361,11 +363,11 @@ export default function BarcodeScannerModal({
                 <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-emerald-400"></div>
 
                 {/* স্ক্যান লেজার লাইন অ্যানিমেশন */}
-                <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_12px_#34d399] animate-[scannerLaser_2s_ease-in-out_infinite]" />
+                <div className="w-full h-0.5 bg-emerald-400 animate-[scannerLaser_2s_ease-in-out_infinite]" />
               </div>
 
               {/* সহায়তা নির্দেশিকা */}
-              <div className="absolute bottom-4 px-3 py-1 bg-slate-900/80 backdrop-blur-xs rounded-full text-[11px] font-semibold text-emerald-300 border border-emerald-500/30 flex items-center space-x-1.5 shadow-md">
+              <div className="absolute bottom-4 px-3 py-1 bg-neutral-900/90 rounded-md text-[11px] font-semibold text-emerald-300 border border-emerald-500/40 flex items-center space-x-1.5">
                 <Sparkles className="w-3 h-3 text-emerald-400" />
                 <span>বারকোডটি ফ্রেমের সোজা রাখুন</span>
               </div>
@@ -374,15 +376,15 @@ export default function BarcodeScannerModal({
 
           {/* স্ক্যান সফল কনফার্মেশন ওভারলে */}
           {scannedResult && (
-            <div className="absolute inset-0 bg-emerald-950/90 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-3 z-30 animate-in fade-in zoom-in-95">
-              <div className="w-16 h-16 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/40">
+            <div className="absolute inset-0 bg-neutral-900/90 flex flex-col items-center justify-center text-white space-y-3 z-30 animate-in fade-in zoom-in-95">
+              <div className="w-16 h-16 rounded-full bg-[#15803D] text-white flex items-center justify-center border border-emerald-400">
                 <CheckCircle2 className="w-9 h-9" />
               </div>
               <div className="text-center px-4">
-                <span className="text-xs uppercase tracking-wider text-emerald-300 font-bold block">
+                <span className="text-xs uppercase tracking-wider text-emerald-300 font-semibold block">
                   সফলভাবে স্ক্যান সম্পন্ন!
                 </span>
-                <span className="text-xl font-mono font-black text-white block mt-1">
+                <span className="text-xl font-mono tabular-nums font-bold text-white block mt-1">
                   {scannedResult}
                 </span>
               </div>
@@ -391,17 +393,17 @@ export default function BarcodeScannerModal({
 
           {/* এরর ওভারলে */}
           {errorMessage && (
-            <div className="absolute inset-0 bg-slate-900/95 p-6 flex flex-col items-center justify-center text-center text-white space-y-3 z-20">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center">
+            <div className="absolute inset-0 bg-neutral-900/95 p-6 flex flex-col items-center justify-center text-center text-white space-y-3 z-20">
+              <div className="w-12 h-12 rounded-lg bg-red-950/60 text-red-400 border border-red-800/60 flex items-center justify-center">
                 <AlertCircle className="w-6 h-6" />
               </div>
-              <p className="text-xs text-rose-200 max-w-xs leading-relaxed font-medium">
+              <p className="text-xs text-red-200 max-w-xs leading-relaxed font-medium">
                 {errorMessage}
               </p>
               <button
                 type="button"
                 onClick={() => selectedCameraId && startCamera(selectedCameraId)}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-md transition-all cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] px-4 py-2 bg-[#15803D] hover:bg-emerald-800 text-white text-xs font-semibold rounded-md flex items-center space-x-1.5 transition-colors cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>পুনরায় চেষ্টা করুন</span>
@@ -412,14 +414,14 @@ export default function BarcodeScannerModal({
         </div>
 
         {/* ম্যানুয়াল ইনপুট সেকশন (যদি ক্যামেরা স্ক্যান করতে না পারে) */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200">
+        <div className="p-4 bg-[#FAFAFA] border-t border-neutral-200/80">
           <form onSubmit={handleManualSubmit} className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-slate-600">
-              <span className="font-bold flex items-center space-x-1.5">
-                <Keyboard className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="flex items-center justify-between text-xs text-[#525252]">
+              <span className="font-semibold flex items-center space-x-1.5 text-[#111111]">
+                <Keyboard className="w-3.5 h-3.5 text-[#0F172A]" />
                 <span>অথবা সরাসরি বারকোড টাইপ / পেস্ট করুন:</span>
               </span>
-              <span className="text-[10px] text-slate-400">হ্যান্ডহেল্ড স্ক্যানারও কাজ করবে</span>
+              <span className="text-[10px] text-[#737373]">হ্যান্ডহেল্ড স্ক্যানারও কাজ করবে</span>
             </div>
 
             <div className="flex space-x-2">
@@ -428,12 +430,12 @@ export default function BarcodeScannerModal({
                 placeholder="যেমন: 890123456789..."
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
-                className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                className="min-h-[44px] sm:min-h-[36px] flex-1 px-3 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums font-semibold text-[#111111] placeholder-[#737373] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A]"
               />
               <button
                 type="submit"
                 disabled={!manualCode.trim()}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] px-4 py-2 bg-[#0F172A] hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-semibold rounded-md transition-colors cursor-pointer"
               >
                 যুক্ত করুন
               </button>

@@ -522,32 +522,32 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
 
   return (
     <div
-      className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 z-[100] animate-fadeIn"}
+      className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent" : "fixed inset-0 bg-neutral-900/40 flex items-center justify-center p-3 sm:p-5 z-[100]"}
       style={embedded ? {} : { zIndex: 100 }}
     >
-      <div className={embedded ? "bg-white w-full flex-1 min-h-[calc(100vh-6.5rem)] rounded-2xl shadow-sm flex flex-col overflow-hidden border border-slate-200/90" : "bg-white w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-200/90"}>
+      <div className={embedded ? "bg-white w-full flex-1 min-h-[calc(100vh-6.5rem)] rounded-lg flex flex-col overflow-hidden border border-neutral-200/80" : "bg-white w-full max-w-4xl rounded-lg flex flex-col max-h-[92vh] overflow-hidden border border-neutral-200/80"}>
         
         {/* ১. স্লিম ও আধুনিক মোডাল হেডার */}
-        <div className="bg-slate-900 text-white px-5 sm:px-6 py-4 flex items-center justify-between shadow-md shrink-0 border-b border-slate-800">
+        <div className="bg-[#FAFAFA] border-b border-neutral-200/80 text-[#111111] px-5 sm:px-6 py-3.5 flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-[#0da487] flex items-center justify-center shadow-inner shrink-0">
+            <div className="w-10 h-10 rounded-md bg-emerald-50 border border-emerald-200/80 text-[#15803D] flex items-center justify-center shrink-0">
               <Coins className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center space-x-2">
-                <h2 className="text-base sm:text-lg font-black tracking-tight text-white truncate">
+              <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                <h2 className="text-base sm:text-lg font-semibold tracking-tight text-[#111111] truncate">
                   দৈনিক ক্যাশ ড্রয়ার ও EOD ক্লোজিং
                 </h2>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border flex items-center space-x-1 shrink-0 ${
+                <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium border flex items-center space-x-1 shrink-0 ${
                   isRegisterOpen
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
-                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                    ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80'
+                    : 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80'
                 }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isRegisterOpen ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${isRegisterOpen ? 'bg-[#15803D]' : 'bg-neutral-400'}`} />
                   <span>{isRegisterOpen ? 'সক্রিয় সেশন চালু' : 'রেজিস্টার বন্ধ'}</span>
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-medium truncate mt-0.5">
+              <p className="text-xs text-[#525252] font-medium font-mono tabular-nums truncate mt-0.5">
                 {isRegisterOpen
                   ? `সেশন: ${activeRegister.RegisterID || 'ACTIVE'} • প্রারম্ভিক ক্যাশ: ${currencySymbol}${Number(activeRegister.OpeningBalance || 0).toLocaleString('en-IN')}`
                   : 'সকালের ক্যাশ ফ্লোট, রিয়েল-টাইম ক্যাশ ট্র্যাকিং ও দিন শেষে নিখুঁত ক্যাশ মেলানো'}
@@ -556,16 +556,16 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
           </div>
           <button
             onClick={onClose}
-            className={`transition-all cursor-pointer flex items-center space-x-1 ${
+            className={`transition-colors cursor-pointer flex items-center space-x-1 rounded-md min-h-[44px] sm:min-h-[36px] border border-neutral-200/80 ${
               embedded
-                ? 'px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 shadow-2xs'
-                : 'p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl'
+                ? 'px-3.5 py-1.5 bg-white hover:bg-[#F5F5F5] text-[#111111] font-medium text-xs'
+                : 'min-w-[44px] sm:min-w-[36px] bg-white text-[#737373] hover:text-[#111111] hover:bg-[#F5F5F5] justify-center'
             }`}
             title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
           >
             {embedded ? (
               <>
-                <span className="text-sm font-bold">←</span>
+                <span className="text-sm font-semibold">←</span>
                 <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
               </>
             ) : (
@@ -575,14 +575,14 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
         </div>
 
         {/* ২. আধুনিক ট্যাব নেভিগেশন বার */}
-        <div className="flex border-b border-slate-200/90 px-4 sm:px-6 pt-2.5 bg-slate-100/70 shrink-0 gap-2 select-none">
+        <div className="flex border-b border-neutral-200/80 px-4 sm:px-6 pt-2 bg-white shrink-0 gap-2 select-none overflow-x-auto">
           {isRegisterOpen ? (
             <button
               onClick={() => setActiveTab('live')}
-              className={`pb-2.5 px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer ${
+              className={`pb-2.5 px-4 font-medium text-xs sm:text-sm transition-colors border-b-2 flex items-center space-x-2 cursor-pointer min-h-[44px] sm:min-h-[36px] whitespace-nowrap ${
                 activeTab === 'live'
-                  ? 'border-[#0da487] text-[#0da487] font-black'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
+                  ? 'border-[#0F172A] text-[#111111] font-semibold'
+                  : 'border-transparent text-[#525252] hover:text-[#111111]'
               }`}
             >
               <Clock className="w-4 h-4" />
@@ -591,10 +591,10 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
           ) : (
             <button
               onClick={() => setActiveTab('open')}
-              className={`pb-2.5 px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer ${
+              className={`pb-2.5 px-4 font-medium text-xs sm:text-sm transition-colors border-b-2 flex items-center space-x-2 cursor-pointer min-h-[44px] sm:min-h-[36px] whitespace-nowrap ${
                 activeTab === 'open'
-                  ? 'border-[#0da487] text-[#0da487] font-black'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
+                  ? 'border-[#0F172A] text-[#111111] font-semibold'
+                  : 'border-transparent text-[#525252] hover:text-[#111111]'
               }`}
             >
               <Unlock className="w-4 h-4" />
@@ -604,28 +604,28 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
 
           <button
             onClick={() => setActiveTab('history')}
-            className={`pb-2.5 px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer ${
+            className={`pb-2.5 px-4 font-medium text-xs sm:text-sm transition-colors border-b-2 flex items-center space-x-2 cursor-pointer min-h-[44px] sm:min-h-[36px] whitespace-nowrap ${
               activeTab === 'history'
-                ? 'border-[#0da487] text-[#0da487] font-black'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-[#0F172A] text-[#111111] font-semibold'
+                : 'border-transparent text-[#525252] hover:text-[#111111]'
             }`}
           >
             <FileText className="w-4 h-4" />
             <span>পূর্ববর্তী ক্লোজিং হিস্ট্রি</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700 font-mono font-bold">
+            <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-[#F5F5F5] border border-neutral-200/80 text-[#111111] font-mono tabular-nums font-medium">
               {cashRegisters.length}
             </span>
           </button>
         </div>
 
         {/* ৩. বডি কন্টেন্ট এরিয়া */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#FAFAFA]">
 
           {statusMessage && (
-            <div className={`p-3.5 rounded-2xl mb-4 text-xs sm:text-sm flex items-center space-x-2 shadow-2xs ${
-              statusMessage.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
+            <div className={`p-3.5 rounded-md mb-4 text-xs sm:text-sm flex items-center space-x-2 border ${
+              statusMessage.type === 'success' ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80' : 'bg-red-50 text-[#B91C1C] border-red-200/80'
             }`}>
-              {statusMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" /> : <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />}
+              {statusMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0 text-[#15803D]" /> : <AlertCircle className="w-4 h-4 shrink-0 text-[#B91C1C]" />}
               <span>{statusMessage.text}</span>
             </div>
           )}
@@ -634,14 +634,14 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
               দৃশ্য ১: সকালের রেজিস্টার ওপেন ফর্ম
               ======================================================== */}
           {!isRegisterOpen && activeTab === 'open' && (
-            <div className="max-w-xl mx-auto bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm space-y-5">
-              <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#0da487] flex items-center justify-center shrink-0">
-                  <Unlock className="w-6 h-6" />
+            <div className="max-w-xl mx-auto bg-white p-6 rounded-lg border border-neutral-200/80 space-y-5">
+              <div className="flex items-center space-x-3 pb-3 border-b border-neutral-200/80">
+                <div className="w-11 h-11 rounded-md bg-emerald-50 border border-emerald-200/80 text-[#15803D] flex items-center justify-center shrink-0">
+                  <Unlock className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">সকালের শিফট শুরু (রেজিস্টার ওপেন)</h3>
-                  <p className="text-xs text-slate-500 font-medium">
+                  <h3 className="text-base font-semibold tracking-tight text-[#111111]">সকালের শিফট শুরু (রেজিস্টার ওপেন)</h3>
+                  <p className="text-xs text-[#525252] font-medium">
                     দোকান খোলার সময় ড্রয়ারে ভাঙতি/প্রারম্ভিক ক্যাশ কত টাকা রাখা হয়েছে তা ইনপুট দিয়ে শিফট শুরু করুন।
                   </p>
                 </div>
@@ -650,13 +650,13 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
               <form onSubmit={handleOpenRegisterSubmit} className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold text-slate-800">
-                      প্রারম্ভিক ক্যাশ ফ্লোট (Opening Cash) <span className="text-rose-500">*</span>
+                    <label className="block text-xs font-semibold text-[#111111]">
+                      প্রারম্ভিক ক্যাশ ফ্লোট (Opening Cash) <span className="text-[#B91C1C]">*</span>
                     </label>
                     <button
                       type="button"
                       onClick={() => setShowOpenDenominations(!showOpenDenominations)}
-                      className="text-[11px] font-bold text-[#0da487] hover:underline flex items-center space-x-1 cursor-pointer"
+                      className="text-[11px] font-medium text-[#0F172A] hover:underline flex items-center space-x-1 cursor-pointer min-h-[36px]"
                     >
                       <Calculator className="w-3.5 h-3.5" />
                       <span>{showOpenDenominations ? 'ক্যালকুলেটর লুকান' : 'নোট গোনার ক্যালকুলেটর'}</span>
@@ -664,7 +664,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                   </div>
 
                   <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-lg text-slate-400">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono font-semibold text-lg text-[#737373]">
                       {currencySymbol}
                     </span>
                     <input
@@ -675,7 +675,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                       placeholder="যেমন: 2000"
                       value={openingBalance}
                       onChange={(e) => setOpeningBalance(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 text-lg font-black font-mono text-emerald-800 bg-emerald-50/30 rounded-xl border border-emerald-200 focus:outline-none focus:ring-2 focus:ring-[#0da487]/20 focus:border-[#0da487] shadow-inner"
+                      className="w-full pl-9 pr-4 py-2 text-lg font-semibold font-mono tabular-nums text-[#15803D] bg-[#FAFAFA] rounded-md border border-neutral-200/80 focus:bg-white focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                     />
                   </div>
 
@@ -686,10 +686,10 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                         key={val}
                         type="button"
                         onClick={() => setOpeningBalance(String(val))}
-                        className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 text-xs font-medium font-mono tabular-nums rounded-md transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px] border ${
                           Number(openingBalance) === val
-                            ? 'bg-slate-900 text-white shadow-2xs'
-                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                            ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                            : 'bg-[#F5F5F5] hover:bg-neutral-200/70 text-[#111111] border-neutral-200/80'
                         }`}
                       >
                         +{currencySymbol}{val}
@@ -699,7 +699,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                       <button
                         type="button"
                         onClick={() => { setOpeningBalance(''); setOpenDenoms({ 1000: 0, 500: 0, 200: 0, 100: 0, 50: 0, 20: 0, 10: 0, 5: 0, 2: 0, 1: 0 }); }}
-                        className="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 cursor-pointer"
+                        className="px-2.5 py-1.5 text-xs font-medium rounded-md bg-red-50 text-[#B91C1C] border border-red-200/80 hover:bg-red-100 cursor-pointer min-h-[44px] sm:min-h-[36px]"
                       >
                         মুছুন
                       </button>
@@ -708,23 +708,23 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
 
                   {/* ঐচ্ছিক নোট গোনার ক্যালকুলেটর গ্রিড */}
                   {showOpenDenominations && (
-                    <div className="mt-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5 animate-in fade-in duration-150">
-                      <span className="text-[11px] font-bold text-slate-700 block">
-                        💵 ড্রয়ারের বিভিন্ন নোটের সংখ্যা বসান (স্বয়ংক্রিয় যোগফল হবে):
+                    <div className="mt-3 p-3.5 bg-[#FAFAFA] rounded-lg border border-neutral-200/80 space-y-2.5">
+                      <span className="text-[11px] font-semibold text-[#111111] block">
+                        ড্রয়ারের বিভিন্ন নোটের সংখ্যা বসান (স্বয়ংক্রিয় যোগফল হবে):
                       </span>
                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                         {DENOMINATION_LIST.map(d => (
-                          <div key={d} className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs text-center">
-                            <span className="text-[10.5px] font-bold text-slate-500 block">৳{d} এর নোট</span>
+                          <div key={d} className="bg-white p-2 rounded-md border border-neutral-200/80 text-center">
+                            <span className="text-[10.5px] font-mono tabular-nums font-medium text-[#525252] block">৳{d} এর নোট</span>
                             <input
                               type="number"
                               min="0"
                               placeholder="০"
                               value={openDenoms[d] || ''}
                               onChange={(e) => handleOpenDenomChange(d, e.target.value)}
-                              className="w-full mt-1 px-1.5 py-1 text-center font-black font-mono text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0da487]"
+                              className="w-full mt-1 px-1.5 py-1 text-center font-semibold font-mono tabular-nums text-xs border border-neutral-200/80 rounded-md focus:outline-none focus:border-[#0F172A] min-h-[36px]"
                             />
-                            <span className="text-[9.5px] font-mono text-slate-400 block mt-0.5">
+                            <span className="text-[9.5px] font-mono tabular-nums text-[#737373] block mt-0.5">
                               ={currencySymbol}{((openDenoms[d] || 0) * d).toLocaleString('en-IN')}
                             </span>
                           </div>
@@ -735,7 +735,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-[#111111] mb-1">
                     মন্তব্য বা বিবরণ (ঐচ্ছিক)
                   </label>
                   <input
@@ -743,7 +743,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                     placeholder="যেমন: সকালের ড্রয়ারে ভাঙতির জন্য ৫০ ও ১০০ টাকার নোট..."
                     value={openNotes}
                     onChange={(e) => setOpenNotes(e.target.value)}
-                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0da487]/20 focus:border-[#0da487] shadow-2xs"
+                    className="w-full px-3.5 py-2 text-xs rounded-md border border-neutral-200/80 bg-white focus:outline-none focus:border-[#0F172A] text-[#111111] min-h-[44px] sm:min-h-[36px]"
                   />
                 </div>
 
@@ -751,7 +751,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                   <button
                     type="submit"
                     disabled={isOpenSubmitting}
-                    className="w-full py-3 bg-[#0da487] hover:bg-[#0b8b72] active:scale-[0.99] text-white font-black text-sm rounded-xl shadow-md shadow-[#0da487]/20 transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+                    className="w-full py-2.5 bg-[#0F172A] hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 min-h-[44px] sm:min-h-[36px]"
                   >
                     <Unlock className="w-4 h-4" />
                     <span>{isOpenSubmitting ? 'ওপেন করা হচ্ছে...' : 'ক্যাশ রেজিস্টার সেশন চালু করুন'}</span>
@@ -769,105 +769,105 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
               
               {/* ৪টি মূল লাইভ মেট্রিক কার্ডস */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">১. প্রারম্ভিক ক্যাশ</p>
-                  <p className="text-xl font-black font-mono text-slate-900 mt-1">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80">
+                  <p className="text-[11px] font-medium text-[#525252] uppercase tracking-wider">১. প্রারম্ভিক ক্যাশ</p>
+                  <p className="text-xl font-semibold font-mono tabular-nums text-[#111111] mt-1">
                     {currencySymbol}{liveSessionMetrics.opening.toLocaleString('en-IN')}
                   </p>
-                  <p className="text-[10.5px] text-slate-400 mt-0.5">সকালের ফ্লোট</p>
+                  <p className="text-[10.5px] text-[#737373] mt-0.5">সকালের ফ্লোট</p>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-emerald-200/80 shadow-2xs">
-                  <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">২. নগদ বিক্রি (+)</p>
-                  <p className="text-xl font-black font-mono text-emerald-700 mt-1">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80">
+                  <p className="text-[11px] font-medium text-[#15803D] uppercase tracking-wider">২. নগদ বিক্রি (+)</p>
+                  <p className="text-xl font-semibold font-mono tabular-nums text-[#15803D] mt-1">
                     +{currencySymbol}{liveSessionMetrics.cashSales.toLocaleString('en-IN')}
                   </p>
-                  <p className="text-[10.5px] text-slate-400 mt-0.5">{liveSessionMetrics.cashSalesCount}টি ক্যাশ অর্ডারে</p>
+                  <p className="text-[10.5px] text-[#737373] font-mono tabular-nums mt-0.5">{liveSessionMetrics.cashSalesCount}টি ক্যাশ অর্ডারে</p>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-rose-200/80 shadow-2xs">
-                  <p className="text-[11px] font-bold text-rose-700 uppercase tracking-wider">৩. ক্যাশ খরচ ও পেইড (-)</p>
-                  <p className="text-xl font-black font-mono text-rose-700 mt-1">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80">
+                  <p className="text-[11px] font-medium text-[#B91C1C] uppercase tracking-wider">৩. ক্যাশ খরচ ও পেইড (-)</p>
+                  <p className="text-xl font-semibold font-mono tabular-nums text-[#B91C1C] mt-1">
                     -{currencySymbol}{liveSessionMetrics.totalCashOut.toLocaleString('en-IN')}
                   </p>
-                  <p className="text-[10.5px] text-slate-400 mt-0.5">দোকান খরচ ও মহাজন</p>
+                  <p className="text-[10.5px] text-[#737373] mt-0.5">দোকান খরচ ও মহাজন</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-[#0da487] to-teal-800 text-white p-4 rounded-2xl shadow-md">
-                  <p className="text-[11px] font-bold text-emerald-100 uppercase tracking-wider">হিসাবমতে ড্রয়ারে ক্যাশ</p>
-                  <p className="text-2xl font-black font-mono mt-1">
+                <div className="bg-[#0F172A] text-white p-4 rounded-lg border border-slate-800">
+                  <p className="text-[11px] font-medium text-slate-300 uppercase tracking-wider">হিসাবমতে ড্রয়ারে ক্যাশ</p>
+                  <p className="text-2xl font-semibold font-mono tabular-nums mt-1">
                     {currencySymbol}{liveSessionMetrics.expectedCash.toLocaleString('en-IN')}
                   </p>
-                  <p className="text-[10.5px] text-emerald-200 mt-0.5">প্রত্যাশিত মোট নগদ</p>
+                  <p className="text-[10.5px] text-slate-300 mt-0.5">প্রত্যাশিত মোট নগদ</p>
                 </div>
               </div>
 
               {/* কলাপসিবল ক্যাশ ফ্লো ব্রেকডাউন টগল */}
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+              <div className="bg-white rounded-lg border border-neutral-200/80 overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setShowLiveBreakdown(!showLiveBreakdown)}
-                  className="w-full px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="w-full px-4 py-3 flex items-center justify-between text-xs font-semibold text-[#111111] hover:bg-[#FAFAFA] transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px]"
                 >
                   <span className="flex items-center space-x-2">
-                    <FileText className="w-4 h-4 text-[#0da487]" />
+                    <FileText className="w-4 h-4 text-[#0F172A]" />
                     <span>আজকের লাইভ লেনদেনের বিস্তারিত খতিয়ান (Cash Inflow & Outflow Breakdown)</span>
                   </span>
-                  <span className="flex items-center space-x-1 text-slate-400">
+                  <span className="flex items-center space-x-1 text-[#737373]">
                     <span className="text-[11px]">{showLiveBreakdown ? 'সংক্ষেপ করুন' : 'বিস্তারিত দেখুন'}</span>
                     {showLiveBreakdown ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </span>
                 </button>
 
                 {showLiveBreakdown && (
-                  <div className="p-4 border-t border-slate-100 bg-slate-50/50 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs animate-in fade-in duration-150">
+                  <div className="p-4 border-t border-neutral-200/80 bg-[#FAFAFA] grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     {/* ক্যাশ আগমন (Inflows) */}
-                    <div className="bg-white p-3.5 rounded-xl border border-emerald-100 space-y-2">
-                      <span className="text-[11px] font-black text-emerald-800 flex items-center space-x-1.5 uppercase">
-                        <ArrowDownRight className="w-4 h-4 text-emerald-600" />
+                    <div className="bg-white p-3.5 rounded-lg border border-emerald-200/80 space-y-2">
+                      <span className="text-[11px] font-semibold text-[#15803D] flex items-center space-x-1.5 uppercase">
+                        <ArrowDownRight className="w-4 h-4 text-[#15803D]" />
                         <span>নগদ আগমন (Cash Inflows)</span>
                       </span>
                       <div className="space-y-1.5 pt-1">
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-600">🛒 কাউন্টার ক্যাশ সেলস:</span>
-                          <strong className="font-mono text-emerald-700">+{currencySymbol}{liveSessionMetrics.cashSales.toLocaleString('en-IN')}</strong>
+                        <div className="flex justify-between py-1 border-b border-neutral-100">
+                          <span className="text-[#525252] flex items-center gap-1.5"><ShoppingCart className="w-3.5 h-3.5 text-[#737373]" /> কাউন্টার ক্যাশ সেলস:</span>
+                          <strong className="font-mono tabular-nums text-[#15803D]">+{currencySymbol}{liveSessionMetrics.cashSales.toLocaleString('en-IN')}</strong>
                         </div>
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-600">✂️ টেইলারিং অগ্রিম ও কালেকশন:</span>
-                          <strong className="font-mono text-emerald-700">+{currencySymbol}{liveSessionMetrics.cashTailoring.toLocaleString('en-IN')}</strong>
+                        <div className="flex justify-between py-1 border-b border-neutral-100">
+                          <span className="text-[#525252] flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-[#737373]" /> টেইলারিং অগ্রিম ও কালেকশন:</span>
+                          <strong className="font-mono tabular-nums text-[#15803D]">+{currencySymbol}{liveSessionMetrics.cashTailoring.toLocaleString('en-IN')}</strong>
                         </div>
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-600">📥 কাস্টমার বকেয়া আদায় (ক্যাশ):</span>
-                          <strong className="font-mono text-emerald-700">+{currencySymbol}{(liveSessionMetrics.cashIn - liveSessionMetrics.cashTailoring).toLocaleString('en-IN')}</strong>
+                        <div className="flex justify-between py-1 border-b border-neutral-100">
+                          <span className="text-[#525252] flex items-center gap-1.5"><ArrowDownRight className="w-3.5 h-3.5 text-[#737373]" /> কাস্টমার বকেয়া আদায় (ক্যাশ):</span>
+                          <strong className="font-mono tabular-nums text-[#15803D]">+{currencySymbol}{(liveSessionMetrics.cashIn - liveSessionMetrics.cashTailoring).toLocaleString('en-IN')}</strong>
                         </div>
                         {liveSessionMetrics.cashInBankWithdrawal > 0 && (
                           <div className="flex justify-between py-1">
-                            <span className="text-slate-600">🏦 ব্যাংক উত্তোলন (কাউন্টারে জমা):</span>
-                            <strong className="font-mono text-emerald-700">+{currencySymbol}{liveSessionMetrics.cashInBankWithdrawal.toLocaleString('en-IN')}</strong>
+                            <span className="text-[#525252] flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-[#737373]" /> ব্যাংক উত্তোলন (কাউন্টারে জমা):</span>
+                            <strong className="font-mono tabular-nums text-[#15803D]">+{currencySymbol}{liveSessionMetrics.cashInBankWithdrawal.toLocaleString('en-IN')}</strong>
                           </div>
                         )}
                       </div>
                     </div>
 
                     {/* ক্যাশ নির্গমন (Outflows) */}
-                    <div className="bg-white p-3.5 rounded-xl border border-rose-100 space-y-2">
-                      <span className="text-[11px] font-black text-rose-800 flex items-center space-x-1.5 uppercase">
-                        <ArrowUpRight className="w-4 h-4 text-rose-600" />
+                    <div className="bg-white p-3.5 rounded-lg border border-red-200/80 space-y-2">
+                      <span className="text-[11px] font-semibold text-[#B91C1C] flex items-center space-x-1.5 uppercase">
+                        <ArrowUpRight className="w-4 h-4 text-[#B91C1C]" />
                         <span>নগদ নির্গমন (Cash Outflows)</span>
                       </span>
                       <div className="space-y-1.5 pt-1">
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-600">☕ দৈনন্দিন দোকান খরচ:</span>
-                          <strong className="font-mono text-rose-700">-{currencySymbol}{liveSessionMetrics.cashOutExpenses.toLocaleString('en-IN')}</strong>
+                        <div className="flex justify-between py-1 border-b border-neutral-100">
+                          <span className="text-[#525252] flex items-center gap-1.5"><Coffee className="w-3.5 h-3.5 text-[#737373]" /> দৈনন্দিন দোকান খরচ:</span>
+                          <strong className="font-mono tabular-nums text-[#B91C1C]">-{currencySymbol}{liveSessionMetrics.cashOutExpenses.toLocaleString('en-IN')}</strong>
                         </div>
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-600">🏭 মহাজন/সাপ্লায়ারকে নগদ প্রদান:</span>
-                          <strong className="font-mono text-rose-700">-{currencySymbol}{liveSessionMetrics.cashOutSuppliers.toLocaleString('en-IN')}</strong>
+                        <div className="flex justify-between py-1 border-b border-neutral-100">
+                          <span className="text-[#525252] flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-[#737373]" /> মহাজন/সাপ্লায়ারকে নগদ প্রদান:</span>
+                          <strong className="font-mono tabular-nums text-[#B91C1C]">-{currencySymbol}{liveSessionMetrics.cashOutSuppliers.toLocaleString('en-IN')}</strong>
                         </div>
                         {liveSessionMetrics.cashOutBankDeposit > 0 && (
                           <div className="flex justify-between py-1">
-                            <span className="text-slate-600">🏦 ব্যাংক ক্যাশ ডিপোজিট:</span>
-                            <strong className="font-mono text-rose-700">-{currencySymbol}{liveSessionMetrics.cashOutBankDeposit.toLocaleString('en-IN')}</strong>
+                            <span className="text-[#525252] flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-[#737373]" /> ব্যাংক ক্যাশ ডিপোজিট:</span>
+                            <strong className="font-mono tabular-nums text-[#B91C1C]">-{currencySymbol}{liveSessionMetrics.cashOutBankDeposit.toLocaleString('en-IN')}</strong>
                           </div>
                         )}
                       </div>
@@ -877,50 +877,50 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
               </div>
 
               {/* দিন শেষে ক্যাশ ড্রয়ার ক্লোজিং ফর্ম (EOD Closing Form) */}
-              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm max-w-2xl mx-auto space-y-4">
-                <div className="flex items-center space-x-2.5 pb-3 border-b border-slate-100">
-                  <div className="p-2 rounded-xl bg-slate-100 text-slate-800">
+              <div className="bg-white p-5 sm:p-6 rounded-lg border border-neutral-200/80 max-w-2xl mx-auto space-y-4">
+                <div className="flex items-center space-x-2.5 pb-3 border-b border-neutral-200/80">
+                  <div className="p-2 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A]">
                     <Lock className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm sm:text-base font-black text-slate-900">দিন শেষে ড্রয়ার বন্ধ করুন (EOD Closing)</h3>
-                    <p className="text-xs text-slate-500 font-medium">ড্রয়ারের নগদ টাকা গুনে নিচে বসিয়ে হিসাব মিলিয়ে ক্লোজ করুন।</p>
+                    <h3 className="text-sm sm:text-base font-semibold tracking-tight text-[#111111]">দিন শেষে ড্রয়ার বন্ধ করুন (EOD Closing)</h3>
+                    <p className="text-xs text-[#525252] font-medium">ড্রয়ারের নগদ টাকা গুনে নিচে বসিয়ে হিসাব মিলিয়ে ক্লোজ করুন।</p>
                   </div>
                 </div>
 
                 <form onSubmit={handleCloseRegisterSubmit} className="space-y-4">
                   {/* GAP 2: ক্যাশ রিকনসিলিয়েশন অডিট ও লাইভ হিসাব বিবরণী */}
-                  <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-black text-slate-800 pb-1.5 border-b border-slate-200">
+                  <div className="p-3.5 bg-[#FAFAFA] rounded-lg border border-neutral-200/80 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-semibold text-[#111111] pb-1.5 border-b border-neutral-200/80">
                       <span className="flex items-center space-x-1.5">
-                        <Receipt className="w-3.5 h-3.5 text-indigo-600" />
+                        <FileText className="w-3.5 h-3.5 text-[#0F172A]" />
                         <span>ক্যাশ রিকনসিলিয়েশন সারসংক্ষেপ (Cash Reconciliation)</span>
                       </span>
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">হিসাব মিলান</span>
+                      <span className="text-[10px] font-medium text-[#737373] uppercase tracking-wider">হিসাব মিলান</span>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                      <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
-                        <span className="text-slate-400 font-semibold block text-[10px]">প্রারম্ভিক ক্যাশ (+)</span>
-                        <strong className="text-slate-800 font-mono font-bold text-xs">
+                      <div className="bg-white p-2 rounded-md border border-neutral-200/80">
+                        <span className="text-[#737373] font-medium block text-[10px]">প্রারম্ভিক ক্যাশ (+)</span>
+                        <strong className="text-[#111111] font-mono tabular-nums font-semibold text-xs">
                           {currencySymbol}{liveSessionMetrics.opening.toLocaleString('en-IN')}
                         </strong>
                       </div>
-                      <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
-                        <span className="text-emerald-600 font-semibold block text-[10px]">ক্যাশ বিক্রয় ({liveSessionMetrics.cashSalesCount}টি) (+)</span>
-                        <strong className="text-emerald-700 font-mono font-bold text-xs">
+                      <div className="bg-white p-2 rounded-md border border-neutral-200/80">
+                        <span className="text-[#15803D] font-medium block text-[10px]">ক্যাশ বিক্রয় (<span className="font-mono tabular-nums">{liveSessionMetrics.cashSalesCount}</span>টি) (+)</span>
+                        <strong className="text-[#15803D] font-mono tabular-nums font-semibold text-xs">
                           +{currencySymbol}{liveSessionMetrics.cashSales.toLocaleString('en-IN')}
                         </strong>
                       </div>
-                      <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
-                        <span className="text-rose-600 font-semibold block text-[10px]">দৈনন্দিন খরচ ({liveSessionMetrics.expensesCount}টি) (-)</span>
-                        <strong className="text-rose-700 font-mono font-bold text-xs">
+                      <div className="bg-white p-2 rounded-md border border-neutral-200/80">
+                        <span className="text-[#B91C1C] font-medium block text-[10px]">দৈনন্দিন খরচ (<span className="font-mono tabular-nums">{liveSessionMetrics.expensesCount}</span>টি) (-)</span>
+                        <strong className="text-[#B91C1C] font-mono tabular-nums font-semibold text-xs">
                           -{currencySymbol}{liveSessionMetrics.cashOutExpenses.toLocaleString('en-IN')}
                         </strong>
                       </div>
-                      <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
-                        <span className="text-blue-600 font-semibold block text-[10px]">প্রত্যাশিত ব্যালেন্স (=)</span>
-                        <strong className="text-blue-700 font-mono font-black text-xs">
+                      <div className="bg-white p-2 rounded-md border border-neutral-200/80">
+                        <span className="text-[#525252] font-medium block text-[10px]">প্রত্যাশিত ব্যালেন্স (=)</span>
+                        <strong className="text-[#111111] font-mono tabular-nums font-semibold text-xs">
                           {currencySymbol}{liveSessionMetrics.expectedCash.toLocaleString('en-IN')}
                         </strong>
                       </div>
@@ -929,13 +929,13 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
 
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-bold text-slate-800">
-                        ড্রয়ারে বাস্তবে গুনে মোট কত টাকা পাওয়া গেল? (Actual Physical Cash) <span className="text-rose-500">*</span>
+                      <label className="block text-xs font-semibold text-[#111111]">
+                        ড্রয়ারে বাস্তবে গুনে মোট কত টাকা পাওয়া গেল? (Actual Physical Cash) <span className="text-[#B91C1C]">*</span>
                       </label>
                       <button
                         type="button"
                         onClick={() => setShowCloseDenominations(!showCloseDenominations)}
-                        className="text-[11px] font-bold text-[#0da487] hover:underline flex items-center space-x-1 cursor-pointer"
+                        className="text-[11px] font-medium text-[#0F172A] hover:underline flex items-center space-x-1 cursor-pointer min-h-[36px]"
                       >
                         <Calculator className="w-3.5 h-3.5" />
                         <span>{showCloseDenominations ? 'ক্যালকুলেটর লুকান' : 'নোট গোনার ক্যালকুলেটর'}</span>
@@ -943,7 +943,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                     </div>
 
                     <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-lg text-slate-400">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono font-semibold text-lg text-[#737373]">
                         {currencySymbol}
                       </span>
                       <input
@@ -954,29 +954,29 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                         placeholder="যেমন: 7500"
                         value={actualCashInput}
                         onChange={(e) => setActualCashInput(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2.5 text-xl font-black font-mono text-slate-900 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0da487]/20 focus:border-[#0da487] shadow-inner"
+                        className="w-full pl-9 pr-4 py-2 text-xl font-semibold font-mono tabular-nums text-[#111111] bg-[#FAFAFA] rounded-md border border-neutral-200/80 focus:bg-white focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                       />
                     </div>
 
                     {/* ড্রয়ার গোনার ক্যালকুলেটর */}
                     {showCloseDenominations && (
-                      <div className="mt-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5 animate-in fade-in duration-150">
-                        <span className="text-[11px] font-bold text-slate-700 block">
-                          💵 ক্যাশ বাক্সের নোট গুনে সংখ্যা লিখুন (স্বয়ংক্রিয় যোগফল বসবে):
+                      <div className="mt-3 p-3.5 bg-[#FAFAFA] rounded-lg border border-neutral-200/80 space-y-2.5">
+                        <span className="text-[11px] font-semibold text-[#111111] block">
+                          ক্যাশ বাক্সের নোট গুনে সংখ্যা লিখুন (স্বয়ংক্রিয় যোগফল বসবে):
                         </span>
                         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                           {DENOMINATION_LIST.map(d => (
-                            <div key={d} className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs text-center">
-                              <span className="text-[10.5px] font-bold text-slate-500 block">৳{d} এর নোট</span>
+                            <div key={d} className="bg-white p-2 rounded-md border border-neutral-200/80 text-center">
+                              <span className="text-[10.5px] font-mono tabular-nums font-medium text-[#525252] block">৳{d} এর নোট</span>
                               <input
                                 type="number"
                                 min="0"
                                 placeholder="০"
                                 value={closeDenoms[d] || ''}
                                 onChange={(e) => handleCloseDenomChange(d, e.target.value)}
-                                className="w-full mt-1 px-1.5 py-1 text-center font-black font-mono text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0da487]"
+                                className="w-full mt-1 px-1.5 py-1 text-center font-semibold font-mono tabular-nums text-xs border border-neutral-200/80 rounded-md focus:outline-none focus:border-[#0F172A] min-h-[36px]"
                               />
-                              <span className="text-[9.5px] font-mono text-slate-400 block mt-0.5">
+                              <span className="text-[9.5px] font-mono tabular-nums text-[#737373] block mt-0.5">
                                 ={currencySymbol}{((closeDenoms[d] || 0) * d).toLocaleString('en-IN')}
                               </span>
                             </div>
@@ -988,36 +988,36 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
 
                   {/* গরমিল ডিটেকশন লাইভ ব্যানার */}
                   {actualCashInput !== '' && (
-                    <div className={`p-4 rounded-2xl border flex items-center justify-between text-xs sm:text-sm shadow-2xs ${
+                    <div className={`p-4 rounded-lg border flex items-center justify-between text-xs sm:text-sm ${
                       Number(actualCashInput) === liveSessionMetrics.expectedCash
-                        ? 'bg-emerald-50 text-emerald-950 border-emerald-300'
+                        ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80'
                         : Number(actualCashInput) < liveSessionMetrics.expectedCash
-                        ? 'bg-rose-50 text-rose-950 border-rose-300'
-                        : 'bg-indigo-50 text-indigo-950 border-indigo-300'
+                        ? 'bg-red-50 text-[#B91C1C] border-red-200/80'
+                        : 'bg-amber-50 text-[#B45309] border-amber-200/80'
                     }`}>
                       <div className="flex items-center space-x-3">
                         {Number(actualCashInput) === liveSessionMetrics.expectedCash ? (
-                          <div className="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                          <div className="w-9 h-9 rounded-md bg-[#15803D] text-white flex items-center justify-center shrink-0">
                             <CheckCircle2 className="w-5 h-5" />
                           </div>
                         ) : Number(actualCashInput) < liveSessionMetrics.expectedCash ? (
-                          <div className="w-9 h-9 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0">
+                          <div className="w-9 h-9 rounded-md bg-[#B91C1C] text-white flex items-center justify-center shrink-0">
                             <AlertTriangle className="w-5 h-5" />
                           </div>
                         ) : (
-                          <div className="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0">
+                          <div className="w-9 h-9 rounded-md bg-[#B45309] text-white flex items-center justify-center shrink-0">
                             <Sparkles className="w-5 h-5" />
                           </div>
                         )}
                         <div>
-                          <p className="font-black text-sm">
+                          <p className="font-semibold text-sm font-mono tabular-nums">
                             {Number(actualCashInput) === liveSessionMetrics.expectedCash
                               ? 'হিসাব ১০০% নিখুঁত মিলেছে!'
                               : Number(actualCashInput) < liveSessionMetrics.expectedCash
                               ? `ক্যাশ ঘাটতি (Shortage): -${currencySymbol}${Math.abs(Number(actualCashInput) - liveSessionMetrics.expectedCash).toLocaleString('en-IN')}`
                               : `অতিরিক্ত ক্যাশ (Excess): +${currencySymbol}${(Number(actualCashInput) - liveSessionMetrics.expectedCash).toLocaleString('en-IN')}`}
                           </p>
-                          <p className="text-[11px] opacity-80 mt-0.5">
+                          <p className="text-[11px] opacity-90 mt-0.5 font-mono tabular-nums">
                             হিসাবমতে থাকার কথা: {currencySymbol}{liveSessionMetrics.expectedCash.toLocaleString('en-IN')} | বাস্তবে গুনেছেন: {currencySymbol}{Number(actualCashInput).toLocaleString('en-IN')}
                           </p>
                         </div>
@@ -1026,7 +1026,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                   )}
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label className="block text-xs font-semibold text-[#111111] mb-1">
                       ক্লোজিং নোট বা গরমিলের কারণ (যদি থাকে)
                     </label>
                     <textarea
@@ -1034,7 +1034,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                       placeholder="যেমন: কোনো ক্যাশ ঘাটতি থাকলে তার কারণ বা হ্যান্ডওভার নোট লিখুন..."
                       value={closeNotes}
                       onChange={(e) => setCloseNotes(e.target.value)}
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0da487]/20 focus:border-[#0da487] shadow-2xs resize-none"
+                      className="w-full px-3.5 py-2 text-xs rounded-md border border-neutral-200/80 bg-white focus:outline-none focus:border-[#0F172A] resize-none text-[#111111]"
                     />
                   </div>
 
@@ -1042,16 +1042,16 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                     <button
                       type="button"
                       onClick={() => handleSendWhatsAppReport({ ...activeRegister, ActualCash: actualCashInput || liveSessionMetrics.expectedCash })}
-                      className="flex-1 py-3 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-2xs"
+                      className="flex-1 py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 text-[#15803D] border border-emerald-200/80 font-medium text-xs sm:text-sm rounded-md transition-colors flex items-center justify-center space-x-2 cursor-pointer min-h-[44px] sm:min-h-[36px]"
                     >
-                      <Share2 className="w-4 h-4 text-emerald-600" />
+                      <Share2 className="w-4 h-4 text-[#15803D]" />
                       <span>মালিককে WhatsApp এ পাঠান</span>
                     </button>
 
                     <button
                       type="submit"
                       disabled={isCloseSubmitting}
-                      className="flex-1 py-3 px-4 bg-[#0da487] hover:bg-[#0b8b72] active:scale-[0.99] text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-[#0da487]/20 transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+                      className="flex-1 py-2.5 px-4 bg-[#0F172A] hover:bg-slate-800 text-white font-medium text-xs sm:text-sm rounded-md transition-colors flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 min-h-[44px] sm:min-h-[36px]"
                     >
                       <Lock className="w-4 h-4" />
                       <span>{isCloseSubmitting ? 'ক্লোজ হচ্ছে...' : 'ক্যাশ ড্রয়ার ক্লোজ করুন'}</span>
@@ -1070,40 +1070,40 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
             <div className="space-y-4">
               
               {/* সার্চ, ফিল্টার ও এক্সপোর্ট বার */}
-              <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+              <div className="bg-white p-3.5 rounded-lg border border-neutral-200/80 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center space-x-2 flex-1 min-w-[200px]">
                   <div className="relative flex-1">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" />
                     <input
                       type="text"
                       value={historySearch}
                       onChange={(e) => setHistorySearch(e.target.value)}
                       placeholder="তারিখ, সেশন আইডি বা স্টাফের নাম দিয়ে খুঁজুন..."
-                      className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0da487]/20 focus:border-[#0da487]"
+                      className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#F5F5F5] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] text-[#111111] min-h-[44px] sm:min-h-[36px]"
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs font-bold">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center bg-[#F5F5F5] p-1 rounded-md border border-neutral-200/80 text-xs font-medium gap-1">
                     <button
                       type="button"
                       onClick={() => setHistoryFilter('ALL')}
-                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${historyFilter === 'ALL' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600'}`}
+                      className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer min-h-[36px] font-mono tabular-nums ${historyFilter === 'ALL' ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold' : 'text-[#525252]'}`}
                     >
                       সব ({cashRegisters.length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setHistoryFilter('THIS_MONTH')}
-                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${historyFilter === 'THIS_MONTH' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600'}`}
+                      className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer min-h-[36px] ${historyFilter === 'THIS_MONTH' ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold' : 'text-[#525252]'}`}
                     >
                       চলতি মাস
                     </button>
                     <button
                       type="button"
                       onClick={() => setHistoryFilter('7_DAYS')}
-                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${historyFilter === '7_DAYS' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600'}`}
+                      className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer min-h-[36px] ${historyFilter === '7_DAYS' ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold' : 'text-[#525252]'}`}
                     >
                       গত ৭ দিন
                     </button>
@@ -1112,10 +1112,10 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                   <button
                     type="button"
                     onClick={handleExportHistoryCSV}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer border border-slate-200"
+                    className="px-3 py-1.5 bg-white hover:bg-[#F5F5F5] text-[#111111] text-xs font-medium rounded-md transition-colors flex items-center space-x-1.5 cursor-pointer border border-neutral-200/80 min-h-[44px] sm:min-h-[36px]"
                     title="সম্পূর্ণ হিস্ট্রি এক্সেল/সিএসভি ফাইলে ডাউনলোড করুন"
                   >
-                    <Download className="w-3.5 h-3.5 text-slate-600" />
+                    <Download className="w-3.5 h-3.5 text-[#525252]" />
                     <span className="hidden sm:inline">এক্সেল ডাউনলোড</span>
                   </button>
                 </div>
@@ -1123,19 +1123,19 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
 
               {/* হিস্ট্রি সারাংশ কার্ড */}
               {filteredRegisters.length > 0 && (
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs text-center">
-                    <span className="text-[10px] font-bold text-slate-400 block uppercase">মোট ক্লোজড সেশন</span>
-                    <span className="text-base font-black font-mono text-slate-800">{historySummary.totalClosed}টি</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="bg-white p-3 rounded-lg border border-neutral-200/80 text-center">
+                    <span className="text-[10px] font-medium text-[#737373] block uppercase">মোট ক্লোজড সেশন</span>
+                    <span className="text-base font-semibold font-mono tabular-nums text-[#111111]">{historySummary.totalClosed}টি</span>
                   </div>
-                  <div className="bg-white p-3 rounded-xl border border-emerald-100 shadow-2xs text-center">
-                    <span className="text-[10px] font-bold text-emerald-600 block uppercase">সম্পূর্ণ মিলেছে (০)</span>
-                    <span className="text-base font-black font-mono text-emerald-700">{historySummary.exactMatches}টি</span>
+                  <div className="bg-white p-3 rounded-lg border border-emerald-200/80 text-center">
+                    <span className="text-[10px] font-medium text-[#15803D] block uppercase">সম্পূর্ণ মিলেছে (০)</span>
+                    <span className="text-base font-semibold font-mono tabular-nums text-[#15803D]">{historySummary.exactMatches}টি</span>
                   </div>
-                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs text-center">
-                    <span className="text-[10px] font-bold text-slate-400 block uppercase">সর্বমোট নিট গরমিল</span>
-                    <span className={`text-base font-black font-mono ${
-                      historySummary.netDifference === 0 ? 'text-slate-700' : (historySummary.netDifference > 0 ? 'text-blue-700' : 'text-rose-600')
+                  <div className="bg-white p-3 rounded-lg border border-neutral-200/80 text-center">
+                    <span className="text-[10px] font-medium text-[#737373] block uppercase">সর্বমোট নিট গরমিল</span>
+                    <span className={`text-base font-semibold font-mono tabular-nums ${
+                      historySummary.netDifference === 0 ? 'text-[#111111]' : (historySummary.netDifference > 0 ? 'text-[#B45309]' : 'text-[#B91C1C]')
                     }`}>
                       {historySummary.netDifference === 0 ? '৳০' : (historySummary.netDifference > 0 ? `+৳${historySummary.netDifference.toLocaleString('en-IN')}` : `-৳${Math.abs(historySummary.netDifference).toLocaleString('en-IN')}`)}
                     </span>
@@ -1144,21 +1144,21 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
               )}
 
               {filteredRegisters.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-12 text-center">
-                  <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 text-[#0da487] flex items-center justify-center mb-3">
+                <div className="bg-white rounded-lg border border-dashed border-neutral-200/80 p-12 text-center">
+                  <div className="w-14 h-14 mx-auto rounded-lg bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center mb-3">
                     <FileText className="w-7 h-7" />
                   </div>
-                  <h3 className="text-base font-bold text-slate-800">কোনো পূর্ববর্তী ক্লোজিং রেকর্ড পাওয়া যায়নি</h3>
-                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  <h3 className="text-base font-semibold tracking-tight text-[#111111]">কোনো পূর্ববর্তী ক্লোজিং রেকর্ড পাওয়া যায়নি</h3>
+                  <p className="text-xs text-[#525252] mt-1 max-w-sm mx-auto">
                     দিন শেষে ক্যাশ রেজিস্টার ক্লোজ করলে তার বিস্তারিত স্টেটমেন্ট এখানে সংরক্ষিত থাকবে।
                   </p>
                 </div>
               ) : (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+                <div className="bg-white rounded-lg border border-neutral-200/80 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
-                        <tr className="bg-slate-100/80 text-slate-700 font-bold border-b border-slate-200">
+                        <tr className="bg-[#F5F5F5] text-[#525252] font-semibold border-b border-neutral-200/80">
                           <th className="py-3 px-4">তারিখ ও সময়</th>
                           <th className="py-3 px-4">সেশন আইডি</th>
                           <th className="py-3 px-4">স্টাফ</th>
@@ -1170,55 +1170,55 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                           <th className="py-3 px-4 text-center">অ্যাকশন</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 font-medium">
+                      <tbody className="divide-y divide-neutral-200/80 font-medium">
                         {filteredRegisters.map((reg) => {
                           const diff = Number(reg.Difference) || 0;
                           return (
-                            <tr key={reg.RegisterID || Math.random()} className="hover:bg-slate-50 transition-colors">
+                            <tr key={reg.RegisterID || Math.random()} className="hover:bg-[#FAFAFA] transition-colors">
                               <td className="py-3 px-4 whitespace-nowrap">
-                                <p className="font-bold text-slate-800 font-mono">
+                                <p className="font-semibold text-[#111111] font-mono tabular-nums">
                                   {reg.ClosingDate ? new Date(reg.ClosingDate).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' }) : reg.OpeningDate}
                                 </p>
-                                <span className="text-[10px] text-slate-400 block font-mono">
+                                <span className="text-[10px] text-[#737373] block font-mono tabular-nums">
                                   {reg.ClosingDate ? new Date(reg.ClosingDate).toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }) : ''}
                                 </span>
                               </td>
                               <td className="py-3 px-4 whitespace-nowrap">
-                                <span className="font-mono text-[11px] font-bold text-slate-600 block">
+                                <span className="font-mono tabular-nums text-[11px] font-semibold text-[#525252] block">
                                   {reg.RegisterID || 'REG-N/A'}
                                 </span>
-                                <span className={`inline-block px-1.5 py-0.2 rounded text-[9.5px] font-bold ${
-                                  reg.Status === 'Open' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'
+                                <span className={`inline-block px-1.5 py-0.5 rounded-md text-[9.5px] font-medium border ${
+                                  reg.Status === 'Open' ? 'bg-amber-50 text-[#B45309] border-amber-200/80' : 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80'
                                 }`}>
                                   {reg.Status === 'Open' ? 'সক্রিয়' : 'ক্লোজড'}
                                 </span>
                               </td>
-                              <td className="py-3 px-4 text-slate-700 whitespace-nowrap">
+                              <td className="py-3 px-4 text-[#525252] whitespace-nowrap">
                                 {reg.ClosedBy || reg.OpenedBy || 'Admin'}
                               </td>
-                              <td className="py-3 px-4 text-right font-mono text-slate-600 whitespace-nowrap">
+                              <td className="py-3 px-4 text-right font-mono tabular-nums text-[#525252] whitespace-nowrap">
                                 {currencySymbol}{(Number(reg.OpeningBalance) || 0).toLocaleString('en-IN')}
                               </td>
-                              <td className="py-3 px-4 text-right font-mono text-emerald-700 font-bold whitespace-nowrap">
+                              <td className="py-3 px-4 text-right font-mono tabular-nums text-[#15803D] font-semibold whitespace-nowrap">
                                 {currencySymbol}{(Number(reg.CashSales) || 0).toLocaleString('en-IN')}
                               </td>
-                              <td className="py-3 px-4 text-right font-mono font-semibold text-slate-700 whitespace-nowrap">
+                              <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold text-[#525252] whitespace-nowrap">
                                 {currencySymbol}{(Number(reg.ExpectedCash) || 0).toLocaleString('en-IN')}
                               </td>
-                              <td className="py-3 px-4 text-right font-mono font-black text-slate-900 whitespace-nowrap">
+                              <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold text-[#111111] whitespace-nowrap">
                                 {currencySymbol}{(Number(reg.ActualCash) || 0).toLocaleString('en-IN')}
                               </td>
                               <td className="py-3 px-4 text-center whitespace-nowrap">
                                 {diff === 0 ? (
-                                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                                  <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-mono tabular-nums font-medium bg-emerald-50 text-[#15803D] border border-emerald-200/80">
                                     মিলেছে (০)
                                   </span>
                                 ) : diff > 0 ? (
-                                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800">
+                                  <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-mono tabular-nums font-medium bg-amber-50 text-[#B45309] border border-amber-200/80">
                                     +৳{diff.toLocaleString('en-IN')}
                                   </span>
                                 ) : (
-                                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">
+                                  <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-mono tabular-nums font-medium bg-red-50 text-[#B91C1C] border border-red-200/80">
                                     -৳{Math.abs(diff).toLocaleString('en-IN')}
                                   </span>
                                 )}
@@ -1228,7 +1228,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                                   <button
                                     type="button"
                                     onClick={() => handleOpenPrintPreview(reg)}
-                                    className="p-1.5 rounded-xl hover:bg-emerald-50 text-slate-600 hover:text-[#0da487] border border-slate-200 transition-colors cursor-pointer shadow-2xs"
+                                    className="p-1.5 rounded-md hover:bg-[#F5F5F5] text-[#525252] hover:text-[#111111] border border-neutral-200/80 transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
                                     title="থার্মাল স্লিপ প্রিভিউ ও প্রিন্ট"
                                   >
                                     <Printer className="w-4 h-4" />
@@ -1236,7 +1236,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                                   <button
                                     type="button"
                                     onClick={() => handleSendWhatsAppReport(reg)}
-                                    className="p-1.5 rounded-xl hover:bg-emerald-50 text-emerald-600 hover:text-emerald-800 border border-emerald-100 transition-colors cursor-pointer shadow-2xs"
+                                    className="p-1.5 rounded-md hover:bg-emerald-50 text-[#15803D] border border-emerald-200/80 transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
                                     title="মালিককে WhatsApp এ পাঠান"
                                   >
                                     <Share2 className="w-4 h-4" />
@@ -1259,7 +1259,7 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
       </div>
 
       {/* ========================================================================= */}
-      {/* ৪. ইন-অ্যাপ থার্মাল ইওডি ক্লোজিং স্লিপ প্রিভিউ ও প্রিন্ট মডাল (১০০% নির্ভরযোগ্য) */}
+      {/* ৪. ইন-অ্যাপ থার্মাল ইওডি ক্লোজিং স্লিপ প্রিভিউ ও প্রিন্ট মডাল */}
       {/* ========================================================================= */}
       {previewSlipSession && (() => {
         const s = previewSlipSession;
@@ -1281,105 +1281,105 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
         };
 
         return (
-          <div className="fixed inset-0 z-[120] bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
-            <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-sm overflow-hidden flex flex-col">
+          <div className="fixed inset-0 z-[120] bg-neutral-900/40 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="bg-white rounded-lg border border-neutral-200/80 w-full max-w-sm overflow-hidden flex flex-col">
               
               {/* প্রিভিউ হেডার */}
-              <div className="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between no-print">
-                <span className="text-xs font-bold flex items-center space-x-1.5">
-                  <Printer className="w-4 h-4 text-emerald-400" />
+              <div className="px-5 py-3.5 bg-[#FAFAFA] border-b border-neutral-200/80 text-[#111111] flex items-center justify-between no-print">
+                <span className="text-xs font-semibold flex items-center space-x-1.5">
+                  <Printer className="w-4 h-4 text-[#0F172A]" />
                   <span>থার্মাল EOD স্লিপ প্রিভিউ (৮০মিমি)</span>
                 </span>
                 <button
                   type="button"
                   onClick={() => setPreviewSlipSession(null)}
-                  className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer"
+                  className="p-1.5 text-[#737373] hover:text-[#111111] rounded-md hover:bg-[#F5F5F5] cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* থার্মাল স্লিপ বডি (প্রিন্টেবল এরিয়া) */}
-              <div className="p-5 overflow-y-auto bg-slate-100 flex justify-center">
+              <div className="p-5 overflow-y-auto bg-[#FAFAFA] flex justify-center">
                 <div
                   id="printable-eod-slip"
-                  className="w-[280px] bg-white p-4 shadow-sm border border-slate-300 font-mono text-[11px] text-slate-950 space-y-2 select-text"
+                  className="w-[280px] bg-white p-4 border border-neutral-200/80 font-mono tabular-nums text-[11px] text-[#111111] space-y-2 select-text"
                 >
-                  <div className="text-center pb-2 border-b border-dashed border-slate-400">
-                    <h3 className="font-bold text-sm uppercase">{storeName}</h3>
-                    {storeAddress && <p className="text-[10px] text-slate-600 mt-0.5">{storeAddress}</p>}
-                    {storePhone && <p className="text-[10px] text-slate-600">মোবাইল: {storePhone}</p>}
-                    <span className="inline-block mt-1.5 px-2 py-0.5 bg-slate-900 text-white rounded text-[9.5px] font-bold uppercase tracking-wider">
+                  <div className="text-center pb-2 border-b border-dashed border-neutral-300">
+                    <h3 className="font-semibold text-sm uppercase">{storeName}</h3>
+                    {storeAddress && <p className="text-[10px] text-[#525252] mt-0.5">{storeAddress}</p>}
+                    {storePhone && <p className="text-[10px] text-[#525252]">মোবাইল: {storePhone}</p>}
+                    <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#0F172A] text-white rounded-md text-[9.5px] font-semibold uppercase tracking-wider">
                       দৈনিক ক্যাশ ক্লোজিং রিপোর্ট (EOD)
                     </span>
                   </div>
 
-                  <div className="text-[10px] space-y-0.5 py-1 border-b border-dashed border-slate-400">
+                  <div className="text-[10px] space-y-0.5 py-1 border-b border-dashed border-neutral-300">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">তারিখ:</span>
+                      <span className="text-[#737373]">তারিখ:</span>
                       <span>{dateStr}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">সেশন:</span>
-                      <span className="font-bold">{s.RegisterID || 'ACTIVE'}</span>
+                      <span className="text-[#737373]">সেশন:</span>
+                      <span className="font-semibold">{s.RegisterID || 'ACTIVE'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">দায়িত্বপ্রাপ্ত:</span>
-                      <span className="font-bold">{cashierName}</span>
+                      <span className="text-[#737373]">দায়িত্বপ্রাপ্ত:</span>
+                      <span className="font-semibold">{cashierName}</span>
                     </div>
                   </div>
 
-                  <div className="space-y-1 py-1 border-b border-dashed border-slate-400">
+                  <div className="space-y-1 py-1 border-b border-dashed border-neutral-300">
                     <div className="flex justify-between">
                       <span>প্রারম্ভিক ক্যাশ:</span>
                       <span>{currencySymbol}{openCash.toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="flex justify-between font-bold text-emerald-800">
+                    <div className="flex justify-between font-semibold text-[#15803D]">
                       <span>ক্যাশ বিক্রয় (+):</span>
                       <span>+{currencySymbol}{sales.toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="flex justify-between text-emerald-800">
+                    <div className="flex justify-between text-[#15803D]">
                       <span>বকেয়া কালেকশন (+):</span>
                       <span>+{currencySymbol}{cashIn.toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="flex justify-between text-rose-800">
+                    <div className="flex justify-between text-[#B91C1C]">
                       <span>খরচ ও সাপ্লায়ার (-):</span>
                       <span>-{currencySymbol}{cashOut.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
 
-                  <div className="space-y-1 py-1 border-b-2 border-slate-800 font-bold">
-                    <div className="flex justify-between text-slate-700">
+                  <div className="space-y-1 py-1 border-b-2 border-[#0F172A] font-semibold">
+                    <div className="flex justify-between text-[#525252]">
                       <span>হিসাবমতে ক্যাশ:</span>
                       <span>{currencySymbol}{expected.toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="flex justify-between text-sm text-slate-950 font-black">
+                    <div className="flex justify-between text-sm text-[#111111]">
                       <span>বাস্তবে গুনেছেন:</span>
                       <span>{currencySymbol}{actual.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
 
-                  <div className="py-1 border-b border-dashed border-slate-400 text-center font-bold">
+                  <div className="py-1 border-b border-dashed border-neutral-300 text-center font-semibold">
                     <span>পার্থক্য (Discrepancy): </span>
-                    <span className={diff === 0 ? 'text-emerald-700' : (diff > 0 ? 'text-blue-700' : 'text-rose-600')}>
-                      {diff === 0 ? '০ (হিসাব মিলেছে ✅)' : (diff > 0 ? `+৳${diff.toLocaleString('en-IN')} (উদ্বৃত্ত)` : `-৳${Math.abs(diff).toLocaleString('en-IN')} (ঘাটতি ⚠️)`)}
+                    <span className={diff === 0 ? 'text-[#15803D]' : (diff > 0 ? 'text-[#B45309]' : 'text-[#B91C1C]')}>
+                      {diff === 0 ? '০ (হিসাব মিলেছে)' : (diff > 0 ? `+৳${diff.toLocaleString('en-IN')} (উদ্বৃত্ত)` : `-৳${Math.abs(diff).toLocaleString('en-IN')} (ঘাটতি)`)}
                     </span>
                   </div>
 
                   {s.Notes && (
-                    <div className="text-[10px] py-1 border-b border-dashed border-slate-400">
-                      <span className="text-slate-500 block">নোট:</span>
-                      <p className="italic text-slate-700">{s.Notes}</p>
+                    <div className="text-[10px] py-1 border-b border-dashed border-neutral-300">
+                      <span className="text-[#737373] block">নোট:</span>
+                      <p className="italic text-[#525252]">{s.Notes}</p>
                     </div>
                   )}
 
-                  <div className="pt-6 flex justify-between text-[10px] text-slate-600">
+                  <div className="pt-6 flex justify-between text-[10px] text-[#525252]">
                     <div className="text-center">
-                      <div className="w-20 border-t border-slate-400 mb-1" />
+                      <div className="w-20 border-t border-neutral-400 mb-1" />
                       <span>ক্যাশিয়ার</span>
                     </div>
                     <div className="text-center">
-                      <div className="w-20 border-t border-slate-400 mb-1" />
+                      <div className="w-20 border-t border-neutral-400 mb-1" />
                       <span>মালিক/কর্তৃপক্ষ</span>
                     </div>
                   </div>
@@ -1387,11 +1387,11 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
               </div>
 
               {/* প্রিভিউ ফুটার অ্যাকশন বাটন */}
-              <div className="p-3 bg-white border-t border-slate-200 flex items-center justify-between gap-2 no-print">
+              <div className="p-3 bg-white border-t border-neutral-200/80 flex items-center justify-between gap-2 no-print">
                 <button
                   type="button"
                   onClick={() => handleSendWhatsAppReport(s)}
-                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer border border-emerald-200"
+                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#15803D] text-xs font-medium rounded-md flex items-center space-x-1.5 cursor-pointer border border-emerald-200/80 min-h-[44px] sm:min-h-[36px]"
                 >
                   <Share2 className="w-3.5 h-3.5" />
                   <span>হোয়াটসঅ্যাপ</span>
@@ -1401,14 +1401,14 @@ _Enterprise POS দ্বারা স্বয়ংক্রিয়ভাবে �
                   <button
                     type="button"
                     onClick={() => setPreviewSlipSession(null)}
-                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+                    className="px-3 py-2 bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] text-[#525252] text-xs font-medium rounded-md cursor-pointer min-h-[44px] sm:min-h-[36px]"
                   >
                     বন্ধ করুন
                   </button>
                   <button
                     type="button"
                     onClick={handleDirectPrint}
-                    className="px-4 py-2 bg-[#0da487] hover:bg-[#0b8b72] text-white text-xs font-black rounded-xl shadow-sm flex items-center space-x-1.5 cursor-pointer"
+                    className="px-4 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium rounded-md flex items-center space-x-1.5 cursor-pointer min-h-[44px] sm:min-h-[36px]"
                   >
                     <Printer className="w-4 h-4" />
                     <span>প্রিন্ট করুন</span>

@@ -7,8 +7,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        heading: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+        sans: ['Inter', '"Noto Sans Bengali"', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        heading: ['"Plus Jakarta Sans"', 'Inter', '"Noto Sans Bengali"', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       zIndex: {
@@ -27,7 +27,7 @@ export default {
         'lg': '8px',
       },
       colors: {
-        // Editorial Minimalism Design Tokens (Linear/Stripe style)
+        // Utilitarian Minimalism Design Tokens (Linear & Stripe Inspired)
         editorial: {
           canvas: '#FAFAFA',
           surface: '#FFFFFF',
@@ -39,18 +39,19 @@ export default {
           muted: '#737373',
           accent: '#0F172A',
           highlight: '#B45309',
+          success: '#15803D',
+          warning: '#B45309',
+          danger: '#B91C1C',
         },
-        // এন্টারপ্রাইজ স্ট্যাটাস কালারসমূহ: Emerald, Amber, Crimson
         crimson: {
-          50: '#fff1f2',
-          100: '#ffe4e6',
-          500: '#f43f5e',
-          600: '#e11d48',
-          700: '#be123c',
+          50: '#FEF2F2',
+          100: '#FEE2E2',
+          500: '#DC2626',
+          600: '#B91C1C',
+          700: '#991B1B',
         }
       }
     },
   },
   plugins: [],
 }
-

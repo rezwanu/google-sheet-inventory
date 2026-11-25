@@ -918,13 +918,13 @@ export default function EditProductModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-5xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[94vh]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60  flex items-center justify-center p-2 sm:p-4 md:p-6">
+      <div className="bg-white rounded-lg shadow-none border border-slate-200/90 max-w-5xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[94vh]">
         
         {/* মডাল হেডার (আধুনিক ডার্ক প্রিমিয়াম হেডার) */}
-        <div className="px-6 py-4 border-b border-slate-200/90 flex items-center justify-between bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white shrink-0 shadow-xs">
+        <div className="px-6 py-4 border-b border-slate-200/90 flex items-center justify-between bg-[#0F172A] text-white shrink-0 shadow-xs">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-indigo-300 shadow-inner">
+            <div className="p-2.5 rounded-lg bg-white/10  border border-white/10 text-indigo-300 shadow-inner">
               <Edit3 className="w-5 h-5" />
             </div>
             <div>
@@ -941,7 +941,7 @@ export default function EditProductModal({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white p-2 rounded-md hover:bg-white/10 transition-colors cursor-pointer"
             title="বন্ধ করুন"
           >
             <X className="w-5 h-5" />
@@ -959,7 +959,7 @@ export default function EditProductModal({
             <button
               type="button"
               onClick={() => setActiveTab('basic')}
-              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+              className={`px-3 sm:px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
                 activeTab === 'basic'
                   ? 'bg-white text-indigo-900 shadow-xs border border-indigo-300 ring-2 ring-indigo-500/10'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -976,7 +976,7 @@ export default function EditProductModal({
             <button
               type="button"
               onClick={() => setActiveTab('pricing')}
-              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+              className={`px-3 sm:px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
                 activeTab === 'pricing'
                   ? 'bg-white text-emerald-900 shadow-xs border border-emerald-300 ring-2 ring-emerald-500/10'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -1003,7 +1003,7 @@ export default function EditProductModal({
             <button
               type="button"
               onClick={() => setActiveTab('details')}
-              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+              className={`px-3 sm:px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
                 activeTab === 'details'
                   ? 'bg-white text-purple-900 shadow-xs border border-purple-300 ring-2 ring-purple-500/10'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -1019,7 +1019,7 @@ export default function EditProductModal({
           </div>
 
           {/* ডানে পণ্য ধরন নির্বাচন (সাধারণ / ভ্যারিয়েন্ট / বান্ডেল) */}
-          <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+          <div className="flex items-center space-x-1 bg-white p-1 rounded-md border border-slate-200 shadow-2xs">
             <button
               type="button"
               onClick={() => {
@@ -1044,7 +1044,7 @@ export default function EditProductModal({
               }}
               className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 productType === 'variable'
-                  ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-500/25'
+                  ? 'bg-indigo-600 text-white shadow-xs '
                   : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
@@ -1079,7 +1079,7 @@ export default function EditProductModal({
           {activeTab === 'basic' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start animate-in fade-in duration-150">
               <div className="space-y-4">
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
+                <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3.5">
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
                     <Tag className="w-3.5 h-3.5 text-indigo-600" />
                     <span>প্রাথমিক পরিচিতি ও ক্যাটাগরি</span>
@@ -1096,7 +1096,7 @@ export default function EditProductModal({
                       value={formData.productName}
                       onChange={handleChange}
                       placeholder="যেমন: রুবেল ভয়েল / সুতি কাপড়"
-                      className="w-full px-3.5 py-2 text-xs font-semibold text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
+                      className="w-full px-3.5 py-2 text-xs font-semibold text-slate-900 border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
                     />
                   </div>
 
@@ -1120,7 +1120,7 @@ export default function EditProductModal({
                           name="category"
                           value={formData.category}
                           onChange={handleChange}
-                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
+                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
                         >
                           {uniqueCategories.map((cat, idx) => (
                             <option key={idx} value={cat}>{cat}</option>
@@ -1128,7 +1128,7 @@ export default function EditProductModal({
                           {uniqueCategories.length === 0 && <option value="General">General</option>}
                         </select>
                       ) : (
-                        <div className="space-y-1.5 p-2 bg-indigo-50/70 rounded-xl border border-indigo-200/80">
+                        <div className="space-y-1.5 p-2 bg-indigo-50/70 rounded-md border border-indigo-200/80">
                           <input
                             type="text"
                             value={newCategoryName}
@@ -1163,7 +1163,7 @@ export default function EditProductModal({
                           name="subCategory"
                           value={formData.subCategory}
                           onChange={handleChange}
-                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
+                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
                         >
                           <option value="">-- সাব-ক্যাটাগরি নির্বাচন --</option>
                           {availableSubCategories.map((sub, idx) => (
@@ -1177,14 +1177,14 @@ export default function EditProductModal({
                           value={formData.subCategory}
                           onChange={handleChange}
                           placeholder="যেমন: চিনিগুঁড়া বা সাধারণ"
-                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-medium transition-all shadow-2xs"
+                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-medium transition-all shadow-2xs"
                         />
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
+                <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-1.5 pb-2 border-b border-slate-100">
                     <label className="text-xs font-black text-slate-800 flex items-center space-x-1.5 uppercase tracking-wider">
                       <Barcode className="w-4 h-4 text-indigo-600" />
@@ -1227,7 +1227,7 @@ export default function EditProductModal({
                   </div>
 
                   {/* ইনপুট গ্রুপ: বামে প্রিফিক্স পিল, মাঝে বারকোড ইনপুট, ডানে ক্লিয়ার বাটন */}
-                  <div className="flex items-stretch rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 bg-white overflow-hidden shadow-2xs transition-all">
+                  <div className="flex items-stretch rounded-md border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 bg-white overflow-hidden shadow-2xs transition-all">
                     <div className="bg-slate-100/80 border-r border-slate-200 px-2.5 flex items-center space-x-1 shrink-0">
                       <span className="text-[10px] font-bold text-slate-500">প্রিফিক্স:</span>
                       <input
@@ -1281,7 +1281,7 @@ export default function EditProductModal({
                 </div>
               </div>
               <div className="space-y-4">
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
+                <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                     <label className="text-xs font-black text-slate-800 flex items-center space-x-1.5 uppercase tracking-wider">
                       <ImageIcon className="w-4 h-4 text-indigo-600" />
@@ -1323,13 +1323,13 @@ export default function EditProductModal({
                       />
 
                       {isProcessingImage ? (
-                        <div className="p-4 border-2 border-dashed border-indigo-200 rounded-xl flex items-center justify-center space-x-2 bg-indigo-50/50 text-indigo-600 text-xs font-medium">
+                        <div className="p-4 border-2 border-dashed border-indigo-200 rounded-md flex items-center justify-center space-x-2 bg-indigo-50/50 text-indigo-600 text-xs font-medium">
                           <Loader2 className="w-4 h-4 animate-spin" />
                           <span>ছবি প্রস্তুত করা হচ্ছে...</span>
                         </div>
                       ) : localImagePreview ? (
-                        <div className="flex items-center space-x-3 p-2 bg-white rounded-xl border border-slate-200">
-                          <div className="w-14 h-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shrink-0 shadow-2xs">
+                        <div className="flex items-center space-x-3 p-2 bg-white rounded-md border border-slate-200">
+                          <div className="w-14 h-14 rounded-md border border-slate-200 overflow-hidden bg-slate-100 shrink-0 shadow-2xs">
                             <img
                               src={localImagePreview}
                               alt="Preview"
@@ -1363,8 +1363,8 @@ export default function EditProductModal({
                           </button>
                         </div>
                       ) : formData.imageUrl ? (
-                        <div className="flex items-center space-x-3 p-2 bg-white rounded-xl border border-slate-200">
-                          <div className="w-14 h-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shrink-0 shadow-2xs">
+                        <div className="flex items-center space-x-3 p-2 bg-white rounded-md border border-slate-200">
+                          <div className="w-14 h-14 rounded-md border border-slate-200 overflow-hidden bg-slate-100 shrink-0 shadow-2xs">
                             <img
                               src={formData.imageUrl}
                               alt="Current"
@@ -1387,7 +1387,7 @@ export default function EditProductModal({
                       ) : (
                         <label
                           htmlFor="edit-product-image-upload"
-                          className="border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-xl p-4 flex items-center justify-center space-x-2 bg-slate-50/50 hover:bg-indigo-50/20 cursor-pointer transition-all text-center"
+                          className="border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-md p-4 flex items-center justify-center space-x-2 bg-slate-50/50 hover:bg-indigo-50/20 cursor-pointer transition-all text-center"
                         >
                           <Upload className="w-4 h-4 text-indigo-600" />
                           <span className="text-xs font-bold text-slate-700">
@@ -1407,10 +1407,10 @@ export default function EditProductModal({
                         placeholder="https://example.com/product-image.jpg"
                         value={formData.imageUrl}
                         onChange={handleChange}
-                        className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs"
+                        className="flex-1 px-3 py-2 border border-slate-200 rounded-md text-xs bg-slate-50/50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs"
                       />
                       {formData.imageUrl ? (
-                        <div className="w-9 h-9 rounded-xl border border-slate-200 overflow-hidden shrink-0 shadow-2xs">
+                        <div className="w-9 h-9 rounded-md border border-slate-200 overflow-hidden shrink-0 shadow-2xs">
                           <img
                             src={formData.imageUrl}
                             alt="Preview"
@@ -1419,7 +1419,7 @@ export default function EditProductModal({
                           />
                         </div>
                       ) : (
-                        <div className="w-9 h-9 rounded-xl border border-dashed border-slate-200 flex items-center justify-center shrink-0 text-slate-300">
+                        <div className="w-9 h-9 rounded-md border border-dashed border-slate-200 flex items-center justify-center shrink-0 text-slate-300">
                           <ImageIcon className="w-4 h-4" />
                         </div>
                       )}
@@ -1438,12 +1438,12 @@ export default function EditProductModal({
                       placeholder="যেমন: প্রিমিয়াম ভয়েল কাপড় ফ্রন্ট ভিউ"
                       value={formData.imageCaption}
                       onChange={handleChange}
-                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50/50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs"
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-md text-xs bg-slate-50/50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs"
                     />
                   </div>
                 </div>
 
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
+                <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3.5">
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
                     <FileText className="w-3.5 h-3.5 text-indigo-600" />
                     <span>সংক্ষিপ্ত বিবরণ ও বৈশিষ্ট্যসমূহ</span>
@@ -1460,7 +1460,7 @@ export default function EditProductModal({
                       value={formData.shortDescription}
                       onChange={handleChange}
                       placeholder="এক বা দুই লাইনে পণ্যের পরিচিতি..."
-                      className="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none resize-none leading-relaxed bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
+                      className="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none resize-none leading-relaxed bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
                     />
                   </div>
 
@@ -1478,12 +1478,12 @@ export default function EditProductModal({
                         onChange={(e) => setFeatureInput(e.target.value)}
                         onKeyDown={handleFeatureKeyDown}
                         placeholder="বৈশিষ্ট্য লিখে Enter বা 'যোগ' চাপুন..."
-                        className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white shadow-2xs"
+                        className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white shadow-2xs"
                       />
                       <button
                         type="button"
                         onClick={handleAddFeature}
-                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors shrink-0 shadow-2xs cursor-pointer"
+                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-md transition-colors shrink-0 shadow-2xs cursor-pointer"
                       >
                         যোগ
                       </button>
@@ -1524,7 +1524,7 @@ export default function EditProductModal({
             <div className="space-y-5 animate-in fade-in duration-150">
               {/* আর্থিক তথ্য ও মজুত ২-কলাম গ্রিড */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
+                <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3.5">
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
                     <Sparkles className="w-3.5 h-3.5 text-purple-600" />
                     <span>আর্থিক তথ্য ও বিক্রয়মূল্য নির্ধারণ</span>
@@ -1547,12 +1547,12 @@ export default function EditProductModal({
                               value={formData.costPrice}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
+                              className="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold text-slate-900 border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
                             />
                             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">{currencySymbol}</span>
                           </>
                         ) : (
-                          <div className="w-full px-2.5 py-2 text-xs border border-slate-200 rounded-xl bg-slate-100 text-slate-400 font-bold flex items-center justify-between">
+                          <div className="w-full px-2.5 py-2 text-xs border border-slate-200 rounded-md bg-slate-100 text-slate-400 font-bold flex items-center justify-between">
                             <span>🔒 সুরক্ষিত</span>
                           </div>
                         )}
@@ -1578,7 +1578,7 @@ export default function EditProductModal({
                           value={formData.minSellingPrice}
                           onChange={handleChange}
                           placeholder={formData.costPrice ? `${formData.costPrice}` : "0.00"}
-                          className={`w-full pl-7 pr-3 py-2 text-xs font-mono font-black text-amber-950 border rounded-xl focus:ring-2 focus:outline-none bg-amber-50/60 transition-all shadow-2xs ${
+                          className={`w-full pl-7 pr-3 py-2 text-xs font-mono font-black text-amber-950 border rounded-md focus:ring-2 focus:outline-none bg-amber-50/60 transition-all shadow-2xs ${
                             isFloorBelowCost 
                               ? 'border-rose-400 focus:ring-rose-500' 
                               : isFloorAboveSell 
@@ -1605,7 +1605,7 @@ export default function EditProductModal({
                           value={formData.sellingPrice}
                           onChange={handleChange}
                           placeholder="0.00"
-                          className="w-full pl-7 pr-3 py-2 text-xs font-mono font-black text-indigo-950 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-indigo-50/30 hover:bg-white transition-all shadow-2xs"
+                          className="w-full pl-7 pr-3 py-2 text-xs font-mono font-black text-indigo-950 border border-indigo-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-indigo-50/30 hover:bg-white transition-all shadow-2xs"
                         />
                         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-indigo-600 font-bold">{currencySymbol}</span>
                       </div>
@@ -1614,13 +1614,13 @@ export default function EditProductModal({
 
                   {/* সতর্কবার্তা যদি ফ্লোর প্রাইস কেনা দামের নিচে বা বিক্রয়মূল্যের উপরে যায় */}
                   {isFloorBelowCost && (
-                    <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center space-x-1.5">
+                    <div className="p-2 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center space-x-1.5">
                       <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                       <span>সতর্কতা: নূন্যতম বিক্রয়মূল্য ({currencySymbol}{minSell}) কেনা দামের চেয়ে কম (লোকসান হতে পারে)।</span>
                     </div>
                   )}
                   {isFloorAboveSell && (
-                    <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center space-x-1.5">
+                    <div className="p-2 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center space-x-1.5">
                       <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                       <span>ত্রুটি: নূন্যতম বিক্রয়মূল্য সাধারণ বিক্রয়মূল্যের চেয়ে বেশি হতে পারে না।</span>
                     </div>
@@ -1629,7 +1629,7 @@ export default function EditProductModal({
                   {/* লাইভ লাভ ও মার্জিন প্রিভিউ বার */}
                   {(cost > 0 || sell > 0 || minSell > 0) && (
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold font-mono border shadow-2xs ${
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold font-mono border shadow-2xs ${
                         isProfitable
                           ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
                           : 'bg-rose-50 text-rose-800 border-rose-200/80'
@@ -1637,7 +1637,7 @@ export default function EditProductModal({
                         স্বাভাবিক লাভ: {currencySymbol}{netProfit.toFixed(2)} ({isProfitable ? `+${profitMarginPercent}%` : `${profitMarginPercent}%`})
                       </span>
                       {minSell > 0 && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold font-mono bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold font-mono bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs">
                           ফ্লোর দর লাভ: {currencySymbol}{minFloorProfit.toFixed(2)} ({minFloorProfit >= 0 ? `+${minFloorMarginPercent}%` : `${minFloorMarginPercent}%`})
                         </span>
                       )}
@@ -1645,7 +1645,7 @@ export default function EditProductModal({
                   )}
                 </div>
 
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
+                <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3.5">
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
                     <PackageCheck className="w-3.5 h-3.5 text-emerald-600" />
                     <span>বর্তমান মজুত ও পরিমাপক একক</span>
@@ -1667,7 +1667,7 @@ export default function EditProductModal({
                         value={productType === 'variable' ? variants.reduce((s, v) => s + (Number(v.StockQuantity !== undefined ? v.StockQuantity : v.stockQuantity) || 0), 0) : formData.stockQuantity}
                         onChange={handleChange}
                         placeholder="0"
-                        className={`w-full px-3.5 py-2 text-xs font-mono font-bold border rounded-xl focus:outline-none transition-all shadow-2xs ${
+                        className={`w-full px-3.5 py-2 text-xs font-mono font-bold border rounded-md focus:outline-none transition-all shadow-2xs ${
                           productType === 'variable'
                             ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed'
                             : 'text-slate-900 border-slate-200 bg-slate-50/50 hover:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'
@@ -1695,7 +1695,7 @@ export default function EditProductModal({
                         value={productType === 'variable' ? variants.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0) : (formData.godownStock !== undefined ? formData.godownStock : '0')}
                         onChange={handleChange}
                         placeholder="0"
-                        className={`w-full px-3.5 py-2 text-xs font-mono font-bold border rounded-xl focus:outline-none transition-all shadow-2xs ${
+                        className={`w-full px-3.5 py-2 text-xs font-mono font-bold border rounded-md focus:outline-none transition-all shadow-2xs ${
                           productType === 'variable'
                             ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed'
                             : 'text-slate-900 border-slate-200 bg-slate-50/50 hover:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500'
@@ -1722,7 +1722,7 @@ export default function EditProductModal({
                         value={formData.minStockAlert}
                         onChange={handleChange}
                         placeholder="5"
-                        className="w-full px-3.5 py-2 text-xs font-mono font-semibold text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
+                        className="w-full px-3.5 py-2 text-xs font-mono font-semibold text-slate-900 border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
                       />
                     </div>
 
@@ -1745,7 +1745,7 @@ export default function EditProductModal({
                           name="unit"
                           value={formData.unit}
                           onChange={handleChange}
-                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
+                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
                         >
                           {uniqueUnits.map((u, idx) => (
                             <option key={idx} value={u}>{u}</option>
@@ -1755,7 +1755,7 @@ export default function EditProductModal({
                           )}
                         </select>
                       ) : (
-                        <div className="space-y-1.5 p-2 bg-indigo-50/70 rounded-xl border border-indigo-200/80">
+                        <div className="space-y-1.5 p-2 bg-indigo-50/70 rounded-md border border-indigo-200/80">
                           <input
                             type="text"
                             value={newUnitName}
@@ -1786,7 +1786,7 @@ export default function EditProductModal({
 
               {/* বস্ত্রালয় থান ও গজ কাপড় সেটিংস (স্মার্ট ভিজিবিলিটি: শুধুমাত্র থান/গজ পণ্য হলে প্রদর্শিত হবে) */}
                 {(isThanUnit(formData.unit) || isFabricUnit(formData.unit)) && (
-                  <div className="bg-gradient-to-r from-amber-50/90 to-orange-50/90 border border-amber-200/90 rounded-2xl p-4 space-y-3 shadow-2xs">
+                  <div className="bg-amber-50 border border-amber-200/80 rounded-lg p-4 space-y-3 shadow-2xs">
                     <div className="flex items-center justify-between pb-1 border-b border-amber-200/60">
                       <div className="flex items-center space-x-2">
                         <div className="p-1.5 bg-amber-500/10 rounded-lg text-amber-700">
@@ -1815,7 +1815,7 @@ export default function EditProductModal({
                           value={formData.yardsPerThan}
                           onChange={handleChange}
                           placeholder="যেমন: ২৫"
-                          className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-black text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                          className="w-full px-3 py-2 bg-white border border-amber-300 rounded-md text-xs font-black text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
                         />
                         <span className="text-[10px] text-amber-700">১ থানে মোট গজের পরিমাণ</span>
                       </div>
@@ -1833,7 +1833,7 @@ export default function EditProductModal({
                           value={formData.remnantThreshold}
                           onChange={handleChange}
                           placeholder="যেমন: ১ (খালি রাখলে ১ গজ ডিফল্ট)"
-                          className="w-full px-3 py-2 bg-white border border-rose-300 rounded-xl text-xs font-black text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+                          className="w-full px-3 py-2 bg-white border border-rose-300 rounded-md text-xs font-black text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
                         />
                         <span className="text-[10px] text-amber-700">১ গজ বা এর নিচে নামলে ছাঁট ট্র্যাকার ও নতুন থান চালানের অ্যালার্ট</span>
                       </div>
@@ -1841,7 +1841,7 @@ export default function EditProductModal({
 
                     {/* সিম্পল থান কাপড়ের ক্ষেত্রে দোকানে আস্ত থান ও খোলা গজের ক্যালকুলেটর ইনপুট */}
                     {productType === 'simple' && isThanUnit(formData.unit) && (
-                      <div className="p-3 bg-white/95 rounded-xl border border-amber-300 space-y-2">
+                      <div className="p-3 bg-white/95 rounded-md border border-amber-300 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-amber-950 flex items-center space-x-1.5">
                             <Store className="w-3.5 h-3.5 text-amber-600" />
@@ -1943,7 +1943,7 @@ export default function EditProductModal({
                       const totalCombinedYards = (gStock * ypt) + sStock;
 
                       return (
-                        <div className="bg-white/90 p-3 rounded-xl border border-amber-300/80 text-xs text-amber-950 space-y-2 shadow-2xs">
+                        <div className="bg-white/90 p-3 rounded-md border border-amber-300/80 text-xs text-amber-950 space-y-2 shadow-2xs">
                           <div className="font-bold flex items-center justify-between">
                             <span>🏬 দোকানে বর্তমান ফ্লোর মজুত:</span>
                             <strong className="text-emerald-700 font-mono font-black">{sStock.toLocaleString('bn-BD')} গজ</strong>
@@ -1970,7 +1970,7 @@ export default function EditProductModal({
 
               {/* ফুল-উইডথ ভ্যারিয়েন্ট কনফিগারেশন (যদি variable product হয়) */}
             {productType === 'variable' && (
-              <div className="bg-indigo-50/40 border border-indigo-200/90 rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xs">
+              <div className="bg-neutral-50 border border-neutral-200/80 rounded-lg p-5 sm:p-6 space-y-4 shadow-2xs">
                 <div className="flex items-center justify-between pb-3 border-b border-indigo-200/70">
                   <span className="text-xs font-black text-indigo-950 flex items-center space-x-2 uppercase tracking-wider">
                     <Layers className="w-4 h-4 text-indigo-600" />
@@ -1982,7 +1982,7 @@ export default function EditProductModal({
                 </div>
 
                 {/* স্বয়ংক্রিয় ভ্যারিয়েন্ট জেনারেটর ফর্ম */}
-                <div className="p-4 bg-white rounded-2xl border border-indigo-100 space-y-2.5 shadow-2xs">
+                <div className="p-4 bg-white rounded-lg border border-indigo-100 space-y-2.5 shadow-2xs">
                   <div className="text-[11px] font-black text-slate-700 uppercase tracking-wider">
                     অটো জেনারেটর (কমা দিয়ে একাধিক মান লিখুন):
                   </div>
@@ -1992,21 +1992,21 @@ export default function EditProductModal({
                       placeholder="সাইজ / ওজন (যেমন: S, M, L, XL অথবা 500g, 1kg)"
                       value={attributeSizes}
                       onChange={(e) => setAttributeSizes(e.target.value)}
-                      className="px-3.5 py-2 bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="px-3.5 py-2 bg-slate-50/60 border border-slate-200 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                     <input
                       type="text"
                       placeholder="রঙ / কালার (যেমন: Black, Navy, White)"
                       value={attributeColors}
                       onChange={(e) => setAttributeColors(e.target.value)}
-                      className="px-3.5 py-2 bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="px-3.5 py-2 bg-slate-50/60 border border-slate-200 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
                   <div className="flex items-center justify-between pt-1">
                     <button
                       type="button"
                       onClick={handleAutoGenerateVariants}
-                      className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                      className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
                     >
                       <Wand2 className="w-3.5 h-3.5" />
                       <span>স্বয়ংক্রিয় তৈরি করুন</span>
@@ -2014,7 +2014,7 @@ export default function EditProductModal({
                     <button
                       type="button"
                       onClick={handleAddManualVariant}
-                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-bold transition-all cursor-pointer"
                     >
                       + ম্যানুয়াল রো যোগ
                     </button>
@@ -2022,7 +2022,7 @@ export default function EditProductModal({
                 </div>
 
                 {/* দ্রুত কালার ভ্যারিয়েন্ট যোগ */}
-                <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200/90 space-y-2.5 shadow-2xs">
+                <div className="p-4 bg-amber-50/80 rounded-lg border border-amber-200/90 space-y-2.5 shadow-2xs">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-black text-amber-950 flex items-center space-x-1.5 uppercase tracking-wider">
                       <Palette className="w-3.5 h-3.5 text-amber-600" />
@@ -2041,7 +2041,7 @@ export default function EditProductModal({
                           handleAddQuickColor();
                         }
                       }}
-                      className="flex-1 px-3.5 py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      className="flex-1 px-3.5 py-2 bg-white border border-amber-200 rounded-md text-xs font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                     />
                     <div className="flex items-center space-x-1 shrink-0">
                       <input
@@ -2051,14 +2051,14 @@ export default function EditProductModal({
                         placeholder="গোডাউন"
                         value={quickColorThans}
                         onChange={(e) => setQuickColorThans(e.target.value)}
-                        className="w-18 px-2 py-2 bg-white border border-amber-200 rounded-xl text-xs font-black text-center text-amber-950 focus:outline-none"
+                        className="w-18 px-2 py-2 bg-white border border-amber-200 rounded-md text-xs font-black text-center text-amber-950 focus:outline-none"
                       />
                       <span className="text-[11px] font-bold text-amber-900">থান/পিস</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleAddQuickColor()}
-                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer shrink-0"
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-xs font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer shrink-0"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>+ কালার যোগ</span>
@@ -2091,7 +2091,7 @@ export default function EditProductModal({
 
                 {/* ভ্যারিয়েন্ট তালিকা টেবিল (প্রশান্ত ও সুন্দর টেবিল) */}
                 {variants.length > 0 && (
-                  <div className="overflow-x-auto border border-slate-200 rounded-2xl bg-white shadow-2xs">
+                  <div className="overflow-x-auto border border-slate-200 rounded-lg bg-white shadow-2xs">
                     <table className="w-full text-left text-xs">
                       <thead className="bg-slate-100/80 border-b border-slate-200 text-slate-700 font-black uppercase text-[11px]">
                         <tr>
@@ -2241,7 +2241,7 @@ export default function EditProductModal({
 
               {/* ফুল-উইডথ কম্বো বান্ডেল আইটেম নির্বাচন (যদি bundle product হয়) */}
             {productType === 'bundle' && (
-              <div className="bg-amber-50/50 border border-amber-200/90 rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xs">
+              <div className="bg-amber-50 border border-amber-200/80 rounded-lg p-5 sm:p-6 space-y-4 shadow-2xs">
                 <div className="flex items-center justify-between pb-3 border-b border-amber-200/70">
                   <span className="text-xs font-black text-amber-950 flex items-center space-x-2 uppercase tracking-wider">
                     <Sparkles className="w-4 h-4 text-amber-600" />
@@ -2253,13 +2253,13 @@ export default function EditProductModal({
                 </div>
 
                 {/* সাব-আইটেম অ্যাড ড্রপডাউন */}
-                <div className="p-4 bg-white rounded-2xl border border-amber-100 space-y-2.5 shadow-2xs">
+                <div className="p-4 bg-white rounded-lg border border-amber-100 space-y-2.5 shadow-2xs">
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                     <div className="sm:col-span-8">
                       <select
                         value={selectedBundleProduct}
                         onChange={(e) => setSelectedBundleProduct(e.target.value)}
-                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                       >
                         <option value="">-- অন্তর্ভুক্ত পণ্য বাছাই করুন --</option>
                         {products.map((p) => (
@@ -2277,7 +2277,7 @@ export default function EditProductModal({
                         value={bundleItemQty}
                         onChange={(e) => setBundleItemQty(e.target.value)}
                         placeholder="পরিমাণ"
-                        className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-center"
+                        className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs font-bold text-center"
                         title="কতটি অন্তর্ভুক্ত থাকবে"
                       />
                     </div>
@@ -2286,7 +2286,7 @@ export default function EditProductModal({
                       <button
                         type="button"
                         onClick={handleAddBundleItem}
-                        className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-1 cursor-pointer"
+                        className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-1 cursor-pointer"
                       >
                         <span>+ যোগ</span>
                       </button>
@@ -2296,7 +2296,7 @@ export default function EditProductModal({
 
                 {/* বান্ডেল তালিকা */}
                 {bundleItems.length > 0 && (
-                  <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs divide-y divide-slate-100">
+                  <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-2xs divide-y divide-slate-100">
                     {bundleItems.map((bi) => (
                       <div key={bi.ProductID} className="p-3 px-4 flex items-center justify-between text-xs">
                         <div>
@@ -2329,7 +2329,7 @@ export default function EditProductModal({
               ======================================================== */}
           {activeTab === 'details' && (
             <div className="space-y-5 animate-in fade-in duration-150">
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3.5">
+                <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3.5">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                     <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5">
                       <CalendarClock className="w-4 h-4 text-rose-600" />
@@ -2350,7 +2350,7 @@ export default function EditProductModal({
                         placeholder="BATCH-2026-A1"
                         value={batchNumber}
                         onChange={(e) => setBatchNumber(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-xl text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
+                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-md text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
                       />
                     </div>
 
@@ -2362,7 +2362,7 @@ export default function EditProductModal({
                         type="date"
                         value={mfgDate}
                         onChange={(e) => setMfgDate(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
+                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-md text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
                       />
                     </div>
 
@@ -2374,13 +2374,13 @@ export default function EditProductModal({
                         type="date"
                         value={expiryDate}
                         onChange={(e) => setExpiryDate(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-xl text-xs font-bold text-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
+                        className="w-full px-3 py-2 bg-slate-50/50 hover:bg-white border border-slate-200 rounded-md text-xs font-bold text-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition-all"
                       />
                     </div>
                   </div>
                 </div>
 
-            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2.5">
+            <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-2.5">
               <label className="block text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
                 <AlignLeft className="w-4 h-4 text-indigo-600" />
                 <span>বিস্তারিত বিবরণ (Description) - রিচ টেক্সট ও ফরম্যাটিং</span>
@@ -2405,7 +2405,7 @@ export default function EditProductModal({
               type="button"
               onClick={handleDeleteProduct}
               disabled={isSubmitting || isDeleting}
-              className="px-4 py-2 border border-rose-200 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 shadow-2xs"
+              className="px-4 py-2 border border-rose-200 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 text-xs font-bold rounded-md transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 shadow-2xs"
               title="পণ্যটি সম্পূর্ণ মুছে ফেলুন (Delete)"
             >
               <Trash2 className="w-4 h-4 text-rose-600" />
@@ -2421,7 +2421,7 @@ export default function EditProductModal({
                   if (activeTab === 'details') setActiveTab('pricing');
                   else if (activeTab === 'pricing') setActiveTab('basic');
                 }}
-                className="px-3.5 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                className="px-3.5 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 ← পূর্ববর্তী
               </button>
@@ -2434,7 +2434,7 @@ export default function EditProductModal({
                   if (activeTab === 'basic') setActiveTab('pricing');
                   else if (activeTab === 'pricing') setActiveTab('details');
                 }}
-                className="px-3.5 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                className="px-3.5 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 পরবর্তী →
               </button>
@@ -2443,7 +2443,7 @@ export default function EditProductModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
             >
               বাতিল
             </button>
@@ -2451,7 +2451,7 @@ export default function EditProductModal({
             <button
               type="submit"
               disabled={isSubmitting || isDeleting}
-              className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white text-xs font-bold rounded-xl shadow-sm shadow-indigo-500/25 transition-all flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer"
+              className="px-5 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-bold rounded-md shadow-sm  transition-all flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer"
             >
               <Edit3 className="w-4 h-4" />
               <span>{isSubmitting ? 'আপডেট হচ্ছে...' : 'হালনাগাদ সংরক্ষণ করুন'}</span>
@@ -2491,11 +2491,11 @@ export default function EditProductModal({
 
       {/* বস্ত্রালয় ভ্যারিয়েন্ট থান ও গজ ক্যালকুলেটর পপআপ মডাল */}
       {fabricVariantModal && (
-        <div className="fixed inset-0 z-60 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-amber-300 max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-60 overflow-y-auto bg-slate-900/60  flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-none border border-amber-300 max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-amber-200">
               <div className="flex items-center space-x-2">
-                <div className="p-2 bg-amber-100 text-amber-800 rounded-xl">
+                <div className="p-2 bg-amber-100 text-amber-800 rounded-md">
                   <Scissors className="w-5 h-5 text-amber-700" />
                 </div>
                 <div>
@@ -2512,7 +2512,7 @@ export default function EditProductModal({
               </button>
             </div>
 
-            <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200/80 text-xs text-amber-900 font-medium">
+            <div className="p-2.5 bg-amber-50 rounded-md border border-amber-200/80 text-xs text-amber-900 font-medium">
               📏 প্রতি থানে <strong>{formData.yardsPerThan || 25} গজ</strong> ধরে মোট গজে রূপান্তর হবে।
             </div>
 
@@ -2570,7 +2570,7 @@ export default function EditProductModal({
               const ypt = Math.max(0.1, parseFloat(formData.yardsPerThan) || 25);
               const calcYards = calculateInitialShopYards(fT, cG, cGi, ypt);
               return (
-                <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-center space-y-1">
+                <div className="bg-emerald-50 p-3 rounded-md border border-emerald-200 text-center space-y-1">
                   <span className="text-[11px] font-semibold text-emerald-800 block">দোকানে মোট প্রস্তুতকৃত স্টক:</span>
                   <div className="text-base font-black text-emerald-700 font-mono">
                     {calcYards.toLocaleString('bn-BD')} গজ
@@ -2586,14 +2586,14 @@ export default function EditProductModal({
               <button
                 type="button"
                 onClick={() => setFabricVariantModal(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-bold transition-colors cursor-pointer"
               >
                 বাতিল
               </button>
               <button
                 type="button"
                 onClick={handleApplyFabricVariantModal}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors shadow-xs flex items-center space-x-1 cursor-pointer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-black transition-colors shadow-xs flex items-center space-x-1 cursor-pointer"
               >
                 <Check className="w-4 h-4" />
                 <span>✓ প্রয়োগ করুন</span>

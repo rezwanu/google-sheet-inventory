@@ -3,16 +3,15 @@ import { Store } from 'lucide-react';
 import { getDriveImageCandidates } from '../services/storage';
 
 /**
- * স্টোর লোগো রেন্ডারিং কম্পোনেন্ট
- * গুগল ড্রাইভের বিভিন্ন ফরম্যাট (thumbnail, lh3, uc) স্বয়ংক্রিয়ভাবে ট্রাই করে এবং ব্যর্থ হলে ফলব্যাক আইকন দেখায়।
+ * স্টোর লোগো রেন্ডারিং কম্পোনেন্ট (Utilitarian Minimalism)
  */
 export default function StoreLogo({
   url,
   alt = 'স্টোর লোগো',
-  className = 'w-10 h-10 object-contain rounded-xl border border-slate-200/80 p-0.5 bg-white shadow-2xs',
+  className = 'w-8 h-8 object-contain rounded-md border border-neutral-200/80 p-0.5 bg-white',
   fallbackIcon: FallbackIcon = Store,
-  fallbackClassName = 'w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white font-black shadow-md shadow-indigo-500/20',
-  iconClassName = 'w-5 h-5',
+  fallbackClassName = 'w-8 h-8 rounded-md bg-[#0F172A] flex items-center justify-center text-white font-semibold',
+  iconClassName = 'w-4 h-4',
 }) {
   const candidates = useMemo(() => getDriveImageCandidates(url), [url]);
   const [candidateIdx, setCandidateIdx] = useState(0);
@@ -47,4 +46,3 @@ export default function StoreLogo({
     </div>
   );
 }
-

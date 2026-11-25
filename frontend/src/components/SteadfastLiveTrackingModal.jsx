@@ -59,66 +59,66 @@ export default function SteadfastLiveTrackingModal({
   const getStatusBadge = (rawStatus) => {
     const s = String(rawStatus || '').toLowerCase();
     if (s.includes('delivered') && !s.includes('pending')) {
-      return { label: 'ডেলিভারি সম্পন্ন (Delivered)', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', icon: <CheckCircle2 className="w-4 h-4 text-emerald-600" /> };
+      return { label: 'ডেলিভারি সম্পন্ন (Delivered)', color: 'bg-emerald-50 text-[#15803D] border-emerald-200/80', icon: <CheckCircle2 className="w-4 h-4 text-[#15803D]" /> };
     }
     if (s.includes('in_review') || s.includes('review')) {
-      return { label: 'রিভিউতে রয়েছে (In Review)', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: <Clock className="w-4 h-4 text-blue-600" /> };
+      return { label: 'রিভিউতে রয়েছে (In Review)', color: 'bg-[#F5F5F5] text-[#0F172A] border-neutral-200/80', icon: <Clock className="w-4 h-4 text-[#0F172A]" /> };
     }
     if (s.includes('transit') || s.includes('shipping') || s.includes('picked')) {
-      return { label: 'অন দ্য ওয়ে / ট্রানজিটে (In Transit)', color: 'bg-purple-100 text-purple-800 border-purple-300', icon: <Truck className="w-4 h-4 text-purple-600" /> };
+      return { label: 'অন দ্য ওয়ে / ট্রানজিটে (In Transit)', color: 'bg-slate-100 text-[#0F172A] border-slate-200/80', icon: <Truck className="w-4 h-4 text-[#0F172A]" /> };
     }
     if (s.includes('hold') || s.includes('pending')) {
-      return { label: 'অপেক্ষমাণ / হোল্ড (Pending/Hold)', color: 'bg-amber-100 text-amber-800 border-amber-300', icon: <Clock className="w-4 h-4 text-amber-600" /> };
+      return { label: 'অপেক্ষমাণ / হোল্ড (Pending/Hold)', color: 'bg-amber-50 text-[#B45309] border-amber-200/80', icon: <Clock className="w-4 h-4 text-[#B45309]" /> };
     }
     if (s.includes('cancelled') || s.includes('returned') || s.includes('return')) {
-      return { label: 'রিটার্ন / বাতিল (Returned)', color: 'bg-rose-100 text-rose-800 border-rose-300', icon: <AlertCircle className="w-4 h-4 text-rose-600" /> };
+      return { label: 'রিটার্ন / বাতিল (Returned)', color: 'bg-red-50 text-[#B91C1C] border-red-200/80', icon: <AlertCircle className="w-4 h-4 text-[#B91C1C]" /> };
     }
-    return { label: rawStatus || 'ট্র্যাকিং প্রক্রিয়াধীন', color: 'bg-slate-100 text-slate-800 border-slate-300', icon: <Package className="w-4 h-4 text-slate-500" /> };
+    return { label: rawStatus || 'ট্র্যাকিং প্রক্রিয়াধীন', color: 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80', icon: <Package className="w-4 h-4 text-[#737373]" /> };
   };
 
   const badge = getStatusBadge(typeof statusData === 'string' ? statusData : statusData?.status || order.Status);
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 overflow-y-auto bg-neutral-900/40 flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150 relative"
+        className="bg-white rounded-lg border border-neutral-200/80 max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* হেডার ব্যানার */}
-        <div className="p-4 sm:p-5 border-b border-emerald-100 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center justify-between shrink-0">
+        <div className="p-4 sm:p-5 border-b border-neutral-200/80 bg-[#FAFAFA] text-[#111111] flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white border border-white/20">
-              <Truck className="w-5 h-5 text-emerald-200" />
+            <div className="w-10 h-10 rounded-md bg-white border border-neutral-200/80 flex items-center justify-center text-[#0F172A] shrink-0">
+              <Truck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-black">Steadfast লাইভ ট্র্যাকিং</h3>
-              <p className="text-xs text-emerald-100/90">অর্ডার #{order.OrderNumber || order.OrderID}</p>
+              <h3 className="text-base font-semibold tracking-tight text-[#111111]">Steadfast লাইভ ট্র্যাকিং</h3>
+              <p className="text-xs text-[#525252] font-mono tabular-nums mt-0.5">অর্ডার #{order.OrderNumber || order.OrderID}</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-2 text-[#525252] hover:text-[#111111] hover:bg-neutral-200/60 rounded-md transition-colors cursor-pointer flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* কনটেন্ট বডি */}
-        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 bg-white">
           
           {/* লাইভ স্ট্যাটাস কার্ড */}
-          <div className="p-4 bg-gradient-to-br from-slate-50 to-emerald-50/30 border border-slate-200 rounded-2xl space-y-3">
+          <div className="p-4 bg-[#F5F5F5] border border-neutral-200/80 rounded-lg space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase text-slate-400">বর্তমান লাইভ স্ট্যাটাস</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-[#737373]">বর্তমান লাইভ স্ট্যাটাস</span>
               <button
                 type="button"
                 onClick={fetchStatus}
                 disabled={loading}
-                className="text-xs text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1 cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] px-2.5 rounded-md bg-white hover:bg-[#FAFAFA] border border-neutral-200/80 text-xs text-[#0F172A] font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                 <span>রিফ্রেশ</span>
@@ -126,51 +126,51 @@ export default function SteadfastLiveTrackingModal({
             </div>
 
             <div className="flex items-center space-x-2.5">
-              <span className={`px-3 py-1.5 rounded-xl border text-xs font-black flex items-center space-x-1.5 ${badge.color}`}>
+              <span className={`px-3 py-1.5 rounded-md border text-xs font-medium flex items-center space-x-1.5 ${badge.color}`}>
                 {badge.icon}
                 <span>{badge.label}</span>
               </span>
             </div>
 
             {errorMsg && (
-              <p className="text-xs text-rose-600 font-bold pt-1">{errorMsg}</p>
+              <p className="text-xs text-[#B91C1C] font-medium pt-1">{errorMsg}</p>
             )}
           </div>
 
           {/* ট্র্যাকিং ও কনসাইনমেন্ট কোড */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="text-[10px] font-black uppercase text-slate-400 block mb-0.5">Tracking ID</span>
-              <span className="font-mono text-xs font-black text-slate-900 block truncate">
+            <div className="p-3 bg-[#F5F5F5] border border-neutral-200/80 rounded-lg">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-[#737373] block mb-0.5">Tracking ID</span>
+              <span className="font-mono tabular-nums text-xs font-semibold text-[#111111] block truncate">
                 {trackingCode || 'বুকিং প্রক্রিয়াধীন'}
               </span>
             </div>
 
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="text-[10px] font-black uppercase text-slate-400 block mb-0.5">Consignment ID</span>
-              <span className="font-mono text-xs font-black text-slate-900 block truncate">
+            <div className="p-3 bg-[#F5F5F5] border border-neutral-200/80 rounded-lg">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-[#737373] block mb-0.5">Consignment ID</span>
+              <span className="font-mono tabular-nums text-xs font-semibold text-[#111111] block truncate">
                 {consignmentId || 'CID তৈরি হয়নি'}
               </span>
             </div>
           </div>
 
           {/* পার্সেল ও ডেলিভারি বিবরণ */}
-          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-xs">
-            <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
-              <span className="text-slate-500">গ্রাহক:</span>
-              <strong className="text-slate-900">{order.CustomerName}</strong>
+          <div className="p-3.5 bg-[#F5F5F5] border border-neutral-200/80 rounded-lg space-y-2 text-xs">
+            <div className="flex items-center justify-between border-b border-neutral-200/80 pb-2">
+              <span className="text-[#525252]">গ্রাহক:</span>
+              <strong className="text-[#111111] font-semibold">{order.CustomerName}</strong>
             </div>
-            <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
-              <span className="text-slate-500">ফোন:</span>
-              <span className="font-mono font-bold text-slate-800">{order.CustomerPhone}</span>
+            <div className="flex items-center justify-between border-b border-neutral-200/80 pb-2">
+              <span className="text-[#525252]">ফোন:</span>
+              <span className="font-mono tabular-nums font-semibold text-[#111111]">{order.CustomerPhone}</span>
             </div>
-            <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
-              <span className="text-slate-500">ক্যাশ অন ডেলিভারি (COD):</span>
-              <strong className="text-emerald-700">{currencySymbol}{order.DueAmount || order.TotalAmount || 0}</strong>
+            <div className="flex items-center justify-between border-b border-neutral-200/80 pb-2">
+              <span className="text-[#525252]">ক্যাশ অন ডেলিভারি (COD):</span>
+              <strong className="font-mono tabular-nums text-[#15803D] font-semibold">{currencySymbol}{order.DueAmount || order.TotalAmount || 0}</strong>
             </div>
             <div className="pt-1">
-              <span className="text-slate-500 block mb-0.5">ঠিকানা:</span>
-              <p className="text-slate-800 font-medium leading-relaxed">{order.CustomerAddress || 'ঠিকানা পাওয়া যায়নি'}</p>
+              <span className="text-[#525252] block mb-0.5">ঠিকানা:</span>
+              <p className="text-[#111111] font-medium leading-relaxed">{order.CustomerAddress || 'ঠিকানা পাওয়া যায়নি'}</p>
             </div>
           </div>
 
@@ -181,7 +181,7 @@ export default function SteadfastLiveTrackingModal({
                 href={`https://steadfast.com.bd/t/${encodeURIComponent(trackingCode)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full min-h-[44px] sm:min-h-[36px] py-2 px-4 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <span>Steadfast অফিসিয়াল ট্র্যাকিং ওয়েবসাইট দেখুন</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -192,11 +192,11 @@ export default function SteadfastLiveTrackingModal({
         </div>
 
         {/* ফুটার */}
-        <div className="p-3.5 border-t border-slate-200 bg-slate-50 flex justify-end shrink-0">
+        <div className="p-3.5 border-t border-neutral-200/80 bg-[#FAFAFA] flex justify-end shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] px-4 py-2 bg-white hover:bg-[#F5F5F5] border border-neutral-200/80 text-[#111111] text-xs font-medium rounded-md transition-colors cursor-pointer"
           >
             বন্ধ করুন
           </button>
@@ -206,4 +206,3 @@ export default function SteadfastLiveTrackingModal({
     </div>
   );
 }
-

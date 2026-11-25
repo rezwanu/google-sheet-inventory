@@ -292,23 +292,23 @@ export default function BankManagementModal({
   if (!isOpen && !embedded) return null;
 
   return (
-    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/40 overflow-y-auto"}>
-      <div className={embedded ? "relative w-full bg-white rounded-lg border border-[#E5E5E5] overflow-hidden flex flex-col flex-1 min-h-[calc(100vh-6.5rem)]" : "relative w-full max-w-5xl bg-white rounded-lg border border-[#E5E5E5] overflow-hidden my-auto flex flex-col max-h-[92vh]"}>
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent" : "fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-900/40 overflow-y-auto"}>
+      <div className={embedded ? "relative w-full bg-white rounded-lg border border-neutral-200/80 overflow-hidden flex flex-col flex-1 min-h-[calc(100vh-6.5rem)]" : "relative w-full max-w-5xl bg-white rounded-lg border border-neutral-200/80 overflow-hidden my-auto flex flex-col max-h-[92vh]"}>
 
         {/* =================================================================== */}
-        {/* হেডার ও সেগমেন্টেড ট্যাব (Linear Style Editorial Header) */}
+        {/* হেডার ও সেগমেন্টেড ট্যাব */}
         {/* =================================================================== */}
-        <div className="px-6 py-3.5 bg-white border-b border-[#E5E5E5] text-[#111111] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+        <div className="px-6 py-3.5 bg-[#FAFAFA] border-b border-neutral-200/80 text-[#111111] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-md border border-[#E5E5E5] bg-[#F5F5F5] text-[#111111] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-md border border-neutral-200/80 bg-[#F5F5F5] text-[#0F172A] flex items-center justify-center shrink-0">
               <Landmark className="w-4 h-4" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-base font-semibold font-heading tracking-tight text-[#111111]">
+              <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                <h2 className="text-base font-semibold tracking-tight text-[#111111]">
                   ব্যাংক হিসাব ও ডিপোজিট খতিয়ান
                 </h2>
-                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-sm text-[11px] font-mono border border-[#E5E5E5] bg-[#F5F5F5] text-[#111111]">
+                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[11px] font-mono tabular-nums border border-neutral-200/80 bg-[#F5F5F5] text-[#111111]">
                   <span>মোট ব্যালেন্স:</span>
                   <strong className="font-semibold">{currencySymbol}{Math.round(totalBankBalance).toLocaleString('bn-BD')}</strong>
                 </span>
@@ -319,21 +319,21 @@ export default function BankManagementModal({
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 flex-wrap">
+          <div className="flex items-center space-x-2 flex-wrap gap-y-2">
             {/* ৩টি মূল সেগমেন্টেড ট্যাব */}
-            <div className="bg-[#F5F5F5] p-1 rounded-md flex items-center border border-[#E5E5E5] gap-1">
+            <div className="bg-[#F5F5F5] p-1 rounded-md flex items-center border border-neutral-200/80 gap-1 overflow-x-auto">
               <button
                 type="button"
                 onClick={() => { setActiveTab('accounts'); setIsPrintPreview(false); }}
-                className={`px-3 py-1.5 rounded-sm text-xs font-medium transition-colors duration-150 flex items-center space-x-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150 flex items-center space-x-1.5 cursor-pointer min-h-[44px] sm:min-h-[36px] whitespace-nowrap ${
                   activeTab === 'accounts'
-                    ? 'bg-white text-[#111111] border border-[#E5E5E5] font-semibold'
-                    : 'text-[#525252] hover:text-[#111111]'
+                    ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold'
+                    : 'text-[#525252] hover:text-[#111111] border border-transparent'
                 }`}
               >
                 <Building2 className="w-3.5 h-3.5" />
                 <span>ব্যাংক অ্যাকাউন্টস</span>
-                <span className="px-1.5 py-0.2 rounded-xs text-[10px] font-mono bg-[#E5E5E5] text-[#111111]">
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono tabular-nums bg-[#F5F5F5] border border-neutral-200/80 text-[#111111]">
                   {bankAccounts.length}
                 </span>
               </button>
@@ -341,10 +341,10 @@ export default function BankManagementModal({
               <button
                 type="button"
                 onClick={() => { setActiveTab('deposit'); setIsPrintPreview(false); }}
-                className={`px-3 py-1.5 rounded-sm text-xs font-medium transition-colors duration-150 flex items-center space-x-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150 flex items-center space-x-1.5 cursor-pointer min-h-[44px] sm:min-h-[36px] whitespace-nowrap ${
                   activeTab === 'deposit'
-                    ? 'bg-white text-[#111111] border border-[#E5E5E5] font-semibold'
-                    : 'text-[#525252] hover:text-[#111111]'
+                    ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold'
+                    : 'text-[#525252] hover:text-[#111111] border border-transparent'
                 }`}
               >
                 <PlusCircle className="w-3.5 h-3.5" />
@@ -354,15 +354,15 @@ export default function BankManagementModal({
               <button
                 type="button"
                 onClick={() => { setActiveTab('transactions'); setIsPrintPreview(false); }}
-                className={`px-3 py-1.5 rounded-sm text-xs font-medium transition-colors duration-150 flex items-center space-x-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150 flex items-center space-x-1.5 cursor-pointer min-h-[44px] sm:min-h-[36px] whitespace-nowrap ${
                   activeTab === 'transactions'
-                    ? 'bg-white text-[#111111] border border-[#E5E5E5] font-semibold'
-                    : 'text-[#525252] hover:text-[#111111]'
+                    ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold'
+                    : 'text-[#525252] hover:text-[#111111] border border-transparent'
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
                 <span>লেনদেন পাসবুক</span>
-                <span className="px-1.5 py-0.2 rounded-xs text-[10px] font-mono bg-[#E5E5E5] text-[#111111]">
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono tabular-nums bg-[#F5F5F5] border border-neutral-200/80 text-[#111111]">
                   {bankTransactions.length}
                 </span>
               </button>
@@ -371,7 +371,7 @@ export default function BankManagementModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 text-[#737373] hover:text-[#111111] hover:bg-[#F5F5F5] rounded-md border border-[#E5E5E5] transition-colors cursor-pointer"
+              className="p-1.5 text-[#737373] hover:text-[#111111] bg-white hover:bg-[#F5F5F5] rounded-md border border-neutral-200/80 transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
               title="বন্ধ করুন"
             >
               <X className="w-4 h-4" />
@@ -381,12 +381,14 @@ export default function BankManagementModal({
 
         {/* টোস্ট নোটিফিকেশন */}
         {toast && (
-          <div className="px-6 py-2 bg-[#F0FDF4] border-b border-[#DCFCE7] text-[#15803D] text-xs font-medium flex items-center justify-between animate-in fade-in duration-150">
+          <div className="px-6 py-2 bg-emerald-50 border-b border-emerald-200/80 text-[#15803D] text-xs font-medium flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{toast.message}</span>
             </div>
-            <button onClick={() => setToast(null)} className="text-[#15803D] hover:underline cursor-pointer">×</button>
+            <button onClick={() => setToast(null)} className="text-[#15803D] hover:underline cursor-pointer p-1">
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 
@@ -401,14 +403,14 @@ export default function BankManagementModal({
           {activeTab === 'accounts' && (
             <div className="space-y-4">
               {/* শীর্ষ লিকুইডিটি কার্ড */}
-              <div className="p-4 bg-white rounded-md border border-[#E5E5E5] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 bg-white rounded-lg border border-neutral-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
                   <span className="text-[11px] font-medium uppercase tracking-wider text-[#737373]">দোকানের সর্বমোট ব্যাংক তারল্য (Total Bank Liquidity)</span>
                   <div className="text-2xl sm:text-3xl font-semibold font-mono tracking-tight tabular-nums text-[#111111]">
                     {currencySymbol}{Math.round(totalBankBalance).toLocaleString('bn-BD')}
                   </div>
                   <p className="text-xs text-[#525252]">
-                    মোট {bankAccounts.length}টি সক্রিয় হিসাবের সমন্বিত ব্যালেন্স
+                    মোট <span className="font-mono tabular-nums">{bankAccounts.length}</span>টি সক্রিয় হিসাবের সমন্বিত ব্যালেন্স
                   </p>
                 </div>
 
@@ -416,7 +418,7 @@ export default function BankManagementModal({
                   <button
                     type="button"
                     onClick={() => setShowAddAccountModal(true)}
-                    className="px-3.5 py-1.5 text-xs font-medium rounded-md text-white bg-[#0F172A] hover:bg-[#1E293B] transition-colors duration-150 cursor-pointer flex items-center space-x-1.5 shadow-none"
+                    className="px-3.5 py-1.5 text-xs font-medium rounded-md text-white bg-[#0F172A] hover:bg-slate-800 transition-colors duration-150 cursor-pointer flex items-center space-x-1.5 min-h-[44px] sm:min-h-[36px]"
                   >
                     <PlusCircle className="w-3.5 h-3.5" />
                     <span>+ নতুন ব্যাংক অ্যাকাউন্ট</span>
@@ -424,7 +426,7 @@ export default function BankManagementModal({
                   <button
                     type="button"
                     onClick={() => setActiveTab('deposit')}
-                    className="px-3.5 py-1.5 text-xs font-medium rounded-md text-[#111111] bg-white border border-[#E5E5E5] hover:bg-[#F5F5F5] hover:border-[#D4D4D4] transition-colors duration-150 cursor-pointer flex items-center space-x-1.5"
+                    className="px-3.5 py-1.5 text-xs font-medium rounded-md text-[#111111] bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] hover:border-neutral-300 transition-colors duration-150 cursor-pointer flex items-center space-x-1.5 min-h-[44px] sm:min-h-[36px]"
                   >
                     <Coins className="w-3.5 h-3.5 text-[#B45309]" />
                     <span>টাকা জমা দিন</span>
@@ -441,26 +443,26 @@ export default function BankManagementModal({
                   return (
                     <div
                       key={acc.AccountID}
-                      className="p-4 bg-white rounded-md border border-[#E5E5E5] hover:border-[#D4D4D4] transition-colors duration-150 flex flex-col justify-between space-y-3"
+                      className="p-4 bg-white rounded-lg border border-neutral-200/80 hover:border-neutral-300 transition-colors duration-150 flex flex-col justify-between space-y-3"
                     >
                       <div>
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div>
-                            <h3 className="text-sm font-semibold font-heading text-[#111111] tracking-tight">
+                            <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
                               {acc.BankName}
                             </h3>
-                            <span className="text-xs text-[#525252] block font-mono">
+                            <span className="text-xs text-[#525252] block font-mono tabular-nums">
                               A/C: {acc.AccountNumber}
                             </span>
                           </div>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-mono border ${
-                            isMfs ? 'bg-[#FFFBEB] text-[#B45309] border-[#FEF3C7]' : 'bg-[#F5F5F5] text-[#111111] border-[#E5E5E5]'
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono tabular-nums border ${
+                            isMfs ? 'bg-amber-50 text-[#B45309] border-amber-200/80' : 'bg-[#F5F5F5] text-[#111111] border-neutral-200/80'
                           }`}>
                             {acc.AccountType}
                           </span>
                         </div>
 
-                        <div className="pt-2 border-t border-[#E5E5E5]">
+                        <div className="pt-2 border-t border-neutral-200/80">
                           <span className="text-[11px] font-medium uppercase tracking-wider text-[#737373] block mb-0.5">বর্তমান জমা ব্যালেন্স</span>
                           <div className="text-xl font-semibold font-mono tracking-tight tabular-nums text-[#111111]">
                             {currencySymbol}{Math.round(bal).toLocaleString('bn-BD')}
@@ -468,7 +470,7 @@ export default function BankManagementModal({
                         </div>
                       </div>
 
-                      <div className="pt-2 border-t border-[#E5E5E5] flex items-center justify-between text-xs text-[#737373]">
+                      <div className="pt-2 border-t border-neutral-200/80 flex items-center justify-between text-xs text-[#737373]">
                         <span className="truncate">{acc.Branch || 'Main Branch'}</span>
                         <button
                           type="button"
@@ -476,7 +478,7 @@ export default function BankManagementModal({
                             setSelectedAccountId(acc.AccountID);
                             setActiveTab('deposit');
                           }}
-                          className="text-[#0F172A] hover:underline font-medium cursor-pointer"
+                          className="text-[#0F172A] hover:underline font-medium cursor-pointer min-h-[44px] sm:min-h-[36px] flex items-center"
                         >
                           ডিপোজিট করুন →
                         </button>
@@ -492,9 +494,9 @@ export default function BankManagementModal({
           {/* ট্যাব ২: টাকা জমা / উত্তোলন এন্ট্রি ফর্ম (Deposit / Withdraw Form) */}
           {/* =============================================================== */}
           {activeTab === 'deposit' && (
-            <div className="max-w-2xl mx-auto p-5 bg-white rounded-md border border-[#E5E5E5] space-y-4">
-              <div className="border-b border-[#E5E5E5] pb-3">
-                <h3 className="text-sm font-semibold font-heading text-[#111111]">
+            <div className="max-w-2xl mx-auto p-5 bg-white rounded-lg border border-neutral-200/80 space-y-4">
+              <div className="border-b border-neutral-200/80 pb-3">
+                <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
                   ব্যাংকে টাকা জমা, উত্তোলন ও ট্রান্সফার এন্ট্রি
                 </h3>
                 <p className="text-xs text-[#525252]">
@@ -503,9 +505,11 @@ export default function BankManagementModal({
               </div>
 
               {inlineError && (
-                <div className="p-3 bg-[#FEF2F2] border border-[#FEE2E2] rounded-sm text-xs text-[#B91C1C] flex items-center justify-between">
+                <div className="p-3 bg-red-50 border border-red-200/80 rounded-md text-xs text-[#B91C1C] flex items-center justify-between">
                   <span>{inlineError.message}</span>
-                  <button onClick={() => setInlineError(null)} className="text-[#B91C1C] font-bold">×</button>
+                  <button onClick={() => setInlineError(null)} className="text-[#B91C1C] font-semibold p-1">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               )}
 
@@ -519,39 +523,39 @@ export default function BankManagementModal({
                     <button
                       type="button"
                       onClick={() => setTxType('DEPOSIT')}
-                      className={`p-2.5 rounded-sm border text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors cursor-pointer ${
+                      className={`p-2.5 rounded-md border text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px] ${
                         txType === 'DEPOSIT'
-                          ? 'bg-[#0F172A] text-white border-transparent'
-                          : 'bg-white text-[#111111] border-[#E5E5E5] hover:bg-[#F5F5F5]'
+                          ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                          : 'bg-white text-[#111111] border-neutral-200/80 hover:bg-[#F5F5F5]'
                       }`}
                     >
-                      <ArrowDownRight className="w-4 h-4 text-emerald-400" />
+                      <ArrowDownRight className={`w-4 h-4 ${txType === 'DEPOSIT' ? 'text-emerald-400' : 'text-[#15803D]'}`} />
                       <span>টাকা জমা (Deposit)</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setTxType('WITHDRAW')}
-                      className={`p-2.5 rounded-sm border text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors cursor-pointer ${
+                      className={`p-2.5 rounded-md border text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px] ${
                         txType === 'WITHDRAW'
-                          ? 'bg-[#0F172A] text-white border-transparent'
-                          : 'bg-white text-[#111111] border-[#E5E5E5] hover:bg-[#F5F5F5]'
+                          ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                          : 'bg-white text-[#111111] border-neutral-200/80 hover:bg-[#F5F5F5]'
                       }`}
                     >
-                      <ArrowUpRight className="w-4 h-4 text-rose-400" />
+                      <ArrowUpRight className={`w-4 h-4 ${txType === 'WITHDRAW' ? 'text-red-400' : 'text-[#B91C1C]'}`} />
                       <span>টাকা উত্তোলন (Withdraw)</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setTxType('TRANSFER')}
-                      className={`p-2.5 rounded-sm border text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors cursor-pointer ${
+                      className={`p-2.5 rounded-md border text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px] ${
                         txType === 'TRANSFER'
-                          ? 'bg-[#0F172A] text-white border-transparent'
-                          : 'bg-white text-[#111111] border-[#E5E5E5] hover:bg-[#F5F5F5]'
+                          ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                          : 'bg-white text-[#111111] border-neutral-200/80 hover:bg-[#F5F5F5]'
                       }`}
                     >
-                      <ArrowRightLeft className="w-4 h-4 text-amber-400" />
+                      <ArrowRightLeft className={`w-4 h-4 ${txType === 'TRANSFER' ? 'text-amber-400' : 'text-[#B45309]'}`} />
                       <span>ব্যাংক ট্রান্সফার</span>
                     </button>
                   </div>
@@ -566,7 +570,7 @@ export default function BankManagementModal({
                     <select
                       value={selectedAccountId}
                       onChange={(e) => setSelectedAccountId(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                      className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                       required
                     >
                       {bankAccounts.map((a) => (
@@ -585,7 +589,7 @@ export default function BankManagementModal({
                       <select
                         value={destinationAccountId}
                         onChange={(e) => setDestinationAccountId(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                        className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                         required
                       >
                         <option value="">-- গন্তব্য ব্যাংক বেছে নিন --</option>
@@ -605,7 +609,7 @@ export default function BankManagementModal({
                         type="date"
                         value={txDate}
                         onChange={(e) => setTxDate(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                        className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                       />
                     </div>
                   )}
@@ -624,7 +628,7 @@ export default function BankManagementModal({
                       placeholder="যেমন: ৫০,০০০"
                       value={txAmount}
                       onChange={(e) => setTxAmount(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-sm font-semibold font-mono text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                      className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-sm font-semibold font-mono tabular-nums text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                       required
                     />
                   </div>
@@ -638,7 +642,7 @@ export default function BankManagementModal({
                       placeholder="যেমন: SLIP-98421"
                       value={referenceNo}
                       onChange={(e) => setReferenceNo(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                      className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs font-mono text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                     />
                   </div>
                 </div>
@@ -651,7 +655,7 @@ export default function BankManagementModal({
                         {txType === 'DEPOSIT' ? 'টাকার উৎস / খাত' : txType === 'WITHDRAW' ? 'টাকা স্থানান্তরের গন্তব্য' : 'লেনদেনের বিবরণ'}
                       </label>
                       {activeRegister && (
-                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-mono">
+                        <span className="text-[10px] text-[#15803D] bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200/80 font-mono">
                           ক্যাশ ড্রয়ার সক্রিয়
                         </span>
                       )}
@@ -665,10 +669,10 @@ export default function BankManagementModal({
                               setSourceType('cash_register');
                               setSource(txType === 'DEPOSIT' ? 'দোকানের ক্যাশ ড্রয়ার (Shop Cash)' : 'দোকানের ক্যাশ ড্রয়ারে জমা');
                             }}
-                            className={`px-2 py-1.5 text-xs text-left rounded border transition-colors ${
+                            className={`px-2 py-1.5 text-xs text-left rounded-md border transition-colors min-h-[44px] sm:min-h-[36px] ${
                               sourceType === 'cash_register'
                                 ? 'bg-[#0F172A] text-white border-[#0F172A] font-medium'
-                                : 'bg-white text-slate-700 border-[#E5E5E5] hover:bg-slate-50'
+                                : 'bg-white text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'
                             }`}
                           >
                             {txType === 'DEPOSIT' ? 'দোকানের ক্যাশ ড্রয়ার' : 'দোকানের ক্যাশ ড্রয়ার'}
@@ -679,10 +683,10 @@ export default function BankManagementModal({
                               setSourceType('external');
                               setSource(txType === 'DEPOSIT' ? 'বাহ্যিক তহবিল / মূলধন' : 'ব্যক্তিগত / অন্যান্য খরচ');
                             }}
-                            className={`px-2 py-1.5 text-xs text-left rounded border transition-colors ${
+                            className={`px-2 py-1.5 text-xs text-left rounded-md border transition-colors min-h-[44px] sm:min-h-[36px] ${
                               sourceType === 'external'
                                 ? 'bg-[#0F172A] text-white border-[#0F172A] font-medium'
-                                : 'bg-white text-slate-700 border-[#E5E5E5] hover:bg-slate-50'
+                                : 'bg-white text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'
                             }`}
                           >
                             {txType === 'DEPOSIT' ? 'বাহ্যিক / মালিকের তহবিল' : 'অন্যান্য / ব্যক্তিগত খরচ'}
@@ -693,11 +697,11 @@ export default function BankManagementModal({
                           placeholder={txType === 'DEPOSIT' ? 'দোকানের ক্যাশ ড্রয়ার' : 'খরচ বা ব্যবহারের বিবরণ'}
                           value={source}
                           onChange={(e) => setSource(e.target.value)}
-                          className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                          className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                         />
                         {sourceType === 'cash_register' && (
-                          <p className="text-[11px] text-emerald-700 flex items-center space-x-1">
-                            <span>●</span>
+                          <p className="text-[11px] text-[#15803D] flex items-center space-x-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#15803D] shrink-0" />
                             <span>
                               {txType === 'DEPOSIT'
                                 ? 'এই টাকাটি দৈনিক ক্যাশ ড্রয়ারের ব্যালেন্স থেকে কর্তন হবে (EOD শর্টেজ হবে না)।'
@@ -712,7 +716,7 @@ export default function BankManagementModal({
                         placeholder="ফান্ড ট্রান্সফার বিবরণ"
                         value={source}
                         onChange={(e) => setSource(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                        className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                       />
                     )}
                   </div>
@@ -726,16 +730,16 @@ export default function BankManagementModal({
                       placeholder="যেমন: সাপ্তাহিক ক্যাশ জমা"
                       value={txNotes}
                       onChange={(e) => setTxNotes(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                      className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                     />
                   </div>
                 </div>
 
                 {/* ব্যালেন্স প্রিভিউ কার্ড */}
                 {selectedAccount && Number(txAmount) > 0 && (
-                  <div className="p-3 bg-[#F5F5F5] rounded-sm border border-[#E5E5E5] flex items-center justify-between text-xs">
+                  <div className="p-3 bg-[#F5F5F5] rounded-md border border-neutral-200/80 flex items-center justify-between text-xs">
                     <span className="text-[#525252]">এই লেনদেনের পর অ্যাকাউন্টের প্রত্যাশিত ব্যালেন্স:</span>
-                    <strong className="font-mono text-sm text-[#111111]">
+                    <strong className="font-mono tabular-nums text-sm text-[#111111]">
                       {currencySymbol}{Math.round(previewBalanceAfter).toLocaleString('bn-BD')}
                     </strong>
                   </div>
@@ -746,7 +750,7 @@ export default function BankManagementModal({
                   <button
                     type="button"
                     onClick={() => setActiveTab('accounts')}
-                    className="px-4 py-2 text-xs font-medium rounded-md text-[#111111] bg-white border border-[#E5E5E5] hover:bg-[#F5F5F5] transition-colors cursor-pointer"
+                    className="px-4 py-2 text-xs font-medium rounded-md text-[#111111] bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px]"
                   >
                     বাতিল
                   </button>
@@ -754,7 +758,7 @@ export default function BankManagementModal({
                   <button
                     type="submit"
                     disabled={isSubmittingTx}
-                    className="px-5 py-2 text-xs font-medium rounded-md text-white bg-[#0F172A] hover:bg-[#1E293B] transition-colors cursor-pointer disabled:opacity-40 flex items-center space-x-1.5 shadow-none"
+                    className="px-5 py-2 text-xs font-medium rounded-md text-white bg-[#0F172A] hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-40 flex items-center space-x-1.5 min-h-[44px] sm:min-h-[36px]"
                   >
                     {isSubmittingTx ? (
                       <>
@@ -776,7 +780,7 @@ export default function BankManagementModal({
           {activeTab === 'transactions' && (
             <div className="space-y-3">
               {/* সার্চ ও ফিল্টার বার */}
-              <div className="p-3 bg-white rounded-md border border-[#E5E5E5] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-3 bg-white rounded-lg border border-neutral-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2 flex-1">
                   {/* সার্চ বক্স */}
                   <div className="relative min-w-[200px] flex-1">
@@ -787,7 +791,7 @@ export default function BankManagementModal({
                       placeholder="রেফারেন্স নং, ব্যাংক, মন্তব্য খুঁজুন... (/)"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                      className="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                     />
                   </div>
 
@@ -795,7 +799,7 @@ export default function BankManagementModal({
                   <select
                     value={accountFilter}
                     onChange={(e) => setAccountFilter(e.target.value)}
-                    className="px-2.5 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                    className="px-2.5 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                   >
                     <option value="ALL">সকল ব্যাংক</option>
                     {bankAccounts.map(a => (
@@ -807,7 +811,7 @@ export default function BankManagementModal({
                   <select
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    className="px-2.5 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                    className="px-2.5 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                   >
                     <option value="ALL">সকল লেনদেন</option>
                     <option value="DEPOSIT">জমা (Deposit)</option>
@@ -819,7 +823,7 @@ export default function BankManagementModal({
                   <select
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value)}
-                    className="px-2.5 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                    className="px-2.5 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                   >
                     <option value="ALL">সকল তারিখ</option>
                     <option value="TODAY">আজকের লেনদেন</option>
@@ -832,32 +836,32 @@ export default function BankManagementModal({
                   <button
                     type="button"
                     onClick={() => exportBankTransactionsExcelCSV(filteredTransactions, bankAccounts)}
-                    className="px-3 py-1.5 text-xs font-medium rounded-md text-[#111111] bg-white border border-[#E5E5E5] hover:bg-[#F5F5F5] hover:border-[#D4D4D4] transition-colors duration-150 cursor-pointer flex items-center space-x-1.5"
+                    className="px-3 py-1.5 text-xs font-medium rounded-md text-[#111111] bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] hover:border-neutral-300 transition-colors duration-150 cursor-pointer flex items-center space-x-1.5 min-h-[44px] sm:min-h-[36px]"
                     title="এক্সেল ফাইল ডাউনলোড করুন"
                   >
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-[#15803D]" />
                     <span>এক্সেল ডাউনলোড</span>
                   </button>
                 </div>
               </div>
 
               {/* লেনদেন টেবিল */}
-              <div className="bg-white rounded-md border border-[#E5E5E5] overflow-hidden">
+              <div className="bg-white rounded-lg border border-neutral-200/80 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left border-collapse">
                     <thead>
-                      <tr className="bg-[#F5F5F5] text-[#525252] font-medium border-b border-[#E5E5E5]">
-                        <th className="py-2 px-3">তারিখ ও সময়</th>
-                        <th className="py-2 px-3">ব্যাংক ও হিসাব নং</th>
-                        <th className="py-2 px-3">ধরণ</th>
-                        <th className="py-2 px-3">রেফারেন্স / স্লিপ নং</th>
-                        <th className="py-2 px-3 text-right">জমা (+)</th>
-                        <th className="py-2 px-3 text-right">খরচ / তোলা (-)</th>
-                        <th className="py-2 px-3 text-right">অবশিষ্ট ব্যালেন্স</th>
-                        <th className="py-2 px-3">এন্ট্রিকারী</th>
+                      <tr className="bg-[#F5F5F5] text-[#525252] font-medium border-b border-neutral-200/80">
+                        <th className="py-2.5 px-3">তারিখ ও সময়</th>
+                        <th className="py-2.5 px-3">ব্যাংক ও হিসাব নং</th>
+                        <th className="py-2.5 px-3">ধরণ</th>
+                        <th className="py-2.5 px-3">রেফারেন্স / স্লিপ নং</th>
+                        <th className="py-2.5 px-3 text-right">জমা (+)</th>
+                        <th className="py-2.5 px-3 text-right">খরচ / তোলা (-)</th>
+                        <th className="py-2.5 px-3 text-right">অবশিষ্ট ব্যালেন্স</th>
+                        <th className="py-2.5 px-3">এন্ট্রিকারী</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#E5E5E5]">
+                    <tbody className="divide-y divide-neutral-200/80">
                       {filteredTransactions.length === 0 ? (
                         <tr>
                           <td colSpan="8" className="py-8 text-center text-[#737373]">
@@ -870,39 +874,39 @@ export default function BankManagementModal({
 
                           return (
                             <tr key={tx.TransactionID} className="hover:bg-[#FAFAFA] transition-colors duration-150">
-                              <td className="py-2 px-3 font-mono text-[#525252] whitespace-nowrap">
+                              <td className="py-2.5 px-3 font-mono tabular-nums text-[#525252] whitespace-nowrap">
                                 {new Date(tx.Date || tx.CreatedAt).toLocaleDateString('bn-BD')}
-                                <span className="block text-[10px] text-[#A3A3A3]">
+                                <span className="block text-[10px] text-[#737373]">
                                   {new Date(tx.Date || tx.CreatedAt).toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                               </td>
-                              <td className="py-2 px-3 font-medium text-[#111111]">
+                              <td className="py-2.5 px-3 font-medium text-[#111111]">
                                 <div>{tx.BankName}</div>
-                                <span className="text-[10px] font-mono text-[#737373]">{tx.AccountNumber}</span>
+                                <span className="text-[10px] font-mono tabular-nums text-[#737373]">{tx.AccountNumber}</span>
                               </td>
-                              <td className="py-2 px-3">
-                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-xs text-[10px] font-mono border ${
+                              <td className="py-2.5 px-3">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono border ${
                                   isCredit
-                                    ? 'bg-[#F0FDF4] text-[#15803D] border-[#DCFCE7]'
-                                    : 'bg-[#FEF2F2] text-[#B91C1C] border-[#FEE2E2]'
+                                    ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80'
+                                    : 'bg-red-50 text-[#B91C1C] border-red-200/80'
                                 }`}>
                                   {isCredit ? '+ ডিপোজিট' : '- উত্তোলন'}
                                 </span>
                               </td>
-                              <td className="py-2 px-3 font-mono text-[#111111]">
+                              <td className="py-2.5 px-3 font-mono tabular-nums text-[#111111]">
                                 {tx.ReferenceNo || 'N/A'}
                                 {tx.Notes && <span className="block text-[10.5px] font-sans text-[#737373]">{tx.Notes}</span>}
                               </td>
-                              <td className="py-2 px-3 text-right font-mono font-semibold tabular-nums text-[#15803D]">
+                              <td className="py-2.5 px-3 text-right font-mono font-semibold tabular-nums text-[#15803D]">
                                 {isCredit ? `+${Number(tx.Amount).toLocaleString('bn-BD')}` : '—'}
                               </td>
-                              <td className="py-2 px-3 text-right font-mono font-semibold tabular-nums text-[#B91C1C]">
+                              <td className="py-2.5 px-3 text-right font-mono font-semibold tabular-nums text-[#B91C1C]">
                                 {!isCredit ? `-${Number(tx.Amount).toLocaleString('bn-BD')}` : '—'}
                               </td>
-                              <td className="py-2 px-3 text-right font-mono font-bold tabular-nums text-[#111111]">
+                              <td className="py-2.5 px-3 text-right font-mono font-semibold tabular-nums text-[#111111]">
                                 {currencySymbol}{Number(tx.BalanceAfter || 0).toLocaleString('bn-BD')}
                               </td>
-                              <td className="py-2 px-3 text-[#525252]">
+                              <td className="py-2.5 px-3 text-[#525252]">
                                 {tx.PerformedBy || 'Admin'}
                               </td>
                             </tr>
@@ -921,16 +925,16 @@ export default function BankManagementModal({
         {/* সাব-মডাল: নতুন ব্যাংক অ্যাকাউন্ট সংযোজন */}
         {/* =================================================================== */}
         {showAddAccountModal && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-black/40">
-            <div className="bg-white rounded-lg border border-[#E5E5E5] w-full max-w-md p-5 space-y-4 shadow-none">
-              <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-2.5">
-                <h3 className="text-sm font-semibold font-heading text-[#111111]">
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-neutral-900/40">
+            <div className="bg-white rounded-lg border border-neutral-200/80 w-full max-w-md p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-neutral-200/80 pb-2.5">
+                <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
                   নতুন ব্যাংক অ্যাকাউন্ট যোগ করুন
                 </h3>
                 <button
                   type="button"
                   onClick={() => setShowAddAccountModal(false)}
-                  className="text-[#737373] hover:text-[#111111] p-1 rounded-sm hover:bg-[#F5F5F5]"
+                  className="text-[#737373] hover:text-[#111111] p-1.5 rounded-md hover:bg-[#F5F5F5] min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -944,7 +948,7 @@ export default function BankManagementModal({
                     placeholder="যেমন: Islami Bank Bangladesh Ltd"
                     value={newBankName}
                     onChange={(e) => setNewBankName(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                    className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                     required
                   />
                 </div>
@@ -957,7 +961,7 @@ export default function BankManagementModal({
                       placeholder="Pabna Bostraloy"
                       value={newAccountName}
                       onChange={(e) => setNewAccountName(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                      className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                     />
                   </div>
 
@@ -968,7 +972,7 @@ export default function BankManagementModal({
                       placeholder="2050XXXXXXXXXX"
                       value={newAccountNumber}
                       onChange={(e) => setNewAccountNumber(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                      className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                       required
                     />
                   </div>
@@ -982,7 +986,7 @@ export default function BankManagementModal({
                       placeholder="Mohammadpur Branch"
                       value={newBranch}
                       onChange={(e) => setNewBranch(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                      className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                     />
                   </div>
 
@@ -991,7 +995,7 @@ export default function BankManagementModal({
                     <select
                       value={newAccountType}
                       onChange={(e) => setNewAccountType(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                      className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                     >
                       <option value="Current">Current (চলতি)</option>
                       <option value="Savings">Savings (সঞ্চয়ী)</option>
@@ -1010,7 +1014,7 @@ export default function BankManagementModal({
                     placeholder="0"
                     value={newOpeningBalance}
                     onChange={(e) => setNewOpeningBalance(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-xs font-mono text-[#111111] focus:outline-none focus:border-[#0F172A]"
+                    className="w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                   />
                 </div>
 
@@ -1018,14 +1022,14 @@ export default function BankManagementModal({
                   <button
                     type="button"
                     onClick={() => setShowAddAccountModal(false)}
-                    className="px-3 py-1.5 text-xs font-medium rounded-md text-[#111111] bg-white border border-[#E5E5E5] hover:bg-[#F5F5F5]"
+                    className="px-3 py-1.5 text-xs font-medium rounded-md text-[#111111] bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] min-h-[44px] sm:min-h-[36px]"
                   >
                     বাতিল
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmittingAccount}
-                    className="px-4 py-1.5 text-xs font-medium rounded-md text-white bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-40"
+                    className="px-4 py-1.5 text-xs font-medium rounded-md text-white bg-[#0F172A] hover:bg-slate-800 disabled:opacity-40 min-h-[44px] sm:min-h-[36px]"
                   >
                     {isSubmittingAccount ? 'সংরক্ষণ হচ্ছে...' : 'সংরক্ষণ করুন'}
                   </button>

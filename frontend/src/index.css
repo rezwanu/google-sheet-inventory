@@ -34,8 +34,14 @@
 
   /* সংখ্যা ও টেবুলার ডাটার জন্য মনোস্পেস ডিফল্ট */
   .font-tabular {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* মোবাইল টাচ-টার্গেট মিনিমাম ৪৪ পিক্সেল */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 
@@ -238,7 +244,7 @@
 
 .rich-text-content a,
 .rich-editor-content a {
-  color: #4f46e5 !important;
+  color: #0F172A !important;
   text-decoration: underline !important;
   font-weight: 500 !important;
 }

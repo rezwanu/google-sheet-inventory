@@ -82,7 +82,7 @@ function SingleStickerItem({
       className={`bg-white text-black flex flex-col justify-between items-center text-center select-none ${getContainerStyles()} ${
         isPrintVersion
           ? 'break-inside-avoid page-break-avoid'
-          : 'border-2 border-slate-300 rounded-2xl shadow-md hover:shadow-lg transition-all mx-auto'
+          : 'border border-neutral-300 rounded-lg transition-colors mx-auto'
       }`}
       style={{
         pageBreakInside: 'avoid',
@@ -92,14 +92,14 @@ function SingleStickerItem({
     >
       {/* দোকান বা ব্র্যান্ডের নাম */}
       {showStoreName && (
-        <div className="w-full truncate font-black text-[11px] uppercase tracking-wider leading-none text-slate-900 border-b border-dashed border-slate-300 pb-0.5">
+        <div className="w-full truncate font-bold text-[11px] uppercase tracking-wider leading-none text-[#111111] border-b border-dashed border-neutral-300 pb-0.5">
           {storeName}
         </div>
       )}
 
       {/* পণ্যের নাম */}
       {showProductName && (
-        <div className="w-full truncate font-bold text-[10px] text-slate-800 leading-tight px-0.5 mt-0.5">
+        <div className="w-full truncate font-semibold text-[10px] text-[#111111] leading-tight px-0.5 mt-0.5">
           {productName || 'পণ্য'}
         </div>
       )}
@@ -109,13 +109,13 @@ function SingleStickerItem({
         {barcode ? (
           <svg ref={svgRef} className="max-w-full h-auto block" />
         ) : (
-          <div className="text-[10px] text-rose-500 font-bold py-1.5">বারকোড নেই</div>
+          <div className="text-[10px] text-[#B91C1C] font-semibold py-1.5">বারকোড নেই</div>
         )}
       </div>
 
       {/* পণ্যের বিক্রয়মূল্য (MRP) */}
       {showPrice && price !== undefined && (
-        <div className="w-full flex items-center justify-center font-black text-[12px] text-slate-950 leading-none pt-0.5 border-t border-dashed border-slate-300">
+        <div className="w-full flex items-center justify-center font-mono tabular-nums font-bold text-[12px] text-[#111111] leading-none pt-0.5 border-t border-dashed border-neutral-300">
           <span>মূল্য: {currencySymbol}{Number(price).toFixed(2)}</span>
         </div>
       )}
@@ -299,32 +299,32 @@ export default function BarcodePrintModal({
 
   return (
     <div
-      className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200"}
+      className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-[100] bg-neutral-900/40 flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200"}
       style={embedded ? {} : { zIndex: 100 }}
     >
       
       {/* স্ক্রিন ইন্টারেক্টিভ মডাল (নো-প্রিন্ট) */}
       <div
-        className={embedded ? "bg-white rounded-2xl shadow-sm border border-slate-200 w-full flex-1 min-h-[calc(100vh-6.5rem)] flex flex-col overflow-hidden no-print relative" : "bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[88vh] my-auto flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 no-print relative"}
+        className={embedded ? "bg-white rounded-lg border border-neutral-200/80 w-full flex-1 min-h-[calc(100vh-6.5rem)] flex flex-col overflow-hidden no-print relative" : "bg-white rounded-lg border border-neutral-200/80 w-full max-w-5xl max-h-[88vh] my-auto flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 no-print relative"}
         style={embedded ? {} : { zIndex: 101 }}
       >
         
         {/* ১. হেডার */}
-        <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 bg-[#FAFAFA] border-b border-neutral-200/80 text-[#111111] flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 shadow-inner">
+            <div className="w-10 h-10 rounded-lg bg-[#0F172A] text-white flex items-center justify-center shrink-0">
               <BarcodeIcon className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-base sm:text-lg font-black tracking-tight">
+                <h2 className="text-base sm:text-lg font-semibold tracking-tight text-[#111111]">
                   বারকোড লেবেল ও প্রাইস ট্যাগ জেনারেটর
                 </h2>
-                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F5F5F5] text-[#525252] border border-neutral-200/80">
                   Thermal & Sticker Ready
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">
+              <p className="text-xs text-[#525252] mt-0.5">
                 পণ্যের বারকোড স্টিকার প্রিন্ট করুন এবং থার্মাল রোলে নিখুঁত লেবেল তৈরি করুন
               </p>
             </div>
@@ -332,10 +332,10 @@ export default function BarcodePrintModal({
 
           <button
             onClick={onClose}
-            className={`rounded-xl transition-all cursor-pointer flex items-center space-x-1 ${
+            className={`min-h-[44px] sm:min-h-[36px] rounded-md transition-colors cursor-pointer flex items-center space-x-1 ${
               embedded
-                ? 'px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/10 shadow-xs'
-                : 'w-9 h-9 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white justify-center'
+                ? 'px-3 py-1.5 bg-white hover:bg-[#F5F5F5] text-[#111111] font-semibold text-xs border border-neutral-200/80'
+                : 'px-2 bg-white hover:bg-[#F5F5F5] text-[#737373] hover:text-[#111111] border border-neutral-200/80 justify-center'
             }`}
             title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
           >
@@ -351,37 +351,37 @@ export default function BarcodePrintModal({
         </div>
 
         {/* ২. মোড ট্যাব সিলেকশন (Single vs Batch) */}
-        <div className="bg-slate-100 border-b border-slate-200 px-6 py-2.5 flex items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center space-x-2 bg-slate-200/80 p-1 rounded-2xl">
+        <div className="bg-[#FAFAFA] border-b border-neutral-200/80 px-6 py-2.5 flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center space-x-1.5 bg-[#F5F5F5] p-1 rounded-lg border border-neutral-200/80">
             <button
               type="button"
               onClick={() => setActiveTab('single')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 cursor-pointer ${
+              className={`min-h-[44px] sm:min-h-[36px] px-4 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 activeTab === 'single'
-                  ? 'bg-white text-indigo-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#0F172A] text-white'
+                  : 'text-[#525252] hover:text-[#111111]'
               }`}
             >
-              <Tag className="w-3.5 h-3.5 text-indigo-600" />
+              <Tag className="w-3.5 h-3.5" />
               <span>একক পণ্য দ্রুত প্রিন্ট</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('batch')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 cursor-pointer ${
+              className={`min-h-[44px] sm:min-h-[36px] px-4 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 activeTab === 'batch'
-                  ? 'bg-white text-indigo-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#0F172A] text-white'
+                  : 'text-[#525252] hover:text-[#111111]'
               }`}
             >
-              <Layers className="w-3.5 h-3.5 text-indigo-600" />
+              <Layers className="w-3.5 h-3.5" />
               <span>একাধিক পণ্য ব্যাচ প্রিন্ট</span>
             </button>
           </div>
 
-          <div className="text-xs font-bold text-slate-600 hidden sm:block">
-            মোট স্টিকার: <span className="text-indigo-600 font-black">{totalStickerCount} টি</span>
+          <div className="text-xs font-semibold text-[#525252] hidden sm:block">
+            মোট স্টিকার: <span className="text-[#111111] font-mono tabular-nums font-bold">{totalStickerCount} টি</span>
           </div>
         </div>
 
@@ -395,9 +395,9 @@ export default function BarcodePrintModal({
             {activeTab === 'single' && (
               <div className="space-y-4">
                 {/* পণ্য ড্রপডাউন সিলেক্টর */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
-                  <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
-                    <Box className="w-4 h-4 text-indigo-600" />
+                <div className="bg-[#FAFAFA] border border-neutral-200/80 rounded-lg p-4 space-y-2">
+                  <label className="text-xs font-semibold text-[#111111] flex items-center space-x-1.5">
+                    <Box className="w-4 h-4 text-[#0F172A]" />
                     <span>পণ্য নির্বাচন করুন</span>
                   </label>
                   
@@ -410,7 +410,7 @@ export default function BarcodePrintModal({
                         setSingleQuantity(Math.max(1, Number(prod.StockQuantity) || 10));
                       }
                     }}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-white border border-neutral-200/80 rounded-md text-xs sm:text-sm font-semibold text-[#111111] focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:outline-none"
                   >
                     {products.map(p => (
                       <option key={p.ProductID} value={p.ProductID}>
@@ -420,22 +420,22 @@ export default function BarcodePrintModal({
                   </select>
 
                   {selectedSingleProduct && (
-                    <div className="flex items-center justify-between text-xs text-slate-600 pt-1 px-1">
-                      <span>ক্যাটাগরি: <strong>{selectedSingleProduct.Category || 'General'}</strong></span>
-                      <span>বর্তমান স্টক: <strong className="text-indigo-700">{selectedSingleProduct.StockQuantity || 0} পিস</strong></span>
-                      <span>বিক্রয়মূল্য: <strong className="text-slate-900">৳{selectedSingleProduct.SellingPrice}</strong></span>
+                    <div className="flex items-center justify-between text-xs text-[#525252] pt-1 px-1 flex-wrap gap-2">
+                      <span>ক্যাটাগরি: <strong className="text-[#111111]">{selectedSingleProduct.Category || 'General'}</strong></span>
+                      <span>বর্তমান স্টক: <strong className="text-[#111111] font-mono tabular-nums">{selectedSingleProduct.StockQuantity || 0} পিস</strong></span>
+                      <span>বিক্রয়মূল্য: <strong className="text-[#111111] font-mono tabular-nums">{currencySymbol}{selectedSingleProduct.SellingPrice}</strong></span>
                     </div>
                   )}
                 </div>
 
                 {/* স্টিকার সংখ্যা সিলেক্টর ও দ্রুত বাটন */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                <div className="bg-[#FAFAFA] border border-neutral-200/80 rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
-                      <Tag className="w-4 h-4 text-indigo-600" />
+                    <label className="text-xs font-semibold text-[#111111] flex items-center space-x-1.5">
+                      <Tag className="w-4 h-4 text-[#0F172A]" />
                       <span>কতোটি স্টিকার প্রিন্ট করতে চান? (Quantity)</span>
                     </label>
-                    <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                    <span className="text-xs font-mono tabular-nums font-bold text-[#111111] bg-white px-2.5 py-0.5 rounded-md border border-neutral-200/80">
                       মোট: {singleQuantity} টি স্টিকার
                     </span>
                   </div>
@@ -444,7 +444,7 @@ export default function BarcodePrintModal({
                     <button
                       type="button"
                       onClick={() => setSingleQuantity((q) => Math.max(1, q - 1))}
-                      className="w-10 h-10 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 flex items-center justify-center font-bold text-sm shadow-2xs cursor-pointer"
+                      className="min-h-[44px] sm:min-h-[36px] w-10 rounded-md bg-white border border-neutral-200/80 text-[#111111] hover:bg-[#F5F5F5] flex items-center justify-center font-bold text-sm cursor-pointer"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
@@ -455,13 +455,13 @@ export default function BarcodePrintModal({
                       max="1000"
                       value={singleQuantity}
                       onChange={(e) => setSingleQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                      className="flex-1 py-2 text-center text-base font-black text-slate-900 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                      className="min-h-[44px] sm:min-h-[36px] flex-1 py-2 text-center text-base font-mono tabular-nums font-bold text-[#111111] bg-white border border-neutral-200/80 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A]"
                     />
 
                     <button
                       type="button"
                       onClick={() => setSingleQuantity((q) => q + 1)}
-                      className="w-10 h-10 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 flex items-center justify-center font-bold text-sm shadow-2xs cursor-pointer"
+                      className="min-h-[44px] sm:min-h-[36px] w-10 rounded-md bg-white border border-neutral-200/80 text-[#111111] hover:bg-[#F5F5F5] flex items-center justify-center font-bold text-sm cursor-pointer"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -469,7 +469,7 @@ export default function BarcodePrintModal({
 
                   {/* দ্রুত সংখ্যা প্রিসেট বাটন */}
                   <div className="flex flex-wrap gap-1.5 pt-1">
-                    <span className="text-[11px] text-slate-400 self-center mr-1">দ্রুত যোগ:</span>
+                    <span className="text-[11px] text-[#737373] self-center mr-1">দ্রুত যোগ:</span>
                     {[
                       { label: '+১', val: 1 },
                       { label: '+৫', val: 5 },
@@ -488,7 +488,7 @@ export default function BarcodePrintModal({
                             setSingleQuantity((q) => q + preset.val);
                           }
                         }}
-                        className="px-2.5 py-1 text-xs font-bold bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 transition-all shadow-2xs cursor-pointer"
+                        className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 text-xs font-mono tabular-nums font-semibold bg-white text-[#111111] border border-neutral-200/80 rounded-md hover:bg-[#F5F5F5] hover:border-[#0F172A] transition-colors cursor-pointer"
                       >
                         {preset.label}
                       </button>
@@ -504,13 +504,13 @@ export default function BarcodePrintModal({
                 {/* সার্চ ও ক্যাটাগরি ফিল্টার */}
                 <div className="flex flex-col sm:flex-row items-center gap-2">
                   <div className="relative flex-1 w-full">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="পণ্য, বারকোড বা SKU দিয়ে খুঁজুন..."
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      className="min-h-[44px] sm:min-h-[36px] w-full pl-9 pr-3 py-2 bg-white border border-neutral-200/80 rounded-md text-xs sm:text-sm font-medium text-[#111111] focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:outline-none"
                     />
                   </div>
 
@@ -518,7 +518,7 @@ export default function BarcodePrintModal({
                     <select
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="w-full sm:w-40 px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-700"
+                      className="min-h-[44px] sm:min-h-[36px] w-full sm:w-40 px-3 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-semibold text-[#111111] focus:outline-none focus:border-[#0F172A]"
                     >
                       <option value="ALL">সকল ক্যাটাগরি</option>
                       {categories.map(c => (
@@ -529,22 +529,22 @@ export default function BarcodePrintModal({
                 </div>
 
                 {/* কুইক অ্যাকশন রো */}
-                <div className="flex items-center justify-between text-xs bg-slate-100 p-2.5 rounded-xl text-slate-700">
+                <div className="flex items-center justify-between text-xs bg-[#F5F5F5] border border-neutral-200/80 p-2.5 rounded-lg text-[#525252]">
                   <div className="flex items-center space-x-3">
                     <button
                       type="button"
                       onClick={handleSelectAllFiltered}
-                      className="font-bold text-indigo-700 hover:text-indigo-900 flex items-center space-x-1 cursor-pointer"
+                      className="min-h-[44px] sm:min-h-[36px] px-2 font-semibold text-[#0F172A] hover:underline flex items-center space-x-1 cursor-pointer"
                     >
                       <CheckSquare className="w-3.5 h-3.5" />
-                      <span>সব সিলেক্ট ({filteredProducts.length})</span>
+                      <span>সব সিলেক্ট (<span className="font-mono tabular-nums">{filteredProducts.length}</span>)</span>
                     </button>
 
                     {Object.keys(selectedItems).length > 0 && (
                       <button
                         type="button"
                         onClick={handleDeselectAll}
-                        className="font-bold text-rose-600 hover:text-rose-800 flex items-center space-x-1 cursor-pointer"
+                        className="min-h-[44px] sm:min-h-[36px] px-2 font-semibold text-[#B91C1C] hover:underline flex items-center space-x-1 cursor-pointer"
                       >
                         <Square className="w-3.5 h-3.5" />
                         <span>সিলেকশন মুছুন</span>
@@ -552,15 +552,15 @@ export default function BarcodePrintModal({
                     )}
                   </div>
 
-                  <span className="font-black text-indigo-950">
+                  <span className="font-mono tabular-nums font-bold text-[#111111]">
                     নির্বাচিত: {Object.keys(selectedItems).length} টি পণ্য ({totalStickerCount} টি স্টিকার)
                   </span>
                 </div>
 
                 {/* পণ্য তালিকা স্ক্রোল এরিয়া */}
-                <div className="border border-slate-200 rounded-2xl overflow-hidden max-h-[340px] overflow-y-auto">
+                <div className="border border-neutral-200/80 rounded-lg overflow-hidden max-h-[340px] overflow-y-auto">
                   <table className="w-full text-left text-xs border-collapse">
-                    <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] sticky top-0 border-b border-slate-200 z-10">
+                    <thead className="bg-[#FAFAFA] text-[#525252] font-semibold uppercase text-[10px] sticky top-0 border-b border-neutral-200/80 z-10">
                       <tr>
                         <th className="py-2.5 px-3 w-10 text-center">সিলেক্ট</th>
                         <th className="py-2.5 px-3">পণ্যের বিবরণ</th>
@@ -569,36 +569,36 @@ export default function BarcodePrintModal({
                         <th className="py-2.5 px-3 text-center w-28">প্রিন্ট কপি</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-neutral-200/80 bg-white">
                       {filteredProducts.map(p => {
                         const isSelected = !!selectedItems[p.ProductID];
                         const currentQty = selectedItems[p.ProductID] || 10;
                         return (
                           <tr
                             key={p.ProductID}
-                            className={`transition-colors ${isSelected ? 'bg-indigo-50/50 font-bold' : 'hover:bg-slate-50'}`}
+                            className={`transition-colors ${isSelected ? 'bg-[#F5F5F5] font-semibold' : 'hover:bg-[#FAFAFA]'}`}
                           >
                             <td className="py-2.5 px-3 text-center">
                               <input
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={() => handleToggleBatchItem(p)}
-                                className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                className="w-4 h-4 rounded accent-[#0F172A] cursor-pointer"
                               />
                             </td>
 
                             <td className="py-2.5 px-3 cursor-pointer" onClick={() => handleToggleBatchItem(p)}>
-                              <div className="text-slate-900">{p.ProductName}</div>
-                              <div className="text-[10px] text-slate-400 font-mono">
+                              <div className="text-[#111111] font-medium">{p.ProductName}</div>
+                              <div className="text-[10px] text-[#737373] font-mono tabular-nums">
                                 বারকোড: {p.Barcode || 'নেই'} {p.SKU ? `| SKU: ${p.SKU}` : ''}
                               </div>
                             </td>
 
-                            <td className="py-2.5 px-3 text-right font-black text-slate-900">
+                            <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-[#111111]">
                               {currencySymbol}{Number(p.SellingPrice || 0).toFixed(2)}
                             </td>
 
-                            <td className="py-2.5 px-3 text-center text-slate-600">
+                            <td className="py-2.5 px-3 text-center font-mono tabular-nums text-[#525252]">
                               {p.StockQuantity || 0}
                             </td>
 
@@ -608,7 +608,7 @@ export default function BarcodePrintModal({
                                   <button
                                     type="button"
                                     onClick={() => handleBatchQuantityChange(p.ProductID, currentQty - 1)}
-                                    className="w-5 h-5 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700"
+                                    className="min-h-[44px] sm:min-h-[36px] w-7 rounded-md bg-[#F5F5F5] border border-neutral-200/80 hover:bg-neutral-200 flex items-center justify-center text-[#111111] cursor-pointer"
                                   >
                                     <Minus className="w-3 h-3" />
                                   </button>
@@ -618,18 +618,18 @@ export default function BarcodePrintModal({
                                     max="500"
                                     value={currentQty}
                                     onChange={(e) => handleBatchQuantityChange(p.ProductID, e.target.value)}
-                                    className="w-12 py-0.5 text-center bg-white border border-slate-300 rounded text-xs font-bold"
+                                    className="min-h-[44px] sm:min-h-[36px] w-12 py-0.5 text-center bg-white border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums font-bold text-[#111111]"
                                   />
                                   <button
                                     type="button"
                                     onClick={() => handleBatchQuantityChange(p.ProductID, currentQty + 1)}
-                                    className="w-5 h-5 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700"
+                                    className="min-h-[44px] sm:min-h-[36px] w-7 rounded-md bg-[#F5F5F5] border border-neutral-200/80 hover:bg-neutral-200 flex items-center justify-center text-[#111111] cursor-pointer"
                                   >
                                     <Plus className="w-3 h-3" />
                                   </button>
                                 </div>
                               ) : (
-                                <div className="text-center text-slate-400 text-[11px]">-</div>
+                                <div className="text-center text-[#737373] text-[11px]">-</div>
                               )}
                             </td>
                           </tr>
@@ -642,9 +642,9 @@ export default function BarcodePrintModal({
             )}
 
             {/* ফরম্যাট ও কাস্টমাইজেশন অ্যাকর্ডিয়ন */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-              <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
-                <Grid className="w-4 h-4 text-indigo-600" />
+            <div className="bg-[#FAFAFA] border border-neutral-200/80 rounded-lg p-4 space-y-3">
+              <label className="text-xs font-semibold text-[#111111] flex items-center space-x-1.5">
+                <Grid className="w-4 h-4 text-[#0F172A]" />
                 <span>প্রিন্টার পেপার সাইজ ফরম্যাট:</span>
               </label>
 
@@ -661,68 +661,68 @@ export default function BarcodePrintModal({
                       key={fmt.id}
                       type="button"
                       onClick={() => setFormat(fmt.id)}
-                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      className={`min-h-[44px] sm:min-h-[36px] p-2.5 rounded-md border text-left transition-colors cursor-pointer ${
                         isSelected
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                          : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300'
+                          ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                          : 'bg-white text-[#111111] border-neutral-200/80 hover:border-neutral-300'
                       }`}
                     >
-                      <div className="text-xs font-black">{fmt.label}</div>
-                      <div className={`text-[10px] ${isSelected ? 'text-indigo-100' : 'text-slate-500'}`}>{fmt.desc}</div>
+                      <div className="text-xs font-mono tabular-nums font-bold">{fmt.label}</div>
+                      <div className={`text-[10px] ${isSelected ? 'text-neutral-300' : 'text-[#525252]'}`}>{fmt.desc}</div>
                     </button>
                   );
                 })}
               </div>
 
               {/* টগল সেটিংস */}
-              <div className="pt-2 border-t border-slate-200 space-y-2">
+              <div className="pt-2 border-t border-neutral-200/80 space-y-2">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-600 block mb-1">দোকানের নাম (Header)</label>
+                  <label className="text-[11px] font-semibold text-[#525252] block mb-1">দোকানের নাম (Header)</label>
                   <input
                     type="text"
                     value={customStoreName}
                     onChange={(e) => setCustomStoreName(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold"
+                    className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md text-xs font-semibold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A]"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-semibold text-slate-700 pt-1">
-                  <label className="flex items-center space-x-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-medium text-[#111111] pt-1">
+                  <label className="min-h-[44px] sm:min-h-[36px] flex items-center space-x-2 bg-white px-2.5 py-2 rounded-md border border-neutral-200/80 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={showStoreName}
                       onChange={(e) => setShowStoreName(e.target.checked)}
-                      className="rounded text-indigo-600"
+                      className="rounded accent-[#0F172A]"
                     />
                     <span>দোকান নাম</span>
                   </label>
 
-                  <label className="flex items-center space-x-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer">
+                  <label className="min-h-[44px] sm:min-h-[36px] flex items-center space-x-2 bg-white px-2.5 py-2 rounded-md border border-neutral-200/80 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={showProductName}
                       onChange={(e) => setShowProductName(e.target.checked)}
-                      className="rounded text-indigo-600"
+                      className="rounded accent-[#0F172A]"
                     />
                     <span>পণ্যের নাম</span>
                   </label>
 
-                  <label className="flex items-center space-x-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer">
+                  <label className="min-h-[44px] sm:min-h-[36px] flex items-center space-x-2 bg-white px-2.5 py-2 rounded-md border border-neutral-200/80 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={showPrice}
                       onChange={(e) => setShowPrice(e.target.checked)}
-                      className="rounded text-indigo-600"
+                      className="rounded accent-[#0F172A]"
                     />
                     <span>মূল্য (MRP)</span>
                   </label>
 
-                  <label className="flex items-center space-x-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer">
+                  <label className="min-h-[44px] sm:min-h-[36px] flex items-center space-x-2 bg-white px-2.5 py-2 rounded-md border border-neutral-200/80 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={showCodeText}
                       onChange={(e) => setShowCodeText(e.target.checked)}
-                      className="rounded text-indigo-600"
+                      className="rounded accent-[#0F172A]"
                     />
                     <span>বারকোড সংখ্যা</span>
                   </label>
@@ -733,13 +733,13 @@ export default function BarcodePrintModal({
           </div>
 
           {/* ডান পাশ: রিয়েল-টাইম থার্মাল স্টিকার প্রিভিউ প্যানেল (৫ কলাম) */}
-          <div className="lg:col-span-5 bg-gradient-to-b from-slate-100 to-slate-200/80 border border-slate-300 rounded-3xl p-5 flex flex-col items-center justify-between min-h-[380px] shadow-inner space-y-4">
+          <div className="lg:col-span-5 bg-[#FAFAFA] border border-neutral-200/80 rounded-lg p-5 flex flex-col items-center justify-between min-h-[380px] space-y-4">
             
             <div className="w-full text-center">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#525252] block">
                 লাইভ স্টিকার প্রিভিউ (Live Preview)
               </span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">
+              <span className="text-[10px] text-[#737373] block mt-0.5">
                 কাগজে ঠিক যেমনটি প্রিন্ট হবে
               </span>
             </div>
@@ -761,18 +761,18 @@ export default function BarcodePrintModal({
                   isPrintVersion={false}
                 />
               ) : (
-                <div className="text-xs text-slate-400 py-10 text-center">
+                <div className="text-xs text-[#737373] py-10 text-center">
                   কোনো পণ্য পাওয়া যায়নি
                 </div>
               )}
             </div>
 
             {/* প্রিন্ট সারাংশ ও নির্দেশনা */}
-            <div className="w-full text-center space-y-1 bg-white/70 backdrop-blur-xs p-3 rounded-2xl border border-slate-200/80 text-xs">
-              <div className="font-black text-indigo-950">
+            <div className="w-full text-center space-y-1 bg-white p-3 rounded-lg border border-neutral-200/80 text-xs">
+              <div className="font-mono tabular-nums font-bold text-[#111111]">
                 মোট {totalStickerCount} টি স্টিকার প্রিন্ট হবে
               </div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[11px] text-[#525252]">
                 {format === 'a4-sheet' 
                   ? 'A4 পেপারের প্রতি শীটে ২৪টি করে লেবেল সাজানো থাকবে'
                   : 'থার্মাল প্রিন্টারে প্রতিটি স্টিকারের পর অটো-কাট / পেজ ব্রেক হবে'}
@@ -784,16 +784,16 @@ export default function BarcodePrintModal({
         </div>
 
         {/* ৪. ফুটার অ্যাকশন বার (নো-প্রিন্ট) */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
-          <div className="text-xs text-slate-500 hidden sm:block">
-            নির্বাচিত ফরম্যাট: <strong className="text-slate-800">{format}</strong>
+        <div className="px-6 py-4 bg-[#FAFAFA] border-t border-neutral-200/80 flex items-center justify-between shrink-0">
+          <div className="text-xs text-[#525252] hidden sm:block">
+            নির্বাচিত ফরম্যাট: <strong className="font-mono text-[#111111]">{format}</strong>
           </div>
 
           <div className="flex items-center space-x-3 w-full sm:w-auto justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] px-5 py-2 border border-neutral-200/80 bg-white text-[#525252] hover:text-[#111111] text-xs font-semibold rounded-md hover:bg-[#F5F5F5] transition-colors cursor-pointer"
             >
               বন্ধ করুন
             </button>
@@ -802,7 +802,7 @@ export default function BarcodePrintModal({
               type="button"
               onClick={handlePrint}
               disabled={totalStickerCount === 0}
-              className="px-7 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-800 hover:from-indigo-700 hover:to-indigo-900 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow-lg shadow-indigo-300 flex items-center space-x-2 transition-all cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] px-6 py-2 bg-[#0F172A] hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-semibold font-mono tabular-nums rounded-md flex items-center space-x-2 transition-colors cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span>{totalStickerCount} টি স্টিকার প্রিন্ট করুন</span>

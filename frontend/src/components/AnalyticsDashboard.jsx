@@ -106,11 +106,11 @@ export default function AnalyticsDashboard({
     return (
       <span
         onClick={() => setShowPinModal(true)}
-        className="inline-flex items-center space-x-1 cursor-pointer select-none text-slate-400 hover:text-indigo-600 transition-colors"
+        className="inline-flex items-center space-x-1 cursor-pointer select-none text-[#737373] hover:text-[#0F172A] transition-colors"
         title="লাভ বা কেনা দাম দেখতে অ্যাডমিন পিন দিয়ে আনলক করুন"
       >
         <span className="tracking-widest font-mono">••••••</span>
-        <Lock className="w-3 h-3 text-slate-400 inline" />
+        <Lock className="w-3 h-3 text-[#737373] inline" />
       </span>
     );
   };
@@ -1256,42 +1256,42 @@ export default function AnalyticsDashboard({
   if (!isOpen && !embedded) return null;
 
   return (
-    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 sm:py-5 animate-in fade-in duration-200"}>
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent" : "fixed inset-0 z-50 overflow-y-auto bg-neutral-900/40 flex items-center justify-center p-2 sm:p-4 sm:py-5"}>
       
       {/* প্রধান ড্যাশবোর্ড উইন্ডো (Screen Only - No Print) */}
-      <div className={embedded ? "bg-white rounded-xl border border-slate-200/90 w-full overflow-hidden flex flex-col flex-1 min-h-[calc(100vh-6.5rem)] no-print shadow-2xs" : "bg-white rounded-2xl border border-slate-200/90 max-w-7xl w-full overflow-hidden flex flex-col max-h-[94vh] shadow-xl no-print"}>
+      <div className={embedded ? "bg-white rounded-lg border border-neutral-200/80 w-full overflow-hidden flex flex-col flex-1 min-h-[calc(100vh-6.5rem)] no-print" : "bg-white rounded-lg border border-neutral-200/80 max-w-7xl w-full overflow-hidden flex flex-col max-h-[94vh] no-print"}>
         
         {/* ড্যাশবোর্ড হেডার ও দ্রুত অ্যাকশন বার */}
-        <div className="shrink-0 px-5 sm:px-6 py-3.5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 select-none">
+        <div className="shrink-0 px-5 sm:px-6 py-3.5 bg-[#FAFAFA] text-[#111111] flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200/80 select-none">
           <div className="flex items-center space-x-3 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700/80 text-indigo-400 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center shrink-0">
               <TrendingUp className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center space-x-2">
-                <h2 className="text-sm sm:text-base font-bold text-white tracking-tight truncate">
+                <h2 className="text-sm sm:text-base font-semibold text-[#111111] tracking-tight truncate">
                   Profit & Loss (P&L) Analytics
                 </h2>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-slate-300 border border-slate-700 shrink-0 font-mono">
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-white text-[#525252] border border-neutral-200/80 shrink-0 font-mono">
                   WAC Cost Model
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5 truncate">
+              <p className="text-xs text-[#525252] mt-0.5 truncate">
                 বিক্রয় ও ক্রয়মূল্যের ভিত্তিতে স্বচ্ছ লাভ-ক্ষতি, মার্জিন ও ক্যাশ রিকনসিলিয়েশন
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 shrink-0">
+          <div className="flex items-center space-x-2 shrink-0 flex-wrap gap-y-1">
             {/* ক্লাউড রিফ্রেশ বাটন */}
             {onRefreshSales && (
               <button
                 onClick={handleCloudSync}
                 disabled={isRefreshing}
                 title="গুগল শিট থেকে সর্বশেষ বিক্রয় ডাটা সিঙ্ক করুন"
-                className="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition-colors border border-slate-700 disabled:opacity-50 cursor-pointer"
+                className="flex items-center space-x-1.5 px-2.5 py-1.5 bg-white hover:bg-[#F5F5F5] text-[#111111] text-xs font-medium rounded-md transition-colors border border-neutral-200/80 disabled:opacity-50 cursor-pointer min-h-[44px] sm:min-h-[36px]"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#0F172A]' : ''}`} />
                 <span className="hidden sm:inline">{isRefreshing ? 'সিঙ্ক হচ্ছে...' : 'ক্লাউড সিঙ্ক'}</span>
               </button>
             )}
@@ -1301,9 +1301,9 @@ export default function AnalyticsDashboard({
               onClick={handleSaveMonthlyPnLToCloud}
               disabled={isArchivingCloud}
               title="এই সময়কালের P&L ব্যালেন্স শিট গুগল শিটে সংরক্ষণ করুন"
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition-colors border border-slate-700 disabled:opacity-50 cursor-pointer"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-[#F5F5F5] text-[#111111] text-xs font-medium rounded-md transition-colors border border-neutral-200/80 disabled:opacity-50 cursor-pointer min-h-[44px] sm:min-h-[36px]"
             >
-              <Save className="w-3.5 h-3.5 text-slate-300" />
+              <Save className="w-3.5 h-3.5 text-[#525252]" />
               <span className="hidden sm:inline">{isArchivingCloud ? 'সংরক্ষণ হচ্ছে...' : 'ব্যালেন্স শিট সেভ'}</span>
             </button>
 
@@ -1312,13 +1312,13 @@ export default function AnalyticsDashboard({
               <button
                 onClick={() => setShowPinModal(true)}
                 title={hasProfitAccess ? "প্রাইভেসি আনলক রয়েছে" : "লাভ ও কেনা দাম দেখতে অ্যাডমিন পিন দিন"}
-                className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border cursor-pointer ${
+                className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors border cursor-pointer min-h-[44px] sm:min-h-[36px] ${
                   hasProfitAccess
-                    ? 'bg-slate-800 text-emerald-400 border-slate-700 hover:bg-slate-700'
-                    : 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
+                    ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80 hover:bg-emerald-100'
+                    : 'bg-amber-50 text-[#B45309] border-amber-200/80 hover:bg-amber-100'
                 }`}
               >
-                {hasProfitAccess ? <Unlock className="w-3.5 h-3.5 text-emerald-400" /> : <Lock className="w-3.5 h-3.5 text-amber-300" />}
+                {hasProfitAccess ? <Unlock className="w-3.5 h-3.5 text-[#15803D]" /> : <Lock className="w-3.5 h-3.5 text-[#B45309]" />}
                 <span className="hidden sm:inline">{hasProfitAccess ? 'আনলকড' : 'প্রাইভেসি লক'}</span>
               </button>
             )}
@@ -1329,63 +1329,63 @@ export default function AnalyticsDashboard({
                 type="button"
                 onClick={() => setShowExportMenu(!showExportMenu)}
                 title="বিভিন্ন রিপোর্ট এক্সেল/CSV ফাইলে ডাউনলোড করুন"
-                className="flex items-center space-x-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition-colors border border-slate-700 cursor-pointer"
+                className="flex items-center space-x-1 px-2.5 py-1.5 bg-white hover:bg-[#F5F5F5] text-[#111111] text-xs font-medium rounded-md transition-colors border border-neutral-200/80 cursor-pointer min-h-[44px] sm:min-h-[36px]"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>এক্সপোর্ট</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
+                <ChevronDown className="w-3 h-3 text-[#737373]" />
               </button>
 
               {showExportMenu && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 divide-y divide-slate-100 text-slate-800 animate-in fade-in duration-100">
-                  <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg border border-neutral-200/80 py-1.5 z-50 divide-y divide-neutral-200/80 text-[#111111]">
+                  <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#737373]">
                     রিপোর্ট নির্বাচন
                   </div>
                   <button
                     type="button"
                     onClick={handleExportCSV}
-                    className="w-full px-3.5 py-2 text-left hover:bg-slate-50 text-xs font-medium flex items-center space-x-2 text-slate-800 transition-colors"
+                    className="w-full px-3.5 py-2 text-left hover:bg-[#F5F5F5] text-xs font-medium flex items-center space-x-2 text-[#111111] transition-colors min-h-[44px] sm:min-h-[36px]"
                   >
-                    <FileText className="w-4 h-4 text-slate-600 shrink-0" />
+                    <FileText className="w-4 h-4 text-[#525252] shrink-0" />
                     <div>
                       <span className="block font-semibold">পূর্ণাঙ্গ P&L ফাইন্যান্সিয়াল CSV</span>
-                      <span className="text-[10px] text-slate-400 font-normal">আয়, ব্যয়, মার্জিন ও পণ্যভিত্তিক লাভ</span>
+                      <span className="text-[10px] text-[#737373] font-normal">আয়, ব্যয়, মার্জিন ও পণ্যভিত্তিক লাভ</span>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleExportSalesCSV}
-                    className="w-full px-3.5 py-2 text-left hover:bg-slate-50 text-xs font-medium flex items-center space-x-2 text-slate-800 transition-colors"
+                    className="w-full px-3.5 py-2 text-left hover:bg-[#F5F5F5] text-xs font-medium flex items-center space-x-2 text-[#111111] transition-colors min-h-[44px] sm:min-h-[36px]"
                   >
-                    <CreditCard className="w-4 h-4 text-slate-600 shrink-0" />
+                    <CreditCard className="w-4 h-4 text-[#525252] shrink-0" />
                     <div>
                       <span className="block font-semibold">ইনভয়েস বিক্রয় বিবরণী CSV</span>
-                      <span className="text-[10px] text-slate-400 font-normal">সকল মেমো, ছাড়, ভ্যাট ও পেমেন্ট</span>
+                      <span className="text-[10px] text-[#737373] font-normal">সকল মেমো, ছাড়, ভ্যাট ও পেমেন্ট</span>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleExportDeadStockCSV}
-                    className="w-full px-3.5 py-2 text-left hover:bg-slate-50 text-xs font-medium flex items-center space-x-2 text-slate-800 transition-colors"
+                    className="w-full px-3.5 py-2 text-left hover:bg-[#F5F5F5] text-xs font-medium flex items-center space-x-2 text-[#111111] transition-colors min-h-[44px] sm:min-h-[36px]"
                   >
-                    <AlertTriangle className="w-4 h-4 text-slate-600 shrink-0" />
+                    <AlertTriangle className="w-4 h-4 text-[#525252] shrink-0" />
                     <div>
                       <span className="block font-semibold">অচল ও ডেড স্টক ইনভেন্টরি CSV</span>
-                      <span className="text-[10px] text-slate-400 font-normal">আটকে থাকা মূলধন ও অবিক্রিত দিন</span>
+                      <span className="text-[10px] text-[#737373] font-normal">আটকে থাকা মূলধন ও অবিক্রিত দিন</span>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleExportCustomerDueCSV}
-                    className="w-full px-3.5 py-2 text-left hover:bg-slate-50 text-xs font-medium flex items-center space-x-2 text-slate-800 transition-colors"
+                    className="w-full px-3.5 py-2 text-left hover:bg-[#F5F5F5] text-xs font-medium flex items-center space-x-2 text-[#111111] transition-colors min-h-[44px] sm:min-h-[36px]"
                   >
-                    <Coins className="w-4 h-4 text-slate-600 shrink-0" />
+                    <Coins className="w-4 h-4 text-[#525252] shrink-0" />
                     <div>
                       <span className="block font-semibold">গ্রাহক বাকি খাতা ও লেজার CSV</span>
-                      <span className="text-[10px] text-slate-400 font-normal">বর্তমান বকেয়া ও কাস্টমার তালিকা</span>
+                      <span className="text-[10px] text-[#737373] font-normal">বর্তমান বকেয়া ও কাস্টমার তালিকা</span>
                     </div>
                   </button>
                 </div>
@@ -1396,7 +1396,7 @@ export default function AnalyticsDashboard({
             <button
               onClick={handlePrint}
               title="প্রফেশনাল P&L বিবরণী প্রিন্ট করুন"
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs cursor-pointer"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium rounded-md transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px]"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>প্রিন্ট</span>
@@ -1405,11 +1405,11 @@ export default function AnalyticsDashboard({
             {/* ক্লোজ / ব্যাক বাটন */}
             <button
               onClick={onClose}
-              className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors border border-slate-700/80 cursor-pointer ml-1"
+              className="flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] rounded-md bg-white hover:bg-[#F5F5F5] text-[#737373] hover:text-[#111111] transition-colors border border-neutral-200/80 cursor-pointer ml-1"
               title={embedded ? "ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
             >
               {embedded ? (
-                <span className="text-sm font-bold">←</span>
+                <span className="text-sm font-semibold">←</span>
               ) : (
                 <X className="w-4 h-4" />
               )}
@@ -1418,19 +1418,19 @@ export default function AnalyticsDashboard({
         </div>
 
         {/* ফিল্টার ও সময়সীমা কন্ট্রোল বার (Clean Executive Toolbar) */}
-        <div className="shrink-0 px-5 sm:px-6 py-2.5 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+        <div className="shrink-0 px-5 sm:px-6 py-2.5 bg-white border-b border-neutral-200/80 flex flex-wrap items-center justify-between gap-2.5 text-xs">
           
           <div className="flex flex-wrap items-center gap-2">
             {/* মোড সুইচ: খাতা-কলমে বনাম নগদ লাভ (Segmented Pill Switch) */}
-            <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200/80">
+            <div className="inline-flex items-center p-1 bg-[#F5F5F5] rounded-md border border-neutral-200/80 gap-1">
               <button
                 type="button"
                 onClick={() => setAccountingMode('accrual')}
                 title="চালান ও বিক্রির ভিত্তিতে লাভ-ক্ষতি হিসাব (Accrual Accounting)"
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer min-h-[36px] ${
                   accountingMode === 'accrual'
-                    ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold'
+                    : 'text-[#525252] hover:text-[#111111] border border-transparent'
                 }`}
               >
                 খাতা-কলমে (Accrual)
@@ -1439,10 +1439,10 @@ export default function AnalyticsDashboard({
                 type="button"
                 onClick={() => setAccountingMode('cash')}
                 title="হাতে প্রাপ্ত প্রকৃত নগদ ক্যাশের ভিত্তিতে আসল লাভ-ক্ষতি হিসাব (Cash Basis)"
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer min-h-[36px] ${
                   accountingMode === 'cash'
-                    ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold'
+                    : 'text-[#525252] hover:text-[#111111] border border-transparent'
                 }`}
               >
                 নগদ লাভ (Cash-Basis)
@@ -1450,7 +1450,7 @@ export default function AnalyticsDashboard({
             </div>
 
             {/* ওমনিচ্যানেল চ্যানেল ফিল্টার সুইচ */}
-            <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200/80">
+            <div className="inline-flex items-center p-1 bg-[#F5F5F5] rounded-md border border-neutral-200/80 gap-1">
               {[
                 { id: 'all', label: 'সকল চ্যানেল' },
                 { id: 'offline', label: 'ইন-স্টোর' },
@@ -1459,10 +1459,10 @@ export default function AnalyticsDashboard({
                 <button
                   key={c.id}
                   onClick={() => setChannelFilter(c.id)}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer min-h-[36px] ${
                     channelFilter === c.id
-                      ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold'
+                      : 'text-[#525252] hover:text-[#111111] border border-transparent'
                   }`}
                 >
                   {c.label}
@@ -1471,12 +1471,12 @@ export default function AnalyticsDashboard({
             </div>
 
             {/* সময়সীমা নির্বাচন ড্রপডাউন */}
-            <div className="inline-flex items-center bg-slate-100 rounded-lg border border-slate-200/80 p-0.5">
-              <Calendar className="w-3.5 h-3.5 text-slate-500 ml-2 shrink-0" />
+            <div className="inline-flex items-center bg-[#F5F5F5] rounded-md border border-neutral-200/80 p-0.5 min-h-[44px] sm:min-h-[36px]">
+              <Calendar className="w-3.5 h-3.5 text-[#525252] ml-2 shrink-0" />
               <select
                 value={filterRange}
                 onChange={(e) => setFilterRange(e.target.value)}
-                className="bg-transparent text-xs font-medium text-slate-700 py-1 pl-1.5 pr-6 rounded-md focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs font-medium text-[#111111] py-1 pl-1.5 pr-6 rounded-md focus:outline-none cursor-pointer"
               >
                 <option value="today">আজ (Today)</option>
                 <option value="yesterday">গতকাল (Yesterday)</option>
@@ -1491,19 +1491,19 @@ export default function AnalyticsDashboard({
 
             {/* কাস্টম তারিখ নির্বাচন বার */}
             {filterRange === 'custom' && (
-              <div className="flex items-center space-x-1.5 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200 text-xs animate-in fade-in duration-150">
+              <div className="flex items-center space-x-1.5 bg-[#FAFAFA] px-2 py-0.5 rounded-md border border-neutral-200/80 text-xs">
                 <input
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="bg-white border border-slate-200 rounded px-1.5 py-0.5 text-xs text-slate-700 focus:outline-none"
+                  className="bg-white border border-neutral-200/80 rounded-md px-1.5 py-1 text-xs font-mono tabular-nums text-[#111111] focus:outline-none focus:border-[#0F172A]"
                 />
-                <span className="text-slate-400 text-[11px]">–</span>
+                <span className="text-[#737373] text-[11px]">–</span>
                 <input
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="bg-white border border-slate-200 rounded px-1.5 py-0.5 text-xs text-slate-700 focus:outline-none"
+                  className="bg-white border border-neutral-200/80 rounded-md px-1.5 py-1 text-xs font-mono tabular-nums text-[#111111] focus:outline-none focus:border-[#0F172A]"
                 />
               </div>
             )}
@@ -1514,50 +1514,50 @@ export default function AnalyticsDashboard({
             <button
               type="button"
               onClick={() => setShowDeductionsMenu(!showDeductionsMenu)}
-              className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+              className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px] ${
                 showDeductionsMenu || (!includePayroll || !includeReturns || !includeWastage)
-                  ? 'bg-slate-100 border-slate-300 text-slate-900 font-semibold'
-                  : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'bg-[#F5F5F5] border-neutral-300 text-[#111111] font-semibold'
+                  : 'bg-white border-neutral-200/80 text-[#525252] hover:text-[#111111] hover:bg-[#F5F5F5]'
               }`}
               title="পরিচালন ব্যয়, বেতন ও অপচয় সমন্বয় সেটিংস"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#525252]" />
               <span>ব্যয় সমন্বয়</span>
               {(!includePayroll || !includeReturns || !includeWastage) && (
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#B45309] inline-block"></span>
               )}
-              <ChevronDown className="w-3 h-3 text-slate-400" />
+              <ChevronDown className="w-3 h-3 text-[#737373]" />
             </button>
 
             {showDeductionsMenu && (
-              <div className="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-40 space-y-2.5 text-xs text-slate-700 animate-in fade-in duration-100">
-                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">
+              <div className="absolute right-0 mt-2 w-60 bg-white rounded-lg border border-neutral-200/80 p-3 z-40 space-y-2.5 text-xs text-[#525252]">
+                <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider pb-1 border-b border-neutral-200/80">
                   পরিচালন ব্যয় সমন্বয়
                 </div>
-                <label className="flex items-center space-x-2 cursor-pointer hover:text-slate-900 select-none">
+                <label className="flex items-center space-x-2 cursor-pointer hover:text-[#111111] select-none min-h-[32px]">
                   <input
                     type="checkbox"
                     checked={includePayroll}
                     onChange={(e) => setIncludePayroll(e.target.checked)}
-                    className="rounded border-slate-300 text-indigo-600 focus:ring-0 cursor-pointer"
+                    className="rounded border-neutral-300 text-[#0F172A] focus:ring-0 cursor-pointer"
                   />
                   <span>স্টাফদের বেতন ও বিক্রয় কমিশন</span>
                 </label>
-                <label className="flex items-center space-x-2 cursor-pointer hover:text-slate-900 select-none">
+                <label className="flex items-center space-x-2 cursor-pointer hover:text-[#111111] select-none min-h-[32px]">
                   <input
                     type="checkbox"
                     checked={includeReturns}
                     onChange={(e) => setIncludeReturns(e.target.checked)}
-                    className="rounded border-slate-300 text-indigo-600 focus:ring-0 cursor-pointer"
+                    className="rounded border-neutral-300 text-[#0F172A] focus:ring-0 cursor-pointer"
                   />
                   <span>সেলস রিটার্ন ও রিফান্ড কর্তন</span>
                 </label>
-                <label className="flex items-center space-x-2 cursor-pointer hover:text-slate-900 select-none">
+                <label className="flex items-center space-x-2 cursor-pointer hover:text-[#111111] select-none min-h-[32px]">
                   <input
                     type="checkbox"
                     checked={includeWastage}
                     onChange={(e) => setIncludeWastage(e.target.checked)}
-                    className="rounded border-slate-300 text-indigo-600 focus:ring-0 cursor-pointer"
+                    className="rounded border-neutral-300 text-[#0F172A] focus:ring-0 cursor-pointer"
                   />
                   <span>থান ছাঁট ও গোডাউন অপচয় ক্ষতি</span>
                 </label>
@@ -1568,19 +1568,19 @@ export default function AnalyticsDashboard({
         </div>
 
         {/* সমন্বিত নগদ ও ব্যাংক তারল্য ওভারভিউ কার্ড (Unified Liquidity Card) */}
-        <div className="mx-5 sm:mx-6 mt-3.5 p-3.5 bg-slate-50/90 rounded-xl border border-slate-200/90 flex flex-wrap items-center justify-between gap-4">
+        <div className="mx-5 sm:mx-6 mt-3.5 p-3.5 bg-[#FAFAFA] rounded-lg border border-neutral-200/80 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-800 flex items-center justify-center shrink-0">
-              <Coins className="w-4 h-4 text-emerald-600" />
+            <div className="w-8 h-8 rounded-md bg-white border border-neutral-200/80 text-[#111111] flex items-center justify-center shrink-0">
+              <Coins className="w-4 h-4 text-[#15803D]" />
             </div>
             <div>
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center space-x-1.5">
+              <div className="text-[11px] font-semibold text-[#525252] uppercase tracking-wider flex items-center space-x-1.5">
                 <span>মোট তরল মূলধন ও তারল্য স্থিতি (Unified Liquid Capital)</span>
                 {activeRegister && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" title="ক্যাশ ড্রয়ার ওপেন" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#15803D] inline-block" title="ক্যাশ ড্রয়ার ওপেন" />
                 )}
               </div>
-              <div className="text-base sm:text-lg font-bold font-mono text-slate-900 tabular-nums">
+              <div className="text-base sm:text-lg font-semibold font-mono text-[#111111] tabular-nums">
                 {currencySymbol}{liquidAssets.totalLiquid.toLocaleString('bn-BD')}
               </div>
             </div>
@@ -1588,15 +1588,15 @@ export default function AnalyticsDashboard({
 
           <div className="flex items-center space-x-6 text-xs">
             <div>
-              <span className="text-slate-400 block text-[10px] font-medium">কাউন্টার ক্যাশ ড্রয়ার (Cash in Hand)</span>
-              <span className="font-mono font-bold text-slate-700">
+              <span className="text-[#737373] block text-[10px] font-medium">কাউন্টার ক্যাশ ড্রয়ার (Cash in Hand)</span>
+              <span className="font-mono tabular-nums font-semibold text-[#111111]">
                 {currencySymbol}{liquidAssets.cashInHand.toLocaleString('bn-BD')}
               </span>
             </div>
-            <div className="h-6 w-px bg-slate-200" />
+            <div className="h-6 w-px bg-neutral-200/80" />
             <div>
-              <span className="text-slate-400 block text-[10px] font-medium">ব্যাংক ও MFS ব্যালেন্স ({bankAccounts.length}টি অ্যাকাউন্ট)</span>
-              <span className="font-mono font-bold text-slate-700">
+              <span className="text-[#737373] block text-[10px] font-medium font-mono tabular-nums">ব্যাংক ও MFS ব্যালেন্স ({bankAccounts.length}টি অ্যাকাউন্ট)</span>
+              <span className="font-mono tabular-nums font-semibold text-[#111111]">
                 {currencySymbol}{liquidAssets.totalBank.toLocaleString('bn-BD')}
               </span>
             </div>
@@ -1608,40 +1608,40 @@ export default function AnalyticsDashboard({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             
             {/* KPI ১: মোট বিক্রয় / ক্যাশ সংগ্রহ (Revenue / Inflow) */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors flex flex-col justify-between">
-              <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <div className="bg-white p-4 rounded-lg border border-neutral-200/80 hover:border-neutral-300 transition-colors flex flex-col justify-between">
+              <div className="flex items-center justify-between text-[#525252] text-xs font-medium">
                 <span>{accountingMode === 'cash' ? 'নগদ ক্যাশ সংগ্রহ' : 'মোট নিট রাজস্ব'}</span>
-                <Coins className="w-4 h-4 text-slate-400" />
+                <Coins className="w-4 h-4 text-[#737373]" />
               </div>
               <div className="my-1.5 flex items-baseline justify-between flex-wrap gap-1">
-                <span className="text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-900 tracking-tight">
+                <span className="text-xl sm:text-2xl font-semibold font-mono tabular-nums text-[#111111] tracking-tight">
                   {currencySymbol}{(accountingMode === 'cash' ? analyticsKPI.totalCashInflow : analyticsKPI.netSales).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-500">
+              <div className="flex items-center justify-between text-[11px] text-[#525252] font-mono tabular-nums">
                 {analyticsKPI.revenueGrowthPct !== null ? (
-                  <span className={analyticsKPI.revenueGrowthPct >= 0 ? 'text-emerald-700 font-semibold' : 'text-rose-600 font-semibold'}>
+                  <span className={analyticsKPI.revenueGrowthPct >= 0 ? 'text-[#15803D] font-semibold' : 'text-[#B91C1C] font-semibold'}>
                     {analyticsKPI.revenueGrowthPct >= 0 ? '▲ +' : '▼ '}{analyticsKPI.revenueGrowthPct}% পূর্ববর্তী
                   </span>
                 ) : (
                   <span>ছাড়: {currencySymbol}{analyticsKPI.totalDiscount.toFixed(0)}</span>
                 )}
-                <span className="text-slate-400">রিটার্ন {currencySymbol}{analyticsKPI.periodRefundAmount.toFixed(0)}</span>
+                <span className="text-[#737373]">রিটার্ন {currencySymbol}{analyticsKPI.periodRefundAmount.toFixed(0)}</span>
               </div>
             </div>
 
             {/* KPI ২: বিক্রিত পণ্যের ক্রয়মূল্য (COGS) */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors flex flex-col justify-between">
-              <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <div className="bg-white p-4 rounded-lg border border-neutral-200/80 hover:border-neutral-300 transition-colors flex flex-col justify-between">
+              <div className="flex items-center justify-between text-[#525252] text-xs font-medium">
                 <span>ক্রয় খরচ (COGS)</span>
-                <Package className="w-4 h-4 text-slate-400" />
+                <Package className="w-4 h-4 text-[#737373]" />
               </div>
-              <div className="my-1.5 text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-900 tracking-tight">
+              <div className="my-1.5 text-xl sm:text-2xl font-semibold font-mono tabular-nums text-[#111111] tracking-tight">
                 {renderMaskedValue(analyticsKPI.totalCOGS)}
               </div>
-              <div className="text-[11px] text-slate-500 flex items-center justify-between">
+              <div className="text-[11px] text-[#525252] flex items-center justify-between">
                 <span>গড় ক্রয়মূল্য (WAC)</span>
-                {!hasProfitAccess && <span className="text-amber-600 font-medium">লকড</span>}
+                {!hasProfitAccess && <span className="text-[#B45309] font-medium">লকড</span>}
               </div>
             </div>
 
@@ -1650,27 +1650,27 @@ export default function AnalyticsDashboard({
               const activeProfitVal = accountingMode === 'cash' ? analyticsKPI.effectiveRealizedCashProfit : analyticsKPI.trueNetProfit;
               const isProfitPositive = activeProfitVal >= 0;
               return (
-                <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80 hover:border-neutral-300 transition-colors flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-[#525252] text-xs font-medium">
                     <span>{accountingMode === 'cash' ? 'আসল নগদ মুনাফা' : 'প্রকৃত নিট মুনাফা'}</span>
-                    <div className={`w-2 h-2 rounded-full ${isProfitPositive ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                    <div className={`w-2 h-2 rounded-full ${isProfitPositive ? 'bg-[#15803D]' : 'bg-[#B91C1C]'}`} />
                   </div>
                   <div className={`my-1.5 flex items-baseline justify-between flex-wrap gap-1 ${
-                    isProfitPositive ? 'text-emerald-700' : 'text-rose-600'
+                    isProfitPositive ? 'text-[#15803D]' : 'text-[#B91C1C]'
                   }`}>
-                    <span className="text-xl sm:text-2xl font-bold font-mono tabular-nums tracking-tight">
+                    <span className="text-xl sm:text-2xl font-semibold font-mono tabular-nums tracking-tight">
                       {isProfitPositive ? '+' : ''}{renderMaskedValue(activeProfitVal)}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-500 flex items-center justify-between">
+                  <div className="text-[11px] text-[#525252] flex items-center justify-between font-mono tabular-nums">
                     {analyticsKPI.profitGrowthPct !== null && hasProfitAccess ? (
-                      <span className={analyticsKPI.profitGrowthPct >= 0 ? 'text-emerald-700 font-semibold' : 'text-rose-600 font-semibold'}>
+                      <span className={analyticsKPI.profitGrowthPct >= 0 ? 'text-[#15803D] font-semibold' : 'text-[#B91C1C] font-semibold'}>
                         {analyticsKPI.profitGrowthPct >= 0 ? '▲ +' : '▼ '}{analyticsKPI.profitGrowthPct}%
                       </span>
                     ) : (
                       <span>{isProfitPositive ? 'লাভজনক' : 'ঘাটতি'}</span>
                     )}
-                    <span className="font-semibold text-slate-700">
+                    <span className="font-semibold text-[#111111]">
                       মার্জিন {hasProfitAccess ? `${analyticsKPI.profitMarginPercent}%` : '•••'}
                     </span>
                   </div>
@@ -1679,35 +1679,35 @@ export default function AnalyticsDashboard({
             })()}
 
             {/* KPI ৪: মুনাফার মার্জিন (Profit Margin %) */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors flex flex-col justify-between">
-              <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <div className="bg-white p-4 rounded-lg border border-neutral-200/80 hover:border-neutral-300 transition-colors flex flex-col justify-between">
+              <div className="flex items-center justify-between text-[#525252] text-xs font-medium">
                 <span>মুনাফার মার্জিন %</span>
-                <Percent className="w-4 h-4 text-slate-400" />
+                <Percent className="w-4 h-4 text-[#737373]" />
               </div>
-              <div className="my-1.5 text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-900 tracking-tight">
+              <div className="my-1.5 text-xl sm:text-2xl font-semibold font-mono tabular-nums text-[#111111] tracking-tight">
                 {hasProfitAccess ? `${analyticsKPI.profitMarginPercent}%` : renderMaskedValue(analyticsKPI.profitMarginPercent, false)}
               </div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[11px] text-[#525252]">
                 মোট নিট রাজস্বের ওপর অনুপাত
               </div>
             </div>
 
             {/* KPI ৫: ব্রেক-ইভেন টার্গেট (Break-Even Point) */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors flex flex-col justify-between col-span-2 sm:col-span-1">
-              <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <div className="bg-white p-4 rounded-lg border border-neutral-200/80 hover:border-neutral-300 transition-colors flex flex-col justify-between col-span-2 sm:col-span-1">
+              <div className="flex items-center justify-between text-[#525252] text-xs font-medium">
                 <span>ব্রেক-ইভেন টার্গেট</span>
-                <Target className="w-4 h-4 text-slate-400" />
+                <Target className="w-4 h-4 text-[#737373]" />
               </div>
               <div className="my-1.5 flex items-baseline justify-between flex-wrap gap-1">
-                <span className="text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-900 tracking-tight">
+                <span className="text-xl sm:text-2xl font-semibold font-mono tabular-nums text-[#111111] tracking-tight">
                   {currencySymbol}{analyticsKPI.breakEvenSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                 </span>
               </div>
-              <div className="text-[11px] flex items-center justify-between">
-                <span className={analyticsKPI.isAboveBreakEven ? 'text-emerald-700 font-semibold' : 'text-amber-700 font-semibold'}>
+              <div className="text-[11px] flex items-center justify-between font-mono tabular-nums">
+                <span className={analyticsKPI.isAboveBreakEven ? 'text-[#15803D] font-semibold' : 'text-[#B45309] font-semibold'}>
                   {analyticsKPI.breakEvenProgress}% অর্জিত ({analyticsKPI.isAboveBreakEven ? 'নিরাপদ' : 'ঘাটতি'})
                 </span>
-                <span className="text-slate-400">গড় {currencySymbol}{analyticsKPI.averageOrderValue.toFixed(0)}</span>
+                <span className="text-[#737373]">গড় {currencySymbol}{analyticsKPI.averageOrderValue.toFixed(0)}</span>
               </div>
             </div>
 
@@ -1715,7 +1715,7 @@ export default function AnalyticsDashboard({
         </div>
 
         {/* ন্যাভিগেশন ট্যাব বার (Clean Minimal Tab Bar) */}
-        <div className="shrink-0 px-5 sm:px-6 border-b border-slate-200 bg-white">
+        <div className="shrink-0 px-5 sm:px-6 border-b border-neutral-200/80 bg-white">
           <div className="flex space-x-2 sm:space-x-4 overflow-x-auto text-xs font-medium no-scrollbar">
             {[
               { id: 'overview', label: 'ওভারভিউ ও ট্রেন্ডস', icon: BarChart3 },
@@ -1731,17 +1731,17 @@ export default function AnalyticsDashboard({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-1.5 py-2.5 px-2 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                  className={`flex items-center space-x-1.5 py-2.5 px-2 border-b-2 whitespace-nowrap transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px] ${
                     isActive
-                      ? 'border-indigo-600 text-indigo-600 font-semibold'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'border-[#0F172A] text-[#111111] font-semibold'
+                      : 'border-transparent text-[#525252] hover:text-[#111111]'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
                   <span>{tab.label}</span>
                   {tab.count !== undefined && (
-                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                      isActive ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'bg-slate-100 text-slate-600'
+                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono tabular-nums ${
+                      isActive ? 'bg-[#0F172A] text-white font-semibold' : 'bg-[#F5F5F5] text-[#525252] border border-neutral-200/80'
                     }`}>
                       {tab.count}
                     </span>
@@ -1753,7 +1753,7 @@ export default function AnalyticsDashboard({
         </div>
 
         {/* মূল কনটেন্ট এরিয়া (ট্যাব অনুযায়ী রেন্ডারিং) */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-slate-50/50">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-[#FAFAFA]">
 
           {/* ============================================================== */}
           {/* ট্যাব ১: ওভারভিউ ও ভিজ্যুয়াল ট্রেন্ড চার্ট */}
@@ -1762,29 +1762,29 @@ export default function AnalyticsDashboard({
             <div className="space-y-4">
               
               {/* ক্যাশ ও বকেয়া মুনাফা সমন্বয় (Cash Flow & Accrual Reconciliation) */}
-              <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-neutral-200/80">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
-                      <Coins className="w-4 h-4 text-slate-600" />
+                    <div className="w-8 h-8 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center font-semibold">
+                      <Coins className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+                      <h3 className="text-sm font-semibold text-[#111111] tracking-tight">
                         ক্যাশ ও বকেয়া মুনাফা সমন্বয় (Cash Flow & Accrual Reconciliation)
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-[#525252] mt-0.5">
                         চালান অনুযায়ী মোট লাভ বনাম সংগৃহীত নগদ এবং বকেয়ার বর্তমান অবস্থান
                       </p>
                     </div>
                   </div>
 
                   {/* সার্বিক কাস্টমার বকেয়া সারাংশ */}
-                  <div className="flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
-                    <span className="text-slate-500">সার্বিক মার্কেট বকেয়া:</span>
-                    <span className="font-bold text-amber-700 font-mono tabular-nums">
+                  <div className="flex items-center space-x-2 bg-[#FAFAFA] px-3 py-1.5 rounded-md border border-neutral-200/80 text-xs">
+                    <span className="text-[#525252]">সার্বিক মার্কেট বকেয়া:</span>
+                    <span className="font-semibold text-[#B45309] font-mono tabular-nums">
                       {currencySymbol}{analyticsKPI.totalMarketDue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                     </span>
-                    <span className="text-[11px] text-slate-400">({analyticsKPI.dueCustomersCount} জন গ্রাহক)</span>
+                    <span className="text-[11px] text-[#737373] font-mono tabular-nums">({analyticsKPI.dueCustomersCount} জন গ্রাহক)</span>
                   </div>
                 </div>
 
@@ -1792,43 +1792,43 @@ export default function AnalyticsDashboard({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   
                   {/* কার্ড ১: খাতা-কলমে মোট লাভ (Booked Accrual Profit) */}
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 flex flex-col justify-between">
-                    <div className="flex items-center justify-between text-xs text-slate-600 font-semibold">
+                  <div className="bg-[#FAFAFA] p-4 rounded-lg border border-neutral-200/80 flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs text-[#525252] font-medium">
                       <span>১. খাতা-কলমে মোট লাভ</span>
-                      <span className="text-[11px] font-mono font-medium text-slate-500">Booked Profit</span>
+                      <span className="text-[11px] font-mono font-medium text-[#737373]">Booked Profit</span>
                     </div>
-                    <div className="my-2 text-xl font-bold text-slate-900 font-mono tabular-nums tracking-tight">
+                    <div className="my-2 text-xl font-semibold text-[#111111] font-mono tabular-nums tracking-tight">
                       {analyticsKPI.bookedProfit >= 0 ? '+' : ''}{currencySymbol}{analyticsKPI.bookedProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                     </div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="text-[11px] text-[#525252] font-mono tabular-nums">
                       মোট বিক্রয় {currencySymbol}{analyticsKPI.netSales.toFixed(0)} - কেনা খরচ {currencySymbol}{analyticsKPI.totalCOGS.toFixed(0)}
                     </div>
                   </div>
 
                   {/* কার্ড ২: হাতে আসা আসল নগদ লাভ (Realized Cash Profit) */}
-                  <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-200/80 flex flex-col justify-between">
-                    <div className="flex items-center justify-between text-xs text-emerald-900 font-semibold">
+                  <div className="bg-emerald-50/50 p-4 rounded-lg border border-emerald-200/80 flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs text-[#15803D] font-medium">
                       <span>২. সংগৃহীত নগদ লাভ</span>
-                      <span className="text-[11px] font-mono font-medium text-emerald-700">Realized Cash</span>
+                      <span className="text-[11px] font-mono font-medium text-[#15803D]">Realized Cash</span>
                     </div>
-                    <div className={`my-2 text-xl font-bold font-mono tabular-nums tracking-tight ${analyticsKPI.realizedCashProfit >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+                    <div className={`my-2 text-xl font-semibold font-mono tabular-nums tracking-tight ${analyticsKPI.realizedCashProfit >= 0 ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
                       {analyticsKPI.realizedCashProfit >= 0 ? '+' : ''}{currencySymbol}{analyticsKPI.realizedCashProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                     </div>
-                    <div className="text-[11px] text-emerald-800/80">
+                    <div className="text-[11px] text-[#15803D] font-mono tabular-nums">
                       আদায়কৃত ক্যাশ {currencySymbol}{analyticsKPI.totalCashInflow.toFixed(0)} - কেনা খরচ {currencySymbol}{analyticsKPI.totalCOGS.toFixed(0)}
                     </div>
                   </div>
 
                   {/* কার্ড ৩: বকেয়া মুনাফা ও ঝুঁকি (Unrealized Due Profit) */}
-                  <div className="bg-amber-50/40 p-4 rounded-xl border border-amber-200/80 flex flex-col justify-between">
-                    <div className="flex items-center justify-between text-xs text-amber-900 font-semibold">
+                  <div className="bg-amber-50/50 p-4 rounded-lg border border-amber-200/80 flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs text-[#B45309] font-medium">
                       <span>৩. বকেয়া মুনাফা ও ঝুঁকি</span>
-                      <span className="text-[11px] font-mono font-medium text-amber-700">Unrealized Due</span>
+                      <span className="text-[11px] font-mono font-medium text-[#B45309]">Unrealized Due</span>
                     </div>
-                    <div className="my-2 text-xl font-bold text-amber-800 font-mono tabular-nums tracking-tight">
+                    <div className="my-2 text-xl font-semibold text-[#B45309] font-mono tabular-nums tracking-tight">
                       {currencySymbol}{analyticsKPI.unrealizedDueProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                     </div>
-                    <div className="text-[11px] text-amber-800/80">
+                    <div className="text-[11px] text-[#B45309]">
                       গ্রাহকের নিকট বাকি (আদায় সাপেক্ষে ক্যাশ লাভে রূপান্তর)
                     </div>
                   </div>
@@ -1837,25 +1837,25 @@ export default function AnalyticsDashboard({
 
                 {/* প্রগ্রেস বার: কত শতাংশ মুনাফা ক্যাশে কনভার্ট হয়েছে */}
                 <div className="pt-1 space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-medium text-slate-600">
+                  <div className="flex items-center justify-between text-xs font-medium text-[#525252]">
                     <span className="flex items-center space-x-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                      <span className="w-2 h-2 rounded-full bg-[#15803D] inline-block"></span>
                       <span>নগদ লাভ রিয়ালাইজেশন হার:</span>
-                      <strong className="text-emerald-700 font-bold font-mono">{analyticsKPI.realizationRate}%</strong>
+                      <strong className="text-[#15803D] font-semibold font-mono tabular-nums">{analyticsKPI.realizationRate}%</strong>
                     </span>
-                    <span className="text-[11px] text-slate-500">
-                      সময়কালে বকেয়া আদায়: <strong className="text-slate-800 font-mono font-bold">{currencySymbol}{analyticsKPI.periodCollectedDues.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</strong>
+                    <span className="text-[11px] text-[#525252]">
+                      সময়কালে বকেয়া আদায়: <strong className="text-[#111111] font-mono tabular-nums font-semibold">{currencySymbol}{analyticsKPI.periodCollectedDues.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</strong>
                     </span>
                   </div>
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex">
+                  <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden flex">
                     <div
                       style={{ width: `${Math.min(100, Math.max(0, analyticsKPI.realizationRate))}%` }}
-                      className="bg-emerald-500 h-full transition-all"
+                      className="bg-[#15803D] h-full transition-all"
                       title={`নগদে অর্জিত: ${analyticsKPI.realizationRate}%`}
                     />
                     <div
                       style={{ width: `${Math.max(0, 100 - Math.min(100, Math.max(0, analyticsKPI.realizationRate)))}%` }}
-                      className="bg-amber-400 h-full transition-all"
+                      className="bg-amber-500 h-full transition-all"
                       title={`মার্কেটে বকেয়া বাকি: ${Math.max(0, (100 - analyticsKPI.realizationRate).toFixed(1))}%`}
                     />
                   </div>
@@ -1866,56 +1866,56 @@ export default function AnalyticsDashboard({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 {/* কার্ড ১: ডায়নামিক ব্রেক-ইভেন পয়েন্ট ও রান-রেট প্রজেকশন */}
-                <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-3.5 flex flex-col justify-between">
-                  <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-3.5 flex flex-col justify-between">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-neutral-200/80">
                     <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
-                        <Target className="w-4 h-4 text-slate-600" />
+                      <div className="w-8 h-8 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center font-semibold">
+                        <Target className="w-4 h-4" />
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-slate-900">ব্রেক-ইভেন বিশ্লেষণ ও প্রজেকশন</h4>
-                        <span className="text-[10px] text-slate-400">স্থির খরচ ও মার্জিনের ভিত্তিতে লক্ষ্যমাত্রা</span>
+                        <h4 className="text-xs font-semibold tracking-tight text-[#111111]">ব্রেক-ইভেন বিশ্লেষণ ও প্রজেকশন</h4>
+                        <span className="text-[10px] text-[#737373]">স্থির খরচ ও মার্জিনের ভিত্তিতে লক্ষ্যমাত্রা</span>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium border ${
                       analyticsKPI.isAboveBreakEven
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80'
+                        : 'bg-amber-50 text-[#B45309] border-amber-200/80'
                     }`}>
                       {analyticsKPI.isAboveBreakEven ? 'ব্রেক-ইভেন অর্জিত' : 'ঘাটতি জোন'}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/60">
-                      <span className="text-[11px] text-slate-400 block font-medium">স্থির পরিচালন খরচ</span>
-                      <span className="text-sm font-bold text-slate-900 font-mono tabular-nums">
+                    <div className="bg-[#FAFAFA] p-3 rounded-md border border-neutral-200/80">
+                      <span className="text-[11px] text-[#737373] block font-medium">স্থির পরিচালন খরচ</span>
+                      <span className="text-sm font-semibold text-[#111111] font-mono tabular-nums">
                         {currencySymbol}{analyticsKPI.fixedCosts.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                       </span>
-                      <span className="text-[10px] text-slate-500 block mt-0.5">দোকান খরচ ও বেতন</span>
+                      <span className="text-[10px] text-[#525252] block mt-0.5">দোকান খরচ ও বেতন</span>
                     </div>
 
-                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/60">
-                      <span className="text-[11px] text-slate-400 block font-medium">ব্রেক-ইভেন বিক্রয় টার্গেট</span>
-                      <span className="text-sm font-bold text-indigo-700 font-mono tabular-nums">
+                    <div className="bg-[#FAFAFA] p-3 rounded-md border border-neutral-200/80">
+                      <span className="text-[11px] text-[#737373] block font-medium">ব্রেক-ইভেন বিক্রয় টার্গেট</span>
+                      <span className="text-sm font-semibold text-[#111111] font-mono tabular-nums">
                         {currencySymbol}{analyticsKPI.breakEvenSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                       </span>
-                      <span className="text-[10px] text-slate-500 block mt-0.5">মুনাফা শুরুর ন্যূনতম বিক্রয়</span>
+                      <span className="text-[10px] text-[#525252] block mt-0.5">মুনাফা শুরুর ন্যূনতম বিক্রয়</span>
                     </div>
                   </div>
 
                   {/* ব্রেক-ইভেন প্রগ্রেস বার */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-[11px] font-medium">
-                      <span className="text-slate-600">টার্গেট অগ্রগতি:</span>
-                      <span className={analyticsKPI.isAboveBreakEven ? "text-emerald-700 font-semibold" : "text-amber-700 font-semibold"}>
+                      <span className="text-[#525252]">টার্গেট অগ্রগতি:</span>
+                      <span className={`font-mono tabular-nums font-semibold ${analyticsKPI.isAboveBreakEven ? "text-[#15803D]" : "text-[#B45309]"}`}>
                         {analyticsKPI.breakEvenProgress}% ({currencySymbol}{analyticsKPI.netSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })} / {currencySymbol}{analyticsKPI.breakEvenSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })})
                       </span>
                     </div>
-                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${
-                          analyticsKPI.isAboveBreakEven ? 'bg-emerald-500' : 'bg-amber-500'
+                          analyticsKPI.isAboveBreakEven ? 'bg-[#15803D]' : 'bg-amber-500'
                         }`}
                         style={{ width: `${analyticsKPI.breakEvenProgress}%` }}
                       />
@@ -1924,9 +1924,9 @@ export default function AnalyticsDashboard({
 
                   {/* মাস শেষের আনুমানিক প্রজেকশন */}
                   {filterRange === 'month' && (
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] flex-wrap gap-1">
-                      <span className="text-slate-500">চলতি মাস শেষের পূর্বাভাস:</span>
-                      <span className="font-semibold text-slate-800 font-mono tabular-nums text-[11px]">
+                    <div className="pt-2 border-t border-neutral-200/80 flex items-center justify-between text-[11px] flex-wrap gap-1">
+                      <span className="text-[#525252]">চলতি মাস শেষের পূর্বাভাস:</span>
+                      <span className="font-semibold text-[#111111] font-mono tabular-nums text-[11px]">
                         বিক্রয় ≈ {currencySymbol}{Math.round(analyticsKPI.projectedMonthEndRevenue).toLocaleString('en-IN')} • নিট লাভ ≈ {renderMaskedValue(Math.round(analyticsKPI.projectedMonthEndProfit))}
                       </span>
                     </div>
@@ -1934,60 +1934,60 @@ export default function AnalyticsDashboard({
                 </div>
 
                 {/* কার্ড ২: মাল্টি-স্ট্রিম সমন্বিত ব্যয় ও অপচয় খতিয়ান */}
-                <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-3.5 flex flex-col justify-between">
-                  <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-3.5 flex flex-col justify-between">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-neutral-200/80">
                     <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
-                        <Coins className="w-4 h-4 text-slate-600" />
+                      <div className="w-8 h-8 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center font-semibold">
+                        <Coins className="w-4 h-4" />
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-slate-900">পরিচালন ব্যয় ও কর্তন বিবরণী</h4>
-                        <span className="text-[10px] text-slate-400">বেতন, কমিশন, রিফান্ড ও অপচয় ক্ষতি</span>
+                        <h4 className="text-xs font-semibold tracking-tight text-[#111111]">পরিচালন ব্যয় ও কর্তন বিবরণী</h4>
+                        <span className="text-[10px] text-[#737373]">বেতন, কমিশন, রিফান্ড ও অপচয় ক্ষতি</span>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600">
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#F5F5F5] border border-neutral-200/80 text-[#525252]">
                       সমন্বিত অডিট
                     </span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2.5 text-xs">
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/60">
-                      <div className="flex items-center space-x-1 text-slate-500 text-[10px] font-medium">
-                        <UsersIcon className="w-3 h-3 text-slate-500" />
+                    <div className="bg-[#FAFAFA] p-2.5 rounded-md border border-neutral-200/80">
+                      <div className="flex items-center space-x-1 text-[#525252] text-[10px] font-medium">
+                        <UsersIcon className="w-3 h-3 text-[#525252]" />
                         <span>স্টাফ পেরোল</span>
                       </div>
-                      <div className="text-xs font-bold text-slate-900 mt-1 font-mono tabular-nums">
+                      <div className="text-xs font-semibold text-[#111111] mt-1 font-mono tabular-nums">
                         {currencySymbol}{Math.round(analyticsKPI.totalPayroll).toLocaleString('en-IN')}
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">বেতন ও কমিশন</div>
+                      <div className="text-[10px] text-[#737373] mt-0.5">বেতন ও কমিশন</div>
                     </div>
 
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/60">
-                      <div className="flex items-center space-x-1 text-slate-500 text-[10px] font-medium">
-                        <RotateCcw className="w-3 h-3 text-slate-500" />
+                    <div className="bg-[#FAFAFA] p-2.5 rounded-md border border-neutral-200/80">
+                      <div className="flex items-center space-x-1 text-[#525252] text-[10px] font-medium">
+                        <RotateCcw className="w-3 h-3 text-[#525252]" />
                         <span>রিটার্ন রিফান্ড</span>
                       </div>
-                      <div className="text-xs font-bold text-rose-600 mt-1 font-mono tabular-nums">
+                      <div className="text-xs font-semibold text-[#B91C1C] mt-1 font-mono tabular-nums">
                         {currencySymbol}{Math.round(analyticsKPI.periodRefundAmount).toLocaleString('en-IN')}
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">{analyticsKPI.periodReturnsCount}টি ফেরত মেমো</div>
+                      <div className="text-[10px] text-[#737373] font-mono tabular-nums mt-0.5">{analyticsKPI.periodReturnsCount}টি ফেরত মেমো</div>
                     </div>
 
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/60">
-                      <div className="flex items-center space-x-1 text-slate-500 text-[10px] font-medium">
-                        <AlertTriangle className="w-3 h-3 text-slate-500" />
+                    <div className="bg-[#FAFAFA] p-2.5 rounded-md border border-neutral-200/80">
+                      <div className="flex items-center space-x-1 text-[#525252] text-[10px] font-medium">
+                        <AlertTriangle className="w-3 h-3 text-[#525252]" />
                         <span>ছাঁট ও অপচয়</span>
                       </div>
-                      <div className="text-xs font-bold text-amber-700 mt-1 font-mono tabular-nums">
+                      <div className="text-xs font-semibold text-[#B45309] mt-1 font-mono tabular-nums">
                         {currencySymbol}{Math.round(analyticsKPI.totalShrinkageLoss).toLocaleString('en-IN')}
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">থান ও স্টক ক্ষতি</div>
+                      <div className="text-[10px] text-[#737373] mt-0.5">থান ও স্টক ক্ষতি</div>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span className="text-slate-500">মোট পরিচালন কর্তন (All Deductions):</span>
-                    <span className="font-bold text-rose-600 font-mono tabular-nums">
+                  <div className="pt-2 border-t border-neutral-200/80 flex items-center justify-between text-xs">
+                    <span className="text-[#525252]">মোট পরিচালন কর্তন (All Deductions):</span>
+                    <span className="font-semibold text-[#B91C1C] font-mono tabular-nums">
                       - {currencySymbol}{Math.round(analyticsKPI.totalOperatingExpenses).toLocaleString('en-IN')}
                     </span>
                   </div>
@@ -1996,25 +1996,25 @@ export default function AnalyticsDashboard({
               </div>
 
               {/* ওমনিচ্যানেল চ্যানেল তুলনা কার্ড (Omnichannel Performance Breakdown) */}
-              <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+              <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-200/80">
                   <div className="flex items-center space-x-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-                      <Store className="w-4 h-4 text-slate-600" />
+                    <div className="w-8 h-8 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center">
+                      <Store className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">
+                      <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
                         ওমনিচ্যানেল আর্থিক তুলনা (In-Store vs Online)
                       </h3>
-                      <p className="text-xs text-slate-500">কাউন্টার সেলস ও অনলাইন ডেলিভারির রাজস্ব, মুনাফা ও মার্জিন বিশ্লেষণ</p>
+                      <p className="text-xs text-[#525252]">কাউন্টার সেলস ও অনলাইন ডেলিভারির রাজস্ব, মুনাফা ও মার্জিন বিশ্লেষণ</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2 text-xs font-medium">
-                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                  <div className="flex items-center space-x-2 text-xs font-mono tabular-nums font-medium">
+                    <span className="px-2 py-0.5 rounded-md bg-[#F5F5F5] text-[#111111] border border-neutral-200/80">
                       ইন-স্টোর: {channelBreakdown.offlineShare}%
                     </span>
-                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-[#15803D] border border-emerald-200/80">
                       অনলাইন: {channelBreakdown.onlineShare}%
                     </span>
                   </div>
@@ -2023,47 +2023,47 @@ export default function AnalyticsDashboard({
                 {/* তুলনামূলক গ্রিড */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* ১. ইন-স্টোর / কাউন্টার পিওএস */}
-                  <div className={`p-4 rounded-xl border transition-all ${
+                  <div className={`p-4 rounded-lg border transition-colors ${
                     channelFilter === 'offline'
-                      ? 'bg-slate-50 border-slate-300 ring-1 ring-slate-300'
-                      : 'bg-white border-slate-200/80 hover:border-slate-300'
+                      ? 'bg-[#FAFAFA] border-[#0F172A]'
+                      : 'bg-white border-neutral-200/80 hover:border-neutral-300'
                   }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Store className="w-4 h-4 text-slate-600" />
+                        <Store className="w-4 h-4 text-[#0F172A]" />
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">ইন-স্টোর কাউন্টার সেলস (POS)</h4>
-                          <span className="text-[10px] text-slate-400">সরাসরি দোকান থেকে বিক্রয়</span>
+                          <h4 className="text-xs font-semibold text-[#111111]">ইন-স্টোর কাউন্টার সেলস (POS)</h4>
+                          <span className="text-[10px] text-[#737373]">সরাসরি দোকান থেকে বিক্রয়</span>
                         </div>
                       </div>
                       <button
                         onClick={() => setChannelFilter(channelFilter === 'offline' ? 'all' : 'offline')}
-                        className={`text-[11px] font-medium px-2.5 py-1 rounded-md border transition-colors cursor-pointer ${
+                        className={`text-[11px] font-medium px-2.5 py-1 rounded-md border transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px] ${
                           channelFilter === 'offline'
-                            ? 'bg-slate-900 text-white border-slate-900'
-                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                            ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                            : 'bg-white text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'
                         }`}
                       >
                         {channelFilter === 'offline' ? 'ফিল্টার সক্রিয়' : 'ফিল্টার করুন'}
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100">
+                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-neutral-200/80">
                       <div>
-                        <span className="text-[10px] text-slate-400 font-medium block">মোট রাজস্ব</span>
-                        <span className="text-sm font-bold text-slate-900 font-mono tabular-nums">
+                        <span className="text-[10px] text-[#737373] font-medium block">মোট রাজস্ব</span>
+                        <span className="text-sm font-semibold text-[#111111] font-mono tabular-nums">
                           {currencySymbol}{channelBreakdown.offlineRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 font-medium block">নিট লাভ</span>
-                        <span className="text-sm font-bold text-emerald-700 font-mono tabular-nums">
+                        <span className="text-[10px] text-[#737373] font-medium block">নিট লাভ</span>
+                        <span className="text-sm font-semibold text-[#15803D] font-mono tabular-nums">
                           {currencySymbol}{channelBreakdown.offlineProfit.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 font-medium block">মার্জিন ও অর্ডার</span>
-                        <span className="text-xs font-semibold text-slate-700">
+                        <span className="text-[10px] text-[#737373] font-medium block">মার্জিন ও অর্ডার</span>
+                        <span className="text-xs font-mono tabular-nums font-semibold text-[#525252]">
                           {channelBreakdown.offlineMargin}% • {channelBreakdown.offlineOrders}টি
                         </span>
                       </div>
@@ -2071,47 +2071,47 @@ export default function AnalyticsDashboard({
                   </div>
 
                   {/* ২. অনলাইন ডেলিভারি */}
-                  <div className={`p-4 rounded-xl border transition-all ${
+                  <div className={`p-4 rounded-lg border transition-colors ${
                     channelFilter === 'online'
-                      ? 'bg-slate-50 border-slate-300 ring-1 ring-slate-300'
-                      : 'bg-white border-slate-200/80 hover:border-slate-300'
+                      ? 'bg-[#FAFAFA] border-[#0F172A]'
+                      : 'bg-white border-neutral-200/80 hover:border-neutral-300'
                   }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <ShoppingBag className="w-4 h-4 text-slate-600" />
+                        <ShoppingBag className="w-4 h-4 text-[#0F172A]" />
                         <div>
-                          <h4 className="text-xs font-bold text-slate-900">অনলাইন ও কুরিয়ার ডেলিভারি</h4>
-                          <span className="text-[10px] text-slate-400">Facebook, WhatsApp, Website</span>
+                          <h4 className="text-xs font-semibold text-[#111111]">অনলাইন ও কুরিয়ার ডেলিভারি</h4>
+                          <span className="text-[10px] text-[#737373]">Facebook, WhatsApp, Website</span>
                         </div>
                       </div>
                       <button
                         onClick={() => setChannelFilter(channelFilter === 'online' ? 'all' : 'online')}
-                        className={`text-[11px] font-medium px-2.5 py-1 rounded-md border transition-colors cursor-pointer ${
+                        className={`text-[11px] font-medium px-2.5 py-1 rounded-md border transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px] ${
                           channelFilter === 'online'
-                            ? 'bg-slate-900 text-white border-slate-900'
-                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                            ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                            : 'bg-white text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'
                         }`}
                       >
                         {channelFilter === 'online' ? 'ফিল্টার সক্রিয়' : 'ফিল্টার করুন'}
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100">
+                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-neutral-200/80">
                       <div>
-                        <span className="text-[10px] text-slate-400 font-medium block">মোট রাজস্ব</span>
-                        <span className="text-sm font-bold text-slate-900 font-mono tabular-nums">
+                        <span className="text-[10px] text-[#737373] font-medium block">মোট রাজস্ব</span>
+                        <span className="text-sm font-semibold text-[#111111] font-mono tabular-nums">
                           {currencySymbol}{channelBreakdown.onlineRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 font-medium block">নিট লাভ</span>
-                        <span className="text-sm font-bold text-indigo-700 font-mono tabular-nums">
+                        <span className="text-[10px] text-[#737373] font-medium block">নিট লাভ</span>
+                        <span className="text-sm font-semibold text-[#15803D] font-mono tabular-nums">
                           {currencySymbol}{channelBreakdown.onlineProfit.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 font-medium block">মার্জিন ও অর্ডার</span>
-                        <span className="text-xs font-semibold text-slate-700">
+                        <span className="text-[10px] text-[#737373] font-medium block">মার্জিন ও অর্ডার</span>
+                        <span className="text-xs font-mono tabular-nums font-semibold text-[#525252]">
                           {channelBreakdown.onlineMargin}% • {channelBreakdown.onlineOrders}টি
                         </span>
                       </div>
@@ -2122,19 +2122,19 @@ export default function AnalyticsDashboard({
                 {/* রাজস্ব ভাগ প্রগ্রেস বার */}
                 {channelBreakdown.totalRev > 0 && (
                   <div className="space-y-1 pt-1">
-                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex">
+                    <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden flex">
                       <div
                         style={{ width: `${channelBreakdown.offlineShare}%` }}
-                        className="bg-slate-800 h-full transition-all"
+                        className="bg-[#0F172A] h-full transition-all"
                         title={`ইন-স্টোর: ${channelBreakdown.offlineShare}%`}
                       />
                       <div
                         style={{ width: `${channelBreakdown.onlineShare}%` }}
-                        className="bg-indigo-600 h-full transition-all"
+                        className="bg-[#15803D] h-full transition-all"
                         title={`অনলাইন: ${channelBreakdown.onlineShare}%`}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium px-0.5">
+                    <div className="flex items-center justify-between text-[11px] text-[#525252] font-mono tabular-nums font-medium px-0.5">
                       <span>ইন-স্টোর কাউন্টার ({channelBreakdown.offlineShare}%)</span>
                       <span>অনলাইন ডেলিভারি ({channelBreakdown.onlineShare}%)</span>
                     </div>
@@ -2143,39 +2143,39 @@ export default function AnalyticsDashboard({
               </div>
 
               {/* দিনভিত্তিক বিক্রয় ও মুনাফা ভিজ্যুয়াল চার্ট */}
-              <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
+              <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-neutral-200/80">
                   <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-                      <BarChart3 className="w-4 h-4 text-slate-600" />
+                    <div className="w-8 h-8 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center">
+                      <BarChart3 className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">
+                      <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
                         দৈনিক বিক্রয়, ক্রয় খরচ ও মুনাফার গতিধারা
                       </h3>
-                      <p className="text-xs text-slate-500">নির্দিষ্ট দিনের বিস্তারিত দেখতে বারের ওপর মাউস রাখুন</p>
+                      <p className="text-xs text-[#525252]">নির্দিষ্ট দিনের বিস্তারিত দেখতে বারের ওপর মাউস রাখুন</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3 text-xs font-medium">
                     <div className="flex items-center space-x-1.5">
-                      <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500"></span>
-                      <span className="text-slate-600">বিক্রয়</span>
+                      <span className="w-2.5 h-2.5 rounded-sm bg-[#0F172A]"></span>
+                      <span className="text-[#525252]">বিক্রয়</span>
                     </div>
                     <div className="flex items-center space-x-1.5">
                       <span className="w-2.5 h-2.5 rounded-sm bg-amber-500"></span>
-                      <span className="text-slate-600">খরচ</span>
+                      <span className="text-[#525252]">খরচ</span>
                     </div>
                     <div className="flex items-center space-x-1.5">
-                      <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>
-                      <span className="text-slate-600">মুনাফা</span>
+                      <span className="w-2.5 h-2.5 rounded-sm bg-[#15803D]"></span>
+                      <span className="text-[#525252]">মুনাফা</span>
                     </div>
                   </div>
                 </div>
 
                 {analyticsKPI.dailyTrendList.length === 0 ? (
-                  <div className="h-40 flex flex-col items-center justify-center text-xs text-slate-400">
-                    <BarChart3 className="w-8 h-8 text-slate-300 mb-2 stroke-[1.5]" />
+                  <div className="h-40 flex flex-col items-center justify-center text-xs text-[#737373]">
+                    <BarChart3 className="w-8 h-8 text-neutral-300 mb-2 stroke-[1.5]" />
                     <span>নির্বাচিত সময়সীমায় কোনো বিক্রয় তথ্য নেই</span>
                   </div>
                 ) : (
@@ -2185,9 +2185,9 @@ export default function AnalyticsDashboard({
                       
                       {/* ব্যাকগ্রাউন্ড হরাইজন্টাল গাইডলাইন */}
                       <div className="absolute inset-x-0 top-4 bottom-7 flex flex-col justify-between pointer-events-none opacity-40">
-                        <div className="border-b border-dashed border-slate-200 w-full" />
-                        <div className="border-b border-dashed border-slate-200 w-full" />
-                        <div className="border-b border-slate-200 w-full" />
+                        <div className="border-b border-dashed border-neutral-200 w-full" />
+                        <div className="border-b border-dashed border-neutral-200 w-full" />
+                        <div className="border-b border-neutral-200 w-full" />
                       </div>
 
                       {/* বার কলাম কন্টেইনার */}
@@ -2210,7 +2210,7 @@ export default function AnalyticsDashboard({
                                 {/* রেভিনিউ বার */}
                                 <div 
                                   style={{ height: `${revHeight}%` }}
-                                  className="w-3 sm:w-3.5 bg-indigo-500 hover:bg-indigo-600 rounded-t-sm transition-all"
+                                  className="w-3 sm:w-3.5 bg-[#0F172A] hover:bg-slate-700 rounded-t-sm transition-all"
                                   title={`বিক্রয়: ${currencySymbol}${item.revenue.toFixed(2)}`}
                                 />
                                 {/* খরচ বার */}
@@ -2223,12 +2223,12 @@ export default function AnalyticsDashboard({
                                 <div 
                                   style={{ height: `${profitHeight}%` }}
                                   className={`w-3 sm:w-3.5 rounded-t-sm transition-all ${
-                                    item.profit >= 0 ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-rose-500'
+                                    item.profit >= 0 ? 'bg-[#15803D] hover:bg-emerald-700' : 'bg-[#B91C1C]'
                                   }`}
                                   title={`লাভ: ${currencySymbol}${item.profit.toFixed(2)}`}
                                 />
                               </div>
-                              <span className="text-[11px] text-slate-500 font-mono mt-1 font-medium">
+                              <span className="text-[11px] text-[#525252] font-mono tabular-nums mt-1 font-medium">
                                 {item.date.split('-').slice(1).join('/')}
                               </span>
                             </div>
@@ -2239,12 +2239,12 @@ export default function AnalyticsDashboard({
 
                     {/* হোভার ডিটেইলস পপআপ বার */}
                     {hoveredTrendItem && (
-                      <div className="bg-slate-900 text-white px-3.5 py-2 rounded-lg text-xs flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-100 shadow-md">
-                        <span className="font-medium text-slate-300">তারিখ: <strong className="text-white font-mono">{hoveredTrendItem.date}</strong></span>
-                        <span>অর্ডার: <strong className="font-mono">{hoveredTrendItem.orders}</strong> টি</span>
-                        <span>বিক্রয়: <strong className="font-mono">{currencySymbol}{hoveredTrendItem.revenue.toFixed(2)}</strong></span>
-                        <span>খরচ: <strong className="text-amber-300 font-mono">{currencySymbol}{hoveredTrendItem.cogs.toFixed(2)}</strong></span>
-                        <span className={`font-semibold font-mono ${hoveredTrendItem.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      <div className="bg-[#0F172A] text-white px-3.5 py-2 rounded-md text-xs flex flex-wrap items-center justify-between gap-3">
+                        <span className="font-medium text-slate-300">তারিখ: <strong className="text-white font-mono tabular-nums">{hoveredTrendItem.date}</strong></span>
+                        <span>অর্ডার: <strong className="font-mono tabular-nums">{hoveredTrendItem.orders}</strong> টি</span>
+                        <span>বিক্রয়: <strong className="font-mono tabular-nums">{currencySymbol}{hoveredTrendItem.revenue.toFixed(2)}</strong></span>
+                        <span>খরচ: <strong className="text-amber-300 font-mono tabular-nums">{currencySymbol}{hoveredTrendItem.cogs.toFixed(2)}</strong></span>
+                        <span className={`font-semibold font-mono tabular-nums ${hoveredTrendItem.profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                           নিট লাভ: {currencySymbol}{hoveredTrendItem.profit.toFixed(2)}
                         </span>
                       </div>
@@ -2257,17 +2257,17 @@ export default function AnalyticsDashboard({
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 
                 {/* সেরা বিক্রিত ও লাভজনক পণ্য (৮ কলাম) */}
-                <div className="lg:col-span-8 bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="lg:col-span-8 bg-white p-5 rounded-lg border border-neutral-200/80 space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-200/80">
                     <div className="flex items-center space-x-2">
-                      <Award className="w-4 h-4 text-slate-600" />
-                      <h3 className="text-sm font-bold text-slate-900">
+                      <Award className="w-4 h-4 text-[#0F172A]" />
+                      <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
                         শীর্ষ ৫টি সর্বোচ্চ লাভজনক পণ্য (Top 5 Profitable Products)
                       </h3>
                     </div>
                     <button 
                       onClick={() => setActiveTab('products')}
-                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center space-x-1 cursor-pointer"
+                      className="text-xs font-medium text-[#0F172A] hover:underline flex items-center space-x-1 cursor-pointer min-h-[36px]"
                     >
                       <span>সব পণ্য দেখুন</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -2275,14 +2275,14 @@ export default function AnalyticsDashboard({
                   </div>
 
                   {analyticsKPI.topProducts.length === 0 ? (
-                    <div className="h-32 flex items-center justify-center text-xs text-slate-400">
+                    <div className="h-32 flex items-center justify-center text-xs text-[#737373]">
                       কোনো বিক্রয় রেকর্ড নেই
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs text-left">
                         <thead>
-                          <tr className="text-slate-500 font-semibold border-b border-slate-100 pb-2">
+                          <tr className="text-[#525252] font-semibold border-b border-neutral-200/80 pb-2">
                             <th className="pb-2.5">পণ্যের নাম</th>
                             <th className="pb-2.5 text-center">বিক্রিত পরিমাণ</th>
                             <th className="pb-2.5 text-right">মোট বিক্রয়</th>
@@ -2290,24 +2290,24 @@ export default function AnalyticsDashboard({
                             <th className="pb-2.5 text-right">মার্জিন</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-neutral-200/80">
                           {analyticsKPI.topProducts.map((p, i) => (
-                            <tr key={i} className="hover:bg-slate-50 transition-colors">
-                              <td className="py-2.5 font-medium text-slate-900">
+                            <tr key={i} className="hover:bg-[#FAFAFA] transition-colors">
+                              <td className="py-2.5 font-medium text-[#111111]">
                                 <div>{p.productName}</div>
-                                <span className="text-[10px] text-slate-400 font-mono">#{p.productId}</span>
+                                <span className="text-[10px] text-[#737373] font-mono tabular-nums">#{p.productId}</span>
                               </td>
-                              <td className="py-2.5 text-center font-mono font-medium text-slate-700">
+                              <td className="py-2.5 text-center font-mono tabular-nums font-medium text-[#525252]">
                                 {p.unitsSold}
                               </td>
-                              <td className="py-2.5 text-right font-mono font-medium text-slate-900">
+                              <td className="py-2.5 text-right font-mono tabular-nums font-medium text-[#111111]">
                                 {currencySymbol}{p.revenue.toFixed(2)}
                               </td>
-                              <td className="py-2.5 text-right font-mono font-bold text-emerald-700">
+                              <td className="py-2.5 text-right font-mono tabular-nums font-semibold text-[#15803D]">
                                 {renderMaskedValue(p.profit)}
                               </td>
                               <td className="py-2.5 text-right">
-                                <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-slate-100 text-slate-700">
+                                <span className="px-2 py-0.5 rounded-md text-[11px] font-mono tabular-nums font-medium bg-[#F5F5F5] text-[#111111] border border-neutral-200/80">
                                   {hasProfitAccess ? `${p.marginPercent}%` : '•••'}
                                 </span>
                               </td>
@@ -2320,10 +2320,10 @@ export default function AnalyticsDashboard({
                 </div>
 
                 {/* পেমেন্ট মেথড অনুপাত (৪ কলাম) */}
-                <div className="lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
-                  <div className="flex items-center space-x-2 pb-3 border-b border-slate-100">
-                    <CreditCard className="w-4 h-4 text-slate-600" />
-                    <h3 className="text-sm font-bold text-slate-900">
+                <div className="lg:col-span-4 bg-white p-5 rounded-lg border border-neutral-200/80 space-y-4">
+                  <div className="flex items-center space-x-2 pb-3 border-b border-neutral-200/80">
+                    <CreditCard className="w-4 h-4 text-[#0F172A]" />
+                    <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
                       পেমেন্ট চ্যানেল বন্টন
                     </h3>
                   </div>
@@ -2339,19 +2339,19 @@ export default function AnalyticsDashboard({
                         return (
                           <div key={method} className="space-y-1">
                             <div className="flex justify-between font-medium">
-                              <span className="text-slate-700">{method}</span>
-                              <span className="text-slate-900 font-mono font-semibold">
+                              <span className="text-[#525252]">{method}</span>
+                              <span className="text-[#111111] font-mono tabular-nums font-semibold">
                                 {currencySymbol}{amount.toFixed(2)} ({percentage}%)
                               </span>
                             </div>
-                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all duration-300 ${
                                   method === 'Cash'
-                                    ? 'bg-emerald-500'
+                                    ? 'bg-[#15803D]'
                                     : method === 'bKash' || method === 'Nagad'
-                                    ? 'bg-indigo-600'
-                                    : 'bg-slate-700'
+                                    ? 'bg-amber-500'
+                                    : 'bg-[#0F172A]'
                                 }`}
                                 style={{ width: `${percentage}%` }}
                               />
@@ -2361,54 +2361,54 @@ export default function AnalyticsDashboard({
                       })}
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500">
-                    মোট সংগৃহীত পেমেন্ট: <strong className="text-slate-900 font-mono font-bold">{currencySymbol}{analyticsKPI.totalCollectedRevenue.toFixed(2)}</strong>
+                  <div className="pt-2 border-t border-neutral-200/80 text-[11px] text-[#525252]">
+                    মোট সংগৃহীত পেমেন্ট: <strong className="text-[#111111] font-mono tabular-nums font-semibold">{currencySymbol}{analyticsKPI.totalCollectedRevenue.toFixed(2)}</strong>
                   </div>
                 </div>
 
               </div>
 
               {/* পরিচালন ব্যয়ের খাতওয়ারি বন্টন ও বিশ্লেষণ চার্ট */}
-              <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+              <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-200/80">
                   <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-                      <PieChart className="w-4 h-4 text-slate-600" />
+                    <div className="w-8 h-8 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center">
+                      <PieChart className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">
+                      <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
                         পরিচালন ব্যয়ের খাতওয়ারি বন্টন (Operating Expense Distribution)
                       </h3>
-                      <p className="text-xs text-slate-500">দোকান পরিচালনা, বেতন, কুরিয়ার ও অপচয় খরচের শতকরার হার</p>
+                      <p className="text-xs text-[#525252]">দোকান পরিচালনা, বেতন, কুরিয়ার ও অপচয় খরচের শতকরার হার</p>
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-rose-600 font-mono tabular-nums">
+                  <span className="text-xs font-semibold text-[#B91C1C] font-mono tabular-nums">
                     মোট পরিচালন ব্যয়: {currencySymbol}{analyticsKPI.totalOperatingExpenses.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                   </span>
                 </div>
 
                 {analyticsKPI.expenseCategoryList.length === 0 ? (
-                  <div className="h-20 flex items-center justify-center text-xs text-slate-400">
+                  <div className="h-20 flex items-center justify-center text-xs text-[#737373]">
                     নির্বাচিত সময়সীমায় কোনো ব্যয়ের হিসাব পাওয়া যায়নি
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {analyticsKPI.expenseCategoryList.map((exp, idx) => (
-                      <div key={idx} className="bg-slate-50 p-3 rounded-lg border border-slate-200/60 space-y-2">
+                      <div key={idx} className="bg-[#FAFAFA] p-3 rounded-md border border-neutral-200/80 space-y-2">
                         <div className="flex justify-between items-center text-xs">
-                          <span className="font-semibold text-slate-800 truncate" title={exp.category}>{exp.category}</span>
-                          <span className="font-mono font-bold text-rose-600 tabular-nums">
+                          <span className="font-semibold text-[#111111] truncate" title={exp.category}>{exp.category}</span>
+                          <span className="font-mono font-semibold text-[#B91C1C] tabular-nums">
                             {currencySymbol}{exp.amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                           </span>
                         </div>
                         <div className="space-y-1">
-                          <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                          <div className="w-full bg-neutral-200 h-1.5 rounded-full overflow-hidden">
                             <div
-                              className="bg-rose-500 h-full rounded-full transition-all duration-300"
+                              className="bg-[#B91C1C] h-full rounded-full transition-all duration-300"
                               style={{ width: `${exp.percentage}%` }}
                             />
                           </div>
-                          <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+                          <div className="flex justify-between text-[10px] text-[#737373] font-mono tabular-nums font-medium">
                             <span>মোট ব্যয়ের {exp.percentage}%</span>
                             <span>{analyticsKPI.netSales > 0 ? `${((exp.amount / analyticsKPI.netSales) * 100).toFixed(1)}% বিক্রির` : ''}</span>
                           </div>
@@ -2426,110 +2426,110 @@ export default function AnalyticsDashboard({
           {/* ট্যাব ২: পূর্ণাঙ্গ P&L আয়-ব্যয় বিবরণী (Financial Income Statement) */}
           {/* ============================================================== */}
           {activeTab === 'statement' && (
-            <div className="bg-white p-6 sm:p-8 rounded-xl border border-slate-200/90 shadow-2xs max-w-3xl mx-auto space-y-6">
+            <div className="bg-white p-6 sm:p-8 rounded-lg border border-neutral-200/80 max-w-3xl mx-auto space-y-6">
               
-              <div className="text-center pb-5 border-b border-slate-200">
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+              <div className="text-center pb-5 border-b border-neutral-200/80">
+                <h3 className="text-base sm:text-lg font-semibold text-[#111111] tracking-tight">
                   {storeSettings.StoreName || 'Super Shop POS'}
                 </h3>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">
+                <h4 className="text-xs font-semibold text-[#525252] uppercase tracking-wider mt-0.5">
                   Profit & Loss (Income) Financial Statement
                 </h4>
                 <div className="flex items-center justify-center space-x-2 mt-2">
-                  <span className={`px-2.5 py-0.5 rounded text-xs font-semibold border ${
+                  <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border ${
                     accountingMode === 'cash'
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                      : 'bg-slate-100 text-slate-800 border-slate-200'
+                      ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80'
+                      : 'bg-[#F5F5F5] text-[#111111] border-neutral-200/80'
                   }`}>
                     {accountingMode === 'cash' ? 'নগদ লাভ মোড (Cash-Basis Accounting)' : 'খাতা-কলমের লাভ মোড (Accrual Accounting)'}
                   </span>
                   <button
                     type="button"
                     onClick={() => setAccountingMode(accountingMode === 'cash' ? 'accrual' : 'cash')}
-                    className="text-[11px] font-medium text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
+                    className="text-[11px] font-medium text-[#0F172A] hover:underline cursor-pointer min-h-[36px]"
                   >
                     মোড পরিবর্তন
                   </button>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[#737373] font-mono tabular-nums mt-1">
                   হিসাবের সময়কাল: {filterRange === 'today' ? 'আজকের দিন' : filterRange === 'month' ? 'চলতি মাস' : filterRange} ({customStartDate || 'শুরু'} থেকে {customEndDate || 'শেষ'})
                 </p>
               </div>
 
               {/* প্রফেশনাল অ্যাকাউন্টিং টেবিল */}
-              <div className="space-y-4 text-xs font-mono">
+              <div className="space-y-4 text-xs font-mono tabular-nums">
                 
                 {/* ১. রাজস্ব সেকশন */}
-                <div className="space-y-2 pb-3 border-b border-slate-100">
-                  <div className="font-sans font-bold text-slate-900 text-sm">১. রাজস্ব আয় (Revenues & Sales)</div>
-                  <div className="flex justify-between pl-4 text-slate-700">
+                <div className="space-y-2 pb-3 border-b border-neutral-200/80">
+                  <div className="font-sans font-semibold text-[#111111] text-sm">১. রাজস্ব আয় (Revenues & Sales)</div>
+                  <div className="flex justify-between pl-4 text-[#525252]">
                     <span>মোট বিক্রয় (Gross Sales Revenue)</span>
                     <span className="tabular-nums">{currencySymbol}{analyticsKPI.totalGrossRevenue.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between pl-4 text-rose-600">
+                  <div className="flex justify-between pl-4 text-[#B91C1C]">
                     <span>বাদ: বিক্রয় ছাড় ও ডিসকাউন্ট (Less: Sales Discounts)</span>
                     <span className="tabular-nums">- {currencySymbol}{analyticsKPI.totalDiscount.toFixed(2)}</span>
                   </div>
                   {includeReturns && analyticsKPI.periodRefundAmount > 0 && (
-                    <div className="flex justify-between pl-4 text-rose-600">
+                    <div className="flex justify-between pl-4 text-[#B91C1C]">
                       <span>বাদ: সেলস রিটার্ন ও রিফান্ড (Less: Sales Returns & Refunds)</span>
                       <span className="tabular-nums">- {currencySymbol}{analyticsKPI.periodRefundAmount.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between pl-4 font-bold text-slate-900 bg-slate-50 py-1.5 px-3 rounded-lg font-sans">
+                  <div className="flex justify-between pl-4 font-semibold text-[#111111] bg-[#FAFAFA] py-1.5 px-3 rounded-md font-sans border border-neutral-200/80">
                     <span>প্রকৃত নিট বিক্রয় (Net Sales)</span>
                     <span className="tabular-nums font-mono">{currencySymbol}{analyticsKPI.netSales.toFixed(2)}</span>
                   </div>
                 </div>
 
                 {/* ২. ক্রয় খরচ সেকশন */}
-                <div className="space-y-2 pb-3 border-b border-slate-100">
-                  <div className="font-sans font-bold text-slate-900 text-sm">২. বিক্রিত পণ্যের খরচ (Cost of Goods Sold - COGS)</div>
-                  <div className="flex justify-between pl-4 text-slate-700">
+                <div className="space-y-2 pb-3 border-b border-neutral-200/80">
+                  <div className="font-sans font-semibold text-[#111111] text-sm">২. বিক্রিত পণ্যের খরচ (Cost of Goods Sold - COGS)</div>
+                  <div className="flex justify-between pl-4 text-[#525252]">
                     <span>পণ্যের মূল ক্রয়মূল্য খরচ (Cost of Inventory Sold)</span>
                     <span className="tabular-nums">{renderMaskedValue(analyticsKPI.totalCOGS)}</span>
                   </div>
-                  <div className="flex justify-between pl-4 font-bold text-slate-900 bg-slate-50 py-1.5 px-3 rounded-lg font-sans">
+                  <div className="flex justify-between pl-4 font-semibold text-[#111111] bg-[#FAFAFA] py-1.5 px-3 rounded-md font-sans border border-neutral-200/80">
                     <span>মোট বিক্রয় খরচ (Total Cost of Sales)</span>
                     <span className="tabular-nums font-mono">{renderMaskedValue(analyticsKPI.totalCOGS)}</span>
                   </div>
                 </div>
 
                 {/* ৩. মোট মুনাফা (Gross Profit) */}
-                <div className="flex justify-between font-bold text-sm bg-slate-100 text-slate-900 p-3 rounded-lg border border-slate-200 font-sans">
+                <div className="flex justify-between font-semibold text-sm bg-[#F5F5F5] text-[#111111] p-3 rounded-md border border-neutral-200/80 font-sans">
                   <span>৩. মোট বিক্রয় মুনাফা (Gross Profit = Net Sales - COGS)</span>
-                  <span className="tabular-nums font-mono font-bold">{renderMaskedValue(analyticsKPI.grossProfit)}</span>
+                  <span className="tabular-nums font-mono font-semibold">{renderMaskedValue(analyticsKPI.grossProfit)}</span>
                 </div>
 
                 {/* ৪. পরিচালন খরচ, বেতন ও অপচয় ক্ষতি (Operating Expenses, Payroll & Losses) */}
-                <div className="space-y-2 pb-3 border-b border-slate-100">
-                  <div className="font-sans font-bold text-slate-900 text-sm">৪. পরিচালন ব্যয় ও অপচয় কর্তন (Operating Expenses, Payroll & Losses)</div>
-                  <div className="flex justify-between pl-4 text-slate-700">
+                <div className="space-y-2 pb-3 border-b border-neutral-200/80">
+                  <div className="font-sans font-semibold text-[#111111] text-sm">৪. পরিচালন ব্যয় ও অপচয় কর্তন (Operating Expenses, Payroll & Losses)</div>
+                  <div className="flex justify-between pl-4 text-[#525252]">
                     <span>দোকানের সাধারণ পরিচালন খরচ (Shop Operating Expenses)</span>
-                    <span className="text-rose-600 font-medium tabular-nums">- {currencySymbol}{analyticsKPI.totalExpenses.toFixed(2)}</span>
+                    <span className="text-[#B91C1C] font-medium tabular-nums">- {currencySymbol}{analyticsKPI.totalExpenses.toFixed(2)}</span>
                   </div>
                   {includePayroll && analyticsKPI.totalPayroll > 0 && (
-                    <div className="flex justify-between pl-4 text-slate-700">
+                    <div className="flex justify-between pl-4 text-[#525252]">
                       <span>স্টাফদের মূল বেতন ও বিক্রয় কমিশন (Staff Salaries & Commissions)</span>
-                      <span className="text-rose-600 font-medium tabular-nums">- {currencySymbol}{analyticsKPI.totalPayroll.toFixed(2)}</span>
+                      <span className="text-[#B91C1C] font-medium tabular-nums">- {currencySymbol}{analyticsKPI.totalPayroll.toFixed(2)}</span>
                     </div>
                   )}
                   {includeWastage && analyticsKPI.totalShrinkageLoss > 0 && (
-                    <div className="flex justify-between pl-4 text-slate-700">
+                    <div className="flex justify-between pl-4 text-[#525252]">
                       <span>থান ছাঁট ও গোডাউন ড্যামেজ ক্ষতি (Fabric Scrap & Shrinkage Loss)</span>
-                      <span className="text-rose-600 font-medium tabular-nums">- {currencySymbol}{analyticsKPI.totalShrinkageLoss.toFixed(2)}</span>
+                      <span className="text-[#B91C1C] font-medium tabular-nums">- {currencySymbol}{analyticsKPI.totalShrinkageLoss.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between pl-4 font-bold text-slate-900 bg-slate-50 py-1.5 px-3 rounded-lg font-sans text-slate-900">
+                  <div className="flex justify-between pl-4 font-semibold text-[#111111] bg-[#FAFAFA] py-1.5 px-3 rounded-md font-sans border border-neutral-200/80">
                     <span>মোট পরিচালন কর্তন (Total Operating Deductions)</span>
-                    <span className="tabular-nums font-mono font-bold">- {currencySymbol}{analyticsKPI.totalOperatingExpenses.toFixed(2)}</span>
+                    <span className="tabular-nums font-mono font-semibold">- {currencySymbol}{analyticsKPI.totalOperatingExpenses.toFixed(2)}</span>
                   </div>
                 </div>
 
                 {/* ৫. ট্যাক্স ও শুল্ক */}
-                <div className="space-y-2 pb-3 border-b border-slate-100">
-                  <div className="font-sans font-bold text-slate-900 text-sm">৫. সংগৃহীত কর/ভ্যাট (Taxes Collected)</div>
-                  <div className="flex justify-between pl-4 text-slate-700">
+                <div className="space-y-2 pb-3 border-b border-neutral-200/80">
+                  <div className="font-sans font-semibold text-[#111111] text-sm">৫. সংগৃহীত কর/ভ্যাট (Taxes Collected)</div>
+                  <div className="flex justify-between pl-4 text-[#525252]">
                     <span>সংগৃহীত বিক্রয় কর (Sales Tax / VAT)</span>
                     <span className="tabular-nums">{currencySymbol}{analyticsKPI.totalTax.toFixed(2)}</span>
                   </div>
@@ -2540,18 +2540,18 @@ export default function AnalyticsDashboard({
                   const statementProfit = accountingMode === 'cash' ? analyticsKPI.effectiveRealizedCashProfit : analyticsKPI.trueNetProfit;
                   const isPositive = statementProfit >= 0;
                   return (
-                    <div className={`flex justify-between font-bold text-sm sm:text-base p-4 rounded-xl border font-sans ${
+                    <div className={`flex justify-between font-semibold text-sm sm:text-base p-4 rounded-lg border font-sans ${
                       isPositive
-                        ? 'bg-emerald-50/70 text-emerald-950 border-emerald-200'
-                        : 'bg-rose-50/70 text-rose-950 border-rose-200'
+                        ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80'
+                        : 'bg-red-50 text-[#B91C1C] border-red-200/80'
                     }`}>
                       <div className="flex flex-col">
                         <span>{accountingMode === 'cash' ? 'চূড়ান্ত আসল নগদ মুনাফা (Realized Cash Profit)' : 'চূড়ান্ত নিট পরিচালন লাভ (True Net Operating Profit)'}</span>
-                        <span className="text-xs font-normal text-slate-600 mt-0.5">
+                        <span className="text-xs font-normal text-[#525252] mt-0.5 font-mono tabular-nums">
                           মার্জিন হার: {hasProfitAccess ? `${analyticsKPI.profitMarginPercent}%` : '••••'} (সকল খরচ, বেতন ও অপচয় কর্তন পরবর্তী)
                         </span>
                       </div>
-                      <span className="text-lg font-mono tabular-nums font-bold">
+                      <span className="text-lg font-mono tabular-nums font-semibold">
                         {isPositive ? '+' : ''}{renderMaskedValue(statementProfit)}
                       </span>
                     </div>
@@ -2560,47 +2560,47 @@ export default function AnalyticsDashboard({
 
                 {/* ৭. ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় */}
                 <div className="space-y-2 pt-2 pb-1">
-                  <div className="font-sans font-bold text-slate-900 text-sm">৭. ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় (Cash Realization & Ledger)</div>
-                  <div className="flex justify-between pl-4 text-slate-700">
+                  <div className="font-sans font-semibold text-[#111111] text-sm">৭. ক্যাশ রিয়ালাইজেশন ও বাকির খাতার সমন্বয় (Cash Realization & Ledger)</div>
+                  <div className="flex justify-between pl-4 text-[#525252]">
                     <span>হিসাবকৃত মোট মুনাফা (Booked Accrual Profit)</span>
-                    <span className="font-bold tabular-nums">{renderMaskedValue(analyticsKPI.bookedProfit)}</span>
+                    <span className="font-semibold tabular-nums">{renderMaskedValue(analyticsKPI.bookedProfit)}</span>
                   </div>
-                  <div className="flex justify-between pl-4 text-amber-700">
+                  <div className="flex justify-between pl-4 text-[#B45309]">
                     <span>বাদ: বাকি বিক্রির পরিমাণ (Credit Sales in Period)</span>
                     <span className="tabular-nums">- {currencySymbol}{analyticsKPI.totalSalesDueCreated.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between pl-4 text-emerald-700">
+                  <div className="flex justify-between pl-4 text-[#15803D]">
                     <span>যোগ: বাকির খাতা থেকে আদায়কৃত ক্যাশ (Collected Dues)</span>
                     <span className="tabular-nums">+ {currencySymbol}{analyticsKPI.periodCollectedDues.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between pl-4 font-bold text-emerald-950 bg-emerald-50/60 py-2 px-3 rounded-lg font-sans border border-emerald-200">
+                  <div className="flex justify-between pl-4 font-semibold text-[#15803D] bg-emerald-50/70 py-2 px-3 rounded-md font-sans border border-emerald-200/80">
                     <span>হাতে আসা আসল নগদ লাভ (Realized Cash Profit)</span>
-                    <span className="text-sm font-bold font-mono tabular-nums">{renderMaskedValue(analyticsKPI.realizedCashProfit)}</span>
+                    <span className="text-sm font-semibold font-mono tabular-nums">{renderMaskedValue(analyticsKPI.realizedCashProfit)}</span>
                   </div>
-                  <div className="flex justify-between pl-4 text-slate-500 text-[11px] pt-1">
-                    <span>মার্কেটে বকেয়া মুনাফা / ঝুঁকি: <strong className="text-amber-800 font-mono">{currencySymbol}{analyticsKPI.unrealizedDueProfit.toFixed(2)}</strong></span>
-                    <span>সার্বিক কাস্টমার বকেয়া: <strong className="text-slate-800 font-mono">{currencySymbol}{analyticsKPI.totalMarketDue.toFixed(2)}</strong></span>
+                  <div className="flex justify-between pl-4 text-[#525252] text-[11px] pt-1">
+                    <span>মার্কেটে বকেয়া মুনাফা / ঝুঁকি: <strong className="text-[#B45309] font-mono tabular-nums">{currencySymbol}{analyticsKPI.unrealizedDueProfit.toFixed(2)}</strong></span>
+                    <span>সার্বিক কাস্টমার বকেয়া: <strong className="text-[#111111] font-mono tabular-nums">{currencySymbol}{analyticsKPI.totalMarketDue.toFixed(2)}</strong></span>
                   </div>
                 </div>
 
               </div>
 
               {/* অ্যাকশন বাটনসমূহ */}
-              <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100">
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-200/80">
                 <button
                   type="button"
                   onClick={handleSaveMonthlyPnLToCloud}
                   disabled={isArchivingCloud}
-                  className="inline-flex items-center space-x-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] text-[#111111] rounded-md text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer min-h-[44px] sm:min-h-[36px]"
                 >
-                  <Save className="w-4 h-4 text-slate-300" />
+                  <Save className="w-4 h-4 text-[#525252]" />
                   <span>{isArchivingCloud ? 'সংরক্ষণ হচ্ছে...' : 'গুগল শিটে ব্যালেন্স শিট সংরক্ষণ'}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="inline-flex items-center space-x-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                  className="inline-flex items-center space-x-2 px-5 py-2 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-medium transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px]"
                 >
                   <Printer className="w-4 h-4" />
                   <span>স্টেটমেন্টটি প্রিন্ট করুন</span>
@@ -2614,21 +2614,21 @@ export default function AnalyticsDashboard({
           {/* ট্যাব ৩: পণ্যভিত্তিক পূর্ণাঙ্গ লাভ-ক্ষতি তালিকা (Product P&L) */}
           {/* ============================================================== */}
           {activeTab === 'products' && (
-            <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
+            <div className="bg-white p-5 sm:p-6 rounded-lg border border-neutral-200/80 space-y-4">
               
               {/* সার্চ, ক্যাটাগরি ও সর্টিং ফিল্টার টুলবার */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-neutral-200/80">
                 <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
                   
                   {/* সার্চ বক্স */}
                   <div className="relative flex-1 min-w-[180px]">
-                    <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" />
                     <input
                       type="text"
                       placeholder="পণ্য বা কোড দিয়ে খুঁজুন..."
                       value={productSearch}
                       onChange={(e) => setProductSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium"
+                      className="w-full pl-9 pr-3 py-2 text-xs bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:border-[#0F172A] focus:outline-none font-medium text-[#111111] min-h-[44px] sm:min-h-[36px]"
                     />
                   </div>
 
@@ -2636,7 +2636,7 @@ export default function AnalyticsDashboard({
                   <select
                     value={selectedCategoryFilter}
                     onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                    className="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50 font-semibold text-slate-700"
+                    className="px-3 py-2 text-xs border border-neutral-200/80 rounded-md focus:border-[#0F172A] focus:outline-none bg-[#FAFAFA] font-medium text-[#111111] min-h-[44px] sm:min-h-[36px]"
                   >
                     <option value="all">সকল ক্যাটাগরি</option>
                     {categories.map((c, i) => (
@@ -2648,12 +2648,12 @@ export default function AnalyticsDashboard({
 
                 {/* সর্টিং ড্রপডাউন */}
                 <div className="flex items-center space-x-2 text-xs">
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-slate-500 font-semibold">সর্ট:</span>
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-[#737373]" />
+                  <span className="text-[#525252] font-medium">সর্ট:</span>
                   <select
                     value={productSortBy}
                     onChange={(e) => setProductSortBy(e.target.value)}
-                    className="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50 font-bold text-slate-700"
+                    className="px-3 py-2 text-xs border border-neutral-200/80 rounded-md focus:border-[#0F172A] focus:outline-none bg-[#FAFAFA] font-semibold text-[#111111] min-h-[44px] sm:min-h-[36px]"
                   >
                     <option value="profit_desc">সর্বোচ্চ মুনাফা (Highest Profit)</option>
                     <option value="profit_asc">সর্বনিম্ন মুনাফা (Lowest Profit)</option>
@@ -2666,15 +2666,15 @@ export default function AnalyticsDashboard({
 
               {/* প্রোডাক্ট P&L টেবিল */}
               {processedProductsList.length === 0 ? (
-                <div className="h-40 flex flex-col items-center justify-center text-xs text-slate-400">
-                  <Package className="w-8 h-8 text-slate-300 mb-2 stroke-[1.5]" />
+                <div className="h-40 flex flex-col items-center justify-center text-xs text-[#737373]">
+                  <Package className="w-8 h-8 text-neutral-300 mb-2 stroke-[1.5]" />
                   <span>কোনো পণ্য খুঁজে পাওয়া যায়নি</span>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left">
                     <thead>
-                      <tr className="text-slate-500 font-bold border-b border-slate-200 bg-slate-50/70">
+                      <tr className="text-[#525252] font-semibold border-b border-neutral-200/80 bg-[#F5F5F5]">
                         <th className="py-3 px-3">পণ্যের বিবরণ</th>
                         <th className="py-3 px-2">ক্যাটাগরি</th>
                         <th className="py-3 px-2 text-center">বিক্রিত পরিমাণ</th>
@@ -2686,47 +2686,47 @@ export default function AnalyticsDashboard({
                         <th className="py-3 px-3 text-right">মার্জিন</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-neutral-200/80">
                       {processedProductsList.map((p, idx) => {
                         const isProfit = p.profit >= 0;
                         return (
-                          <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                          <tr key={idx} className="hover:bg-[#FAFAFA] transition-colors">
                             <td className="py-3 px-3">
-                              <div className="font-bold text-slate-900">{p.productName}</div>
-                              <div className="text-[10px] text-slate-400 font-mono">
+                              <div className="font-semibold text-[#111111]">{p.productName}</div>
+                              <div className="text-[10px] text-[#737373] font-mono tabular-nums">
                                 #{p.productId} {p.barcode ? `• ${p.barcode}` : ''}
                               </div>
                             </td>
-                            <td className="py-3 px-2 text-slate-600 font-medium">
-                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] text-slate-700 font-semibold">
+                            <td className="py-3 px-2 text-[#525252] font-medium">
+                              <span className="px-2 py-0.5 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[10px] text-[#111111] font-medium">
                                 {p.category}
                               </span>
                             </td>
-                            <td className="py-3 px-2 text-center font-bold text-slate-800">
+                            <td className="py-3 px-2 text-center font-mono tabular-nums font-semibold text-[#111111]">
                               {p.unitsSold}
                             </td>
-                            <td className="py-3 px-2 text-right font-medium text-slate-700">
+                            <td className="py-3 px-2 text-right font-mono tabular-nums font-medium text-[#525252]">
                               {currencySymbol}{p.avgSellingPrice.toFixed(2)}
                             </td>
-                            <td className="py-3 px-2 text-right font-medium text-amber-700">
+                            <td className="py-3 px-2 text-right font-mono tabular-nums font-medium text-[#B45309]">
                               {renderMaskedValue(p.avgCostPrice)}
                             </td>
-                            <td className="py-3 px-2 text-right font-bold text-slate-900">
+                            <td className="py-3 px-2 text-right font-mono tabular-nums font-semibold text-[#111111]">
                               {currencySymbol}{p.revenue.toFixed(2)}
                             </td>
-                            <td className="py-3 px-2 text-right font-bold text-amber-700">
+                            <td className="py-3 px-2 text-right font-mono tabular-nums font-semibold text-[#B45309]">
                               {renderMaskedValue(p.cogs)}
                             </td>
-                            <td className={`py-3 px-2 text-right font-black ${
-                              isProfit ? 'text-emerald-600' : 'text-rose-600'
+                            <td className={`py-3 px-2 text-right font-mono tabular-nums font-semibold ${
+                              isProfit ? 'text-[#15803D]' : 'text-[#B91C1C]'
                             }`}>
                               {isProfit ? '+' : ''}{renderMaskedValue(p.profit)}
                             </td>
                             <td className="py-3 px-3 text-right">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              <span className={`px-2 py-0.5 rounded-md font-mono tabular-nums text-[10px] font-medium border ${
                                 isProfit 
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                  ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80' 
+                                  : 'bg-red-50 text-[#B91C1C] border-red-200/80'
                               }`}>
                                 {hasProfitAccess ? `${p.marginPercent}%` : '•••'}
                               </span>
@@ -2736,24 +2736,24 @@ export default function AnalyticsDashboard({
                       })}
                     </tbody>
                     <tfoot>
-                      <tr className="bg-slate-100 font-bold text-slate-900 border-t-2 border-slate-200">
-                        <td className="py-3 px-3">সর্বমোট ({processedProductsList.length} টি পণ্য)</td>
+                      <tr className="bg-[#F5F5F5] font-semibold text-[#111111] border-t-2 border-neutral-200/80 font-mono tabular-nums">
+                        <td className="py-3 px-3 font-sans">সর্বমোট (<span className="font-mono tabular-nums">{processedProductsList.length}</span> টি পণ্য)</td>
                         <td className="py-3 px-2"></td>
-                        <td className="py-3 px-2 text-center font-black">
+                        <td className="py-3 px-2 text-center font-semibold">
                           {processedProductsList.reduce((acc, p) => acc + p.unitsSold, 0)}
                         </td>
                         <td className="py-3 px-2 text-right">-</td>
                         <td className="py-3 px-2 text-right">-</td>
-                        <td className="py-3 px-2 text-right font-black">
+                        <td className="py-3 px-2 text-right font-semibold">
                           {currencySymbol}{processedProductsList.reduce((acc, p) => acc + p.revenue, 0).toFixed(2)}
                         </td>
-                        <td className="py-3 px-2 text-right text-amber-800 font-black">
+                        <td className="py-3 px-2 text-right text-[#B45309] font-semibold">
                           {renderMaskedValue(processedProductsList.reduce((acc, p) => acc + p.cogs, 0))}
                         </td>
-                        <td className="py-3 px-2 text-right text-emerald-700 font-black">
+                        <td className="py-3 px-2 text-right text-[#15803D] font-semibold">
                           +{renderMaskedValue(processedProductsList.reduce((acc, p) => acc + p.profit, 0))}
                         </td>
-                        <td className="py-3 px-3 text-right font-black">
+                        <td className="py-3 px-3 text-right font-semibold">
                           {hasProfitAccess ? `${analyticsKPI.profitMarginPercent}%` : '•••'}
                         </td>
                       </tr>
@@ -2769,26 +2769,26 @@ export default function AnalyticsDashboard({
           {/* ট্যাব ৪: ক্যাটাগরিভিত্তিক লাভ-ক্ষতি (Category P&L) */}
           {/* ============================================================== */}
           {activeTab === 'categories' && (
-            <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="bg-white p-5 sm:p-6 rounded-lg border border-neutral-200/80 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-neutral-200/80">
                 <div className="flex items-center space-x-2">
-                  <Layers className="w-5 h-5 text-indigo-600" />
-                  <h3 className="text-sm font-black text-slate-900">
+                  <Layers className="w-5 h-5 text-[#0F172A]" />
+                  <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
                     ক্যাটাগরিভিত্তিক পারফরম্যান্স ও মুনাফার হার
                   </h3>
                 </div>
-                <span className="text-xs text-slate-400 font-medium">সর্বোচ্চ মুনাফার ভিত্তিতে সাজানো</span>
+                <span className="text-xs text-[#737373] font-medium">সর্বোচ্চ মুনাফার ভিত্তিতে সাজানো</span>
               </div>
 
               {analyticsKPI.allCategoryList.length === 0 ? (
-                <div className="h-32 flex items-center justify-center text-xs text-slate-400">
+                <div className="h-32 flex items-center justify-center text-xs text-[#737373]">
                   কোনো ক্যাটাগরি রেকর্ড পাওয়া যায়নি
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left">
                     <thead>
-                      <tr className="text-slate-500 font-bold border-b border-slate-100 bg-slate-50/70">
+                      <tr className="text-[#525252] font-semibold border-b border-neutral-200/80 bg-[#F5F5F5]">
                         <th className="py-3 px-3">ক্যাটাগরির নাম</th>
                         <th className="py-3 px-2 text-center">বিক্রিত পণ্য সংখ্যা</th>
                         <th className="py-3 px-2 text-right">মোট বিক্রয়</th>
@@ -2798,35 +2798,35 @@ export default function AnalyticsDashboard({
                         <th className="py-3 px-3 text-right">লাভে অবদান</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-neutral-200/80">
                       {analyticsKPI.allCategoryList.map((c, i) => (
-                        <tr key={i} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-3 px-3 font-bold text-slate-900">
+                        <tr key={i} className="hover:bg-[#FAFAFA] transition-colors">
+                          <td className="py-3 px-3 font-semibold text-[#111111]">
                             {c.categoryName}
                           </td>
-                          <td className="py-3 px-2 text-center font-bold text-slate-700">
+                          <td className="py-3 px-2 text-center font-mono tabular-nums font-semibold text-[#525252]">
                             {c.unitsSold}
                           </td>
-                          <td className="py-3 px-2 text-right font-bold text-slate-900">
+                          <td className="py-3 px-2 text-right font-mono tabular-nums font-semibold text-[#111111]">
                             {currencySymbol}{c.revenue.toFixed(2)}
                           </td>
-                          <td className="py-3 px-2 text-right font-bold text-amber-700">
+                          <td className="py-3 px-2 text-right font-mono tabular-nums font-semibold text-[#B45309]">
                             {renderMaskedValue(c.cogs)}
                           </td>
-                          <td className="py-3 px-2 text-right font-black text-emerald-600">
+                          <td className="py-3 px-2 text-right font-mono tabular-nums font-semibold text-[#15803D]">
                             +{renderMaskedValue(c.profit)}
                           </td>
                           <td className="py-3 px-2 text-right">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            <span className="px-2 py-0.5 rounded-md font-mono tabular-nums text-[10px] font-medium bg-[#F5F5F5] text-[#111111] border border-neutral-200/80">
                               {hasProfitAccess ? `${c.marginPercent}%` : '•••'}
                             </span>
                           </td>
                           <td className="py-3 px-3 text-right font-medium">
                             <div className="flex items-center justify-end space-x-2">
-                              <span className="font-bold text-slate-700">{c.contributionPercent}%</span>
-                              <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                              <span className="font-mono tabular-nums font-semibold text-[#111111]">{c.contributionPercent}%</span>
+                              <div className="w-16 bg-neutral-100 h-1.5 rounded-full overflow-hidden">
                                 <div 
-                                  className="h-full bg-emerald-500 rounded-full"
+                                  className="h-full bg-[#15803D] rounded-full"
                                   style={{ width: `${Math.min(100, Math.max(0, c.contributionPercent))}%` }}
                                 />
                               </div>
@@ -2845,26 +2845,26 @@ export default function AnalyticsDashboard({
           {/* ট্যাব ৫: ইনভয়েস ও সেলস লেনদেন হিস্ট্রি (Transactions) */}
           {/* ============================================================== */}
           {activeTab === 'transactions' && (
-            <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="bg-white p-5 sm:p-6 rounded-lg border border-neutral-200/80 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-neutral-200/80">
                 <div className="flex items-center space-x-2">
-                  <CreditCard className="w-5 h-5 text-indigo-600" />
-                  <h3 className="text-sm font-black text-slate-900">
+                  <CreditCard className="w-5 h-5 text-[#0F172A]" />
+                  <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
                     নির্বাচিত সময়সীমার অর্ডার ও ইনভয়েস তালিকা
                   </h3>
                 </div>
-                <span className="text-xs text-slate-400 font-bold">সর্বমোট {filteredSales.length} টি ইনভয়েস</span>
+                <span className="text-xs text-[#737373] font-mono tabular-nums font-medium">সর্বমোট {filteredSales.length} টি ইনভয়েস</span>
               </div>
 
               {filteredSales.length === 0 ? (
-                <div className="h-32 flex items-center justify-center text-xs text-slate-400">
+                <div className="h-32 flex items-center justify-center text-xs text-[#737373]">
                   কোনো লেনদেন রেকর্ড নেই
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left">
                     <thead>
-                      <tr className="text-slate-500 font-bold border-b border-slate-100 bg-slate-50/70">
+                      <tr className="text-[#525252] font-semibold border-b border-neutral-200/80 bg-[#F5F5F5]">
                         <th className="py-3 px-3">তারিখ ও সময়</th>
                         <th className="py-3 px-2">ইনভয়েস / অর্ডার নম্বর</th>
                         <th className="py-3 px-2 text-center">চ্যানেল</th>
@@ -2876,7 +2876,7 @@ export default function AnalyticsDashboard({
                         <th className="py-3 px-3 text-right">নিট লাভ</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-neutral-200/80">
                       {filteredSales.map((sale, i) => {
                         const timeVal = sale.timestamp || sale.Timestamp || sale.Date || sale.CreatedAt;
                         const dateFormatted = timeVal ? new Date(timeVal).toLocaleString('bn-BD') : 'N/A';
@@ -2889,47 +2889,47 @@ export default function AnalyticsDashboard({
                         const isOffline = sale.channel === 'offline' || sale.orderSource === 'In-Store / POS';
 
                         return (
-                          <tr key={i} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="py-3 px-3 text-slate-500">
+                          <tr key={i} className="hover:bg-[#FAFAFA] transition-colors">
+                            <td className="py-3 px-3 text-[#525252] font-mono tabular-nums whitespace-nowrap">
                               {dateFormatted}
                             </td>
-                            <td className="py-3 px-2 font-mono font-bold text-indigo-600">
+                            <td className="py-3 px-2 font-mono tabular-nums font-semibold text-[#111111]">
                               {invNo}
                             </td>
                             <td className="py-3 px-2 text-center">
                               {isOffline ? (
-                                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                                <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#F5F5F5] text-[#111111] border border-neutral-200/80">
                                   ইন-স্টোর
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 text-[#15803D] border border-emerald-200/80">
                                   {sale.orderSource || 'অনলাইন'}
                                 </span>
                               )}
                             </td>
-                            <td className="py-3 px-2 text-slate-600 font-medium">
+                            <td className="py-3 px-2 text-[#525252] font-medium">
                               {sale.courierName || (isOffline ? 'কাউন্টার পিকআপ' : 'কুরিয়ার')}
                             </td>
-                            <td className="py-3 px-2 text-slate-800 font-semibold">
+                            <td className="py-3 px-2 text-[#111111] font-semibold">
                               {custName}
                             </td>
                             <td className="py-3 px-2 text-center">
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#F5F5F5] border border-neutral-200/80 text-[#111111]">
                                 {pMethod}
                               </span>
                               {Number(sale.dueAmount || 0) > 0 && (
-                                <span className="block text-[9px] text-amber-600 font-bold mt-0.5 whitespace-nowrap">
+                                <span className="block text-[9px] text-[#B45309] font-mono tabular-nums font-semibold mt-0.5 whitespace-nowrap">
                                   বাকি: {currencySymbol}{Number(sale.dueAmount).toFixed(0)}
                                 </span>
                               )}
                             </td>
-                            <td className="py-3 px-2 text-right text-slate-700 font-bold">
+                            <td className="py-3 px-2 text-right font-mono tabular-nums text-[#525252] font-semibold">
                               {itemCount}
                             </td>
-                            <td className="py-3 px-2 text-right font-black text-slate-900">
+                            <td className="py-3 px-2 text-right font-mono tabular-nums font-semibold text-[#111111]">
                               {currencySymbol}{total.toFixed(2)}
                             </td>
-                            <td className={`py-3 px-3 text-right font-black ${profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            <td className={`py-3 px-3 text-right font-mono tabular-nums font-semibold ${profit >= 0 ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
                               {profit >= 0 ? '+' : ''}{renderMaskedValue(profit)}
                             </td>
                           </tr>
@@ -2946,20 +2946,20 @@ export default function AnalyticsDashboard({
           {/* ট্যাব ৬: অচল ও ডেড স্টক ইনভেন্টরি বিশ্লেষণ (Phase 8 Dead Stock) */}
           {/* ============================================================== */}
           {activeTab === 'dead_stock' && (
-            <div className="space-y-4 animate-in fade-in duration-150">
+            <div className="space-y-4">
               
               {/* ডেড স্টক ব্যানার ও থ্রেশহোল্ড সিলেক্টর */}
-              <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-200/80">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
-                      <AlertTriangle className="w-4 h-4 text-slate-600" />
+                    <div className="w-8 h-8 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center font-semibold">
+                      <AlertTriangle className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center space-x-2">
+                      <h3 className="text-sm font-semibold text-[#111111] tracking-tight flex items-center space-x-2">
                         <span>অচল ও ডেড স্টক ক্যাপিটাল বিশ্লেষণ</span>
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-[#525252] mt-0.5">
                         দোকানে অবিক্রিত পণ্য ও অবরুদ্ধ মূলধন শনাক্ত করে দ্রুত ক্লিয়ারেন্স অফার বা রিঅর্ডার সিদ্ধান্ত নিন
                       </p>
                     </div>
@@ -2968,9 +2968,9 @@ export default function AnalyticsDashboard({
                   <button
                     type="button"
                     onClick={handleExportDeadStockCSV}
-                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg text-xs flex items-center space-x-1.5 transition-colors shrink-0 shadow-xs cursor-pointer"
+                    className="px-3 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white font-medium rounded-md text-xs flex items-center space-x-1.5 transition-colors shrink-0 cursor-pointer min-h-[44px] sm:min-h-[36px]"
                   >
-                    <Download className="w-3.5 h-3.5 text-slate-300" />
+                    <Download className="w-3.5 h-3.5" />
                     <span>ডেড স্টক CSV</span>
                   </button>
                 </div>
@@ -2978,17 +2978,17 @@ export default function AnalyticsDashboard({
                 {/* থ্রেশহোল্ড সিলেক্টর ফিল্টার */}
                 <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
                   <div className="flex items-center space-x-2">
-                    <span className="text-slate-500 font-medium">অচলাবস্থার সময়সীমা:</span>
-                    <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                    <span className="text-[#525252] font-medium">অচলাবস্থার সময়সীমা:</span>
+                    <div className="inline-flex bg-[#F5F5F5] p-1 rounded-md border border-neutral-200/80 gap-1">
                       {[30, 60, 90, 120].map((days) => (
                         <button
                           key={days}
                           type="button"
                           onClick={() => setDeadStockThreshold(days)}
-                          className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                          className={`px-3 py-1 rounded-md text-xs font-mono tabular-nums font-medium transition-colors cursor-pointer min-h-[36px] ${
                             deadStockThreshold === days
-                              ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                              : 'text-slate-600 hover:text-slate-900'
+                              ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold'
+                              : 'text-[#525252] hover:text-[#111111] border border-transparent'
                           }`}
                         >
                           {days} দিন+
@@ -2997,127 +2997,129 @@ export default function AnalyticsDashboard({
                     </div>
                   </div>
 
-                  <span className="text-[11px] text-slate-400">
-                    গত <strong className="text-slate-700 font-mono font-bold">{deadStockThreshold}</strong> দিনে ১ পিসও বিক্রি না হওয়া পণ্য
+                  <span className="text-[11px] text-[#737373]">
+                    গত <strong className="text-[#111111] font-mono tabular-nums font-semibold">{deadStockThreshold}</strong> দিনে ১ পিসও বিক্রি না হওয়া পণ্য
                   </span>
                 </div>
               </div>
 
               {/* ৩টি প্রধান ডেড স্টক মেট্রিক কার্ড */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
+                <div className="p-4 bg-white rounded-lg border border-neutral-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-medium text-slate-500 block">মোট অচল পণ্যের সংখ্যা</span>
-                    <div className="text-xl sm:text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
+                    <span className="text-xs font-medium text-[#525252] block">মোট অচল পণ্যের সংখ্যা</span>
+                    <div className="text-xl sm:text-2xl font-semibold text-[#111111] font-mono tabular-nums mt-1">
                       {deadStockData.totalStagnantItems} টি
                     </div>
-                    <span className="text-[11px] text-slate-400">ইনভেন্টরিতে স্টক জমা আছে</span>
+                    <span className="text-[11px] text-[#737373]">ইনভেন্টরিতে স্টক জমা আছে</span>
                   </div>
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#525252] flex items-center justify-center">
                     <Package className="w-4 h-4" />
                   </div>
                 </div>
 
-                <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
+                <div className="p-4 bg-white rounded-lg border border-neutral-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-medium text-slate-500 block">মোট আটকে থাকা পণ্যের ইউনিট</span>
-                    <div className="text-xl sm:text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
+                    <span className="text-xs font-medium text-[#525252] block">মোট আটকে থাকা পণ্যের ইউনিট</span>
+                    <div className="text-xl sm:text-2xl font-semibold text-[#111111] font-mono tabular-nums mt-1">
                       {deadStockData.totalStagnantUnits.toLocaleString('en-IN')} পিস
                     </div>
-                    <span className="text-[11px] text-slate-400">অবিক্রিত অবস্থায় দোকানে মজুত</span>
+                    <span className="text-[11px] text-[#737373]">অবিক্রিত অবস্থায় দোকানে মজুত</span>
                   </div>
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#525252] flex items-center justify-center">
                     <Archive className="w-4 h-4" />
                   </div>
                 </div>
 
-                <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
+                <div className="p-4 bg-white rounded-lg border border-neutral-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-medium text-rose-600 block">আটকে থাকা মূলধন (Blocked Capital)</span>
-                    <div className="text-xl sm:text-2xl font-bold text-rose-600 font-mono tabular-nums mt-1">
+                    <span className="text-xs font-medium text-[#B91C1C] block">আটকে থাকা মূলধন (Blocked Capital)</span>
+                    <div className="text-xl sm:text-2xl font-semibold text-[#B91C1C] font-mono tabular-nums mt-1">
                       {currencySymbol}{Math.round(deadStockData.totalBlockedCapital).toLocaleString('en-IN')}
                     </div>
-                    <span className="text-[11px] text-slate-400">ক্রয়মূল্য ভিত্তিক আটকে থাকা টাকা</span>
+                    <span className="text-[11px] text-[#737373]">ক্রয়মূল্য ভিত্তিক আটকে থাকা টাকা</span>
                   </div>
-                  <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-md bg-red-50 border border-red-200/80 text-[#B91C1C] flex items-center justify-center">
                     <Coins className="w-4 h-4" />
                   </div>
                 </div>
               </div>
 
               {/* সার্চ ও টেবিল সেকশন */}
-              <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-3 border-b border-neutral-200/80">
                   <div className="flex items-center space-x-2">
-                    <AlertTriangle className="w-4 h-4 text-slate-600" />
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+                    <AlertTriangle className="w-4 h-4 text-[#0F172A]" />
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-[#111111] font-mono tabular-nums">
                       অচল পণ্যের তালিকা ({filteredDeadStockItems.length}টি)
                     </h4>
                   </div>
 
                   <div className="relative w-full sm:w-64">
-                    <Search className="w-4 h-4 absolute left-3 top-2 text-slate-400" />
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" />
                     <input
                       type="text"
                       placeholder="পণ্যের নাম, বারকোড বা ক্যাটাগরি..."
                       value={deadStockSearch}
                       onChange={(e) => setDeadStockSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-medium"
+                      className="w-full pl-9 pr-3 py-1.5 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs focus:bg-white focus:outline-none focus:border-[#0F172A] font-medium text-[#111111] min-h-[44px] sm:min-h-[36px]"
                     />
                   </div>
                 </div>
 
                 {filteredDeadStockItems.length === 0 ? (
-                  <div className="py-12 text-center text-slate-400 space-y-2">
-                    <CheckCircle2 className="w-10 h-10 mx-auto stroke-1 text-emerald-500" />
-                    <p className="text-sm font-semibold text-slate-700">কোনো ডেড স্টক নেই</p>
-                    <p className="text-xs">গত {deadStockThreshold} দিনে সকল পণ্যের কোনো না কোনো বিক্রয় সম্পন্ন হয়েছে।</p>
+                  <div className="py-12 text-center text-[#737373] space-y-2">
+                    <CheckCircle2 className="w-10 h-10 mx-auto stroke-1 text-[#15803D]" />
+                    <p className="text-sm font-semibold text-[#111111]">কোনো ডেড স্টক নেই</p>
+                    <p className="text-xs text-[#525252]">গত {deadStockThreshold} দিনে সকল পণ্যের কোনো না কোনো বিক্রয় সম্পন্ন হয়েছে।</p>
                   </div>
                 ) : (
-                  <div className="border border-slate-200 rounded-lg overflow-hidden">
-                    <table className="w-full text-xs text-left">
-                      <thead>
-                        <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
-                          <th className="py-2.5 px-3">পণ্যের নাম ও বারকোড</th>
-                          <th className="py-2.5 px-3">ক্যাটাগরি</th>
-                          <th className="py-2.5 px-3 text-center">মজুত স্টক</th>
-                          <th className="py-2.5 px-3 text-right">কেনা দাম</th>
-                          <th className="py-2.5 px-3 text-right">আটকে থাকা টাকা</th>
-                          <th className="py-2.5 px-3 text-center">অবিক্রিত দিন</th>
-                          <th className="py-2.5 px-3 text-center">সুপারিশকৃত ছাড়</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {filteredDeadStockItems.map((itm) => (
-                          <tr key={itm.productId} className="hover:bg-slate-50 transition-colors">
-                            <td className="py-2.5 px-3">
-                              <span className="font-medium text-slate-900 block">{itm.productName}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">বারকোড: {itm.barcode}</span>
-                            </td>
-                            <td className="py-2.5 px-3 text-slate-600">{itm.category}</td>
-                            <td className="py-2.5 px-3 text-center font-mono font-medium text-slate-800">
-                              {itm.stockQuantity} পিস
-                            </td>
-                            <td className="py-2.5 px-3 text-right font-mono text-slate-600">
-                              {renderMaskedValue(itm.costPrice)}
-                            </td>
-                            <td className="py-2.5 px-3 text-right font-mono font-semibold text-rose-600 tabular-nums">
-                              {renderMaskedValue(itm.blockedCapital, true, 0)}
-                            </td>
-                            <td className="py-2.5 px-3 text-center">
-                              <span className="px-2 py-0.5 rounded text-[11px] font-mono text-slate-600 bg-slate-100">
-                                {itm.daysStagnant >= 999 ? 'কখনও বিক্রি হয়নি' : `${itm.daysStagnant} দিন`}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-3 text-center">
-                              <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                                {itm.suggestedDiscount}% ছাড়
-                              </span>
-                            </td>
+                  <div className="border border-neutral-200/80 rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-left">
+                        <thead>
+                          <tr className="bg-[#F5F5F5] border-b border-neutral-200/80 text-[#525252] font-semibold">
+                            <th className="py-2.5 px-3">পণ্যের নাম ও বারকোড</th>
+                            <th className="py-2.5 px-3">ক্যাটাগরি</th>
+                            <th className="py-2.5 px-3 text-center">মজুত স্টক</th>
+                            <th className="py-2.5 px-3 text-right">কেনা দাম</th>
+                            <th className="py-2.5 px-3 text-right">আটকে থাকা টাকা</th>
+                            <th className="py-2.5 px-3 text-center">অবিক্রিত দিন</th>
+                            <th className="py-2.5 px-3 text-center">সুপারিশকৃত ছাড়</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-200/80">
+                          {filteredDeadStockItems.map((itm) => (
+                            <tr key={itm.productId} className="hover:bg-[#FAFAFA] transition-colors">
+                              <td className="py-2.5 px-3">
+                                <span className="font-medium text-[#111111] block">{itm.productName}</span>
+                                <span className="text-[10px] text-[#737373] font-mono tabular-nums">বারকোড: {itm.barcode}</span>
+                              </td>
+                              <td className="py-2.5 px-3 text-[#525252]">{itm.category}</td>
+                              <td className="py-2.5 px-3 text-center font-mono tabular-nums font-medium text-[#111111]">
+                                {itm.stockQuantity} পিস
+                              </td>
+                              <td className="py-2.5 px-3 text-right font-mono tabular-nums text-[#525252]">
+                                {renderMaskedValue(itm.costPrice)}
+                              </td>
+                              <td className="py-2.5 px-3 text-right font-mono font-semibold text-[#B91C1C] tabular-nums">
+                                {renderMaskedValue(itm.blockedCapital, true, 0)}
+                              </td>
+                              <td className="py-2.5 px-3 text-center">
+                                <span className="px-2 py-0.5 rounded-md text-[11px] font-mono tabular-nums text-[#525252] bg-[#F5F5F5] border border-neutral-200/80">
+                                  {itm.daysStagnant >= 999 ? 'কখনও বিক্রি হয়নি' : `${itm.daysStagnant} দিন`}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-center">
+                                <span className="px-2 py-0.5 rounded-md text-[11px] font-mono tabular-nums font-medium bg-amber-50 text-[#B45309] border border-amber-200/80">
+                                  {itm.suggestedDiscount}% ছাড়
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </div>
@@ -3128,16 +3130,16 @@ export default function AnalyticsDashboard({
         </div>
 
         {/* মডাল ফুটার */}
-        <div className="shrink-0 px-5 sm:px-6 py-2.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
+        <div className="shrink-0 px-5 sm:px-6 py-2.5 border-t border-neutral-200/80 bg-[#FAFAFA] flex items-center justify-between text-xs text-[#525252]">
           <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-4 h-4 text-slate-400" />
+            <ShieldCheck className="w-4 h-4 text-[#737373]" />
             <span>WAC কস্ট মডেল ও রিয়েল-টাইম গুগল শিট অ্যানালিটিক্স সিঙ্ক</span>
           </div>
           
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-medium rounded-lg border border-slate-200 shadow-2xs transition-colors cursor-pointer"
+            className="px-4 py-1.5 bg-white hover:bg-[#F5F5F5] text-[#111111] font-medium rounded-md border border-neutral-200/80 transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px]"
           >
             বন্ধ করুন
           </button>
@@ -3320,14 +3322,14 @@ export default function AnalyticsDashboard({
 
       {/* RBAC অ্যাডমিন পিন আনলক মডাল (Tier 7: Privacy PIN Override) */}
       {showPinModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-100">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full p-6 space-y-4 animate-in zoom-in-95 duration-100">
+        <div className="fixed inset-0 z-50 bg-neutral-900/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg border border-neutral-200/80 max-w-sm w-full p-6 space-y-4">
             <div className="text-center space-y-1">
-              <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-700 mx-auto flex items-center justify-center mb-2">
-                <Lock className="w-5 h-5 text-slate-600" />
+              <div className="w-10 h-10 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] mx-auto flex items-center justify-center mb-2">
+                <Lock className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900">লাভ-ক্ষতি ও কেনা দাম আনলক</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="text-sm font-semibold tracking-tight text-[#111111]">লাভ-ক্ষতি ও কেনা দাম আনলক</h3>
+              <p className="text-xs text-[#525252]">
                 সংবেদনশীল আর্থিক ডাটা দেখতে অ্যাডমিন বা অনুমোদিত পিন দিন
               </p>
             </div>
@@ -3344,10 +3346,10 @@ export default function AnalyticsDashboard({
                     setPinInput(e.target.value);
                     setPinError('');
                   }}
-                  className="w-full text-center text-lg font-bold font-mono tracking-widest px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:outline-none focus:bg-white"
+                  className="w-full text-center text-lg font-semibold font-mono tabular-nums tracking-widest px-4 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:border-[#0F172A] focus:outline-none focus:bg-white text-[#111111] min-h-[44px] sm:min-h-[36px]"
                 />
                 {pinError && (
-                  <p className="text-xs text-rose-600 font-medium text-center mt-1.5 animate-shake">
+                  <p className="text-xs text-[#B91C1C] font-medium text-center mt-1.5">
                     {pinError}
                   </p>
                 )}
@@ -3361,13 +3363,13 @@ export default function AnalyticsDashboard({
                     setPinInput('');
                     setPinError('');
                   }}
-                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-xs transition-colors cursor-pointer"
+                  className="flex-1 py-2 bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] text-[#525252] font-medium rounded-md text-xs transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px]"
                 >
                   বাতিল
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg text-xs transition-colors shadow-xs cursor-pointer"
+                  className="flex-1 py-2 bg-[#0F172A] hover:bg-slate-800 text-white font-medium rounded-md text-xs transition-colors cursor-pointer min-h-[44px] sm:min-h-[36px]"
                 >
                   আনলক করুন
                 </button>

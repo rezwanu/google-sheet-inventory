@@ -263,38 +263,38 @@ export default function SalesReturnModal({
   if (!isOpen && !embedded) return null;
 
   return (
-    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-xs overflow-y-auto"}>
-      <div className={embedded ? "relative w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-[calc(100vh-6.5rem)]" : "relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto flex flex-col max-h-[92vh]"}>
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent" : "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-neutral-900/40 overflow-y-auto"}>
+      <div className={embedded ? "relative w-full bg-white rounded-lg border border-neutral-200/80 overflow-hidden flex flex-col flex-1 min-h-[calc(100vh-6.5rem)]" : "relative w-full max-w-5xl bg-white rounded-lg border border-neutral-200/80 overflow-hidden my-auto flex flex-col max-h-[92vh]"}>
         
         {/* মডাল হেডার */}
-        <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 bg-[#FAFAFA] border-b border-neutral-200/80 text-[#111111] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-400 shadow-inner">
+            <div className="w-10 h-10 rounded-md bg-[#F5F5F5] border border-neutral-200/80 flex items-center justify-center text-[#0F172A] shrink-0">
               <RotateCcw className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-lg font-black tracking-tight">পণ্য বিক্রয় রিটার্ন ও স্টোর ক্রেডিট নোট</h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-400/20">
+              <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                <h2 className="text-base sm:text-lg font-semibold tracking-tight text-[#111111]">পণ্য বিক্রয় রিটার্ন ও স্টোর ক্রেডিট নোট</h2>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#F5F5F5] text-[#525252] border border-neutral-200/80">
                   Phase 7 Live
                 </span>
               </div>
-              <p className="text-xs text-slate-300">
+              <p className="text-xs text-[#525252]">
                 বিক্রিত পণ্য ফেরত নেওয়া, স্টকে পুনঃসংযোজন ও স্টোর ক্রেডিট ভাউচার তৈরি
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-wrap gap-y-2">
             {/* ট্যাব নেভিগেশন */}
-            <div className="bg-slate-800/80 p-1 rounded-xl flex items-center border border-slate-700/60">
+            <div className="bg-[#F5F5F5] p-1 rounded-md flex items-center border border-neutral-200/80 gap-1">
               <button
                 type="button"
                 onClick={() => { setActiveTab('new'); setPrintableRecord(null); }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors min-h-[44px] sm:min-h-[36px] cursor-pointer ${
                   activeTab === 'new'
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold'
+                    : 'text-[#525252] hover:text-[#111111] border border-transparent'
                 }`}
               >
                 নতুন রিটার্ন / বিনিময়
@@ -302,15 +302,15 @@ export default function SalesReturnModal({
               <button
                 type="button"
                 onClick={() => { setActiveTab('history'); setPrintableRecord(null); }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center space-x-1.5 min-h-[44px] sm:min-h-[36px] cursor-pointer ${
                   activeTab === 'history'
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'bg-white text-[#111111] border border-neutral-200/80 font-semibold'
+                    : 'text-[#525252] hover:text-[#111111] border border-transparent'
                 }`}
               >
                 <span>রিটার্ন ও ভাউচার তালিকা</span>
                 {salesReturns.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-indigo-400/40 text-white font-mono font-bold">
+                  <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-[#F5F5F5] border border-neutral-200/80 text-[#111111] font-mono tabular-nums font-medium">
                     {salesReturns.length}
                   </span>
                 )}
@@ -319,16 +319,16 @@ export default function SalesReturnModal({
 
             <button
               onClick={onClose}
-              className={`rounded-xl transition-all cursor-pointer flex items-center space-x-1 ${
+              className={`rounded-md transition-colors cursor-pointer flex items-center space-x-1 min-h-[44px] sm:min-h-[36px] border border-neutral-200/80 ${
                 embedded
-                  ? 'px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/10 shadow-xs'
-                  : 'p-2 text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'px-3 py-1.5 bg-white hover:bg-[#F5F5F5] text-[#111111] font-medium text-xs'
+                  : 'min-w-[44px] sm:min-w-[36px] bg-white text-[#737373] hover:text-[#111111] hover:bg-[#F5F5F5] justify-center'
               }`}
               title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
             >
               {embedded ? (
                 <>
-                  <span className="text-sm font-bold">←</span>
+                  <span className="text-sm font-semibold">←</span>
                   <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
                 </>
               ) : (
@@ -340,19 +340,19 @@ export default function SalesReturnModal({
 
         {/* প্রিন্ট ভিউয়ার (যদি থাকে) */}
         {printableRecord ? (
-          <div className="flex-1 overflow-y-auto p-6 bg-slate-100 flex flex-col items-center">
-            <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg border border-slate-200 p-6 print:border-none print:shadow-none">
+          <div className="flex-1 overflow-y-auto p-6 bg-[#FAFAFA] flex flex-col items-center">
+            <div className="w-full max-w-lg bg-white rounded-lg border border-neutral-200/80 p-6 print:border-none">
               
               {/* প্রিন্ট কন্ট্রোল বার */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-4 print:hidden">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-neutral-200/80 mb-4 print:hidden">
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs font-bold text-slate-600">ডকুমেন্ট টাইপ:</span>
-                  <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                  <span className="text-xs font-medium text-[#525252]">ডকুমেন্ট টাইপ:</span>
+                  <div className="flex bg-[#F5F5F5] p-1 rounded-md border border-neutral-200/80 gap-1">
                     <button
                       type="button"
                       onClick={() => setPrintDocType('memo')}
-                      className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
-                        printDocType === 'memo' ? 'bg-indigo-600 text-white shadow-2xs' : 'text-slate-600'
+                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors min-h-[36px] cursor-pointer ${
+                        printDocType === 'memo' ? 'bg-[#0F172A] text-white' : 'text-[#525252] hover:text-[#111111]'
                       }`}
                     >
                       রিটার্ন মেমো
@@ -361,8 +361,8 @@ export default function SalesReturnModal({
                       <button
                         type="button"
                         onClick={() => setPrintDocType('voucher')}
-                        className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all flex items-center space-x-1 ${
-                          printDocType === 'voucher' ? 'bg-indigo-600 text-white shadow-2xs' : 'text-slate-600'
+                        className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors flex items-center space-x-1 min-h-[36px] cursor-pointer ${
+                          printDocType === 'voucher' ? 'bg-[#0F172A] text-white' : 'text-[#525252] hover:text-[#111111]'
                         }`}
                       >
                         <Ticket className="w-3 h-3" />
@@ -376,7 +376,7 @@ export default function SalesReturnModal({
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-sm"
+                    className="px-3 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium rounded-md flex items-center space-x-1.5 min-h-[44px] sm:min-h-[36px] cursor-pointer"
                   >
                     <Printer className="w-3.5 h-3.5" />
                     <span>প্রিন্ট করুন</span>
@@ -384,7 +384,7 @@ export default function SalesReturnModal({
                   <button
                     type="button"
                     onClick={handleResetForm}
-                    className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl"
+                    className="px-3 py-1.5 bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] text-[#111111] text-xs font-medium rounded-md min-h-[44px] sm:min-h-[36px] cursor-pointer"
                   >
                     নতুন রিটার্ন
                   </button>
@@ -393,78 +393,80 @@ export default function SalesReturnModal({
 
               {/* মেমো ডকুমেন্ট */}
               {printDocType === 'memo' ? (
-                <div className="space-y-4 text-slate-800">
-                  <div className="text-center pb-3 border-b border-slate-200">
-                    <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                <div className="space-y-4 text-[#111111]">
+                  <div className="text-center pb-3 border-b border-neutral-200/80">
+                    <h3 className="text-lg font-semibold tracking-tight text-[#111111]">
                       {storeSettings?.StoreName || 'Pabna Bostraloy'}
                     </h3>
-                    <p className="text-xs text-slate-500">{storeSettings?.Address || 'Bosila, Mohammadpur, Dhaka'}</p>
-                    <p className="text-xs text-slate-500">ফোন: {storeSettings?.Phone || '01675934919'}</p>
-                    <div className="inline-block mt-2 px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-xs font-black">
+                    <p className="text-xs text-[#525252]">{storeSettings?.Address || 'Bosila, Mohammadpur, Dhaka'}</p>
+                    <p className="text-xs text-[#525252] font-mono tabular-nums">ফোন: {storeSettings?.Phone || '01675934919'}</p>
+                    <div className="inline-block mt-2 px-3 py-1 bg-red-50 text-[#B91C1C] border border-red-200/80 rounded-md text-xs font-semibold">
                       পণ্য বিক্রয় রিটার্ন ও রিফান্ড মেমো
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 text-xs gap-2 py-1 border-b border-slate-100">
+                  <div className="grid grid-cols-2 text-xs gap-2 py-1 border-b border-neutral-200/80">
                     <div>
-                      <span className="text-slate-400 block font-medium">রিটার্ন আইডি:</span>
-                      <span className="font-bold font-mono">{printableRecord.ReturnID}</span>
+                      <span className="text-[#737373] block font-medium">রিটার্ন আইডি:</span>
+                      <span className="font-semibold font-mono tabular-nums">{printableRecord.ReturnID}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block font-medium">মূল ইনভয়েস নম্বর:</span>
-                      <span className="font-bold font-mono text-indigo-600">{printableRecord.InvoiceNo}</span>
+                      <span className="text-[#737373] block font-medium">মূল ইনভয়েস নম্বর:</span>
+                      <span className="font-semibold font-mono tabular-nums text-[#111111]">{printableRecord.InvoiceNo}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block font-medium">গ্রাহক:</span>
-                      <span className="font-bold">{printableRecord.CustomerName}</span>
+                      <span className="text-[#737373] block font-medium">গ্রাহক:</span>
+                      <span className="font-semibold">{printableRecord.CustomerName}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block font-medium">তারিখ ও সময়:</span>
-                      <span className="font-medium text-slate-600">{new Date(printableRecord.ReturnDate).toLocaleString('bn-BD')}</span>
+                      <span className="text-[#737373] block font-medium">তারিখ ও সময়:</span>
+                      <span className="font-mono tabular-nums font-medium text-[#525252]">{new Date(printableRecord.ReturnDate).toLocaleString('bn-BD')}</span>
                     </div>
                   </div>
 
                   {/* আইটেম তালিকা */}
-                  <table className="w-full text-xs text-left">
-                    <thead>
-                      <tr className="border-b border-slate-200 text-slate-500">
-                        <th className="py-1">পণ্য</th>
-                        <th className="py-1 text-center">পরিমাণ</th>
-                        <th className="py-1 text-right">দর</th>
-                        <th className="py-1 text-right">মোট টাকা</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {(printableRecord.Items || []).map((itm, i) => (
-                        <tr key={i} className="py-1.5">
-                          <td className="py-1.5">
-                            <span className="font-bold text-slate-800">{itm.productName}</span>
-                            {itm.variantName && <span className="block text-[10px] text-slate-500">{itm.variantName}</span>}
-                            <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold inline-block mt-0.5 ${
-                              itm.condition === 'Resellable' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-                            }`}>
-                              {itm.condition === 'Resellable' ? 'পুনর্বিক্রয়যোগ্য (Restocked)' : 'ত্রুটিযুক্ত/নষ্ট (Damaged)'}
-                            </span>
-                          </td>
-                          <td className="py-1.5 text-center font-bold">{itm.quantity}</td>
-                          <td className="py-1.5 text-right font-mono">{currencySymbol}{Number(itm.returnPrice || itm.sellingPrice || 0).toFixed(2)}</td>
-                          <td className="py-1.5 text-right font-mono font-bold">
-                            {currencySymbol}{(Number(itm.quantity) * Number(itm.returnPrice || itm.sellingPrice || 0)).toFixed(2)}
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead>
+                        <tr className="border-b border-neutral-200/80 text-[#525252]">
+                          <th className="py-1.5">পণ্য</th>
+                          <th className="py-1.5 text-center">পরিমাণ</th>
+                          <th className="py-1.5 text-right">দর</th>
+                          <th className="py-1.5 text-right">মোট টাকা</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-neutral-200/80">
+                        {(printableRecord.Items || []).map((itm, i) => (
+                          <tr key={i} className="py-1.5">
+                            <td className="py-1.5">
+                              <span className="font-semibold text-[#111111]">{itm.productName}</span>
+                              {itm.variantName && <span className="block text-[10px] text-[#525252]">{itm.variantName}</span>}
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded-md border font-medium inline-block mt-0.5 ${
+                                itm.condition === 'Resellable' ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80' : 'bg-red-50 text-[#B91C1C] border-red-200/80'
+                              }`}>
+                                {itm.condition === 'Resellable' ? 'পুনর্বিক্রয়যোগ্য (Restocked)' : 'ত্রুটিযুক্ত/নষ্ট (Damaged)'}
+                              </span>
+                            </td>
+                            <td className="py-1.5 text-center font-mono tabular-nums font-semibold">{itm.quantity}</td>
+                            <td className="py-1.5 text-right font-mono tabular-nums">{currencySymbol}{Number(itm.returnPrice || itm.sellingPrice || 0).toFixed(2)}</td>
+                            <td className="py-1.5 text-right font-mono tabular-nums font-semibold">
+                              {currencySymbol}{(Number(itm.quantity) * Number(itm.returnPrice || itm.sellingPrice || 0)).toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
                   {/* টোটাল রিফান্ড ও মেথড */}
-                  <div className="pt-3 border-t-2 border-slate-800 space-y-1.5 text-xs">
-                    <div className="flex justify-between font-bold text-sm text-slate-900">
+                  <div className="pt-3 border-t-2 border-[#0F172A] space-y-1.5 text-xs">
+                    <div className="flex justify-between font-semibold text-sm text-[#111111]">
                       <span>মোট রিফান্ড / সমন্বয় টাকা:</span>
-                      <span className="font-mono text-rose-600">{currencySymbol}{Number(printableRecord.TotalRefundAmount).toFixed(2)}</span>
+                      <span className="font-mono tabular-nums text-[#B91C1C]">{currencySymbol}{Number(printableRecord.TotalRefundAmount).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-slate-600">
+                    <div className="flex justify-between text-[#525252]">
                       <span>রিফান্ড মাধ্যম:</span>
-                      <span className="font-bold text-indigo-700">
+                      <span className="font-semibold text-[#111111]">
                         {printableRecord.RefundMethod === 'StoreCredit' && 'স্টোর ক্রেডিট নোট (ভাউচার)'}
                         {printableRecord.RefundMethod === 'Cash' && 'নগদ ক্যাশ প্রদান (Cash)'}
                         {printableRecord.RefundMethod === 'DeductDue' && 'বকেয়া খাতা থেকে কর্তন (Due Deduct)'}
@@ -472,55 +474,54 @@ export default function SalesReturnModal({
                       </span>
                     </div>
                     {printableRecord.CreditNoteCode && (
-                      <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200 mt-2">
+                      <div className="p-2.5 bg-amber-50 rounded-md border border-amber-200/80 mt-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-amber-900">ইস্যুকৃত ভাউচার কোড:</span>
-                          <span className="font-mono font-black text-sm text-amber-700">{printableRecord.CreditNoteCode}</span>
+                          <span className="text-[11px] font-semibold text-[#B45309]">ইস্যুকৃত ভাউচার কোড:</span>
+                          <span className="font-mono tabular-nums font-semibold text-sm text-[#B45309]">{printableRecord.CreditNoteCode}</span>
                         </div>
-                        <span className="text-[10px] text-amber-700 block mt-0.5">
+                        <span className="text-[10px] text-[#B45309] font-mono tabular-nums block mt-0.5">
                           মেয়াদ: {printableRecord.CreditNoteExpiry || '৬০ দিন'} (পরবর্তী কেনাকাটায় প্রযোজ্য)
                         </span>
                       </div>
                     )}
                   </div>
 
-                  <div className="text-center pt-4 border-t border-dashed border-slate-200 text-[10px] text-slate-400">
+                  <div className="text-center pt-4 border-t border-dashed border-neutral-200/80 text-[10px] text-[#737373]">
                     প্রসেস করেছেন: {printableRecord.ProcessedBy || 'Cashier'} • পাবনা বস্ত্রালয় POS
                   </div>
                 </div>
               ) : (
                 /* স্টোর ক্রেডিট ভাউচার কার্ড */
-                <div className="p-6 bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-950 text-white rounded-2xl border-2 border-indigo-400/40 relative overflow-hidden shadow-2xl">
-                  <div className="absolute top-0 right-0 -mt-4 -mr-4 w-28 h-28 bg-indigo-500/20 rounded-full blur-xl pointer-events-none" />
+                <div className="p-6 bg-[#0F172A] text-white rounded-lg border border-slate-800 relative overflow-hidden">
                   
-                  <div className="flex items-center justify-between border-b border-indigo-500/30 pb-3 mb-4">
+                  <div className="flex items-center justify-between border-b border-slate-700 pb-3 mb-4">
                     <div className="flex items-center space-x-2">
                       <Ticket className="w-5 h-5 text-amber-400" />
-                      <span className="text-xs font-bold text-indigo-200 uppercase tracking-widest">STORE CREDIT VOUCHER</span>
+                      <span className="text-xs font-semibold text-slate-200 uppercase tracking-widest">STORE CREDIT VOUCHER</span>
                     </div>
-                    <span className="text-xs font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-400/30">
+                    <span className="text-xs font-semibold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-400/30">
                       {printableRecord.CreditNoteStatus || 'ACTIVE'}
                     </span>
                   </div>
 
                   <div className="text-center py-2">
-                    <span className="text-[11px] text-indigo-300 font-medium">ভাউচারের মোট মূল্যমান:</span>
-                    <div className="text-3xl font-black text-amber-300 font-mono tracking-tight my-1">
+                    <span className="text-[11px] text-slate-300 font-medium">ভাউচারের মোট মূল্যমান:</span>
+                    <div className="text-3xl font-semibold text-amber-300 font-mono tabular-nums tracking-tight my-1">
                       {currencySymbol}{Number(printableRecord.TotalRefundAmount).toFixed(2)}
                     </div>
-                    <p className="text-xs text-indigo-200">
-                      গ্রাহক: <strong className="text-white">{printableRecord.CustomerName}</strong> ({printableRecord.CustomerPhone || 'N/A'})
+                    <p className="text-xs text-slate-300">
+                      গ্রাহক: <strong className="text-white">{printableRecord.CustomerName}</strong> (<span className="font-mono tabular-nums">{printableRecord.CustomerPhone || 'N/A'}</span>)
                     </p>
                   </div>
 
-                  <div className="mt-4 p-3 bg-white/10 rounded-xl border border-white/20 text-center">
-                    <span className="text-[10px] uppercase font-bold text-indigo-300 block mb-1">ভাউচার কোড (চেকআউটে দেখান):</span>
-                    <span className="font-mono text-xl font-black tracking-widest text-white selection:bg-amber-400 selection:text-slate-900">
+                  <div className="mt-4 p-3 bg-slate-800/80 rounded-md border border-slate-700 text-center">
+                    <span className="text-[10px] uppercase font-medium text-slate-300 block mb-1">ভাউচার কোড (চেকআউটে দেখান):</span>
+                    <span className="font-mono tabular-nums text-xl font-semibold tracking-widest text-white selection:bg-amber-400 selection:text-slate-900">
                       {printableRecord.CreditNoteCode}
                     </span>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between text-[10px] text-indigo-300 pt-3 border-t border-indigo-500/30">
+                  <div className="mt-4 flex items-center justify-between text-[10px] text-slate-300 pt-3 border-t border-slate-700 font-mono tabular-nums">
                     <span>ইস্যুর তারিখ: {new Date(printableRecord.ReturnDate).toLocaleDateString('bn-BD')}</span>
                     <span>মেয়াদ শেষ: {printableRecord.CreditNoteExpiry || '৬০ দিন'}</span>
                   </div>
@@ -531,29 +532,29 @@ export default function SalesReturnModal({
           </div>
         ) : activeTab === 'new' ? (
           /* ট্যাব ১: নতুন রিটার্ন ও বিনিময় ফর্ম */
-          <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6 bg-[#FAFAFA]">
             
             {/* ধাপ ১: মূল ইনভয়েস সার্চ */}
-            <div className="p-4 sm:p-5 bg-slate-50 rounded-2xl border border-slate-200">
-              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+            <div className="p-4 sm:p-5 bg-white rounded-lg border border-neutral-200/80">
+              <label className="text-xs font-semibold text-[#111111] block mb-1.5">
                 ধাপ ১: বিক্রয় মেমো / ইনভয়েস নম্বর বা গ্রাহকের ফোন দিয়ে সার্চ করুন:
               </label>
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" />
                 <input
                   type="text"
                   placeholder="যেমন: INV-2610-1234 অথবা গ্রাহকের ফোন নম্বর বা নাম..."
                   value={invoiceQuery}
                   onChange={(e) => setInvoiceQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                  className="w-full pl-9 pr-4 py-2 bg-[#F5F5F5] focus:bg-white border border-neutral-200/80 rounded-md text-sm focus:outline-none focus:border-[#0F172A] font-medium text-[#111111] min-h-[44px] sm:min-h-[36px]"
                 />
               </div>
 
               {/* অটো-সাজেশন রেজাল্ট */}
               {!selectedInvoice && invoiceQuery.trim() && (
-                <div className="mt-2 bg-white rounded-xl border border-slate-200 shadow-md divide-y divide-slate-100 max-h-56 overflow-y-auto">
+                <div className="mt-2 bg-white rounded-lg border border-neutral-200/80 divide-y divide-neutral-200/80 max-h-56 overflow-y-auto">
                   {filteredInvoices.length === 0 ? (
-                    <div className="p-3 text-center text-xs text-slate-400">
+                    <div className="p-3 text-center text-xs text-[#737373]">
                       কোনো ইনভয়েস খুঁজে পাওয়া যায়নি। নম্বরটি সঠিকভাবে টাইপ করুন।
                     </div>
                   ) : (
@@ -566,22 +567,22 @@ export default function SalesReturnModal({
                           key={invId}
                           type="button"
                           onClick={() => handleSelectInvoice(inv)}
-                          className="w-full p-2.5 text-left hover:bg-indigo-50/80 flex items-center justify-between transition-colors group cursor-pointer"
+                          className="w-full p-2.5 text-left hover:bg-[#F5F5F5] flex items-center justify-between transition-colors group cursor-pointer min-h-[44px] sm:min-h-[36px]"
                         >
                           <div className="flex items-center space-x-2.5">
-                            <Receipt className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
+                            <Receipt className="w-4 h-4 text-[#0F172A]" />
                             <div>
-                              <span className="text-xs font-bold text-slate-800 font-mono block">{invId}</span>
-                              <span className="text-[11px] text-slate-500">
+                              <span className="text-xs font-semibold text-[#111111] font-mono tabular-nums block">{invId}</span>
+                              <span className="text-[11px] text-[#525252] font-mono tabular-nums">
                                 {inv.CustomerName || 'Walk-in'} • {inv.CustomerPhone || 'N/A'} • {date ? new Date(date).toLocaleDateString() : ''}
                               </span>
                             </div>
                           </div>
                           <div className="text-right">
-                            <span className="text-xs font-bold text-slate-900 font-mono">
+                            <span className="text-xs font-semibold text-[#111111] font-mono tabular-nums">
                               {currencySymbol}{total.toFixed(2)}
                             </span>
-                            <span className="text-[10px] text-indigo-600 block font-bold">সিলেক্ট করুন ➔</span>
+                            <span className="text-[10px] text-[#0F172A] block font-semibold">সিলেক্ট করুন ➔</span>
                           </div>
                         </button>
                       );
@@ -592,14 +593,14 @@ export default function SalesReturnModal({
 
               {/* নির্বাচিত ইনভয়েস সামারি বার */}
               {selectedInvoice && (
-                <div className="mt-3 p-3.5 bg-indigo-50/80 rounded-xl border border-indigo-200 flex flex-wrap items-center justify-between gap-2">
+                <div className="mt-3 p-3.5 bg-[#F5F5F5] rounded-md border border-neutral-200/80 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-indigo-600 shrink-0" />
+                    <CheckCircle className="w-5 h-5 text-[#15803D] shrink-0" />
                     <div>
-                      <span className="text-xs font-black text-indigo-950 font-mono">
+                      <span className="text-xs font-semibold text-[#111111] font-mono tabular-nums">
                         ইনভয়েস: {selectedInvoice.InvoiceNo || selectedInvoice.invoiceNo || selectedInvoice.saleId}
                       </span>
-                      <span className="text-[11px] text-slate-600 block">
+                      <span className="text-[11px] text-[#525252] block font-mono tabular-nums">
                         গ্রাহক: {selectedInvoice.CustomerName || 'Walk-in'} ({selectedInvoice.CustomerPhone || 'N/A'}) • বিক্রয় মোট: {currencySymbol}{Number(selectedInvoice.GrandTotal || selectedInvoice.grandTotal || 0).toFixed(2)}
                       </span>
                     </div>
@@ -607,7 +608,7 @@ export default function SalesReturnModal({
                   <button
                     type="button"
                     onClick={() => { setSelectedInvoice(null); setReturnItemsState({}); }}
-                    className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline px-2 py-1 bg-white rounded-lg border border-rose-200"
+                    className="text-xs font-medium text-[#B91C1C] hover:bg-red-50 px-3 py-1.5 bg-white rounded-md border border-red-200/80 min-h-[44px] sm:min-h-[36px] cursor-pointer"
                   >
                     অন্য ইনভয়েস বাছুন
                   </button>
@@ -619,10 +620,10 @@ export default function SalesReturnModal({
             {selectedInvoice && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-[#525252]">
                     ধাপ ২: যে পণ্যগুলো রিটার্ন নেওয়া হবে তার পরিমাণ ও অবস্থা চিহ্নিত করুন:
                   </h3>
-                  <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                  <span className="text-xs font-medium text-[#111111] bg-white px-2.5 py-0.5 rounded-md border border-neutral-200/80 font-mono tabular-nums">
                     মোট পণ্য: {invoiceItems.length} প্রকার
                   </span>
                 </div>
@@ -642,37 +643,37 @@ export default function SalesReturnModal({
                     return (
                       <div
                         key={key}
-                        className={`p-3.5 rounded-2xl border transition-all ${
+                        className={`p-3.5 rounded-lg border transition-colors ${
                           isSelected
-                            ? 'bg-white border-indigo-300 shadow-md ring-2 ring-indigo-500/10'
-                            : 'bg-slate-50/70 border-slate-200 opacity-90'
+                            ? 'bg-white border-[#0F172A]'
+                            : 'bg-white border-neutral-200/80'
                         }`}
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           {/* পণ্যের বিবরণ */}
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-xs font-bold text-slate-900 truncate">
+                            <h4 className="text-xs font-semibold text-[#111111] truncate">
                               {item.productName}
                               {item.variantName && (
-                                <span className="ml-1.5 px-1.5 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded border border-indigo-200">
+                                <span className="ml-1.5 px-1.5 py-0.5 bg-[#F5F5F5] text-[#111111] text-[10px] font-medium rounded-md border border-neutral-200/80">
                                   {item.variantName}
                                 </span>
                               )}
                             </h4>
-                            <div className="flex items-center space-x-3 text-[11px] text-slate-500 mt-1">
-                              <span>মূল বিক্রয় দর: <strong className="text-slate-800 font-mono">{currencySymbol}{Number(item.sellingPrice).toFixed(2)}</strong></span>
-                              <span>বিক্রয় পরিমাণ: <strong className="text-slate-800">{item.quantity} {item.unit || 'Pcs'}</strong></span>
+                            <div className="flex items-center space-x-3 text-[11px] text-[#525252] mt-1">
+                              <span>মূল বিক্রয় দর: <strong className="text-[#111111] font-mono tabular-nums">{currencySymbol}{Number(item.sellingPrice).toFixed(2)}</strong></span>
+                              <span>বিক্রয় পরিমাণ: <strong className="text-[#111111] font-mono tabular-nums">{item.quantity} {item.unit || 'Pcs'}</strong></span>
                             </div>
                           </div>
 
                           {/* পরিমাণ কন্ট্রোল */}
                           <div className="flex items-center space-x-2">
-                            <span className="text-xs font-bold text-slate-600">ফেরতের পরিমাণ:</span>
+                            <span className="text-xs font-medium text-[#525252]">ফেরতের পরিমাণ:</span>
                             <div className="flex items-center space-x-1">
                               <button
                                 type="button"
                                 onClick={() => handleQtyChange(key, state.quantity - 1)}
-                                className="w-7 h-7 rounded-lg bg-slate-200 hover:bg-slate-300 font-bold text-slate-700 flex items-center justify-center text-sm"
+                                className="min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] rounded-md bg-[#F5F5F5] hover:bg-neutral-200/70 border border-neutral-200/80 font-semibold font-mono tabular-nums text-[#111111] flex items-center justify-center text-sm cursor-pointer"
                               >
                                 -
                               </button>
@@ -682,37 +683,37 @@ export default function SalesReturnModal({
                                 max={state.maxQuantity}
                                 value={state.quantity}
                                 onChange={(e) => handleQtyChange(key, e.target.value)}
-                                className="w-12 py-1 text-center font-bold text-xs border border-slate-300 rounded-lg bg-white"
+                                className="w-12 py-1 text-center font-semibold font-mono tabular-nums text-xs border border-neutral-200/80 rounded-md bg-white text-[#111111] min-h-[44px] sm:min-h-[36px]"
                               />
                               <button
                                 type="button"
                                 onClick={() => handleQtyChange(key, state.quantity + 1)}
                                 disabled={state.quantity >= state.maxQuantity}
-                                className="w-7 h-7 rounded-lg bg-indigo-100 hover:bg-indigo-200 font-bold text-indigo-700 flex items-center justify-center text-sm disabled:opacity-40"
+                                className="min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] rounded-md bg-[#0F172A] hover:bg-slate-800 font-semibold font-mono tabular-nums text-white flex items-center justify-center text-sm disabled:opacity-40 cursor-pointer"
                               >
                                 +
                               </button>
                             </div>
-                            <span className="text-[10px] text-slate-400">/ সর্বোচ্চ {state.maxQuantity}</span>
+                            <span className="text-[10px] text-[#737373] font-mono tabular-nums">/ সর্বোচ্চ {state.maxQuantity}</span>
                           </div>
                         </div>
 
                         {/* যদি আইটেমটি রিটার্নের জন্য সিলেক্ট করা হয় */}
                         {isSelected && (
-                          <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs animate-in fade-in duration-150">
+                          <div className="mt-3 pt-3 border-t border-neutral-200/80 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                             {/* পণ্যের কন্ডিশন / অবস্থা */}
                             <div>
-                              <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                              <label className="text-[10px] font-semibold text-[#737373] uppercase block mb-1">
                                 পণ্যের অবস্থা (ইনভেন্টরি প্রভাব):
                               </label>
                               <div className="grid grid-cols-2 gap-1.5">
                                 <button
                                   type="button"
                                   onClick={() => handleConditionChange(key, 'Resellable')}
-                                  className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
+                                  className={`py-1.5 px-2 rounded-md border text-[11px] font-medium flex items-center justify-center space-x-1 transition-colors min-h-[44px] sm:min-h-[36px] cursor-pointer ${
                                     state.condition === 'Resellable'
-                                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                      ? 'bg-[#15803D] text-white border-[#15803D]'
+                                      : 'bg-white text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'
                                   }`}
                                 >
                                   <Check className="w-3 h-3" />
@@ -721,10 +722,10 @@ export default function SalesReturnModal({
                                 <button
                                   type="button"
                                   onClick={() => handleConditionChange(key, 'Damaged')}
-                                  className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
+                                  className={`py-1.5 px-2 rounded-md border text-[11px] font-medium flex items-center justify-center space-x-1 transition-colors min-h-[44px] sm:min-h-[36px] cursor-pointer ${
                                     state.condition === 'Damaged'
-                                      ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                      ? 'bg-[#B91C1C] text-white border-[#B91C1C]'
+                                      : 'bg-white text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'
                                   }`}
                                 >
                                   <AlertTriangle className="w-3 h-3" />
@@ -735,13 +736,13 @@ export default function SalesReturnModal({
 
                             {/* আইটেমের কারণ */}
                             <div>
-                              <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                              <label className="text-[10px] font-semibold text-[#737373] uppercase block mb-1">
                                 রিটার্নের কারণ:
                               </label>
                               <select
                                 value={state.reason}
                                 onChange={(e) => handleItemReasonChange(key, e.target.value)}
-                                className="w-full py-1.5 px-2 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:ring-1 focus:ring-indigo-500"
+                                className="w-full py-1.5 px-2 bg-white border border-neutral-200/80 rounded-md text-xs font-medium text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                               >
                                 <option value="Size mismatch / ফিটিং সমস্যা">সাইজ / ফিটিং সমস্যা</option>
                                 <option value="Color or style preference / পছন্দ পরিবর্তন">রং বা ডিজাইন অপছন্দ</option>
@@ -760,19 +761,19 @@ export default function SalesReturnModal({
 
                 {/* ধাপ ৩: রিফান্ড বা সেটেলমেন্ট মেথড */}
                 {returnSummary.totalItems > 0 && (
-                  <div className="p-4 sm:p-5 bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-3xl shadow-xl space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/10 gap-2">
+                  <div className="p-4 sm:p-5 bg-[#0F172A] text-white rounded-lg border border-slate-800 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-700 gap-2">
                       <div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300 block">
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-300 block">
                           ধাপ ৩: রিফান্ড বা ক্রেডিট সেটেলমেন্ট
                         </span>
-                        <h3 className="text-base font-bold text-white">
-                          মোট ফেরত পণ্য: <span className="text-amber-300 font-mono">{returnSummary.totalItems} পিস</span>
+                        <h3 className="text-base font-semibold tracking-tight text-white">
+                          মোট ফেরত পণ্য: <span className="text-amber-300 font-mono tabular-nums">{returnSummary.totalItems} পিস</span>
                         </h3>
                       </div>
                       <div className="text-right">
-                        <span className="text-xs text-indigo-200 block">মোট রিফান্ড পরিমাণ:</span>
-                        <span className="text-2xl font-black text-amber-400 font-mono">
+                        <span className="text-xs text-slate-300 block">মোট রিফান্ড পরিমাণ:</span>
+                        <span className="text-2xl font-semibold text-amber-300 font-mono tabular-nums">
                           {currencySymbol}{returnSummary.totalAmount.toFixed(2)}
                         </span>
                       </div>
@@ -785,17 +786,17 @@ export default function SalesReturnModal({
                       <button
                         type="button"
                         onClick={() => setRefundMethod('StoreCredit')}
-                        className={`p-3 rounded-2xl border text-left transition-all relative ${
+                        className={`p-3 rounded-md border text-left transition-colors relative min-h-[44px] cursor-pointer ${
                           refundMethod === 'StoreCredit'
-                            ? 'bg-indigo-600/90 border-indigo-400 ring-2 ring-indigo-400/30'
-                            : 'bg-white/5 border-white/10 hover:bg-white/10'
+                            ? 'bg-white text-[#111111] border-white'
+                            : 'bg-slate-800/70 border-slate-700 text-slate-200 hover:bg-slate-800'
                         }`}
                       >
                         <div className="flex items-center space-x-2 mb-1">
-                          <Ticket className="w-4 h-4 text-amber-300" />
-                          <span className="text-xs font-bold text-white">স্টোর ক্রেডিট ভাউচার</span>
+                          <Ticket className={`w-4 h-4 ${refundMethod === 'StoreCredit' ? 'text-[#B45309]' : 'text-amber-300'}`} />
+                          <span className="text-xs font-semibold">স্টোর ক্রেডিট ভাউচার</span>
                         </div>
-                        <p className="text-[10px] text-indigo-200">
+                        <p className={`text-[10px] ${refundMethod === 'StoreCredit' ? 'text-[#525252]' : 'text-slate-300'}`}>
                           গ্রাহকের জন্য একটি এসসিএন কোড তৈরি হবে, যা পরবর্তী কেনাকাটায় ব্যবহার করা যাবে।
                         </p>
                       </button>
@@ -804,17 +805,17 @@ export default function SalesReturnModal({
                       <button
                         type="button"
                         onClick={() => setRefundMethod('Cash')}
-                        className={`p-3 rounded-2xl border text-left transition-all ${
+                        className={`p-3 rounded-md border text-left transition-colors min-h-[44px] cursor-pointer ${
                           refundMethod === 'Cash'
-                            ? 'bg-rose-600/90 border-rose-400 ring-2 ring-rose-400/30'
-                            : 'bg-white/5 border-white/10 hover:bg-white/10'
+                            ? 'bg-[#B91C1C] border-red-400 text-white'
+                            : 'bg-slate-800/70 border-slate-700 text-slate-200 hover:bg-slate-800'
                         }`}
                       >
                         <div className="flex items-center space-x-2 mb-1">
-                          <Banknote className="w-4 h-4 text-rose-300" />
-                          <span className="text-xs font-bold text-white">নগদ ক্যাশ ফেরত</span>
+                          <Banknote className={`w-4 h-4 ${refundMethod === 'Cash' ? 'text-white' : 'text-red-300'}`} />
+                          <span className="text-xs font-semibold">নগদ ক্যাশ ফেরত</span>
                         </div>
-                        <p className="text-[10px] text-rose-200">
+                        <p className={`text-[10px] ${refundMethod === 'Cash' ? 'text-red-100' : 'text-slate-300'}`}>
                           দোকানের ক্যাশ কাউন্টার ড্রয়ার থেকে গ্রাহককে নগদ টাকা প্রদান করা হবে।
                         </p>
                       </button>
@@ -823,17 +824,17 @@ export default function SalesReturnModal({
                       <button
                         type="button"
                         onClick={() => setRefundMethod('DeductDue')}
-                        className={`p-3 rounded-2xl border text-left transition-all ${
+                        className={`p-3 rounded-md border text-left transition-colors min-h-[44px] cursor-pointer ${
                           refundMethod === 'DeductDue'
-                            ? 'bg-emerald-600/90 border-emerald-400 ring-2 ring-emerald-400/30'
-                            : 'bg-white/5 border-white/10 hover:bg-white/10'
+                            ? 'bg-[#15803D] border-emerald-400 text-white'
+                            : 'bg-slate-800/70 border-slate-700 text-slate-200 hover:bg-slate-800'
                         }`}
                       >
                         <div className="flex items-center space-x-2 mb-1">
-                          <Coins className="w-4 h-4 text-emerald-300" />
-                          <span className="text-xs font-bold text-white">বকেয়া লেজার সমন্বয়</span>
+                          <Coins className={`w-4 h-4 ${refundMethod === 'DeductDue' ? 'text-white' : 'text-emerald-300'}`} />
+                          <span className="text-xs font-semibold">বকেয়া লেজার সমন্বয়</span>
                         </div>
-                        <p className="text-[10px] text-emerald-200">
+                        <p className={`text-[10px] font-mono tabular-nums ${refundMethod === 'DeductDue' ? 'text-emerald-100' : 'text-slate-300'}`}>
                           গ্রাহকের বর্তমান বকেয়া (৳{customerCurrentDue.toLocaleString('en-IN')}) থেকে কর্তন হবে।
                         </p>
                       </button>
@@ -841,18 +842,18 @@ export default function SalesReturnModal({
 
                     {/* স্টোর ক্রেডিট মেয়াদ সিলেক্টর */}
                     {refundMethod === 'StoreCredit' && (
-                      <div className="flex items-center space-x-3 text-xs bg-white/10 p-2.5 rounded-xl border border-white/10">
-                        <span className="text-indigo-200">ভাউচারের মেয়াদকাল:</span>
+                      <div className="flex flex-wrap items-center gap-2 text-xs bg-slate-800/70 p-2.5 rounded-md border border-slate-700">
+                        <span className="text-slate-300">ভাউচারের মেয়াদকাল:</span>
                         <div className="flex space-x-2">
                           {[30, 60, 90, 180].map((days) => (
                             <button
                               key={days}
                               type="button"
                               onClick={() => setValidityDays(days)}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                              className={`px-2.5 py-1 rounded-md text-xs font-medium font-mono tabular-nums transition-colors min-h-[36px] cursor-pointer ${
                                 validityDays === days
-                                  ? 'bg-amber-400 text-slate-900 shadow-xs'
-                                  : 'bg-white/10 text-white hover:bg-white/20'
+                                  ? 'bg-white text-[#111111]'
+                                  : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
                               }`}
                             >
                               {days} দিন
@@ -869,7 +870,7 @@ export default function SalesReturnModal({
                         placeholder="রিটার্ন সম্পর্কে অতিরিক্ত কোনো মন্তব্য / নোট (ঐচ্ছিক)..."
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                        className="w-full px-3 py-2 bg-slate-800/70 border border-slate-700 rounded-md text-xs text-white placeholder-slate-400 focus:outline-none focus:border-white min-h-[44px] sm:min-h-[36px]"
                       />
                     </div>
 
@@ -879,7 +880,7 @@ export default function SalesReturnModal({
                         type="button"
                         onClick={() => handleSubmitReturn(true)}
                         disabled={isSubmitting}
-                        className="w-full sm:w-auto px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-98 text-slate-950 font-black rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 text-xs disabled:opacity-50"
+                        className="w-full sm:w-auto px-5 py-2.5 bg-[#15803D] hover:bg-emerald-800 text-white font-medium rounded-md transition-colors flex items-center justify-center space-x-2 text-xs disabled:opacity-50 min-h-[44px] sm:min-h-[36px] cursor-pointer"
                       >
                         <Printer className="w-4 h-4" />
                         <span>প্রসেস ও স্লিপ প্রিন্ট করুন</span>
@@ -889,7 +890,7 @@ export default function SalesReturnModal({
                         type="button"
                         onClick={() => handleSubmitReturn(false)}
                         disabled={isSubmitting}
-                        className="w-full sm:w-auto px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 active:scale-98 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-xs disabled:opacity-50"
+                        className="w-full sm:w-auto px-5 py-2.5 bg-white hover:bg-neutral-100 text-[#111111] font-medium rounded-md transition-colors flex items-center justify-center space-x-2 text-xs disabled:opacity-50 min-h-[44px] sm:min-h-[36px] cursor-pointer"
                       >
                         <CheckCircle className="w-4 h-4" />
                         <span>শুধুমাত্র রিটার্ন সম্পন্ন করুন</span>
@@ -905,18 +906,18 @@ export default function SalesReturnModal({
           </div>
         ) : (
           /* ট্যাব ২: রিটার্ন ও ভাউচার হিস্ট্রি */
-          <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 bg-[#FAFAFA]">
             
             {/* সার্চ ও ফিল্টার বার */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-lg border border-neutral-200/80">
               <div className="relative w-full sm:w-80">
-                <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" />
                 <input
                   type="text"
                   placeholder="রিটার্ন আইডি, ইনভয়েস বা ভাউচার কোড খুঁজুন..."
                   value={historySearch}
                   onChange={(e) => setHistorySearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs focus:ring-1 focus:ring-indigo-500"
+                  className="w-full pl-9 pr-3 py-1.5 bg-[#F5F5F5] focus:bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:outline-none focus:border-[#0F172A] min-h-[44px] sm:min-h-[36px]"
                 />
               </div>
 
@@ -926,10 +927,10 @@ export default function SalesReturnModal({
                     key={filter}
                     type="button"
                     onClick={() => setHistoryMethodFilter(filter)}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 min-h-[44px] sm:min-h-[36px] cursor-pointer border ${
                       historyMethodFilter === filter
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                        : 'bg-white text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'
                     }`}
                   >
                     {filter === 'ALL' && 'সকল মেথড'}
@@ -943,10 +944,10 @@ export default function SalesReturnModal({
 
             {/* তালিকা */}
             {filteredReturnsHistory.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 space-y-2">
-                <RotateCcw className="w-10 h-10 mx-auto stroke-1 text-slate-300" />
-                <p className="text-sm font-bold text-slate-600">কোনো রিটার্ন রেকর্ড পাওয়া যায়নি</p>
-                <p className="text-xs">নতুন কোনো বিক্রয় রিটার্ন নেওয়া হলে তা এখানে স্বয়ংক্রিয়ভাবে প্রদর্শিত হবে।</p>
+              <div className="py-12 text-center text-[#737373] space-y-2 bg-white rounded-lg border border-dashed border-neutral-200/80">
+                <RotateCcw className="w-10 h-10 mx-auto stroke-1 text-neutral-300" />
+                <p className="text-sm font-semibold text-[#111111]">কোনো রিটার্ন রেকর্ড পাওয়া যায়নি</p>
+                <p className="text-xs text-[#525252]">নতুন কোনো বিক্রয় রিটার্ন নেওয়া হলে তা এখানে স্বয়ংক্রিয়ভাবে প্রদর্শিত হবে।</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -957,39 +958,39 @@ export default function SalesReturnModal({
                   return (
                     <div
                       key={ret.ReturnID || idx}
-                      className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs hover:border-indigo-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      className="p-4 bg-white rounded-lg border border-neutral-200/80 hover:border-neutral-300 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
                       <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-mono font-bold text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
+                        <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                          <span className="font-mono tabular-nums font-semibold text-xs text-[#111111] bg-[#F5F5F5] px-2 py-0.5 rounded-md border border-neutral-200/80">
                             {ret.ReturnID}
                           </span>
-                          <span className="text-xs font-bold text-slate-700 font-mono">
+                          <span className="text-xs font-semibold text-[#525252] font-mono tabular-nums">
                             ইনভয়েস: {ret.InvoiceNo}
                           </span>
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-[#737373] font-mono tabular-nums">
                             • {new Date(ret.ReturnDate || ret.Timestamp).toLocaleDateString('bn-BD')}
                           </span>
                         </div>
 
-                        <div className="text-xs text-slate-600">
-                          গ্রাহক: <strong className="text-slate-800">{ret.CustomerName}</strong> ({ret.CustomerPhone || 'N/A'})
-                          • আইটেম: <strong className="text-slate-800">{ret.TotalItems || items.length} প্রকার</strong>
+                        <div className="text-xs text-[#525252]">
+                          গ্রাহক: <strong className="text-[#111111]">{ret.CustomerName}</strong> (<span className="font-mono tabular-nums">{ret.CustomerPhone || 'N/A'}</span>)
+                          • আইটেম: <strong className="text-[#111111] font-mono tabular-nums">{ret.TotalItems || items.length} প্রকার</strong>
                         </div>
 
                         {/* ক্রেডিট নোট কোড ব্যাজ */}
                         {ret.CreditNoteCode && (
                           <div className="flex items-center space-x-2 pt-1">
-                            <span className="text-[10px] font-bold text-slate-400">ভাউচার কোড:</span>
-                            <span className="font-mono text-xs font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                            <span className="text-[10px] font-medium text-[#737373]">ভাউচার কোড:</span>
+                            <span className="font-mono tabular-nums text-xs font-semibold text-[#B45309] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80">
                               {ret.CreditNoteCode}
                             </span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                            <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium border ${
                               ret.CreditNoteStatus === 'Active'
-                                ? 'bg-emerald-100 text-emerald-800'
+                                ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80'
                                 : ret.CreditNoteStatus === 'Redeemed'
-                                ? 'bg-slate-100 text-slate-600'
-                                : 'bg-rose-100 text-rose-700'
+                                ? 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80'
+                                : 'bg-red-50 text-[#B91C1C] border-red-200/80'
                             }`}>
                               {ret.CreditNoteStatus === 'Active' ? 'সক্রিয় (Active)' : ret.CreditNoteStatus === 'Redeemed' ? 'ব্যবহৃত (Redeemed)' : ret.CreditNoteStatus}
                             </span>
@@ -997,10 +998,10 @@ export default function SalesReturnModal({
                         )}
                       </div>
 
-                      <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-2 sm:pt-0">
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 border-neutral-200/80 pt-2 sm:pt-0">
                         <div className="text-right">
-                          <span className="text-xs text-slate-400 block font-medium">রিফান্ড পরিমাণ:</span>
-                          <span className="text-base font-black font-mono text-rose-600">
+                          <span className="text-xs text-[#737373] block font-medium">রিফান্ড পরিমাণ:</span>
+                          <span className="text-base font-semibold font-mono tabular-nums text-[#B91C1C]">
                             {currencySymbol}{Number(ret.TotalRefundAmount).toFixed(2)}
                           </span>
                         </div>
@@ -1010,7 +1011,7 @@ export default function SalesReturnModal({
                             <button
                               type="button"
                               onClick={() => handleQuickRedeem(ret.CreditNoteCode)}
-                              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-[10px] rounded-lg shadow-2xs transition-all"
+                              className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-[#B45309] border border-amber-200/80 font-medium text-[11px] rounded-md transition-colors min-h-[44px] sm:min-h-[36px] cursor-pointer"
                             >
                               রিডিম করুন
                             </button>
@@ -1021,7 +1022,7 @@ export default function SalesReturnModal({
                               setPrintableRecord(ret);
                               setPrintDocType('memo');
                             }}
-                            className="p-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 rounded-lg border border-slate-200 transition-colors"
+                            className="p-2 bg-[#F5F5F5] hover:bg-neutral-200/70 text-[#111111] rounded-md border border-neutral-200/80 transition-colors min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center cursor-pointer"
                             title="স্লিপ রি-প্রিন্ট"
                           >
                             <Printer className="w-3.5 h-3.5" />

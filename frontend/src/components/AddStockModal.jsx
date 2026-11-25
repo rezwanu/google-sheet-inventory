@@ -747,27 +747,27 @@ export default function AddStockModal({
   if (!isOpen && !embedded) return null;
 
   return (
-    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 sm:py-6 animate-in fade-in duration-200"}>
-      <div className={embedded ? "bg-white rounded-3xl shadow-sm border border-slate-200/90 w-full flex-1 min-h-[calc(100vh-6.5rem)] overflow-hidden flex flex-col transition-all" : "bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-5xl w-full overflow-hidden flex flex-col max-h-[94vh] transition-all animate-in zoom-in-95 duration-200"}>
+    <div className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-50 overflow-y-auto bg-neutral-900/40 flex items-center justify-center p-3 sm:p-5 sm:py-6 animate-in fade-in duration-200"}>
+      <div className={embedded ? "bg-white rounded-lg border border-neutral-200/80 w-full flex-1 min-h-[calc(100vh-6.5rem)] overflow-hidden flex flex-col" : "bg-white rounded-lg border border-neutral-200/80 max-w-5xl w-full overflow-hidden flex flex-col max-h-[94vh] animate-in zoom-in-95 duration-200"}>
         
         {/* মডাল হেডার (Header Bar with 1-Click Segmented Location Toggle) */}
-        <div className="px-5 sm:px-8 py-4 sm:py-5 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 bg-gradient-to-r from-slate-50 via-teal-50/25 to-white relative select-none">
+        <div className="px-5 sm:px-8 py-4 sm:py-5 border-b border-neutral-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 bg-[#FAFAFA] text-[#111111] relative select-none">
           
           {/* বাম পাশে ব্র্যান্ডিং ও টাইটেল */}
           <div className="flex items-center space-x-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-teal-600 via-emerald-600 to-teal-700 text-white flex items-center justify-center shadow-lg shadow-teal-600/20 shrink-0 ring-4 ring-teal-50">
+            <div className="w-10 h-10 rounded-lg bg-[#0F172A] text-white flex items-center justify-center shrink-0">
               <PlusCircle className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                <h3 className="text-base sm:text-lg font-semibold text-[#111111] tracking-tight">
                   গোডাউন রিস্টক ও লট বৃদ্ধি
                 </h3>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200 shadow-2xs">
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F5F5F5] text-[#525252] border border-neutral-200/80">
                   WAC ওয়েইটেড কস্ট সিঙ্ক
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#525252] mt-0.5">
                 পূর্বের মজুতের সাথে নতুন লটের সংখ্যা ও কেনা দাম স্বয়ংক্রিয় সমন্বয়
               </p>
             </div>
@@ -777,14 +777,14 @@ export default function AddStockModal({
           <div className="flex items-center space-x-2.5 w-full sm:w-auto justify-between sm:justify-end">
             
             {/* মোবাইল মোডে ট্যাব সুইচ বাটন */}
-            <div className="flex lg:hidden bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+            <div className="flex lg:hidden bg-[#F5F5F5] border border-neutral-200/80 p-1 rounded-md text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => setMobileTab('form')}
-                className={`px-3 py-1 rounded-lg transition-all ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1 rounded-md transition-colors cursor-pointer ${
                   mobileTab === 'form' 
-                    ? 'bg-white text-teal-700 shadow-xs font-bold' 
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-[#111111] border border-neutral-200/80' 
+                    : 'text-[#525252] hover:text-[#111111]'
                 }`}
               >
                 ফর্ম
@@ -792,10 +792,10 @@ export default function AddStockModal({
               <button
                 type="button"
                 onClick={() => setMobileTab('analytics')}
-                className={`px-3 py-1 rounded-lg flex items-center space-x-1 transition-all ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1 rounded-md flex items-center space-x-1 transition-colors cursor-pointer ${
                   mobileTab === 'analytics' 
-                    ? 'bg-white text-teal-700 shadow-xs font-bold' 
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-[#111111] border border-neutral-200/80' 
+                    : 'text-[#525252] hover:text-[#111111]'
                 }`}
               >
                 <Calculator className="w-3.5 h-3.5" />
@@ -804,48 +804,49 @@ export default function AddStockModal({
             </div>
 
             {/* ১-ক্লিক সেগমেন্টেড লোকেশন টগল (1-Click Segmented Location Pill) */}
-            <div className="inline-flex p-1 bg-slate-100/90 rounded-2xl border border-slate-200/80 shadow-inner">
+            <div className="inline-flex p-1 bg-[#F5F5F5] rounded-md border border-neutral-200/80 gap-1">
               <button
                 type="button"
                 onClick={() => setTargetLocation('Godown')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer ${
                   targetLocation === 'Godown'
-                    ? 'bg-amber-500 text-white shadow-sm ring-1 ring-amber-600/30'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                    ? 'bg-[#B45309] text-white'
+                    : 'text-[#525252] hover:text-[#111111] hover:bg-white'
                 }`}
                 title="ওয়্যারহাউজ বা কেন্দ্রীয় গোডাউনে মাল জমা হবে"
               >
                 <Warehouse className="w-3.5 h-3.5" />
-                <span>🏭 কেন্দ্রীয় গোডাউন</span>
+                <span>কেন্দ্রীয় গোডাউন</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setTargetLocation('Shop')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer ${
                   targetLocation === 'Shop'
-                    ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-700/30'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                    ? 'bg-[#0F172A] text-white'
+                    : 'text-[#525252] hover:text-[#111111] hover:bg-white'
                 }`}
                 title="দোকানের বিক্রয় কাউন্টারে সরাসরি মাল জমা হবে"
               >
                 <Store className="w-3.5 h-3.5" />
-                <span>🏬 শো-রুম কাউন্টার</span>
+                <span>শো-রুম কাউন্টার</span>
               </button>
             </div>
 
             <button
+              type="button"
               onClick={onClose}
-              className={`p-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
+              className={`min-h-[44px] sm:min-h-[36px] p-2 rounded-md transition-colors cursor-pointer flex items-center space-x-1.5 ${
                 embedded
-                  ? 'bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs px-3.5 py-1.5 border border-slate-200 shadow-2xs'
-                  : 'w-9 h-9 text-slate-400 hover:text-slate-700 hover:bg-slate-100 justify-center'
+                  ? 'bg-white hover:bg-[#F5F5F5] text-[#111111] font-semibold text-xs px-3.5 py-1.5 border border-neutral-200/80'
+                  : 'min-w-[44px] sm:min-w-[36px] text-[#737373] hover:text-[#111111] hover:bg-[#F5F5F5] justify-center'
               }`}
               title={embedded ? "ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
             >
               {embedded ? (
                 <>
-                  <span className="text-sm font-bold">←</span>
+                  <span className="text-sm font-semibold">←</span>
                   <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
                 </>
               ) : (
@@ -856,28 +857,28 @@ export default function AddStockModal({
         </div>
 
         {/* প্রধান কনটেন্ট এরিয়া (2-কলাম গ্রিড লেআউট) */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto bg-white">
+          <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-neutral-200/80">
             
             {/* বাম কলাম: স্টক ইনপুট ফর্ম (৭ কলাম) */}
             <div className={`lg:col-span-7 p-5 sm:p-7 space-y-5 ${mobileTab === 'analytics' ? 'hidden lg:block' : 'block'}`}>
               
               {/* Gap 3(ক): পেন্ডিং পারচেজ অর্ডার সিলেক্টর */}
               {pendingPOs.length > 0 && (
-                <div className="bg-indigo-50/70 border border-indigo-200 rounded-3xl p-4 sm:p-5 space-y-2.5 shadow-2xs">
+                <div className="bg-[#FAFAFA] border border-neutral-200/80 rounded-lg p-4 sm:p-5 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-indigo-950 flex items-center space-x-2">
-                      <ClipboardList className="w-4 h-4 text-indigo-600" />
+                    <span className="text-xs font-semibold text-[#111111] flex items-center space-x-2">
+                      <ClipboardList className="w-4 h-4 text-[#0F172A]" />
                       <span>পেন্ডিং পারচেজ অর্ডার থেকে মাল গ্রহণ (ঐচ্ছিক)</span>
                     </span>
-                    <span className="text-[10px] font-bold bg-indigo-200/80 text-indigo-800 px-2.5 py-0.5 rounded-full">
+                    <span className="text-[10px] font-mono tabular-nums font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 px-2.5 py-0.5 rounded-md">
                       {pendingPOs.length}টি অর্ডার অপেক্ষমান
                     </span>
                   </div>
                   <select
                     value={linkedPONumber}
                     onChange={handleSelectPendingPO}
-                    className="w-full text-xs font-semibold bg-white border border-indigo-300 rounded-2xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                    className="w-full min-h-[44px] sm:min-h-[36px] text-xs font-semibold bg-white border border-neutral-200/80 rounded-md px-3.5 py-2 text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                   >
                     <option value="">-- কোনো অর্ডার ছাড়া সাধারণ রিস্টক --</option>
                     {pendingPOs.map((po) => (
@@ -887,28 +888,29 @@ export default function AddStockModal({
                     ))}
                   </select>
                   {linkedPONumber && (
-                    <p className="text-[10.5px] text-indigo-700 font-medium">
-                      ✓ এই লটটি সেভ হলে সংশ্লিষ্ট পারচেজ অর্ডার ({linkedPONumber}) স্বয়ংক্রিয়ভাবে <strong>Received</strong> হয়ে যাবে।
+                    <p className="text-[10.5px] text-[#15803D] font-medium flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5 shrink-0" />
+                      <span>এই লটটি সেভ হলে সংশ্লিষ্ট পারচেজ অর্ডার (<span className="font-mono tabular-nums">{linkedPONumber}</span>) স্বয়ংক্রিয়ভাবে <strong>Received</strong> হয়ে যাবে।</span>
                     </p>
                   )}
                 </div>
               )}
 
               {/* সেকশন ১: স্মার্ট কম্বোবক্স ও পণ্য নির্বাচন (Smart Combobox) */}
-              <div className="bg-slate-50/80 border border-slate-200 rounded-3xl p-4 sm:p-5 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
-                  <span className="text-xs font-black text-slate-800 flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+              <div className="bg-[#FAFAFA] border border-neutral-200/80 rounded-lg p-4 sm:p-5 space-y-4">
+                <div className="flex items-center justify-between pb-2.5 border-b border-neutral-200/80">
+                  <span className="text-xs font-semibold text-[#111111] flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#0F172A]"></span>
                     <span>১. পণ্য অনুসন্ধান ও নির্বাচন</span>
                   </span>
                   <div className="flex items-center space-x-2">
                     <button
                       type="button"
                       onClick={() => setIsCameraScannerOpen(true)}
-                      className="text-[11px] font-bold text-teal-800 hover:text-teal-950 flex items-center space-x-1.5 bg-white px-2.5 py-1 rounded-xl border border-teal-200 hover:bg-teal-50 transition-all shadow-2xs cursor-pointer"
+                      className="min-h-[44px] sm:min-h-[36px] text-[11px] font-semibold text-[#111111] hover:bg-[#F5F5F5] flex items-center space-x-1.5 bg-white px-2.5 py-1 rounded-md border border-neutral-200/80 transition-colors cursor-pointer"
                       title="মোবাইল বা ওয়েবক্যাম দিয়ে পণ্যের বারকোড স্ক্যান করুন"
                     >
-                      <Camera className="w-3.5 h-3.5 text-teal-600" />
+                      <Camera className="w-3.5 h-3.5 text-[#0F172A]" />
                       <span>ক্যামেরা স্ক্যান</span>
                     </button>
                   </div>
@@ -916,10 +918,10 @@ export default function AddStockModal({
 
                 {/* নির্বাচিত পণ্যের হিরো কার্ড (Selected Product Hero Card) */}
                 {selectedProduct ? (
-                  <div className="bg-white border-2 border-teal-400/80 rounded-2xl p-4 shadow-sm relative overflow-hidden transition-all">
+                  <div className="bg-white border border-[#0F172A] rounded-lg p-4 relative overflow-hidden">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center space-x-3.5">
-                        <div className="w-14 h-14 rounded-2xl border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center shrink-0 shadow-2xs">
+                        <div className="w-14 h-14 rounded-md border border-neutral-200/80 overflow-hidden bg-[#FAFAFA] flex items-center justify-center shrink-0">
                           {selectedProduct.ImageUrl ? (
                             <img
                               src={selectedProduct.ImageUrl}
@@ -928,27 +930,27 @@ export default function AddStockModal({
                               onError={(e) => { e.target.style.display = 'none'; }}
                             />
                           ) : (
-                            <Package className="w-6 h-6 text-teal-600" />
+                            <Package className="w-6 h-6 text-[#0F172A]" />
                           )}
                         </div>
                         <div>
                           <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                            <span className="text-[10px] font-bold text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
+                            <span className="text-[10px] font-semibold text-[#111111] bg-[#F5F5F5] px-2 py-0.5 rounded-md border border-neutral-200/80">
                               {selectedProduct.Category || 'General'}
                             </span>
                             {selectedProduct.Barcode && (
-                              <span className="text-[10px] font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                              <span className="text-[10px] font-mono tabular-nums font-semibold text-[#525252] bg-[#F5F5F5] px-2 py-0.5 rounded-md border border-neutral-200/80">
                                 #{selectedProduct.Barcode}
                               </span>
                             )}
                           </div>
-                          <h4 className="text-sm font-black text-slate-900 mt-1 leading-snug">
+                          <h4 className="text-sm font-semibold text-[#111111] mt-1 leading-snug">
                             {selectedProduct.ProductName}
                           </h4>
-                          <div className="flex items-center space-x-2 text-xs font-semibold text-slate-500 mt-1">
-                            <span>আইডি: <strong className="text-slate-700 font-mono">{selectedProduct.ProductID}</strong></span>
+                          <div className="flex items-center space-x-2 text-xs font-medium text-[#525252] mt-1">
+                            <span>আইডি: <strong className="text-[#111111] font-mono tabular-nums">{selectedProduct.ProductID}</strong></span>
                             <span>•</span>
-                            <span>একক: <strong className="text-teal-700">{selectedProduct.Unit || 'Pcs'}</strong></span>
+                            <span>একক: <strong className="text-[#111111]">{selectedProduct.Unit || 'Pcs'}</strong></span>
                           </div>
                         </div>
                       </div>
@@ -960,7 +962,7 @@ export default function AddStockModal({
                           setBarcodeSearchQuery('');
                           setTimeout(() => barcodeInputRef.current?.focus(), 80);
                         }}
-                        className="px-3 py-1.5 text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 rounded-xl border border-teal-200 hover:border-teal-300 transition-all cursor-pointer shrink-0 shadow-2xs"
+                        className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 text-xs font-semibold text-[#111111] bg-[#F5F5F5] hover:bg-neutral-200 rounded-md border border-neutral-200/80 transition-colors cursor-pointer shrink-0"
                         title="অন্য পণ্য নির্বাচন করুন"
                       >
                         পণ্য পরিবর্তন করুন
@@ -968,21 +970,21 @@ export default function AddStockModal({
                     </div>
 
                     {/* বর্তমান লোকেশন অনুযায়ী লাইভ স্টক স্ট্যাটাস চিপস */}
-                    <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <div className="flex items-center space-x-2">
-                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                          <Warehouse className="w-3.5 h-3.5 text-amber-600" />
-                          <span>গোডাউন মজুদ: <strong>{selectedProduct.GodownStock !== undefined ? selectedProduct.GodownStock : 0} {selectedProduct.Unit || 'Pcs'}</strong></span>
+                    <div className="mt-3.5 pt-3 border-t border-neutral-200/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-[#B45309] border border-amber-200">
+                          <Warehouse className="w-3.5 h-3.5 text-[#B45309]" />
+                          <span>গোডাউন মজুদ: <strong className="font-mono tabular-nums">{selectedProduct.GodownStock !== undefined ? selectedProduct.GodownStock : 0} {selectedProduct.Unit || 'Pcs'}</strong></span>
                         </span>
-                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
-                          <Store className="w-3.5 h-3.5 text-blue-600" />
-                          <span>কাউন্টার মজুদ: <strong>{selectedProduct.StockQuantity || 0} {selectedProduct.Unit || 'Pcs'}</strong></span>
+                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80">
+                          <Store className="w-3.5 h-3.5 text-[#0F172A]" />
+                          <span>কাউন্টার মজুদ: <strong className="font-mono tabular-nums">{selectedProduct.StockQuantity || 0} {selectedProduct.Unit || 'Pcs'}</strong></span>
                         </span>
                       </div>
 
                       {isThanUnit && yardsPerThan > 0 && (
-                        <span className="text-[11px] font-bold text-teal-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
-                          📏 {yardsPerThan} গজ / প্রতি থান
+                        <span className="text-[11px] font-mono tabular-nums font-semibold text-[#15803D] bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                          {yardsPerThan} গজ / প্রতি থান
                         </span>
                       )}
                     </div>
@@ -990,11 +992,11 @@ export default function AddStockModal({
                 ) : (
                   /* স্মার্ট কম্বোবক্স ইনপুট (Smart Combobox Input) */
                   <div ref={comboboxRef} className="relative">
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label className="block text-xs font-semibold text-[#111111] mb-1.5">
                       পণ্যের নাম, বারকোড বা আইডি খুঁজুন *
                     </label>
                     <div className="relative">
-                      <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 pointer-events-none" />
+                      <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373] pointer-events-none" />
                       <input
                         ref={barcodeInputRef}
                         type="text"
@@ -1006,16 +1008,16 @@ export default function AddStockModal({
                         onFocus={() => setIsSearchDropdownOpen(true)}
                         onKeyDown={handleBarcodeKeyDown}
                         placeholder="বারকোড স্ক্যান করুন বা পণ্যের নাম লিখে খুঁজুন..."
-                        className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-300 rounded-2xl text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-teal-500/15 focus:border-teal-500 transition-all shadow-2xs"
+                        className="w-full min-h-[44px] sm:min-h-[36px] pl-10 pr-10 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-semibold text-[#111111] placeholder-[#737373] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] transition-colors"
                       />
-                      <Barcode className="w-4 h-4 absolute right-3.5 top-3 text-slate-400 pointer-events-none" />
+                      <Barcode className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-[#737373] pointer-events-none" />
                     </div>
 
                     {/* লাইভ ড্রপডাউন সাজেশন লিস্ট (Instant Suggestions) */}
                     {isSearchDropdownOpen && (
-                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 max-h-64 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-neutral-200/80 rounded-lg z-30 max-h-64 overflow-y-auto divide-y divide-neutral-200/80 animate-in fade-in zoom-in-95 duration-150">
                         {filteredProductOptions.length === 0 ? (
-                          <div className="p-4 text-center text-xs text-slate-500">
+                          <div className="p-4 text-center text-xs text-[#525252]">
                             '{barcodeSearchQuery}' দিয়ে কোনো পণ্য পাওয়া যায়নি!
                           </div>
                         ) : (
@@ -1026,34 +1028,36 @@ export default function AddStockModal({
                               <div
                                 key={p.ProductID}
                                 onClick={() => handleProductSelect(p.ProductID)}
-                                className="p-2.5 sm:px-3.5 hover:bg-teal-50/60 cursor-pointer transition-colors flex items-center justify-between gap-2"
+                                className="p-2.5 sm:px-3.5 hover:bg-[#FAFAFA] cursor-pointer transition-colors flex items-center justify-between gap-2"
                               >
                                 <div className="flex items-center space-x-2.5 min-w-0">
-                                  <div className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center shrink-0 overflow-hidden">
+                                  <div className="w-9 h-9 rounded-md border border-neutral-200/80 bg-[#FAFAFA] flex items-center justify-center shrink-0 overflow-hidden">
                                     {p.ImageUrl ? (
                                       <img src={p.ImageUrl} alt={p.ProductName} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
                                     ) : (
-                                      <Package className="w-4 h-4 text-slate-400" />
+                                      <Package className="w-4 h-4 text-[#737373]" />
                                     )}
                                   </div>
                                   <div className="min-w-0">
-                                    <h5 className="text-xs font-bold text-slate-900 truncate">
+                                    <h5 className="text-xs font-semibold text-[#111111] truncate">
                                       {p.ProductName}
                                     </h5>
-                                    <div className="flex items-center space-x-2 text-[10px] text-slate-500 mt-0.5">
-                                      {p.Barcode && <span className="font-mono">#{p.Barcode}</span>}
+                                    <div className="flex items-center space-x-2 text-[10px] text-[#525252] mt-0.5">
+                                      {p.Barcode && <span className="font-mono tabular-nums">#{p.Barcode}</span>}
                                       <span>•</span>
-                                      <span className="text-teal-700 font-semibold">{p.Category || 'General'}</span>
+                                      <span className="text-[#111111] font-semibold">{p.Category || 'General'}</span>
                                     </div>
                                   </div>
                                 </div>
 
-                                <div className="flex items-center space-x-1.5 shrink-0">
-                                  <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                    🏭 {gStock}
+                                <div className="flex items-center space-x-1.5 shrink-0 font-mono tabular-nums">
+                                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-[#B45309] border border-amber-200">
+                                    <Warehouse className="w-3 h-3" />
+                                    <span>{gStock}</span>
                                   </span>
-                                  <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
-                                    🏬 {sStock} {p.Unit || 'Pcs'}
+                                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80">
+                                    <Store className="w-3 h-3" />
+                                    <span>{sStock} {p.Unit || 'Pcs'}</span>
                                   </span>
                                 </div>
                               </div>
@@ -1067,46 +1071,47 @@ export default function AddStockModal({
               </div>
 
               {/* সেকশন ২: নতুন আগমনী পরিমাণ ও ভ্যারিয়েন্ট রিস্টক */}
-              <div className="bg-slate-50/80 border border-slate-200 rounded-3xl p-4 sm:p-5 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
-                  <span className="text-xs font-black text-slate-800 flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <div className="bg-[#FAFAFA] border border-neutral-200/80 rounded-lg p-4 sm:p-5 space-y-4">
+                <div className="flex items-center justify-between pb-2.5 border-b border-neutral-200/80">
+                  <span className="text-xs font-semibold text-[#111111] flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#15803D]"></span>
                     <span>২. লটের আগমনী পরিমাণ ও কেনা দাম</span>
                   </span>
                   {selectedProduct && (
-                    <span className="text-xs font-black text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-lg border border-teal-200">
-                      গন্তব্য: {targetLocation === 'Godown' ? '🏭 কেন্দ্রীয় গোডাউন' : '🏬 শো-রুম কাউন্টার'}
+                    <span className="text-xs font-semibold text-[#111111] bg-white px-2.5 py-0.5 rounded-md border border-neutral-200/80 inline-flex items-center space-x-1">
+                      {targetLocation === 'Godown' ? <Warehouse className="w-3 h-3 text-[#B45309]" /> : <Store className="w-3 h-3 text-[#0F172A]" />}
+                      <span>গন্তব্য: {targetLocation === 'Godown' ? 'কেন্দ্রীয় গোডাউন' : 'শো-রুম কাউন্টার'}</span>
                     </span>
                   )}
                 </div>
 
                 {/* যদি পণ্যটিতে ভ্যারিয়েন্ট থাকে (রং / সাইজ / থান অনুযায়ী) */}
                 {hasVariants ? (
-                  <div className="bg-white border border-teal-200 rounded-2xl p-4 space-y-4 shadow-2xs">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-teal-100">
+                  <div className="bg-white border border-neutral-200/80 rounded-lg p-4 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-neutral-200/80">
                       <div className="flex items-center space-x-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center border border-teal-200">
+                        <div className="w-8 h-8 rounded-md bg-[#F5F5F5] text-[#0F172A] flex items-center justify-center border border-neutral-200/80">
                           <Palette className="w-4 h-4" />
                         </div>
                         <div>
-                          <h5 className="text-xs font-black text-slate-900">
-                            ভ্যারিয়েন্ট ভিত্তিক রিস্টক ({allVariants.length}টি ভ্যারিয়েন্ট)
+                          <h5 className="text-xs font-semibold text-[#111111]">
+                            ভ্যারিয়েন্ট ভিত্তিক রিস্টক (<span className="font-mono tabular-nums">{allVariants.length}</span>টি ভ্যারিয়েন্ট)
                           </h5>
-                          <p className="text-[11px] text-slate-500">
+                          <p className="text-[11px] text-[#525252]">
                             {isThanUnit ? 'প্রতিটি রঙের জন্য পৃথক থান সংখ্যা বসান' : 'প্রতিটি ভ্যারিয়েন্টের নতুন লটের সংখ্যা নির্ধারণ করুন'}
                           </p>
                         </div>
                       </div>
 
                       {/* মোড সুইচ বাটন */}
-                      <div className="flex bg-slate-100 p-0.5 rounded-xl text-[11px] font-bold">
+                      <div className="flex bg-[#F5F5F5] border border-neutral-200/80 p-0.5 rounded-md text-[11px] font-semibold">
                         <button
                           type="button"
                           onClick={() => setVariantRestockMode('all')}
-                          className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                          className={`min-h-[44px] sm:min-h-[36px] px-3 py-1 rounded-md transition-colors cursor-pointer ${
                             variantRestockMode === 'all'
-                              ? 'bg-white text-teal-800 shadow-2xs font-bold'
-                              : 'text-slate-600 hover:text-slate-900'
+                              ? 'bg-[#0F172A] text-white font-semibold'
+                              : 'text-[#525252] hover:text-[#111111]'
                           }`}
                         >
                           সকল ভ্যারিয়েন্ট তালিকা
@@ -1114,10 +1119,10 @@ export default function AddStockModal({
                         <button
                           type="button"
                           onClick={() => setVariantRestockMode('single')}
-                          className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                          className={`min-h-[44px] sm:min-h-[36px] px-3 py-1 rounded-md transition-colors cursor-pointer ${
                             variantRestockMode === 'single'
-                              ? 'bg-white text-teal-800 shadow-2xs font-bold'
-                              : 'text-slate-600 hover:text-slate-900'
+                              ? 'bg-[#0F172A] text-white font-semibold'
+                              : 'text-[#525252] hover:text-[#111111]'
                           }`}
                         >
                           একক ভ্যারিয়েন্ট
@@ -1126,22 +1131,22 @@ export default function AddStockModal({
                     </div>
 
                     {/* নতুন ভ্যারিয়েন্ট যোগ করার টগল বাটন */}
-                    <div className="flex items-center justify-between bg-teal-50/60 p-3 rounded-2xl border border-teal-200">
+                    <div className="flex items-center justify-between bg-[#FAFAFA] p-3 rounded-lg border border-neutral-200/80 gap-2 flex-wrap">
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs font-bold text-slate-800">
+                        <span className="text-xs font-semibold text-[#111111]">
                           লটে নতুন কোনো কালার বা ভ্যারিয়েন্ট এসেছে?
                         </span>
-                        <span className="text-[10px] text-teal-800 bg-teal-100 px-2 py-0.5 rounded-full font-bold">
+                        <span className="text-[10px] text-[#525252] bg-[#F5F5F5] border border-neutral-200/80 px-2 py-0.5 rounded-md font-semibold">
                           অন-দ্য-ফ্লাই এন্ট্রি
                         </span>
                       </div>
                       <button
                         type="button"
                         onClick={() => setIsAddingNewColorOpen((prev) => !prev)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center space-x-1.5 shadow-2xs ${
+                        className={`min-h-[44px] sm:min-h-[36px] px-3.5 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer inline-flex items-center space-x-1.5 ${
                           isAddingNewColorOpen
-                            ? 'bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300'
-                            : 'bg-teal-600 hover:bg-teal-700 text-white'
+                            ? 'bg-red-50 hover:bg-red-100 text-[#B91C1C] border border-red-200'
+                            : 'bg-[#0F172A] hover:bg-slate-800 text-white'
                         }`}
                       >
                         {isAddingNewColorOpen ? (
@@ -1160,13 +1165,13 @@ export default function AddStockModal({
 
                     {/* নতুন ভ্যারিয়েন্ট যোগ করার ফর্ম ড্রয়ার */}
                     {isAddingNewColorOpen && (
-                      <div className="p-4 bg-gradient-to-br from-white via-teal-50/40 to-indigo-50/30 border-2 border-teal-300 rounded-2xl shadow-sm space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="flex items-center justify-between pb-2 border-b border-teal-200">
-                          <div className="flex items-center space-x-1.5 text-xs font-black text-teal-900">
-                            <Palette className="w-4 h-4 text-teal-600" />
+                      <div className="p-4 bg-[#FAFAFA] border border-neutral-200/80 rounded-lg space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between pb-2 border-b border-neutral-200/80">
+                          <div className="flex items-center space-x-1.5 text-xs font-semibold text-[#111111]">
+                            <Palette className="w-4 h-4 text-[#0F172A]" />
                             <span>নতুন ভ্যারিয়েন্টের স্টক যোগ করুন</span>
                           </div>
-                          <span className="text-[10px] font-bold text-slate-500">
+                          <span className="text-[10px] font-semibold text-[#525252]">
                             লটের সাথে সরাসরি যুক্ত হবে
                           </span>
                         </div>
@@ -1174,8 +1179,8 @@ export default function AddStockModal({
                         {/* ভ্যারিয়েন্টের ধরণ ও ডাটাবেস ড্রপডাউন */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                              ১. ভ্যারিয়েন্টের ধরণ নির্বাচন করুন <span className="text-rose-500">*</span>
+                            <label className="block text-[11px] font-semibold text-[#111111] mb-1">
+                              ১. ভ্যারিয়েন্টের ধরণ নির্বাচন করুন <span className="text-[#B91C1C]">*</span>
                             </label>
                             <select
                               value={newColorType}
@@ -1183,22 +1188,22 @@ export default function AddStockModal({
                                 setNewColorType(e.target.value);
                                 setNewColorName('');
                               }}
-                              className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                              className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-xs bg-white border border-neutral-200/80 rounded-md font-semibold text-[#111111] focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] cursor-pointer"
                             >
-                              <option value="Color">🎨 রঙ / কালার (Color)</option>
-                              <option value="Size">📏 সাইজ / মাপ (Size)</option>
-                              <option value="Weight">⚖️ ওজন / পরিমাপ (Weight)</option>
+                              <option value="Color">রঙ / কালার (Color)</option>
+                              <option value="Size">সাইজ / মাপ (Size)</option>
+                              <option value="Weight">ওজন / পরিমাপ (Weight)</option>
                             </select>
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                              ২. ডাটাবেসের তালিকা ({allColorOptions.length}টি সংরক্ষিত):
+                            <label className="block text-[11px] font-semibold text-[#111111] mb-1">
+                              ২. ডাটাবেসের তালিকা (<span className="font-mono tabular-nums">{allColorOptions.length}</span>টি সংরক্ষিত):
                             </label>
                             <select
                               value={newColorName}
                               onChange={(e) => setNewColorName(e.target.value)}
-                              className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                              className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-xs bg-white border border-neutral-200/80 rounded-md font-semibold text-[#111111] focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] cursor-pointer"
                             >
                               <option value="">
                                 -- {newColorType === 'Color' ? 'রং নির্বাচন করুন' : newColorType === 'Size' ? 'সাইজ নির্বাচন করুন' : 'ওজন নির্বাচন করুন'} --
@@ -1214,14 +1219,14 @@ export default function AddStockModal({
 
                         {/* কুইক চিপস */}
                         <div>
-                          <div className="text-[10.5px] font-bold text-slate-600 mb-1.5 flex items-center justify-between">
+                          <div className="text-[10.5px] font-semibold text-[#525252] mb-1.5 flex items-center justify-between">
                             <span className="flex items-center space-x-1">
-                              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                              <Sparkles className="w-3.5 h-3.5 text-[#0F172A]" />
                               <span>১-ক্লিকে দ্রুত বাছাই ({newColorType}):</span>
                             </span>
-                            <span className="text-[10px] text-teal-700 font-semibold">{allColorOptions.length}টি অপশন</span>
+                            <span className="text-[10px] text-[#525252] font-mono tabular-nums font-semibold">{allColorOptions.length}টি অপশন</span>
                           </div>
-                          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2 bg-white/90 rounded-xl border border-slate-200">
+                          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2 bg-white rounded-md border border-neutral-200/80">
                             {allColorOptions.map((c) => {
                               const dotColor = newColorType === 'Color' ? getColorHex(c) : null;
                               return (
@@ -1229,10 +1234,10 @@ export default function AddStockModal({
                                   key={c}
                                   type="button"
                                   onClick={() => setNewColorName(c)}
-                                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer border inline-flex items-center space-x-1.5 ${
+                                  className={`min-h-[36px] sm:min-h-[32px] px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer border inline-flex items-center space-x-1.5 ${
                                     newColorName === c
-                                      ? 'bg-teal-600 text-white border-teal-700 shadow-xs ring-1 ring-teal-400'
-                                      : 'bg-white hover:bg-teal-50 text-slate-700 border-slate-200'
+                                      ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                                      : 'bg-white hover:bg-[#F5F5F5] text-[#111111] border-neutral-200/80'
                                   }`}
                                 >
                                   {dotColor && (
@@ -1251,20 +1256,20 @@ export default function AddStockModal({
                         {/* ইনপুট গ্রিড */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                              ৩. নাম <span className="text-rose-500">*</span>
+                            <label className="block text-[11px] font-semibold text-[#111111] mb-1">
+                              ৩. নাম <span className="text-[#B91C1C]">*</span>
                             </label>
                             <input
                               type="text"
                               value={newColorName}
                               onChange={(e) => setNewColorName(e.target.value)}
                               placeholder={`যেমন: ${newColorType === 'Color' ? 'ফিরোজা বা রয়্যাল ব্লু' : newColorType === 'Size' ? 'XL বা 42' : '1kg'}`}
-                              className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl font-bold focus:ring-2 focus:ring-teal-500"
+                              className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-xs bg-white border border-neutral-200/80 rounded-md font-semibold text-[#111111] focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                            <label className="block text-[11px] font-semibold text-[#111111] mb-1">
                               লটে আগত পরিমাণ ({isThanUnit ? 'থান' : selectedProduct?.Unit || 'Pcs'}) *
                             </label>
                             <input
@@ -1273,12 +1278,12 @@ export default function AddStockModal({
                               value={newColorStock}
                               onChange={(e) => setNewColorStock(e.target.value)}
                               placeholder={isThanUnit ? '1' : '10'}
-                              className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl font-black text-teal-800 text-center focus:ring-2 focus:ring-teal-500"
+                              className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-xs bg-white border border-neutral-200/80 rounded-md font-mono tabular-nums font-semibold text-[#111111] text-center focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                            <label className="block text-[11px] font-semibold text-[#111111] mb-1">
                               বারকোড (ঐচ্ছিক)
                             </label>
                             <input
@@ -1286,7 +1291,7 @@ export default function AddStockModal({
                               value={newColorBarcode}
                               onChange={(e) => setNewColorBarcode(e.target.value)}
                               placeholder="স্বয়ংক্রিয় তৈরি হবে"
-                              className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl font-mono text-slate-600 focus:ring-2 focus:ring-teal-500"
+                              className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-xs bg-white border border-neutral-200/80 rounded-md font-mono tabular-nums text-[#525252] focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                             />
                           </div>
                         </div>
@@ -1295,14 +1300,14 @@ export default function AddStockModal({
                           <button
                             type="button"
                             onClick={() => setIsAddingNewColorOpen(false)}
-                            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold cursor-pointer"
+                            className="min-h-[44px] sm:min-h-[36px] px-3.5 py-1.5 bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#111111] rounded-md text-xs font-semibold cursor-pointer"
                           >
                             বাতিল
                           </button>
                           <button
                             type="button"
                             onClick={handleAddNewColorVariant}
-                            className="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 cursor-pointer shadow-sm transition-all"
+                            className="min-h-[44px] sm:min-h-[36px] px-4 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-semibold inline-flex items-center space-x-1.5 cursor-pointer transition-colors"
                           >
                             <Check className="w-3.5 h-3.5" />
                             <span>এই ভ্যারিয়েন্টটি লটে যোগ করুন</span>
@@ -1315,9 +1320,9 @@ export default function AddStockModal({
                     {variantRestockMode === 'all' ? (
                       <div className="space-y-3.5">
                         {/* কুইক বাল্ক ফিল বার */}
-                        <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs">
-                          <span className="text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        <div className="flex items-center justify-between bg-[#FAFAFA] p-2.5 rounded-md border border-neutral-200/80 text-xs gap-2 flex-wrap">
+                          <span className="text-xs font-semibold text-[#111111] flex items-center space-x-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-[#B45309]" />
                             <span>সব ভ্যারিয়েন্টে এক ক্লিকে সমান সংখ্যা:</span>
                           </span>
                           <div className="flex items-center space-x-2">
@@ -1327,12 +1332,12 @@ export default function AddStockModal({
                               placeholder="সংখ্যা"
                               value={bulkVariantQty}
                               onChange={(e) => setBulkVariantQty(e.target.value)}
-                              className="w-18 px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold text-center focus:ring-1 focus:ring-teal-500"
+                              className="w-20 min-h-[44px] sm:min-h-[36px] px-2 py-1 bg-white border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums font-semibold text-center text-[#111111] focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                             />
                             <button
                               type="button"
                               onClick={handleApplyBulkQtyToAllVariants}
-                              className="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold shadow-2xs transition-all cursor-pointer"
+                              className="min-h-[44px] sm:min-h-[36px] px-3 py-1 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer"
                             >
                               সবগুলোতে দিন
                             </button>
@@ -1340,9 +1345,9 @@ export default function AddStockModal({
                         </div>
 
                         {/* ভ্যারিয়েন্ট তালিকা টেবিল */}
-                        <div className="overflow-x-auto max-h-72 overflow-y-auto border border-slate-200 rounded-2xl shadow-2xs">
+                        <div className="overflow-x-auto max-h-72 overflow-y-auto border border-neutral-200/80 rounded-lg">
                           <table className="w-full text-left text-xs">
-                            <thead className="bg-slate-100 text-slate-700 font-black sticky top-0 z-5 border-b border-slate-200 text-[11px]">
+                            <thead className="bg-[#F5F5F5] text-[#525252] font-semibold sticky top-0 z-5 border-b border-neutral-200/80 text-[11px]">
                               <tr>
                                 <th className="p-3">ভ্যারিয়েন্ট / কালার বিবরণ</th>
                                 <th className="p-3 text-center">বর্তমান মজুদ</th>
@@ -1352,7 +1357,7 @@ export default function AddStockModal({
                                 <th className="p-3 text-right pr-4">নতুন সমন্বিত মোট</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 bg-white">
+                            <tbody className="divide-y divide-neutral-200/80 bg-white">
                               {allVariants.map((v) => {
                                 const vId = v.VariantID;
                                 const currentStock = targetLocation === 'Godown'
@@ -1365,11 +1370,11 @@ export default function AddStockModal({
                                 const hexColor = getColorHex(vColor);
 
                                 return (
-                                  <tr key={vId} className={`hover:bg-teal-50/40 transition-colors ${v.isNewVariant ? 'bg-amber-50/40' : ''}`}>
+                                  <tr key={vId} className={`hover:bg-[#FAFAFA] transition-colors ${v.isNewVariant ? 'bg-amber-50/40' : ''}`}>
                                     <td className="p-3">
                                       <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                                         {vColor && (
-                                          <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-white text-slate-800 border border-slate-200 shadow-2xs">
+                                          <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-[#111111] border border-neutral-200/80">
                                             <span
                                               className="w-3 h-3 rounded-full border border-black/15 shrink-0"
                                               style={{ backgroundColor: hexColor }}
@@ -1378,18 +1383,18 @@ export default function AddStockModal({
                                           </span>
                                         )}
                                         {vSize && (
-                                          <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                          <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80">
                                             সাইজ: {vSize}
                                           </span>
                                         )}
                                         {!vColor && !vSize && (
-                                          <span className="font-bold text-slate-800 text-xs">
+                                          <span className="font-semibold text-[#111111] text-xs">
                                             {v.Attributes ? Object.values(v.Attributes).join(' / ') : vId}
                                           </span>
                                         )}
                                         {v.isNewVariant && (
-                                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 inline-flex items-center space-x-1">
-                                            <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                                          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-[#B45309] border border-amber-200 inline-flex items-center space-x-1">
+                                            <Sparkles className="w-2.5 h-2.5 text-[#B45309]" />
                                             <span>নতুন</span>
                                           </span>
                                         )}
@@ -1397,7 +1402,7 @@ export default function AddStockModal({
                                           <button
                                             type="button"
                                             onClick={() => handleRemoveCustomVariant(v.VariantID)}
-                                            className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer transition-colors"
+                                            className="p-1 text-[#737373] hover:text-[#B91C1C] rounded-md cursor-pointer transition-colors"
                                             title="এই নতুন ভ্যারিয়েন্টটি তালিকা থেকে বাদ দিন"
                                           >
                                             <Trash2 className="w-3.5 h-3.5" />
@@ -1405,19 +1410,19 @@ export default function AddStockModal({
                                         )}
                                       </div>
                                       {v.Barcode && (
-                                        <span className="text-[10px] font-mono text-slate-400 block mt-1">
+                                        <span className="text-[10px] font-mono tabular-nums text-[#737373] block mt-1">
                                           #{v.Barcode}
                                         </span>
                                       )}
                                     </td>
                                     <td className="p-3 text-center">
-                                      <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 inline-block">
+                                      <span className="px-2.5 py-1 rounded-md text-xs font-mono tabular-nums font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 inline-block">
                                         {currentStock} {isThanUnit ? 'থান' : selectedProduct.Unit || 'Pcs'}
                                       </span>
                                     </td>
                                     <td className="p-3 text-center">
                                       <div className="inline-flex items-center space-x-1">
-                                        <span className="text-teal-600 font-bold">+</span>
+                                        <span className="text-[#15803D] font-semibold">+</span>
                                         <input
                                           type="number"
                                           min="0"
@@ -1430,21 +1435,21 @@ export default function AddStockModal({
                                               [vId]: val
                                             }));
                                           }}
-                                          className="w-18 px-2 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-black text-center text-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-2xs"
+                                          className="w-20 min-h-[44px] sm:min-h-[36px] px-2 py-1 bg-white border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums font-semibold text-center text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                                         />
                                       </div>
                                     </td>
                                     <td className="p-3 text-right pr-4">
-                                      <span className={`px-3 py-1 rounded-xl text-xs font-black inline-flex items-center space-x-1 ${
+                                      <span className={`px-3 py-1 rounded-md text-xs font-mono tabular-nums font-semibold inline-flex items-center space-x-1 ${
                                         incomingForV > 0
-                                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-2xs'
-                                          : 'bg-slate-50 text-slate-700 border border-slate-200'
+                                          ? 'bg-emerald-50 text-[#15803D] border border-emerald-200'
+                                          : 'bg-[#FAFAFA] text-[#525252] border border-neutral-200/80'
                                       }`}>
                                         <span>{newVStock}</span>
-                                        <span className="text-[10px] text-slate-500 font-normal">{isThanUnit ? 'থান' : selectedProduct.Unit || 'Pcs'}</span>
+                                        <span className="text-[10px] text-[#737373] font-sans font-normal">{isThanUnit ? 'থান' : selectedProduct.Unit || 'Pcs'}</span>
                                       </span>
                                       {isThanUnit && yardsPerThan > 0 && incomingForV > 0 && (
-                                        <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 block mt-1 text-right">
+                                        <span className="text-[10px] font-mono tabular-nums font-semibold text-[#15803D] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 block mt-1 text-right">
                                           = {newVStock * yardsPerThan} গজ
                                         </span>
                                       )}
@@ -1457,16 +1462,16 @@ export default function AddStockModal({
                         </div>
 
                         {/* ভ্যারিয়েন্ট সামারি বার */}
-                        <div className="p-3 bg-gradient-to-r from-teal-50 via-emerald-50/50 to-white rounded-2xl border border-teal-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-                          <span className="text-slate-700 font-bold">
+                        <div className="p-3 bg-[#FAFAFA] rounded-lg border border-neutral-200/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <span className="text-[#111111] font-semibold">
                             মোট আগত লট স্টক (সকল ভ্যারিয়েন্ট মিলিয়ে):
                           </span>
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-black text-teal-900 bg-white px-3 py-1 rounded-xl border border-teal-200 shadow-2xs">
+                            <span className="text-sm font-mono tabular-nums font-semibold text-[#111111] bg-white px-3 py-1 rounded-md border border-neutral-200/80">
                               +{effectiveIncomingQty} {isThanUnit ? 'থান' : selectedProduct?.Unit || 'Pcs'}
                             </span>
                             {isThanUnit && yardsPerThan > 0 && (
-                              <span className="text-xs font-black text-emerald-800 bg-emerald-100 px-3 py-1 rounded-xl border border-emerald-200 shadow-2xs">
+                              <span className="text-xs font-mono tabular-nums font-semibold text-[#15803D] bg-emerald-50 px-3 py-1 rounded-md border border-emerald-200">
                                 = {effectiveTotalYards} গজ
                               </span>
                             )}
@@ -1477,13 +1482,13 @@ export default function AddStockModal({
                       /* একক ভ্যারিয়েন্ট মোড */
                       <div className="space-y-3.5">
                         <div>
-                          <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                          <label className="block text-xs font-semibold text-[#111111] mb-1.5">
                             নির্দিষ্ট ভ্যারিয়েন্ট নির্বাচন করুন *
                           </label>
                           <select
                             value={selectedSingleVariantId}
                             onChange={(e) => setSelectedSingleVariantId(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-500 shadow-2xs"
+                            className="w-full min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-semibold text-[#111111] focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                           >
                             {allVariants.map((v) => {
                               const cur = targetLocation === 'Godown'
@@ -1494,7 +1499,7 @@ export default function AddStockModal({
                                 : (v.Color || v.Size || v.VariantID);
                               return (
                                 <option key={v.VariantID} value={v.VariantID}>
-                                  {v.isNewVariant ? '✨ [নতুন] ' : ''}{label} (বর্তমান মজুদ: {cur} {isThanUnit ? 'থান' : selectedProduct?.Unit || 'Pcs'})
+                                  {v.isNewVariant ? '[নতুন] ' : ''}{label} (বর্তমান মজুদ: {cur} {isThanUnit ? 'থান' : selectedProduct?.Unit || 'Pcs'})
                                 </option>
                               );
                             })}
@@ -1502,22 +1507,22 @@ export default function AddStockModal({
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                          <label className="block text-xs font-semibold text-[#111111] mb-1.5">
                             এই ভ্যারিয়েন্টের নতুন আগত পরিমাণ ({isThanUnit ? 'থান' : selectedProduct?.Unit || 'Pcs'}) *
                           </label>
                           <div className="relative">
-                            <span className="absolute left-3.5 top-2.5 text-xs font-bold text-teal-600">+</span>
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#15803D]">+</span>
                             <input
                               type="number"
                               min="1"
                               placeholder="পরিমাণ লিখুন"
                               value={singleVariantQty}
                               onChange={(e) => setSingleVariantQty(e.target.value)}
-                              className="w-full pl-8 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-2xs"
+                              className="w-full min-h-[44px] sm:min-h-[36px] pl-8 pr-3.5 py-2 bg-white border border-neutral-200/80 rounded-md text-sm font-mono tabular-nums font-semibold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                             />
                           </div>
                           {isThanUnit && yardsPerThan > 0 && singleVariantQty && (
-                            <p className="text-xs text-teal-800 font-bold mt-1.5 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 inline-block">
+                            <p className="text-xs text-[#15803D] font-mono tabular-nums font-semibold mt-1.5 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 inline-block">
                               = {Number(singleVariantQty) * yardsPerThan} গজ ({singleVariantQty} থান × {yardsPerThan} গজ/থান)
                             </p>
                           )}
@@ -1530,14 +1535,14 @@ export default function AddStockModal({
                   <div className="space-y-4">
                     {/* অপশন: সাধারণ পণ্যকে কালার ভিত্তিক রিস্টক এন্ট্রি করার অপশন */}
                     {selectedProduct && (
-                      <div className="p-3.5 bg-gradient-to-r from-indigo-50/90 via-teal-50/70 to-emerald-50/50 border border-teal-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-2xs">
-                        <div className="flex items-center space-x-2.5 text-teal-900">
-                          <Palette className="w-4 h-4 text-teal-600 shrink-0" />
+                      <div className="p-3.5 bg-white border border-neutral-200/80 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div className="flex items-center space-x-2.5 text-[#111111]">
+                          <Palette className="w-4 h-4 text-[#0F172A] shrink-0" />
                           <div>
-                            <span className="text-xs font-bold block">
+                            <span className="text-xs font-semibold block">
                               কালার বা সাইজ ভিত্তিক লট রিস্টক করতে চান?
                             </span>
-                            <span className="text-[10px] text-slate-500 block">
+                            <span className="text-[10px] text-[#525252] block">
                               কালার অপশন চালু করে প্রতিটি রঙের আলাদা থান/পিস স্টক এন্ট্রি করুন
                             </span>
                           </div>
@@ -1548,7 +1553,7 @@ export default function AddStockModal({
                             setIsVariantRestockEnabled(true);
                             setIsAddingNewColorOpen(true);
                           }}
-                          className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs inline-flex items-center space-x-1.5 shrink-0 self-start sm:self-auto"
+                          className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-semibold cursor-pointer transition-colors inline-flex items-center space-x-1.5 shrink-0 self-start sm:self-auto"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>+ কালার ভিত্তিক রিস্টক চালু করুন</span>
@@ -1559,16 +1564,16 @@ export default function AddStockModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       {/* নতুন স্টক পরিমাণ */}
                       <div>
-                        <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1.5 flex items-center justify-between">
                           <span>নতুন আসা পরিমাণ (Incoming Qty) *</span>
                           {selectedProduct && (
-                            <span className="text-[10px] text-slate-500 font-semibold">
+                            <span className="text-[10px] font-mono tabular-nums text-[#525252] font-semibold">
                               বর্তমান: {targetLocation === 'Godown' ? (selectedProduct.GodownStock || 0) : (selectedProduct.StockQuantity || 0)} {selectedProduct.Unit || 'Pcs'}
                             </span>
                           )}
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3.5 top-2.5 text-xs font-bold text-teal-600">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#15803D]">
                             +
                           </span>
                           <input
@@ -1579,19 +1584,19 @@ export default function AddStockModal({
                             placeholder="যেমন: 50"
                             value={incomingQty}
                             onChange={(e) => setIncomingQty(e.target.value)}
-                            className="w-full pl-8 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-teal-500/15 focus:border-teal-500 transition-all shadow-2xs"
+                            className="w-full min-h-[44px] sm:min-h-[36px] pl-8 pr-3.5 py-2 bg-white border border-neutral-200/80 rounded-md text-sm font-mono tabular-nums font-semibold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] transition-colors"
                           />
                         </div>
 
                         {/* দ্রুত সংখ্যা প্রিসেট বাটন */}
                         <div className="flex items-center space-x-1.5 mt-2 flex-wrap gap-y-1">
-                          <span className="text-[10px] text-slate-400 font-semibold">কুইক অ্যাড:</span>
+                          <span className="text-[10px] text-[#737373] font-semibold">কুইক অ্যাড:</span>
                           {QUANTITY_PRESETS.map((amt) => (
                             <button
                               key={amt}
                               type="button"
                               onClick={() => handleAddPresetQty(amt)}
-                              className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white hover:bg-teal-50 text-slate-700 hover:text-teal-800 border border-slate-200 hover:border-teal-300 transition-all shadow-2xs active:scale-95 cursor-pointer"
+                              className="min-h-[36px] sm:min-h-[32px] px-2.5 py-0.5 rounded-md text-[10px] font-mono tabular-nums font-semibold bg-white hover:bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 transition-colors cursor-pointer"
                             >
                               +{amt}
                             </button>
@@ -1599,23 +1604,23 @@ export default function AddStockModal({
                         </div>
 
                         {isThanUnit && yardsPerThan > 0 && incomingQty && (
-                          <div className="mt-2.5 p-2 bg-emerald-50 rounded-xl border border-emerald-200 text-xs font-bold text-emerald-800 flex items-center space-x-1.5">
-                            <span>📏 মোট গজ:</span>
-                            <span className="text-sm font-black text-emerald-900">{Number(incomingQty) * yardsPerThan} গজ</span>
-                            <span className="text-[10px] text-slate-500">({incomingQty} থান × {yardsPerThan} গজ/থান)</span>
+                          <div className="mt-2.5 p-2 bg-emerald-50 rounded-md border border-emerald-200 text-xs font-semibold text-[#15803D] flex items-center space-x-1.5">
+                            <span>মোট গজ:</span>
+                            <span className="text-sm font-mono tabular-nums font-semibold text-[#15803D]">{Number(incomingQty) * yardsPerThan} গজ</span>
+                            <span className="text-[10px] font-mono tabular-nums text-[#525252]">({incomingQty} থান × {yardsPerThan} গজ/থান)</span>
                           </div>
                         )}
                       </div>
 
                       {/* ক্রয়মূল্য ইনপুট */}
                       <div>
-                        <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1.5 flex items-center justify-between">
                           <span>প্রতি ইউনিটের কেনা দাম (Unit Cost) *</span>
                           {selectedProduct && (
                             <button
                               type="button"
                               onClick={() => setUnitCost(selectedProduct.CostPrice || '')}
-                              className="text-[10px] text-teal-700 hover:text-teal-900 font-bold hover:underline"
+                              className="text-[10px] font-mono tabular-nums text-[#0F172A] hover:underline font-semibold cursor-pointer"
                               title="পূর্বের কেনা দাম ফিরিয়ে আনুন"
                             >
                               আগের দাম: {currencySymbol}{Number(selectedProduct.CostPrice || 0).toFixed(2)}
@@ -1623,7 +1628,7 @@ export default function AddStockModal({
                           )}
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#737373]">
                             {currencySymbol}
                           </span>
                           <input
@@ -1634,10 +1639,10 @@ export default function AddStockModal({
                             placeholder="যেমন: 450.00"
                             value={unitCost}
                             onChange={(e) => setUnitCost(e.target.value)}
-                            className="w-full pl-8 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-teal-500/15 focus:border-teal-500 transition-all shadow-2xs"
+                            className="w-full min-h-[44px] sm:min-h-[36px] pl-8 pr-3.5 py-2 bg-white border border-neutral-200/80 rounded-md text-sm font-mono tabular-nums font-semibold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] transition-colors"
                           />
                         </div>
-                        <p className="text-[10px] text-slate-400 mt-2">
+                        <p className="text-[10px] text-[#737373] mt-2">
                           দাম পরিবর্তন হলে স্বয়ংক্রিয়ভাবে ওয়েইটেড এভারেজ কস্ট (WAC) হিসেব হবে
                         </p>
                       </div>
@@ -1647,14 +1652,14 @@ export default function AddStockModal({
 
                 {/* যদি ভ্যারিয়েন্ট থাকে, কেনা দাম আলাদা কার্ডে দেখান */}
                 {hasVariants && (
-                  <div className="p-3.5 bg-white border border-slate-200 rounded-2xl">
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                  <div className="p-3.5 bg-white border border-neutral-200/80 rounded-lg">
+                    <label className="block text-xs font-semibold text-[#111111] mb-1.5 flex items-center justify-between">
                       <span>লটের গড় কেনা দাম (Unit Cost) *</span>
                       {selectedProduct && (
                         <button
                           type="button"
                           onClick={() => setUnitCost(selectedProduct.CostPrice || '')}
-                          className="text-[10px] text-teal-700 hover:text-teal-900 font-bold hover:underline"
+                          className="text-[10px] font-mono tabular-nums text-[#0F172A] hover:underline font-semibold cursor-pointer"
                           title="পূর্বের কেনা দাম ফিরিয়ে আনুন"
                         >
                           আগের দাম: {currencySymbol}{Number(selectedProduct.CostPrice || 0).toFixed(2)}
@@ -1662,7 +1667,7 @@ export default function AddStockModal({
                       )}
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#737373]">
                         {currencySymbol}
                       </span>
                       <input
@@ -1673,10 +1678,10 @@ export default function AddStockModal({
                         placeholder="যেমন: 450.00"
                         value={unitCost}
                         onChange={(e) => setUnitCost(e.target.value)}
-                        className="w-full pl-8 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-teal-500/15 focus:border-teal-500 transition-all shadow-2xs"
+                        className="w-full min-h-[44px] sm:min-h-[36px] pl-8 pr-3.5 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-sm font-mono tabular-nums font-semibold text-[#111111] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] transition-colors"
                       />
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-1">
+                    <p className="text-[10px] text-[#737373] mt-1">
                       দাম পরিবর্তন হলে স্বয়ংক্রিয়ভাবে সমন্বিত ওয়েইটেড এভারেজ কস্ট (WAC) হিসেব হবে
                     </p>
                   </div>
@@ -1684,14 +1689,14 @@ export default function AddStockModal({
 
                 {/* রিস্টক বারকোড স্টিকার প্রিন্ট কার্ড */}
                 {selectedProduct && (
-                  <div className="p-3.5 bg-gradient-to-r from-indigo-50/70 to-teal-50/50 border border-indigo-200/80 rounded-2xl space-y-2.5">
+                  <div className="p-3.5 bg-white border border-neutral-200/80 rounded-lg space-y-2.5">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center space-x-2">
-                        <Tag className="w-4 h-4 text-indigo-600" />
-                        <span className="text-xs font-bold text-slate-800">
+                        <Tag className="w-4 h-4 text-[#0F172A]" />
+                        <span className="text-xs font-semibold text-[#111111]">
                           রিস্টক বারকোড স্টিকার প্রিন্ট:
                         </span>
-                        <span className="text-[11px] font-mono font-bold text-indigo-800 bg-white px-2 py-0.5 rounded-md border border-indigo-200">
+                        <span className="text-[11px] font-mono tabular-nums font-semibold text-[#111111] bg-[#F5F5F5] px-2 py-0.5 rounded-md border border-neutral-200/80">
                           {selectedProduct.Barcode || 'বারকোড নেই'}
                         </span>
                       </div>
@@ -1713,15 +1718,15 @@ export default function AddStockModal({
                           setIsStickerModalOpen(true);
                         }}
                         disabled={!selectedProduct.Barcode}
-                        className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 px-3.5 py-1.5 rounded-xl flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer"
+                        className="min-h-[44px] sm:min-h-[36px] text-xs font-semibold text-white bg-[#0F172A] hover:bg-slate-800 disabled:opacity-50 px-3.5 py-1.5 rounded-md flex items-center space-x-1.5 transition-colors cursor-pointer"
                       >
                         <Printer className="w-3.5 h-3.5" />
                         <span>{effectiveIncomingQty > 0 ? `${effectiveIncomingQty}টি স্টিকার প্রিন্ট` : 'স্টিকার প্রিন্ট করুন'}</span>
                       </button>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-indigo-100/70 text-xs text-slate-600">
-                      <span className="text-[11px] text-slate-500">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-neutral-200/80 text-xs text-[#525252]">
+                      <span className="text-[11px] text-[#525252]">
                         নতুন আসা লটের পণ্যে লাগানোর জন্য লেবেল প্রিন্ট করুন
                       </span>
                       <label className="flex items-center space-x-2 cursor-pointer select-none">
@@ -1729,9 +1734,9 @@ export default function AddStockModal({
                           type="checkbox"
                           checked={autoPrintStickersOnRestock}
                           onChange={(e) => setAutoPrintStickersOnRestock(e.target.checked)}
-                          className="rounded text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
+                          className="rounded text-[#0F172A] focus:ring-[#0F172A] w-3.5 h-3.5"
                         />
-                        <span className="text-[11px] font-bold text-indigo-950">
+                        <span className="text-[11px] font-semibold text-[#111111]">
                           রিস্টক শেষে স্বয়ংক্রিয় প্রিন্ট
                         </span>
                       </label>
@@ -1741,13 +1746,13 @@ export default function AddStockModal({
               </div>
 
               {/* সেকশন ৩: সাপ্লায়ার ও ভেন্ডর খাতা ইন্টিগ্রেশন এবং অডিট ট্র্যাকিং */}
-              <div className="bg-slate-50/80 border border-slate-200 rounded-3xl p-4 sm:p-5 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
-                  <span className="text-xs font-black text-slate-800 flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+              <div className="bg-[#FAFAFA] border border-neutral-200/80 rounded-lg p-4 sm:p-5 space-y-4">
+                <div className="flex items-center justify-between pb-2.5 border-b border-neutral-200/80">
+                  <span className="text-xs font-semibold text-[#111111] flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#0F172A]"></span>
                     <span>৩. সাপ্লায়ার ও ভেন্ডর খাতা এবং চালান নোট</span>
                   </span>
-                  <span className="text-[11px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md">
+                  <span className="text-[11px] text-[#525252] font-semibold bg-white border border-neutral-200/80 px-2 py-0.5 rounded-md">
                     সাপ্লায়ার ডাটাবেস সিঙ্ক
                   </span>
                 </div>
@@ -1755,15 +1760,15 @@ export default function AddStockModal({
                 {/* সাপ্লায়ার নির্বাচন বা নতুন সাপ্লায়ার তৈরি */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
-                      <Truck className="w-4 h-4 text-indigo-600" />
+                    <label className="text-xs font-semibold text-[#111111] flex items-center space-x-1.5">
+                      <Truck className="w-4 h-4 text-[#0F172A]" />
                       <span>সাপ্লায়ার ও ভেন্ডর (Supplier / Vendor) *</span>
                     </label>
                     {!isAddingNewSupplier && (
                       <button
                         type="button"
                         onClick={() => setIsAddingNewSupplier(true)}
-                        className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-0.5 rounded-lg border border-indigo-200 transition-all cursor-pointer inline-flex items-center space-x-1"
+                        className="min-h-[36px] text-[11px] font-semibold text-[#111111] bg-white hover:bg-[#F5F5F5] px-2.5 py-0.5 rounded-md border border-neutral-200/80 transition-colors cursor-pointer inline-flex items-center space-x-1"
                       >
                         <Plus className="w-3 h-3" />
                         <span>+ নতুন সাপ্লায়ার</span>
@@ -1773,16 +1778,16 @@ export default function AddStockModal({
 
                   {isAddingNewSupplier ? (
                     /* নতুন সাপ্লায়ার ইনপুট কার্ড (WhatsApp Field সহ) */
-                    <div className="p-3.5 bg-gradient-to-br from-indigo-50/80 via-white to-teal-50/50 border-2 border-indigo-300 rounded-2xl shadow-sm space-y-3 animate-in fade-in zoom-in-95 duration-150">
-                      <div className="flex items-center justify-between pb-2 border-b border-indigo-200">
-                        <span className="text-xs font-black text-indigo-900 flex items-center space-x-1.5">
-                          <Building2 className="w-4 h-4 text-indigo-600" />
+                    <div className="p-3.5 bg-white border border-neutral-200/80 rounded-lg space-y-3 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="flex items-center justify-between pb-2 border-b border-neutral-200/80">
+                        <span className="text-xs font-semibold text-[#111111] flex items-center space-x-1.5">
+                          <Building2 className="w-4 h-4 text-[#0F172A]" />
                           <span>নতুন সাপ্লায়ার এন্ট্রি (সাপ্লায়ার খাতায় যুক্ত হবে)</span>
                         </span>
                         <button
                           type="button"
                           onClick={() => setIsAddingNewSupplier(false)}
-                          className="text-slate-400 hover:text-slate-700 p-1"
+                          className="text-[#737373] hover:text-[#111111] p-1 cursor-pointer"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -1790,20 +1795,20 @@ export default function AddStockModal({
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                            প্রতিষ্ঠানের / কোম্পানির নাম <span className="text-rose-500">*</span>
+                          <label className="block text-[11px] font-semibold text-[#111111] mb-1">
+                            প্রতিষ্ঠানের / কোম্পানির নাম <span className="text-[#B91C1C]">*</span>
                           </label>
                           <input
                             type="text"
                             placeholder="যেমন: আনোয়ার টেক্সটাইল বা মেসার্স ট্রেডার্স"
                             value={newSupplierCompany}
                             onChange={(e) => setNewSupplierCompany(e.target.value)}
-                            className="w-full px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          <label className="block text-[11px] font-semibold text-[#111111] mb-1">
                             স্বত্বাধিকারী / যোগাযোগকারীর নাম
                           </label>
                           <input
@@ -1811,25 +1816,25 @@ export default function AddStockModal({
                             placeholder="যেমন: হাজী আব্দুল করিম"
                             value={newSupplierContact}
                             onChange={(e) => setNewSupplierContact(e.target.value)}
-                            className="w-full px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                            হোয়াটসঅ্যাপ নম্বর (WhatsApp Number) <span className="text-rose-500">*</span>
+                          <label className="block text-[11px] font-semibold text-[#111111] mb-1">
+                            হোয়াটসঅ্যাপ নম্বর (WhatsApp Number) <span className="text-[#B91C1C]">*</span>
                           </label>
                           <input
                             type="text"
                             placeholder="যেমন: 017xxxxxxxx"
                             value={newSupplierPhone}
                             onChange={(e) => setNewSupplierPhone(e.target.value)}
-                            className="w-full px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          <label className="block text-[11px] font-semibold text-[#111111] mb-1">
                             ঠিকানা / বাজার
                           </label>
                           <input
@@ -1837,7 +1842,7 @@ export default function AddStockModal({
                             placeholder="যেমন: ইসলামপুর, ঢাকা"
                             value={newSupplierAddress}
                             onChange={(e) => setNewSupplierAddress(e.target.value)}
-                            className="w-full px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                           />
                         </div>
                       </div>
@@ -1846,7 +1851,7 @@ export default function AddStockModal({
                         <button
                           type="button"
                           onClick={handleCreateSupplier}
-                          className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                          className="min-h-[44px] sm:min-h-[36px] flex-1 py-2 bg-[#0F172A] hover:bg-slate-800 text-white font-semibold text-xs rounded-md transition-colors cursor-pointer flex items-center justify-center space-x-1.5"
                         >
                           <Check className="w-3.5 h-3.5" />
                           <span>সাপ্লায়ার সংরক্ষণ ও নির্বাচন করুন</span>
@@ -1854,7 +1859,7 @@ export default function AddStockModal({
                         <button
                           type="button"
                           onClick={() => setIsAddingNewSupplier(false)}
-                          className="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                          className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#111111] text-xs font-semibold rounded-md transition-colors cursor-pointer"
                         >
                           বাতিল
                         </button>
@@ -1864,11 +1869,11 @@ export default function AddStockModal({
                     /* ড্রপডাউন থেকে সাপ্লায়ার নির্বাচন */
                     <div className="space-y-2">
                       <div className="relative">
-                        <Truck className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+                        <Truck className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]" />
                         <select
                           value={selectedSupplierId}
                           onChange={handleSupplierSelectChange}
-                          className="w-full pl-9 pr-8 py-2.5 bg-white border border-slate-300 rounded-2xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                          className="w-full min-h-[44px] sm:min-h-[36px] pl-9 pr-8 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-semibold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                         >
                           <option value="">-- সাপ্লায়ার নির্বাচন করুন ({localSuppliersList.length} জন সংরক্ষিত) --</option>
                           {localSuppliersList.map((sup) => (
@@ -1883,7 +1888,7 @@ export default function AddStockModal({
                       {/* কুইক সাম্প্রতিক সাপ্লায়ার চিপস */}
                       {localSuppliersList.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 pt-1">
-                          <span className="text-[10px] text-slate-400 font-semibold self-center">কুইক সিলেক্ট:</span>
+                          <span className="text-[10px] text-[#737373] font-semibold self-center">কুইক সিলেক্ট:</span>
                           {localSuppliersList.slice(0, 4).map((sup) => (
                             <button
                               key={sup.SupplierID}
@@ -1892,10 +1897,10 @@ export default function AddStockModal({
                                 setSelectedSupplierId(sup.SupplierID);
                                 setSupplierName(sup.CompanyName || sup.ContactPerson || '');
                               }}
-                              className={`text-[10px] px-2.5 py-1 rounded-lg border font-bold transition-all shadow-2xs cursor-pointer ${
+                              className={`min-h-[36px] sm:min-h-[32px] text-[10px] px-2.5 py-1 rounded-md border font-semibold transition-colors cursor-pointer ${
                                 selectedSupplierId === sup.SupplierID
-                                  ? 'bg-indigo-600 text-white border-indigo-700'
-                                  : 'bg-white hover:bg-indigo-50 text-slate-700 border-slate-200'
+                                  ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                                  : 'bg-white hover:bg-[#F5F5F5] text-[#111111] border-neutral-200/80'
                               }`}
                             >
                               {sup.CompanyName || sup.ContactPerson}
@@ -1910,34 +1915,34 @@ export default function AddStockModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                   {/* দায়িত্বপ্রাপ্ত ব্যক্তি */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label className="block text-xs font-semibold text-[#111111] mb-1.5">
                       দায়িত্বপ্রাপ্ত ব্যক্তি (Handled By)
                     </label>
                     <div className="relative">
-                      <UserCheck className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+                      <UserCheck className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]" />
                       <input
                         type="text"
                         placeholder="অ্যাডমিন বা ব্যবহারকারীর নাম"
                         value={handledBy}
                         onChange={(e) => setHandledBy(e.target.value)}
-                        className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-2xs"
+                        className="w-full min-h-[44px] sm:min-h-[36px] pl-9 pr-3.5 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-semibold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                       />
                     </div>
                   </div>
 
                   {/* চালান বা রেফারেন্স নোট */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label className="block text-xs font-semibold text-[#111111] mb-1.5">
                       চালান বা ভাউচার নম্বর (Notes)
                     </label>
                     <div className="relative">
-                      <FileText className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+                      <FileText className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]" />
                       <input
                         type="text"
                         placeholder="যেমন: চালান #১০৫, লট রিস্টক..."
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-2xs"
+                        className="w-full min-h-[44px] sm:min-h-[36px] pl-9 pr-3.5 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-semibold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                       />
                     </div>
                   </div>
@@ -1945,13 +1950,13 @@ export default function AddStockModal({
 
                 {/* কুইক নোট চিপস */}
                 <div className="flex flex-wrap gap-1.5">
-                  <span className="text-[10px] text-slate-400 font-semibold self-center">দ্রুত নোট:</span>
+                  <span className="text-[10px] text-[#737373] font-semibold self-center">দ্রুত নোট:</span>
                   {NOTE_PRESETS.map((note) => (
                     <button
                       key={note}
                       type="button"
                       onClick={() => setNotes(note)}
-                      className="text-[10px] px-2.5 py-0.5 rounded-lg bg-white border border-slate-200 hover:border-teal-300 text-slate-600 hover:text-teal-800 transition-all shadow-2xs font-bold cursor-pointer"
+                      className="min-h-[36px] sm:min-h-[32px] text-[10px] px-2.5 py-0.5 rounded-md bg-white border border-neutral-200/80 hover:border-[#0F172A] text-[#525252] hover:text-[#111111] transition-colors font-semibold cursor-pointer"
                     >
                       + {note}
                     </button>
@@ -1960,10 +1965,10 @@ export default function AddStockModal({
               </div>
 
               {/* সেকশন ৪: পেমেন্ট মোড ও মহাজন দেনা (Gap 4: Payment & Supplier Ledger) */}
-              <div className="bg-slate-50/80 border border-slate-200 rounded-3xl p-4 sm:p-5 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
-                  <span className="text-xs font-black text-slate-800 flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <div className="bg-[#FAFAFA] border border-neutral-200/80 rounded-lg p-4 sm:p-5 space-y-4">
+                <div className="flex items-center justify-between pb-2.5 border-b border-neutral-200/80">
+                  <span className="text-xs font-semibold text-[#111111] flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#15803D]"></span>
                     <span>৪. পেমেন্ট ও মহাজন দেনা হিসাব (Payment & Ledger)</span>
                   </span>
                 </div>
@@ -1972,38 +1977,38 @@ export default function AddStockModal({
                   <button
                     type="button"
                     onClick={() => setPaymentMode('Paid')}
-                    className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center space-y-1 cursor-pointer ${
+                    className={`min-h-[44px] p-3 rounded-lg border text-xs font-semibold transition-colors flex flex-col items-center justify-center space-y-1 cursor-pointer ${
                       paymentMode === 'Paid'
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        ? 'bg-emerald-50 border-[#15803D] text-[#111111]'
+                        : 'bg-white border-neutral-200/80 text-[#525252] hover:bg-[#F5F5F5]'
                     }`}
                   >
                     <span>পরিশোধিত (ক্যাশ/ব্যাংক)</span>
-                    <span className="text-[10px] font-normal text-emerald-700">নগদে বা ব্যাংকে পরিশোধ</span>
+                    <span className="text-[10px] font-normal text-[#15803D]">নগদে বা ব্যাংকে পরিশোধ</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setPaymentMode('Due')}
-                    className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center space-y-1 cursor-pointer ${
+                    className={`min-h-[44px] p-3 rounded-lg border text-xs font-semibold transition-colors flex flex-col items-center justify-center space-y-1 cursor-pointer ${
                       paymentMode === 'Due'
-                        ? 'bg-rose-50 border-rose-500 text-rose-950 ring-2 ring-rose-500/20 shadow-xs'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        ? 'bg-red-50 border-[#B91C1C] text-[#111111]'
+                        : 'bg-white border-neutral-200/80 text-[#525252] hover:bg-[#F5F5F5]'
                     }`}
                   >
                     <span>মহাজন বাকি (Payable Bill)</span>
-                    <span className="text-[10px] font-normal text-rose-700">লেজারে দেনা হিসেবে যুক্ত হবে</span>
+                    <span className="text-[10px] font-normal text-[#B91C1C]">লেজারে দেনা হিসেবে যুক্ত হবে</span>
                   </button>
                 </div>
 
                 {paymentMode === 'Paid' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">পেমেন্ট মাধ্যম</label>
+                      <label className="block text-[11px] font-semibold text-[#111111] mb-1">পেমেন্ট মাধ্যম</label>
                       <select
                         value={paymentMethod}
                         onChange={(e) => setPaymentMethod(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800"
+                        className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-semibold text-[#111111]"
                       >
                         <option value="Cash">নগদ (Cash Drawer)</option>
                         <option value="Bank">ব্যাংক অ্যাকাউন্ট</option>
@@ -2012,28 +2017,28 @@ export default function AddStockModal({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">পরিশোধের পরিমাণ ({currencySymbol})</label>
+                      <label className="block text-[11px] font-semibold text-[#111111] mb-1">পরিশোধের পরিমাণ ({currencySymbol})</label>
                       <input
                         type="number"
                         value={paidAmount}
                         onChange={(e) => setPaidAmount(e.target.value)}
                         placeholder={`মোট: ${calculations ? calculations.incomingBatchValue.toFixed(2) : '0'}`}
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800"
+                        className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-white border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums font-semibold text-[#111111]"
                       />
                     </div>
                   </div>
                 )}
 
                 {paymentMode === 'Due' && (
-                  <div className="p-3 bg-rose-50/70 rounded-2xl border border-rose-200 text-xs text-rose-900 space-y-1">
-                    <div className="flex justify-between items-center font-bold">
+                  <div className="p-3 bg-red-50 rounded-lg border border-red-200 text-xs text-[#B91C1C] space-y-1">
+                    <div className="flex justify-between items-center font-semibold">
                       <span>মহাজনের খতিয়ানে প্রদেয় বিল যোগ হবে:</span>
-                      <span className="font-mono text-sm text-rose-950 font-black">
+                      <span className="font-mono tabular-nums text-sm text-[#B91C1C] font-semibold">
                         {currencySymbol}{calculations ? calculations.incomingBatchValue.toFixed(2) : '0'}
                       </span>
                     </div>
-                    <p className="text-[10px] text-rose-700 leading-relaxed">
-                      রিস্টক সম্পন্ন হলে সরবরাহকারী <strong>{supplierName || 'মহাজন'}</strong>-এর লেজারে ক্রয় বিল বাবদ বকেয়া নথিভুক্ত হবে।
+                    <p className="text-[10px] text-[#525252] leading-relaxed">
+                      রিস্টক সম্পন্ন হলে সরবরাহকারী <strong className="text-[#111111]">{supplierName || 'মহাজন'}</strong>-এর লেজারে ক্রয় বিল বাবদ বকেয়া নথিভুক্ত হবে।
                     </p>
                   </div>
                 )}
@@ -2041,21 +2046,21 @@ export default function AddStockModal({
 
             </div>
 
-            {/* ডান কলাম: আধুনিক সফট-বেন্টো অ্যানালিটিক্স প্যানেল (Soft-Bento Analytics Panel) */}
-            <div className={`lg:col-span-5 p-5 sm:p-7 bg-gradient-to-b from-slate-50/70 via-white to-slate-50/50 space-y-5 ${mobileTab === 'form' ? 'hidden lg:block' : 'block'}`}>
+            {/* ডান কলাম: অ্যানালিটিক্স প্যানেল */}
+            <div className={`lg:col-span-5 p-5 sm:p-7 bg-[#FAFAFA] space-y-5 ${mobileTab === 'form' ? 'hidden lg:block' : 'block'}`}>
               
               <div className="sticky top-4 space-y-4">
                 
                 {/* অ্যানালিটিক্স হেডার */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                <div className="flex items-center justify-between pb-3 border-b border-neutral-200/80">
                   <div className="flex items-center space-x-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse"></div>
-                    <h4 className="text-sm font-black text-slate-900 tracking-tight flex items-center space-x-1.5">
-                      <Calculator className="w-4 h-4 text-teal-600" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#15803D] animate-pulse"></div>
+                    <h4 className="text-sm font-semibold text-[#111111] tracking-tight flex items-center space-x-1.5">
+                      <Calculator className="w-4 h-4 text-[#0F172A]" />
                       <span>রিস্টক ব্যালেন্স ও WAC অ্যানালিটিক্স</span>
                     </h4>
                   </div>
-                  <span className="text-[10px] font-bold text-teal-800 bg-teal-100/80 px-2.5 py-0.5 rounded-full border border-teal-200 shadow-2xs">
+                  <span className="text-[10px] font-semibold text-[#15803D] bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
                     রিয়েল-টাইম
                   </span>
                 </div>
@@ -2063,35 +2068,35 @@ export default function AddStockModal({
                 {selectedProduct && calculations ? (
                   <>
                     {/* বেন্টো কার্ড ১: স্টক প্রবৃদ্ধি রূপান্তর (Cumulative Growth) */}
-                    <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-3.5">
-                      <div className="flex items-center justify-between text-xs font-black text-slate-900">
+                    <div className="bg-white rounded-lg border border-neutral-200/80 p-4 sm:p-5 space-y-3.5">
+                      <div className="flex items-center justify-between text-xs font-semibold text-[#111111]">
                         <span className="flex items-center space-x-2">
-                          <Layers className="w-4 h-4 text-teal-600" />
+                          <Layers className="w-4 h-4 text-[#0F172A]" />
                           <span>স্টক প্রবৃদ্ধি রূপান্তর</span>
                         </span>
-                        <span className="text-[11px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        <span className="text-[11px] font-mono tabular-nums font-semibold text-[#15803D] bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
                           +{calculations.stockGrowthPercentage}% প্রবৃদ্ধি
                         </span>
                       </div>
 
                       {/* ৩-ধাপের ভিজ্যুয়াল স্টক ব্যালেন্স কার্ড */}
                       <div className="grid grid-cols-3 gap-2 text-center">
-                        <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200">
-                          <span className="text-[10px] font-bold text-slate-400 block mb-0.5">
+                        <div className="p-2.5 rounded-lg bg-[#FAFAFA] border border-neutral-200/80">
+                          <span className="text-[10px] font-semibold text-[#737373] block mb-0.5">
                             পূর্বের ({targetLocation === 'Godown' ? 'গোডাউন' : 'কাউন্টার'})
                           </span>
-                          <span className="text-sm sm:text-base font-black text-slate-800">
+                          <span className="text-sm sm:text-base font-mono tabular-nums font-semibold text-[#111111]">
                             {calculations.prevStock}
                           </span>
-                          <span className="text-[10px] text-slate-400 block font-semibold">{isThanUnit ? 'থান' : selectedProduct.Unit || 'Pcs'}</span>
+                          <span className="text-[10px] text-[#737373] block font-medium">{isThanUnit ? 'থান' : selectedProduct.Unit || 'Pcs'}</span>
                         </div>
 
-                        <div className="p-2.5 rounded-2xl bg-teal-50 border border-teal-200">
-                          <span className="text-[10px] font-bold text-teal-800 block mb-0.5">+ নতুন আগমন</span>
-                          <span className="text-sm sm:text-base font-black text-teal-700">
+                        <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                          <span className="text-[10px] font-semibold text-[#15803D] block mb-0.5">+ নতুন আগমন</span>
+                          <span className="text-sm sm:text-base font-mono tabular-nums font-semibold text-[#15803D]">
                             +{calculations.incoming}
                           </span>
-                          <span className="text-[10px] text-teal-700 block font-semibold">
+                          <span className="text-[10px] text-[#15803D] block font-medium">
                             {isThanUnit ? (
                               <span>থান {yardsPerThan > 0 ? `(${effectiveTotalYards} গজ)` : ''}</span>
                             ) : (
@@ -2100,29 +2105,29 @@ export default function AddStockModal({
                           </span>
                         </div>
 
-                        <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-sm">
-                          <span className="text-[10px] font-bold text-emerald-100 block mb-0.5">= নতুন মোট</span>
-                          <span className="text-sm sm:text-base font-black text-white">
+                        <div className="p-2.5 rounded-lg bg-[#0F172A] text-white">
+                          <span className="text-[10px] font-semibold text-slate-300 block mb-0.5">= নতুন মোট</span>
+                          <span className="text-sm sm:text-base font-mono tabular-nums font-semibold text-white">
                             {calculations.newStock}
                           </span>
-                          <span className="text-[10px] text-emerald-100 block font-semibold">{isThanUnit ? 'থান' : selectedProduct.Unit || 'Pcs'}</span>
+                          <span className="text-[10px] text-slate-300 block font-medium">{isThanUnit ? 'থান' : selectedProduct.Unit || 'Pcs'}</span>
                         </div>
                       </div>
 
                       {/* প্রোগ্রেস বার */}
                       <div className="space-y-1 pt-1">
-                        <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
+                        <div className="flex justify-between text-[10px] text-[#737373] font-medium">
                           <span>স্টক অনুপাত</span>
-                          <span>{calculations.prevStock} ➔ {calculations.newStock} {selectedProduct.Unit || 'Pcs'}</span>
+                          <span className="font-mono tabular-nums">{calculations.prevStock} → {calculations.newStock} {selectedProduct.Unit || 'Pcs'}</span>
                         </div>
-                        <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden flex">
+                        <div className="w-full h-2 rounded-full bg-neutral-200 overflow-hidden flex">
                           <div 
-                            className="h-full bg-slate-400 transition-all duration-300" 
+                            className="h-full bg-neutral-400 transition-all duration-300" 
                             style={{ width: `${calculations.newStock > 0 ? (calculations.prevStock / calculations.newStock) * 100 : 0}%` }}
                             title={`পূর্বের মজুদ: ${calculations.prevStock}`}
                           />
                           <div 
-                            className="h-full bg-teal-500 transition-all duration-300" 
+                            className="h-full bg-[#15803D] transition-all duration-300" 
                             style={{ width: `${calculations.newStock > 0 ? (calculations.incoming / calculations.newStock) * 100 : 0}%` }}
                             title={`নতুন আগমন: ${calculations.incoming}`}
                           />
@@ -2132,45 +2137,45 @@ export default function AddStockModal({
 
                     {/* বেন্টো কার্ড ২: লট খরচ ও ইনভেন্টরি ভ্যালু গ্রিড */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-indigo-200/90 shadow-2xs space-y-1">
-                        <span className="text-[10px] font-bold text-indigo-700 flex items-center space-x-1">
-                          <Coins className="w-3.5 h-3.5" />
+                      <div className="bg-white p-3.5 sm:p-4 rounded-lg border border-neutral-200/80 space-y-1">
+                        <span className="text-[10px] font-semibold text-[#525252] flex items-center space-x-1">
+                          <Coins className="w-3.5 h-3.5 text-[#0F172A]" />
                           <span>এই লটের মোট খরচ</span>
                         </span>
-                        <div className="text-base sm:text-lg font-black text-indigo-950">
+                        <div className="text-base sm:text-lg font-mono tabular-nums font-semibold text-[#111111]">
                           {currencySymbol}{calculations.incomingBatchValue.toFixed(2)}
                         </div>
-                        <span className="text-[10px] text-slate-400 block">
+                        <span className="text-[10px] font-mono tabular-nums text-[#737373] block">
                           ({calculations.incoming} × {currencySymbol}{calculations.newLotCost})
                         </span>
                       </div>
 
-                      <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-emerald-200/90 shadow-2xs space-y-1">
-                        <span className="text-[10px] font-bold text-emerald-700 flex items-center space-x-1">
+                      <div className="bg-white p-3.5 sm:p-4 rounded-lg border border-emerald-200 space-y-1">
+                        <span className="text-[10px] font-semibold text-[#15803D] flex items-center space-x-1">
                           <TrendingUp className="w-3.5 h-3.5" />
                           <span>মোট ইনভেন্টরি ভ্যালু</span>
                         </span>
-                        <div className="text-base sm:text-lg font-black text-emerald-950">
+                        <div className="text-base sm:text-lg font-mono tabular-nums font-semibold text-[#15803D]">
                           {currencySymbol}{calculations.totalNewStockValue.toFixed(2)}
                         </div>
-                        <span className="text-[10px] text-slate-400 block">
+                        <span className="text-[10px] text-[#737373] block">
                           (সমন্বিত মোট অ্যাসেট)
                         </span>
                       </div>
                     </div>
 
                     {/* বেন্টো কার্ড ৩: ওয়েইটেড এভারেজ কস্ট (WAC) সমন্বিত ক্রয়মূল্য */}
-                    <div className="bg-white rounded-3xl border border-teal-200 p-4 sm:p-5 shadow-xs space-y-3">
+                    <div className="bg-white rounded-lg border border-neutral-200/80 p-4 sm:p-5 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-slate-800 flex items-center space-x-1.5">
-                          <Calculator className="w-4 h-4 text-teal-600" />
+                        <span className="text-xs font-semibold text-[#111111] flex items-center space-x-1.5">
+                          <Calculator className="w-4 h-4 text-[#0F172A]" />
                           <span>সমন্বিত গড় ক্রয়মূল্য (New WAC)</span>
                         </span>
                         {calculations.costDiff !== 0 && (
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                          <span className={`text-[10px] font-mono tabular-nums font-semibold px-2 py-0.5 rounded-md border ${
                             calculations.costDiff > 0
-                              ? 'bg-amber-50 text-amber-800 border-amber-200'
-                              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              ? 'bg-amber-50 text-[#B45309] border-amber-200'
+                              : 'bg-emerald-50 text-[#15803D] border-emerald-200'
                           }`}>
                             {calculations.costDiff > 0 ? `+${currencySymbol}${calculations.costDiff} (বৃদ্ধি)` : `-${currencySymbol}${Math.abs(calculations.costDiff)} (হ্রাস)`}
                           </span>
@@ -2179,23 +2184,23 @@ export default function AddStockModal({
 
                       <div className="flex items-baseline justify-between pt-1">
                         <div>
-                          <div className="text-2xl sm:text-3xl font-black text-teal-900 tracking-tight">
+                          <div className="text-2xl sm:text-3xl font-mono tabular-nums font-semibold text-[#111111] tracking-tight">
                             {currencySymbol}{calculations.weightedAvgCost.toFixed(2)}
-                            <span className="text-xs font-semibold text-slate-400 ml-1">/ {selectedProduct.Unit || 'Pcs'}</span>
+                            <span className="text-xs font-sans font-medium text-[#737373] ml-1">/ {selectedProduct.Unit || 'Pcs'}</span>
                           </div>
                         </div>
 
                         <div className="text-right">
-                          <span className="text-[10px] font-semibold text-slate-400 block">পূর্বের কেনা দাম</span>
-                          <span className="text-xs font-bold text-slate-400 line-through">
+                          <span className="text-[10px] font-medium text-[#737373] block">পূর্বের কেনা দাম</span>
+                          <span className="text-xs font-mono tabular-nums font-semibold text-[#737373] line-through">
                             {currencySymbol}{Number(selectedProduct.CostPrice || 0).toFixed(2)}
                           </span>
                         </div>
                       </div>
 
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                      <div className="pt-2 border-t border-neutral-200/80 flex items-center justify-between text-[11px] text-[#525252]">
                         <span>হিসাবের সূত্র:</span>
-                        <span className="font-mono text-[10px] text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-100">
+                        <span className="font-mono text-[10px] text-[#111111] bg-[#F5F5F5] px-2 py-0.5 rounded-md border border-neutral-200/80">
                           (আগের মোট মূল্য + নতুন লট মূল্য) ÷ নতুন মোট স্টক
                         </span>
                       </div>
@@ -2203,20 +2208,20 @@ export default function AddStockModal({
                   </>
                 ) : (
                   /* কোনো পণ্য নির্বাচিত না থাকলে এম্পটি স্টেট */
-                  <div className="p-8 border-2 border-dashed border-slate-200 rounded-3xl text-center bg-white space-y-2.5">
-                    <Box className="w-10 h-10 text-slate-300 mx-auto stroke-[1.5]" />
-                    <p className="text-xs font-bold text-slate-700">কোনো পণ্য নির্বাচিত হয়নি</p>
-                    <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+                  <div className="p-8 border border-dashed border-neutral-300 rounded-lg text-center bg-white space-y-2.5">
+                    <Box className="w-10 h-10 text-neutral-300 mx-auto stroke-[1.5]" />
+                    <p className="text-xs font-semibold text-[#111111]">কোনো পণ্য নির্বাচিত হয়নি</p>
+                    <p className="text-[11px] text-[#525252] max-w-xs mx-auto">
                       বাম পাশের কম্বোবক্স বা ক্যামেরা দিয়ে পণ্য নির্বাচন করলে লাইভ স্টক প্রবৃদ্ধি ও WAC হিসেব দেখতে পাবেন
                     </p>
                   </div>
                 )}
 
                 {/* ডাটাবেস নিরাপত্তা ও সিঙ্ক আশ্বাস বার্তা */}
-                <div className="p-3.5 bg-gradient-to-r from-teal-50/80 to-emerald-50/60 rounded-2xl border border-teal-200/90 flex items-start space-x-2.5 text-xs text-teal-950">
-                  <ShieldCheck className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
-                  <p className="text-[11px] leading-relaxed text-teal-900">
-                    রেকর্ড করার সাথে সাথে গুগল শিটের <strong>StockTransactions</strong> ট্যাবে বিস্তারিত ট্রানজ্যাকশন হিস্টোরি এবং <strong>Products</strong> ট্যাবে বর্তমান সমন্বিত স্টক স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।
+                <div className="p-3.5 bg-emerald-50/50 rounded-lg border border-emerald-200 flex items-start space-x-2.5 text-xs text-[#111111]">
+                  <ShieldCheck className="w-4 h-4 text-[#15803D] shrink-0 mt-0.5" />
+                  <p className="text-[11px] leading-relaxed text-[#525252]">
+                    রেকর্ড করার সাথে সাথে গুগল শিটের <strong className="text-[#111111]">StockTransactions</strong> ট্যাবে বিস্তারিত ট্রানজ্যাকশন হিস্টোরি এবং <strong className="text-[#111111]">Products</strong> ট্যাবে বর্তমান সমন্বিত স্টক স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।
                   </p>
                 </div>
 
@@ -2227,17 +2232,17 @@ export default function AddStockModal({
           </div>
 
           {/* মডাল ফুটার একশন বার (Sticky Bottom) */}
-          <div className="p-4 sm:px-8 sm:py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 select-none">
-            <div className="text-xs text-slate-600 w-full sm:w-auto text-center sm:text-left">
+          <div className="p-4 sm:px-8 sm:py-4 bg-[#FAFAFA] border-t border-neutral-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 select-none">
+            <div className="text-xs text-[#525252] w-full sm:w-auto text-center sm:text-left">
               {selectedProduct ? (
-                <span className="text-teal-900 font-bold flex items-center justify-center sm:justify-start space-x-1.5 flex-wrap">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="text-[#111111] font-semibold flex items-center justify-center sm:justify-start space-x-1.5 flex-wrap">
+                  <CheckCircle2 className="w-4 h-4 text-[#15803D] shrink-0" />
                   <span>
-                    লট বৃদ্ধি ({targetLocation === 'Godown' ? '🏭 কেন্দ্রীয় গোডাউনে' : '🏬 শো-রুম কাউন্টারে'}): <strong className="text-slate-900">{selectedProduct.ProductName}</strong> (+{effectiveIncomingQty} {isThanUnit ? 'থান' : selectedProduct.Unit || 'Pcs'}{isThanUnit && yardsPerThan > 0 ? ` / ${effectiveTotalYards} গজ` : ''}) • খরচ: <strong className="text-indigo-900">{currencySymbol}{calculations ? calculations.incomingBatchValue.toFixed(2) : '0'}</strong>
+                    লট বৃদ্ধি ({targetLocation === 'Godown' ? 'কেন্দ্রীয় গোডাউনে' : 'শো-রুম কাউন্টারে'}): <strong className="text-[#111111]">{selectedProduct.ProductName}</strong> (<span className="font-mono tabular-nums">+{effectiveIncomingQty}</span> {isThanUnit ? 'থান' : selectedProduct.Unit || 'Pcs'}{isThanUnit && yardsPerThan > 0 ? ` / ${effectiveTotalYards} গজ` : ''}) • খরচ: <strong className="text-[#111111] font-mono tabular-nums">{currencySymbol}{calculations ? calculations.incomingBatchValue.toFixed(2) : '0'}</strong>
                   </span>
                 </span>
               ) : (
-                <span className="text-slate-400">* পণ্য নির্বাচন করুন ও নতুন লটের পরিমাণ প্রদান করুন</span>
+                <span className="text-[#737373]">* পণ্য নির্বাচন করুন ও নতুন লটের পরিমাণ প্রদান করুন</span>
               )}
             </div>
 
@@ -2246,7 +2251,7 @@ export default function AddStockModal({
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="flex-1 sm:flex-none px-5 py-2.5 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100 transition-all active:scale-95 disabled:opacity-50 cursor-pointer shadow-2xs"
+                className="min-h-[44px] sm:min-h-[36px] flex-1 sm:flex-none px-5 py-2 bg-white border border-neutral-200/80 text-[#111111] text-xs font-semibold rounded-md hover:bg-[#F5F5F5] transition-colors disabled:opacity-50 cursor-pointer"
               >
                 বাতিল করুন
               </button>
@@ -2254,7 +2259,7 @@ export default function AddStockModal({
               <button
                 type="submit"
                 disabled={isSubmitting || !selectedProductId || effectiveIncomingQty <= 0}
-                className="flex-1 sm:flex-none px-6 py-2.5 bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-700 hover:to-emerald-800 text-white text-xs font-black rounded-xl shadow-lg shadow-teal-600/25 transition-all flex items-center justify-center space-x-2 active:scale-95 disabled:opacity-50 cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] flex-1 sm:flex-none px-6 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -2264,7 +2269,7 @@ export default function AddStockModal({
                 ) : (
                   <>
                     <PlusCircle className="w-4 h-4" />
-                    <span>{targetLocation === 'Godown' ? '🏭 গোডাউনে' : '🏬 শো-রুমে'} স্টক রেকর্ড করুন</span>
+                    <span>{targetLocation === 'Godown' ? 'গোডাউনে' : 'শো-রুমে'} স্টক রেকর্ড করুন</span>
                   </>
                 )}
               </button>

@@ -37,7 +37,7 @@ import { playCashChime, playWarningBeep } from '../utils/soundEffects';
 export const GARMENT_PRESETS = {
   'পাঞ্জাবি': {
     name: 'পাঞ্জাবি (Panjabi)',
-    icon: '👔',
+    icon: 'Shirt',
     fields: [
       { key: 'length', label: 'ঝুল (Length)', placeholder: '৪০', defaultVal: '40' },
       { key: 'chest', label: 'ছাতি (Chest)', placeholder: '৩৮', defaultVal: '38' },
@@ -54,7 +54,7 @@ export const GARMENT_PRESETS = {
   },
   'শার্ট': {
     name: 'ফরমাল / ক্যাজুয়াল শার্ট (Shirt)',
-    icon: '👔',
+    icon: 'Shirt',
     fields: [
       { key: 'length', label: 'ঝুল (Length)', placeholder: '২৯', defaultVal: '29' },
       { key: 'chest', label: 'ছাতি (Chest)', placeholder: '৩৯', defaultVal: '39' },
@@ -70,7 +70,7 @@ export const GARMENT_PRESETS = {
   },
   'প্যান্ট': {
     name: 'ফরমাল / গ্যাবার্ডিন প্যান্ট (Pant)',
-    icon: '👖',
+    icon: 'Scissors',
     fields: [
       { key: 'length', label: 'ঝুল (Length)', placeholder: '৩৯', defaultVal: '39' },
       { key: 'waist', label: 'কোমর (Waist)', placeholder: '৩২', defaultVal: '32' },
@@ -84,7 +84,7 @@ export const GARMENT_PRESETS = {
   },
   'পায়জামা': {
     name: 'পায়জামা / সালোয়ার (Pajama)',
-    icon: '🩳',
+    icon: 'Scissors',
     fields: [
       { key: 'length', label: 'ঝুল (Length)', placeholder: '৩৮', defaultVal: '38' },
       { key: 'waist', label: 'কোমর (Waist)', placeholder: '৩৮', defaultVal: '38' },
@@ -96,7 +96,7 @@ export const GARMENT_PRESETS = {
   },
   'কামিজ': {
     name: 'থ্রি-পিস কামিজ / কুর্তি (Kameez)',
-    icon: '👗',
+    icon: 'Shirt',
     fields: [
       { key: 'length', label: 'ঝুল (Length)', placeholder: '৪২', defaultVal: '42' },
       { key: 'chest', label: 'ছাতি (Chest)', placeholder: '৩৬', defaultVal: '36' },
@@ -114,7 +114,7 @@ export const GARMENT_PRESETS = {
   },
   'বোরকা': {
     name: 'বোরকা / আবায়া (Burqa / Abaya)',
-    icon: '🧕',
+    icon: 'Shirt',
     fields: [
       { key: 'length', label: 'ঝুল (Length)', placeholder: '৫২', defaultVal: '52' },
       { key: 'chest', label: 'বডি / ছাতি', placeholder: '৪৪', defaultVal: '44' },
@@ -127,7 +127,7 @@ export const GARMENT_PRESETS = {
   },
   'কোটি': {
     name: 'মুজিব কোট / ওয়েস্টকোট (Waistcoat)',
-    icon: '🧥',
+    icon: 'Shirt',
     fields: [
       { key: 'length', label: 'ঝুল (Length)', placeholder: '২৮', defaultVal: '28' },
       { key: 'chest', label: 'ছাতি (Chest)', placeholder: '৩৮', defaultVal: '38' },
@@ -139,7 +139,7 @@ export const GARMENT_PRESETS = {
   },
   'অন্যান্য': {
     name: 'অন্যান্য কাস্টম পোশাক (Custom)',
-    icon: '✂️',
+    icon: 'Scissors',
     fields: [
       { key: 'length', label: 'ঝুল (Length)', placeholder: '', defaultVal: '' },
       { key: 'chest', label: 'ছাতি (Chest)', placeholder: '', defaultVal: '' },
@@ -152,12 +152,12 @@ export const GARMENT_PRESETS = {
 };
 
 export const STATUS_MAP = {
-  Pending: { label: 'অর্ডার গৃহীত', color: 'bg-amber-100 text-amber-800 border-amber-300', dot: 'bg-amber-500' },
-  Cutting: { label: 'কাটিং চলছে', color: 'bg-blue-100 text-blue-800 border-blue-300', dot: 'bg-blue-500' },
-  Stitching: { label: 'সেলাই চলছে', color: 'bg-purple-100 text-purple-800 border-purple-300', dot: 'bg-purple-500' },
-  Ready: { label: 'প্রস্তুত (Ready)', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', dot: 'bg-emerald-500' },
-  Delivered: { label: 'ডেলিভারি সম্পন্ন', color: 'bg-slate-100 text-slate-800 border-slate-300', dot: 'bg-slate-500' },
-  Cancelled: { label: 'বাতিল', color: 'bg-rose-100 text-rose-800 border-rose-300', dot: 'bg-rose-500' }
+  Pending: { label: 'অর্ডার গৃহীত', color: 'bg-amber-50 text-[#B45309] border-amber-200', dot: 'bg-[#B45309]' },
+  Cutting: { label: 'কাটিং চলছে', color: 'bg-[#F5F5F5] text-[#111111] border-neutral-300', dot: 'bg-[#0F172A]' },
+  Stitching: { label: 'সেলাই চলছে', color: 'bg-slate-100 text-[#0F172A] border-slate-300', dot: 'bg-slate-700' },
+  Ready: { label: 'প্রস্তুত (Ready)', color: 'bg-emerald-50 text-[#15803D] border-emerald-200', dot: 'bg-[#15803D]' },
+  Delivered: { label: 'ডেলিভারি সম্পন্ন', color: 'bg-[#FAFAFA] text-[#525252] border-neutral-200/80', dot: 'bg-neutral-500' },
+  Cancelled: { label: 'বাতিল', color: 'bg-red-50 text-[#B91C1C] border-red-200', dot: 'bg-[#B91C1C]' }
 };
 
 export default function TailoringModal({
@@ -462,8 +462,8 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
     <div
       className={
         embedded
-          ? 'w-full h-full flex flex-col bg-slate-50'
-          : 'fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200'
+          ? 'w-full h-full flex flex-col bg-[#FAFAFA]'
+          : 'fixed inset-0 z-50 bg-neutral-900/40 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200'
       }
       role="dialog"
       aria-modal="true"
@@ -471,26 +471,26 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
       <div
         className={
           embedded
-            ? 'w-full h-full flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden'
-            : 'bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-200'
+            ? 'w-full h-full flex flex-col bg-white rounded-lg border border-neutral-200/80 overflow-hidden'
+            : 'bg-white rounded-lg border border-neutral-200/80 w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-200'
         }
       >
-        {/* ================= ১. আল্ট্রা-মডার্ন হেডার ================= */}
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border-b border-indigo-900/40">
+        {/* ================= ১. হেডার ================= */}
+        <div className="bg-[#FAFAFA] text-[#111111] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200/80">
           <div className="flex items-center space-x-3">
-            <div className="w-11 h-11 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-400 shadow-inner">
-              <Scissors className="w-6 h-6 animate-pulse" />
+            <div className="w-11 h-11 rounded-lg bg-[#0F172A] flex items-center justify-center text-white shrink-0">
+              <Scissors className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-lg sm:text-xl font-black tracking-tight text-white">
+                <h2 className="text-lg sm:text-xl font-semibold tracking-tight text-[#111111]">
                   টেইলারিং ও সেলাই অর্ডার স্টুডিও
                 </h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/30 text-indigo-300 border border-indigo-400/40 uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F5F5F5] text-[#525252] border border-neutral-200/80 uppercase tracking-wider">
                   Phase 2 Special
                 </span>
               </div>
-              <p className="text-xs text-indigo-200/80 mt-0.5">
+              <p className="text-xs text-[#525252] mt-0.5">
                 গ্রাহকের নিখুঁত শরীরের মাপজোখ, কারিগর কার্যপত্র ও সেলাই ডেলিভারি ট্র্যাকিং
               </p>
             </div>
@@ -498,19 +498,21 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
 
           <div className="flex items-center space-x-2">
             {/* ট্যাব নেভিগেশন */}
-            <div className="bg-slate-800/80 p-1 rounded-xl flex items-center border border-slate-700/60 text-xs font-bold">
+            <div className="bg-[#F5F5F5] p-1 rounded-lg flex items-center border border-neutral-200/80 text-xs font-semibold gap-1 flex-wrap">
               <button
                 type="button"
                 onClick={() => setActiveTab('orders')}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md transition-colors flex items-center space-x-1.5 cursor-pointer ${
                   activeTab === 'orders'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'bg-[#0F172A] text-white'
+                    : 'text-[#525252] hover:text-[#111111]'
                 }`}
               >
                 <span>অর্ডার তালিকা ও ট্র্যাকিং</span>
                 {tailoringOrders.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-400/30 text-white">
+                  <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono tabular-nums ${
+                    activeTab === 'orders' ? 'bg-white/20 text-white' : 'bg-white border border-neutral-200/80 text-[#111111]'
+                  }`}>
                     {tailoringOrders.length}
                   </span>
                 )}
@@ -518,10 +520,10 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
               <button
                 type="button"
                 onClick={() => setActiveTab('new')}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md transition-colors flex items-center space-x-1.5 cursor-pointer ${
                   activeTab === 'new'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'bg-[#0F172A] text-white'
+                    : 'text-[#525252] hover:text-[#111111]'
                 }`}
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -530,10 +532,10 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
               <button
                 type="button"
                 onClick={() => setActiveTab('tailors')}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md transition-colors flex items-center space-x-1.5 cursor-pointer ${
                   activeTab === 'tailors'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'bg-[#0F172A] text-white'
+                    : 'text-[#525252] hover:text-[#111111]'
                 }`}
               >
                 <UserCheck className="w-3.5 h-3.5" />
@@ -543,7 +545,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md bg-white border border-neutral-200/80 text-[#737373] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors cursor-pointer"
               title="বন্ধ করুন"
             >
               <X className="w-5 h-5" />
@@ -552,70 +554,70 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
         </div>
 
         {/* ================= ২. মূল কনটেন্ট এরিয়া ================= */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/60 space-y-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#FAFAFA] space-y-5">
           {/* ট্যাব ১: অর্ডার তালিকা ও লাইভ ট্র্যাকিং */}
           {activeTab === 'orders' && (
             <div className="space-y-5">
               {/* KPI স্ট্রিপ */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">মোট অর্ডার</span>
-                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{kpi.totalOrders}টি</h3>
+                    <span className="text-[11px] font-semibold text-[#525252] uppercase tracking-wider">মোট অর্ডার</span>
+                    <h3 className="text-xl sm:text-2xl font-semibold tracking-tight font-mono tabular-nums text-[#111111] mt-0.5">{kpi.totalOrders}টি</h3>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center">
                     <Scissors className="w-5 h-5" />
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">সেলাই / কাটিং চলছে</span>
-                    <h3 className="text-xl sm:text-2xl font-black text-amber-700 mt-0.5">{kpi.inProgress}টি</h3>
+                    <span className="text-[11px] font-semibold text-[#B45309] uppercase tracking-wider">সেলাই / কাটিং চলছে</span>
+                    <h3 className="text-xl sm:text-2xl font-semibold tracking-tight font-mono tabular-nums text-[#B45309] mt-0.5">{kpi.inProgress}টি</h3>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-md bg-amber-50 border border-amber-200 text-[#B45309] flex items-center justify-center">
                     <Clock className="w-5 h-5" />
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">ডেলিভারির জন্য প্রস্তুত</span>
-                    <h3 className="text-xl sm:text-2xl font-black text-emerald-700 mt-0.5">{kpi.readyCount}টি</h3>
+                    <span className="text-[11px] font-semibold text-[#15803D] uppercase tracking-wider">ডেলিভারির জন্য প্রস্তুত</span>
+                    <h3 className="text-xl sm:text-2xl font-semibold tracking-tight font-mono tabular-nums text-[#15803D] mt-0.5">{kpi.readyCount}টি</h3>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-md bg-emerald-50 border border-emerald-200 text-[#15803D] flex items-center justify-center">
                     <CheckCircle className="w-5 h-5" />
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">মোট বকেয়া মজুরি</span>
-                    <h3 className="text-xl sm:text-2xl font-black text-rose-700 mt-0.5">
+                    <span className="text-[11px] font-semibold text-[#B91C1C] uppercase tracking-wider">মোট বকেয়া মজুরি</span>
+                    <h3 className="text-xl sm:text-2xl font-semibold tracking-tight font-mono tabular-nums text-[#B91C1C] mt-0.5">
                       {currencySymbol}{kpi.totalDue.toLocaleString('en-IN')}
                     </h3>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-md bg-red-50 border border-red-200 text-[#B91C1C] flex items-center justify-center">
                     <DollarSign className="w-5 h-5" />
                   </div>
                 </div>
               </div>
 
               {/* ফিল্টার ও সার্চ বার */}
-              <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3">
+              <div className="bg-white p-3 sm:p-4 rounded-lg border border-neutral-200/80 flex flex-wrap items-center justify-between gap-3">
                 <div className="relative flex-1 min-w-[240px]">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-[#737373] absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="অর্ডার নং, টোকেন, গ্রাহকের নাম, মোবাইল বা কারিগর দিয়ে খুঁজুন..."
-                    className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-medium"
+                    className="min-h-[44px] sm:min-h-[36px] w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-medium text-[#111111]"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                      className="min-h-[44px] sm:min-h-[36px] px-2 absolute right-2 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#111111] text-xs cursor-pointer"
                     >
                       মুছুন
                     </button>
@@ -627,7 +629,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                   <select
                     value={selectedStatusFilter}
                     onChange={(e) => setSelectedStatusFilter(e.target.value)}
-                    className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="min-h-[44px] sm:min-h-[36px] text-xs bg-[#FAFAFA] border border-neutral-200/80 rounded-md px-3 py-2 font-semibold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A]"
                   >
                     <option value="ALL">সকল স্ট্যাটাস</option>
                     <option value="Pending">অর্ডার গৃহীত</option>
@@ -641,7 +643,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                   <select
                     value={selectedGarmentFilter}
                     onChange={(e) => setSelectedGarmentFilter(e.target.value)}
-                    className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="min-h-[44px] sm:min-h-[36px] text-xs bg-[#FAFAFA] border border-neutral-200/80 rounded-md px-3 py-2 font-semibold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A]"
                   >
                     <option value="ALL">সকল পোশাক</option>
                     {Object.keys(GARMENT_PRESETS).map((g) => (
@@ -653,17 +655,17 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
 
               {/* অর্ডার তালিকা কার্ড / টেবিল */}
               {filteredOrders.length === 0 ? (
-                <div className="bg-white rounded-3xl p-10 text-center border border-slate-200/80 shadow-xs space-y-3">
-                  <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 mx-auto flex items-center justify-center">
+                <div className="bg-white rounded-lg p-10 text-center border border-neutral-200/80 space-y-3">
+                  <div className="w-16 h-16 rounded-lg bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] mx-auto flex items-center justify-center">
                     <Scissors className="w-8 h-8" />
                   </div>
-                  <h3 className="text-base font-black text-slate-800">কোনো টেইলারিং অর্ডার পাওয়া যায়নি</h3>
-                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  <h3 className="text-base font-semibold tracking-tight text-[#111111]">কোনো টেইলারিং অর্ডার পাওয়া যায়নি</h3>
+                  <p className="text-xs text-[#525252] max-w-md mx-auto">
                     গ্রাহকের নতুন পোশাক সেলাইয়ের জন্য "নতুন সেলাই অর্ডার" বাটনে ক্লিক করে সহজে অর্ডার তৈরি করুন।
                   </p>
                   <button
                     onClick={() => setActiveTab('new')}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center space-x-1.5 shadow-md shadow-indigo-500/20"
+                    className="min-h-[44px] sm:min-h-[36px] px-4 py-2 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-semibold transition-colors inline-flex items-center space-x-1.5 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>নতুন অর্ডার তৈরি করুন</span>
@@ -676,34 +678,35 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                     const deliveryDt = new Date(order.DeliveryDate);
                     const isDueToday = deliveryDt.toDateString() === new Date().toDateString();
                     const isOverdue = deliveryDt < new Date() && order.Status !== 'Delivered' && order.Status !== 'Cancelled';
+                    const isScissorsPreset = GARMENT_PRESETS[order.GarmentType]?.icon === 'Scissors';
 
                     return (
                       <div
                         key={order.OrderID}
-                        className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group"
+                        className="bg-white rounded-lg border border-neutral-200/80 transition-colors flex flex-col justify-between overflow-hidden group"
                       >
                         {/* টপ বার */}
-                        <div className="p-4 border-b border-slate-100 flex items-start justify-between gap-2">
+                        <div className="p-4 border-b border-neutral-200/80 flex items-start justify-between gap-2">
                           <div>
                             <div className="flex items-center space-x-2">
-                              <span className="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 font-mono font-black text-xs border border-indigo-200/60">
+                              <span className="px-2 py-0.5 rounded-md bg-[#F5F5F5] text-[#111111] font-mono tabular-nums font-bold text-xs border border-neutral-200/80">
                                 #{order.TokenNo || '---'}
                               </span>
-                              <span className="text-xs font-mono font-bold text-slate-500">
+                              <span className="text-xs font-mono tabular-nums font-semibold text-[#525252]">
                                 {order.OrderID}
                               </span>
                             </div>
-                            <h4 className="text-sm font-black text-slate-900 mt-1 flex items-center space-x-1.5">
+                            <h4 className="text-sm font-semibold tracking-tight text-[#111111] mt-1 flex items-center space-x-1.5 flex-wrap">
                               <span>{order.CustomerName}</span>
                               {order.CustomerPhone && (
-                                <span className="text-[11px] font-normal text-slate-500">
+                                <span className="text-[11px] font-mono tabular-nums font-normal text-[#525252]">
                                   ({order.CustomerPhone})
                                 </span>
                               )}
                             </h4>
                           </div>
 
-                          <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center space-x-1.5 ${st.color}`}>
+                          <span className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border flex items-center space-x-1.5 shrink-0 ${st.color}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span>
                             <span>{st.label}</span>
                           </span>
@@ -711,20 +714,24 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
 
                         {/* পোশাক ও মেজারমেন্ট প্রিভিউ */}
                         <div className="p-4 space-y-3 flex-1 text-xs">
-                          <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60 space-y-1">
-                            <div className="flex items-center justify-between font-bold text-slate-800">
-                              <span className="flex items-center space-x-1">
-                                <span className="text-base">{GARMENT_PRESETS[order.GarmentType]?.icon || '✂️'}</span>
+                          <div className="bg-[#FAFAFA] rounded-md p-2.5 border border-neutral-200/80 space-y-1">
+                            <div className="flex items-center justify-between font-semibold text-[#111111]">
+                              <span className="flex items-center space-x-1.5">
+                                {isScissorsPreset ? (
+                                  <Scissors className="w-3.5 h-3.5 text-[#0F172A]" />
+                                ) : (
+                                  <Shirt className="w-3.5 h-3.5 text-[#0F172A]" />
+                                )}
                                 <span>{order.GarmentType}</span>
                               </span>
-                              <span className="text-indigo-600 font-black">{order.Quantity || 1}টি</span>
+                              <span className="text-[#111111] font-mono tabular-nums font-bold">{order.Quantity || 1}টি</span>
                             </div>
-                            <p className="text-[11px] text-slate-500">
+                            <p className="text-[11px] text-[#525252] font-mono tabular-nums">
                               {order.FabricSource === 'store' ? 'দোকানের কাপড়' : 'গ্রাহকের কাপড়'}: {order.FabricName} ({order.FabricYards || 0} গজ)
                             </p>
                             {order.TailorMaster && (
-                              <p className="text-[11px] text-slate-600 font-medium flex items-center space-x-1">
-                                <span className="font-bold text-slate-700">কারিগর:</span>
+                              <p className="text-[11px] text-[#525252] font-medium flex items-center space-x-1">
+                                <span className="font-semibold text-[#111111]">কারিগর:</span>
                                 <span>{order.TailorMaster}</span>
                               </p>
                             )}
@@ -732,15 +739,15 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
 
                           {/* মাপের সংক্ষিপ্ত বিবরণ */}
                           {order.Measurements && (
-                            <div className="grid grid-cols-3 gap-1.5 text-[10px] bg-indigo-50/50 p-2 rounded-xl border border-indigo-100">
+                            <div className="grid grid-cols-3 gap-1.5 text-[10px] bg-[#FAFAFA] p-2 rounded-md border border-neutral-200/80">
                               {Object.entries(order.Measurements)
                                 .slice(0, 6)
                                 .map(([k, v]) => (
                                   <div key={k} className="flex flex-col">
-                                    <span className="text-slate-400 font-medium capitalize truncate">
+                                    <span className="text-[#737373] font-medium capitalize truncate">
                                       {GARMENT_PRESETS[order.GarmentType]?.fields?.find((f) => f.key === k)?.label?.split(' ')[0] || k}
                                     </span>
-                                    <span className="font-bold text-indigo-900">{v || '-'}″</span>
+                                    <span className="font-mono tabular-nums font-bold text-[#111111]">{v || '-'}″</span>
                                   </div>
                                 ))}
                             </div>
@@ -748,17 +755,17 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
 
                           {/* ডেলিভারি তারিখ */}
                           <div className="flex items-center justify-between text-[11px] pt-1">
-                            <span className="text-slate-500 flex items-center space-x-1">
-                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="text-[#525252] flex items-center space-x-1">
+                              <Calendar className="w-3.5 h-3.5 text-[#737373]" />
                               <span>ডেলিভারি:</span>
                             </span>
                             <span
-                              className={`font-black ${
+                              className={`font-mono tabular-nums font-bold ${
                                 isOverdue
-                                  ? 'text-rose-600 animate-pulse'
+                                  ? 'text-[#B91C1C]'
                                   : isDueToday
-                                  ? 'text-amber-600 font-bold'
-                                  : 'text-slate-700'
+                                  ? 'text-[#B45309]'
+                                  : 'text-[#111111]'
                               }`}
                             >
                               {deliveryDt.toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' })}
@@ -768,14 +775,14 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                           </div>
 
                           {/* ফাইন্যান্সিয়ালস (মজুরি ও বকেয়া) */}
-                          <div className="bg-slate-900 text-white rounded-xl p-2.5 flex items-center justify-between">
+                          <div className="bg-[#0F172A] text-white rounded-md p-2.5 flex items-center justify-between">
                             <div>
-                              <span className="text-[10px] text-slate-400 block">মোট মজুরি</span>
-                              <span className="font-black text-sm">{currencySymbol}{order.TotalAmount}</span>
+                              <span className="text-[10px] text-neutral-400 block">মোট মজুরি</span>
+                              <span className="font-mono tabular-nums font-bold text-sm">{currencySymbol}{order.TotalAmount}</span>
                             </div>
                             <div className="text-right">
-                              <span className="text-[10px] text-slate-400 block">অবশিষ্ট বকেয়া</span>
-                              <span className={`font-black text-sm ${Number(order.DueAmount) > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                              <span className="text-[10px] text-neutral-400 block">অবশিষ্ট বকেয়া</span>
+                              <span className={`font-mono tabular-nums font-bold text-sm ${Number(order.DueAmount) > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
                                 {currencySymbol}{order.DueAmount}
                               </span>
                             </div>
@@ -783,12 +790,12 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                         </div>
 
                         {/* অ্যাকশন বাটনসমূহ */}
-                        <div className="p-3 bg-slate-50/80 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1.5">
+                        <div className="p-3 bg-[#FAFAFA] border-t border-neutral-200/80 flex flex-wrap items-center justify-between gap-1.5">
                           {/* স্ট্যাটাস অ্যাডভান্স বাটন */}
                           {order.Status !== 'Delivered' && order.Status !== 'Cancelled' ? (
                             <button
                               onClick={() => handleAdvanceStatus(order)}
-                              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center space-x-1 shadow-xs cursor-pointer"
+                              className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-semibold transition-colors flex items-center space-x-1 cursor-pointer"
                               title="পরবর্তী ধাপে অগ্রসর করুন"
                             >
                               <span>
@@ -800,7 +807,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                               <ChevronRight className="w-3.5 h-3.5" />
                             </button>
                           ) : (
-                            <span className="text-[11px] font-bold text-slate-500 px-2 py-1 bg-slate-200/80 rounded-lg">
+                            <span className="text-[11px] font-semibold text-[#525252] px-2.5 py-1 bg-[#F5F5F5] border border-neutral-200/80 rounded-md">
                               সম্পন্ন
                             </span>
                           )}
@@ -809,7 +816,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                             {/* হোয়াটসঅ্যাপ মেমো */}
                             <button
                               onClick={() => handleSendWhatsAppMemo(order)}
-                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg transition-all cursor-pointer"
+                              className="min-h-[44px] sm:min-h-[36px] px-2 bg-emerald-50 hover:bg-emerald-100 text-[#15803D] border border-emerald-200 rounded-md transition-colors cursor-pointer"
                               title="হোয়াটসঅ্যাপে মেমো পাঠান"
                             >
                               <Share2 className="w-3.5 h-3.5" />
@@ -821,7 +828,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                                 setActiveSlipOrder(order);
                                 setSlipType('customer');
                               }}
-                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg transition-all cursor-pointer"
+                              className="min-h-[44px] sm:min-h-[36px] px-2 bg-white hover:bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 rounded-md transition-colors cursor-pointer"
                               title="গ্রাহক কপি প্রিন্ট"
                             >
                               <Printer className="w-3.5 h-3.5" />
@@ -833,7 +840,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                                 setActiveSlipOrder(order);
                                 setSlipType('tailor');
                               }}
-                              className="p-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg transition-all cursor-pointer"
+                              className="min-h-[44px] sm:min-h-[36px] px-2 bg-[#F5F5F5] hover:bg-neutral-200 text-[#111111] border border-neutral-200/80 rounded-md transition-colors cursor-pointer"
                               title="কারিগর কাটিং স্লিপ প্রিন্ট"
                             >
                               <Scissors className="w-3.5 h-3.5" />
@@ -846,7 +853,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                                   setDueCollectOrder(order);
                                   setCollectAmount(order.DueAmount);
                                 }}
-                                className="px-2 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-[10px] font-black transition-all cursor-pointer"
+                                className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-[#B45309] border border-amber-200 rounded-md text-[10px] font-semibold transition-colors cursor-pointer"
                                 title="বকেয়া আদায় করুন"
                               >
                                 আদায়
@@ -861,7 +868,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                                     onDeleteOrder(order.OrderID);
                                   }
                                 }}
-                                className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-all cursor-pointer"
+                                className="min-h-[44px] sm:min-h-[36px] px-2 hover:bg-red-50 text-[#737373] hover:text-[#B91C1C] rounded-md transition-colors cursor-pointer"
                                 title="মুছে ফেলুন"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -881,70 +888,70 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
           {activeTab === 'new' && (
             <form onSubmit={handleSubmitNewOrder} className="space-y-6">
               {/* স্টেপ ১: গ্রাহক তথ্য */}
-              <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-4">
+                <div className="flex items-center justify-between border-b border-neutral-200/80 pb-3">
                   <div className="flex items-center space-x-2">
-                    <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-black flex items-center justify-center">
+                    <span className="w-6 h-6 rounded-full bg-[#0F172A] text-white text-xs font-mono tabular-nums font-bold flex items-center justify-center">
                       ১
                     </span>
-                    <h3 className="text-sm font-black text-slate-900">গ্রাহকের তথ্য ও পূর্বের মাপ</h3>
+                    <h3 className="text-sm font-semibold tracking-tight text-[#111111]">গ্রাহকের তথ্য ও পূর্বের মাপ</h3>
                   </div>
 
                   <button
                     type="button"
                     onClick={handleRecallPreviousMeasurements}
-                    className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-3 py-1 bg-[#F5F5F5] hover:bg-neutral-200 text-[#111111] border border-neutral-200/80 rounded-md text-xs font-semibold transition-colors flex items-center space-x-1.5 cursor-pointer"
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Sparkles className="w-3.5 h-3.5 text-[#0F172A]" />
                     <span>পূর্ববর্তী মাপ রিকল করুন</span>
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">গ্রাহকের নাম *</label>
+                    <label className="block text-[#111111] font-semibold mb-1">গ্রাহকের নাম *</label>
                     <input
                       type="text"
                       required
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="যেমন: মো: রফিকুল ইসলাম"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-medium"
+                      className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:outline-none font-medium text-[#111111]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">মোবাইল নম্বর (হোয়াটসঅ্যাপ) *</label>
+                    <label className="block text-[#111111] font-semibold mb-1">মোবাইল নম্বর (হোয়াটসঅ্যাপ) *</label>
                     <input
                       type="text"
                       required
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="017XXXXXXXX"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono font-medium"
+                      className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:outline-none font-mono tabular-nums font-medium text-[#111111]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">ঠিকানা / এলাকা</label>
+                    <label className="block text-[#111111] font-semibold mb-1">ঠিকানা / এলাকা</label>
                     <input
                       type="text"
                       value={customerAddress}
                       onChange={(e) => setCustomerAddress(e.target.value)}
                       placeholder="যেমন: বসিলা, মোহাম্মদপুর"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-medium"
+                      className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:outline-none font-medium text-[#111111]"
                     />
                   </div>
                 </div>
               </div>
 
               {/* স্টেপ ২: পোশাক নির্বাচন ও পরিমাপক চার্ট */}
-              <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
-                <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
-                  <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-black flex items-center justify-center">
+              <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-4">
+                <div className="flex items-center space-x-2 border-b border-neutral-200/80 pb-3">
+                  <span className="w-6 h-6 rounded-full bg-[#0F172A] text-white text-xs font-mono tabular-nums font-bold flex items-center justify-center">
                     ২
                   </span>
-                  <h3 className="text-sm font-black text-slate-900">পোশাকের ধরণ ও শরীরের নিখুঁত মাপ (ইঞ্চি)</h3>
+                  <h3 className="text-sm font-semibold tracking-tight text-[#111111]">পোশাকের ধরণ ও শরীরের নিখুঁত মাপ (ইঞ্চি)</h3>
                 </div>
 
                 {/* পোশাকের কুইক পিল বাটনসমূহ */}
@@ -954,24 +961,28 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                       key={key}
                       type="button"
                       onClick={() => setGarmentType(key)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                      className={`min-h-[44px] sm:min-h-[36px] px-3.5 py-2 rounded-md text-xs font-semibold transition-colors flex items-center space-x-1.5 cursor-pointer border ${
                         garmentType === key
-                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25 scale-102'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                          ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                          : 'bg-[#F5F5F5] hover:bg-neutral-200 text-[#111111] border-neutral-200/80'
                       }`}
                     >
-                      <span className="text-sm">{data.icon}</span>
+                      {data.icon === 'Scissors' ? (
+                        <Scissors className="w-3.5 h-3.5" />
+                      ) : (
+                        <Shirt className="w-3.5 h-3.5" />
+                      )}
                       <span>{data.name.split(' ')[0]}</span>
                     </button>
                   ))}
                 </div>
 
                 {/* মাপ ইনপুট গ্রিড */}
-                <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
+                <div className="bg-[#FAFAFA] p-4 rounded-lg border border-neutral-200/80">
                   <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 text-xs">
                     {(GARMENT_PRESETS[garmentType]?.fields || []).map((f) => (
                       <div key={f.key}>
-                        <label className="block text-slate-700 font-bold mb-1 truncate" title={f.label}>
+                        <label className="block text-[#111111] font-semibold mb-1 truncate" title={f.label}>
                           {f.label}
                         </label>
                         <div className="relative">
@@ -982,9 +993,9 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                               setMeasurements((prev) => ({ ...prev, [f.key]: e.target.value }))
                             }
                             placeholder={f.placeholder}
-                            className="w-full px-3 py-2 pr-6 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-bold text-slate-900"
+                            className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 pr-6 bg-white border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:outline-none font-mono tabular-nums font-bold text-[#111111]"
                           />
-                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-[#737373] font-bold">
                             ″
                           </span>
                         </div>
@@ -994,7 +1005,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                     {/* কাস্টম যোগ করা ফিল্ডসমূহ */}
                     {customFields.map((cf) => (
                       <div key={cf.key}>
-                        <label className="block text-indigo-700 font-bold mb-1 truncate">
+                        <label className="block text-[#0F172A] font-semibold mb-1 truncate">
                           {cf.label}
                         </label>
                         <div className="relative">
@@ -1004,9 +1015,9 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                             onChange={(e) =>
                               setMeasurements((prev) => ({ ...prev, [cf.key]: e.target.value }))
                             }
-                            className="w-full px-3 py-2 pr-6 bg-white border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-bold text-slate-900"
+                            className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 pr-6 bg-white border border-neutral-300 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:outline-none font-mono tabular-nums font-bold text-[#111111]"
                           />
-                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-[#737373] font-bold">
                             ″
                           </span>
                         </div>
@@ -1015,18 +1026,18 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                   </div>
 
                   {/* নতুন কাস্টম মাপ যোগ করার ইনপুট */}
-                  <div className="mt-4 pt-3 border-t border-slate-200 flex items-center space-x-2">
+                  <div className="mt-4 pt-3 border-t border-neutral-200/80 flex items-center space-x-2">
                     <input
                       type="text"
                       value={newFieldName}
                       onChange={(e) => setNewFieldName(e.target.value)}
                       placeholder="+ অতিরিক্ত মাপের নাম (যেমন: কাফ হাইট, পকেট সাইজ)..."
-                      className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-hidden flex-1 max-w-sm"
+                      className="min-h-[44px] sm:min-h-[36px] text-xs px-3 py-1.5 bg-white border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:outline-none flex-1 max-w-sm text-[#111111]"
                     />
                     <button
                       type="button"
                       onClick={handleAddCustomField}
-                      className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                      className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 bg-[#F5F5F5] hover:bg-neutral-200 text-[#111111] border border-neutral-200/80 rounded-md text-xs font-semibold transition-colors cursor-pointer"
                     >
                       মাপ ফিল্ড যুক্ত করুন
                     </button>
@@ -1035,7 +1046,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
 
                 {/* ডিজাইন ও বিশেষ নির্দেশনা */}
                 <div className="text-xs">
-                  <label className="block text-slate-700 font-bold mb-1">
+                  <label className="block text-[#111111] font-semibold mb-1">
                     ডিজাইন ও সেলাইয়ের বিশেষ নির্দেশনা (কলার, বোতাম, পকেট, কাটিং ইত্যাদি)
                   </label>
                   <textarea
@@ -1043,32 +1054,32 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                     value={designDetails}
                     onChange={(e) => setDesignDetails(e.target.value)}
                     placeholder="যেমন: ব্যান্ড কলার, মেটাল বোতাম, ডাবল সেলাই, সাইড কাট পকেট..."
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-medium"
+                    className="w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] focus:outline-none font-medium text-[#111111]"
                   />
                 </div>
               </div>
 
               {/* স্টেপ ৩: কাপড়ের উৎস ও কারিগর নির্বাচন */}
-              <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
-                <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
-                  <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-black flex items-center justify-center">
+              <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-4">
+                <div className="flex items-center space-x-2 border-b border-neutral-200/80 pb-3">
+                  <span className="w-6 h-6 rounded-full bg-[#0F172A] text-white text-xs font-mono tabular-nums font-bold flex items-center justify-center">
                     ৩
                   </span>
-                  <h3 className="text-sm font-black text-slate-900">কাপড়ের উৎস ও কারিগর অ্যাসাইন</h3>
+                  <h3 className="text-sm font-semibold tracking-tight text-[#111111]">কাপড়ের উৎস ও কারিগর অ্যাসাইন</h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                   {/* কাপড়ের সোর্স */}
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">কাপড় কোথা থেকে?</label>
+                    <label className="block text-[#111111] font-semibold mb-1">কাপড় কোথা থেকে?</label>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={() => setFabricSource('store')}
-                        className={`py-2 px-3 rounded-xl font-bold transition-all cursor-pointer ${
+                        className={`min-h-[44px] sm:min-h-[36px] py-2 px-3 rounded-md font-semibold transition-colors cursor-pointer border ${
                           fabricSource === 'store'
-                            ? 'bg-indigo-600 text-white shadow-xs'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                            : 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80 hover:bg-neutral-200'
                         }`}
                       >
                         দোকানের কাপড়
@@ -1076,10 +1087,10 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                       <button
                         type="button"
                         onClick={() => setFabricSource('customer')}
-                        className={`py-2 px-3 rounded-xl font-bold transition-all cursor-pointer ${
+                        className={`min-h-[44px] sm:min-h-[36px] py-2 px-3 rounded-md font-semibold transition-colors cursor-pointer border ${
                           fabricSource === 'customer'
-                            ? 'bg-indigo-600 text-white shadow-xs'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                            : 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80 hover:bg-neutral-200'
                         }`}
                       >
                         গ্রাহকের নিজস্ব
@@ -1090,17 +1101,17 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                   {/* কাপড় বিবরণ বা সিলেকশন */}
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="block text-slate-700 font-bold">কাপড়ের বিবরণ / থান</label>
+                      <label className="block text-[#111111] font-semibold">কাপড়ের বিবরণ / থান</label>
                       {fabricSource === 'store' && (
                         <div className="flex items-center space-x-1.5 text-[10px]">
-                          <span className="text-slate-400 font-semibold">স্টক উৎস:</span>
+                          <span className="text-[#737373] font-semibold">স্টক উৎস:</span>
                           <button
                             type="button"
                             onClick={() => setFabricLocation('Shop')}
-                            className={`px-2 py-0.5 rounded font-bold cursor-pointer transition-all ${
+                            className={`px-2 py-0.5 rounded-md font-semibold cursor-pointer transition-colors border ${
                               fabricLocation === 'Shop'
-                                ? 'bg-indigo-600 text-white shadow-2xs'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                                : 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80 hover:bg-neutral-200'
                             }`}
                           >
                             দোকান
@@ -1108,10 +1119,10 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                           <button
                             type="button"
                             onClick={() => setFabricLocation('Godown')}
-                            className={`px-2 py-0.5 rounded font-bold cursor-pointer transition-all ${
+                            className={`px-2 py-0.5 rounded-md font-semibold cursor-pointer transition-colors border ${
                               fabricLocation === 'Godown'
-                                ? 'bg-indigo-600 text-white shadow-2xs'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                                : 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80 hover:bg-neutral-200'
                             }`}
                           >
                             গোডাউন
@@ -1127,7 +1138,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                           setFabricProductId(e.target.value);
                           if (p) setFabricName(p.ProductName || p.name);
                         }}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium text-xs"
+                        className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-medium text-xs text-[#111111]"
                       >
                         <option value="">দোকানের থান কাপড় নির্বাচন করুন...</option>
                         {fabricProducts.map((p) => {
@@ -1146,21 +1157,21 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                         value={fabricName}
                         onChange={(e) => setFabricName(e.target.value)}
                         placeholder="কাপড়ের নাম ও কালার (যেমন: সুতি সাদা থান)"
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium"
+                        className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-medium text-[#111111]"
                       />
                     )}
                   </div>
 
                   {/* গজ সংখ্যা */}
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">কাপড়ের পরিমাণ (গজ)</label>
+                    <label className="block text-[#111111] font-semibold mb-1">কাপড়ের পরিমাণ (গজ)</label>
                     <input
                       type="number"
                       step="0.25"
                       min="0.5"
                       value={fabricYards}
                       onChange={(e) => setFabricYards(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900"
+                      className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-mono tabular-nums font-bold text-[#111111]"
                     />
                   </div>
                 </div>
@@ -1168,11 +1179,11 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-2">
                   {/* কারিগর নির্বাচন */}
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">কারিগর / মাস্টার দর্জি</label>
+                    <label className="block text-[#111111] font-semibold mb-1">কারিগর / মাস্টার দর্জি</label>
                     <select
                       value={tailorMaster}
                       onChange={(e) => setTailorMaster(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800"
+                      className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-semibold text-[#111111]"
                     >
                       {tailorMasters.map((tm) => (
                         <option key={tm.TailorID || tm.Name} value={tm.Name}>
@@ -1184,69 +1195,69 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
 
                   {/* পোশাক সংখ্যা */}
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">পোশাকের সংখ্যা (Pcs)</label>
+                    <label className="block text-[#111111] font-semibold mb-1">পোশাকের সংখ্যা (Pcs)</label>
                     <input
                       type="number"
                       min="1"
                       value={quantity}
                       onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900"
+                      className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-mono tabular-nums font-bold text-[#111111]"
                     />
                   </div>
                 </div>
               </div>
 
               {/* স্টেপ ৪: মজুরি, অগ্রিম ও ডেলিভারি তারিখ */}
-              <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
-                <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
-                  <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-black flex items-center justify-center">
+              <div className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-4">
+                <div className="flex items-center space-x-2 border-b border-neutral-200/80 pb-3">
+                  <span className="w-6 h-6 rounded-full bg-[#0F172A] text-white text-xs font-mono tabular-nums font-bold flex items-center justify-center">
                     ৪
                   </span>
-                  <h3 className="text-sm font-black text-slate-900">সেলাই মজুরি, অগ্রিম পেমেন্ট ও ডেলিভারি তারিখ</h3>
+                  <h3 className="text-sm font-semibold tracking-tight text-[#111111]">সেলাই মজুরি, অগ্রিম পেমেন্ট ও ডেলিভারি তারিখ</h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">সেলাই মজুরি (৳) *</label>
+                    <label className="block text-[#111111] font-semibold mb-1">সেলাই মজুরি (৳) *</label>
                     <input
                       type="number"
                       required
                       min="0"
                       value={stitchingCharge}
                       onChange={(e) => setStitchingCharge(Math.max(0, parseFloat(e.target.value) || 0))}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-black text-slate-900 text-sm"
+                      className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-mono tabular-nums font-bold text-[#111111] text-sm"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">বোতাম / আস্তরণ ইত্যাদি (৳)</label>
+                    <label className="block text-[#111111] font-semibold mb-1">বোতাম / আস্তরণ ইত্যাদি (৳)</label>
                     <input
                       type="number"
                       min="0"
                       value={accessoriesCharge}
                       onChange={(e) => setAccessoriesCharge(Math.max(0, parseFloat(e.target.value) || 0))}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900"
+                      className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-mono tabular-nums font-bold text-[#111111]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">অগ্রিম জমা (৳)</label>
+                    <label className="block text-[#111111] font-semibold mb-1">অগ্রিম জমা (৳)</label>
                     <input
                       type="number"
                       min="0"
                       max={totalAmount}
                       value={advancePaid}
                       onChange={(e) => setAdvancePaid(Math.max(0, parseFloat(e.target.value) || 0))}
-                      className="w-full px-3 py-2 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl focus:ring-2 focus:ring-emerald-500 font-black text-sm"
+                      className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-emerald-50 border border-emerald-200 text-[#15803D] rounded-md focus:ring-2 focus:ring-[#15803D]/20 font-mono tabular-nums font-bold text-sm"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">পেমেন্ট মাধ্যম</label>
+                    <label className="block text-[#111111] font-semibold mb-1">পেমেন্ট মাধ্যম</label>
                     <select
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800"
+                      className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-semibold text-[#111111]"
                     >
                       <option value="Cash">ক্যাশ (Cash)</option>
                       <option value="bKash">বিকাশ (bKash)</option>
@@ -1259,20 +1270,20 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                 {/* ডেলিভারি তারিখ ও দ্রুত শর্টকাট */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-2">
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">ডেলিভারির তারিখ *</label>
+                    <label className="block text-[#111111] font-semibold mb-1">ডেলিভারির তারিখ *</label>
                     <div className="flex items-center space-x-2">
                       <input
                         type="date"
                         required
                         value={deliveryDate}
                         onChange={(e) => setDeliveryDate(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 flex-1"
+                        className="min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-mono tabular-nums font-semibold text-[#111111] flex-1"
                       />
                       <input
                         type="time"
                         value={deliveryTime}
                         onChange={(e) => setDeliveryTime(e.target.value)}
-                        className="px-2 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 w-24"
+                        className="min-h-[44px] sm:min-h-[36px] px-2 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-mono tabular-nums font-semibold text-[#111111] w-28"
                       />
                     </div>
                     {/* কুইক ডেট চিপস */}
@@ -1284,7 +1295,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                           d.setDate(d.getDate() + 3);
                           setDeliveryDate(d.toISOString().slice(0, 10));
                         }}
-                        className="text-[10px] px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-bold cursor-pointer"
+                        className="min-h-[44px] sm:min-h-[36px] text-[10px] px-2.5 py-1 bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 rounded-md text-[#111111] font-mono tabular-nums font-semibold cursor-pointer"
                       >
                         +৩ দিন
                       </button>
@@ -1295,7 +1306,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                           d.setDate(d.getDate() + 5);
                           setDeliveryDate(d.toISOString().slice(0, 10));
                         }}
-                        className="text-[10px] px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-bold cursor-pointer"
+                        className="min-h-[44px] sm:min-h-[36px] text-[10px] px-2.5 py-1 bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 rounded-md text-[#111111] font-mono tabular-nums font-semibold cursor-pointer"
                       >
                         +৫ দিন
                       </button>
@@ -1306,7 +1317,7 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                           d.setDate(d.getDate() + 7);
                           setDeliveryDate(d.toISOString().slice(0, 10));
                         }}
-                        className="text-[10px] px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-bold cursor-pointer"
+                        className="min-h-[44px] sm:min-h-[36px] text-[10px] px-2.5 py-1 bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 rounded-md text-[#111111] font-mono tabular-nums font-semibold cursor-pointer"
                       >
                         +৭ দিন (১ সপ্তাহ)
                       </button>
@@ -1314,21 +1325,21 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                   </div>
 
                   {/* বিল সারাংশ কার্ড */}
-                  <div className="bg-slate-900 text-white p-4 rounded-2xl flex items-center justify-between">
+                  <div className="bg-[#0F172A] text-white p-4 rounded-lg flex items-center justify-between">
                     <div>
-                      <span className="text-xs text-slate-400 block font-medium">মোট সেলাই বিল</span>
-                      <h4 className="text-xl font-black">{currencySymbol}{totalAmount}</h4>
-                      <span className="text-[11px] text-emerald-400 font-bold mt-1 block">
+                      <span className="text-xs text-neutral-400 block font-medium">মোট সেলাই বিল</span>
+                      <h4 className="text-xl font-bold font-mono tabular-nums">{currencySymbol}{totalAmount}</h4>
+                      <span className="text-[11px] text-emerald-400 font-mono tabular-nums font-semibold mt-1 block">
                         অগ্রিম জমা: {currencySymbol}{advancePaid}
                       </span>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-xs text-slate-400 block font-medium">অবশিষ্ট বকেয়া</span>
-                      <h4 className={`text-xl font-black ${dueAmount > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                      <span className="text-xs text-neutral-400 block font-medium">অবশিষ্ট বকেয়া</span>
+                      <h4 className={`text-xl font-bold font-mono tabular-nums ${dueAmount > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
                         {currencySymbol}{dueAmount}
                       </h4>
-                      <span className="text-[10px] text-slate-400 block mt-1">ডেলিভারির সময় প্রদেয়</span>
+                      <span className="text-[10px] text-neutral-400 block mt-1">ডেলিভারির সময় প্রদেয়</span>
                     </div>
                   </div>
                 </div>
@@ -1339,13 +1350,13 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                 <button
                   type="button"
                   onClick={() => setActiveTab('orders')}
-                  className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-2xl text-xs font-bold transition-all cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] px-5 py-2 bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] text-[#525252] hover:text-[#111111] rounded-md text-xs font-semibold transition-colors cursor-pointer"
                 >
                   বাতিল
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black transition-all flex items-center space-x-2 shadow-lg shadow-indigo-500/30 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] px-6 py-2 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-semibold transition-colors flex items-center space-x-2 cursor-pointer"
                 >
                   <Check className="w-4 h-4" />
                   <span>অর্ডার নিশ্চিত ও রসিদ তৈরি করুন</span>
@@ -1357,10 +1368,10 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
           {/* ট্যাব ৩: কারিগর মাস্টার্স তালিকা */}
           {activeTab === 'tailors' && (
             <div className="space-y-4">
-              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div className="bg-white p-4 rounded-lg border border-neutral-200/80 flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-black text-slate-900">কারিগর ও মাস্টার্স প্যানেল</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">দোকানের দক্ষ কারিগরদের কাজের তালিকা ও কন্টাক্ট</p>
+                  <h3 className="text-sm font-semibold tracking-tight text-[#111111]">কারিগর ও মাস্টার্স প্যানেল</h3>
+                  <p className="text-xs text-[#525252] mt-0.5">দোকানের দক্ষ কারিগরদের কাজের তালিকা ও কন্টাক্ট</p>
                 </div>
               </div>
 
@@ -1373,29 +1384,29 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                   return (
                     <div
                       key={tm.TailorID || tm.Name}
-                      className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3"
+                      className="bg-white p-5 rounded-lg border border-neutral-200/80 space-y-3"
                     >
                       <div className="flex items-start justify-between">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-lg">
+                        <div className="w-12 h-12 rounded-lg bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center font-bold text-lg">
                           {tm.Name.charAt(0)}
                         </div>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 border border-emerald-200 text-[#15803D]">
                           সক্রিয় কারিগর
                         </span>
                       </div>
 
                       <div>
-                        <h4 className="text-base font-black text-slate-900">{tm.Name}</h4>
-                        <p className="text-xs text-indigo-600 font-bold mt-0.5">{tm.Speciality}</p>
-                        <p className="text-xs text-slate-500 mt-1 flex items-center space-x-1">
-                          <Phone className="w-3.5 h-3.5 text-slate-400" />
+                        <h4 className="text-base font-semibold tracking-tight text-[#111111]">{tm.Name}</h4>
+                        <p className="text-xs text-[#525252] font-semibold mt-0.5">{tm.Speciality}</p>
+                        <p className="text-xs text-[#525252] font-mono tabular-nums mt-1 flex items-center space-x-1">
+                          <Phone className="w-3.5 h-3.5 text-[#737373]" />
                           <span>{tm.Phone || 'নম্বর নেই'}</span>
                         </p>
                       </div>
 
-                      <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
-                        <span className="text-slate-600 font-medium">চলতি কাজের অর্ডার:</span>
-                        <span className="font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">
+                      <div className="bg-[#FAFAFA] p-2.5 rounded-md border border-neutral-200/80 flex items-center justify-between text-xs">
+                        <span className="text-[#525252] font-medium">চলতি কাজের অর্ডার:</span>
+                        <span className="font-mono tabular-nums font-bold text-[#111111] bg-white border border-neutral-200/80 px-2 py-0.5 rounded-md">
                           {assignedCount}টি রানিং
                         </span>
                       </div>
@@ -1409,29 +1420,29 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
 
         {/* ================= ৩. প্রিন্ট স্লিপ প্রিভিউ মডাল ================= */}
         {activeSlipOrder && (
-          <div className="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-            <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg p-6 space-y-4 my-auto relative animate-in zoom-in-95">
+          <div className="fixed inset-0 z-[120] bg-neutral-900/40 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+            <div className="bg-white rounded-lg border border-neutral-200/80 w-full max-w-lg p-6 space-y-4 my-auto relative animate-in zoom-in-95">
               <button
                 onClick={() => setActiveSlipOrder(null)}
-                className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 p-1"
+                className="min-h-[44px] sm:min-h-[36px] px-2 absolute right-3 top-3 text-[#737373] hover:text-[#111111] rounded-md hover:bg-[#F5F5F5]"
               >
                 <X className="w-5 h-5" />
               </button>
 
               {/* স্লিপ টগল */}
-              <div className="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+              <div className="flex items-center space-x-1.5 bg-[#F5F5F5] border border-neutral-200/80 p-1 rounded-lg text-xs font-semibold mt-2">
                 <button
                   onClick={() => setSlipType('customer')}
-                  className={`flex-1 py-1.5 rounded-lg transition-all ${
-                    slipType === 'customer' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600'
+                  className={`min-h-[44px] sm:min-h-[36px] flex-1 py-1.5 rounded-md transition-colors cursor-pointer ${
+                    slipType === 'customer' ? 'bg-[#0F172A] text-white' : 'text-[#525252] hover:text-[#111111]'
                   }`}
                 >
                   গ্রাহক রসিদ (Customer Copy)
                 </button>
                 <button
                   onClick={() => setSlipType('tailor')}
-                  className={`flex-1 py-1.5 rounded-lg transition-all ${
-                    slipType === 'tailor' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600'
+                  className={`min-h-[44px] sm:min-h-[36px] flex-1 py-1.5 rounded-md transition-colors cursor-pointer ${
+                    slipType === 'tailor' ? 'bg-[#0F172A] text-white' : 'text-[#525252] hover:text-[#111111]'
                   }`}
                 >
                   কারিগর স্লিপ (Tailor Work Slip)
@@ -1439,13 +1450,13 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
               </div>
 
               {/* প্রিন্ট ফ্রেম */}
-              <div id="tailoring-printable-slip" className="border border-slate-200 rounded-2xl p-4 bg-white text-slate-900 space-y-3 font-sans">
+              <div id="tailoring-printable-slip" className="border border-neutral-200/80 rounded-lg p-4 bg-white text-[#111111] space-y-3 font-sans">
                 {/* হেড */}
-                <div className="text-center border-b border-dashed border-slate-300 pb-2">
-                  <h3 className="font-black text-base">{storeSettings.StoreName || 'পাবনা বস্ত্রালয়'}</h3>
-                  <p className="text-[10px] text-slate-500">{storeSettings.Address || 'বসিলা, মোহাম্মদপুর, ঢাকা'}</p>
-                  <p className="text-[10px] text-slate-500 font-mono">মোবাইল: {storeSettings.Phone || '01675934919'}</p>
-                  <span className="inline-block mt-1 px-2.5 py-0.5 bg-slate-100 font-black text-[11px] rounded-full uppercase tracking-wider">
+                <div className="text-center border-b border-dashed border-neutral-300 pb-2">
+                  <h3 className="font-semibold tracking-tight text-base text-[#111111]">{storeSettings.StoreName || 'পাবনা বস্ত্রালয়'}</h3>
+                  <p className="text-[10px] text-[#525252]">{storeSettings.Address || 'বসিলা, মোহাম্মদপুর, ঢাকা'}</p>
+                  <p className="text-[10px] text-[#525252] font-mono tabular-nums">মোবাইল: {storeSettings.Phone || '01675934919'}</p>
+                  <span className="inline-block mt-1 px-2.5 py-0.5 bg-[#F5F5F5] border border-neutral-200/80 font-semibold text-[11px] rounded-md uppercase tracking-wider">
                     {slipType === 'customer' ? 'টেইলারিং গ্রাহক রসিদ' : 'কারিগর কাটিং ও সেলাই কার্যপত্র'}
                   </span>
                 </div>
@@ -1453,88 +1464,88 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                 {/* অর্ডার ও গ্রাহক তথ্য */}
                 <div className="text-xs space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">টোকেন নং:</span>
-                    <span className="font-black font-mono text-sm">#{activeSlipOrder.TokenNo || '---'}</span>
+                    <span className="text-[#525252]">টোকেন নং:</span>
+                    <span className="font-bold font-mono tabular-nums text-sm">#{activeSlipOrder.TokenNo || '---'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">অর্ডার নং:</span>
-                    <span className="font-mono font-bold">{activeSlipOrder.OrderID}</span>
+                    <span className="text-[#525252]">অর্ডার নং:</span>
+                    <span className="font-mono tabular-nums font-bold">{activeSlipOrder.OrderID}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">গ্রাহক:</span>
-                    <span className="font-bold">{activeSlipOrder.CustomerName}</span>
+                    <span className="text-[#525252]">গ্রাহক:</span>
+                    <span className="font-semibold">{activeSlipOrder.CustomerName}</span>
                   </div>
                   {activeSlipOrder.CustomerPhone && (
                     <div className="flex justify-between">
-                      <span className="text-slate-500">মোবাইল:</span>
-                      <span className="font-mono">{activeSlipOrder.CustomerPhone}</span>
+                      <span className="text-[#525252]">মোবাইল:</span>
+                      <span className="font-mono tabular-nums">{activeSlipOrder.CustomerPhone}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-slate-500">পোশাক:</span>
-                    <span className="font-black text-indigo-700">{activeSlipOrder.GarmentType} ({activeSlipOrder.Quantity || 1}টি)</span>
+                    <span className="text-[#525252]">পোশাক:</span>
+                    <span className="font-semibold font-mono tabular-nums text-[#111111]">{activeSlipOrder.GarmentType} ({activeSlipOrder.Quantity || 1}টি)</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">ডেলিভারি তারিখ:</span>
-                    <span className="font-bold text-rose-700">
+                    <span className="text-[#525252]">ডেলিভারি তারিখ:</span>
+                    <span className="font-semibold font-mono tabular-nums text-[#B91C1C]">
                       {new Date(activeSlipOrder.DeliveryDate).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </span>
                   </div>
                   {activeSlipOrder.TailorMaster && (
                     <div className="flex justify-between">
-                      <span className="text-slate-500">কারিগর:</span>
-                      <span className="font-bold">{activeSlipOrder.TailorMaster}</span>
+                      <span className="text-[#525252]">কারিগর:</span>
+                      <span className="font-semibold">{activeSlipOrder.TailorMaster}</span>
                     </div>
                   )}
                 </div>
 
                 {/* কারিগর স্লিপের ক্ষেত্রে বিস্তারিত মাপের ছক */}
                 {slipType === 'tailor' && activeSlipOrder.Measurements && (
-                  <div className="border-t border-b border-dashed border-slate-300 py-2 my-2 space-y-1.5">
-                    <span className="text-[11px] font-black text-slate-800 block text-center">নিখুঁত কাটিং মাপ (ইঞ্চি)</span>
-                    <div className="grid grid-cols-3 gap-1.5 text-xs bg-slate-50 p-2 rounded-xl">
+                  <div className="border-t border-b border-dashed border-neutral-300 py-2 my-2 space-y-1.5">
+                    <span className="text-[11px] font-semibold text-[#111111] block text-center">নিখুঁত কাটিং মাপ (ইঞ্চি)</span>
+                    <div className="grid grid-cols-3 gap-1.5 text-xs bg-[#FAFAFA] p-2 rounded-md border border-neutral-200/80">
                       {Object.entries(activeSlipOrder.Measurements).map(([k, v]) => (
-                        <div key={k} className="flex justify-between border-b border-slate-200/60 pb-0.5">
-                          <span className="text-slate-500 text-[10px]">{k}:</span>
-                          <span className="font-black font-mono">{v || '-'}″</span>
+                        <div key={k} className="flex justify-between border-b border-neutral-200/80 pb-0.5">
+                          <span className="text-[#525252] text-[10px]">{k}:</span>
+                          <span className="font-bold font-mono tabular-nums">{v || '-'}″</span>
                         </div>
                       ))}
                     </div>
                     {activeSlipOrder.DesignDetails && (
-                      <p className="text-[11px] text-slate-700 font-medium pt-1">
-                        <span className="font-bold">ডিজাইন:</span> {activeSlipOrder.DesignDetails}
+                      <p className="text-[11px] text-[#111111] font-medium pt-1">
+                        <span className="font-semibold">ডিজাইন:</span> {activeSlipOrder.DesignDetails}
                       </p>
                     )}
                   </div>
                 )}
 
                 {/* ফাইন্যান্সিয়ালস */}
-                <div className="border-t border-dashed border-slate-300 pt-2 text-xs space-y-1">
+                <div className="border-t border-dashed border-neutral-300 pt-2 text-xs space-y-1">
                   <div className="flex justify-between">
                     <span>সেলাই মজুরি:</span>
-                    <span className="font-mono font-bold">{currencySymbol}{activeSlipOrder.StitchingCharge}</span>
+                    <span className="font-mono tabular-nums font-bold">{currencySymbol}{activeSlipOrder.StitchingCharge}</span>
                   </div>
                   {activeSlipOrder.AccessoriesCharge > 0 && (
-                    <div className="flex justify-between text-slate-500">
+                    <div className="flex justify-between text-[#525252]">
                       <span>অন্যান্য খরচ (বোতাম/আস্তরণ):</span>
-                      <span className="font-mono">{currencySymbol}{activeSlipOrder.AccessoriesCharge}</span>
+                      <span className="font-mono tabular-nums">{currencySymbol}{activeSlipOrder.AccessoriesCharge}</span>
                     </div>
                   )}
-                  <div className="flex justify-between font-black text-sm border-t border-slate-200 pt-1">
+                  <div className="flex justify-between font-bold text-sm border-t border-neutral-200/80 pt-1">
                     <span>মোট বিল:</span>
-                    <span className="font-mono">{currencySymbol}{activeSlipOrder.TotalAmount}</span>
+                    <span className="font-mono tabular-nums">{currencySymbol}{activeSlipOrder.TotalAmount}</span>
                   </div>
-                  <div className="flex justify-between text-emerald-700 font-bold">
+                  <div className="flex justify-between text-[#15803D] font-semibold">
                     <span>অগ্রিম জমা:</span>
-                    <span className="font-mono">{currencySymbol}{activeSlipOrder.AdvancePaid}</span>
+                    <span className="font-mono tabular-nums">{currencySymbol}{activeSlipOrder.AdvancePaid}</span>
                   </div>
-                  <div className="flex justify-between text-rose-700 font-black text-sm">
+                  <div className="flex justify-between text-[#B91C1C] font-bold text-sm">
                     <span>অবশিষ্ট বকেয়া:</span>
-                    <span className="font-mono">{currencySymbol}{activeSlipOrder.DueAmount}</span>
+                    <span className="font-mono tabular-nums">{currencySymbol}{activeSlipOrder.DueAmount}</span>
                   </div>
                 </div>
 
-                <div className="text-center pt-2 text-[9px] text-slate-400">
+                <div className="text-center pt-2 text-[9px] text-[#737373]">
                   <p>ডেলিভারি গ্রহণের সময় অনুগ্রহ করে এই রসিদটি সাথে আনবেন।</p>
                   <p className="mt-0.5">সিস্টেম প্রস্তুতকৃত ডিজিটাল টোকেন স্লিপ</p>
                 </div>
@@ -1544,14 +1555,14 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
               <div className="flex items-center space-x-2 pt-2">
                 <button
                   onClick={() => window.print()}
-                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center space-x-1.5 shadow-md cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] flex-1 py-2 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
                 >
                   <Printer className="w-4 h-4" />
                   <span>প্রিন্ট করুন</span>
                 </button>
                 <button
                   onClick={() => handleSendWhatsAppMemo(activeSlipOrder)}
-                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center space-x-1.5 shadow-md cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] flex-1 py-2 bg-[#15803D] hover:bg-emerald-800 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
                 >
                   <Share2 className="w-4 h-4" />
                   <span>হোয়াটসঅ্যাপে পাঠান</span>
@@ -1563,24 +1574,24 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
 
         {/* ================= ৪. বকেয়া আদায় মডাল ================= */}
         {dueCollectOrder && (
-          <div className="fixed inset-0 z-[130] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-sm p-5 space-y-4 animate-in zoom-in-95">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <h4 className="text-sm font-black text-slate-900">সেলাই মজুরি বকেয়া আদায়</h4>
-                <button onClick={() => setDueCollectOrder(null)} className="text-slate-400 hover:text-slate-600">
+          <div className="fixed inset-0 z-[130] bg-neutral-900/40 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg border border-neutral-200/80 w-full max-w-sm p-5 space-y-4 animate-in zoom-in-95">
+              <div className="flex items-center justify-between border-b border-neutral-200/80 pb-2">
+                <h4 className="text-sm font-semibold tracking-tight text-[#111111]">সেলাই মজুরি বকেয়া আদায়</h4>
+                <button onClick={() => setDueCollectOrder(null)} className="min-h-[44px] sm:min-h-[36px] px-2 text-[#737373] hover:text-[#111111] rounded-md hover:bg-[#F5F5F5]">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1">
-                <p><span className="font-bold">গ্রাহক:</span> {dueCollectOrder.CustomerName}</p>
-                <p><span className="font-bold">অর্ডার নং:</span> {dueCollectOrder.OrderID}</p>
-                <p><span className="font-bold text-rose-600">বকেয়া পরিমাণ:</span> {currencySymbol}{dueCollectOrder.DueAmount}</p>
+              <div className="bg-[#FAFAFA] p-3 rounded-md border border-neutral-200/80 text-xs space-y-1">
+                <p><span className="font-semibold">গ্রাহক:</span> {dueCollectOrder.CustomerName}</p>
+                <p><span className="font-semibold">অর্ডার নং:</span> <span className="font-mono tabular-nums">{dueCollectOrder.OrderID}</span></p>
+                <p><span className="font-semibold text-[#B91C1C]">বকেয়া পরিমাণ:</span> <span className="font-mono tabular-nums font-bold text-[#B91C1C]">{currencySymbol}{dueCollectOrder.DueAmount}</span></p>
               </div>
 
               <form onSubmit={handleConfirmDueCollection} className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-slate-700 font-bold mb-1">আদায়কৃত টাকা (৳)</label>
+                  <label className="block text-[#111111] font-semibold mb-1">আদায়কৃত টাকা (৳)</label>
                   <input
                     type="number"
                     required
@@ -1588,16 +1599,16 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                     max={dueCollectOrder.DueAmount}
                     value={collectAmount}
                     onChange={(e) => setCollectAmount(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-black text-sm focus:ring-2 focus:ring-indigo-500"
+                    className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md font-mono tabular-nums font-bold text-sm focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 font-bold mb-1">পেমেন্ট মেথড</label>
+                  <label className="block text-[#111111] font-semibold mb-1">পেমেন্ট মেথড</label>
                   <select
                     value={collectMethod}
                     onChange={(e) => setCollectMethod(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md font-semibold text-[#111111]"
                   >
                     <option value="Cash">ক্যাশ (Cash)</option>
                     <option value="bKash">বিকাশ (bKash)</option>
@@ -1610,13 +1621,13 @@ ${order.DesignDetails ? `📌 *ডিজাইন:* ${order.DesignDetails}\n` : 
                   <button
                     type="button"
                     onClick={() => setDueCollectOrder(null)}
-                    className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-xl font-bold"
+                    className="min-h-[44px] sm:min-h-[36px] flex-1 py-2 bg-[#F5F5F5] border border-neutral-200/80 text-[#111111] rounded-md font-semibold cursor-pointer"
                   >
                     বাতিল
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-2 bg-emerald-600 text-white rounded-xl font-black shadow-md hover:bg-emerald-700"
+                    className="min-h-[44px] sm:min-h-[36px] flex-1 py-2 bg-[#15803D] text-white rounded-md font-semibold hover:bg-emerald-800 cursor-pointer"
                   >
                     আদায় সম্পন্ন করুন
                   </button>

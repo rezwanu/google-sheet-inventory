@@ -244,23 +244,23 @@ export default function ProductVariantSelectModal({
   const isOverStock = effectiveQuantity > maxSelectable;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-neutral-900/40 animate-in fade-in duration-200">
       <div 
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200"
+        className="bg-white rounded-lg border border-neutral-200/80 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
       >
         {/* হেডার */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-indigo-50/80 to-purple-50/60">
+        <div className="px-6 py-4 border-b border-neutral-200/80 flex items-center justify-between bg-[#FAFAFA]">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
+            <div className="w-10 h-10 rounded-lg bg-[#0F172A] text-white flex items-center justify-center shrink-0">
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-900">
+              <h3 className="text-base font-semibold tracking-tight text-[#111111]">
                 ভ্যারিয়েন্ট বাছাই করুন
               </h3>
-              <p className="text-xs font-semibold text-slate-500">
+              <p className="text-xs font-medium text-[#525252]">
                 সাইজ, রঙ বা ওজন অনুযায়ী সঠিক ভ্যারিয়েন্ট নির্বাচন করুন
               </p>
             </div>
@@ -268,15 +268,15 @@ export default function ProductVariantSelectModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-all cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md flex items-center justify-center text-[#737373] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* পণ্য পরিচিতি কার্ড */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex items-center space-x-3">
-          <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
+        <div className="p-4 sm:p-5 border-b border-neutral-200/80 bg-[#FAFAFA] flex items-center space-x-3">
+          <div className="w-14 h-14 rounded-lg bg-white border border-neutral-200/80 overflow-hidden shrink-0 flex items-center justify-center">
             {product.ImageUrl ? (
               <img 
                 src={product.ImageUrl} 
@@ -285,23 +285,23 @@ export default function ProductVariantSelectModal({
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             ) : (
-              <Layers className="w-6 h-6 text-slate-400" />
+              <Layers className="w-6 h-6 text-[#737373]" />
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="text-sm font-black text-slate-900 truncate">
+            <h4 className="text-sm font-semibold tracking-tight text-[#111111] truncate">
               {product.ProductName}
             </h4>
-            <div className="flex items-center space-x-2 text-xs text-slate-500 mt-0.5 flex-wrap">
+            <div className="flex items-center space-x-2 text-xs text-[#525252] mt-0.5 flex-wrap">
               <span>{product.Category || 'সাধারণ'}</span>
               <span>•</span>
-              <span className="font-bold text-indigo-600">
+              <span className="font-semibold text-[#111111] font-mono tabular-nums">
                 ভ্যারিয়েন্ট অপশন: {variants.length}টি
               </span>
               {isFabric && yardsPerThan > 0 && (
                 <>
                   <span>•</span>
-                  <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                  <span className="font-semibold font-mono tabular-nums text-[#B45309] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                     প্রতি থান: {yardsPerThan} গজ
                   </span>
                 </>
@@ -311,9 +311,9 @@ export default function ProductVariantSelectModal({
         </div>
 
         {/* ভ্যারিয়েন্ট সিলেক্টর লিস্ট */}
-        <div className="p-4 sm:p-6 max-h-72 overflow-y-auto space-y-2.5">
-          <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
-            উপলব্ধ ভ্যারিয়েন্টসমূহ ({variants.length})
+        <div className="p-4 sm:p-6 max-h-72 overflow-y-auto space-y-2.5 bg-white">
+          <label className="block text-xs font-semibold text-[#525252] uppercase tracking-wider mb-2">
+            উপলব্ধ ভ্যারিয়েন্টসমূহ (<span className="font-mono tabular-nums">{variants.length}</span>)
           </label>
 
           {variants.map((v) => {
@@ -330,19 +330,19 @@ export default function ProductVariantSelectModal({
               <div
                 key={v.VariantID}
                 onClick={() => handleSelectVariant(v)}
-                className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                className={`p-3.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-between ${
                   isSelected
-                    ? 'bg-indigo-50/80 border-indigo-600 ring-2 ring-indigo-600/20 shadow-xs'
+                    ? 'bg-[#F5F5F5] border-[#0F172A] ring-1 ring-[#0F172A]'
                     : isOutOfStock
-                    ? 'bg-slate-50 border-slate-200 opacity-60 cursor-not-allowed'
-                    : 'bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50/50'
+                    ? 'bg-[#FAFAFA] border-neutral-200/80 opacity-60 cursor-not-allowed'
+                    : 'bg-white border-neutral-200/80 hover:border-neutral-300 hover:bg-[#FAFAFA]'
                 }`}
               >
                 <div className="flex items-center space-x-3 min-w-0">
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                     isSelected
-                      ? 'border-indigo-600 bg-indigo-600 text-white'
-                      : 'border-slate-300 bg-white'
+                      ? 'border-[#0F172A] bg-[#0F172A] text-white'
+                      : 'border-neutral-300 bg-white'
                   }`}>
                     {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                   </div>
@@ -350,17 +350,17 @@ export default function ProductVariantSelectModal({
                   <div className="flex items-center space-x-2.5 min-w-0">
                     {vColor && (
                       <span
-                        className="w-4 h-4 rounded-full border border-black/15 shadow-2xs shrink-0 inline-block"
+                        className="w-4 h-4 rounded-full border border-black/15 shrink-0 inline-block"
                         style={{ backgroundColor: hexColor }}
                         title={`রং: ${vColor}`}
                       />
                     )}
                     <div className="min-w-0">
-                      <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                      <div className="text-xs sm:text-sm font-semibold text-[#111111] truncate">
                         {attrText}
                       </div>
                       {v.Barcode && (
-                        <div className="text-[10px] text-slate-400 font-mono flex items-center space-x-1 mt-0.5">
+                        <div className="text-[10px] text-[#737373] font-mono tabular-nums flex items-center space-x-1 mt-0.5">
                           <Barcode className="w-3 h-3 shrink-0" />
                           <span className="truncate">{v.Barcode}</span>
                         </div>
@@ -370,19 +370,19 @@ export default function ProductVariantSelectModal({
                 </div>
 
                 <div className="text-right shrink-0 pl-3">
-                  <div className="text-xs sm:text-sm font-black text-indigo-700">
+                  <div className="text-xs sm:text-sm font-bold font-mono tabular-nums text-[#111111]">
                     {currencySymbol}{Number(v.SellingPrice || product.SellingPrice || 0).toLocaleString('en-IN')}
-                    {isFabric && <span className="text-[10px] font-normal text-slate-500"> / গজ</span>}
+                    {isFabric && <span className="text-[10px] font-sans font-normal text-[#525252]"> / গজ</span>}
                   </div>
-                  <div className="text-[10px] mt-0.5 font-semibold">
+                  <div className="text-[10px] mt-0.5 font-semibold font-mono tabular-nums">
                     {isOutOfStock ? (
-                      <span className="text-rose-600 font-bold">স্টক শেষ</span>
+                      <span className="text-[#B91C1C] font-bold">স্টক শেষ</span>
                     ) : (
-                      <span className="text-emerald-700 font-bold">{stockDisplayText}</span>
+                      <span className="text-[#15803D] font-bold">{stockDisplayText}</span>
                     )}
                   </div>
                   {vGStock > 0 && (
-                    <div className="text-[9px] text-slate-400 font-medium mt-0.5">
+                    <div className="text-[9px] text-[#737373] font-mono tabular-nums font-medium mt-0.5">
                       গোডাউন: {vGStock} {isFabric ? 'থান' : (product?.Unit || 'টি')}
                     </div>
                   )}
@@ -393,20 +393,20 @@ export default function ProductVariantSelectModal({
         </div>
 
         {/* কোয়ান্টিটি ও সাবটোটাল ফুটার */}
-        <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 space-y-3.5">
+        <div className="p-4 sm:p-6 border-t border-neutral-200/80 bg-[#FAFAFA] space-y-3.5">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <span className="text-xs font-bold text-slate-600">
+            <span className="text-xs font-semibold text-[#525252]">
               পরিমাণ {isFabric ? '(গজ ও গিরা)' : '(Quantity)'}:
             </span>
             
             {isFabric ? (
-              <div className="flex items-center gap-1.5 p-1 bg-amber-50/90 border border-amber-300 rounded-xl shadow-2xs">
+              <div className="flex items-center gap-1.5 p-1 bg-amber-50 border border-amber-200 rounded-lg">
                 {/* গজ */}
-                <div className="flex items-center bg-white border border-amber-300 rounded-lg p-0.5">
+                <div className="flex items-center bg-white border border-amber-200 rounded-md p-0.5">
                   <button
                     type="button"
                     onClick={() => setFabricGoj((g) => Math.max(0, g - 1))}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-2 flex items-center justify-center rounded-md bg-[#F5F5F5] hover:bg-neutral-200 text-[#111111] cursor-pointer"
                   >
                     <Minus className="w-3 h-3" />
                   </button>
@@ -415,26 +415,26 @@ export default function ProductVariantSelectModal({
                     min="0"
                     value={fabricGoj}
                     onChange={(e) => setFabricGoj(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                    className="w-9 text-center font-black text-xs text-slate-900 bg-transparent focus:outline-none"
+                    className="min-h-[44px] sm:min-h-[36px] w-10 text-center font-mono tabular-nums font-bold text-xs text-[#111111] bg-transparent focus:outline-none"
                   />
-                  <span className="text-[10px] font-black text-amber-900 pr-0.5 select-none">গজ</span>
+                  <span className="text-[10px] font-bold text-[#B45309] pr-1 select-none">গজ</span>
                   <button
                     type="button"
                     onClick={() => setFabricGoj((g) => g + 1)}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-2 flex items-center justify-center rounded-md bg-[#F5F5F5] hover:bg-neutral-200 text-[#111111] cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
                   </button>
                 </div>
 
-                <span className="text-xs font-black text-amber-600">+</span>
+                <span className="text-xs font-bold text-[#B45309]">+</span>
 
                 {/* গিরা */}
-                <div className="flex items-center bg-white border border-amber-300 rounded-lg p-0.5">
+                <div className="flex items-center bg-white border border-amber-200 rounded-md p-0.5">
                   <button
                     type="button"
                     onClick={() => setFabricGira((gi) => Math.max(0, gi - 1))}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-2 flex items-center justify-center rounded-md bg-[#F5F5F5] hover:bg-neutral-200 text-[#111111] cursor-pointer"
                   >
                     <Minus className="w-3 h-3" />
                   </button>
@@ -444,36 +444,36 @@ export default function ProductVariantSelectModal({
                     max="15"
                     value={fabricGira}
                     onChange={(e) => setFabricGira(Math.max(0, Math.min(15, parseInt(e.target.value, 10) || 0)))}
-                    className="w-7 text-center font-black text-xs text-slate-900 bg-transparent focus:outline-none"
+                    className="min-h-[44px] sm:min-h-[36px] w-8 text-center font-mono tabular-nums font-bold text-xs text-[#111111] bg-transparent focus:outline-none"
                   />
-                  <span className="text-[10px] font-black text-amber-900 pr-0.5 select-none">গিরা</span>
+                  <span className="text-[10px] font-bold text-[#B45309] pr-1 select-none">গিরা</span>
                   <button
                     type="button"
                     onClick={() => setFabricGira((gi) => (gi + 1 >= 16 ? 0 : gi + 1))}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-2 flex items-center justify-center rounded-md bg-[#F5F5F5] hover:bg-neutral-200 text-[#111111] cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-2 bg-white px-2 py-1 rounded-xl border border-slate-200 shadow-2xs">
+              <div className="flex items-center space-x-2 bg-white px-1.5 py-1 rounded-md border border-neutral-200/80">
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   disabled={quantity <= 1}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md flex items-center justify-center text-[#525252] hover:bg-[#F5F5F5] disabled:opacity-30 cursor-pointer"
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
-                <span className="text-sm font-black text-slate-900 w-8 text-center">
+                <span className="text-sm font-mono tabular-nums font-bold text-[#111111] w-8 text-center">
                   {quantity}
                 </span>
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => Math.min(maxSelectable, q + 1))}
                   disabled={quantity >= maxSelectable}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md flex items-center justify-center text-[#525252] hover:bg-[#F5F5F5] disabled:opacity-30 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
@@ -482,9 +482,9 @@ export default function ProductVariantSelectModal({
           </div>
 
           {isFabric && (
-            <div className="flex items-center justify-between text-[11px] font-bold">
-              <span className="text-slate-500">পরিমাপ বিশ্লেষণ:</span>
-              <span className="text-amber-900 bg-amber-100/70 px-2 py-0.5 rounded-md border border-amber-200">
+            <div className="flex items-center justify-between text-[11px] font-semibold">
+              <span className="text-[#525252]">পরিমাপ বিশ্লেষণ:</span>
+              <span className="text-[#B45309] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 font-mono tabular-nums">
                 নির্বাচিত: {formatFabricQuantity(effectiveQuantity, 'গজ', true)}
               </span>
             </div>
@@ -492,21 +492,21 @@ export default function ProductVariantSelectModal({
 
           {/* স্টক সতর্কতা বা কার্ট ইনফো */}
           {isOverStock ? (
-            <div className="flex items-center space-x-1.5 p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
+            <div className="flex items-center space-x-1.5 p-2.5 rounded-md bg-red-50 border border-red-200 text-[#B91C1C] text-xs font-semibold font-mono tabular-nums">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>
                 মজুদের চেয়ে বেশি পরিমাণ নির্বাচন করা হয়েছে (সর্বোচ্চ: {isFabric ? formatFabricQuantity(maxSelectable, 'গজ') : `${maxSelectable} ${product?.Unit || 'পিস'}`})
               </span>
             </div>
           ) : alreadyInCartQty > 0 ? (
-            <div className="text-right text-[11px] font-medium text-indigo-600">
+            <div className="text-right text-[11px] font-medium font-mono tabular-nums text-[#525252]">
               (কার্টে ইতিমধ্যে {isFabric ? formatFabricQuantity(alreadyInCartQty, 'গজ') : `${alreadyInCartQty} ${product?.Unit || 'পিস'}`} রয়েছে)
             </div>
           ) : null}
 
           <div className="flex items-center justify-between text-xs pt-1">
-            <span className="text-slate-500 font-medium">সাবটোটাল:</span>
-            <span className="text-base font-black text-slate-900">
+            <span className="text-[#525252] font-medium">সাবটোটাল:</span>
+            <span className="text-base font-bold font-mono tabular-nums text-[#111111]">
               {currencySymbol}{subTotal.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
             </span>
           </div>
@@ -516,7 +516,7 @@ export default function ProductVariantSelectModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-full py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] w-full py-2 rounded-md border border-neutral-200/80 bg-white hover:bg-[#F5F5F5] text-[#525252] hover:text-[#111111] text-xs font-semibold transition-colors cursor-pointer"
             >
               বাতিল
             </button>
@@ -524,7 +524,7 @@ export default function ProductVariantSelectModal({
               type="button"
               onClick={handleConfirmAddToCart}
               disabled={variantStock <= 0 || maxSelectable <= 0 || effectiveQuantity <= 0 || isOverStock}
-              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center space-x-1.5 cursor-pointer disabled:cursor-not-allowed"
+              className="min-h-[44px] sm:min-h-[36px] w-full py-2 rounded-md bg-[#0F172A] hover:bg-slate-800 disabled:bg-neutral-300 text-white text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5 cursor-pointer disabled:cursor-not-allowed"
             >
               <ShoppingCart className="w-4 h-4" />
               <span>কার্টে যোগ করুন</span>

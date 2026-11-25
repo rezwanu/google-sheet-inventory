@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Navbar from './components/Navbar';
 import ProductCatalog from './components/ProductCatalog';
+import OverviewDashboard from './components/OverviewDashboard';
+import InventoryView from './components/InventoryView';
+import SettingsView from './components/SettingsView';
+import ProductDrawer from './components/ProductDrawer';
 
 import CartPage from './components/CartPage';
 import CheckoutPage from './components/CheckoutPage';
@@ -453,8 +457,16 @@ export default function App() {
   // ফেজ ৮: আরএফএম গ্রাহক সেগমেন্টেশন ও টার্গেটেড এসএমএস ক্যাম্পেইন মডাল স্টেট
   const [isRFMCampaignModalOpen, setIsRFMCampaignModalOpen] = useState(false);
 
-  // ভিউ নেভিগেশন স্টেট ('pos' | 'cart' | 'checkout')
-  const [currentView, setCurrentView] = useState('pos');
+  // ভিউ নেভিগেশন স্টেট ('overview' | 'pos' | 'inventory' | 'settings' | 'cart' | 'checkout' | ...)
+  const [currentView, setCurrentView] = useState(() => {
+    try {
+      const u = getActiveUser();
+      const isStaffOrAdmin = u && u.UserID !== 'USER-GUEST' && u.UserID !== 'GUEST-CUSTOMER' && ['Admin', 'Cashier', 'Manager', 'Salesman', 'Staff'].includes(u.Role);
+      return isStaffOrAdmin ? 'overview' : 'pos';
+    } catch {
+      return 'pos';
+    }
+  });
   const [discountAmount, setDiscountAmount] = useState(0);
 
   // ফেজ ৩: ব্যবসায়িক লাভ ও নিরাপত্তা (Role-Based Restriction & 1-Click Backup)
@@ -789,6 +801,9 @@ export default function App() {
       setActiveUser(user);
       setIsAuthModalOpen(false);
       setUsers(getLocalUsers());
+      if (user.Role !== 'Customer' && user.UserID !== 'GUEST-CUSTOMER') {
+        setCurrentView((prev) => (prev === 'pos' ? 'overview' : prev));
+      }
 
       // ৩. স্টাফদের জন্য স্বয়ংক্রিয় ক্লক-ইন (যদি আজকের প্রথম লগইন হয়)
       let autoClockInMessage = '';
@@ -1034,6 +1049,7 @@ export default function App() {
     };
     saveActiveUser(customerUser);
     setActiveUser(customerUser);
+    setCurrentView('pos');
     showToast('গ্রাহক স্টোর ভিউ মোডে প্রবেশ করা হয়েছে।', 'info');
   };
 
@@ -1406,6 +1422,28 @@ export default function App() {
         return;
       }
 
+      // '/' => প্রোডাক্ট বা গ্লোবাল সার্চে ফোকাস (ইনপুট ফিল্ডের বাইরে থাকলে)
+      if (
+        e.key === '/' &&
+        !e.ctrlKey && !e.metaKey && !e.altKey &&
+        !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) &&
+        !document.activeElement?.isContentEditable
+      ) {
+        e.preventDefault();
+        const targetId =
+          currentView === 'pos'
+            ? 'pos-product-search-input'
+            : currentView === 'inventory'
+            ? 'inventory-search-input'
+            : 'global-top-search-input';
+        const el = document.getElementById(targetId) || document.getElementById('global-top-search-input');
+        if (el) {
+          el.focus();
+          el.select?.();
+        }
+        return;
+      }
+
       // Escape => যেকোনো সক্রিয় মডাল বন্ধ করা
       if (e.key === 'Escape') {
         if (isShortcutsModalOpen) {
@@ -1438,6 +1476,45 @@ export default function App() {
         }
         if (isPosQuickExpenseModalOpen) {
           setIsPosQuickExpenseModalOpen(false);
+          return;
+        }
+        if (isCartDrawerOpen) {
+          setIsCartDrawerOpen(false);
+          return;
+        }
+        if (isEditProductModalOpen) {
+          setIsEditProductModalOpen(false);
+          setSelectedProductForEdit(null);
+          return;
+        }
+        if (isProductModalOpen) {
+          setIsProductModalOpen(false);
+          return;
+        }
+        if (isSettingsModalOpen) {
+          setIsSettingsModalOpen(false);
+          return;
+        }
+        if (isMobileSidebarOpen) {
+          setIsMobileSidebarOpen(false);
+          return;
+        }
+        if (isProductDetailsOpen) {
+          setIsProductDetailsOpen(false);
+          setSelectedProductForDetails(null);
+          return;
+        }
+        if (isAuthModalOpen) {
+          setIsAuthModalOpen(false);
+          return;
+        }
+        if (isInvoiceLookupOpen) {
+          setIsInvoiceLookupOpen(false);
+          return;
+        }
+        if (isLogoutConfirmModalOpen) {
+          setIsLogoutConfirmModalOpen(false);
+          setPendingLogoutShift(null);
           return;
         }
       }
@@ -1501,6 +1578,7 @@ export default function App() {
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [
+    currentView,
     cart,
     heldCarts,
     isShortcutsModalOpen,
@@ -1510,7 +1588,16 @@ export default function App() {
     isFabricWastageModalOpen,
     isCalculatorOpen,
     isPosQuickExpenseModalOpen,
-    fabricCutProduct
+    fabricCutProduct,
+    isCartDrawerOpen,
+    isEditProductModalOpen,
+    isProductModalOpen,
+    isSettingsModalOpen,
+    isMobileSidebarOpen,
+    isProductDetailsOpen,
+    isAuthModalOpen,
+    isInvoiceLookupOpen,
+    isLogoutConfirmModalOpen
   ]);
 
   // ৪. কার্ট অপারেশনসমূহ (সাপোর্টস সিম্পল পণ্য, সাইজ/রং ভ্যারিয়েন্ট, গজ কাপড় থান এবং কম্বো বান্ডেল)
@@ -5730,7 +5817,7 @@ export default function App() {
   const isAdmin = isLoggedIn && (activeUser.Role === 'Admin' || activeUser.Role === 'Cashier' || activeUser.Role === 'Manager' || activeUser.Role === 'Salesman' || activeUser.Role === 'Staff');
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col font-sans text-[#111111]">
       
       {/* টপ নেভিগেশন বার (সরাসরি স্টোর লোগো, নাম, সিঙ্ক, হিস্ট্রি, সেটিংস ও প্রোফাইল আইকন) */}
       <Navbar
@@ -5762,6 +5849,10 @@ export default function App() {
         onToggleSound={handleToggleSound}
         currentView={currentView}
         onOpenCartDrawer={() => setIsCartDrawerOpen(true)}
+        products={products}
+        salesHistory={salesHistory}
+        onAddToCart={handleAddToCart}
+        onOpenInvoiceLookup={handleOpenInvoiceLookup}
       />
 
       {/* মূল বডি লেআউট: স্থায়ী সাইডবার প্যানেল (শুধুমাত্র এডমিনের জন্য) এবং মূল অ্যাপ্লিকেশন কন্টেন্ট */}
@@ -5835,6 +5926,7 @@ export default function App() {
             onOpenAbandonedCartModal={() => setIsAbandonedCartModalOpen(true)}
             onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
             onOpenUsersModal={() => executeAdminAction(() => setIsUsersModalOpen(true), 'ইউজার ও স্টাফ একাউন্ট ম্যানেজ করতে')}
+            onOpenSettingsModal={() => handleSecureNavigate('settings')}
             onOpenCouponModal={() => setIsCouponModalOpen(true)}
             onOpenInvoiceLookupModal={handleOpenInvoiceLookup}
             onOpenCustomerOrdersModal={() => setIsCustomerOrdersOpen(true)}
@@ -5851,16 +5943,32 @@ export default function App() {
           
           {/* স্টোরফ্রন্ট প্রমোশনাল অফার ব্যানার */}
           {settings?.StorefrontBannerText && settings?.StorefrontEnabled !== false && (
-            <div className="mb-3.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white text-xs sm:text-sm font-bold py-2.5 px-4 rounded-2xl shadow-sm flex items-center justify-center space-x-2 animate-in fade-in duration-300">
-              <span className="text-amber-300 text-base shrink-0">✨</span>
-              <span className="tracking-wide text-center">{settings.StorefrontBannerText}</span>
+            <div className="mb-3.5 bg-white border border-neutral-200/80 text-[#111111] text-xs font-medium py-2 px-4 rounded-md text-center">
+              <span className="tracking-normal">{settings.StorefrontBannerText}</span>
             </div>
           )}
 
+          {currentView === 'overview' && (
+            <OverviewDashboard
+              products={products}
+              salesHistory={salesHistory}
+              orders={orders}
+              expenses={expenses}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              activeUser={activeUser}
+              isPinAuthorized={isPinAuthorizedSession}
+              onRequestAdminUnlock={() => executeAdminAction(() => {}, 'গোপন তথ্য ও লাভ দেখতে')}
+              isLoading={syncStatus === 'syncing'}
+              onNavigate={handleSecureNavigate}
+              onQuickRestock={handleQuickRestock}
+              onReprintInvoice={handleOpenReprintInvoice}
+            />
+          )}
+
           {currentView === 'pos' && (
-            <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-0 h-[calc(100vh-6.5rem)]">
+            <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-[calc(100vh-5.5rem)] lg:h-[calc(100vh-5.5rem)] pb-16 lg:pb-0">
               {/* বামপাশ: আধুনিক পণ্য ক্যাটালগ হাব */}
-              <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+              <div className="flex-1 min-w-0 bg-white rounded-lg border border-neutral-200/80 overflow-hidden flex flex-col">
                 <ProductCatalog
                   products={products}
                   currencySymbol={settings.CurrencySymbol || '৳'}
@@ -5881,11 +5989,12 @@ export default function App() {
                   onOpenVariantSelector={(prod) => setVariantSelectModalProduct(prod)}
                   heldCartsCount={heldCarts.length}
                   onOpenHeldCartsModal={() => setIsHeldCartsModalOpen(true)}
+                  isLoading={syncStatus === 'syncing'}
                 />
               </div>
 
               {/* ডানপাশ: স্থায়ী লাইভ কাউন্টার ও কার্ট টার্মিনাল (ডেস্কটপ / পিওএস কাউন্টারে দৃশ্যমান) */}
-              <div className="hidden lg:flex w-80 xl:w-96 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-col">
+              <div className="hidden lg:flex w-80 xl:w-96 shrink-0 bg-white rounded-lg border border-neutral-200/80 overflow-hidden flex-col">
                 <PosCartPanel
                   cartItems={cart}
                   currencySymbol={settings.CurrencySymbol || '৳'}
@@ -5905,10 +6014,41 @@ export default function App() {
                   onSendToTailoring={handleSendToTailoringFromCart}
                   onNavigateToCheckout={() => setCurrentView('checkout')}
                   onQuickCashCheckout={() => setCurrentView('checkout')}
+                  onDirectCompleteSale={handleCompleteSale}
+                  isProcessingSale={isProcessingSale}
                   onOpenQuickExpenseModal={() => setIsPosQuickExpenseModalOpen(true)}
                 />
               </div>
             </div>
+          )}
+
+          {currentView === 'inventory' && (
+            <InventoryView
+              products={products}
+              categories={categories}
+              units={units}
+              suppliers={suppliers}
+              currencySymbol={settings.CurrencySymbol || '৳'}
+              activeUser={activeUser}
+              isPinAuthorized={isPinAuthorizedSession}
+              onRequestAdminUnlock={() => executeAdminAction(() => {}, 'কেনা দাম ও ইনভেন্টরি ম্যানেজ করতে')}
+              isLoading={syncStatus === 'syncing'}
+              onSubmitProduct={handleSubmitProduct}
+              onUpdateProduct={handleUpdateProduct}
+              onDeleteProduct={handleDeleteProduct}
+              onAddCategory={handleAddCategory}
+              onAddUnit={handleAddUnit}
+              onQuickRestock={handleQuickRestock}
+              onNavigate={handleSecureNavigate}
+            />
+          )}
+
+          {currentView === 'settings' && (
+            <SettingsView
+              settings={settings}
+              onSaveSettings={handleSaveSettings}
+              onTestConnection={handleTestConnection}
+            />
           )}
 
           {currentView === 'cart' && (
@@ -6462,26 +6602,25 @@ export default function App() {
         </main>
       </div>
 
-      {/* ক্যাটালগ ভিউতে ফ্লোটিং ডায়নামিক কার্ট বার (মোবাইল / ছোট ডিভাইসে দৃশ্যমান) */}
+      {/* মোবাইল স্টিকি বটম কার্ট সামারি বার (৩৭৫px / ট্যাবলেটে দৃশ্যমান) */}
       {Array.isArray(cart) && cart.length > 0 && currentView === 'pos' && (
-        <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 hover:bg-slate-900 text-white pl-4 pr-2.5 py-2 rounded-full shadow-2xl backdrop-blur-xl flex items-center space-x-3 sm:space-x-4 border border-white/10 animate-in fade-in slide-in-from-bottom-5 transition-all">
-          <div className="flex items-center space-x-2">
-            <span className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 text-white font-black text-xs flex items-center justify-center shadow-md shadow-indigo-500/30">
-              {cart.reduce((a, b) => a + (Number(b.quantity) || 0), 0)}
-            </span>
-            <span className="text-xs sm:text-sm font-bold text-slate-200">কার্ট:</span>
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-neutral-200/80 px-4 py-2.5 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[11px] font-medium text-[#525252] font-mono tabular-nums">
+              {cart.reduce((a, b) => a + (Number(b.quantity) || 0), 0)} items in cart
+            </div>
+            <div className="text-sm font-semibold font-mono tabular-nums text-[#111111]">
+              {settings.CurrencySymbol || '৳'}
+              {Math.round(cart.reduce((a, b) => a + (Number(b.sellingPrice) || 0) * (Number(b.quantity) || 0), 0)).toLocaleString('en-IN')}
+            </div>
           </div>
 
-          <span className="text-emerald-400 font-black text-sm sm:text-base">
-            {settings.CurrencySymbol || '৳'}{cart.reduce((a, b) => a + (Number(b.sellingPrice) || 0) * (Number(b.quantity) || 0), 0).toFixed(2)}
-          </span>
-
           <button
-            onClick={() => setCurrentView('cart')}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-black rounded-full shadow-md transition-all flex items-center space-x-1.5 cursor-pointer"
+            type="button"
+            onClick={() => setIsCartDrawerOpen(true)}
+            className="min-h-[44px] px-4 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium rounded-md flex items-center gap-1.5 cursor-pointer shrink-0"
           >
-            <span>কার্ট পেজে যান</span>
-            <span className="text-sm font-bold">→</span>
+            <span>View Cart & Pay</span>
           </button>
         </div>
       )}
@@ -6508,8 +6647,8 @@ export default function App() {
         }
       />
 
-      {/* পণ্য সম্পাদনা (Edit Product) মডাল */}
-      <EditProductModal
+      {/* পণ্য সম্পাদনা (Slide-over ProductDrawer) */}
+      <ProductDrawer
         isOpen={isEditProductModalOpen}
         onClose={() => {
           setIsEditProductModalOpen(false);
@@ -6522,12 +6661,8 @@ export default function App() {
         onAddCategory={handleAddCategory}
         units={units}
         onAddUnit={handleAddUnit}
-        variantAttributes={variantAttributes}
-        onAddVariantOption={handleAddVariantOption}
+        suppliers={suppliers}
         products={products}
-        settings={settings}
-        activeUser={activeUser}
-        onDeleteProduct={handleDeleteProduct}
       />
 
       {/* P&L লাভ-ক্ষতি অ্যানালিটিক্স ড্যাশবোর্ড মডাল */}
@@ -6596,9 +6731,10 @@ export default function App() {
         purchaseOrders={purchaseOrders}
       />
 
-      <AddProductModal
+      <ProductDrawer
         isOpen={isProductModalOpen}
         onClose={() => setIsProductModalOpen(false)}
+        product={null}
         currencySymbol={settings.CurrencySymbol || '৳'}
         onSubmitProduct={handleSubmitProduct}
         categories={categories}
@@ -6606,11 +6742,7 @@ export default function App() {
         units={units}
         onAddUnit={handleAddUnit}
         suppliers={suppliers}
-        onSaveSupplier={handleSaveSupplier}
-        variantAttributes={variantAttributes}
-        onAddVariantOption={handleAddVariantOption}
         products={products}
-        settings={settings}
       />
 
       <SettingsModal
@@ -7091,7 +7223,7 @@ export default function App() {
         actionDescription={adminPinActionDescription}
       />
 
-      {/* Fastkart Offcanvas Cart Drawer */}
+      {/* Offcanvas / Mobile Full-Height Cart Drawer */}
       <CartDrawer
         isOpen={isCartDrawerOpen}
         onClose={() => setIsCartDrawerOpen(false)}
@@ -7105,6 +7237,8 @@ export default function App() {
           setIsCartDrawerOpen(false);
           setCurrentView('checkout');
         }}
+        onDirectCompleteSale={handleCompleteSale}
+        isProcessingSale={isProcessingSale}
         discountAmount={discountAmount}
         setDiscountAmount={setDiscountAmount}
         coupons={coupons}
@@ -7131,17 +7265,17 @@ export default function App() {
           স্টাফ লগআউট ও শিফট সমাপ্তি কনফার্মেশন ডায়ালগ (Logout & Shift Attendance Modal)
           ========================================================================= */}
       {isLogoutConfirmModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[120] animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-scaleIn">
+        <div className="fixed inset-0 bg-neutral-900/40 flex items-center justify-center p-4 z-[120]">
+          <div className="bg-white rounded-lg border border-neutral-200/80 max-w-md w-full overflow-hidden">
             {/* হেডার */}
-            <div className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
+            <div className="p-4 border-b border-neutral-200/80 bg-[#FAFAFA] flex items-center justify-between">
               <div className="flex items-center space-x-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                  <Clock className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-md bg-amber-50 border border-amber-200/80 text-[#B45309] flex items-center justify-center shrink-0">
+                  <Clock className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold">লগআউট ও শিফট হাজিরা</h3>
-                  <p className="text-[11px] text-slate-300">
+                  <h3 className="text-sm font-semibold tracking-tight text-[#111111]">লগআউট ও শিফট হাজিরা</h3>
+                  <p className="text-[11px] text-[#525252]">
                     {activeUser?.FullName} ({activeUser?.Role})
                   </p>
                 </div>
@@ -7152,20 +7286,20 @@ export default function App() {
                   setIsLogoutConfirmModalOpen(false);
                   setPendingLogoutShift(null);
                 }}
-                className="p-1 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+                className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-md hover:bg-neutral-100 text-[#525252] hover:text-[#111111] transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* বডি */}
             <div className="p-5 space-y-4 text-xs">
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start space-x-2.5">
-                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-md text-[#B45309] flex items-start space-x-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-xs">আপনার আজকের শিফট এখনো চালু আছে!</p>
-                  <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
-                    প্রবেশ সময়: <span className="font-mono font-bold">{pendingLogoutShift?.ClockIn ? new Date(pendingLogoutShift.ClockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'আজ'}</span>। আপনি কি দোকান ছেড়ে যাওয়ার আগে প্রস্থান (Clock-Out) করতে চান?
+                  <p className="font-semibold text-xs">আপনার আজকের শিফট এখনো চালু আছে</p>
+                  <p className="text-[11px] text-[#525252] mt-0.5 leading-relaxed">
+                    প্রবেশ সময়: <span className="font-mono tabular-nums font-semibold text-[#111111]">{pendingLogoutShift?.ClockIn ? new Date(pendingLogoutShift.ClockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'আজ'}</span>। দোকান ছেড়ে যাওয়ার আগে প্রস্থান (Clock-Out) করতে চান?
                   </p>
                 </div>
               </div>
@@ -7175,49 +7309,49 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => executeLogout(true)}
-                  className="w-full p-3.5 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 hover:from-indigo-100 hover:to-violet-100 text-left flex items-center justify-between transition-all cursor-pointer group shadow-2xs"
+                  className="w-full p-3.5 rounded-md border border-[#0F172A] bg-[#FAFAFA] hover:bg-neutral-100 text-left flex items-center justify-between transition-colors cursor-pointer group"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0">
+                    <div className="w-8 h-8 rounded-md bg-[#0F172A] text-white flex items-center justify-center shrink-0">
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="font-bold text-xs text-indigo-950">পদ্ধতি ১: শিফট সমাপ্ত ও প্রস্থান (Clock-Out)</p>
-                      <p className="text-[11px] text-indigo-700/80 mt-0.5">কাজের সময় সমাপ্ত করে প্রস্থান রেকর্ড ও লগআউট সম্পন্ন করুন</p>
+                      <p className="font-semibold text-xs text-[#111111]">পদ্ধতি ১: শিফট সমাপ্ত ও প্রস্থান (Clock-Out)</p>
+                      <p className="text-[11px] text-[#525252] mt-0.5">কাজের সময় সমাপ্ত করে প্রস্থান রেকর্ড ও লগআউট সম্পন্ন করুন</p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight className="w-4 h-4 text-[#525252] group-hover:translate-x-0.5 transition-transform" />
                 </button>
 
                 {/* অপশন ২: পদ্ধতি ২ - শুধু সাময়িক লগআউট */}
                 <button
                   type="button"
                   onClick={() => executeLogout(false)}
-                  className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-left flex items-center justify-between transition-all cursor-pointer group"
+                  className="w-full p-3 rounded-md border border-neutral-200/80 bg-white hover:bg-neutral-50 text-left flex items-center justify-between transition-colors cursor-pointer group"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center font-bold shrink-0">
+                    <div className="w-8 h-8 rounded-md bg-neutral-100 text-[#525252] flex items-center justify-center shrink-0">
                       <Clock className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="font-bold text-xs text-slate-800">পদ্ধতি ২: শুধু সাময়িক লগআউট (শিফট চালু থাকবে)</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">নাস্তার বিরতি বা অন্য কর্মীর বসার জন্য (হাজিরা ডিউটিতে থাকবে)</p>
+                      <p className="font-semibold text-xs text-[#111111]">পদ্ধতি ২: শুধু সাময়িক লগআউট (শিফট চালু থাকবে)</p>
+                      <p className="text-[11px] text-[#525252] mt-0.5">বিরতি বা অন্য কর্মীর বসার জন্য (হাজিরা ডিউটিতে থাকবে)</p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight className="w-4 h-4 text-[#525252] group-hover:translate-x-0.5 transition-transform" />
                 </button>
               </div>
             </div>
 
             {/* ফুটার */}
-            <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+            <div className="p-3 bg-[#FAFAFA] border-t border-neutral-200/80 flex justify-end">
               <button
                 type="button"
                 onClick={() => {
                   setIsLogoutConfirmModalOpen(false);
                   setPendingLogoutShift(null);
                 }}
-                className="px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                className="min-h-[36px] px-4 py-1.5 rounded-md border border-neutral-200/80 bg-white text-xs font-medium text-[#525252] hover:text-[#111111] hover:bg-neutral-50 transition-colors cursor-pointer"
               >
                 বাতিল (লগইন থাকুন)
               </button>
@@ -7228,14 +7362,14 @@ export default function App() {
 
       {/* লাইভ টোস্ট নোটিফিকেশন */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed bottom-5 right-5 z-50">
           <div
-            className={`px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center space-x-2 text-white ${
+            className={`px-4 py-2.5 rounded-md border text-xs font-medium flex items-center space-x-2 text-white ${
               toastMessage.type === 'error'
-                ? 'bg-rose-600'
+                ? 'bg-[#B91C1C] border-[#B91C1C]'
                 : toastMessage.type === 'warning'
-                ? 'bg-amber-600'
-                : 'bg-emerald-600'
+                ? 'bg-[#B45309] border-[#B45309]'
+                : 'bg-[#0F172A] border-[#0F172A]'
             }`}
           >
             <span>{toastMessage.message}</span>

@@ -84,38 +84,38 @@ export default function CustomerOrdersModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 overflow-y-auto bg-neutral-900/40 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200/80 max-w-2xl w-full overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
+        className="bg-white rounded-lg border border-neutral-200/80 max-w-2xl w-full overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* হেডার ব্যানার */}
-        <div className="bg-gradient-to-r from-indigo-700 via-indigo-600 to-violet-700 p-5 text-white flex items-center justify-between">
+        <div className="bg-[#FAFAFA] border-b border-neutral-200/80 p-4 sm:p-5 text-[#111111] flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-3">
             <StoreLogo
               url={settings?.LogoUrl || settings?.logoUrl}
               alt={settings?.StoreName || 'স্টোর'}
-              className="w-10 h-10 rounded-2xl object-contain bg-white/95 p-1 border border-white/30 shadow-xs"
+              className="w-10 h-10 rounded-md object-contain bg-white p-1 border border-neutral-200/80 shrink-0"
               fallbackIcon={ShoppingBag}
-              fallbackClassName="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20"
-              iconClassName="w-5 h-5 text-amber-300"
+              fallbackClassName="w-10 h-10 rounded-md bg-white flex items-center justify-center border border-neutral-200/80 shrink-0"
+              iconClassName="w-5 h-5 text-[#0F172A]"
             />
             <div>
-              <h2 className="text-base sm:text-lg font-black tracking-tight">
+              <h2 className="text-base sm:text-lg font-semibold tracking-tight text-[#111111]">
                 {settings?.StoreName ? `${settings.StoreName} - ` : ''}আমার অর্ডারসমূহ (My Orders)
               </h2>
-              <p className="text-xs text-indigo-100/90">
-                গ্রাহক: <strong className="text-white">{activeUser ? activeUser.FullName : 'লগইন করা নেই'}</strong>
-                {activeUser?.Phone && ` • ${activeUser.Phone}`}
+              <p className="text-xs text-[#525252] mt-0.5">
+                গ্রাহক: <strong className="text-[#111111] font-medium">{activeUser ? activeUser.FullName : 'লগইন করা নেই'}</strong>
+                {activeUser?.Phone && <span className="font-mono tabular-nums"> • {activeUser.Phone}</span>}
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-2 rounded-md hover:bg-neutral-200/60 text-[#525252] hover:text-[#111111] transition-colors cursor-pointer flex items-center justify-center"
             title="বন্ধ করুন"
           >
             <X className="w-5 h-5" />
@@ -123,42 +123,42 @@ export default function CustomerOrdersModal({
         </div>
 
         {/* পরিসংখ্যান বার */}
-        <div className="bg-indigo-50/60 border-b border-indigo-100 px-5 py-3 flex items-center justify-between text-xs">
+        <div className="bg-[#F5F5F5] border-b border-neutral-200/80 px-5 py-3 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
           <div className="flex items-center space-x-4">
             <div>
-              <span className="text-slate-500 font-medium">মোট অর্ডার: </span>
-              <strong className="text-indigo-900 font-extrabold">{customerOrders.length} টি</strong>
+              <span className="text-[#525252] font-medium">মোট অর্ডার: </span>
+              <strong className="text-[#111111] font-semibold font-mono tabular-nums">{customerOrders.length} টি</strong>
             </div>
-            <div className="h-3.5 w-px bg-indigo-200" />
+            <div className="h-3.5 w-px bg-neutral-300" />
             <div>
-              <span className="text-slate-500 font-medium">সর্বমোট কেনাকাটা: </span>
-              <strong className="text-indigo-900 font-extrabold">{currencySymbol}{totalSpent.toFixed(2)}</strong>
+              <span className="text-[#525252] font-medium">সর্বমোট কেনাকাটা: </span>
+              <strong className="text-[#111111] font-semibold font-mono tabular-nums">{currencySymbol}{totalSpent.toFixed(2)}</strong>
             </div>
           </div>
 
           {customerOrders.length > 3 && (
-            <div className="relative w-44 sm:w-56">
+            <div className="relative w-full sm:w-56">
               <input
                 type="text"
                 placeholder="ইনভয়েস দিয়ে খুঁজুন..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-7 pr-2.5 py-1 text-xs bg-white border border-indigo-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800"
+                className="w-full min-h-[44px] sm:min-h-[36px] pl-8 pr-2.5 py-1.5 text-xs bg-white border border-neutral-200/80 rounded-md focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] text-[#111111]"
               />
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2 pointer-events-none" />
+              <Search className="w-3.5 h-3.5 text-[#737373] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           )}
         </div>
 
         {/* অর্ডার তালিকা কনটেন্ট */}
-        <div className="overflow-y-auto p-4 sm:p-5 flex-1 space-y-3.5">
+        <div className="overflow-y-auto p-4 sm:p-5 flex-1 space-y-3.5 bg-[#FAFAFA]">
           {!activeUser ? (
-            <div className="py-12 flex flex-col items-center justify-center text-center text-slate-500">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-3 shadow-xs">
-                <LogIn className="w-8 h-8" />
+            <div className="py-12 flex flex-col items-center justify-center text-center text-[#525252]">
+              <div className="w-14 h-14 rounded-lg bg-[#F5F5F5] border border-neutral-200/80 flex items-center justify-center text-[#0F172A] mb-3">
+                <LogIn className="w-7 h-7" />
               </div>
-              <h4 className="text-base font-bold text-slate-800">অর্ডার হিস্ট্রি দেখতে লগইন করুন</h4>
-              <p className="text-xs text-slate-500 mt-1 max-w-sm">
+              <h4 className="text-base font-semibold tracking-tight text-[#111111]">অর্ডার হিস্ট্রি দেখতে লগইন করুন</h4>
+              <p className="text-xs text-[#525252] mt-1 max-w-sm">
                 আপনার পূর্ববর্তী অর্ডারের তালিকা এবং ডিজিটাল ইনভয়েস দেখতে অনুগ্রহ করে আপনার অ্যাকাউন্টে লগইন অথবা নতুন রেজিস্ট্রেশন করুন।
               </p>
               {onOpenAuthModal && (
@@ -168,7 +168,7 @@ export default function CustomerOrdersModal({
                     onClose();
                     onOpenAuthModal();
                   }}
-                  className="mt-5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold transition-all shadow-md flex items-center space-x-2 cursor-pointer"
+                  className="mt-5 min-h-[44px] sm:min-h-[36px] px-5 py-2 rounded-md bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium transition-colors flex items-center space-x-2 cursor-pointer"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>লগইন / সাইন-আপ করুন</span>
@@ -176,12 +176,12 @@ export default function CustomerOrdersModal({
               )}
             </div>
           ) : customerOrders.length === 0 ? (
-            <div className="py-12 flex flex-col items-center justify-center text-center text-slate-400">
-              <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-300 mb-3">
-                <ShoppingBag className="w-8 h-8 stroke-[1.5]" />
+            <div className="py-12 flex flex-col items-center justify-center text-center text-[#737373]">
+              <div className="w-14 h-14 rounded-lg bg-[#F5F5F5] border border-neutral-200/80 flex items-center justify-center text-[#737373] mb-3">
+                <ShoppingBag className="w-7 h-7 stroke-[1.5]" />
               </div>
-              <h4 className="text-base font-bold text-slate-700">আপনি এখনো কোনো অর্ডার করেননি</h4>
-              <p className="text-xs text-slate-400 mt-1 max-w-xs">
+              <h4 className="text-base font-semibold tracking-tight text-[#111111]">আপনি এখনো কোনো অর্ডার করেননি</h4>
+              <p className="text-xs text-[#525252] mt-1 max-w-xs">
                 আমাদের ক্যাটালগ থেকে সেরা পণ্যগুলো বাছাই করুন এবং এখনই ঘরে বসে অর্ডার করুন!
               </p>
               {onNavigateToCatalog && (
@@ -191,7 +191,7 @@ export default function CustomerOrdersModal({
                     onClose();
                     onNavigateToCatalog();
                   }}
-                  className="mt-4 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5 cursor-pointer"
+                  className="mt-4 min-h-[44px] sm:min-h-[36px] px-4 py-2 rounded-md bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium transition-colors flex items-center space-x-1.5 cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>পণ্য কেনাকাটা শুরু করুন</span>
@@ -199,7 +199,7 @@ export default function CustomerOrdersModal({
               )}
             </div>
           ) : filteredOrders.length === 0 ? (
-            <div className="py-10 text-center text-slate-400 text-xs">
+            <div className="py-10 text-center text-[#737373] text-xs">
               "{searchQuery}" দিয়ে কোনো ইনভয়েস পাওয়া যায়নি।
             </div>
           ) : (
@@ -213,32 +213,32 @@ export default function CustomerOrdersModal({
               return (
                 <div
                   key={invoiceNo + idx}
-                  className="bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all p-4 space-y-3"
+                  className="bg-white rounded-lg border border-neutral-200/80 hover:border-neutral-300 transition-colors p-4 space-y-3"
                 >
                   {/* কার্ড হেডার */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono text-xs font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-neutral-200/80">
+                    <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                      <span className="font-mono tabular-nums text-xs font-semibold text-[#111111] bg-[#F5F5F5] px-2.5 py-1 rounded-md border border-neutral-200/80">
                         {invoiceNo}
                       </span>
-                      <span className="text-[11px] text-slate-400 flex items-center space-x-1">
-                        <Clock className="w-3 h-3 text-slate-400" />
+                      <span className="text-[11px] text-[#737373] font-mono tabular-nums flex items-center space-x-1">
+                        <Clock className="w-3 h-3 text-[#737373]" />
                         <span>{dateStr}</span>
                       </span>
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-emerald-50 text-[#15803D] border border-emerald-200/80">
+                        <CheckCircle2 className="w-3 h-3 mr-1 text-[#15803D]" />
                         সম্পন্ন
                       </span>
                       <button
                         type="button"
                         onClick={() => onViewInvoice && onViewInvoice(order)}
-                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-300 text-[11px] font-bold transition-all flex items-center space-x-1 cursor-pointer"
+                        className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 rounded-md bg-white hover:bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 text-[11px] font-medium transition-colors flex items-center space-x-1 cursor-pointer"
                         title="মেমো প্রিন্ট বা ডাউনলোড করুন"
                       >
-                        <Printer className="w-3 h-3 text-indigo-600" />
+                        <Printer className="w-3.5 h-3.5 text-[#525252]" />
                         <span>রিসিট দেখুন</span>
                       </button>
                     </div>
@@ -251,35 +251,35 @@ export default function CustomerOrdersModal({
                       const itemQty = Number(item.Quantity || item.quantity || 1);
                       const itemPrice = Number(item.SellingPrice || item.sellingPrice || 0);
                       return (
-                        <div key={itemIdx} className="flex items-center justify-between text-xs text-slate-700">
+                        <div key={itemIdx} className="flex items-center justify-between text-xs text-[#525252]">
                           <div className="flex items-center space-x-1.5 truncate max-w-[70%]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                            <span className="truncate">{itemName}</span>
-                            <span className="text-slate-400 text-[11px]">× {itemQty}</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-300 shrink-0" />
+                            <span className="truncate text-[#111111]">{itemName}</span>
+                            <span className="text-[#737373] text-[11px] font-mono tabular-nums">× {itemQty}</span>
                           </div>
-                          <span className="font-semibold text-slate-900 font-mono">
+                          <span className="font-semibold text-[#111111] font-mono tabular-nums">
                             {currencySymbol}{(itemPrice * itemQty).toFixed(2)}
                           </span>
                         </div>
                       );
                     })}
                     {items.length > 3 && (
-                      <span className="text-[11px] font-semibold text-indigo-600 block pl-3">
+                      <span className="text-[11px] font-medium text-[#525252] block pl-3 font-mono tabular-nums">
                         + আরও {items.length - 3}টি পণ্য রয়েছে...
                       </span>
                     )}
                   </div>
 
                   {/* ফুটার: মোট টাকা ও পেমেন্ট মেথড */}
-                  <div className="pt-2 border-t border-dashed border-slate-200 flex items-center justify-between text-xs">
-                    <span className="text-slate-500 flex items-center space-x-1">
-                      <CreditCard className="w-3.5 h-3.5 text-slate-400" />
-                      <span>পেমেন্ট মাধ্যম: <strong>{payment}</strong></span>
+                  <div className="pt-2 border-t border-dashed border-neutral-200/80 flex items-center justify-between text-xs">
+                    <span className="text-[#525252] flex items-center space-x-1">
+                      <CreditCard className="w-3.5 h-3.5 text-[#737373]" />
+                      <span>পেমেন্ট মাধ্যম: <strong className="text-[#111111] font-medium">{payment}</strong></span>
                     </span>
 
                     <div className="flex items-baseline space-x-1">
-                      <span className="text-slate-500 font-medium">মোট প্রদেয়:</span>
-                      <span className="text-sm font-black text-indigo-900 font-mono">
+                      <span className="text-[#525252] font-medium">মোট প্রদেয়:</span>
+                      <span className="text-sm font-semibold text-[#111111] font-mono tabular-nums">
                         {currencySymbol}{grandTotal.toFixed(2)}
                       </span>
                     </div>
@@ -292,11 +292,11 @@ export default function CustomerOrdersModal({
         </div>
 
         {/* ফুটার বাটন */}
-        <div className="p-4 border-t border-slate-200 bg-slate-50/80 flex items-center justify-end">
+        <div className="p-4 border-t border-neutral-200/80 bg-[#FAFAFA] flex items-center justify-end shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] px-4 py-2 rounded-md border border-neutral-200/80 bg-white hover:bg-[#F5F5F5] text-[#111111] text-xs font-medium transition-colors cursor-pointer"
           >
             বন্ধ করুন
           </button>
@@ -306,4 +306,3 @@ export default function CustomerOrdersModal({
     </div>
   );
 }
-

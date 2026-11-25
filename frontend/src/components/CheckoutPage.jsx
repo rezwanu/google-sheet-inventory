@@ -365,49 +365,49 @@ export default function CheckoutPage({
   };
 
   return (
-    <div className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 flex flex-col animate-in fade-in duration-200">
+    <div className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 flex flex-col animate-in fade-in duration-200 bg-[#FAFAFA]">
       
       {/* ১. প্রফেশনাল স্টেপার ও ব্রেডক্রাম্বস */}
-      <div className="mb-7 bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-3xl p-4 sm:p-5 shadow-xs">
+      <div className="mb-6 bg-white border border-neutral-200/80 rounded-lg p-4 sm:p-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              <div className="w-9 h-9 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center">
                 <CreditCard className="w-5 h-5" />
               </div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-semibold text-[#111111] tracking-tight">
                 চেকআউট ও পেমেন্ট (Checkout & Payment)
               </h1>
             </div>
-            <p className="text-xs text-slate-500 mt-1 pl-11">
+            <p className="text-xs text-[#525252] mt-1 pl-11">
               গ্রাহকের বিবরণ নিশ্চিত করুন, পেমেন্ট মাধ্যম নির্বাচন করুন এবং বিক্রয় রশিদ তৈরি করুন।
             </p>
           </div>
 
           {/* স্টেপ ট্র্যাকার */}
-          <div className="flex items-center space-x-2 sm:space-x-3 text-xs font-bold self-start md:self-auto">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-medium self-start md:self-auto">
             <button
               onClick={onNavigateToCatalog}
-              className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+              className="min-h-[44px] sm:min-h-[36px] flex items-center space-x-2 px-3 py-1.5 rounded-md bg-[#F5F5F5] hover:bg-neutral-200/70 border border-neutral-200/80 text-[#525252] hover:text-[#111111] transition-colors cursor-pointer"
             >
-              <span className="w-5 h-5 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center text-[11px] font-black">১</span>
+              <span className="w-5 h-5 rounded-full bg-neutral-200 text-[#111111] flex items-center justify-center text-[11px] font-semibold font-mono tabular-nums">১</span>
               <span>পণ্য ক্যাটালগ</span>
             </button>
 
-            <span className="text-slate-300 font-bold">──</span>
+            <span className="text-neutral-300 font-medium hidden sm:inline">──</span>
 
             <button
               onClick={onNavigateToCart}
-              className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+              className="min-h-[44px] sm:min-h-[36px] flex items-center space-x-2 px-3 py-1.5 rounded-md bg-[#F5F5F5] hover:bg-neutral-200/70 border border-neutral-200/80 text-[#525252] hover:text-[#111111] transition-colors cursor-pointer"
             >
-              <span className="w-5 h-5 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center text-[11px] font-black">২</span>
+              <span className="w-5 h-5 rounded-full bg-neutral-200 text-[#111111] flex items-center justify-center text-[11px] font-semibold font-mono tabular-nums">২</span>
               <span>শপিং কার্ট</span>
             </button>
 
-            <span className="text-slate-300 font-bold">──</span>
+            <span className="text-neutral-300 font-medium hidden sm:inline">──</span>
 
-            <div className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20">
-              <span className="w-5 h-5 rounded-full bg-white text-emerald-700 flex items-center justify-center text-[11px] font-black">৩</span>
+            <div className="min-h-[44px] sm:min-h-[36px] flex items-center space-x-2 px-3.5 py-1.5 rounded-md border border-[#0F172A] bg-[#0F172A] text-white">
+              <span className="w-5 h-5 rounded-full bg-white text-[#0F172A] flex items-center justify-center text-[11px] font-semibold font-mono tabular-nums">৩</span>
               <span>চেকআউট ও পেমেন্ট</span>
             </div>
           </div>
@@ -416,16 +416,16 @@ export default function CheckoutPage({
 
       {/* অতিথি গ্রাহকদের জন্য লগইন / সাইন-আপ ব্যানার */}
       {isGuest && onOpenAuthModal && (
-        <div className="bg-gradient-to-r from-amber-50 via-indigo-50 to-violet-50 border border-indigo-100 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs animate-in fade-in duration-200">
+        <div className="mb-6 bg-white border border-neutral-200/80 rounded-lg p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-200">
           <div className="flex items-center space-x-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-indigo-600/10 border border-indigo-600/20 text-indigo-700 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-indigo-600" />
+            <div className="w-10 h-10 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-black text-slate-900">
+              <h3 className="text-sm sm:text-base font-semibold tracking-tight text-[#111111]">
                 আপনার কি পূর্ববর্তী অ্যাকাউন্ট রয়েছে?
               </h3>
-              <p className="text-xs text-slate-600 mt-0.5">
+              <p className="text-xs text-[#525252] mt-0.5">
                 লগইন করলে আপনার পূর্ববর্তী ঠিকানা ও অর্ডার হিস্ট্রি যুক্ত থাকবে, অথবা আপনি অতিথি হিসেবেও ফর্ম পূরণ করে অর্ডার করতে পারেন।
               </p>
             </div>
@@ -434,7 +434,7 @@ export default function CheckoutPage({
           <button
             type="button"
             onClick={onOpenAuthModal}
-            className="shrink-0 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs sm:text-sm font-black transition-all shadow-md hover:shadow-lg flex items-center space-x-2 cursor-pointer active:scale-95"
+            className="shrink-0 min-h-[44px] sm:min-h-[36px] px-5 py-2 rounded-md bg-[#0F172A] hover:bg-slate-800 text-white text-xs sm:text-sm font-medium transition-colors flex items-center space-x-2 cursor-pointer"
           >
             <LogIn className="w-4 h-4" />
             <span>লগইন / সাইন-আপ করুন</span>
@@ -449,20 +449,18 @@ export default function CheckoutPage({
         <div className="lg:col-span-7 xl:col-span-8 space-y-6">
           
           {/* ২.১ কাস্টমার প্রোফাইল কার্ড */}
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-5">
+          <div className="bg-white border border-neutral-200/80 rounded-lg p-5 sm:p-6 space-y-5">
             
-            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-neutral-200/80">
               <div className="flex items-center space-x-3">
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold ${
-                  isAdmin ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600'
-                }`}>
+                <div className="w-10 h-10 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center shrink-0">
                   <User className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                  <h2 className="text-base sm:text-lg font-semibold tracking-tight text-[#111111]">
                     {isAdmin ? 'গ্রাহকের বিবরণ (Customer Information)' : 'ডেলিভারি ও যোগাযোগের তথ্য'}
                   </h2>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[#525252]">
                     {isAdmin
                       ? 'ডাটাবেস থেকে পুরাতন গ্রাহক নির্বাচন করুন অথবা নতুন গ্রাহক নিবন্ধন করুন'
                       : 'অর্ডার নিশ্চিত করার জন্য আপনার সঠিক নাম, ফোন নম্বর ও পূর্ণাঙ্গ ঠিকানা প্রদান করুন'}
@@ -476,14 +474,14 @@ export default function CheckoutPage({
                   <button
                     type="button"
                     onClick={handleSetWalkIn}
-                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md border border-neutral-200/80 bg-white hover:bg-[#F5F5F5] text-[#111111] text-xs font-medium transition-colors cursor-pointer"
                   >
                     ওয়াক-ইন গ্রাহক
                   </button>
                   <button
                     type="button"
                     onClick={handleClearCustomerForm}
-                    className="px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md border border-neutral-200/80 bg-[#F5F5F5] hover:bg-neutral-200/70 text-[#0F172A] text-xs font-medium transition-colors flex items-center space-x-1 cursor-pointer"
                   >
                     <UserPlus className="w-3.5 h-3.5" />
                     <span>নতুন ফর্ম</span>
@@ -495,11 +493,11 @@ export default function CheckoutPage({
             {/* গ্রাহক অনুসন্ধান ইনপুট (Live Database Search - শুধু ক্যাশিয়ার মোডে) */}
             {isAdmin && (
               <div className="relative">
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label className="block text-xs font-medium text-[#525252] mb-1.5">
                   গ্রাহক খুঁজুন (ফোন নম্বর বা নাম দিয়ে ডাটাবেস সার্চ):
                 </label>
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]" />
                 <input
                   type="text"
                   placeholder="গ্রাহকের নাম বা মোবাইল নম্বর টাইপ করুন..."
@@ -509,26 +507,27 @@ export default function CheckoutPage({
                     setCustomerSearchQuery(e.target.value);
                     setShowCustomerDropdown(true);
                   }}
-                  className="w-full pl-10 pr-4 py-2.5 sm:py-3 text-xs sm:text-sm bg-slate-50/80 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 font-medium transition-all"
+                  className="w-full min-h-[44px] sm:min-h-[36px] pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-medium text-[#111111] transition-colors"
                 />
               </div>
 
               {/* লাইভ ড্রপডাউন পপওভার */}
               {showCustomerDropdown && (
-                <div className="absolute z-30 left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl max-h-64 overflow-y-auto divide-y divide-slate-100 animate-in fade-in duration-150">
-                  <div className="p-2.5 bg-slate-50 text-[11px] font-bold text-slate-500 flex justify-between items-center px-4">
-                    <span>ডাটাবেসে সংরক্ষিত গ্রাহক তালিকা ({filteredCustomers.length})</span>
+                <div className="absolute z-30 left-0 right-0 mt-1.5 bg-white border border-neutral-200/80 rounded-lg max-h-64 overflow-y-auto divide-y divide-neutral-200/80 animate-in fade-in duration-150">
+                  <div className="p-2.5 bg-[#F5F5F5] text-[11px] font-medium text-[#525252] flex justify-between items-center px-4">
+                    <span>ডাটাবেসে সংরক্ষিত গ্রাহক তালিকা (<span className="font-mono tabular-nums">{filteredCustomers.length}</span>)</span>
                     <button
                       type="button"
                       onClick={() => setShowCustomerDropdown(false)}
-                      className="text-slate-400 hover:text-slate-600 font-bold"
+                      className="text-[#525252] hover:text-[#111111] font-medium flex items-center gap-1 cursor-pointer"
                     >
-                      বন্ধ করুন ✕
+                      <span>বন্ধ করুন</span>
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
                   {filteredCustomers.length === 0 ? (
-                    <div className="p-5 text-center text-xs text-slate-500">
+                    <div className="p-5 text-center text-xs text-[#737373]">
                       কোনো গ্রাহক পাওয়া যায়নি। নিচে সরাসরি নতুন গ্রাহকের তথ্য পূরণ করুন।
                     </div>
                   ) : (
@@ -536,26 +535,26 @@ export default function CheckoutPage({
                       <div
                         key={c.CustomerID || c.Phone}
                         onClick={() => handleSelectCustomer(c)}
-                        className="p-3.5 hover:bg-indigo-50/70 cursor-pointer transition-colors flex items-center justify-between"
+                        className="p-3.5 hover:bg-[#F5F5F5] cursor-pointer transition-colors flex items-center justify-between"
                       >
                         <div className="flex items-center space-x-3">
-                          <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-xs">
+                          <div className="w-9 h-9 rounded-md bg-[#0F172A] text-white flex items-center justify-center font-semibold text-xs">
                             {c.CustomerName ? c.CustomerName.charAt(0) : 'U'}
                           </div>
                           <div>
                             <div className="flex items-center space-x-2">
-                              <span className="text-xs font-bold text-slate-900">{c.CustomerName}</span>
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold border border-slate-200/80">
+                              <span className="text-xs font-semibold text-[#111111]">{c.CustomerName}</span>
+                              <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#F5F5F5] text-[#525252] font-medium border border-neutral-200/80">
                                 {c.CustomerType || 'Regular'}
                               </span>
                             </div>
-                            <span className="text-[11px] text-slate-500 font-medium">{c.Phone || 'মোবাইল নেই'}</span>
+                            <span className="text-[11px] text-[#525252] font-mono tabular-nums">{c.Phone || 'মোবাইল নেই'}</span>
                           </div>
                         </div>
 
                         <div className="text-right text-[11px]">
-                          <span className="text-indigo-600 font-black block">{currencySymbol}{Number(c.TotalSpent || 0).toFixed(2)}</span>
-                          <span className="text-slate-400 font-semibold">{c.TotalOrders || 0} টি অর্ডার</span>
+                          <span className="text-[#111111] font-semibold font-mono tabular-nums block">{currencySymbol}{Number(c.TotalSpent || 0).toFixed(2)}</span>
+                          <span className="text-[#737373] font-medium font-mono tabular-nums">{c.TotalOrders || 0} টি অর্ডার</span>
                         </div>
                       </div>
                     ))
@@ -567,22 +566,22 @@ export default function CheckoutPage({
 
           {/* গ্রাহক বাকির তথ্য ও ক্রেডিট লিমিট কার্ড (Customer Due & Credit Limit Pill) */}
           {selectedCustomerObj && (Number(selectedCustomerObj.CurrentDue) > 0 || Number(selectedCustomerObj.CreditLimit) > 0) && (
-            <div className={`p-3.5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in duration-200 border ${
+            <div className={`p-3.5 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in duration-200 border ${
               Number(selectedCustomerObj.CreditLimit) > 0 && Number(selectedCustomerObj.CurrentDue) > Number(selectedCustomerObj.CreditLimit)
-                ? 'bg-rose-50 border-rose-300 text-rose-950'
-                : 'bg-gradient-to-r from-amber-50 to-orange-50/60 border-amber-200/90 text-slate-800'
+                ? 'bg-red-50 border-red-200/80 text-[#B91C1C]'
+                : 'bg-amber-50 border-amber-200/80 text-[#111111]'
             }`}>
               <div className="flex items-center space-x-2.5">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                <div className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 bg-white border ${
                   Number(selectedCustomerObj.CreditLimit) > 0 && Number(selectedCustomerObj.CurrentDue) > Number(selectedCustomerObj.CreditLimit)
-                    ? 'bg-rose-200 text-rose-800'
-                    : 'bg-amber-100 text-amber-700'
+                    ? 'border-red-200/80 text-[#B91C1C]'
+                    : 'border-amber-200/80 text-[#B45309]'
                 }`}>
                   <AlertTriangle className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold text-slate-500 block">গ্রাহকের পূর্বের বকেয়া হিসাব:</span>
-                  <span className="text-sm font-black text-rose-600 font-mono">
+                  <span className="text-[11px] font-medium text-[#525252] block">গ্রাহকের পূর্বের বকেয়া হিসাব:</span>
+                  <span className="text-sm font-semibold text-[#B91C1C] font-mono tabular-nums">
                     {currencySymbol}{Number(selectedCustomerObj.CurrentDue || 0).toLocaleString()}
                   </span>
                 </div>
@@ -591,14 +590,14 @@ export default function CheckoutPage({
               <div className="flex items-center space-x-3 text-xs">
                 {Number(selectedCustomerObj.CreditLimit) > 0 ? (
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-400 block font-bold uppercase">নির্ধারিত ক্রেডিট লিমিট</span>
-                    <span className="font-bold text-slate-800 font-mono">
+                    <span className="text-[10px] text-[#737373] block font-medium uppercase">নির্ধারিত ক্রেডিট লিমিট</span>
+                    <span className="font-semibold text-[#111111] font-mono tabular-nums">
                       {currencySymbol}{Number(selectedCustomerObj.CreditLimit).toLocaleString()}
                     </span>
-                    <span className={`block text-[10px] font-bold font-mono ${
+                    <span className={`block text-[10px] font-medium font-mono tabular-nums ${
                       Number(selectedCustomerObj.CurrentDue) >= Number(selectedCustomerObj.CreditLimit)
-                        ? 'text-rose-600'
-                        : 'text-emerald-600'
+                        ? 'text-[#B91C1C]'
+                        : 'text-[#15803D]'
                     }`}>
                       {Number(selectedCustomerObj.CurrentDue) >= Number(selectedCustomerObj.CreditLimit)
                         ? `সীমা অতিক্রান্ত (-${currencySymbol}${(Number(selectedCustomerObj.CurrentDue) - Number(selectedCustomerObj.CreditLimit)).toLocaleString()})`
@@ -606,7 +605,7 @@ export default function CheckoutPage({
                     </span>
                   </div>
                 ) : (
-                  <span className="text-[10px] text-slate-400 italic">ক্রেডিট লিমিট সেট করা নেই</span>
+                  <span className="text-[10px] text-[#737373] italic">ক্রেডিট লিমিট সেট করা নেই</span>
                 )}
               </div>
             </div>
@@ -617,8 +616,8 @@ export default function CheckoutPage({
               
               {/* গ্রাহকের নাম */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <User className="w-3.5 h-3.5 text-indigo-600" />
+                <label className="block text-xs font-medium text-[#525252] mb-1.5 flex items-center gap-1">
+                  <User className="w-3.5 h-3.5 text-[#525252]" />
                   <span>গ্রাহকের নাম *</span>
                 </label>
                 <input
@@ -627,14 +626,14 @@ export default function CheckoutPage({
                   placeholder="গ্রাহকের পুরো নাম লিখুন"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50/70 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium transition-all"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3.5 py-2 text-xs sm:text-sm bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-medium text-[#111111] transition-colors"
                 />
               </div>
 
               {/* মোবাইল নম্বর */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <Phone className="w-3.5 h-3.5 text-indigo-600" />
+                <label className="block text-xs font-medium text-[#525252] mb-1.5 flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5 text-[#525252]" />
                   <span>মোবাইল নম্বর *</span>
                 </label>
                 <input
@@ -642,14 +641,14 @@ export default function CheckoutPage({
                   placeholder="যেমন: 01711-XXXXXX"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50/70 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium transition-all"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3.5 py-2 text-xs sm:text-sm bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-mono tabular-nums font-medium text-[#111111] transition-colors"
                 />
               </div>
 
               {/* ইমেইল ঠিকানা */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <Mail className="w-3.5 h-3.5 text-indigo-600" />
+                <label className="block text-xs font-medium text-[#525252] mb-1.5 flex items-center gap-1">
+                  <Mail className="w-3.5 h-3.5 text-[#525252]" />
                   <span>ইমেইল ঠিকানা (ঐচ্ছিক)</span>
                 </label>
                 <input
@@ -657,21 +656,21 @@ export default function CheckoutPage({
                   placeholder="customer@example.com"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50/70 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium transition-all"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3.5 py-2 text-xs sm:text-sm bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-medium text-[#111111] transition-colors"
                 />
               </div>
 
               {/* কাস্টমার ধরন (Type) - শুধু এডমিন / ক্যাশিয়ার */}
               {isAdmin && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                    <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
+                  <label className="block text-xs font-medium text-[#525252] mb-1.5 flex items-center gap-1">
+                    <UserCheck className="w-3.5 h-3.5 text-[#525252]" />
                     <span>গ্রাহকের ক্যাটাগরি</span>
                   </label>
                   <select
                     value={customerType}
                     onChange={(e) => setCustomerType(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50/70 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 transition-all"
+                    className="w-full min-h-[44px] sm:min-h-[36px] px-3.5 py-2 text-xs sm:text-sm bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-medium text-[#111111] transition-colors"
                   >
                     <option value="Regular">নিয়মিত খুচরা গ্রাহক (Regular)</option>
                     <option value="Wholesale">পাইকারি গ্রাহক (Wholesale)</option>
@@ -683,8 +682,8 @@ export default function CheckoutPage({
 
               {/* পূর্ণাঙ্গ ঠিকানা */}
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-indigo-600" />
+                <label className="block text-xs font-medium text-[#525252] mb-1.5 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-[#525252]" />
                   <span>গ্রাহকের ঠিকানা (ডেলিভারি বা যোগাযোগের জন্য)</span>
                 </label>
                 <input
@@ -692,14 +691,14 @@ export default function CheckoutPage({
                   placeholder="বাড়ি, রোড, এলাকা, থানা, জেলা"
                   value={customerAddress}
                   onChange={(e) => setCustomerAddress(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50/70 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium transition-all"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3.5 py-2 text-xs sm:text-sm bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-medium text-[#111111] transition-colors"
                 />
               </div>
 
               {/* অর্ডার স্পেশাল নোট */}
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                <label className="block text-xs font-medium text-[#525252] mb-1.5 flex items-center gap-1">
+                  <FileText className="w-3.5 h-3.5 text-[#525252]" />
                   <span>অর্ডার নোট বা বিশেষ মন্তব্য</span>
                 </label>
                 <input
@@ -707,7 +706,7 @@ export default function CheckoutPage({
                   placeholder="যেমন: দ্রুত ডেলিভারি দিতে হবে / বিশেষ নির্দেশনা..."
                   value={orderNotes}
                   onChange={(e) => setOrderNotes(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50/70 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium transition-all"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3.5 py-2 text-xs sm:text-sm bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-medium text-[#111111] transition-colors"
                 />
               </div>
 
@@ -716,34 +715,34 @@ export default function CheckoutPage({
           </div>
 
           {/* ২.২ পেমেন্ট মেথড ও ক্যাশ ক্যালকুলেটর সেকশন */}
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-5">
+          <div className="bg-white border border-neutral-200/80 rounded-lg p-5 sm:p-6 space-y-5">
             
-            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3.5 border-b border-neutral-200/80">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center">
                   <Banknote className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                  <h2 className="text-base sm:text-lg font-semibold tracking-tight text-[#111111]">
                     পেমেন্ট মেথড নির্বাচন (Payment Method)
                   </h2>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[#525252]">
                     গ্রাহক যেভাবে মূল্য পরিশোধ করছেন সেটি নির্বাচন করুন
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* পেমেন্ট কার্ড গ্রিড (Modern Brand Accent Cards) */}
+            {/* পেমেন্ট কার্ড গ্রিড */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
-                { id: 'Cash', label: 'নগদ টাকা (Cash)', icon: Banknote, color: 'text-emerald-600', activeBg: 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-500/20' },
-                { id: 'bKash', label: 'বিকাশ (bKash)', icon: Smartphone, color: 'text-pink-600', activeBg: 'bg-pink-50/80 border-pink-500 ring-2 ring-pink-500/20' },
-                { id: 'Nagad', label: 'নগদ (Nagad)', icon: Smartphone, color: 'text-amber-600', activeBg: 'bg-amber-50/80 border-amber-500 ring-2 ring-amber-500/20' },
-                { id: 'Rocket', label: 'রকেট (Rocket)', icon: Smartphone, color: 'text-purple-600', activeBg: 'bg-purple-50/80 border-purple-500 ring-2 ring-purple-500/20' },
-                { id: 'Card', label: 'কার্ড / POS (Card)', icon: CreditCard, color: 'text-indigo-600', activeBg: 'bg-indigo-50/80 border-indigo-500 ring-2 ring-indigo-500/20' },
-                { id: 'Due', label: 'বাকী / ক্রেডিট (Due)', icon: AlertTriangle, color: 'text-rose-600', activeBg: 'bg-rose-50/80 border-rose-500 ring-2 ring-rose-500/20' },
-                { id: 'Split', label: 'স্প্লিট পেমেন্ট (Split)', icon: Layers, color: 'text-violet-600', activeBg: 'bg-violet-50/80 border-violet-500 ring-2 ring-violet-500/20' },
+                { id: 'Cash', label: 'নগদ টাকা (Cash)', icon: Banknote },
+                { id: 'bKash', label: 'বিকাশ (bKash)', icon: Smartphone },
+                { id: 'Nagad', label: 'নগদ (Nagad)', icon: Smartphone },
+                { id: 'Rocket', label: 'রকেট (Rocket)', icon: Smartphone },
+                { id: 'Card', label: 'কার্ড / POS (Card)', icon: CreditCard },
+                { id: 'Due', label: 'বাকী / ক্রেডিট (Due)', icon: AlertTriangle },
+                { id: 'Split', label: 'স্প্লিট পেমেন্ট (Split)', icon: Layers },
               ].map((pm) => {
                 const Icon = pm.icon;
                 const isSelected = paymentMethod === pm.id;
@@ -753,21 +752,21 @@ export default function CheckoutPage({
                     key={pm.id}
                     type="button"
                     onClick={() => setPaymentMethod(pm.id)}
-                    className={`p-3.5 rounded-2xl border text-left transition-all duration-150 flex flex-col justify-between space-y-2 cursor-pointer ${
+                    className={`min-h-[44px] p-3.5 rounded-md border text-left transition-colors flex flex-col justify-between space-y-2 cursor-pointer ${
                       isSelected
-                        ? pm.activeBg
-                        : 'border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-700'
+                        ? 'border-[#0F172A] bg-[#0F172A] text-white'
+                        : 'border-neutral-200/80 bg-[#FAFAFA] hover:bg-[#F5F5F5] text-[#111111]'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className={`p-2 rounded-xl ${isSelected ? 'bg-white shadow-2xs ' + pm.color : 'bg-white text-slate-500 border border-slate-200'}`}>
+                    <div className="flex items-center justify-between w-full">
+                      <div className={`p-2 rounded-md border ${isSelected ? 'bg-white/10 text-white border-white/20' : 'bg-white text-[#525252] border-neutral-200/80'}`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       {isSelected && (
-                        <CheckCircle className={`w-4 h-4 ${pm.color}`} />
+                        <CheckCircle className="w-4 h-4 text-white" />
                       )}
                     </div>
-                    <span className="text-xs font-black text-slate-800">
+                    <span className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-[#111111]'}`}>
                       {pm.label}
                     </span>
                   </button>
@@ -777,15 +776,15 @@ export default function CheckoutPage({
 
             {/* নগদ প্রদান ক্যালকুলেটর (Modern Change Calculator - শুধু ক্যাশিয়ার / এডমিন মোডে) */}
             {isAdmin && paymentMethod === 'Cash' && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-4 animate-in fade-in duration-150">
+              <div className="p-4 sm:p-5 rounded-lg bg-[#FAFAFA] border border-neutral-200/80 space-y-4 animate-in fade-in duration-150">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800">নগদ প্রদান ক্যালকুলেটর</h4>
-                    <p className="text-[11px] text-slate-500">গ্রাহকের কাছ থেকে নেওয়া টাকার পরিমাণ লিখুন</p>
+                    <h4 className="text-xs font-semibold text-[#111111]">নগদ প্রদান ক্যালকুলেটর</h4>
+                    <p className="text-[11px] text-[#525252]">গ্রাহকের কাছ থেকে নেওয়া টাকার পরিমাণ লিখুন</p>
                   </div>
                   
                   {/* কুইক শর্টকাট বাটনসমূহ */}
-                  <div className="flex items-center space-x-1.5 flex-wrap">
+                  <div className="flex items-center space-x-1.5 flex-wrap gap-y-1.5">
                     {[grandTotal, Math.ceil(grandTotal / 500) * 500, Math.ceil(grandTotal / 1000) * 1000].map((amt, idx) => {
                       if (!amt || isNaN(amt)) return null;
                       return (
@@ -793,7 +792,7 @@ export default function CheckoutPage({
                           key={idx}
                           type="button"
                           onClick={() => setReceivedCash(amt.toString())}
-                          className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 text-[11px] font-bold text-slate-700 transition-all shadow-2xs"
+                          className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 rounded-md bg-white border border-neutral-200/80 hover:border-[#0F172A] text-[11px] font-medium font-mono tabular-nums text-[#111111] transition-colors cursor-pointer"
                         >
                           {currencySymbol}{amt}
                         </button>
@@ -804,7 +803,7 @@ export default function CheckoutPage({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-center">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    <label className="block text-[11px] font-medium text-[#525252] mb-1">
                       গ্রহণকৃত নগদ টাকা ({currencySymbol}):
                     </label>
                     <input
@@ -814,18 +813,18 @@ export default function CheckoutPage({
                       placeholder="0.00"
                       value={receivedCash}
                       onChange={(e) => setReceivedCash(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-base sm:text-lg font-black bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 text-slate-900"
+                      className="w-full min-h-[44px] px-3.5 py-2.5 text-base sm:text-lg font-semibold font-mono tabular-nums bg-white border border-neutral-200/80 rounded-md focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] text-[#111111]"
                     />
                   </div>
 
                   {/* ফেরত দেওয়ার ডিজিটাল ডিসপ্লে */}
-                  <div className="p-3.5 rounded-2xl bg-white border border-slate-200/90 flex flex-col justify-center shadow-2xs">
-                    <span className="text-[11px] font-bold text-slate-500">গ্রাহককে ফেরত দিতে হবে (Change):</span>
-                    <span className={`text-xl sm:text-2xl font-black tracking-tight ${cashGiven >= grandTotal ? 'text-emerald-600' : 'text-slate-400'}`}>
+                  <div className="p-3.5 rounded-lg bg-white border border-neutral-200/80 flex flex-col justify-center">
+                    <span className="text-[11px] font-medium text-[#525252]">গ্রাহককে ফেরত দিতে হবে (Change):</span>
+                    <span className={`text-xl sm:text-2xl font-semibold font-mono tabular-nums tracking-tight ${cashGiven >= grandTotal ? 'text-[#15803D]' : 'text-[#737373]'}`}>
                       {currencySymbol}{changeDue.toFixed(2)}
                     </span>
                     {shortAmount > 0 && cashGiven > 0 && (
-                      <span className="text-[11px] text-rose-600 font-bold mt-0.5">
+                      <span className="text-[11px] text-[#B91C1C] font-medium font-mono tabular-nums mt-0.5">
                         (আরও {currencySymbol}{shortAmount.toFixed(2)} টাকা বাকী রয়েছে)
                       </span>
                     )}
@@ -836,21 +835,21 @@ export default function CheckoutPage({
 
             {/* গ্রাহক / অতিথি মোডে ক্যাশ অন ডেলিভারি বার্তা */}
             {!isAdmin && paymentMethod === 'Cash' && (
-              <div className="p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 text-emerald-800 text-xs flex items-center space-x-3 animate-in fade-in duration-150">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-700 flex items-center justify-center shrink-0">
-                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+              <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200/80 text-[#15803D] text-xs flex items-center space-x-3 animate-in fade-in duration-150">
+                <div className="w-8 h-8 rounded-md bg-white border border-emerald-200/80 text-[#15803D] flex items-center justify-center shrink-0">
+                  <CheckCircle className="w-4 h-4" />
                 </div>
                 <div>
-                  <strong className="block text-emerald-950 font-bold">ক্যাশ অন ডেলিভারি (Cash on Delivery):</strong>
-                  <span className="text-emerald-700">পণ্য হাতে পেয়ে দেখে ডেলিভারিম্যানকে নগদ মূল্য পরিশোধ করবেন। কোনো অগ্রিম পেমেন্টের প্রয়োজন নেই।</span>
+                  <strong className="block text-[#111111] font-semibold">ক্যাশ অন ডেলিভারি (Cash on Delivery):</strong>
+                  <span className="text-[#15803D]">পণ্য হাতে পেয়ে দেখে ডেলিভারিম্যানকে নগদ মূল্য পরিশোধ করবেন। কোনো অগ্রিম পেমেন্টের প্রয়োজন নেই।</span>
                 </div>
               </div>
             )}
 
             {/* মোবাইল ব্যাংকিং বা কার্ড ট্রানজেকশন আইডি */}
             {(paymentMethod === 'bKash' || paymentMethod === 'Nagad' || paymentMethod === 'Rocket' || paymentMethod === 'Card') && (
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2 animate-in fade-in duration-150">
-                <label className="block text-xs font-bold text-slate-700">
+              <div className="p-4 rounded-lg bg-[#FAFAFA] border border-neutral-200/80 space-y-2 animate-in fade-in duration-150">
+                <label className="block text-xs font-medium text-[#525252]">
                   ট্রানজেকশন আইডি / পেমেন্ট রেফারেন্স (TrxID / Ref No - ঐচ্ছিক):
                 </label>
                 <input
@@ -858,22 +857,22 @@ export default function CheckoutPage({
                   placeholder="যেমন: TRXB9828731 বা স্লিপ #120"
                   value={transactionRef}
                   onChange={(e) => setTransactionRef(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                  className="w-full min-h-[44px] sm:min-h-[36px] px-3.5 py-2 text-xs sm:text-sm bg-white border border-neutral-200/80 rounded-md focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-mono text-[#111111]"
                 />
               </div>
             )}
 
             {/* স্প্লিট পেমেন্ট (Split Payment Mode) ইন্টারফেস */}
             {paymentMethod === 'Split' && (
-              <div className="p-4 sm:p-5 rounded-3xl bg-slate-50 border border-slate-200/90 space-y-4 animate-in fade-in duration-150">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
+              <div className="p-4 sm:p-5 rounded-lg bg-[#FAFAFA] border border-neutral-200/80 space-y-4 animate-in fade-in duration-150">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-neutral-200/80">
                   <div>
-                    <h4 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
-                      <Layers className="w-4 h-4 text-violet-600" />
+                    <h4 className="text-sm font-semibold tracking-tight text-[#111111] flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-[#0F172A]" />
                       <span>বহুবিধ মাধ্যমে পেমেন্ট ভাগ করুন (Split Payment)</span>
                     </h4>
-                    <p className="text-[11px] text-slate-500">
-                      মোট বিল: <strong className="text-slate-800 font-bold">{currencySymbol}{grandTotal}</strong>
+                    <p className="text-[11px] text-[#525252]">
+                      মোট বিল: <strong className="text-[#111111] font-semibold font-mono tabular-nums">{currencySymbol}{grandTotal}</strong>
                     </p>
                   </div>
 
@@ -885,7 +884,7 @@ export default function CheckoutPage({
                         const rem = Math.max(0, parseFloat((grandTotal - paidOthers).toFixed(2)));
                         setSplitPayments(prev => ({ ...prev, cash: rem > 0 ? rem.toString() : '' }));
                       }}
-                      className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 transition-all cursor-pointer shadow-2xs"
+                      className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 bg-white hover:bg-[#F5F5F5] border border-neutral-200/80 rounded-md text-[10px] font-medium text-[#111111] transition-colors cursor-pointer"
                     >
                       অবশিষ্ট নগদে দিন
                     </button>
@@ -895,7 +894,7 @@ export default function CheckoutPage({
                         const rem = Math.max(0, parseFloat((grandTotal - splitTotalPaid).toFixed(2)));
                         setSplitPayments(prev => ({ ...prev, due: rem > 0 ? rem.toString() : '' }));
                       }}
-                      className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg text-[10px] font-bold text-rose-700 transition-all cursor-pointer shadow-2xs"
+                      className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 bg-red-50 hover:bg-red-100 border border-red-200/80 rounded-md text-[10px] font-medium text-[#B91C1C] transition-colors cursor-pointer"
                     >
                       অবশিষ্ট বাকীতে লিখুন
                     </button>
@@ -904,13 +903,13 @@ export default function CheckoutPage({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   {/* ১. নগদ (Cash) */}
-                  <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
-                    <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <div className="bg-white p-3 rounded-lg border border-neutral-200/80">
+                    <label className="block text-xs font-medium text-[#111111] mb-1 flex items-center justify-between">
                       <span className="flex items-center gap-1">
-                        <Banknote className="w-3.5 h-3.5 text-emerald-600" />
+                        <Banknote className="w-3.5 h-3.5 text-[#15803D]" />
                         <span>নগদ পরিশোধ (Cash):</span>
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono">{currencySymbol}</span>
+                      <span className="text-[10px] text-[#737373] font-mono">{currencySymbol}</span>
                     </label>
                     <input
                       type="number"
@@ -919,18 +918,18 @@ export default function CheckoutPage({
                       placeholder="0.00"
                       value={splitPayments.cash}
                       onChange={(e) => setSplitPayments(prev => ({ ...prev, cash: e.target.value }))}
-                      className="w-full px-3 py-2 text-sm font-black bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                      className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm font-semibold bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-mono tabular-nums"
                     />
                   </div>
 
                   {/* ২. বিকাশ (bKash) */}
-                  <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
-                    <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <div className="bg-white p-3 rounded-lg border border-neutral-200/80">
+                    <label className="block text-xs font-medium text-[#111111] mb-1 flex items-center justify-between">
                       <span className="flex items-center gap-1">
-                        <Smartphone className="w-3.5 h-3.5 text-pink-600" />
+                        <Smartphone className="w-3.5 h-3.5 text-[#0F172A]" />
                         <span>বিকাশ (bKash):</span>
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono">{currencySymbol}</span>
+                      <span className="text-[10px] text-[#737373] font-mono">{currencySymbol}</span>
                     </label>
                     <div className="space-y-1.5">
                       <input
@@ -940,7 +939,7 @@ export default function CheckoutPage({
                         placeholder="0.00"
                         value={splitPayments.bkash}
                         onChange={(e) => setSplitPayments(prev => ({ ...prev, bkash: e.target.value }))}
-                        className="w-full px-3 py-2 text-sm font-black bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono"
+                        className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm font-semibold bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-mono tabular-nums"
                       />
                       {Number(splitPayments.bkash) > 0 && (
                         <input
@@ -948,20 +947,20 @@ export default function CheckoutPage({
                           placeholder="bKash TrxID (যেমন: TRXB9828731)"
                           value={splitTrxRefs.bkash}
                           onChange={(e) => setSplitTrxRefs(prev => ({ ...prev, bkash: e.target.value }))}
-                          className="w-full px-2.5 py-1 text-[11px] bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-pink-500"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-2.5 py-1 text-[11px] bg-[#FAFAFA] border border-neutral-200/80 rounded-md font-mono focus:bg-white focus:outline-none focus:border-[#0F172A]"
                         />
                       )}
                     </div>
                   </div>
 
                   {/* ৩. নগদ (Nagad) */}
-                  <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
-                    <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <div className="bg-white p-3 rounded-lg border border-neutral-200/80">
+                    <label className="block text-xs font-medium text-[#111111] mb-1 flex items-center justify-between">
                       <span className="flex items-center gap-1">
-                        <Smartphone className="w-3.5 h-3.5 text-amber-600" />
+                        <Smartphone className="w-3.5 h-3.5 text-[#B45309]" />
                         <span>নগদ (Nagad MFS):</span>
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono">{currencySymbol}</span>
+                      <span className="text-[10px] text-[#737373] font-mono">{currencySymbol}</span>
                     </label>
                     <div className="space-y-1.5">
                       <input
@@ -971,7 +970,7 @@ export default function CheckoutPage({
                         placeholder="0.00"
                         value={splitPayments.nagad}
                         onChange={(e) => setSplitPayments(prev => ({ ...prev, nagad: e.target.value }))}
-                        className="w-full px-3 py-2 text-sm font-black bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+                        className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm font-semibold bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-mono tabular-nums"
                       />
                       {Number(splitPayments.nagad) > 0 && (
                         <input
@@ -979,20 +978,20 @@ export default function CheckoutPage({
                           placeholder="Nagad TrxID (ঐচ্ছিক)"
                           value={splitTrxRefs.nagad}
                           onChange={(e) => setSplitTrxRefs(prev => ({ ...prev, nagad: e.target.value }))}
-                          className="w-full px-2.5 py-1 text-[11px] bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-2.5 py-1 text-[11px] bg-[#FAFAFA] border border-neutral-200/80 rounded-md font-mono focus:bg-white focus:outline-none focus:border-[#0F172A]"
                         />
                       )}
                     </div>
                   </div>
 
                   {/* ৪. কার্ড / POS (Card) */}
-                  <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
-                    <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <div className="bg-white p-3 rounded-lg border border-neutral-200/80">
+                    <label className="block text-xs font-medium text-[#111111] mb-1 flex items-center justify-between">
                       <span className="flex items-center gap-1">
-                        <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
+                        <CreditCard className="w-3.5 h-3.5 text-[#0F172A]" />
                         <span>কার্ড / POS (Card):</span>
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono">{currencySymbol}</span>
+                      <span className="text-[10px] text-[#737373] font-mono">{currencySymbol}</span>
                     </label>
                     <div className="space-y-1.5">
                       <input
@@ -1002,7 +1001,7 @@ export default function CheckoutPage({
                         placeholder="0.00"
                         value={splitPayments.card}
                         onChange={(e) => setSplitPayments(prev => ({ ...prev, card: e.target.value }))}
-                        className="w-full px-3 py-2 text-sm font-black bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                        className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm font-semibold bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:bg-white focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-mono tabular-nums"
                       />
                       {Number(splitPayments.card) > 0 && (
                         <input
@@ -1010,20 +1009,20 @@ export default function CheckoutPage({
                           placeholder="কার্ড স্লিপ / Auth Ref (ঐচ্ছিক)"
                           value={splitTrxRefs.card}
                           onChange={(e) => setSplitTrxRefs(prev => ({ ...prev, card: e.target.value }))}
-                          className="w-full px-2.5 py-1 text-[11px] bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-2.5 py-1 text-[11px] bg-[#FAFAFA] border border-neutral-200/80 rounded-md font-mono focus:bg-white focus:outline-none focus:border-[#0F172A]"
                         />
                       )}
                     </div>
                   </div>
 
                   {/* ৫. বাকী / ক্রেডিট (Due) */}
-                  <div className="sm:col-span-2 bg-rose-50/70 p-3.5 rounded-2xl border border-rose-200 shadow-2xs">
-                    <label className="block text-xs font-bold text-rose-800 mb-1 flex items-center justify-between">
+                  <div className="sm:col-span-2 bg-red-50 p-3.5 rounded-lg border border-red-200/80">
+                    <label className="block text-xs font-medium text-[#B91C1C] mb-1 flex items-center justify-between">
                       <span className="flex items-center gap-1">
-                        <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                        <AlertTriangle className="w-3.5 h-3.5 text-[#B91C1C]" />
                         <span>বাকী / বকেয়া রাখা হবে (Due / Credit):</span>
                       </span>
-                      <span className="text-[10px] text-rose-600 font-mono font-bold">{currencySymbol}</span>
+                      <span className="text-[10px] text-[#B91C1C] font-mono font-semibold">{currencySymbol}</span>
                     </label>
                     <input
                       type="number"
@@ -1032,10 +1031,10 @@ export default function CheckoutPage({
                       placeholder="0.00"
                       value={splitPayments.due}
                       onChange={(e) => setSplitPayments(prev => ({ ...prev, due: e.target.value }))}
-                      className="w-full px-3.5 py-2 text-base font-black bg-white border border-rose-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono text-rose-700"
+                      className="w-full min-h-[44px] sm:min-h-[36px] px-3.5 py-2 text-base font-semibold bg-white border border-red-200/80 rounded-md focus:outline-none focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] font-mono tabular-nums text-[#B91C1C]"
                     />
                     {Number(splitPayments.due) > 0 && (
-                      <p className="text-[10px] text-rose-600 font-bold mt-1">
+                      <p className="text-[10px] text-[#B91C1C] font-medium mt-1">
                         * এই পরিমাণ টাকা কাস্টমারের বাকির খাতা ও লেজারে স্বয়ংক্রিয়ভাবে বকেয়া হিসেবে যোগ হবে।
                       </p>
                     )}
@@ -1043,31 +1042,31 @@ export default function CheckoutPage({
                 </div>
 
                 {/* স্প্লিট ব্যালেন্স স্ট্যাটাস বার */}
-                <div className={`p-3 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-bold ${
+                <div className={`p-3 rounded-md border flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-medium ${
                   Math.abs(splitSum - grandTotal) < 0.05
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                    : 'bg-amber-50 text-amber-900 border-amber-300'
+                    ? 'bg-emerald-50 text-[#15803D] border-emerald-200/80'
+                    : 'bg-amber-50 text-[#B45309] border-amber-200/80'
                 }`}>
                   <div className="flex items-center space-x-3 flex-wrap">
-                    <span>পরিশোধ: <strong className="text-emerald-700 font-mono font-black">{currencySymbol}{splitTotalPaid}</strong></span>
+                    <span>পরিশোধ: <strong className="text-[#15803D] font-mono tabular-nums font-semibold">{currencySymbol}{splitTotalPaid}</strong></span>
                     <span>•</span>
-                    <span>বাকী: <strong className="text-rose-600 font-mono font-black">{currencySymbol}{splitDue}</strong></span>
+                    <span>বাকী: <strong className="text-[#B91C1C] font-mono tabular-nums font-semibold">{currencySymbol}{splitDue}</strong></span>
                     <span>•</span>
-                    <span>মোট: <strong className="font-mono">{currencySymbol}{splitSum}</strong></span>
+                    <span>মোট: <strong className="font-mono tabular-nums">{currencySymbol}{splitSum}</strong></span>
                   </div>
 
                   <div>
                     {Math.abs(splitSum - grandTotal) < 0.05 ? (
-                      <span className="flex items-center gap-1 text-emerald-700 font-bold">
-                        <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      <span className="flex items-center gap-1 text-[#15803D] font-medium">
+                        <CheckCircle className="w-4 h-4 text-[#15803D]" />
                         <span>মোট বিলের সাথে শতভাগ মিলেছে</span>
                       </span>
                     ) : splitSum < grandTotal ? (
-                      <span className="text-rose-600 font-bold">
+                      <span className="text-[#B91C1C] font-medium font-mono tabular-nums">
                         আরও {currencySymbol}{(grandTotal - splitSum).toFixed(2)} টাকা মেলানো বাকি
                       </span>
                     ) : (
-                      <span className="text-amber-700 font-bold">
+                      <span className="text-[#B45309] font-medium font-mono tabular-nums">
                         বিল থেকে {currencySymbol}{(splitSum - grandTotal).toFixed(2)} টাকা অতিরিক্ত ইনপুট হয়েছে
                       </span>
                     )}
@@ -1078,11 +1077,11 @@ export default function CheckoutPage({
 
             {/* বাকী বিক্রয় অ্যালার্ট */}
             {paymentMethod === 'Due' && (
-              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start space-x-3 text-rose-900 text-xs animate-in fade-in duration-150">
-                <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+              <div className="p-4 rounded-lg bg-red-50 border border-red-200/80 flex items-start space-x-3 text-[#B91C1C] text-xs animate-in fade-in duration-150">
+                <AlertTriangle className="w-5 h-5 text-[#B91C1C] flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold">বাকী / ক্রেডিট বিক্রয় সতর্কতা</h4>
-                  <p className="text-rose-700 mt-0.5 font-medium">
+                  <h4 className="font-semibold">বাকী / ক্রেডিট বিক্রয় সতর্কতা</h4>
+                  <p className="text-[#B91C1C] mt-0.5 font-medium">
                     এই বিক্রয়টি বকেয়া হিসেবে লিপিবদ্ধ হবে। অনুগ্রহ করে নিশ্চিত করুন যে গ্রাহকের নাম ও মোবাইল নম্বর সঠিকভাবে পূরণ করা হয়েছে।
                   </p>
                 </div>
@@ -1096,15 +1095,15 @@ export default function CheckoutPage({
               const exceededBy = (customerCurrentDue + currentDueAmt) - customerCreditLimit;
               if (!isOverLimit) return null;
               return (
-                <div className="p-4 rounded-2xl bg-rose-100 border-2 border-rose-500 flex items-start space-x-3 text-rose-950 text-xs animate-in fade-in duration-150 shadow-sm">
-                  <AlertCircle className="w-5 h-5 text-rose-700 flex-shrink-0 mt-0.5" />
+                <div className="p-4 rounded-lg bg-red-50 border border-red-300 flex items-start space-x-3 text-[#B91C1C] text-xs animate-in fade-in duration-150">
+                  <AlertCircle className="w-5 h-5 text-[#B91C1C] flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <h4 className="font-black text-sm text-rose-900">⚠️ ক্রেডিট লিমিট অতিক্রান্ত! (Credit Limit Exceeded)</h4>
-                    <p className="text-rose-800 mt-0.5 font-semibold">
-                      গ্রাহকের ক্রেডিট লিমিট: <strong>{currencySymbol}{customerCreditLimit.toLocaleString()}</strong> | পূর্বের বকেয়া: <strong>{currencySymbol}{customerCurrentDue.toLocaleString()}</strong> | নতুন বাকি: <strong>{currencySymbol}{currentDueAmt.toLocaleString()}</strong>
+                    <h4 className="font-semibold text-sm text-[#B91C1C]">ক্রেডিট লিমিট অতিক্রান্ত! (Credit Limit Exceeded)</h4>
+                    <p className="text-[#B91C1C] mt-0.5 font-medium">
+                      গ্রাহকের ক্রেডিট লিমিট: <strong className="font-mono tabular-nums">{currencySymbol}{customerCreditLimit.toLocaleString()}</strong> | পূর্বের বকেয়া: <strong className="font-mono tabular-nums">{currencySymbol}{customerCurrentDue.toLocaleString()}</strong> | নতুন বাকি: <strong className="font-mono tabular-nums">{currencySymbol}{currentDueAmt.toLocaleString()}</strong>
                     </p>
-                    <p className="text-rose-950 font-black mt-1">
-                      মোট বকেয়া হবে {currencySymbol}{(customerCurrentDue + currentDueAmt).toLocaleString()} (নির্ধারিত সীমার চেয়ে {currencySymbol}{exceededBy.toLocaleString()} টাকা অতিরিক্ত)।
+                    <p className="text-[#B91C1C] font-semibold mt-1">
+                      মোট বকেয়া হবে <span className="font-mono tabular-nums">{currencySymbol}{(customerCurrentDue + currentDueAmt).toLocaleString()}</span> (নির্ধারিত সীমার চেয়ে <span className="font-mono tabular-nums">{currencySymbol}{exceededBy.toLocaleString()}</span> টাকা অতিরিক্ত)।
                     </p>
                   </div>
                 </div>
@@ -1118,60 +1117,60 @@ export default function CheckoutPage({
         {/* ডান কলাম: চূড়ান্ত অর্ডার সারসংক্ষেপ ও চেকআউট অ্যাকশন (৪ কলাম) */}
         <div className="lg:col-span-5 xl:col-span-4 space-y-4 sticky top-24">
           
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-sm space-y-5">
+          <div className="bg-white border border-neutral-200/80 rounded-lg p-5 sm:p-6 space-y-5">
             
-            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3.5 border-b border-neutral-200/80">
               <div className="flex items-center space-x-2.5">
                 <StoreLogo
                   url={settings?.LogoUrl || settings?.logoUrl}
                   alt={settings?.StoreName || 'স্টোর'}
-                  className="w-9 h-9 object-contain rounded-xl border border-slate-200 p-0.5 bg-white shadow-2xs"
+                  className="w-9 h-9 object-contain rounded-md border border-neutral-200/80 p-0.5 bg-white"
                   fallbackIcon={Receipt}
-                  fallbackClassName="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"
+                  fallbackClassName="w-9 h-9 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center"
                   iconClassName="w-5 h-5"
                 />
                 <div>
-                  <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                  <h3 className="text-sm sm:text-base font-semibold tracking-tight text-[#111111] leading-tight">
                     {settings?.StoreName || 'চূড়ান্ত সারসংক্ষেপ'}
                   </h3>
-                  <p className="text-[10px] text-slate-400 font-medium">অর্ডার ভেরিফিকেশন ও সামারি</p>
+                  <p className="text-[10px] text-[#737373] font-medium">অর্ডার ভেরিফিকেশন ও সামারি</p>
                 </div>
               </div>
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+              <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 font-mono tabular-nums">
                 {totalUnits} আইটেম
               </span>
             </div>
 
             {/* কার্ট আইটেমস প্রিভিউ */}
-            <div className="space-y-2.5 max-h-52 overflow-y-auto pr-1 divide-y divide-slate-100">
+            <div className="space-y-2.5 max-h-52 overflow-y-auto pr-1 divide-y divide-neutral-200/80">
               {cartItems.map((item) => {
                 const itemKey = item.cartItemId || (item.variantId ? `${item.productId}__${item.variantId}` : item.productId);
                 return (
                   <div key={itemKey} className="pt-2 first:pt-0 flex items-center justify-between text-xs">
                     <div className="min-w-0 flex-1 pr-2">
-                      <p className="font-bold text-slate-900 truncate">
+                      <p className="font-semibold text-[#111111] truncate">
                         {item.productName}
                         {item.variantName && (
-                          <span className="ml-1.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">
+                          <span className="ml-1.5 text-[10px] font-medium text-[#525252] bg-[#F5F5F5] px-1.5 py-0.5 rounded-md border border-neutral-200/80">
                             {item.variantName}
                           </span>
                         )}
                         {item.isBundle && (
-                          <span className="ml-1 text-[9px] font-bold text-purple-700 bg-purple-50 px-1 py-0.5 rounded border border-purple-100">
+                          <span className="ml-1 text-[9px] font-medium text-[#525252] bg-[#F5F5F5] px-1 py-0.5 rounded-md border border-neutral-200/80">
                             কম্বো
                           </span>
                         )}
                       </p>
-                      <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 flex-wrap">
+                      <p className="text-[11px] text-[#525252] font-mono tabular-nums flex items-center gap-1.5 flex-wrap">
                         <span>{formatFabricQuantity(item.quantity, item.unit)} × {currencySymbol}{Number(item.sellingPrice).toFixed(2)}</span>
                         {item.isBargained && (
-                          <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1 py-0.2 rounded">
+                          <span className="text-[9px] font-sans font-medium text-[#15803D] bg-emerald-50 border border-emerald-200/80 px-1 py-0.5 rounded-md">
                             দরদামকৃত
                           </span>
                         )}
                       </p>
                     </div>
-                    <span className="font-black text-slate-900">
+                    <span className="font-semibold text-[#111111] font-mono tabular-nums">
                       {currencySymbol}{((Number(item.sellingPrice) || 0) * (Number(item.quantity) || 0)).toFixed(2)}
                     </span>
                   </div>
@@ -1181,22 +1180,22 @@ export default function CheckoutPage({
 
             {/* লয়ালটি পয়েন্ট রিওয়ার্ড কার্ড */}
             {loyaltyEnabled && (
-              <div className="p-3.5 bg-gradient-to-br from-purple-50/80 via-indigo-50/40 to-purple-50/60 border border-purple-200/90 rounded-2xl space-y-2.5 shadow-2xs">
-                <div className="flex items-center justify-between">
+              <div className="p-3.5 bg-[#F5F5F5] border border-neutral-200/80 rounded-lg space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold text-xs">
-                      🪙
+                    <div className="w-7 h-7 rounded-md bg-[#0F172A] text-white flex items-center justify-center font-medium text-xs shrink-0">
+                      <Sparkles className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <div className="text-xs font-black text-slate-800">লয়ালটি পয়েন্ট রিওয়ার্ড</div>
-                      <div className="text-[10px] text-slate-500">
-                        উপলব্ধ ব্যালেন্স: <strong className="text-purple-700 font-bold">{availableLoyaltyPoints}</strong> পয়েন্ট
+                      <div className="text-xs font-semibold text-[#111111]">লয়ালটি পয়েন্ট রিওয়ার্ড</div>
+                      <div className="text-[10px] text-[#525252]">
+                        উপলব্ধ ব্যালেন্স: <strong className="text-[#111111] font-semibold font-mono tabular-nums">{availableLoyaltyPoints}</strong> পয়েন্ট
                       </div>
                     </div>
                   </div>
 
                   {availableLoyaltyPoints >= minRedeemPoints ? (
-                    <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-purple-700">
+                    <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-[#0F172A]">
                       <input
                         type="checkbox"
                         checked={isRedeemingLoyalty}
@@ -1206,12 +1205,12 @@ export default function CheckoutPage({
                             setLoyaltyPointsToRedeem(Math.min(availableLoyaltyPoints, maxRedeemablePoints).toString());
                           }
                         }}
-                        className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                        className="rounded accent-[#0F172A] w-4 h-4 cursor-pointer"
                       />
                       <span>ভাঙিয়ে ছাড় নিন</span>
                     </label>
                   ) : (
-                    <span className="text-[10px] text-slate-400 font-medium">
+                    <span className="text-[10px] text-[#737373] font-medium font-mono tabular-nums">
                       (ন্যূনতম {minRedeemPoints} পয়েন্ট আবশ্যক)
                     </span>
                   )}
@@ -1219,7 +1218,7 @@ export default function CheckoutPage({
 
                 {/* পয়েন্ট ইনপুট ফিল্ড (যখন রিডিম সক্রিয় করা হয়) */}
                 {isRedeemingLoyalty && availableLoyaltyPoints >= minRedeemPoints && (
-                  <div className="pt-2 border-t border-purple-200/70 flex items-center gap-2">
+                  <div className="pt-2 border-t border-neutral-200/80 flex items-center gap-2">
                     <div className="relative flex-1">
                       <input
                         type="number"
@@ -1228,10 +1227,10 @@ export default function CheckoutPage({
                         value={loyaltyPointsToRedeem}
                         onChange={(e) => setLoyaltyPointsToRedeem(e.target.value)}
                         placeholder={`সর্বোচ্চ ${maxRedeemablePoints}`}
-                        className="w-full px-3 py-1.5 text-xs bg-white border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-bold text-purple-900"
+                        className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-1.5 text-xs bg-white border border-neutral-200/80 rounded-md focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] font-semibold font-mono tabular-nums text-[#111111]"
                       />
                     </div>
-                    <span className="text-xs font-black text-purple-700 shrink-0">
+                    <span className="text-xs font-semibold font-mono tabular-nums text-[#15803D] shrink-0">
                       = -{currencySymbol}{(Number(loyaltyPointsToRedeem || 0) * loyaltyRedeemRate).toFixed(2)} ছাড়
                     </span>
                   </div>
@@ -1239,43 +1238,43 @@ export default function CheckoutPage({
 
                 {/* এই কেনাকাটায় অর্জিত পয়েন্ট ব্যাজ */}
                 {newlyEarnedPoints > 0 && (
-                  <div className="text-[11px] font-bold text-emerald-700 bg-white/80 border border-emerald-200/80 px-2.5 py-1 rounded-xl flex items-center justify-between">
+                  <div className="text-[11px] font-medium text-[#15803D] bg-white border border-emerald-200/80 px-2.5 py-1.5 rounded-md flex items-center justify-between">
                     <span className="flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      <Sparkles className="w-3.5 h-3.5 text-[#15803D]" />
                       <span>এই কেনাকাটায় অর্জন হবে:</span>
                     </span>
-                    <span className="font-mono font-black text-emerald-800">+{newlyEarnedPoints} পয়েন্ট</span>
+                    <span className="font-mono tabular-nums font-semibold text-[#15803D]">+{newlyEarnedPoints} পয়েন্ট</span>
                   </div>
                 )}
               </div>
             )}
 
             {/* স্টোর ক্রেডিট ভাউচার নোট বক্স (Phase 7) */}
-            <div className="p-3 bg-gradient-to-r from-amber-50/70 to-indigo-50/70 border border-amber-200/80 rounded-2xl space-y-2">
+            <div className="p-3 bg-[#F5F5F5] border border-neutral-200/80 rounded-lg space-y-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-800">
-                  <Ticket className="w-4 h-4 text-amber-600" />
+                <div className="flex items-center space-x-1.5 text-xs font-semibold text-[#111111]">
+                  <Ticket className="w-4 h-4 text-[#B45309]" />
                   <span>স্টোর ক্রেডিট ভাউচার</span>
                 </div>
                 {appliedStoreCredit && (
-                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] bg-emerald-50 text-[#15803D] border border-emerald-200/80 font-medium px-2 py-0.5 rounded-md">
                     প্রযুক্ত
                   </span>
                 )}
               </div>
 
               {appliedStoreCredit ? (
-                <div className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-emerald-200">
+                <div className="flex items-center justify-between bg-white p-2.5 rounded-md border border-emerald-200/80">
                   <div>
-                    <span className="font-mono font-bold text-xs text-indigo-700 block">{appliedStoreCredit.code}</span>
-                    <span className="text-[10px] text-emerald-700 font-semibold">
+                    <span className="font-mono tabular-nums font-semibold text-xs text-[#111111] block">{appliedStoreCredit.code}</span>
+                    <span className="text-[10px] text-[#15803D] font-medium font-mono tabular-nums">
                       ভাউচার ব্যালেন্স: {currencySymbol}{appliedStoreCredit.amount.toFixed(2)} (ছাড়: -{currencySymbol}{storeCreditDiscount.toFixed(2)})
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={handleRemoveStoreCredit}
-                    className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                    className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-1.5 text-[#737373] hover:text-[#B91C1C] transition-colors flex items-center justify-center cursor-pointer"
                     title="ভাউচার বাতিল"
                   >
                     <X className="w-4 h-4" />
@@ -1288,12 +1287,12 @@ export default function CheckoutPage({
                     placeholder="SCN-XXXXXX কোড দিন"
                     value={storeCreditCodeInput}
                     onChange={(e) => setStoreCreditCodeInput(e.target.value)}
-                    className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-xl bg-white font-mono uppercase focus:ring-1 focus:ring-indigo-500"
+                    className="flex-1 min-h-[44px] sm:min-h-[36px] px-3 py-1.5 text-xs border border-neutral-200/80 rounded-md bg-white font-mono uppercase focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A]"
                   />
                   <button
                     type="submit"
                     disabled={!storeCreditCodeInput.trim()}
-                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold disabled:opacity-40 transition-colors shadow-2xs"
+                    className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-medium disabled:opacity-40 transition-colors cursor-pointer"
                   >
                     প্রয়োগ
                   </button>
@@ -1301,7 +1300,7 @@ export default function CheckoutPage({
               )}
 
               {storeCreditError && (
-                <div className="flex items-center space-x-1 text-[10px] text-rose-600 font-bold">
+                <div className="flex items-center space-x-1 text-[10px] text-[#B91C1C] font-medium">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{storeCreditError}</span>
                 </div>
@@ -1309,49 +1308,49 @@ export default function CheckoutPage({
             </div>
 
             {/* খরচ ও মোট টাকার তালিকা */}
-            <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs sm:text-sm">
-              <div className="flex justify-between text-slate-600">
+            <div className="space-y-2.5 pt-3 border-t border-neutral-200/80 text-xs sm:text-sm">
+              <div className="flex justify-between text-[#525252]">
                 <span>উপ-মোট (Subtotal):</span>
-                <span className="font-bold text-slate-800">{currencySymbol}{subTotal.toFixed(2)}</span>
+                <span className="font-semibold text-[#111111] font-mono tabular-nums">{currencySymbol}{subTotal.toFixed(2)}</span>
               </div>
 
               {couponDiscount > 0 && (
-                <div className="flex justify-between text-rose-600 font-bold">
+                <div className="flex justify-between text-[#B91C1C] font-medium">
                   <span>কুপন ডিসকাউন্ট ছাড়:</span>
-                  <span>-{currencySymbol}{couponDiscount.toFixed(2)}</span>
+                  <span className="font-mono tabular-nums">-{currencySymbol}{couponDiscount.toFixed(2)}</span>
                 </div>
               )}
 
               {loyaltyDiscount > 0 && (
-                <div className="flex justify-between text-purple-600 font-bold">
-                  <span>লয়ালটি পয়েন্ট ছাড় ({pointsActuallyRedeemed} pt):</span>
-                  <span>-{currencySymbol}{loyaltyDiscount.toFixed(2)}</span>
+                <div className="flex justify-between text-[#15803D] font-medium">
+                  <span>লয়ালটি পয়েন্ট ছাড় (<span className="font-mono tabular-nums">{pointsActuallyRedeemed}</span> pt):</span>
+                  <span className="font-mono tabular-nums">-{currencySymbol}{loyaltyDiscount.toFixed(2)}</span>
                 </div>
               )}
 
               {storeCreditDiscount > 0 && (
-                <div className="flex justify-between text-emerald-600 font-bold">
+                <div className="flex justify-between text-[#15803D] font-medium">
                   <span>স্টোর ক্রেডিট ভাউচার ছাড়:</span>
-                  <span>-{currencySymbol}{storeCreditDiscount.toFixed(2)}</span>
+                  <span className="font-mono tabular-nums">-{currencySymbol}{storeCreditDiscount.toFixed(2)}</span>
                 </div>
               )}
 
-              <div className="flex justify-between text-slate-600">
-                <span>ভ্যাট ও কর ({taxRatePercent}%):</span>
-                <span className="font-semibold text-slate-800">{currencySymbol}{taxAmount.toFixed(2)}</span>
+              <div className="flex justify-between text-[#525252]">
+                <span>ভ্যাট ও কর (<span className="font-mono tabular-nums">{taxRatePercent}%</span>):</span>
+                <span className="font-medium text-[#111111] font-mono tabular-nums">{currencySymbol}{taxAmount.toFixed(2)}</span>
               </div>
 
               {/* মোট প্রদেয় */}
-              <div className="pt-3 border-t border-slate-200 flex justify-between items-baseline">
+              <div className="pt-3 border-t border-neutral-200/80 flex justify-between items-baseline">
                 <div>
-                  <span className="text-sm sm:text-base font-black text-slate-900 block">
+                  <span className="text-sm sm:text-base font-semibold text-[#111111] block">
                     মোট প্রদেয়:
                   </span>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">
-                    মাধ্যম: <strong className="text-indigo-600">{paymentMethod}</strong>
+                  <span className="text-[10px] text-[#737373] font-medium uppercase">
+                    মাধ্যম: <strong className="text-[#0F172A]">{paymentMethod}</strong>
                   </span>
                 </div>
-                <span className="text-xl sm:text-2xl font-black text-emerald-600 tracking-tight">
+                <span className="text-xl sm:text-2xl font-semibold text-[#15803D] font-mono tabular-nums tracking-tight">
                   {currencySymbol}{grandTotal.toFixed(2)}
                 </span>
               </div>
@@ -1367,13 +1366,13 @@ export default function CheckoutPage({
                     type="button"
                     onClick={() => handleFinalSubmit(false)}
                     disabled={isProcessing || cartItems.length === 0}
-                    className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-black rounded-2xl shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/35 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full min-h-[44px] py-3 px-4 bg-[#0F172A] hover:bg-slate-800 text-white font-semibold rounded-md transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     <CheckCircle className="w-5 h-5" />
                     <span>
                       {isProcessing
                         ? 'অর্ডার প্রসেসিং হচ্ছে...'
-                        : `অর্ডার নিশ্চিত করুন (${currencySymbol}${grandTotal.toFixed(2)})`}
+                        : <>অর্ডার নিশ্চিত করুন (<span className="font-mono tabular-nums">{currencySymbol}{grandTotal.toFixed(2)}</span>)</>}
                     </span>
                   </button>
 
@@ -1381,7 +1380,7 @@ export default function CheckoutPage({
                     type="button"
                     onClick={() => handleFinalSubmit(true)}
                     disabled={isProcessing || cartItems.length === 0}
-                    className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold rounded-2xl shadow-sm transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full min-h-[44px] py-2.5 px-4 bg-white hover:bg-[#F5F5F5] border border-neutral-200/80 text-[#111111] font-medium rounded-md transition-colors flex items-center justify-center space-x-2 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     <Printer className="w-4 h-4" />
                     <span>অর্ডার ও মেমো প্রিন্ট করুন</span>
@@ -1395,7 +1394,7 @@ export default function CheckoutPage({
                     type="button"
                     onClick={() => handleFinalSubmit(true)}
                     disabled={isProcessing || cartItems.length === 0}
-                    className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-black rounded-2xl shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/35 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full min-h-[44px] py-3 px-4 bg-[#0F172A] hover:bg-slate-800 text-white font-semibold rounded-md transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     <Printer className="w-5 h-5" />
                     <span>{isProcessing ? 'প্রসেসিং হচ্ছে...' : 'বিক্রয় ও ইনভয়েস প্রিন্ট করুন'}</span>
@@ -1406,10 +1405,10 @@ export default function CheckoutPage({
                     type="button"
                     onClick={() => handleFinalSubmit(false)}
                     disabled={isProcessing || cartItems.length === 0}
-                    className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold rounded-2xl shadow-sm transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full min-h-[44px] py-2.5 px-4 bg-white hover:bg-[#F5F5F5] border border-neutral-200/80 text-[#111111] font-medium rounded-md transition-colors flex items-center justify-center space-x-2 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
-                    <CheckCircle className="w-4 h-4" />
-                    <span>শুধুমাত্র বিক্রয় ({currencySymbol}{grandTotal.toFixed(2)})</span>
+                    <CheckCircle className="w-4 h-4 text-[#15803D]" />
+                    <span>শুধুমাত্র বিক্রয় (<span className="font-mono tabular-nums">{currencySymbol}{grandTotal.toFixed(2)}</span>)</span>
                   </button>
                 </>
               )}
@@ -1418,7 +1417,7 @@ export default function CheckoutPage({
               <button
                 type="button"
                 onClick={onNavigateToCart}
-                className="w-full py-2.5 px-3 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl text-xs font-bold transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                className="w-full min-h-[44px] sm:min-h-[36px] py-2 px-3 text-[#525252] hover:text-[#111111] hover:bg-[#F5F5F5] rounded-md text-xs font-medium transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>কার্ট পেজে ফিরে যান</span>
@@ -1427,11 +1426,11 @@ export default function CheckoutPage({
             </div>
 
             {/* অডিট ইনফো */}
-            <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-500 text-center font-medium">
+            <div className="pt-3 border-t border-neutral-200/80 text-[11px] text-[#525252] text-center font-medium">
               {isCustomer ? (
-                <span>অর্ডারকারী: <strong className="text-slate-800">{activeUser?.FullName || customerName || 'সম্মানিত অতিথি গ্রাহক'}</strong> • {new Date().toLocaleDateString('bn-BD')}</span>
+                <span>অর্ডারকারী: <strong className="text-[#111111]">{activeUser?.FullName || customerName || 'সম্মানিত অতিথি গ্রাহক'}</strong> • <span className="font-mono tabular-nums">{new Date().toLocaleDateString('bn-BD')}</span></span>
               ) : (
-                <span>অপারেটর: <strong className="text-slate-800">{activeUser?.FullName || 'প্রধান ক্যাশিয়ার'}</strong> • {new Date().toLocaleDateString('bn-BD')}</span>
+                <span>অপারেটর: <strong className="text-[#111111]">{activeUser?.FullName || 'প্রধান ক্যাশিয়ার'}</strong> • <span className="font-mono tabular-nums">{new Date().toLocaleDateString('bn-BD')}</span></span>
               )}
             </div>
 

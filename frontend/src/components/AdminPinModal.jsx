@@ -84,29 +84,30 @@ export default function AdminPinModal({
 
   return (
     <div
-      className="fixed inset-0 z-[150] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-[150] bg-neutral-900/40 flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-sm p-6 space-y-5 my-auto text-center relative animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-lg border border-neutral-200/80 w-full max-w-sm p-6 space-y-5 my-auto text-center relative animate-in zoom-in-95 duration-200">
         
         {/* ক্লোজ বাটন */}
         <button
+          type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1 rounded-xl hover:bg-slate-100 transition-all cursor-pointer"
+          className="absolute right-4 top-4 min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] text-[#737373] hover:text-[#111111] p-1.5 rounded-md hover:bg-[#F5F5F5] transition-colors flex items-center justify-center cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* আইকন ও টাইটেল */}
         <div className="space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 mx-auto flex items-center justify-center shadow-inner">
-            <Lock className="w-7 h-7" />
+          <div className="w-12 h-12 rounded-lg bg-amber-50 border border-amber-200 text-[#B45309] mx-auto flex items-center justify-center">
+            <Lock className="w-6 h-6" />
           </div>
-          <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+          <h3 className="text-base sm:text-lg font-semibold text-[#111111] tracking-tight">
             {actionTitle}
           </h3>
-          <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+          <p className="text-xs text-[#525252] max-w-xs mx-auto leading-relaxed">
             {actionDescription}
           </p>
         </div>
@@ -117,10 +118,10 @@ export default function AdminPinModal({
             {[0, 1, 2, 3].map((idx) => (
               <div
                 key={idx}
-                className={`w-10 h-12 rounded-xl border-2 flex items-center justify-center text-lg font-mono font-black transition-all ${
+                className={`w-10 h-12 rounded-md border flex items-center justify-center text-lg font-mono tabular-nums font-semibold transition-colors ${
                   idx < pinInput.length
-                    ? 'border-indigo-600 bg-indigo-50/60 text-indigo-900 shadow-xs scale-105'
-                    : 'border-slate-200 bg-slate-50 text-slate-300'
+                    ? 'border-[#0F172A] bg-[#F5F5F5] text-[#111111]'
+                    : 'border-neutral-200/80 bg-[#FAFAFA] text-neutral-300'
                 }`}
               >
                 {idx < pinInput.length ? '●' : '—'}
@@ -129,7 +130,7 @@ export default function AdminPinModal({
           </div>
 
           {errorMsg && (
-            <p className="text-xs font-bold text-rose-600 flex items-center justify-center space-x-1 animate-shake">
+            <p className="text-xs font-semibold text-[#B91C1C] flex items-center justify-center space-x-1 animate-shake">
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span>{errorMsg}</span>
             </p>
@@ -143,7 +144,7 @@ export default function AdminPinModal({
               key={num}
               type="button"
               onClick={() => handleKeyPress(num)}
-              className="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-indigo-100 active:text-indigo-700 text-slate-800 font-mono font-black text-lg transition-all shadow-2xs active:scale-95 cursor-pointer"
+              className="min-h-[44px] h-12 rounded-md bg-[#F5F5F5] hover:bg-neutral-200/70 active:bg-[#0F172A] active:text-white border border-neutral-200/80 text-[#111111] font-mono tabular-nums font-semibold text-lg transition-colors cursor-pointer"
             >
               {num}
             </button>
@@ -151,21 +152,21 @@ export default function AdminPinModal({
           <button
             type="button"
             onClick={handleClear}
-            className="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs transition-all active:scale-95 cursor-pointer"
+            className="min-h-[44px] h-12 rounded-md bg-[#F5F5F5] hover:bg-neutral-200/70 border border-neutral-200/80 text-[#525252] font-semibold text-xs transition-colors cursor-pointer"
           >
             ক্লিয়ার
           </button>
           <button
             type="button"
             onClick={() => handleKeyPress(0)}
-            className="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-indigo-100 active:text-indigo-700 text-slate-800 font-mono font-black text-lg transition-all shadow-2xs active:scale-95 cursor-pointer"
+            className="min-h-[44px] h-12 rounded-md bg-[#F5F5F5] hover:bg-neutral-200/70 active:bg-[#0F172A] active:text-white border border-neutral-200/80 text-[#111111] font-mono tabular-nums font-semibold text-lg transition-colors cursor-pointer"
           >
             0
           </button>
           <button
             type="button"
             onClick={handleBackspace}
-            className="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+            className="min-h-[44px] h-12 rounded-md bg-[#F5F5F5] hover:bg-neutral-200/70 border border-neutral-200/80 text-[#525252] flex items-center justify-center transition-colors cursor-pointer"
             title="মুছুন"
           >
             <Delete className="w-5 h-5" />
@@ -176,14 +177,14 @@ export default function AdminPinModal({
         <button
           type="button"
           onClick={handleVerify}
-          className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white rounded-2xl text-xs font-black transition-all flex items-center justify-center space-x-2 shadow-lg shadow-indigo-500/25 cursor-pointer"
+          className="w-full min-h-[44px] sm:min-h-[36px] py-2.5 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center space-x-2 cursor-pointer"
         >
           <KeyRound className="w-4 h-4" />
           <span>আনলক করুন</span>
         </button>
 
-        <p className="text-[10px] text-slate-400">
-          ডিফল্ট অ্যাডমিন পিন: <span className="font-mono font-bold text-slate-600">1234</span>
+        <p className="text-[10px] text-[#737373]">
+          ডিফল্ট অ্যাডমিন পিন: <span className="font-mono tabular-nums font-semibold text-[#525252]">1234</span>
         </p>
       </div>
     </div>

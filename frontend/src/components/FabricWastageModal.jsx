@@ -30,7 +30,8 @@ import {
   RotateCcw,
   ChevronDown,
   ChevronRight,
-  ListFilter
+  ListFilter,
+  Palette
 } from 'lucide-react';
 import { calculateTotalYards, formatFabricQuantity, parseGojGira, calculateThanBreakdown } from '../utils/fabricUtils';
 import { playCashChime, playWarningBeep } from '../utils/soundEffects';
@@ -475,8 +476,8 @@ export default function FabricWastageModal({
     <div
       className={
         embedded
-          ? 'w-full h-full flex flex-col bg-slate-50'
-          : 'fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200'
+          ? 'w-full h-full flex flex-col bg-[#FAFAFA]'
+          : 'fixed inset-0 z-50 bg-neutral-900/40 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200'
       }
       role="dialog"
       aria-modal="true"
@@ -484,26 +485,26 @@ export default function FabricWastageModal({
       <div
         className={
           embedded
-            ? 'w-full h-full flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden'
-            : 'bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-200'
+            ? 'w-full h-full flex flex-col bg-white rounded-lg border border-neutral-200/80 overflow-hidden'
+            : 'bg-white rounded-lg border border-neutral-200/80 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-200'
         }
       >
-        {/* ================= ১. Fastkart এমারেল্ড হেডার ================= */}
-        <div className="bg-gradient-to-r from-[#08775f] via-[#0da487] to-teal-900 text-white p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-sm border-b border-emerald-700/40">
+        {/* ================= ১. হেডার ================= */}
+        <div className="bg-[#FAFAFA] text-[#111111] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200/80">
           <div className="flex items-center space-x-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-white shadow-inner">
-              <Scissors className="w-6 h-6 animate-pulse" />
+            <div className="w-11 h-11 rounded-lg bg-[#0F172A] text-white flex items-center justify-center shrink-0">
+              <Scissors className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-lg sm:text-xl font-black tracking-tight text-white">
+                <h2 className="text-lg sm:text-xl font-semibold tracking-tight text-[#111111]">
                   কাপড়ের ছাঁট ও ড্যামেজ হিসাব ট্র্যাকার
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-950/40 text-emerald-100 border border-emerald-400/30 uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-[#F5F5F5] text-[#525252] border border-neutral-200/80 uppercase tracking-wider">
                   Remnant & Damage Studio
                 </span>
               </div>
-              <p className="text-xs text-emerald-100/90 mt-0.5 font-medium">
+              <p className="text-xs text-[#525252] mt-0.5 font-medium">
                 থান কাপড়ের শেষ অবশিষ্টাংশ (ছাঁট), কাটা অপচয়, মিল ড্যামেজ নিখুঁতকরণ ও ক্লিয়ারেন্স সেল
               </p>
             </div>
@@ -511,19 +512,20 @@ export default function FabricWastageModal({
 
           <div className="flex items-center space-x-2">
             {/* ৪টি ট্যাব পিলস */}
-            <div className="bg-emerald-950/40 p-1 rounded-2xl flex items-center border border-white/20 text-xs font-bold gap-1">
+            <div className="bg-[#F5F5F5] p-1 rounded-lg flex items-center border border-neutral-200/80 text-xs font-semibold gap-1 flex-wrap">
               <button
                 type="button"
                 onClick={() => setActiveTab('live_remnants')}
-                className={`px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md transition-colors flex items-center space-x-1.5 cursor-pointer ${
                   activeTab === 'live_remnants'
-                    ? 'bg-white text-[#0b8b72] shadow-sm font-black'
-                    : 'text-emerald-100 hover:text-white'
+                    ? 'bg-[#0F172A] text-white'
+                    : 'text-[#525252] hover:text-[#111111]'
                 }`}
               >
-                <span>🏬 সক্রিয় ছাঁট</span>
+                <Store className="w-3.5 h-3.5" />
+                <span>সক্রিয় ছাঁট</span>
                 {liveShopRemnants.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-400 text-slate-950 font-black animate-pulse">
+                  <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-amber-50 text-[#B45309] border border-amber-200 font-mono tabular-nums font-bold">
                     {liveShopRemnants.length}
                   </span>
                 )}
@@ -532,15 +534,18 @@ export default function FabricWastageModal({
               <button
                 type="button"
                 onClick={() => setActiveTab('bundles')}
-                className={`px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md transition-colors flex items-center space-x-1.5 cursor-pointer ${
                   activeTab === 'bundles'
-                    ? 'bg-white text-[#0b8b72] shadow-sm font-black'
-                    : 'text-emerald-100 hover:text-white'
+                    ? 'bg-[#0F172A] text-white'
+                    : 'text-[#525252] hover:text-[#111111]'
                 }`}
               >
-                <span>📦 ছাঁট বান্ডেল</span>
+                <Package className="w-3.5 h-3.5" />
+                <span>ছাঁট বান্ডেল</span>
                 {clearanceBundles.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/30 text-white font-bold">
+                  <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono tabular-nums font-bold ${
+                    activeTab === 'bundles' ? 'bg-white/20 text-white' : 'bg-white border border-neutral-200/80 text-[#111111]'
+                  }`}>
                     {clearanceBundles.length}
                   </span>
                 )}
@@ -549,15 +554,18 @@ export default function FabricWastageModal({
               <button
                 type="button"
                 onClick={() => setActiveTab('list')}
-                className={`px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md transition-colors flex items-center space-x-1.5 cursor-pointer ${
                   activeTab === 'list'
-                    ? 'bg-white text-[#0b8b72] shadow-sm font-black'
-                    : 'text-emerald-100 hover:text-white'
+                    ? 'bg-[#0F172A] text-white'
+                    : 'text-[#525252] hover:text-[#111111]'
                 }`}
               >
-                <span>📒 রেকর্ড খাতা</span>
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>রেকর্ড খাতা</span>
                 {(fabricWastageList || []).length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/30 text-white font-bold">
+                  <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono tabular-nums font-bold ${
+                    activeTab === 'list' ? 'bg-white/20 text-white' : 'bg-white border border-neutral-200/80 text-[#111111]'
+                  }`}>
                     {(fabricWastageList || []).length}
                   </span>
                 )}
@@ -566,10 +574,10 @@ export default function FabricWastageModal({
               <button
                 type="button"
                 onClick={() => setActiveTab('new')}
-                className={`px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer ${
+                className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md transition-colors flex items-center space-x-1.5 cursor-pointer ${
                   activeTab === 'new'
-                    ? 'bg-white text-[#0b8b72] shadow-sm font-black'
-                    : 'text-emerald-100 hover:text-white'
+                    ? 'bg-[#0F172A] text-white'
+                    : 'text-[#525252] hover:text-[#111111]'
                 }`}
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -579,7 +587,7 @@ export default function FabricWastageModal({
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-emerald-100 hover:text-white hover:bg-white/20 transition-all cursor-pointer"
+              className="min-h-[44px] sm:min-h-[36px] px-2 rounded-md bg-white border border-neutral-200/80 text-[#737373] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors cursor-pointer"
               title="বন্ধ করুন"
             >
               <X className="w-5 h-5" />
@@ -588,40 +596,40 @@ export default function FabricWastageModal({
         </div>
 
         {/* ================= ২. মূল কনটেন্ট এরিয়া ================= */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/70 space-y-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#FAFAFA] space-y-5">
           
           {/* ট্যাব ১: দোকানে সক্রিয় কাউন্টার ছাঁট কাপড় */}
           {activeTab === 'live_remnants' && (
             <div className="space-y-4">
-              <div className="p-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent rounded-2xl border border-amber-200/90 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+              <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2.5 bg-amber-500/20 text-amber-900 rounded-xl">
-                    <Scissors className="w-5 h-5 text-amber-700" />
+                  <div className="p-2.5 bg-white border border-amber-200 text-[#B45309] rounded-md">
+                    <Scissors className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-black text-amber-950">
+                    <h3 className="text-sm font-semibold tracking-tight text-[#111111]">
                       দোকানে চলমান থানের শেষ ছাঁট কাপড়ের খতিয়ান
                     </h3>
-                    <p className="text-xs text-amber-900 mt-0.5">
-                      কাউন্টার টেবিলে যে থানগুলোর কাপড় ছাঁট সতর্কতার সীমার নিচে নেমে এসেছে—এগুলো এখনও <strong>দোকানের মজুতেই সক্রিয় আছে</strong> এবং খুচরা টুকরা হিসেবে বিক্রয়যোগ্য।
+                    <p className="text-xs text-[#525252] mt-0.5">
+                      কাউন্টার টেবিলে যে থানগুলোর কাপড় ছাঁট সতর্কতার সীমার নিচে নেমে এসেছে—এগুলো এখনও <strong className="text-[#111111]">দোকানের মজুতেই সক্রিয় আছে</strong> এবং খুচরা টুকরা হিসেবে বিক্রয়যোগ্য।
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-bold text-amber-800">মোট সক্রিয় ছাঁট:</span>
-                  <div className="text-xl font-black text-amber-950 font-mono">
+                  <span className="text-xs font-semibold text-[#B45309]">মোট সক্রিয় ছাঁট:</span>
+                  <div className="text-xl font-bold text-[#111111] font-mono tabular-nums">
                     {liveShopRemnants.length}টি লট ({groupedLiveRemnants.length}টি কাপড়)
                   </div>
                 </div>
               </div>
 
               {liveShopRemnants.length === 0 ? (
-                <div className="bg-white rounded-3xl p-10 text-center border border-slate-200/80 shadow-xs space-y-3">
-                  <div className="w-16 h-16 rounded-full bg-emerald-50 text-[#0da487] mx-auto flex items-center justify-center">
+                <div className="bg-white rounded-lg p-10 text-center border border-neutral-200/80 space-y-3">
+                  <div className="w-16 h-16 rounded-lg bg-emerald-50 border border-emerald-200 text-[#15803D] mx-auto flex items-center justify-center">
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
-                  <h3 className="text-base font-black text-slate-800">দোকানে কোনো শেষ ছাঁট কাপড় নেই</h3>
-                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  <h3 className="text-base font-semibold tracking-tight text-[#111111]">দোকানে কোনো শেষ ছাঁট কাপড় নেই</h3>
+                  <p className="text-xs text-[#525252] max-w-md mx-auto">
                     দোকানের প্রতিটি থান কাপড়ে পর্যাপ্ত গজ অবশিষ্ট রয়েছে অথবা কোনো থানের কাপড় ছাঁট সীমার নিচে নামেনি।
                   </p>
                 </div>
@@ -631,26 +639,27 @@ export default function FabricWastageModal({
                     if (grp.hasVariants) {
                       // ভ্যারিয়েন্টভিত্তিক কাপড়: মূল পণ্যের ব্যানারের নিচে ভ্যারিয়েন্টগুলোর তালিকা
                       return (
-                        <div key={grp.productId} className="bg-white rounded-2xl border border-amber-200/90 shadow-2xs hover:shadow-xs transition-all overflow-hidden">
+                        <div key={grp.productId} className="bg-white rounded-lg border border-amber-200 overflow-hidden">
                           {/* প্যারেন্ট কাপড়ের হেডার */}
-                          <div className="p-3.5 sm:p-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-b border-amber-200/70 flex flex-wrap items-center justify-between gap-3">
+                          <div className="p-3.5 sm:p-4 bg-amber-50 border-b border-amber-200 flex flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center space-x-2.5">
-                              <div className="p-2 bg-amber-500/20 text-amber-900 rounded-xl">
-                                <Layers className="w-4 h-4 text-amber-800" />
+                              <div className="p-2 bg-white border border-amber-200 text-[#B45309] rounded-md">
+                                <Layers className="w-4 h-4" />
                               </div>
                               <div>
                                 <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
-                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 uppercase tracking-wide">
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 text-[#B45309] border border-amber-200 uppercase tracking-wide">
                                     {grp.product.Category || 'থান কাপড়'}
                                   </span>
-                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono">
-                                    🎨 {grp.items.length}টি ভ্যারিয়েন্টে ছাঁট
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-white text-[#111111] border border-neutral-200/80 font-mono tabular-nums inline-flex items-center space-x-1">
+                                    <Palette className="w-3 h-3 text-[#0F172A]" />
+                                    <span>{grp.items.length}টি ভ্যারিয়েন্টে ছাঁট</span>
                                   </span>
                                 </div>
-                                <h4 className="text-sm font-black text-slate-900 mt-1">
+                                <h4 className="text-sm font-semibold tracking-tight text-[#111111] mt-1">
                                   {grp.product.ProductName}
                                 </h4>
-                                <span className="text-[10px] font-mono text-slate-400">
+                                <span className="text-[10px] font-mono tabular-nums text-[#737373]">
                                   ID: {grp.product.ProductID} {grp.product.Barcode ? `• #${grp.product.Barcode}` : ''}
                                 </span>
                               </div>
@@ -658,14 +667,14 @@ export default function FabricWastageModal({
 
                             <div className="flex items-center space-x-3 text-right">
                               <div>
-                                <span className="text-[10.5px] font-bold text-slate-500 block">মোট ছাঁট অবশিষ্টাংশ:</span>
-                                <span className="text-sm font-black text-amber-950 font-mono">
+                                <span className="text-[10.5px] font-semibold text-[#525252] block">মোট ছাঁট অবশিষ্টাংশ:</span>
+                                <span className="text-sm font-bold text-[#B45309] font-mono tabular-nums">
                                   {formatFabricQuantity(grp.totalRemnantYards, 'গজ', false)}
                                 </span>
                               </div>
                               <div className="pl-3 border-l border-amber-200">
-                                <span className="text-[10.5px] font-bold text-slate-500 block">দোকানে মোট কাপড়:</span>
-                                <span className="text-xs font-bold text-slate-800 font-mono">
+                                <span className="text-[10.5px] font-semibold text-[#525252] block">দোকানে মোট কাপড়:</span>
+                                <span className="text-xs font-bold text-[#111111] font-mono tabular-nums">
                                   {Number(grp.totalShopStock || 0).toLocaleString('bn-BD')} গজ
                                 </span>
                               </div>
@@ -673,10 +682,10 @@ export default function FabricWastageModal({
                           </div>
 
                           {/* প্যারেন্ট কাপড়ের আন্ডারে ভ্যারিয়েন্টগুলোর তালিকা */}
-                          <div className="p-3.5 sm:p-4 bg-slate-50/50 space-y-2.5">
-                            <div className="text-[11px] font-bold text-slate-600 flex items-center space-x-1.5 px-0.5">
-                              <Scissors className="w-3.5 h-3.5 text-amber-600" />
-                              <span>এই থানের ছাঁট হওয়া ভ্যারিয়েন্টসমূহ ({grp.items.length}টি):</span>
+                          <div className="p-3.5 sm:p-4 bg-[#FAFAFA] space-y-2.5">
+                            <div className="text-[11px] font-semibold text-[#525252] flex items-center space-x-1.5 px-0.5">
+                              <Scissors className="w-3.5 h-3.5 text-[#B45309]" />
+                              <span>এই থানের ছাঁট হওয়া ভ্যারিয়েন্টসমূহ (<span className="font-mono tabular-nums">{grp.items.length}</span>টি):</span>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -685,42 +694,45 @@ export default function FabricWastageModal({
                                 const effSellingPrice = Number(v?.SellingPrice || v?.sellingPrice || p.SellingPrice || p.Price || 100);
 
                                 return (
-                                  <div key={key} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs hover:border-amber-300 transition-all space-y-2.5">
+                                  <div key={key} className="bg-white p-3.5 rounded-lg border border-neutral-200/80 hover:border-amber-300 transition-colors space-y-2.5">
                                     <div className="flex items-start justify-between">
                                       <div>
-                                        <span className="px-2 py-0.5 rounded-md text-xs font-black bg-emerald-50 text-[#0b8b72] border border-emerald-200 inline-flex items-center space-x-1">
-                                          <span>🎨</span>
+                                        <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 inline-flex items-center space-x-1">
+                                          <Palette className="w-3 h-3 text-[#0F172A]" />
                                           <span>{variantLabel}</span>
                                         </span>
-                                        <span className="text-[10px] font-mono text-slate-400 block mt-1">
+                                        <span className="text-[10px] font-mono tabular-nums text-[#737373] block mt-1">
                                           #{v?.Barcode || p.Barcode || '—'}
                                         </span>
                                       </div>
-                                      <span className="p-1 bg-amber-50 text-amber-700 rounded-md">
+                                      <span className="p-1 bg-amber-50 text-[#B45309] border border-amber-200 rounded-md">
                                         <Scissors className="w-3.5 h-3.5" />
                                       </span>
                                     </div>
 
-                                    <div className="p-2.5 bg-amber-50/70 rounded-xl border border-amber-200/60 space-y-1">
-                                      <div className="flex items-center justify-between text-xs font-bold text-amber-950">
-                                        <span>✂️ থানের শেষ ছাঁট:</span>
-                                        <span className="text-amber-900 font-mono font-black text-sm">
+                                    <div className="p-2.5 bg-amber-50 rounded-md border border-amber-200 space-y-1">
+                                      <div className="flex items-center justify-between text-xs font-semibold text-[#111111]">
+                                        <span className="flex items-center space-x-1 text-[#B45309]">
+                                          <Scissors className="w-3 h-3" />
+                                          <span>থানের শেষ ছাঁট:</span>
+                                        </span>
+                                        <span className="text-[#B45309] font-mono tabular-nums font-bold text-sm">
                                           {formatFabricQuantity(remnantYards, 'গজ', false)}
                                         </span>
                                       </div>
-                                      <div className="flex items-center justify-between text-[10.5px] text-slate-600 font-medium pt-1 border-t border-amber-200/50">
+                                      <div className="flex items-center justify-between text-[10.5px] text-[#525252] font-medium pt-1 border-t border-amber-200">
                                         <span>দোকানে মোট গজ:</span>
-                                        <span className="font-mono font-bold text-slate-900">{Number(shopStock || 0).toLocaleString('bn-BD')} গজ</span>
+                                        <span className="font-mono tabular-nums font-bold text-[#111111]">{Number(shopStock || 0).toLocaleString('bn-BD')} গজ</span>
                                       </div>
-                                      <div className="flex items-center justify-between text-[10.5px] text-slate-600 font-medium">
+                                      <div className="flex items-center justify-between text-[10.5px] text-[#525252] font-medium">
                                         <span>ছাঁট সতর্কতা সীমা:</span>
-                                        <span className="font-mono text-slate-800">{threshold} গজ</span>
+                                        <span className="font-mono tabular-nums text-[#111111]">{threshold} গজ</span>
                                       </div>
                                     </div>
 
                                     {bd.needsRestock && (
-                                      <div className="p-1.5 bg-rose-50 text-rose-800 rounded-lg border border-rose-200 text-[10px] font-bold flex items-center space-x-1">
-                                        <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" />
+                                      <div className="p-1.5 bg-red-50 text-[#B91C1C] rounded-md border border-red-200 text-[10px] font-semibold font-mono tabular-nums flex items-center space-x-1">
+                                        <AlertTriangle className="w-3 h-3 text-[#B91C1C] shrink-0" />
                                         <span>আস্ত থান নেই! গোডাউনে আছে: {godownStock} থান</span>
                                       </div>
                                     )}
@@ -740,7 +752,7 @@ export default function FabricWastageModal({
                                           setBundlePrice(Math.round((remnantYards * effSellingPrice) * 0.8));
                                           setActiveTab('new');
                                         }}
-                                        className="py-1.5 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10.5px] font-bold transition-all flex items-center justify-center space-x-1 shadow-2xs cursor-pointer"
+                                        className="min-h-[44px] sm:min-h-[36px] py-1.5 px-2 bg-[#B45309] hover:bg-amber-800 text-white rounded-md text-[10.5px] font-semibold transition-colors flex items-center justify-center space-x-1 cursor-pointer"
                                       >
                                         <Tag className="w-3 h-3" />
                                         <span>বান্ডেল তৈরি</span>
@@ -759,7 +771,7 @@ export default function FabricWastageModal({
                                             Unit: 'টুকরা'
                                           });
                                         }}
-                                        className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10.5px] font-bold transition-all flex items-center justify-center space-x-1 border border-slate-200 cursor-pointer"
+                                        className="min-h-[44px] sm:min-h-[36px] py-1.5 px-2 bg-[#F5F5F5] hover:bg-neutral-200 text-[#111111] rounded-md text-[10.5px] font-semibold transition-colors flex items-center justify-center space-x-1 border border-neutral-200/80 cursor-pointer"
                                         title="কাউন্টার বিক্রির জন্য ছোট প্রাইস ট্যাগ স্টিকার প্রিন্ট করুন"
                                       >
                                         <Printer className="w-3 h-3" />
@@ -782,50 +794,53 @@ export default function FabricWastageModal({
                       const effSellingPrice = Number(p.SellingPrice || p.Price || 100);
 
                       return (
-                        <div key={grp.productId} className="bg-white p-4 rounded-2xl border border-amber-200/90 shadow-2xs hover:shadow-xs transition-all space-y-3">
+                        <div key={grp.productId} className="bg-white p-4 rounded-lg border border-amber-200 space-y-3">
                           <div className="flex items-start justify-between">
                             <div>
                               <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 uppercase tracking-wide">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-[#B45309] border border-amber-200 uppercase tracking-wide">
                                   {p.Category || 'থান কাপড়'}
                                 </span>
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#F5F5F5] text-[#525252] border border-neutral-200/80">
                                   সাধারণ থান
                                 </span>
                               </div>
-                              <h4 className="text-xs font-black text-slate-900 mt-1 line-clamp-1">
+                              <h4 className="text-xs font-semibold tracking-tight text-[#111111] mt-1 line-clamp-1">
                                 {p.ProductName}
                               </h4>
-                              <span className="text-[10px] font-mono text-slate-400">
+                              <span className="text-[10px] font-mono tabular-nums text-[#737373]">
                                 #{p.Barcode || p.ProductID}
                               </span>
                             </div>
-                            <span className="p-1.5 bg-amber-50 text-amber-700 rounded-lg">
+                            <span className="p-1.5 bg-amber-50 text-[#B45309] border border-amber-200 rounded-md">
                               <Scissors className="w-4 h-4" />
                             </span>
                           </div>
 
-                          <div className="p-2.5 bg-amber-50/70 rounded-xl border border-amber-200/60 space-y-1">
-                            <div className="flex items-center justify-between text-xs font-bold text-amber-950">
-                              <span>✂️ থানের শেষ ছাঁট:</span>
-                              <span className="text-amber-900 font-mono font-black text-sm">
+                          <div className="p-2.5 bg-amber-50 rounded-md border border-amber-200 space-y-1">
+                            <div className="flex items-center justify-between text-xs font-semibold text-[#111111]">
+                              <span className="flex items-center space-x-1 text-[#B45309]">
+                                <Scissors className="w-3 h-3" />
+                                <span>থানের শেষ ছাঁট:</span>
+                              </span>
+                              <span className="text-[#B45309] font-mono tabular-nums font-bold text-sm">
                                 {formatFabricQuantity(remnantYards, 'গজ', false)}
                               </span>
                             </div>
-                            <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium pt-1 border-t border-amber-200/50">
+                            <div className="flex items-center justify-between text-[11px] text-[#525252] font-medium pt-1 border-t border-amber-200">
                               <span>দোকানে মোট গজ:</span>
-                              <span className="font-mono font-bold text-slate-900">{Number(shopStock || 0).toLocaleString('bn-BD')} গজ</span>
+                              <span className="font-mono tabular-nums font-bold text-[#111111]">{Number(shopStock || 0).toLocaleString('bn-BD')} গজ</span>
                             </div>
-                            <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
+                            <div className="flex items-center justify-between text-[11px] text-[#525252] font-medium">
                               <span>ছাঁট সতর্কতা সীমা:</span>
-                              <span className="font-mono text-slate-800">{threshold} গজ</span>
+                              <span className="font-mono tabular-nums text-[#111111]">{threshold} গজ</span>
                             </div>
                           </div>
 
                           <div className="space-y-1.5 pt-1">
                             {bd.needsRestock && (
-                              <div className="p-2 bg-rose-50 text-rose-800 rounded-xl border border-rose-200 text-[10.5px] font-bold flex items-center space-x-1.5">
-                                <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                              <div className="p-2 bg-red-50 text-[#B91C1C] rounded-md border border-red-200 text-[10.5px] font-semibold font-mono tabular-nums flex items-center space-x-1.5">
+                                <AlertTriangle className="w-3.5 h-3.5 text-[#B91C1C] shrink-0" />
                                 <span>কাটার মতো আস্ত থান নেই! গোডাউনে আছে: {godownStock} থান</span>
                               </div>
                             )}
@@ -845,7 +860,7 @@ export default function FabricWastageModal({
                                   setBundlePrice(Math.round((remnantYards * effSellingPrice) * 0.8));
                                   setActiveTab('new');
                                 }}
-                                className="py-1.5 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] font-bold transition-all flex items-center justify-center space-x-1 shadow-xs cursor-pointer"
+                                className="min-h-[44px] sm:min-h-[36px] py-1.5 px-2 bg-[#B45309] hover:bg-amber-800 text-white rounded-md text-[11px] font-semibold transition-colors flex items-center justify-center space-x-1 cursor-pointer"
                               >
                                 <Tag className="w-3 h-3" />
                                 <span>ছাঁট বান্ডেল তৈরি</span>
@@ -863,7 +878,7 @@ export default function FabricWastageModal({
                                     Unit: 'টুকরা'
                                   });
                                 }}
-                                className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center space-x-1 border border-slate-200 cursor-pointer"
+                                className="min-h-[44px] sm:min-h-[36px] py-1.5 px-2 bg-[#F5F5F5] hover:bg-neutral-200 text-[#111111] rounded-md text-[11px] font-semibold transition-colors flex items-center justify-center space-x-1 border border-neutral-200/80 cursor-pointer"
                                 title="কাউন্টার বিক্রির জন্য ছোট প্রাইস ট্যাগ স্টিকার প্রিন্ট করুন"
                               >
                                 <Printer className="w-3 h-3" />
@@ -883,12 +898,12 @@ export default function FabricWastageModal({
           {/* ট্যাব ২: ক্লিয়ারেন্স বান্ডেল খতিয়ান */}
           {activeTab === 'bundles' && (
             <div className="space-y-4">
-              <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+              <div className="bg-white p-3.5 sm:p-4 rounded-lg border border-neutral-200/80 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center space-x-2">
-                  <Package className="w-5 h-5 text-[#0da487]" />
+                  <Package className="w-5 h-5 text-[#0F172A]" />
                   <div>
-                    <h3 className="text-sm font-black text-slate-900">ক্লিয়ারেন্স ছাঁট বান্ডেলসমূহ</h3>
-                    <p className="text-[11px] text-slate-500">বিশেষ ছাঁট প্যাক হিসেবে ক্যাটালগে যুক্ত টুকরা কাপড়</p>
+                    <h3 className="text-sm font-semibold tracking-tight text-[#111111]">ক্লিয়ারেন্স ছাঁট বান্ডেলসমূহ</h3>
+                    <p className="text-[11px] text-[#525252]">বিশেষ ছাঁট প্যাক হিসেবে ক্যাটালগে যুক্ত টুকরা কাপড়</p>
                   </div>
                 </div>
 
@@ -896,22 +911,22 @@ export default function FabricWastageModal({
                   <select
                     value={bundleStatusFilter}
                     onChange={(e) => setBundleStatusFilter(e.target.value)}
-                    className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-700 focus:outline-hidden"
+                    className="min-h-[44px] sm:min-h-[36px] text-xs bg-[#FAFAFA] border border-neutral-200/80 rounded-md px-3 py-1.5 font-semibold text-[#111111] focus:outline-none focus:border-[#0F172A]"
                   >
                     <option value="ALL">সকল অবস্থা (All Status)</option>
-                    <option value="Available">🟢 দোকানে মজুত আছে</option>
-                    <option value="Sold">🟣 পিওএস-এ বিক্রিত</option>
+                    <option value="Available">দোকানে মজুত আছে</option>
+                    <option value="Sold">পিওএস-এ বিক্রিত</option>
                   </select>
                 </div>
               </div>
 
               {filteredBundles.length === 0 ? (
-                <div className="bg-white rounded-3xl p-10 text-center border border-slate-200/80 shadow-xs space-y-3">
-                  <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                <div className="bg-white rounded-lg p-10 text-center border border-neutral-200/80 space-y-3">
+                  <div className="w-16 h-16 rounded-lg bg-[#F5F5F5] border border-neutral-200/80 text-[#737373] mx-auto flex items-center justify-center">
                     <Package className="w-8 h-8" />
                   </div>
-                  <h3 className="text-base font-black text-slate-800">কোনো ক্লিয়ারেন্স বান্ডেল পাওয়া যায়নি</h3>
-                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  <h3 className="text-base font-semibold tracking-tight text-[#111111]">কোনো ক্লিয়ারেন্স বান্ডেল পাওয়া যায়নি</h3>
+                  <p className="text-xs text-[#525252] max-w-md mx-auto">
                     থানের শেষ টুকরা কাপড় কম দামে বিক্রির জন্য "নতুন এন্ট্রি" থেকে ছাঁট বান্ডেল হিসেবে সংরক্ষণ করুন।
                   </p>
                 </div>
@@ -920,47 +935,48 @@ export default function FabricWastageModal({
                   {filteredBundles.map((b) => {
                     const isSold = b.BundleStatus === 'Sold';
                     return (
-                      <div key={b.WastageID} className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all space-y-3">
+                      <div key={b.WastageID} className="bg-white p-4 rounded-lg border border-neutral-200/80 space-y-3">
                         <div className="flex items-start justify-between">
                           <div>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-wider ${
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border inline-flex items-center space-x-1 uppercase tracking-wider ${
                               isSold
-                                ? 'bg-purple-100 text-purple-900 border-purple-200'
-                                : 'bg-emerald-100 text-emerald-900 border-emerald-200'
+                                ? 'bg-[#F5F5F5] text-[#111111] border-neutral-300'
+                                : 'bg-emerald-50 text-[#15803D] border-emerald-200'
                             }`}>
-                              {isSold ? '🟣 পিওএস-এ বিক্রিত' : '🟢 দোকানে বিক্রয়যোগ্য'}
+                              <span className={`w-1.5 h-1.5 rounded-full ${isSold ? 'bg-[#0F172A]' : 'bg-[#15803D]'}`}></span>
+                              <span>{isSold ? 'পিওএস-এ বিক্রিত' : 'দোকানে বিক্রয়যোগ্য'}</span>
                             </span>
-                            <h4 className="text-xs font-black text-slate-900 mt-1 line-clamp-1">
+                            <h4 className="text-xs font-semibold tracking-tight text-[#111111] mt-1.5 line-clamp-1">
                               [ছাঁট প্যাক] {b.ProductName} {b.VariantName ? `(${b.VariantName})` : ''}
                             </h4>
-                            <span className="text-[10px] font-mono text-slate-400 block">
+                            <span className="text-[10px] font-mono tabular-nums text-[#737373] block">
                               বারকোড: {b.BundleBarcode || b.WastageID}
                             </span>
                           </div>
-                          <span className="p-1.5 bg-slate-100 text-slate-600 rounded-lg">
+                          <span className="p-1.5 bg-[#F5F5F5] text-[#525252] border border-neutral-200/80 rounded-md">
                             <Tag className="w-4 h-4" />
                           </span>
                         </div>
 
-                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70 space-y-1 text-xs">
-                          <div className="flex items-center justify-between font-bold">
-                            <span className="text-slate-500">কাপড়ের পরিমাণ:</span>
-                            <span className="font-mono font-black text-slate-800">
+                        <div className="p-2.5 bg-[#FAFAFA] rounded-md border border-neutral-200/80 space-y-1 text-xs">
+                          <div className="flex items-center justify-between font-semibold">
+                            <span className="text-[#525252]">কাপড়ের পরিমাণ:</span>
+                            <span className="font-mono tabular-nums font-bold text-[#111111]">
                               {formatFabricQuantity(b.TotalYards, 'গজ', true)}
                             </span>
                           </div>
-                          <div className="flex items-center justify-between font-bold">
-                            <span className="text-slate-500">ছাঁট অফার মূল্য:</span>
-                            <span className="font-mono font-black text-[#0da487] text-sm">
+                          <div className="flex items-center justify-between font-semibold">
+                            <span className="text-[#525252]">ছাঁট অফার মূল্য:</span>
+                            <span className="font-mono tabular-nums font-bold text-[#15803D] text-sm">
                               {currencySymbol}{b.BundlePrice || 0}
                             </span>
                           </div>
-                          <div className="flex items-center justify-between font-medium text-[10.5px] text-slate-500 pt-1 border-t border-slate-200/50">
+                          <div className="flex items-center justify-between font-medium text-[10.5px] text-[#525252] pt-1 border-t border-neutral-200/80">
                             <span>মূল ক্রয়মূল্য:</span>
-                            <span>{currencySymbol}{b.LossAmount || 0}</span>
+                            <span className="font-mono tabular-nums">{currencySymbol}{b.LossAmount || 0}</span>
                           </div>
                           {isSold && b.SoldAt && (
-                            <div className="text-[10px] text-purple-700 font-semibold pt-0.5">
+                            <div className="text-[10px] text-[#525252] font-mono tabular-nums font-semibold pt-0.5">
                               বিক্রির তারিখ: {new Date(b.SoldAt).toLocaleDateString('bn-BD')}
                             </div>
                           )}
@@ -979,7 +995,7 @@ export default function FabricWastageModal({
                                 Unit: 'প্যাক'
                               });
                             }}
-                            className="w-full py-1.5 px-3 bg-slate-100 hover:bg-[#0da487] hover:text-white text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 border border-slate-200 cursor-pointer"
+                            className="min-h-[44px] sm:min-h-[36px] w-full py-1.5 px-3 bg-[#F5F5F5] hover:bg-[#0F172A] hover:text-white text-[#111111] rounded-md text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5 border border-neutral-200/80 cursor-pointer"
                           >
                             <Printer className="w-3.5 h-3.5" />
                             <span>বারকোড স্টিকার প্রিন্ট করুন</span>
@@ -996,116 +1012,116 @@ export default function FabricWastageModal({
           {/* ট্যাব ৩: রেকর্ড খাতা (ইতিহাস ও সামারি) */}
           {activeTab === 'list' && (
             <div className="space-y-5">
-              {/* আধুনিক Fastkart Bento KPI স্ট্রিপ */}
+              {/* KPI স্ট্রিপ */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider block">মোট অপচয় / ছাঁট গজ</span>
-                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 font-mono">
+                    <span className="text-[10.5px] font-semibold text-[#525252] uppercase tracking-wider block">মোট অপচয় / ছাঁট গজ</span>
+                    <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#111111] mt-0.5 font-mono tabular-nums">
                       {formatFabricQuantity(kpi.totalWastedYards, 'গজ', false)}
                     </h3>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-                    <Scissors className="w-5 h-5 text-slate-600" />
+                  <div className="w-10 h-10 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#0F172A] flex items-center justify-center">
+                    <Scissors className="w-5 h-5" />
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-rose-200/80 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-[10.5px] font-bold text-rose-700 uppercase tracking-wider block">মোট আর্থিক ক্ষতি</span>
-                    <h3 className="text-xl sm:text-2xl font-black text-rose-700 mt-0.5 font-mono">
+                    <span className="text-[10.5px] font-semibold text-[#B91C1C] uppercase tracking-wider block">মোট আর্থিক ক্ষতি</span>
+                    <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#B91C1C] mt-0.5 font-mono tabular-nums">
                       {currencySymbol}{kpi.totalLoss.toLocaleString('bn-BD')}
                     </h3>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                    <TrendingDown className="w-5 h-5 text-rose-600" />
+                  <div className="w-10 h-10 rounded-md bg-red-50 border border-red-200 text-[#B91C1C] flex items-center justify-center">
+                    <TrendingDown className="w-5 h-5" />
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-amber-200/80 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-[10.5px] font-bold text-amber-800 uppercase tracking-wider block">থানের শেষ ছাঁট (Remnant)</span>
-                    <h3 className="text-xl sm:text-2xl font-black text-amber-900 mt-0.5 font-mono">{kpi.remnantCount}টি</h3>
+                    <span className="text-[10.5px] font-semibold text-[#B45309] uppercase tracking-wider block">থানের শেষ ছাঁট (Remnant)</span>
+                    <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#B45309] mt-0.5 font-mono tabular-nums">{kpi.remnantCount}টি</h3>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-                    <Layers className="w-5 h-5 text-amber-700" />
+                  <div className="w-10 h-10 rounded-md bg-amber-50 border border-amber-200 text-[#B45309] flex items-center justify-center">
+                    <Layers className="w-5 h-5" />
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-emerald-200/80 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between">
+                <div className="bg-white p-4 rounded-lg border border-neutral-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-[10.5px] font-bold text-[#0b8b72] uppercase tracking-wider block">বিক্রয়যোগ্য ছাঁট প্যাক</span>
-                    <h3 className="text-xl sm:text-2xl font-black text-[#0da487] mt-0.5 font-mono">{kpi.availableBundlesCount}টি</h3>
+                    <span className="text-[10.5px] font-semibold text-[#15803D] uppercase tracking-wider block">বিক্রয়যোগ্য ছাঁট প্যাক</span>
+                    <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#15803D] mt-0.5 font-mono tabular-nums">{kpi.availableBundlesCount}টি</h3>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#0da487] flex items-center justify-center">
-                    <Package className="w-5 h-5 text-[#0da487]" />
+                  <div className="w-10 h-10 rounded-md bg-emerald-50 border border-emerald-200 text-[#15803D] flex items-center justify-center">
+                    <Package className="w-5 h-5" />
                   </div>
                 </div>
               </div>
 
               {/* ফিল্টার ও সার্চ বার */}
-              <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+              <div className="bg-white p-3 sm:p-4 rounded-lg border border-neutral-200/80 flex flex-wrap items-center justify-between gap-3">
                 <div className="relative flex-1 min-w-[220px]">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-[#737373] absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="কাপড়ের নাম, ভ্যারিয়েন্ট, আইডি বা কারণ দিয়ে খুঁজুন..."
-                    className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#0da487] font-medium"
+                    className="min-h-[44px] sm:min-h-[36px] w-full pl-9 pr-4 py-2 text-xs bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-medium text-[#111111]"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                      className="min-h-[44px] sm:min-h-[36px] px-2 absolute right-2 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#111111] text-xs cursor-pointer"
                     >
                       মুছুন
                     </button>
                   )}
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-wrap gap-y-2">
                   <select
                     value={locationFilter}
                     onChange={(e) => setLocationFilter(e.target.value)}
-                    className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-hidden"
+                    className="min-h-[44px] sm:min-h-[36px] text-xs bg-[#FAFAFA] border border-neutral-200/80 rounded-md px-3 py-2 font-semibold text-[#111111] focus:outline-none focus:border-[#0F172A]"
                   >
                     <option value="ALL">সকল অবস্থান (Shop & Godown)</option>
-                    <option value="Shop">🏬 দোকান ফ্লোর</option>
-                    <option value="Godown">🏭 গোডাউন</option>
+                    <option value="Shop">দোকান ফ্লোর</option>
+                    <option value="Godown">গোডাউন</option>
                   </select>
 
                   <select
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-hidden"
+                    className="min-h-[44px] sm:min-h-[36px] text-xs bg-[#FAFAFA] border border-neutral-200/80 rounded-md px-3 py-2 font-semibold text-[#111111] focus:outline-none focus:border-[#0F172A]"
                   >
                     <option value="ALL">সকল ধরণ (All Types)</option>
                     <option value="Remnant">থানের শেষ ছাঁট (Remnant)</option>
                     <option value="Damaged">নষ্ট / ড্যামেজ (Damaged)</option>
                   </select>
 
-                  <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200">
+                  <div className="flex items-center p-0.5 bg-[#F5F5F5] rounded-md border border-neutral-200/80">
                     <button
                       type="button"
                       onClick={() => setRecordsViewMode('grouped')}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                      className={`min-h-[44px] sm:min-h-[36px] px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer flex items-center space-x-1 ${
                         recordsViewMode === 'grouped'
-                          ? 'bg-white text-emerald-900 shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-[#0F172A] text-white'
+                          : 'text-[#525252] hover:text-[#111111]'
                       }`}
                       title="পণ্য ও ভ্যারিয়েন্ট অনুযায়ী গ্রুপকৃত হিসাব"
                     >
-                      <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                      <Layers className="w-3.5 h-3.5" />
                       <span>পণ্য গ্রুপ</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setRecordsViewMode('flat')}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                      className={`min-h-[44px] sm:min-h-[36px] px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer flex items-center space-x-1 ${
                         recordsViewMode === 'flat'
-                          ? 'bg-white text-emerald-900 shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-[#0F172A] text-white'
+                          : 'text-[#525252] hover:text-[#111111]'
                       }`}
                       title="সকল এন্ট্রি কালানুক্রমিক একক তালিকায় দেখুন"
                     >
@@ -1115,7 +1131,7 @@ export default function FabricWastageModal({
 
                   <button
                     onClick={() => window.print()}
-                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#F5F5F5] hover:bg-neutral-200 text-[#111111] border border-neutral-200/80 rounded-md text-xs font-semibold transition-colors flex items-center space-x-1 cursor-pointer"
                   >
                     <Printer className="w-3.5 h-3.5" />
                     <span>প্রিন্ট</span>
@@ -1125,17 +1141,17 @@ export default function FabricWastageModal({
 
               {/* রেকর্ড তালিকা টেবিল */}
               {filteredList.length === 0 ? (
-                <div className="bg-white rounded-3xl p-10 text-center border border-slate-200/80 shadow-xs space-y-3">
-                  <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                <div className="bg-white rounded-lg p-10 text-center border border-neutral-200/80 space-y-3">
+                  <div className="w-16 h-16 rounded-lg bg-[#F5F5F5] border border-neutral-200/80 text-[#737373] mx-auto flex items-center justify-center">
                     <Layers className="w-8 h-8" />
                   </div>
-                  <h3 className="text-base font-black text-slate-800">কোনো ছাঁট বা ড্যামেজ রেকর্ড পাওয়া যায়নি</h3>
-                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  <h3 className="text-base font-semibold tracking-tight text-[#111111]">কোনো ছাঁট বা ড্যামেজ রেকর্ড পাওয়া যায়নি</h3>
+                  <p className="text-xs text-[#525252] max-w-md mx-auto">
                     থান কাপড়ের শেষ অবশিষ্টাংশ বা নষ্ট কাপড় থাকলে "নতুন এন্ট্রি" থেকে রেকর্ড সংরক্ষণ করুন।
                   </p>
                   <button
                     onClick={() => setActiveTab('new')}
-                    className="px-4 py-2 bg-[#0da487] hover:bg-[#0b8b72] text-white rounded-xl text-xs font-bold transition-all inline-flex items-center space-x-1.5 shadow-md shadow-emerald-600/20 cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-4 py-2 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-semibold transition-colors inline-flex items-center space-x-1.5 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>নতুন এন্ট্রি যোগ করুন</span>
@@ -1145,29 +1161,30 @@ export default function FabricWastageModal({
                 /* গ্রুপ ভিউ: মূল পণ্যের ব্যানারের নিচে ভ্যারিয়েন্টগুলোর তালিকা */
                 <div className="space-y-4">
                   {groupedWastageRecords.map((grp) => (
-                    <div key={grp.productId} className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                    <div key={grp.productId} className="bg-white rounded-lg border border-neutral-200/80 overflow-hidden">
                       {/* গ্রুপ হেডার */}
-                      <div className="p-3.5 bg-gradient-to-r from-slate-100/90 via-slate-50 to-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                      <div className="p-3.5 bg-[#FAFAFA] border-b border-neutral-200/80 flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center space-x-2.5">
-                          <div className="p-2 bg-emerald-50 text-emerald-800 rounded-xl">
-                            <Layers className="w-4 h-4 text-[#0da487]" />
+                          <div className="p-2 bg-white border border-neutral-200/80 text-[#0F172A] rounded-md">
+                            <Layers className="w-4 h-4" />
                           </div>
                           <div>
                             <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-200 text-slate-800 uppercase tracking-wide">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 uppercase tracking-wide">
                                 {grp.category || 'থান কাপড়'}
                               </span>
                               {grp.hasVariants ? (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                  🎨 ভ্যারিয়েন্টভিত্তিক কাপড়
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-white text-[#111111] border border-neutral-200/80 inline-flex items-center space-x-1">
+                                  <Palette className="w-3 h-3 text-[#0F172A]" />
+                                  <span>ভ্যারিয়েন্টভিত্তিক কাপড়</span>
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#F5F5F5] text-[#525252] border border-neutral-200/80">
                                   সাধারণ থান
                                 </span>
                               )}
                             </div>
-                            <h4 className="text-sm font-black text-slate-900 mt-1">
+                            <h4 className="text-sm font-semibold tracking-tight text-[#111111] mt-1">
                               {grp.productName}
                             </h4>
                           </div>
@@ -1175,20 +1192,20 @@ export default function FabricWastageModal({
 
                         <div className="flex items-center space-x-3 text-right">
                           <div>
-                            <span className="text-[10px] font-bold text-slate-500 block">মোট অপচয়/ছাঁট:</span>
-                            <span className="text-xs font-black text-slate-900 font-mono">
+                            <span className="text-[10px] font-semibold text-[#525252] block">মোট অপচয়/ছাঁট:</span>
+                            <span className="text-xs font-bold text-[#111111] font-mono tabular-nums">
                               {formatFabricQuantity(grp.totalYards, 'গজ', false)}
                             </span>
                           </div>
-                          <div className="pl-3 border-l border-slate-200">
-                            <span className="text-[10px] font-bold text-slate-500 block">মোট আর্থিক ক্ষতি:</span>
-                            <span className="text-xs font-black text-rose-700 font-mono">
+                          <div className="pl-3 border-l border-neutral-200/80">
+                            <span className="text-[10px] font-semibold text-[#525252] block">মোট আর্থিক ক্ষতি:</span>
+                            <span className="text-xs font-bold text-[#B91C1C] font-mono tabular-nums">
                               {currencySymbol}{grp.totalLoss.toLocaleString('bn-BD')}
                             </span>
                           </div>
-                          <div className="pl-3 border-l border-slate-200">
-                            <span className="text-[10px] font-bold text-slate-500 block">রেকর্ড সংখ্যা:</span>
-                            <span className="text-xs font-bold text-indigo-900 font-mono">
+                          <div className="pl-3 border-l border-neutral-200/80">
+                            <span className="text-[10px] font-semibold text-[#525252] block">রেকর্ড সংখ্যা:</span>
+                            <span className="text-xs font-bold text-[#111111] font-mono tabular-nums">
                               {grp.records.length}টি
                             </span>
                           </div>
@@ -1199,7 +1216,7 @@ export default function FabricWastageModal({
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs">
                           <thead>
-                            <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-600 font-semibold text-[10.5px]">
+                            <tr className="bg-[#FAFAFA] border-b border-neutral-200/80 text-[#525252] font-semibold text-[10.5px]">
                               <th className="p-3 pl-4">তারিখ ও আইডি</th>
                               {grp.hasVariants && <th className="p-3">ভ্যারিয়েন্ট</th>}
                               <th className="p-3 text-center">অবস্থান</th>
@@ -1211,54 +1228,58 @@ export default function FabricWastageModal({
                               <th className="p-3 pr-4 text-right">অ্যাকশন</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100">
+                          <tbody className="divide-y divide-neutral-200/80">
                             {grp.records.map((item) => (
-                              <tr key={item.WastageID} className="hover:bg-emerald-50/15 transition-colors">
+                              <tr key={item.WastageID} className="hover:bg-[#FAFAFA] transition-colors">
                                 <td className="p-3 pl-4">
-                                  <span className="font-mono font-bold text-slate-800 block">{item.WastageID}</span>
-                                  <span className="text-[10px] text-slate-400">
+                                  <span className="font-mono tabular-nums font-bold text-[#111111] block">{item.WastageID}</span>
+                                  <span className="text-[10px] text-[#737373] font-mono tabular-nums">
                                     {new Date(item.CreatedAt).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' })}
                                   </span>
                                 </td>
                                 {grp.hasVariants && (
                                   <td className="p-3">
                                     {item.VariantName ? (
-                                      <span className="px-2 py-0.5 rounded-md text-[10.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 inline-flex items-center space-x-1">
-                                        <span>🎨</span>
+                                      <span className="px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 inline-flex items-center space-x-1">
+                                        <Palette className="w-3 h-3 text-[#0F172A]" />
                                         <span>{item.VariantName}</span>
                                       </span>
                                     ) : (
-                                      <span className="text-[10.5px] text-slate-400 italic">সাধারণ</span>
+                                      <span className="text-[10.5px] text-[#737373] italic">সাধারণ</span>
                                     )}
                                   </td>
                                 )}
                                 <td className="p-3 text-center">
                                   {item.Location === 'Godown' ? (
-                                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                      🏭 গোডাউন
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 inline-flex items-center space-x-1">
+                                      <Warehouse className="w-3 h-3" />
+                                      <span>গোডাউন</span>
                                     </span>
                                   ) : (
-                                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                      🏬 দোকান
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-[#15803D] border border-emerald-200 inline-flex items-center space-x-1">
+                                      <Store className="w-3 h-3" />
+                                      <span>দোকান</span>
                                     </span>
                                   )}
                                 </td>
                                 <td className="p-3">
                                   {item.Type === 'Remnant' ? (
-                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
-                                      ✂️ থানের ছাঁট
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-[#B45309] border border-amber-200 inline-flex items-center space-x-1">
+                                      <Scissors className="w-3 h-3" />
+                                      <span>থানের ছাঁট</span>
                                     </span>
                                   ) : (
-                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                                      🚨 ড্যামেজ / নষ্ট
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-red-50 text-[#B91C1C] border border-red-200 inline-flex items-center space-x-1">
+                                      <AlertOctagon className="w-3 h-3" />
+                                      <span>ড্যামেজ / নষ্ট</span>
                                     </span>
                                   )}
                                 </td>
-                                <td className="p-3 text-center font-bold text-slate-900 font-mono">
+                                <td className="p-3 text-center font-bold text-[#111111] font-mono tabular-nums">
                                   {item.Location === 'Godown' && item.Thans > 0 ? (
                                     <div>
                                       <span>{item.Thans} থান</span>
-                                      <span className="block text-[10px] text-slate-500 font-normal">
+                                      <span className="block text-[10px] text-[#525252] font-normal">
                                         ({formatFabricQuantity(item.TotalYards, 'গজ', false)})
                                       </span>
                                     </div>
@@ -1266,23 +1287,26 @@ export default function FabricWastageModal({
                                     formatFabricQuantity(item.TotalYards, 'গজ', true)
                                   )}
                                 </td>
-                                <td className="p-3 text-center font-black text-rose-700 font-mono">
+                                <td className="p-3 text-center font-bold text-[#B91C1C] font-mono tabular-nums">
                                   {currencySymbol}{item.LossAmount}
-                                  <span className="block text-[9px] text-slate-400 font-normal font-sans">
+                                  <span className="block text-[9px] text-[#737373] font-normal">
                                     @{currencySymbol}{item.CostPricePerYard}/গজ
                                   </span>
                                 </td>
                                 <td className="p-3">
-                                  <span className="font-bold text-slate-800 block text-xs">{item.Reason}</span>
-                                  <span className="text-[10px] text-slate-500 block">
+                                  <span className="font-semibold text-[#111111] block text-xs">{item.Reason}</span>
+                                  <span className="text-[10px] text-[#525252] block">
                                     {item.ActionTaken === 'ClearanceBundle' ? (
-                                      <span className="text-[#0da487] font-semibold">✨ ক্লিয়ারেন্স প্যাক (৳{item.BundlePrice})</span>
+                                      <span className="text-[#15803D] font-semibold font-mono tabular-nums inline-flex items-center space-x-1">
+                                        <Tag className="w-3 h-3" />
+                                        <span>ক্লিয়ারেন্স প্যাক ({currencySymbol}{item.BundlePrice})</span>
+                                      </span>
                                     ) : (
                                       'সরাসরি রাইট-অফ (বাদ)'
                                     )}
                                   </span>
                                 </td>
-                                <td className="p-3 text-slate-600 font-medium">
+                                <td className="p-3 text-[#525252] font-medium">
                                   {item.LoggedBy}
                                 </td>
                                 <td className="p-3 pr-4 text-right">
@@ -1300,7 +1324,7 @@ export default function FabricWastageModal({
                                             Unit: 'প্যাক'
                                           });
                                         }}
-                                        className="p-1.5 text-slate-500 hover:text-[#0da487] hover:bg-emerald-50 rounded-lg transition-all cursor-pointer"
+                                        className="min-h-[44px] sm:min-h-[36px] px-2 text-[#525252] hover:text-[#15803D] hover:bg-emerald-50 rounded-md transition-colors cursor-pointer"
                                         title="প্রাইস ট্যাগ স্টিকার প্রিন্ট করুন"
                                       >
                                         <Printer className="w-3.5 h-3.5" />
@@ -1314,7 +1338,7 @@ export default function FabricWastageModal({
                                             onDeleteWastageRecord(item.WastageID);
                                           }
                                         }}
-                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                                        className="min-h-[44px] sm:min-h-[36px] px-2 text-[#737373] hover:text-[#B91C1C] hover:bg-red-50 rounded-md transition-colors cursor-pointer"
                                         title="রেকর্ড মুছে ফেলুন ও স্টক পুনরুদ্ধার করুন"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
@@ -1332,11 +1356,11 @@ export default function FabricWastageModal({
                 </div>
               ) : (
                 /* ফ্ল্যাট ভিউ: কালানুক্রমিক সাধারণ টেবিল */
-                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+                <div className="bg-white rounded-lg border border-neutral-200/80 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
-                        <tr className="bg-slate-50/90 border-b border-slate-200 text-slate-700 font-bold text-[11px] uppercase tracking-wider">
+                        <tr className="bg-[#FAFAFA] border-b border-neutral-200/80 text-[#525252] font-semibold text-[11px] uppercase tracking-wider">
                           <th className="p-3.5">তারিখ ও আইডি</th>
                           <th className="p-3.5">কাপড়ের বিবরণ ও ভ্যারিয়েন্ট</th>
                           <th className="p-3.5 text-center">অবস্থান</th>
@@ -1348,53 +1372,57 @@ export default function FabricWastageModal({
                           <th className="p-3.5 text-right">অ্যাকশন</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-neutral-200/80">
                         {filteredList.map((item) => (
-                          <tr key={item.WastageID} className="hover:bg-emerald-50/15 transition-colors">
+                          <tr key={item.WastageID} className="hover:bg-[#FAFAFA] transition-colors">
                             <td className="p-3.5">
-                              <span className="font-mono font-bold text-slate-800 block">{item.WastageID}</span>
-                              <span className="text-[10px] text-slate-400">
+                              <span className="font-mono tabular-nums font-bold text-[#111111] block">{item.WastageID}</span>
+                              <span className="text-[10px] text-[#737373] font-mono tabular-nums">
                                 {new Date(item.CreatedAt).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' })}
                               </span>
                             </td>
                             <td className="p-3.5">
-                              <strong className="text-slate-900 block font-bold">{item.ProductName}</strong>
+                              <strong className="text-[#111111] block font-semibold">{item.ProductName}</strong>
                               <div className="flex items-center space-x-1.5 mt-0.5">
                                 {item.VariantName && (
-                                  <span className="px-1.5 py-0.2 rounded text-[10px] bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+                                  <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 font-semibold">
                                     {item.VariantName}
                                   </span>
                                 )}
-                                <span className="text-[10px] text-slate-400">{item.Category}</span>
+                                <span className="text-[10px] text-[#737373]">{item.Category}</span>
                               </div>
                             </td>
                             <td className="p-3.5 text-center">
                               {item.Location === 'Godown' ? (
-                                <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                  🏭 গোডাউন
+                                <span className="px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80 inline-flex items-center space-x-1">
+                                  <Warehouse className="w-3 h-3" />
+                                  <span>গোডাউন</span>
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                  🏬 দোকান
+                                <span className="px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-emerald-50 text-[#15803D] border border-emerald-200 inline-flex items-center space-x-1">
+                                  <Store className="w-3 h-3" />
+                                  <span>দোকান</span>
                                 </span>
                               )}
                             </td>
                             <td className="p-3.5">
                               {item.Type === 'Remnant' ? (
-                                <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
-                                  ✂️ থানের ছাঁট
+                                <span className="px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-amber-50 text-[#B45309] border border-amber-200 inline-flex items-center space-x-1">
+                                  <Scissors className="w-3 h-3" />
+                                  <span>থানের ছাঁট</span>
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                                  🚨 ড্যামেজ / নষ্ট
+                                <span className="px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-red-50 text-[#B91C1C] border border-red-200 inline-flex items-center space-x-1">
+                                  <AlertOctagon className="w-3 h-3" />
+                                  <span>ড্যামেজ / নষ্ট</span>
                                 </span>
                               )}
                             </td>
-                            <td className="p-3.5 text-center font-bold text-slate-900 font-mono">
+                            <td className="p-3.5 text-center font-bold text-[#111111] font-mono tabular-nums">
                               {item.Location === 'Godown' && item.Thans > 0 ? (
                                 <div>
                                   <span>{item.Thans} থান</span>
-                                  <span className="block text-[10px] text-slate-500 font-normal">
+                                  <span className="block text-[10px] text-[#525252] font-normal">
                                     ({formatFabricQuantity(item.TotalYards, 'গজ', false)})
                                   </span>
                                 </div>
@@ -1402,23 +1430,26 @@ export default function FabricWastageModal({
                                 formatFabricQuantity(item.TotalYards, 'গজ', true)
                               )}
                             </td>
-                            <td className="p-3.5 text-center font-black text-rose-700 font-mono">
+                            <td className="p-3.5 text-center font-bold text-[#B91C1C] font-mono tabular-nums">
                               {currencySymbol}{item.LossAmount}
-                              <span className="block text-[9.5px] text-slate-400 font-normal font-sans">
+                              <span className="block text-[9.5px] text-[#737373] font-normal">
                                 @{currencySymbol}{item.CostPricePerYard}/গজ
                               </span>
                             </td>
                             <td className="p-3.5">
-                              <span className="font-bold text-slate-800 block">{item.Reason}</span>
-                              <span className="text-[10px] text-slate-500 block">
+                              <span className="font-semibold text-[#111111] block">{item.Reason}</span>
+                              <span className="text-[10px] text-[#525252] block">
                                 {item.ActionTaken === 'ClearanceBundle' ? (
-                                  <span className="text-[#0da487] font-semibold">✨ ক্লিয়ারেন্স প্যাক (৳{item.BundlePrice})</span>
+                                  <span className="text-[#15803D] font-semibold font-mono tabular-nums inline-flex items-center space-x-1">
+                                    <Tag className="w-3 h-3" />
+                                    <span>ক্লিয়ারেন্স প্যাক ({currencySymbol}{item.BundlePrice})</span>
+                                  </span>
                                 ) : (
                                   'সরাসরি রাইট-অফ (বাদ)'
                                 )}
                               </span>
                             </td>
-                            <td className="p-3.5 text-slate-600 font-medium">
+                            <td className="p-3.5 text-[#525252] font-medium">
                               {item.LoggedBy}
                             </td>
                             <td className="p-3.5 text-right">
@@ -1436,7 +1467,7 @@ export default function FabricWastageModal({
                                         Unit: 'প্যাক'
                                       });
                                     }}
-                                    className="p-1.5 text-slate-500 hover:text-[#0da487] hover:bg-emerald-50 rounded-lg transition-all cursor-pointer"
+                                    className="min-h-[44px] sm:min-h-[36px] px-2 text-[#525252] hover:text-[#15803D] hover:bg-emerald-50 rounded-md transition-colors cursor-pointer"
                                     title="প্রাইস ট্যাগ স্টিকার প্রিন্ট করুন"
                                   >
                                     <Printer className="w-3.5 h-3.5" />
@@ -1450,7 +1481,7 @@ export default function FabricWastageModal({
                                         onDeleteWastageRecord(item.WastageID);
                                       }
                                     }}
-                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                                    className="min-h-[44px] sm:min-h-[36px] px-2 text-[#737373] hover:text-[#B91C1C] hover:bg-red-50 rounded-md transition-colors cursor-pointer"
                                     title="রেকর্ড মুছে ফেলুন ও স্টক পুনরুদ্ধার করুন"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -1471,19 +1502,19 @@ export default function FabricWastageModal({
           {/* ট্যাব ৪: নতুন ছাঁট বা ড্যামেজ রেকর্ড ফরম */}
           {activeTab === 'new' && (
             <form onSubmit={handleSubmitWastage} className="space-y-5">
-              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-4">
+              <div className="bg-white p-5 sm:p-6 rounded-lg border border-neutral-200/80 space-y-4">
                 
                 {/* ধাপ ১: অবস্থান ও কাপড় নির্বাচন */}
-                <div className="space-y-3 pb-4 border-b border-slate-100">
-                  <h3 className="text-sm font-black text-slate-900 flex items-center space-x-2">
-                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-[#0da487] flex items-center justify-center text-xs">১</span>
+                <div className="space-y-3 pb-4 border-b border-neutral-200/80">
+                  <h3 className="text-sm font-semibold tracking-tight text-[#111111] flex items-center space-x-2">
+                    <span className="w-5 h-5 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-mono tabular-nums">১</span>
                     <span>অপচয়ের অবস্থান ও কাপড় নির্বাচন</span>
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     {/* অবস্থান নির্বাচন */}
                     <div>
-                      <label className="block text-slate-700 font-bold mb-1.5">কোন অবস্থানের কাপড় নষ্ট/ছাঁট হয়েছে? *</label>
+                      <label className="block text-[#111111] font-semibold mb-1.5">কোন অবস্থানের কাপড় নষ্ট/ছাঁট হয়েছে? *</label>
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
@@ -1491,14 +1522,14 @@ export default function FabricWastageModal({
                             setLocation('Shop');
                             setReason('থানের শেষ ছাঁট (End-of-bolt Remnant)');
                           }}
-                          className={`py-2.5 px-3 rounded-xl font-bold transition-all flex items-center justify-center space-x-1.5 border cursor-pointer ${
+                          className={`min-h-[44px] sm:min-h-[36px] py-2 px-3 rounded-md font-semibold transition-colors flex items-center justify-center space-x-1.5 border cursor-pointer ${
                             location === 'Shop'
-                              ? 'bg-[#0da487] text-white border-[#0da487] shadow-xs'
-                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                              ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                              : 'bg-[#FAFAFA] text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'
                           }`}
                         >
                           <Store className="w-4 h-4" />
-                          <span>🏬 দোকান ফ্লোর (কাউন্টার)</span>
+                          <span>দোকান ফ্লোর (কাউন্টার)</span>
                         </button>
 
                         <button
@@ -1509,21 +1540,21 @@ export default function FabricWastageModal({
                             setReason('মিলের ত্রুটি / কালার ফল্ট (Mill Defect)');
                             setCreateClearanceBundle(false);
                           }}
-                          className={`py-2.5 px-3 rounded-xl font-bold transition-all flex items-center justify-center space-x-1.5 border cursor-pointer ${
+                          className={`min-h-[44px] sm:min-h-[36px] py-2 px-3 rounded-md font-semibold transition-colors flex items-center justify-center space-x-1.5 border cursor-pointer ${
                             location === 'Godown'
-                              ? 'bg-[#0da487] text-white border-[#0da487] shadow-xs'
-                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                              ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                              : 'bg-[#FAFAFA] text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'
                           }`}
                         >
                           <Warehouse className="w-4 h-4" />
-                          <span>🏭 গোডাউন (আস্ত থান/লট)</span>
+                          <span>গোডাউন (আস্ত থান/লট)</span>
                         </button>
                       </div>
                     </div>
 
                     {/* অপচয়ের ধরণ */}
                     <div>
-                      <label className="block text-slate-700 font-bold mb-1.5">অপচয়ের ধরণ নির্বাচন করুন *</label>
+                      <label className="block text-[#111111] font-semibold mb-1.5">অপচয়ের ধরণ নির্বাচন করুন *</label>
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
@@ -1532,16 +1563,16 @@ export default function FabricWastageModal({
                             setEntryType('Remnant');
                             setReason('থানের শেষ ছাঁট (End-of-bolt Remnant)');
                           }}
-                          className={`py-2.5 px-3 rounded-xl font-bold transition-all flex items-center justify-center space-x-1.5 border ${
+                          className={`min-h-[44px] sm:min-h-[36px] py-2 px-3 rounded-md font-semibold transition-colors flex items-center justify-center space-x-1.5 border ${
                             location === 'Godown'
-                              ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400 border-slate-200'
+                              ? 'opacity-40 cursor-not-allowed bg-[#F5F5F5] text-[#737373] border-neutral-200/80'
                               : entryType === 'Remnant'
-                              ? 'bg-amber-600 text-white border-amber-600 shadow-xs cursor-pointer'
-                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 cursor-pointer'
+                              ? 'bg-[#B45309] text-white border-[#B45309] cursor-pointer'
+                              : 'bg-[#FAFAFA] text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5] cursor-pointer'
                           }`}
                         >
                           <Scissors className="w-4 h-4" />
-                          <span>✂️ থানের শেষ ছাঁট</span>
+                          <span>থানের শেষ ছাঁট</span>
                         </button>
 
                         <button
@@ -1551,14 +1582,14 @@ export default function FabricWastageModal({
                             setReason(location === 'Godown' ? 'মিলের ত্রুটি / কালার ফল্ট (Mill Defect)' : 'ছেঁড়া বা কাটা ভুল (Torn / Cut Mistake)');
                             setCreateClearanceBundle(false);
                           }}
-                          className={`py-2.5 px-3 rounded-xl font-bold transition-all flex items-center justify-center space-x-1.5 border cursor-pointer ${
+                          className={`min-h-[44px] sm:min-h-[36px] py-2 px-3 rounded-md font-semibold transition-colors flex items-center justify-center space-x-1.5 border cursor-pointer ${
                             entryType === 'Damaged'
-                              ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                              ? 'bg-[#B91C1C] text-white border-[#B91C1C]'
+                              : 'bg-[#FAFAFA] text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'
                           }`}
                         >
                           <AlertOctagon className="w-4 h-4" />
-                          <span>🚨 নষ্ট / ড্যামেজ কাপড়</span>
+                          <span>নষ্ট / ড্যামেজ কাপড়</span>
                         </button>
                       </div>
                     </div>
@@ -1567,7 +1598,7 @@ export default function FabricWastageModal({
                   {/* থান কাপড় ও ভ্যারিয়েন্ট ড্রপডাউন */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-1">
                     <div>
-                      <label className="block text-slate-700 font-bold mb-1">থান কাপড় নির্বাচন করুন *</label>
+                      <label className="block text-[#111111] font-semibold mb-1">থান কাপড় নির্বাচন করুন *</label>
                       <select
                         required
                         value={selectedProductId}
@@ -1575,7 +1606,7 @@ export default function FabricWastageModal({
                           setSelectedProductId(e.target.value);
                           setSelectedVariantId('');
                         }}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0da487] font-bold text-slate-800"
+                        className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-semibold text-[#111111]"
                       >
                         <option value="">তালিকায় থাকা থান কাপড় বাছাই করুন...</option>
                         {fabricProducts.map((p) => {
@@ -1592,14 +1623,14 @@ export default function FabricWastageModal({
 
                     {/* ভ্যারিয়েন্ট ড্রপডাউন (যদি থাকে) */}
                     <div>
-                      <label className="block text-slate-700 font-bold mb-1">
+                      <label className="block text-[#111111] font-semibold mb-1">
                         নির্দিষ্ট কালার / ভ্যারিয়েন্ট (ঐচ্ছিক)
                       </label>
                       {selectedProduct && Array.isArray(selectedProduct.Variants) && selectedProduct.Variants.length > 0 ? (
                         <select
                           value={selectedVariantId}
                           onChange={(e) => setSelectedVariantId(e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0da487] font-bold text-slate-800"
+                          className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-semibold text-[#111111]"
                         >
                           <option value="">সাধারণ / সকল ভ্যারিয়েন্ট</option>
                           {selectedProduct.Variants.map((v, vIdx) => {
@@ -1608,7 +1639,7 @@ export default function FabricWastageModal({
                             const vStock = location === 'Godown' ? `${v.GodownStock || 0} থান` : `${v.StockQuantity || 0} গজ`;
                             return (
                               <option key={vKey} value={vKey}>
-                                🎨 {vLabel} (মজুত: {vStock})
+                                {vLabel} (মজুত: {vStock})
                               </option>
                             );
                           })}
@@ -1618,7 +1649,7 @@ export default function FabricWastageModal({
                           type="text"
                           disabled
                           placeholder="এই সাধারণ পণ্যে কোনো ভ্যারিয়েন্ট নেই (একক কাপড়)"
-                          className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-slate-400 font-medium cursor-not-allowed text-xs"
+                          className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#F5F5F5] border border-neutral-200/80 rounded-md text-[#737373] font-medium cursor-not-allowed text-xs"
                         />
                       )}
                     </div>
@@ -1626,14 +1657,14 @@ export default function FabricWastageModal({
 
                   {/* নির্বাচিত পণ্যের বর্তমান মজুত কার্ড */}
                   {selectedProduct && (
-                    <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100 flex items-center justify-between text-xs">
+                    <div className="p-3 bg-emerald-50 rounded-md border border-emerald-200 flex items-center justify-between text-xs">
                       <div>
-                        <span className="text-slate-500 font-medium">নির্বাচিত অবস্থানে বর্তমান মজুত:</span>
-                        <strong className="text-emerald-950 font-black ml-2 font-mono text-sm">
+                        <span className="text-[#525252] font-medium">নির্বাচিত অবস্থানে বর্তমান মজুত:</span>
+                        <strong className="text-[#15803D] font-bold ml-2 font-mono tabular-nums text-sm">
                           {currentStockInfo.text}
                         </strong>
                       </div>
-                      <div className="text-slate-500 font-mono text-[11px]">
+                      <div className="text-[#525252] font-mono tabular-nums text-[11px]">
                         ক্রয়মূল্য: {currencySymbol}{costPrice}/গজ
                       </div>
                     </div>
@@ -1641,28 +1672,28 @@ export default function FabricWastageModal({
                 </div>
 
                 {/* ধাপ ২: পরিমাপ ইনপুট (গজ ও গিরা অথবা থান) */}
-                <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 space-y-3">
-                  <h4 className="text-xs font-black text-slate-800 flex items-center space-x-2">
-                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-[#0da487] flex items-center justify-center text-xs">২</span>
+                <div className="bg-[#FAFAFA] p-4 rounded-lg border border-neutral-200/80 space-y-3">
+                  <h4 className="text-xs font-semibold tracking-tight text-[#111111] flex items-center space-x-2">
+                    <span className="w-5 h-5 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-mono tabular-nums">২</span>
                     <span>{location === 'Godown' ? 'নষ্ট আস্ত থানের সংখ্যা' : 'ছাঁট বা নষ্ট কাপড়ের পরিমাণ (গজ ও গিরা)'}</span>
                   </h4>
 
                   {location === 'Godown' ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                       <div>
-                        <label className="block text-slate-700 font-bold mb-1">ড্যামেজ থানের সংখ্যা (Thans) *</label>
+                        <label className="block text-[#111111] font-semibold mb-1">ড্যামেজ থানের সংখ্যা (Thans) *</label>
                         <input
                           type="number"
                           min="1"
                           step="1"
                           value={thans}
                           onChange={(e) => setThans(Math.max(1, parseInt(e.target.value) || 1))}
-                          className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0da487] font-black text-slate-900 text-sm font-mono"
+                          className="min-h-[44px] sm:min-h-[36px] w-full px-3.5 py-2 bg-white border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-bold text-[#111111] text-sm font-mono tabular-nums"
                         />
                       </div>
-                      <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-col justify-center">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">মোট হিসাব (১ থান = {yardsPerThan} গজ)</span>
-                        <span className="text-base font-black text-slate-900 font-mono">
+                      <div className="bg-white p-3 rounded-md border border-neutral-200/80 flex flex-col justify-center">
+                        <span className="text-[10px] text-[#737373] font-semibold uppercase font-mono tabular-nums">মোট হিসাব (১ থান = {yardsPerThan} গজ)</span>
+                        <span className="text-base font-bold text-[#111111] font-mono tabular-nums">
                           {totalYards.toLocaleString('bn-BD')} গজ কাপড়
                         </span>
                       </div>
@@ -1670,31 +1701,31 @@ export default function FabricWastageModal({
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                       <div>
-                        <label className="block text-slate-700 font-bold mb-1">গজ (Yards)</label>
+                        <label className="block text-[#111111] font-semibold mb-1">গজ (Yards)</label>
                         <input
                           type="number"
                           min="0"
                           value={goj}
                           onChange={(e) => setGoj(Math.max(0, parseInt(e.target.value) || 0))}
-                          className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0da487] font-black text-slate-900 text-sm font-mono"
+                          className="min-h-[44px] sm:min-h-[36px] w-full px-3.5 py-2 bg-white border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-bold text-[#111111] text-sm font-mono tabular-nums"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-slate-700 font-bold mb-1">গিরা (Gira - ১ গজ = ১৬ গিরা)</label>
+                        <label className="block text-[#111111] font-semibold mb-1">গিরা (Gira - ১ গজ = ১৬ গিরা)</label>
                         <input
                           type="number"
                           min="0"
                           max="15"
                           value={gira}
                           onChange={(e) => setGira(Math.min(15, Math.max(0, parseInt(e.target.value) || 0)))}
-                          className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0da487] font-black text-slate-900 text-sm font-mono"
+                          className="min-h-[44px] sm:min-h-[36px] w-full px-3.5 py-2 bg-white border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-bold text-[#111111] text-sm font-mono tabular-nums"
                         />
                       </div>
 
-                      <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-col justify-center">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">মোট পরিমাণ</span>
-                        <span className="text-base font-black text-[#0b8b72] font-mono">
+                      <div className="bg-white p-3 rounded-md border border-neutral-200/80 flex flex-col justify-center">
+                        <span className="text-[10px] text-[#737373] font-semibold uppercase">মোট পরিমাণ</span>
+                        <span className="text-base font-bold text-[#15803D] font-mono tabular-nums">
                           {formatFabricQuantity(totalYards, 'গজ', true)}
                         </span>
                       </div>
@@ -1704,14 +1735,14 @@ export default function FabricWastageModal({
 
                 {/* ধাপ ৩: কারণ ও আর্থিক ক্ষতি */}
                 <div className="space-y-3 pb-2">
-                  <h4 className="text-xs font-black text-slate-800 flex items-center space-x-2">
-                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-[#0da487] flex items-center justify-center text-xs">৩</span>
+                  <h4 className="text-xs font-semibold tracking-tight text-[#111111] flex items-center space-x-2">
+                    <span className="w-5 h-5 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-mono tabular-nums">৩</span>
                     <span>অপচয়ের কারণ ও আর্থিক ক্ষতির হিসাব</span>
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     <div>
-                      <label className="block text-slate-700 font-bold mb-1.5">অপচয় বা ছাঁটের কারণ নির্বাচন করুন *</label>
+                      <label className="block text-[#111111] font-semibold mb-1.5">অপচয় বা ছাঁটের কারণ নির্বাচন করুন *</label>
                       <div className="flex flex-wrap gap-1.5 mb-2">
                         {(location === 'Godown' ? [
                           'মিলের ত্রুটি / কালার ফল্ট (Mill Defect)',
@@ -1734,10 +1765,10 @@ export default function FabricWastageModal({
                             key={r}
                             type="button"
                             onClick={() => setReason(r)}
-                            className={`px-2 py-1 rounded-lg text-[10.5px] font-semibold border transition-all cursor-pointer ${
+                            className={`min-h-[44px] sm:min-h-[36px] px-2.5 py-1 rounded-md text-[10.5px] font-semibold border transition-colors cursor-pointer ${
                               reason === r
-                                ? 'bg-[#0da487] text-white border-[#0da487] shadow-2xs font-bold'
-                                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                                ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                                : 'bg-[#FAFAFA] text-[#525252] border-neutral-200/80 hover:bg-[#F5F5F5]'
                             }`}
                           >
                             {r}
@@ -1752,23 +1783,23 @@ export default function FabricWastageModal({
                           value={customReason}
                           onChange={(e) => setCustomReason(e.target.value)}
                           placeholder="সুনির্দিষ্ট কারণটি লিখুন..."
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0da487] font-medium text-xs"
+                          className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-medium text-xs text-[#111111]"
                         />
                       )}
                     </div>
 
                     {/* আর্থিক ক্ষতির হিসাব কার্ড */}
-                    <div className="bg-rose-950 text-white p-4 rounded-2xl flex items-center justify-between border border-rose-900 shadow-xs">
+                    <div className="bg-red-50 text-[#B91C1C] p-4 rounded-lg flex items-center justify-between border border-red-200">
                       <div>
-                        <span className="text-[10px] text-rose-300 uppercase font-bold block">আনুমানিক আর্থিক ক্ষতি</span>
-                        <h4 className="text-2xl font-black text-white mt-0.5 font-mono">{currencySymbol}{lossAmount.toLocaleString('bn-BD')}</h4>
-                        <span className="text-[10px] text-rose-300 block mt-1 font-mono">
+                        <span className="text-[10px] text-[#B91C1C] uppercase font-semibold block">আনুমানিক আর্থিক ক্ষতি</span>
+                        <h4 className="text-2xl font-bold text-[#B91C1C] mt-0.5 font-mono tabular-nums">{currencySymbol}{lossAmount.toLocaleString('bn-BD')}</h4>
+                        <span className="text-[10px] text-[#B91C1C] block mt-1 font-mono tabular-nums">
                           (কেনা দর: {currencySymbol}{costPrice} × {totalYards} গজ)
                         </span>
                       </div>
 
-                      <div className="w-11 h-11 rounded-2xl bg-rose-800/60 text-rose-300 flex items-center justify-center font-bold">
-                        <TrendingDown className="w-6 h-6 text-rose-300" />
+                      <div className="w-11 h-11 rounded-md bg-white border border-red-200 text-[#B91C1C] flex items-center justify-center">
+                        <TrendingDown className="w-6 h-6" />
                       </div>
                     </div>
                   </div>
@@ -1776,19 +1807,20 @@ export default function FabricWastageModal({
 
                 {/* Gap 5: অপশন: ড্যামেজ কাপড়ের আর্থিক ক্ষতি খরচের খাতায় অপচয় ক্ষতি (Loss Write-Off) হিসেবে এন্ট্রি */}
                 {entryType === 'Damaged' && (
-                  <div className="bg-rose-50/80 p-4 rounded-2xl border border-rose-200/90 space-y-2 text-xs">
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200 space-y-2 text-xs">
                     <label className="flex items-start space-x-2.5 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={recordAsExpense}
                         onChange={(e) => setRecordAsExpense(e.target.checked)}
-                        className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-rose-300 mt-0.5 cursor-pointer"
+                        className="w-4 h-4 rounded accent-[#B91C1C] border-red-300 mt-0.5 cursor-pointer"
                       />
                       <div>
-                        <span className="font-bold text-rose-950 text-xs block">
-                          📉 পরিচালন ক্ষতি (Loss Write-Off) হিসেবে ব্যয়ের খাতায় অন্তর্ভুক্ত করুন
+                        <span className="font-semibold text-[#B91C1C] text-xs inline-flex items-center space-x-1">
+                          <TrendingDown className="w-3.5 h-3.5" />
+                          <span>পরিচালন ক্ষতি (Loss Write-Off) হিসেবে ব্যয়ের খাতায় অন্তর্ভুক্ত করুন</span>
                         </span>
-                        <span className="text-[11px] text-rose-700 block mt-0.5">
+                        <span className="text-[11px] text-[#525252] block mt-0.5 font-mono tabular-nums">
                           সক্রিয় থাকলে খরচের খাতায় ({currencySymbol}{lossAmount.toLocaleString('bn-BD')}) টাকা নন-ক্যাশ পরিচালন অপচয় ক্ষতি হিসেবে এন্ট্রি হবে, যা প্রফিট-লস রিপোর্টে সঠিক ক্ষতি প্রদর্শন করবে।
                         </span>
                       </div>
@@ -1798,33 +1830,34 @@ export default function FabricWastageModal({
 
                 {/* অপশন: ক্লিয়ারেন্স ছাঁট প্যাক হিসেবে কম দামে বিক্রি */}
                 {entryType === 'Remnant' && location === 'Shop' && (
-                  <div className="bg-amber-50/80 p-4 rounded-2xl border border-amber-200/90 space-y-2 text-xs">
+                  <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 space-y-2 text-xs">
                     <label className="flex items-center space-x-2.5 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={createClearanceBundle}
                         onChange={(e) => setCreateClearanceBundle(e.target.checked)}
-                        className="w-4 h-4 rounded text-[#0da487] focus:ring-[#0da487] border-amber-300"
+                        className="w-4 h-4 rounded accent-[#B45309] border-amber-300"
                       />
-                      <span className="font-bold text-amber-950 text-xs">
-                        ✨ এই ছাঁট কাপড়টি ডিসকাউন্ট প্যাক হিসেবে ক্যাটালগে যুক্ত করুন (Clearance Remnant Bundle)
+                      <span className="font-semibold text-[#B45309] text-xs inline-flex items-center space-x-1">
+                        <Tag className="w-3.5 h-3.5" />
+                        <span>এই ছাঁট কাপড়টি ডিসকাউন্ট প্যাক হিসেবে ক্যাটালগে যুক্ত করুন (Clearance Remnant Bundle)</span>
                       </span>
                     </label>
 
                     {createClearanceBundle && (
                       <div className="pt-2 flex flex-wrap items-center gap-3">
                         <div className="flex items-center space-x-2">
-                          <label className="font-bold text-slate-700">ছাঁট প্যাক বিক্রয় মূল্য ({currencySymbol}):</label>
+                          <label className="font-semibold text-[#111111]">ছাঁট প্যাক বিক্রয় মূল্য ({currencySymbol}):</label>
                           <input
                             type="number"
                             min="1"
                             value={bundlePrice}
                             onChange={(e) => setBundlePrice(parseFloat(e.target.value) || 0)}
-                            className="px-3 py-1.5 bg-white border border-amber-300 rounded-xl font-black text-amber-950 w-32 focus:ring-2 focus:ring-[#0da487] font-mono"
+                            className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 bg-white border border-amber-300 rounded-md font-bold text-[#111111] w-32 focus:ring-2 focus:ring-[#B45309]/20 font-mono tabular-nums"
                           />
                         </div>
-                        <span className="text-[11px] text-slate-600">
-                          স্বয়ংক্রিয়ভাবে পিওএস কাউন্টারে <strong>[ছাঁট প্যাক]</strong> নামে পাওয়া যাবে এবং স্টিকার প্রিন্ট করা যাবে।
+                        <span className="text-[11px] text-[#525252]">
+                          স্বয়ংক্রিয়ভাবে পিওএস কাউন্টারে <strong className="text-[#111111]">[ছাঁট প্যাক]</strong> নামে পাওয়া যাবে এবং স্টিকার প্রিন্ট করা যাবে।
                         </span>
                       </div>
                     )}
@@ -1833,13 +1866,13 @@ export default function FabricWastageModal({
 
                 {/* অতিরিক্ত মন্তব্য */}
                 <div className="text-xs">
-                  <label className="block text-slate-700 font-bold mb-1">অতিরিক্ত নোট / বিবরণ (ঐচ্ছিক)</label>
+                  <label className="block text-[#111111] font-semibold mb-1">অতিরিক্ত নোট / বিবরণ (ঐচ্ছিক)</label>
                   <input
                     type="text"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="যেমন: এই থানটি শেষ হওয়ার পর ১ গজ ছাঁট পাওয়া গেছে বা মিল ফল্ট..."
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0da487] font-medium"
+                    className="min-h-[44px] sm:min-h-[36px] w-full px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md focus:ring-2 focus:ring-[#0F172A]/15 focus:border-[#0F172A] font-medium text-[#111111]"
                   />
                 </div>
               </div>
@@ -1849,13 +1882,13 @@ export default function FabricWastageModal({
                 <button
                   type="button"
                   onClick={() => setActiveTab('list')}
-                  className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] px-5 py-2 bg-white border border-neutral-200/80 hover:bg-[#F5F5F5] text-[#525252] hover:text-[#111111] rounded-md text-xs font-semibold transition-colors cursor-pointer"
                 >
                   বাতিল
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-[#0da487] hover:bg-[#0b8b72] active:scale-95 text-white rounded-xl text-xs font-black transition-all flex items-center space-x-2 shadow-lg shadow-emerald-600/30 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] px-6 py-2 bg-[#0F172A] hover:bg-slate-800 text-white rounded-md text-xs font-semibold transition-colors flex items-center space-x-2 cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>রেকর্ড সংরক্ষণ ও স্টক সমন্বয় করুন</span>

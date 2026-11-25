@@ -17,7 +17,10 @@ import {
   Calendar,
   Layers,
   Phone,
-  RefreshCw
+  RefreshCw,
+  Warehouse,
+  Store,
+  Info
 } from 'lucide-react';
 
 export default function PurchaseOrdersModal({
@@ -287,28 +290,28 @@ export default function PurchaseOrdersModal({
     switch (status) {
       case 'Received':
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-[#15803D] border border-emerald-200">
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-[#15803D]" />
             স্টক রিসিভড
           </span>
         );
       case 'Ordered':
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-            <Clock className="w-3.5 h-3.5 mr-1 text-amber-600" />
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-[#B45309] border border-amber-200">
+            <Clock className="w-3.5 h-3.5 mr-1 text-[#B45309]" />
             অর্ডার্ড (পেন্ডিং)
           </span>
         );
       case 'Cancelled':
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
-            <XCircle className="w-3.5 h-3.5 mr-1 text-rose-600" />
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-[#B91C1C] border border-red-200">
+            <XCircle className="w-3.5 h-3.5 mr-1 text-[#B91C1C]" />
             বাতিলকৃত
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-[#F5F5F5] text-[#111111] border border-neutral-200/80">
             {status}
           </span>
         );
@@ -330,23 +333,23 @@ export default function PurchaseOrdersModal({
 
   return (
     <div
-      className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200"}
+      className={embedded ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200" : "fixed inset-0 z-[100] bg-neutral-900/40 flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200"}
       style={embedded ? {} : { zIndex: 100 }}
     >
-      <div className={embedded ? "bg-white rounded-2xl shadow-sm border border-slate-200 w-full flex-1 min-h-[calc(100vh-6.5rem)] flex flex-col overflow-hidden relative" : "bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-6xl max-h-[90vh] my-auto flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 relative"} style={embedded ? {} : { zIndex: 101 }}>
+      <div className={embedded ? "bg-white rounded-lg border border-neutral-200/80 w-full flex-1 min-h-[calc(100vh-6.5rem)] flex flex-col overflow-hidden relative" : "bg-white rounded-lg border border-neutral-200/80 w-full max-w-6xl max-h-[90vh] my-auto flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 relative"} style={embedded ? {} : { zIndex: 101 }}>
         
         {/* Header */}
-        <div className="px-6 py-4.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 bg-[#0F172A] text-white flex items-center justify-between shrink-0 border-b border-slate-800">
           <div className="flex items-center space-x-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 shadow-inner">
-              <ShoppingCart className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center text-white shrink-0">
+              <ShoppingCart className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-lg sm:text-xl font-black tracking-tight">
+                <h2 className="text-lg sm:text-xl font-semibold tracking-tight text-white">
                   পারচেজ অর্ডার ও স্টক প্রকিউরমেন্ট (Purchase Orders)
                 </h2>
-                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
+                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-white/10 text-slate-200 border border-white/15">
                   Procurement & Auto-Restock
                 </span>
               </div>
@@ -358,17 +361,18 @@ export default function PurchaseOrdersModal({
 
           <div className="flex items-center space-x-2">
             <button
+              type="button"
               onClick={onClose}
-              className={`rounded-xl transition-all cursor-pointer flex items-center space-x-1 ${
+              className={`min-h-[44px] sm:min-h-[36px] rounded-md transition-colors cursor-pointer flex items-center space-x-1 ${
                 embedded
-                  ? 'px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/10 shadow-xs'
-                  : 'w-9 h-9 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white justify-center'
+                  ? 'px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15'
+                  : 'min-w-[44px] sm:min-w-[36px] w-9 h-9 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white justify-center'
               }`}
               title={embedded ? "সেলস ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
             >
               {embedded ? (
                 <>
-                  <span className="text-sm font-bold">←</span>
+                  <span className="text-sm font-semibold">←</span>
                   <span className="hidden sm:inline">ক্যাটালগে ফিরুন</span>
                 </>
               ) : (
@@ -379,28 +383,28 @@ export default function PurchaseOrdersModal({
         </div>
 
         {/* Tab Buttons & Subheader */}
-        <div className="bg-slate-50 border-b border-slate-200 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center space-x-2 bg-slate-200/70 p-1 rounded-2xl">
+        <div className="bg-[#FAFAFA] border-b border-neutral-200/80 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center space-x-1.5 bg-[#F5F5F5] p-1 rounded-md border border-neutral-200/80">
             <button
               type="button"
               onClick={() => setActiveTab('list')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 cursor-pointer ${
+              className={`min-h-[44px] sm:min-h-[36px] px-4 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 activeTab === 'list'
-                  ? 'bg-white text-indigo-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#0F172A] text-white'
+                  : 'text-[#525252] hover:text-[#111111]'
               }`}
             >
-              <Layers className="w-3.5 h-3.5 text-indigo-600" />
-              <span>সকল পারচেজ অর্ডার ({purchaseOrders.length})</span>
+              <Layers className={`w-3.5 h-3.5 ${activeTab === 'list' ? 'text-white' : 'text-[#525252]'}`} />
+              <span>সকল পারচেজ অর্ডার (<span className="font-mono tabular-nums">{purchaseOrders.length}</span>)</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('create')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 cursor-pointer ${
+              className={`min-h-[44px] sm:min-h-[36px] px-4 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 activeTab === 'create'
-                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#0F172A] text-white'
+                  : 'text-[#525252] hover:text-[#111111]'
               }`}
             >
               <Plus className="w-3.5 h-3.5" />
@@ -413,17 +417,17 @@ export default function PurchaseOrdersModal({
               <button
                 type="button"
                 onClick={onOpenSuppliersModal}
-                className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold flex items-center space-x-1.5 shadow-2xs transition-all cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md bg-white border border-neutral-200/80 text-[#111111] hover:bg-[#F5F5F5] font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
               >
-                <Truck className="w-3.5 h-3.5 text-indigo-600" />
-                <span>সাপ্লায়ার খাতা দেখুন ({suppliers.length})</span>
+                <Truck className="w-3.5 h-3.5 text-[#525252]" />
+                <span>সাপ্লায়ার খাতা দেখুন (<span className="font-mono tabular-nums">{suppliers.length}</span>)</span>
               </button>
             )}
           </div>
         </div>
 
         {/* Modal Main Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-[#FAFAFA]">
           
           {/* TAB 1: ALL PURCHASE ORDERS */}
           {activeTab === 'list' && (
@@ -431,53 +435,53 @@ export default function PurchaseOrdersModal({
               
               {/* Top Financial KPI Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl">
-                  <div className="text-[11px] font-bold text-slate-500 uppercase">মোট অর্ডার</div>
-                  <div className="text-xl font-black text-slate-900 mt-1">{kpis.totalPOs} টি</div>
+                <div className="bg-white border border-neutral-200/80 p-3.5 rounded-lg">
+                  <div className="text-[11px] font-semibold text-[#525252] uppercase">মোট অর্ডার</div>
+                  <div className="text-xl font-semibold font-mono tabular-nums text-[#111111] mt-1">{kpis.totalPOs} টি</div>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl">
-                  <div className="text-[11px] font-bold text-amber-700 uppercase">পেন্ডিং মালামাল</div>
-                  <div className="text-xl font-black text-amber-900 mt-1">{kpis.orderedCount} টি</div>
+                <div className="bg-amber-50/60 border border-amber-200 p-3.5 rounded-lg">
+                  <div className="text-[11px] font-semibold text-[#B45309] uppercase">পেন্ডিং মালামাল</div>
+                  <div className="text-xl font-semibold font-mono tabular-nums text-[#B45309] mt-1">{kpis.orderedCount} টি</div>
                 </div>
 
-                <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl">
-                  <div className="text-[11px] font-bold text-emerald-700 uppercase">গৃহীত স্টক</div>
-                  <div className="text-xl font-black text-emerald-900 mt-1">{kpis.receivedCount} টি</div>
+                <div className="bg-emerald-50/60 border border-emerald-200 p-3.5 rounded-lg">
+                  <div className="text-[11px] font-semibold text-[#15803D] uppercase">গৃহীত স্টক</div>
+                  <div className="text-xl font-semibold font-mono tabular-nums text-[#15803D] mt-1">{kpis.receivedCount} টি</div>
                 </div>
 
-                <div className="bg-indigo-50 border border-indigo-200 p-3.5 rounded-2xl">
-                  <div className="text-[11px] font-bold text-indigo-700 uppercase">মোট ক্রয়মূল্য</div>
-                  <div className="text-xl font-black text-indigo-950 mt-1">{currencySymbol}{kpis.totalValue.toLocaleString()}</div>
+                <div className="bg-white border border-neutral-200/80 p-3.5 rounded-lg">
+                  <div className="text-[11px] font-semibold text-[#525252] uppercase">মোট ক্রয়মূল্য</div>
+                  <div className="text-xl font-semibold font-mono tabular-nums text-[#111111] mt-1">{currencySymbol}{kpis.totalValue.toLocaleString()}</div>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 p-3.5 rounded-2xl">
-                  <div className="text-[11px] font-bold text-blue-700 uppercase">পরিশোধিত টাকা</div>
-                  <div className="text-xl font-black text-blue-900 mt-1">{currencySymbol}{kpis.totalPaid.toLocaleString()}</div>
+                <div className="bg-white border border-neutral-200/80 p-3.5 rounded-lg">
+                  <div className="text-[11px] font-semibold text-[#525252] uppercase">পরিশোধিত টাকা</div>
+                  <div className="text-xl font-semibold font-mono tabular-nums text-[#15803D] mt-1">{currencySymbol}{kpis.totalPaid.toLocaleString()}</div>
                 </div>
 
-                <div className="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl">
-                  <div className="text-[11px] font-bold text-rose-700 uppercase">মোট বকেয়া দেনা</div>
-                  <div className="text-xl font-black text-rose-900 mt-1">{currencySymbol}{kpis.totalDue.toLocaleString()}</div>
+                <div className="bg-red-50/60 border border-red-200 p-3.5 rounded-lg">
+                  <div className="text-[11px] font-semibold text-[#B91C1C] uppercase">মোট বকেয়া দেনা</div>
+                  <div className="text-xl font-semibold font-mono tabular-nums text-[#B91C1C] mt-1">{currencySymbol}{kpis.totalDue.toLocaleString()}</div>
                 </div>
               </div>
 
               {/* Filter and Search Bar */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="relative flex-1 w-full">
-                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="পিও নম্বর (PO No), সাপ্লায়ারের নাম বা নোট লিখে খুঁজুন..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-2xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                    className="w-full min-h-[44px] sm:min-h-[36px] pl-10 pr-8 py-2 bg-white border border-neutral-200/80 rounded-md text-xs sm:text-sm font-medium text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#111111] cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -485,7 +489,7 @@ export default function PurchaseOrdersModal({
                 </div>
 
                 {/* Status Filter Buttons */}
-                <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-2xl shrink-0 self-stretch sm:self-auto justify-center">
+                <div className="flex items-center space-x-1 bg-[#F5F5F5] border border-neutral-200/80 p-1 rounded-md shrink-0 self-stretch sm:self-auto justify-center">
                   {[
                     { id: 'ALL', label: 'সকল' },
                     { id: 'Ordered', label: 'পেন্ডিং' },
@@ -496,10 +500,10 @@ export default function PurchaseOrdersModal({
                       key={f.id}
                       type="button"
                       onClick={() => setStatusFilter(f.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      className={`min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                         statusFilter === f.id
-                          ? 'bg-white text-indigo-900 shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-[#0F172A] text-white'
+                          : 'text-[#525252] hover:text-[#111111]'
                       }`}
                     >
                       {f.label}
@@ -510,12 +514,12 @@ export default function PurchaseOrdersModal({
 
               {/* Purchase Orders Table */}
               {filteredPOs.length === 0 ? (
-                <div className="bg-slate-50 border border-slate-200 rounded-3xl p-12 text-center">
-                  <div className="w-14 h-14 bg-indigo-50 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <ShoppingCart className="w-7 h-7" />
+                <div className="bg-white border border-neutral-200/80 rounded-lg p-12 text-center">
+                  <div className="w-12 h-12 bg-[#F5F5F5] text-[#525252] border border-neutral-200/80 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <ShoppingCart className="w-6 h-6" />
                   </div>
-                  <h4 className="text-base font-bold text-slate-800">কোনো পারচেজ অর্ডার পাওয়া যায়নি</h4>
-                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  <h4 className="text-base font-semibold text-[#111111]">কোনো পারচেজ অর্ডার পাওয়া যায়নি</h4>
+                  <p className="text-xs text-[#525252] mt-1 max-w-sm mx-auto">
                     {searchQuery || statusFilter !== 'ALL'
                       ? 'সার্চ বা ফিল্টার পরিবর্তন করে পুনরায় চেষ্টা করুন।'
                       : 'নতুন মালামাল ক্রয়ের জন্য উপরের "নতুন পারচেজ অর্ডার তৈরি" বাটনে ক্লিক করুন।'}
@@ -523,16 +527,16 @@ export default function PurchaseOrdersModal({
                   <button
                     type="button"
                     onClick={() => setActiveTab('create')}
-                    className="mt-4 px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-700 transition-colors cursor-pointer"
+                    className="mt-4 min-h-[44px] sm:min-h-[36px] px-4 py-2 rounded-md bg-[#0F172A] text-white font-semibold text-xs hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     + নতুন অর্ডার তৈরি করুন
                   </button>
                 </div>
               ) : (
-                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+                <div className="bg-white border border-neutral-200/80 rounded-lg overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
-                      <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                      <thead className="bg-[#F5F5F5] text-[#525252] font-semibold uppercase text-[10px] tracking-wider border-b border-neutral-200/80">
                         <tr>
                           <th className="py-3 px-4">অর্ডার বিবরণ</th>
                           <th className="py-3 px-4">সাপ্লায়ার</th>
@@ -544,52 +548,52 @@ export default function PurchaseOrdersModal({
                           <th className="py-3 px-4 text-center">একশন</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-neutral-200/80">
                         {filteredPOs.map((po) => {
                           const items = parseItems(po.Items);
                           const isOrdered = po.Status === 'Ordered';
                           return (
-                            <tr key={po.PONumber} className="hover:bg-slate-50/80 transition-colors">
+                            <tr key={po.PONumber} className="hover:bg-[#FAFAFA] transition-colors">
                               <td className="py-3.5 px-4">
-                                <div className="font-black text-slate-900 text-xs flex items-center space-x-1.5">
+                                <div className="font-mono tabular-nums font-semibold text-[#111111] text-xs flex items-center space-x-1.5">
                                   <span>{po.PONumber}</span>
                                 </div>
-                                <div className="text-[11px] text-slate-500 flex items-center space-x-1 mt-0.5">
-                                  <Calendar className="w-3 h-3 text-slate-400" />
+                                <div className="text-[11px] font-mono tabular-nums text-[#525252] flex items-center space-x-1 mt-0.5">
+                                  <Calendar className="w-3 h-3 text-[#737373]" />
                                   <span>{po.Date || 'অজানা তারিখ'}</span>
                                 </div>
                               </td>
 
                               <td className="py-3.5 px-4">
-                                <div className="font-bold text-slate-800 text-xs">
+                                <div className="font-semibold text-[#111111] text-xs">
                                   {po.SupplierName || 'সাধারণ সাপ্লায়ার'}
                                 </div>
                                 {po.SupplierPhone && (
-                                  <div className="text-[11px] text-slate-500 flex items-center space-x-1 mt-0.5">
-                                    <Phone className="w-3 h-3 text-slate-400" />
+                                  <div className="text-[11px] font-mono tabular-nums text-[#525252] flex items-center space-x-1 mt-0.5">
+                                    <Phone className="w-3 h-3 text-[#737373]" />
                                     <span>{po.SupplierPhone}</span>
                                   </div>
                                 )}
                               </td>
 
                               <td className="py-3.5 px-4">
-                                <div className="font-bold text-slate-700 text-xs">
+                                <div className="font-semibold font-mono tabular-nums text-[#111111] text-xs">
                                   {po.TotalQuantity || items.reduce((s, i) => s + (Number(i.Quantity) || 0), 0)} পিস ({items.length} আইটেম)
                                 </div>
-                                <div className="text-[10px] text-slate-500 truncate max-w-[180px] mt-0.5" title={items.map(i => `${i.ProductName} (${i.Quantity})`).join(', ')}>
+                                <div className="text-[10px] text-[#525252] truncate max-w-[180px] mt-0.5" title={items.map(i => `${i.ProductName} (${i.Quantity})`).join(', ')}>
                                   {items.map(i => `${i.ProductName} (${i.Quantity})`).join(', ') || 'বিবরণ নেই'}
                                 </div>
                               </td>
 
-                              <td className="py-3.5 px-4 text-right font-black text-slate-900">
+                              <td className="py-3.5 px-4 text-right font-mono tabular-nums font-semibold text-[#111111]">
                                 {currencySymbol}{Number(po.TotalAmount || 0).toLocaleString()}
                               </td>
 
-                              <td className="py-3.5 px-4 text-right font-bold text-emerald-700">
+                              <td className="py-3.5 px-4 text-right font-mono tabular-nums font-semibold text-[#15803D]">
                                 {currencySymbol}{Number(po.PaidAmount || 0).toLocaleString()}
                               </td>
 
-                              <td className="py-3.5 px-4 text-right font-black text-rose-600">
+                              <td className="py-3.5 px-4 text-right font-mono tabular-nums font-semibold text-[#B91C1C]">
                                 {currencySymbol}{Number(po.DueAmount || 0).toLocaleString()}
                               </td>
 
@@ -599,12 +603,12 @@ export default function PurchaseOrdersModal({
 
                               <td className="py-3.5 px-4 text-center">
                                 <div className="flex items-center justify-center space-x-1.5">
-                                  {/* 1-Click Receive Stock Button with Location Selector (Gap 3-খ ও ৩-গ) */}
+                                  {/* 1-Click Receive Stock Button with Location Selector */}
                                   {isOrdered && onUpdatePOStatus && (
                                     <button
                                       type="button"
                                       onClick={() => setReceiveModalPO({ po, location: 'Godown' })}
-                                      className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px] hover:bg-emerald-700 flex items-center space-x-1 shadow-2xs transition-colors cursor-pointer"
+                                      className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 rounded-md bg-[#15803D] text-white font-semibold text-[11px] hover:bg-emerald-800 flex items-center space-x-1 transition-colors cursor-pointer"
                                       title="মালামাল গ্রহণ করে অবস্থান অনুযায়ী স্টক ইন করুন"
                                     >
                                       <PackageCheck className="w-3.5 h-3.5" />
@@ -616,7 +620,7 @@ export default function PurchaseOrdersModal({
                                   <button
                                     type="button"
                                     onClick={() => setViewingPO(po)}
-                                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 transition-colors cursor-pointer"
+                                    className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-1.5 rounded-md bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#111111] transition-colors flex items-center justify-center cursor-pointer"
                                     title="চালান / ভাউচার দেখুন ও প্রিন্ট করুন"
                                   >
                                     <FileText className="w-4 h-4" />
@@ -631,7 +635,7 @@ export default function PurchaseOrdersModal({
                                           onUpdatePOStatus(po.PONumber, 'Cancelled');
                                         }
                                       }}
-                                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                                      className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-1.5 rounded-md bg-[#F5F5F5] hover:bg-red-50 border border-neutral-200/80 text-[#737373] hover:text-[#B91C1C] transition-colors flex items-center justify-center cursor-pointer"
                                       title="অর্ডার বাতিল করুন"
                                     >
                                       <X className="w-4 h-4" />
@@ -654,26 +658,26 @@ export default function PurchaseOrdersModal({
           {activeTab === 'create' && (
             <form onSubmit={handleSubmitPO} className="space-y-6">
               {errorMsg && (
-                <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <div className="p-3.5 rounded-lg bg-red-50 border border-red-200 text-[#B91C1C] text-xs font-semibold flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 text-[#B91C1C] shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
               {/* Supplier & Date Selection Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4.5 rounded-2xl border border-slate-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4.5 rounded-lg border border-neutral-200/80">
                 {/* Supplier Picker */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
-                      <Building2 className="w-4 h-4 text-indigo-600" />
+                    <label className="text-xs font-semibold text-[#111111] flex items-center space-x-1.5">
+                      <Building2 className="w-4 h-4 text-[#525252]" />
                       <span>সাপ্লায়ার নির্বাচন করুন *</span>
                     </label>
                     {onOpenSuppliersModal && (
                       <button
                         type="button"
                         onClick={onOpenSuppliersModal}
-                        className="text-[11px] text-indigo-600 hover:underline font-bold"
+                        className="text-[11px] text-[#0F172A] hover:underline font-semibold cursor-pointer"
                       >
                         + নতুন সাপ্লায়ার
                       </button>
@@ -683,7 +687,7 @@ export default function PurchaseOrdersModal({
                     value={selectedSupplierId}
                     onChange={(e) => setSelectedSupplierId(e.target.value)}
                     required
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm font-medium text-[#111111] focus:bg-white focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] focus:outline-none"
                   >
                     <option value="">-- সাপ্লায়ার বেছে নিন --</option>
                     {suppliers.map(s => (
@@ -694,17 +698,17 @@ export default function PurchaseOrdersModal({
                   </select>
 
                   {currentSupplier && (
-                    <div className="mt-2 text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-200 space-y-0.5">
-                      <div>কোম্পানি: <strong className="text-slate-800">{currentSupplier.CompanyName}</strong></div>
-                      <div>মোবাইল: <strong className="text-slate-800">{currentSupplier.Phone}</strong></div>
-                      <div>বর্তমান দেনা/বকেয়া: <strong className="text-rose-600">৳{Number(currentSupplier.DueAmount || 0).toLocaleString()}</strong></div>
+                    <div className="mt-2 text-[11px] text-[#525252] bg-[#FAFAFA] p-2 rounded-md border border-neutral-200/80 space-y-0.5">
+                      <div>কোম্পানি: <strong className="text-[#111111]">{currentSupplier.CompanyName}</strong></div>
+                      <div>মোবাইল: <strong className="text-[#111111] font-mono tabular-nums">{currentSupplier.Phone}</strong></div>
+                      <div>বর্তমান দেনা/বকেয়া: <strong className="text-[#B91C1C] font-mono tabular-nums">৳{Number(currentSupplier.DueAmount || 0).toLocaleString()}</strong></div>
                     </div>
                   )}
                 </div>
 
                 {/* PO Date */}
                 <div>
-                  <label className="text-xs font-bold text-slate-800 mb-1.5 block">
+                  <label className="text-xs font-semibold text-[#111111] mb-1.5 block">
                     অর্ডারের তারিখ *
                   </label>
                   <input
@@ -712,41 +716,41 @@ export default function PurchaseOrdersModal({
                     value={poDate}
                     onChange={(e) => setPoDate(e.target.value)}
                     required
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm font-mono tabular-nums font-medium text-[#111111] focus:bg-white focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] focus:outline-none"
                   />
                 </div>
 
                 {/* Expected Delivery Date */}
                 <div>
-                  <label className="text-xs font-bold text-slate-800 mb-1.5 block">
+                  <label className="text-xs font-semibold text-[#111111] mb-1.5 block">
                     সম্ভাব্য মালামাল পৌঁছানোর তারিখ (ঐচ্ছিক)
                   </label>
                   <input
                     type="date"
                     value={expectedDate}
                     onChange={(e) => setExpectedDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm font-mono tabular-nums font-medium text-[#111111] focus:bg-white focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Product Selection & Add to Order */}
-              <div className="bg-indigo-50/50 border border-indigo-100 p-4.5 rounded-2xl space-y-3">
-                <div className="text-xs font-bold text-indigo-950 flex items-center space-x-1.5">
-                  <PackageCheck className="w-4 h-4 text-indigo-600" />
+              <div className="bg-white border border-neutral-200/80 p-4.5 rounded-lg space-y-3">
+                <div className="text-xs font-semibold text-[#111111] flex items-center space-x-1.5">
+                  <PackageCheck className="w-4 h-4 text-[#0F172A]" />
                   <span>পণ্য নির্বাচন ও অর্ডারে যুক্ত করুন</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                   {/* Product Dropdown */}
                   <div className="sm:col-span-6">
-                    <label className="text-[11px] font-bold text-slate-700 mb-1 block">
+                    <label className="text-[11px] font-semibold text-[#525252] mb-1 block">
                       পণ্য নির্বাচন করুন (ইনভেন্টরি থেকে)
                     </label>
                     <select
                       value={selectedProductId}
                       onChange={(e) => handleProductSelect(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm font-medium text-[#111111] focus:bg-white focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] focus:outline-none"
                     >
                       <option value="">-- পণ্য সিলেক্ট করুন --</option>
                       {products.map(p => (
@@ -759,7 +763,7 @@ export default function PurchaseOrdersModal({
 
                   {/* Quantity */}
                   <div className="sm:col-span-2">
-                    <label className="text-[11px] font-bold text-slate-700 mb-1 block">
+                    <label className="text-[11px] font-semibold text-[#525252] mb-1 block">
                       পরিমাণ (Qty)
                     </label>
                     <input
@@ -767,13 +771,13 @@ export default function PurchaseOrdersModal({
                       min="1"
                       value={itemQuantity}
                       onChange={(e) => setItemQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-center focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm font-mono tabular-nums font-semibold text-center text-[#111111] focus:bg-white focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] focus:outline-none"
                     />
                   </div>
 
                   {/* Unit Purchase Cost */}
                   <div className="sm:col-span-2">
-                    <label className="text-[11px] font-bold text-slate-700 mb-1 block">
+                    <label className="text-[11px] font-semibold text-[#525252] mb-1 block">
                       একক ক্রয়মূল্য (৳)
                     </label>
                     <input
@@ -782,7 +786,7 @@ export default function PurchaseOrdersModal({
                       step="any"
                       value={itemUnitCost}
                       onChange={(e) => setItemUnitCost(Math.max(0, parseFloat(e.target.value) || 0))}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-right focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs sm:text-sm font-mono tabular-nums font-semibold text-right text-[#111111] focus:bg-white focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] focus:outline-none"
                     />
                   </div>
 
@@ -792,7 +796,7 @@ export default function PurchaseOrdersModal({
                       type="button"
                       onClick={handleAddItem}
                       disabled={!selectedProductId}
-                      className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center justify-center space-x-1 cursor-pointer"
+                      className="w-full min-h-[44px] sm:min-h-[36px] py-2 bg-[#0F172A] hover:bg-slate-800 disabled:bg-neutral-300 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center space-x-1 cursor-pointer"
                     >
                       <Plus className="w-4 h-4" />
                       <span>যোগ করুন</span>
@@ -802,20 +806,20 @@ export default function PurchaseOrdersModal({
               </div>
 
               {/* Order Items Table */}
-              <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
-                <div className="bg-slate-100 px-4 py-2.5 font-bold text-xs text-slate-700 flex items-center justify-between">
-                  <span>অর্ডারের তালিকাভুক্ত মালামাল ({orderItems.length} টি)</span>
-                  <span className="text-indigo-700">সাবটোটাল: {currencySymbol}{itemsSubtotal.toLocaleString()}</span>
+              <div className="bg-white border border-neutral-200/80 rounded-lg overflow-hidden">
+                <div className="bg-[#F5F5F5] px-4 py-2.5 font-semibold text-xs text-[#111111] flex items-center justify-between border-b border-neutral-200/80">
+                  <span>অর্ডারের তালিকাভুক্ত মালামাল (<span className="font-mono tabular-nums">{orderItems.length}</span> টি)</span>
+                  <span className="text-[#111111] font-mono tabular-nums">সাবটোটাল: {currencySymbol}{itemsSubtotal.toLocaleString()}</span>
                 </div>
 
                 {orderItems.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-slate-400">
+                  <div className="py-8 text-center text-xs text-[#737373]">
                     এখনও কোনো পণ্য অর্ডারে যুক্ত করা হয়নি। উপরের ড্রপডাউন থেকে পণ্য সিলেক্ট করে যোগ করুন।
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] border-b border-slate-200">
+                      <thead className="bg-[#FAFAFA] text-[#525252] font-semibold uppercase text-[10px] border-b border-neutral-200/80">
                         <tr>
                           <th className="py-2.5 px-4">#</th>
                           <th className="py-2.5 px-4">পণ্যের নাম</th>
@@ -825,28 +829,28 @@ export default function PurchaseOrdersModal({
                           <th className="py-2.5 px-4 text-center">মুছুন</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-neutral-200/80">
                         {orderItems.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50">
-                            <td className="py-2.5 px-4 text-slate-400 font-mono">{idx + 1}</td>
+                          <tr key={idx} className="hover:bg-[#FAFAFA]">
+                            <td className="py-2.5 px-4 text-[#737373] font-mono tabular-nums">{idx + 1}</td>
                             <td className="py-2.5 px-4">
-                              <div className="font-bold text-slate-800">{item.ProductName}</div>
-                              {item.SKU && <div className="text-[10px] text-slate-400 font-mono">SKU: {item.SKU}</div>}
+                              <div className="font-semibold text-[#111111]">{item.ProductName}</div>
+                              {item.SKU && <div className="text-[10px] text-[#737373] font-mono tabular-nums">SKU: {item.SKU}</div>}
                             </td>
-                            <td className="py-2.5 px-4 text-center font-black text-slate-900">
+                            <td className="py-2.5 px-4 text-center font-mono tabular-nums font-semibold text-[#111111]">
                               {item.Quantity}
                             </td>
-                            <td className="py-2.5 px-4 text-right font-medium text-slate-700">
+                            <td className="py-2.5 px-4 text-right font-mono tabular-nums font-medium text-[#525252]">
                               {currencySymbol}{item.UnitCost.toFixed(2)}
                             </td>
-                            <td className="py-2.5 px-4 text-right font-black text-indigo-950">
+                            <td className="py-2.5 px-4 text-right font-mono tabular-nums font-semibold text-[#111111]">
                               {currencySymbol}{item.TotalCost.toFixed(2)}
                             </td>
                             <td className="py-2.5 px-4 text-center">
                               <button
                                 type="button"
                                 onClick={() => handleRemoveItem(idx)}
-                                className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                                className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-1 rounded-md text-[#737373] hover:text-[#B91C1C] hover:bg-red-50 transition-colors inline-flex items-center justify-center cursor-pointer"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -864,7 +868,7 @@ export default function PurchaseOrdersModal({
                 {/* Notes and Options */}
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-700 mb-1.5 block">
+                    <label className="text-xs font-semibold text-[#111111] mb-1.5 block">
                       অর্ডার সম্পর্কিত নোট / মন্তব্য
                     </label>
                     <textarea
@@ -872,53 +876,53 @@ export default function PurchaseOrdersModal({
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="অর্ডার ও সাপ্লায়ার সম্পর্কিত কোনো বিশেষ শর্ত বা মন্তব্য..."
-                      className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      className="w-full min-h-[44px] p-3 bg-white border border-neutral-200/80 rounded-md text-xs text-[#111111] focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] focus:outline-none"
                     />
                   </div>
 
                   {/* Immediate Receive Checkbox (Gap 3-গ) */}
-                  <div className="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-2xl space-y-2">
+                  <div className="p-3.5 bg-emerald-50/50 border border-emerald-200 rounded-lg space-y-2">
                     <label className="flex items-start space-x-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={receiveImmediately}
                         onChange={(e) => setReceiveImmediately(e.target.checked)}
-                        className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                        className="mt-1 h-4 w-4 rounded border-neutral-300 text-[#15803D] focus:ring-[#15803D] cursor-pointer"
                       />
                       <div>
-                        <span className="text-xs font-bold text-emerald-950 block">
+                        <span className="text-xs font-semibold text-[#111111] block">
                           মালামাল এখনই ইনভেন্টরিতে সরাসরি যুক্ত করুন (Direct Stock Influx)
                         </span>
-                        <span className="text-[11px] text-emerald-700">
+                        <span className="text-[11px] text-[#15803D]">
                           চেক করা থাকলে অর্ডার সংরক্ষণ করার সাথে সাথেই ইনভেন্টরিতে স্টক বেড়ে যাবে এবং স্ট্যাটাস "Received" হবে।
                         </span>
                       </div>
                     </label>
 
                     {receiveImmediately && (
-                      <div className="pt-2 border-t border-emerald-200/80 flex items-center space-x-4 text-xs">
-                        <span className="font-bold text-emerald-900">কোথায় স্টক জমা হবে:</span>
-                        <label className="flex items-center space-x-1.5 cursor-pointer font-semibold text-emerald-950">
+                      <div className="pt-2 border-t border-emerald-200 flex flex-wrap items-center gap-4 text-xs">
+                        <span className="font-semibold text-[#111111]">কোথায় স্টক জমা হবে:</span>
+                        <label className="flex items-center space-x-1.5 cursor-pointer font-semibold text-[#111111]">
                           <input
                             type="radio"
                             name="createPoLocation"
                             value="Godown"
                             checked={receiveLocation === 'Godown'}
                             onChange={() => setReceiveLocation('Godown')}
-                            className="text-emerald-600 focus:ring-emerald-500"
+                            className="text-[#15803D] focus:ring-[#15803D]"
                           />
-                          <span>🏭 কেন্দ্রীয় গোডাউন (Godown)</span>
+                          <span>কেন্দ্রীয় গোডাউন (Godown)</span>
                         </label>
-                        <label className="flex items-center space-x-1.5 cursor-pointer font-semibold text-emerald-950">
+                        <label className="flex items-center space-x-1.5 cursor-pointer font-semibold text-[#111111]">
                           <input
                             type="radio"
                             name="createPoLocation"
                             value="Shop"
                             checked={receiveLocation === 'Shop'}
                             onChange={() => setReceiveLocation('Shop')}
-                            className="text-emerald-600 focus:ring-emerald-500"
+                            className="text-[#15803D] focus:ring-[#15803D]"
                           />
-                          <span>🏬 বিক্রয় কাউন্টার (Shop)</span>
+                          <span>বিক্রয় কাউন্টার (Shop)</span>
                         </label>
                       </div>
                     )}
@@ -926,17 +930,17 @@ export default function PurchaseOrdersModal({
                 </div>
 
                 {/* Totals & Payment Calculations */}
-                <div className="bg-slate-50 border border-slate-200 p-4.5 rounded-2xl space-y-3.5">
-                  <div className="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2">
+                <div className="bg-white border border-neutral-200/80 p-4.5 rounded-lg space-y-3.5">
+                  <div className="text-xs font-semibold text-[#111111] uppercase tracking-wider border-b border-neutral-200/80 pb-2">
                     মূল্য ও পেমেন্ট হিসাব
                   </div>
 
-                  <div className="flex justify-between items-center text-xs text-slate-600">
+                  <div className="flex justify-between items-center text-xs text-[#525252]">
                     <span>পণ্যের মোট ক্রয়মূল্য (Subtotal):</span>
-                    <span className="font-bold text-slate-900">{currencySymbol}{itemsSubtotal.toFixed(2)}</span>
+                    <span className="font-mono tabular-nums font-semibold text-[#111111]">{currencySymbol}{itemsSubtotal.toFixed(2)}</span>
                   </div>
 
-                  <div className="flex justify-between items-center text-xs text-slate-600">
+                  <div className="flex justify-between items-center text-xs text-[#525252]">
                     <span>পরিবহন ও আনুষঙ্গিক খরচ (Carrying):</span>
                     <div className="w-28">
                       <input
@@ -945,21 +949,21 @@ export default function PurchaseOrdersModal({
                         step="any"
                         value={carryingCost}
                         onChange={(e) => setCarryingCost(Math.max(0, parseFloat(e.target.value) || 0))}
-                        className="w-full px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold text-right"
+                        className="w-full min-h-[44px] sm:min-h-[36px] px-2 py-1 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums font-semibold text-right text-[#111111]"
                       />
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center text-sm font-black text-indigo-950 border-t border-slate-200 pt-2">
+                  <div className="flex justify-between items-center text-sm font-semibold text-[#111111] border-t border-neutral-200/80 pt-2">
                     <span>সর্বমোট বিল (Grand Total):</span>
-                    <span className="text-base text-indigo-600">{currencySymbol}{grandTotal.toFixed(2)}</span>
+                    <span className="text-base font-mono tabular-nums text-[#111111]">{currencySymbol}{grandTotal.toFixed(2)}</span>
                   </div>
 
                   {/* Payment Inputs */}
-                  <div className="space-y-2 pt-2 border-t border-dashed border-slate-200">
+                  <div className="space-y-2 pt-2 border-t border-dashed border-neutral-200">
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                        <label className="text-[11px] font-semibold text-[#111111] block mb-1">
                           পরিশোধিত টাকা (Paid)
                         </label>
                         <input
@@ -969,19 +973,19 @@ export default function PurchaseOrdersModal({
                           step="any"
                           value={paidAmount}
                           onChange={(e) => setPaidAmount(Math.max(0, Math.min(grandTotal, parseFloat(e.target.value) || 0)))}
-                          className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-emerald-700 text-right"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-1.5 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums font-semibold text-[#15803D] text-right"
                         />
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                        <label className="text-[11px] font-semibold text-[#111111] block mb-1">
                           পেমেন্ট মেথড
                         </label>
                         <select
                           value={paymentMethod}
                           onChange={(e) => setPaymentMethod(e.target.value)}
                           disabled={paidAmount <= 0}
-                          className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-medium"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-2 py-1.5 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs font-medium text-[#111111]"
                         >
                           <option value="Cash">নগদ (Cash)</option>
                           <option value="Bank">ব্যাংক (Bank)</option>
@@ -994,7 +998,7 @@ export default function PurchaseOrdersModal({
 
                     {paidAmount > 0 && paymentMethod !== 'Cash' && (
                       <div>
-                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                        <label className="text-[10px] font-semibold text-[#525252] block mb-0.5">
                           ট্রানজেকশন আইডি / চেক নং
                         </label>
                         <input
@@ -1002,28 +1006,28 @@ export default function PurchaseOrdersModal({
                           value={reference}
                           onChange={(e) => setReference(e.target.value)}
                           placeholder="TrxID / Cheque Number"
-                          className="w-full px-3 py-1 bg-white border border-slate-300 rounded-lg text-xs"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-1 bg-[#FAFAFA] border border-neutral-200/80 rounded-md text-xs font-mono tabular-nums"
                         />
                       </div>
                     )}
 
-                    <div className="flex justify-between items-center text-xs font-black pt-2 text-rose-600 bg-rose-50/70 p-2.5 rounded-xl border border-rose-100">
+                    <div className="flex justify-between items-center text-xs font-semibold pt-2 text-[#B91C1C] bg-red-50 p-2.5 rounded-md border border-red-200">
                       <span>অবশিষ্ট বকেয়া দেনা (Due):</span>
-                      <span className="text-sm">{currencySymbol}{calculatedDue.toFixed(2)}</span>
+                      <span className="text-sm font-mono tabular-nums">{currencySymbol}{calculatedDue.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Form Actions */}
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-neutral-200/80">
                 <button
                   type="button"
                   onClick={() => {
                     resetCreateForm();
                     setActiveTab('list');
                   }}
-                  className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] px-5 py-2 rounded-md border border-neutral-200/80 bg-white text-[#111111] text-xs font-semibold hover:bg-[#F5F5F5] transition-colors cursor-pointer"
                 >
                   বাতিল করুন
                 </button>
@@ -1031,7 +1035,7 @@ export default function PurchaseOrdersModal({
                 <button
                   type="submit"
                   disabled={isSubmitting || orderItems.length === 0}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-xs font-black hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 transition-all shadow-md shadow-indigo-200 flex items-center space-x-2 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] px-6 py-2 rounded-md bg-[#0F172A] text-white text-xs font-semibold hover:bg-slate-800 disabled:opacity-50 transition-colors flex items-center space-x-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
@@ -1055,22 +1059,22 @@ export default function PurchaseOrdersModal({
       {/* PO Printable Invoice / Voucher Modal Preview */}
       {viewingPO && (
         <div
-          className="fixed inset-0 z-[110] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 overflow-y-auto animate-in fade-in"
+          className="fixed inset-0 z-[110] bg-neutral-900/40 flex items-center justify-center p-3 overflow-y-auto animate-in fade-in"
           style={{ zIndex: 110 }}
         >
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-2xl w-full my-auto overflow-hidden flex flex-col max-h-[90vh] relative" style={{ zIndex: 111 }}>
+          <div className="bg-white rounded-lg border border-neutral-200/80 max-w-2xl w-full my-auto overflow-hidden flex flex-col max-h-[90vh] relative" style={{ zIndex: 111 }}>
             
             {/* Modal Header */}
-            <div className="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between no-print">
+            <div className="px-5 py-3.5 bg-[#0F172A] text-white flex items-center justify-between no-print border-b border-slate-800">
               <div className="flex items-center space-x-2">
-                <FileText className="w-4 h-4 text-indigo-400" />
-                <span className="font-bold text-sm">পারচেজ অর্ডার চালান ভাউচার (#{viewingPO.PONumber})</span>
+                <FileText className="w-4 h-4 text-slate-300" />
+                <span className="font-semibold text-sm">পারচেজ অর্ডার চালান ভাউচার (<span className="font-mono tabular-nums">#{viewingPO.PONumber}</span>)</span>
               </div>
               <div className="flex items-center space-x-2">
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center space-x-1 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md bg-[#15803D] hover:bg-emerald-800 text-white text-xs font-semibold flex items-center space-x-1 cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>প্রিন্ট করুন</span>
@@ -1078,7 +1082,7 @@ export default function PurchaseOrdersModal({
                 <button
                   type="button"
                   onClick={() => setViewingPO(null)}
-                  className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"
+                  className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-1 rounded-md hover:bg-white/10 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1086,105 +1090,107 @@ export default function PurchaseOrdersModal({
             </div>
 
             {/* Printable Memo Content */}
-            <div className="p-6 sm:p-8 overflow-y-auto space-y-6 text-slate-900 text-xs printable-voucher">
+            <div className="p-6 sm:p-8 overflow-y-auto space-y-6 text-[#111111] text-xs printable-voucher">
               
               {/* Store & Header */}
-              <div className="border-b-2 border-slate-900 pb-4 flex justify-between items-start">
+              <div className="border-b-2 border-[#0F172A] pb-4 flex justify-between items-start">
                 <div>
-                  <h1 className="text-xl font-black text-slate-950 uppercase tracking-tight">{storeName}</h1>
-                  <p className="text-slate-500 text-[11px] mt-0.5">{storeSettings.Address || 'দোকানের ঠিকানা'}</p>
-                  <p className="text-slate-500 text-[11px]">মোবাইল: {storeSettings.Phone || 'ফোন নম্বর'}</p>
+                  <h1 className="text-xl font-semibold text-[#111111] uppercase tracking-tight">{storeName}</h1>
+                  <p className="text-[#525252] text-[11px] mt-0.5">{storeSettings.Address || 'দোকানের ঠিকানা'}</p>
+                  <p className="text-[#525252] text-[11px] font-mono tabular-nums">মোবাইল: {storeSettings.Phone || 'ফোন নম্বর'}</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-black uppercase tracking-wider px-2 py-1 bg-slate-100 rounded border border-slate-300 inline-block mb-1">
+                  <div className="text-xs font-semibold uppercase tracking-wider px-2 py-1 bg-[#F5F5F5] rounded-md border border-neutral-200/80 inline-block mb-1">
                     PURCHASE ORDER
                   </div>
-                  <div className="font-mono font-bold text-sm text-indigo-900">{viewingPO.PONumber}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">তারিখ: {viewingPO.Date}</div>
+                  <div className="font-mono tabular-nums font-semibold text-sm text-[#111111]">{viewingPO.PONumber}</div>
+                  <div className="text-[11px] font-mono tabular-nums text-[#525252] mt-0.5">তারিখ: {viewingPO.Date}</div>
                 </div>
               </div>
 
               {/* Supplier Info Box */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex justify-between items-start">
+              <div className="bg-[#FAFAFA] p-3.5 rounded-lg border border-neutral-200/80 flex justify-between items-start">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">সাপ্লায়ার বিবরণ</span>
-                  <div className="font-bold text-sm text-slate-900 mt-0.5">{viewingPO.SupplierName}</div>
-                  {viewingPO.SupplierPhone && <div className="text-[11px] text-slate-600">মোবাইল: {viewingPO.SupplierPhone}</div>}
+                  <span className="text-[10px] font-semibold text-[#737373] uppercase tracking-wider block">সাপ্লায়ার বিবরণ</span>
+                  <div className="font-semibold text-sm text-[#111111] mt-0.5">{viewingPO.SupplierName}</div>
+                  {viewingPO.SupplierPhone && <div className="text-[11px] font-mono tabular-nums text-[#525252]">মোবাইল: {viewingPO.SupplierPhone}</div>}
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">অর্ডার স্ট্যাটাস</span>
+                  <span className="text-[10px] font-semibold text-[#737373] uppercase tracking-wider block">অর্ডার স্ট্যাটাস</span>
                   <div className="mt-1">{renderStatusBadge(viewingPO.Status)}</div>
                 </div>
               </div>
 
               {/* Items Table */}
-              <table className="w-full text-left text-xs border-collapse">
-                <thead className="border-y-2 border-slate-800 bg-slate-50 font-bold uppercase text-[10px]">
-                  <tr>
-                    <th className="py-2 px-2">#</th>
-                    <th className="py-2 px-2">পণ্যের নাম</th>
-                    <th className="py-2 px-2 text-center">পরিমাণ</th>
-                    <th className="py-2 px-2 text-right">একক মূল্য</th>
-                    <th className="py-2 px-2 text-right">মোট মূল্য</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {parseItems(viewingPO.Items).map((item, idx) => (
-                    <tr key={idx}>
-                      <td className="py-2 px-2 text-slate-400 font-mono">{idx + 1}</td>
-                      <td className="py-2 px-2 font-bold text-slate-900">
-                        {item.ProductName}
-                        {item.SKU && <span className="block text-[10px] text-slate-400 font-mono">SKU: {item.SKU}</span>}
-                      </td>
-                      <td className="py-2 px-2 text-center font-bold text-slate-900">{item.Quantity}</td>
-                      <td className="py-2 px-2 text-right text-slate-700">{currencySymbol}{Number(item.UnitCost || 0).toFixed(2)}</td>
-                      <td className="py-2 px-2 text-right font-black text-slate-950">{currencySymbol}{Number(item.TotalCost || 0).toFixed(2)}</td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="border-y-2 border-[#0F172A] bg-[#FAFAFA] font-semibold uppercase text-[10px]">
+                    <tr>
+                      <th className="py-2 px-2">#</th>
+                      <th className="py-2 px-2">পণ্যের নাম</th>
+                      <th className="py-2 px-2 text-center">পরিমাণ</th>
+                      <th className="py-2 px-2 text-right">একক মূল্য</th>
+                      <th className="py-2 px-2 text-right">মোট মূল্য</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200/80">
+                    {parseItems(viewingPO.Items).map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="py-2 px-2 text-[#737373] font-mono tabular-nums">{idx + 1}</td>
+                        <td className="py-2 px-2 font-semibold text-[#111111]">
+                          {item.ProductName}
+                          {item.SKU && <span className="block text-[10px] text-[#737373] font-mono tabular-nums">SKU: {item.SKU}</span>}
+                        </td>
+                        <td className="py-2 px-2 text-center font-mono tabular-nums font-semibold text-[#111111]">{item.Quantity}</td>
+                        <td className="py-2 px-2 text-right font-mono tabular-nums text-[#525252]">{currencySymbol}{Number(item.UnitCost || 0).toFixed(2)}</td>
+                        <td className="py-2 px-2 text-right font-mono tabular-nums font-semibold text-[#111111]">{currencySymbol}{Number(item.TotalCost || 0).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               {/* Totals Summary */}
               <div className="flex justify-end pt-2">
-                <div className="w-64 space-y-1.5 border-t border-slate-200 pt-2 text-xs">
-                  <div className="flex justify-between text-slate-600">
+                <div className="w-64 space-y-1.5 border-t border-neutral-200/80 pt-2 text-xs">
+                  <div className="flex justify-between text-[#525252]">
                     <span>পণ্যের উপ-মোট:</span>
-                    <span className="font-bold text-slate-900">{currencySymbol}{Number(viewingPO.Subtotal || 0).toFixed(2)}</span>
+                    <span className="font-mono tabular-nums font-semibold text-[#111111]">{currencySymbol}{Number(viewingPO.Subtotal || 0).toFixed(2)}</span>
                   </div>
                   {Number(viewingPO.CarryingCost) > 0 && (
-                    <div className="flex justify-between text-slate-600">
+                    <div className="flex justify-between text-[#525252]">
                       <span>পরিবহন খরচ:</span>
-                      <span className="font-bold text-slate-900">{currencySymbol}{Number(viewingPO.CarryingCost).toFixed(2)}</span>
+                      <span className="font-mono tabular-nums font-semibold text-[#111111]">{currencySymbol}{Number(viewingPO.CarryingCost).toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm font-black border-y border-slate-800 py-1.5 text-slate-950">
+                  <div className="flex justify-between text-sm font-semibold border-y border-[#0F172A] py-1.5 text-[#111111]">
                     <span>সর্বমোট বিল:</span>
-                    <span>{currencySymbol}{Number(viewingPO.TotalAmount || 0).toFixed(2)}</span>
+                    <span className="font-mono tabular-nums">{currencySymbol}{Number(viewingPO.TotalAmount || 0).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-emerald-700 font-bold">
+                  <div className="flex justify-between text-[#15803D] font-semibold">
                     <span>পরিশোধিত:</span>
-                    <span>{currencySymbol}{Number(viewingPO.PaidAmount || 0).toFixed(2)}</span>
+                    <span className="font-mono tabular-nums">{currencySymbol}{Number(viewingPO.PaidAmount || 0).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-rose-700 font-black">
+                  <div className="flex justify-between text-[#B91C1C] font-semibold">
                     <span>বকেয়া দেনা:</span>
-                    <span>{currencySymbol}{Number(viewingPO.DueAmount || 0).toFixed(2)}</span>
+                    <span className="font-mono tabular-nums">{currencySymbol}{Number(viewingPO.DueAmount || 0).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
 
               {/* Notes */}
               {viewingPO.Notes && (
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-[11px] text-slate-600">
-                  <strong>মন্তব্য / নোট:</strong> {viewingPO.Notes}
+                <div className="p-3 bg-[#FAFAFA] rounded-md border border-neutral-200/80 text-[11px] text-[#525252]">
+                  <strong className="text-[#111111]">মন্তব্য / নোট:</strong> {viewingPO.Notes}
                 </div>
               )}
 
               {/* Signature Lines */}
-              <div className="grid grid-cols-2 gap-12 pt-14 text-center text-xs text-slate-600">
-                <div className="border-t border-dashed border-slate-400 pt-1.5">
+              <div className="grid grid-cols-2 gap-12 pt-14 text-center text-xs text-[#525252]">
+                <div className="border-t border-dashed border-neutral-300 pt-1.5">
                   কর্তৃপক্ষের স্বাক্ষর
                 </div>
-                <div className="border-t border-dashed border-slate-400 pt-1.5">
+                <div className="border-t border-dashed border-neutral-300 pt-1.5">
                   সাপ্লায়ার / ডেলিভারি প্রতিনিধি
                 </div>
               </div>
@@ -1197,59 +1203,66 @@ export default function PurchaseOrdersModal({
 
       {/* Gap 3(খ ও গ): মালামাল গ্রহণ অবস্থান (Location) নিশ্চিতকরণ মডাল */}
       {receiveModalPO && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-neutral-900/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 border border-neutral-200/80 space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-inner">
+              <div className="w-11 h-11 rounded-lg bg-emerald-50 border border-emerald-200 text-[#15803D] flex items-center justify-center shrink-0">
                 <PackageCheck className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="text-base font-black text-slate-900">মালামাল গ্রহণ ও স্টক ইন</h4>
-                <p className="text-xs text-slate-500 font-mono">অর্ডার: {receiveModalPO.po.PONumber}</p>
+                <h4 className="text-base font-semibold tracking-tight text-[#111111]">মালামাল গ্রহণ ও স্টক ইন</h4>
+                <p className="text-xs text-[#525252] font-mono tabular-nums">অর্ডার: {receiveModalPO.po.PONumber}</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              আপনি <strong>{receiveModalPO.po.SupplierName}</strong> থেকে পাঠানো মালামাল গ্রহণ করতে যাচ্ছেন। মালামাল কোন অবস্থানে (Location) প্রবেশ করবে তা নির্বাচন করুন:
+            <p className="text-xs text-[#525252] leading-relaxed">
+              আপনি <strong className="text-[#111111]">{receiveModalPO.po.SupplierName}</strong> থেকে পাঠানো মালামাল গ্রহণ করতে যাচ্ছেন। মালামাল কোন অবস্থানে (Location) প্রবেশ করবে তা নির্বাচন করুন:
             </p>
 
             <div className="grid grid-cols-2 gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => setReceiveModalPO(prev => ({ ...prev, location: 'Godown' }))}
-                className={`p-3.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center space-y-1.5 cursor-pointer ${
+                className={`min-h-[44px] p-3.5 rounded-lg border text-xs font-semibold transition-colors flex flex-col items-center justify-center space-y-1.5 cursor-pointer ${
                   receiveModalPO.location === 'Godown'
-                    ? 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs'
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    ? 'bg-emerald-50 border-[#15803D] text-[#111111]'
+                    : 'bg-white border-neutral-200/80 text-[#525252] hover:bg-[#FAFAFA]'
                 }`}
               >
-                <span className="text-sm font-black">🏭 গোডাউন (Godown)</span>
-                <span className="text-[10px] text-emerald-700 font-normal">প্রধান ওয়্যারহাউজে লট বৃদ্ধি</span>
+                <span className="text-sm font-semibold flex items-center space-x-1.5">
+                  <Warehouse className="w-4 h-4 text-[#15803D]" />
+                  <span>গোডাউন (Godown)</span>
+                </span>
+                <span className="text-[10px] text-[#15803D] font-normal">প্রধান ওয়্যারহাউজে লট বৃদ্ধি</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setReceiveModalPO(prev => ({ ...prev, location: 'Shop' }))}
-                className={`p-3.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center space-y-1.5 cursor-pointer ${
+                className={`min-h-[44px] p-3.5 rounded-lg border text-xs font-semibold transition-colors flex flex-col items-center justify-center space-y-1.5 cursor-pointer ${
                   receiveModalPO.location === 'Shop'
-                    ? 'bg-indigo-50 border-indigo-500 text-indigo-950 ring-2 ring-indigo-500/20 shadow-xs'
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    ? 'bg-[#F5F5F5] border-[#0F172A] text-[#111111]'
+                    : 'bg-white border-neutral-200/80 text-[#525252] hover:bg-[#FAFAFA]'
                 }`}
               >
-                <span className="text-sm font-black">🏬 দোকান (Shop)</span>
-                <span className="text-[10px] text-indigo-700 font-normal">সরাসরি বিক্রয় কাউন্টারে যোগ</span>
+                <span className="text-sm font-semibold flex items-center space-x-1.5">
+                  <Store className="w-4 h-4 text-[#0F172A]" />
+                  <span>দোকান (Shop)</span>
+                </span>
+                <span className="text-[10px] text-[#525252] font-normal">সরাসরি বিক্রয় কাউন্টারে যোগ</span>
               </button>
             </div>
 
-            <p className="text-[10.5px] text-slate-400 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-              ℹ️ গ্রহণ নিশ্চিত করলে পণ্যের ওয়েইটেড এভারেজ কস্ট (WAC) সমন্বিত হবে এবং অডিট ট্রেইলে <strong>LOT_IN</strong> মুভমেন্ট সংরক্ষিত হবে।
-            </p>
+            <div className="text-[10.5px] text-[#525252] bg-[#FAFAFA] p-2.5 rounded-md border border-neutral-200/80 flex items-start space-x-2">
+              <Info className="w-3.5 h-3.5 text-[#525252] shrink-0 mt-0.5" />
+              <span>গ্রহণ নিশ্চিত করলে পণ্যের ওয়েইটেড এভারেজ কস্ট (WAC) সমন্বিত হবে এবং অডিট ট্রেইলে <strong>LOT_IN</strong> মুভমেন্ট সংরক্ষিত হবে।</span>
+            </div>
 
             <div className="pt-2 flex items-center space-x-2">
               <button
                 type="button"
                 onClick={() => setReceiveModalPO(null)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-all cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] flex-1 py-2 rounded-md border border-neutral-200/80 text-[#111111] font-semibold text-xs hover:bg-[#F5F5F5] transition-colors cursor-pointer"
               >
                 বাতিল
               </button>
@@ -1259,7 +1272,7 @@ export default function PurchaseOrdersModal({
                   onUpdatePOStatus(receiveModalPO.po.PONumber, 'Received', receiveModalPO.location);
                   setReceiveModalPO(null);
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+                className="min-h-[44px] sm:min-h-[36px] flex-1 py-2 rounded-md bg-[#15803D] hover:bg-emerald-800 text-white font-semibold text-xs transition-colors cursor-pointer"
               >
                 গ্রহণ নিশ্চিত করুন
               </button>
@@ -1271,4 +1284,3 @@ export default function PurchaseOrdersModal({
     </div>
   );
 }
-

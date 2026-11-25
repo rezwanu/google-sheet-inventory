@@ -79,9 +79,9 @@ export const ROLES = [
     name: 'এডমিন (Admin)',
     tag: 'সুপার এক্সেস',
     icon: Crown,
-    badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-200/90',
-    cardBorder: 'border-indigo-500 bg-gradient-to-b from-indigo-50/90 to-white text-indigo-950 ring-2 ring-indigo-500/30 shadow-md shadow-indigo-500/10',
-    avatarGradient: 'from-indigo-600 via-indigo-700 to-violet-800',
+    badgeColor: 'bg-[#F5F5F5] text-[#111111] border-neutral-200/80',
+    cardBorder: 'border-[#0F172A] bg-[#FAFAFA] text-[#111111]',
+    avatarBg: 'bg-[#0F172A]',
     description: 'সম্পূর্ণ সিস্টেম, সেটিংস, রিপোর্ট ও ব্যবহারকারী নিয়ন্ত্রণ',
     defaultPermissions: ['canGiveDiscount', 'canViewBuyingPrice', 'canDeleteOrders', 'canTransferStock', 'canManageExpenses', 'canViewReports']
   },
@@ -90,9 +90,9 @@ export const ROLES = [
     name: 'ম্যানেজার (Manager)',
     tag: 'ইনভেন্টরি কন্ট্রোল',
     icon: ShieldCheck,
-    badgeColor: 'bg-blue-100 text-blue-800 border-blue-200/90',
-    cardBorder: 'border-blue-500 bg-gradient-to-b from-blue-50/90 to-white text-blue-950 ring-2 ring-blue-500/30 shadow-md shadow-blue-500/10',
-    avatarGradient: 'from-blue-600 via-blue-700 to-indigo-700',
+    badgeColor: 'bg-[#F5F5F5] text-[#111111] border-neutral-200/80',
+    cardBorder: 'border-[#0F172A] bg-[#FAFAFA] text-[#111111]',
+    avatarBg: 'bg-slate-800',
     description: 'ইনভেন্টরি, পণ্য স্টক, ক্রয়-বিক্রয় ও হিস্ট্রি ব্যবস্থাপনা',
     defaultPermissions: ['canGiveDiscount', 'canTransferStock', 'canManageExpenses', 'canViewReports']
   },
@@ -101,9 +101,9 @@ export const ROLES = [
     name: 'ক্যাশিয়ার (Cashier)',
     tag: 'কাউন্টার বিলিং',
     icon: Briefcase,
-    badgeColor: 'bg-amber-100 text-amber-900 border-amber-200/90',
-    cardBorder: 'border-amber-500 bg-gradient-to-b from-amber-50/90 to-white text-amber-950 ring-2 ring-amber-500/30 shadow-md shadow-amber-500/10',
-    avatarGradient: 'from-amber-500 via-orange-600 to-amber-700',
+    badgeColor: 'bg-amber-50 text-[#B45309] border-amber-200',
+    cardBorder: 'border-[#B45309] bg-amber-50/40 text-[#111111]',
+    avatarBg: 'bg-[#B45309]',
     description: 'POS কাউন্টারে দ্রুত বিক্রয় এবং ইনভয়েস মেমো তৈরি',
     defaultPermissions: ['canGiveDiscount', 'canManageExpenses']
   },
@@ -112,9 +112,9 @@ export const ROLES = [
     name: 'সেলসম্যান (Salesman)',
     tag: 'সেলস ও বুকিং',
     icon: UserCheck,
-    badgeColor: 'bg-purple-100 text-purple-900 border-purple-200/90',
-    cardBorder: 'border-purple-500 bg-gradient-to-b from-purple-50/90 to-white text-purple-950 ring-2 ring-purple-500/30 shadow-md shadow-purple-500/10',
-    avatarGradient: 'from-purple-600 via-fuchsia-600 to-indigo-700',
+    badgeColor: 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80',
+    cardBorder: 'border-[#0F172A] bg-[#FAFAFA] text-[#111111]',
+    avatarBg: 'bg-slate-700',
     description: 'কাউন্টার ও ফিল্ড সেলস, পণ্য অর্ডার নেওয়া ও ক্যাটালগ প্রদর্শন',
     defaultPermissions: ['canGiveDiscount']
   },
@@ -123,9 +123,9 @@ export const ROLES = [
     name: 'গ্রাহক (Customer)',
     tag: 'অনলাইন শপ',
     icon: ShoppingBag,
-    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200/90',
-    cardBorder: 'border-emerald-500 bg-gradient-to-b from-emerald-50/90 to-white text-emerald-950 ring-2 ring-emerald-500/30 shadow-md shadow-emerald-500/10',
-    avatarGradient: 'from-emerald-500 via-teal-600 to-emerald-700',
+    badgeColor: 'bg-emerald-50 text-[#15803D] border-emerald-200',
+    cardBorder: 'border-[#15803D] bg-emerald-50/40 text-[#111111]',
+    avatarBg: 'bg-[#15803D]',
     description: 'অনলাইন শপ ক্যাটালগ ব্রাউজ, শপিং কার্ট ও নিজস্ব অর্ডার ট্র্যাক',
     defaultPermissions: []
   },
@@ -316,8 +316,8 @@ export default function UsersModal({
       return {
         status: 'absent',
         label: 'আজ আসেননি',
-        badge: 'bg-rose-50 text-rose-700 border-rose-200',
-        dot: 'bg-rose-500'
+        badge: 'bg-red-50 text-[#B91C1C] border-red-200',
+        dot: 'bg-[#B91C1C]'
       };
     }
     if (att.Status === 'AutoClosed') {
@@ -325,8 +325,8 @@ export default function UsersModal({
         status: 'completed',
         label: 'অটো-ক্লোজড',
         time: '৯ ঘণ্টা',
-        badge: 'bg-purple-50 text-purple-800 border-purple-300 ring-1 ring-purple-400/30',
-        dot: 'bg-purple-500'
+        badge: 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80',
+        dot: 'bg-[#525252]'
       };
     }
     if (att.ClockIn && !att.ClockOut) {
@@ -336,24 +336,24 @@ export default function UsersModal({
           status: 'completed',
           label: 'অটো-ক্লোজড',
           time: '৯ ঘণ্টা',
-          badge: 'bg-purple-50 text-purple-800 border-purple-300',
-          dot: 'bg-purple-500'
+          badge: 'bg-[#F5F5F5] text-[#525252] border-neutral-200/80',
+          dot: 'bg-[#525252]'
         };
       }
       return {
         status: 'on_duty',
         label: 'ডিউটিতে আছেন',
         time: new Date(att.ClockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        badge: 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-1 ring-emerald-400/30',
-        dot: 'bg-emerald-500 animate-pulse'
+        badge: 'bg-emerald-50 text-[#15803D] border-emerald-200',
+        dot: 'bg-[#15803D] animate-pulse'
       };
     }
     return {
       status: 'completed',
       label: 'শিফট সম্পন্ন',
       time: new Date(att.ClockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      badge: 'bg-amber-50 text-amber-800 border-amber-300',
-      dot: 'bg-amber-500'
+      badge: 'bg-amber-50 text-[#B45309] border-amber-200',
+      dot: 'bg-[#B45309]'
     };
   };
 
@@ -957,35 +957,35 @@ export default function UsersModal({
       className={
         embedded
           ? "w-full flex-1 flex flex-col min-h-0 bg-transparent animate-in fade-in duration-200"
-          : "fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-[100] animate-fadeIn"
+          : "fixed inset-0 bg-neutral-900/40 flex items-center justify-center p-2 sm:p-4 z-[100] animate-fadeIn"
       }
       style={embedded ? {} : { zIndex: 100 }}
     >
       <div
         className={
           embedded
-            ? "bg-white w-full flex-1 min-h-[calc(100vh-6.5rem)] rounded-2xl shadow-sm flex flex-col overflow-hidden border border-slate-200"
-            : "bg-white w-full max-w-6xl rounded-2xl shadow-2xl flex flex-col max-h-[94vh] overflow-hidden border border-slate-100"
+            ? "bg-white w-full flex-1 min-h-[calc(100vh-6.5rem)] rounded-lg flex flex-col overflow-hidden border border-neutral-200/80"
+            : "bg-white w-full max-w-6xl rounded-lg flex flex-col max-h-[94vh] overflow-hidden border border-neutral-200/80"
         }
       >
         {/* =========================================================================
             ১. এক্সিকিউটিভ হেডার
             ========================================================================= */}
-        <div className="bg-slate-900 text-white px-5 sm:px-6 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0 shadow-md">
+        <div className="bg-[#0F172A] text-white px-5 sm:px-6 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-700 to-violet-800 flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
+                <h2 className="text-base sm:text-lg font-semibold tracking-tight text-white">
                   ইউজার ও স্টাফ ম্যানেজমেন্ট সুইট
                 </h2>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-white/10 text-slate-200 border border-white/15">
                   রোল, পে-রোল ও স্মার্ট হাজিরা
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-300 mt-0.5">
                 {storeName} • কর্মী তালিকা, ডিজিটাল হাজিরা, কমিশন লেজার ও অ্যাক্সেস কন্ট্রোল
               </p>
             </div>
@@ -996,17 +996,19 @@ export default function UsersModal({
               <>
                 {onRefreshUsers && (
                   <button
+                    type="button"
                     onClick={onRefreshUsers}
                     disabled={isLoading}
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                    className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
                     title="গুগল শিট থেকে রিফ্রেশ করুন"
                   >
-                    <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-indigo-400' : ''}`} />
+                    <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-white' : ''}`} />
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => handleOpenNewUserForm(activeMainTab === 'customers' ? 'Customer' : 'Salesman')}
-                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-md bg-white hover:bg-[#F5F5F5] text-[#111111] text-xs font-semibold transition-colors cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>{activeMainTab === 'customers' ? 'নতুন গ্রাহক' : 'নতুন স্টাফ'}</span>
@@ -1015,17 +1017,18 @@ export default function UsersModal({
             )}
 
             <button
+              type="button"
               onClick={onClose}
-              className={`transition-all cursor-pointer flex items-center justify-center ${
+              className={`min-h-[44px] sm:min-h-[36px] transition-colors cursor-pointer flex items-center justify-center ${
                 embedded
-                  ? 'px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700'
-                  : 'w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white'
+                  ? 'px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700'
+                  : 'min-w-[44px] sm:min-w-[36px] w-9 h-9 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
               }`}
               title={embedded ? "ক্যাটালগে ফিরে যান" : "বন্ধ করুন"}
             >
               {embedded ? (
                 <>
-                  <span className="text-sm font-bold mr-1">←</span>
+                  <span className="text-sm font-semibold mr-1">←</span>
                   <span>ক্যাটালগ</span>
                 </>
               ) : (
@@ -1038,7 +1041,7 @@ export default function UsersModal({
         {/* =========================================================================
             ২. ইন্টারঅ্যাক্টিভ KPI ফিল্টার ড্যাশবোর্ড
             ========================================================================= */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 sm:p-3.5 bg-slate-50 border-b border-slate-200 shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 sm:p-3.5 bg-[#FAFAFA] border-b border-neutral-200/80 shrink-0">
           
           {/* কার্ড ১: মোট সক্রিয় কর্মী */}
           <div
@@ -1047,18 +1050,18 @@ export default function UsersModal({
               setSelectedRoleFilter('All');
               setSelectedDutyFilter('all');
             }}
-            className={`p-3 rounded-xl border transition-all cursor-pointer shadow-xs ${
+            className={`p-3 rounded-lg border transition-colors cursor-pointer ${
               activeMainTab === 'staff' && selectedDutyFilter === 'all' && selectedRoleFilter === 'All'
-                ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm'
-                : 'bg-white border-slate-200 hover:border-slate-300'
+                ? 'bg-white border-[#0F172A]'
+                : 'bg-white border-neutral-200/80 hover:border-neutral-300'
             }`}
           >
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+            <div className="flex items-center justify-between text-xs font-semibold text-[#525252]">
               <span>মোট কর্মী দল</span>
-              <Users className="w-3.5 h-3.5 text-indigo-500" />
+              <Users className="w-3.5 h-3.5 text-[#0F172A]" />
             </div>
-            <p className="text-lg font-bold text-slate-900 mt-0.5">{metrics.staff} জন</p>
-            <p className="text-[10px] text-emerald-600 font-medium mt-0.5">{metrics.activeStaff} সক্রিয় কর্মী</p>
+            <p className="text-lg font-semibold font-mono tabular-nums text-[#111111] mt-0.5">{metrics.staff} জন</p>
+            <p className="text-[10px] text-[#15803D] font-mono tabular-nums font-medium mt-0.5">{metrics.activeStaff} সক্রিয় কর্মী</p>
           </div>
 
           {/* কার্ড ২: বর্তমানে ডিউটিতে আছেন */}
@@ -1067,21 +1070,21 @@ export default function UsersModal({
               setActiveMainTab('staff');
               setSelectedDutyFilter('on_duty');
             }}
-            className={`p-3 rounded-xl border transition-all cursor-pointer shadow-xs ${
+            className={`p-3 rounded-lg border transition-colors cursor-pointer ${
               activeMainTab === 'staff' && selectedDutyFilter === 'on_duty'
-                ? 'bg-emerald-50/70 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm'
-                : 'bg-white border-slate-200 hover:border-slate-300'
+                ? 'bg-emerald-50/70 border-[#15803D]'
+                : 'bg-white border-neutral-200/80 hover:border-neutral-300'
             }`}
           >
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+            <div className="flex items-center justify-between text-xs font-semibold text-[#525252]">
               <span className="flex items-center space-x-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="w-2 h-2 rounded-full bg-[#15803D] animate-pulse"></span>
                 <span>ডিউটিতে আছেন</span>
               </span>
-              <Clock className="w-3.5 h-3.5 text-emerald-600" />
+              <Clock className="w-3.5 h-3.5 text-[#15803D]" />
             </div>
-            <p className="text-lg font-bold text-emerald-700 mt-0.5">{metrics.currentlyOnDutyCount} জন</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">দোকানে সক্রিয় রয়েছেন</p>
+            <p className="text-lg font-semibold font-mono tabular-nums text-[#15803D] mt-0.5">{metrics.currentlyOnDutyCount} জন</p>
+            <p className="text-[10px] text-[#737373] mt-0.5">দোকানে সক্রিয় রয়েছেন</p>
           </div>
 
           {/* কার্ড ৩: আজ অনুপস্থিত */}
@@ -1090,18 +1093,18 @@ export default function UsersModal({
               setActiveMainTab('staff');
               setSelectedDutyFilter('absent');
             }}
-            className={`p-3 rounded-xl border transition-all cursor-pointer shadow-xs ${
+            className={`p-3 rounded-lg border transition-colors cursor-pointer ${
               activeMainTab === 'staff' && selectedDutyFilter === 'absent'
-                ? 'bg-rose-50/70 border-rose-500 ring-2 ring-rose-500/20 shadow-sm'
-                : 'bg-white border-slate-200 hover:border-slate-300'
+                ? 'bg-red-50/70 border-[#B91C1C]'
+                : 'bg-white border-neutral-200/80 hover:border-neutral-300'
             }`}
           >
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+            <div className="flex items-center justify-between text-xs font-semibold text-[#525252]">
               <span>আজ আসেননি</span>
-              <UserX className="w-3.5 h-3.5 text-rose-500" />
+              <UserX className="w-3.5 h-3.5 text-[#B91C1C]" />
             </div>
-            <p className="text-lg font-bold text-rose-700 mt-0.5">{metrics.todayAbsentCount} জন</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">অনুপস্থিত কর্মচারী</p>
+            <p className="text-lg font-semibold font-mono tabular-nums text-[#B91C1C] mt-0.5">{metrics.todayAbsentCount} জন</p>
+            <p className="text-[10px] text-[#737373] mt-0.5">অনুপস্থিত কর্মচারী</p>
           </div>
 
           {/* কার্ড ৪: অনলাইন গ্রাহক তালিকা */}
@@ -1110,37 +1113,37 @@ export default function UsersModal({
               setActiveMainTab('customers');
               setSelectedRoleFilter('Customer');
             }}
-            className={`p-3 rounded-xl border transition-all cursor-pointer shadow-xs ${
+            className={`p-3 rounded-lg border transition-colors cursor-pointer ${
               activeMainTab === 'customers'
-                ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm'
-                : 'bg-white border-slate-200 hover:border-slate-300'
+                ? 'bg-white border-[#0F172A]'
+                : 'bg-white border-neutral-200/80 hover:border-neutral-300'
             }`}
           >
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+            <div className="flex items-center justify-between text-xs font-semibold text-[#525252]">
               <span>অনলাইন গ্রাহক</span>
-              <ShoppingBag className="w-3.5 h-3.5 text-purple-500" />
+              <ShoppingBag className="w-3.5 h-3.5 text-[#0F172A]" />
             </div>
-            <p className="text-lg font-bold text-purple-700 mt-0.5">{metrics.customers} জন</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">নিবন্ধিত কাস্টমার</p>
+            <p className="text-lg font-semibold font-mono tabular-nums text-[#111111] mt-0.5">{metrics.customers} জন</p>
+            <p className="text-[10px] text-[#737373] mt-0.5">নিবন্ধিত কাস্টমার</p>
           </div>
 
           {/* কার্ড ৫: পে-রোল ও লেজার */}
           <div
             onClick={() => setActiveMainTab('payroll')}
-            className={`col-span-2 sm:col-span-1 p-3 rounded-xl border transition-all cursor-pointer shadow-xs ${
+            className={`col-span-2 sm:col-span-1 p-3 rounded-lg border transition-colors cursor-pointer ${
               activeMainTab === 'payroll'
-                ? 'bg-amber-50/70 border-amber-500 ring-2 ring-amber-500/20 shadow-sm'
-                : 'bg-white border-slate-200 hover:border-slate-300'
+                ? 'bg-amber-50/70 border-[#B45309]'
+                : 'bg-white border-neutral-200/80 hover:border-neutral-300'
             }`}
           >
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+            <div className="flex items-center justify-between text-xs font-semibold text-[#525252]">
               <span>মাসিক পে-রোল</span>
-              <Wallet className="w-3.5 h-3.5 text-amber-500" />
+              <Wallet className="w-3.5 h-3.5 text-[#B45309]" />
             </div>
-            <p className="text-lg font-bold text-amber-800 mt-0.5">
+            <p className="text-lg font-semibold font-mono tabular-nums text-[#B45309] mt-0.5">
               {currencySymbol}{metrics.totalMonthlySalary.toLocaleString('en-IN')}
             </p>
-            <p className="text-[10px] text-slate-500 mt-0.5">নির্ধারিত মূল বেতন</p>
+            <p className="text-[10px] text-[#737373] mt-0.5">নির্ধারিত মূল বেতন</p>
           </div>
 
         </div>
@@ -1148,53 +1151,56 @@ export default function UsersModal({
         {/* =========================================================================
             ৩. প্রধান নেভিগেশন ট্যাব
             ========================================================================= */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 sm:px-6 bg-white shrink-0 overflow-x-auto">
+        <div className="flex items-center justify-between border-b border-neutral-200/80 px-4 sm:px-6 bg-white shrink-0 overflow-x-auto">
           <div className="flex space-x-1 sm:space-x-2">
             
             {/* ট্যাব ১: স্টাফ ও সেলস টিম */}
             <button
+              type="button"
               onClick={() => {
                 setActiveMainTab('staff');
                 setSelectedRoleFilter('All');
                 setSelectedDutyFilter('all');
                 if (isFormOpen) handleCloseForm();
               }}
-              className={`py-3 px-3 sm:px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
+              className={`min-h-[44px] sm:min-h-[36px] py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm transition-colors border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
                 activeMainTab === 'staff' && !isFormOpen
-                  ? 'border-indigo-600 text-indigo-700'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                  ? 'border-[#0F172A] text-[#111111]'
+                  : 'border-transparent text-[#525252] hover:text-[#111111]'
               }`}
             >
               <Users className="w-4 h-4" />
-              <span>স্টাফ ও সেলস টিম ({metrics.staff})</span>
+              <span>স্টাফ ও সেলস টিম (<span className="font-mono tabular-nums">{metrics.staff}</span>)</span>
             </button>
 
             {/* ট্যাব ২: ডিজিটাল হাজিরা খাতা */}
             <button
+              type="button"
               onClick={() => {
                 setActiveMainTab('attendance');
                 if (isFormOpen) handleCloseForm();
               }}
-              className={`py-3 px-3 sm:px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
+              className={`min-h-[44px] sm:min-h-[36px] py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm transition-colors border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
                 activeMainTab === 'attendance' && !isFormOpen
-                  ? 'border-indigo-600 text-indigo-700'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                  ? 'border-[#0F172A] text-[#111111]'
+                  : 'border-transparent text-[#525252] hover:text-[#111111]'
               }`}
             >
               <Clock className="w-4 h-4" />
-              <span>ডিজিটাল হাজিরা খাতা ({metrics.todayPresentCount}/{metrics.staff})</span>
+              <span>ডিজিটাল হাজিরা খাতা (<span className="font-mono tabular-nums">{metrics.todayPresentCount}/{metrics.staff}</span>)</span>
             </button>
 
             {/* ট্যাব ৩: বেতন ও পে-রোল লেজার */}
             <button
+              type="button"
               onClick={() => {
                 setActiveMainTab('payroll');
                 if (isFormOpen) handleCloseForm();
               }}
-              className={`py-3 px-3 sm:px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
+              className={`min-h-[44px] sm:min-h-[36px] py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm transition-colors border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
                 activeMainTab === 'payroll' && !isFormOpen
-                  ? 'border-indigo-600 text-indigo-700'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                  ? 'border-[#0F172A] text-[#111111]'
+                  : 'border-transparent text-[#525252] hover:text-[#111111]'
               }`}
             >
               <CreditCard className="w-4 h-4" />
@@ -1203,25 +1209,26 @@ export default function UsersModal({
 
             {/* ট্যাব ৪: অনলাইন গ্রাহক */}
             <button
+              type="button"
               onClick={() => {
                 setActiveMainTab('customers');
                 setSelectedRoleFilter('Customer');
                 if (isFormOpen) handleCloseForm();
               }}
-              className={`py-3 px-3 sm:px-4 font-bold text-xs sm:text-sm transition-all border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
+              className={`min-h-[44px] sm:min-h-[36px] py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm transition-colors border-b-2 flex items-center space-x-2 cursor-pointer whitespace-nowrap ${
                 activeMainTab === 'customers' && !isFormOpen
-                  ? 'border-indigo-600 text-indigo-700'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                  ? 'border-[#0F172A] text-[#111111]'
+                  : 'border-transparent text-[#525252] hover:text-[#111111]'
               }`}
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>অনলাইন গ্রাহক ({metrics.customers})</span>
+              <span>অনলাইন গ্রাহক (<span className="font-mono tabular-nums">{metrics.customers}</span>)</span>
             </button>
 
           </div>
 
           {isFormOpen && (
-            <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full whitespace-nowrap ml-2">
+            <span className="text-xs font-mono tabular-nums font-semibold text-[#111111] bg-[#F5F5F5] border border-neutral-200/80 px-3 py-1 rounded-md whitespace-nowrap ml-2">
               {editingUserId ? `সম্পাদনা মোড (#${editingUserId})` : 'নতুন ব্যবহারকারী এন্ট্রি'}
             </span>
           )}
@@ -1230,44 +1237,45 @@ export default function UsersModal({
         {/* =========================================================================
             ৪. বডি কন্টেন্ট (ফর্ম মোড বনাম বিভিন্ন ভিউ মোড)
             ========================================================================= */}
-        <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 bg-slate-50/70">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 bg-[#FAFAFA]">
           
           {/* -----------------------------------------------------------------
               ফর্ম মোড: নতুন ইউজার তৈরি বা এডিট
               ----------------------------------------------------------------- */}
           {isFormOpen ? (
-            <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-7">
+            <div className="max-w-4xl mx-auto bg-white rounded-lg border border-neutral-200/80 p-4 sm:p-7">
               
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+              <div className="flex items-center justify-between pb-4 border-b border-neutral-200/80 mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-semibold">
                     <UserPlus className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">
+                    <h3 className="text-base font-semibold tracking-tight text-[#111111]">
                       {editingUserId ? 'স্টাফ তথ্য ও পারমিশন সম্পাদনা' : 'নতুন স্টাফ / ইউজার একাউন্ট তৈরি'}
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[#525252]">
                       মৌলিক তথ্য, বেতন-কমিশন, কেওয়াইসি এবং কাস্টম পারমিশন নির্ধারণ করুন
                     </p>
                   </div>
                 </div>
 
                 <button
+                  type="button"
                   onClick={handleCloseForm}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-md border border-neutral-200/80 bg-[#F5F5F5] text-xs font-semibold text-[#111111] hover:bg-neutral-200 cursor-pointer"
                 >
                   ফিরে যান
                 </button>
               </div>
 
               {/* ফর্ম স্টেপ উইজার্ড ট্যাব */}
-              <div className="flex flex-wrap gap-2 mb-5 p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+              <div className="flex flex-wrap gap-2 mb-5 p-1 bg-[#F5F5F5] border border-neutral-200/80 rounded-md text-xs font-semibold">
                 <button
                   type="button"
                   onClick={() => setFormActiveTab('basic')}
-                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 ${
-                    formActiveTab === 'basic' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  className={`min-h-[44px] sm:min-h-[36px] px-3.5 py-1.5 rounded-md transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                    formActiveTab === 'basic' ? 'bg-[#0F172A] text-white' : 'text-[#525252] hover:text-[#111111]'
                   }`}
                 >
                   <User className="w-3.5 h-3.5" />
@@ -1276,8 +1284,8 @@ export default function UsersModal({
                 <button
                   type="button"
                   onClick={() => setFormActiveTab('finance')}
-                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 ${
-                    formActiveTab === 'finance' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  className={`min-h-[44px] sm:min-h-[36px] px-3.5 py-1.5 rounded-md transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                    formActiveTab === 'finance' ? 'bg-[#0F172A] text-white' : 'text-[#525252] hover:text-[#111111]'
                   }`}
                 >
                   <Wallet className="w-3.5 h-3.5" />
@@ -1286,8 +1294,8 @@ export default function UsersModal({
                 <button
                   type="button"
                   onClick={() => setFormActiveTab('kyc')}
-                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 ${
-                    formActiveTab === 'kyc' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  className={`min-h-[44px] sm:min-h-[36px] px-3.5 py-1.5 rounded-md transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                    formActiveTab === 'kyc' ? 'bg-[#0F172A] text-white' : 'text-[#525252] hover:text-[#111111]'
                   }`}
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
@@ -1296,8 +1304,8 @@ export default function UsersModal({
                 <button
                   type="button"
                   onClick={() => setFormActiveTab('permissions')}
-                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 ${
-                    formActiveTab === 'permissions' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  className={`min-h-[44px] sm:min-h-[36px] px-3.5 py-1.5 rounded-md transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                    formActiveTab === 'permissions' ? 'bg-[#0F172A] text-white' : 'text-[#525252] hover:text-[#111111]'
                   }`}
                 >
                   <KeyRound className="w-3.5 h-3.5" />
@@ -1306,14 +1314,14 @@ export default function UsersModal({
               </div>
 
               {formError && (
-                <div className="p-3 rounded-xl mb-4 text-xs bg-rose-50 border border-rose-200 text-rose-800 flex items-center space-x-2">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <div className="p-3 rounded-lg mb-4 text-xs bg-red-50 border border-red-200 text-[#B91C1C] flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 text-[#B91C1C] shrink-0" />
                   <span>{formError}</span>
                 </div>
               )}
               {formSuccess && (
-                <div className="p-3 rounded-xl mb-4 text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div className="p-3 rounded-lg mb-4 text-xs bg-emerald-50 border border-emerald-200 text-[#15803D] flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#15803D] shrink-0" />
                   <span>{formSuccess}</span>
                 </div>
               )}
@@ -1325,7 +1333,7 @@ export default function UsersModal({
                   <div className="space-y-4">
                     {/* রোল সিলেক্টর */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-2">
+                      <label className="block text-xs font-semibold text-[#111111] mb-2">
                         ব্যবহারকারীর ভূমিকা / পদবী (Role) নির্বাচন করুন *
                       </label>
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
@@ -1343,19 +1351,19 @@ export default function UsersModal({
                                   Permissions: r.defaultPermissions
                                 }));
                               }}
-                              className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                              className={`min-h-[44px] p-2.5 rounded-lg border text-left flex flex-col justify-between transition-colors cursor-pointer ${
                                 isSelected
-                                  ? 'border-indigo-600 bg-indigo-50/80 text-indigo-950 ring-2 ring-indigo-500/20 font-bold shadow-xs'
-                                  : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                                  ? 'border-[#0F172A] bg-[#F5F5F5] text-[#111111] font-semibold'
+                                  : 'border-neutral-200/80 bg-white hover:bg-[#FAFAFA] text-[#525252]'
                               }`}
                             >
                               <div className="flex items-center justify-between mb-1.5">
-                                <IconComp className={`w-4 h-4 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
-                                <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${r.badgeColor}`}>
+                                <IconComp className={`w-4 h-4 ${isSelected ? 'text-[#0F172A]' : 'text-[#737373]'}`} />
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded-md border font-semibold ${r.badgeColor}`}>
                                   {r.tag}
                                 </span>
                               </div>
-                              <span className="text-xs truncate font-bold">{r.name.split(' ')[0]}</span>
+                              <span className="text-xs truncate font-semibold text-[#111111]">{r.name.split(' ')[0]}</span>
                             </button>
                           );
                         })}
@@ -1364,7 +1372,7 @@ export default function UsersModal({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           পুরো নাম (Full Name) *
                         </label>
                         <input
@@ -1372,12 +1380,12 @@ export default function UsersModal({
                           placeholder="যেমন: মোঃ রফিকুল ইসলাম"
                           value={formData.FullName}
                           onChange={(e) => setFormData(prev => ({ ...prev, FullName: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm rounded-md border border-neutral-200/80 bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           মোবাইল নম্বর (Login Mobile) *
                         </label>
                         <input
@@ -1385,14 +1393,14 @@ export default function UsersModal({
                           placeholder="017XXXXXXXX"
                           value={formData.Phone}
                           onChange={(e) => setFormData(prev => ({ ...prev, Phone: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm rounded-md border border-neutral-200/80 bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] font-mono tabular-nums"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           ইমেইল এড্রেস (ঐচ্ছিক)
                         </label>
                         <input
@@ -1400,19 +1408,19 @@ export default function UsersModal({
                           placeholder="staff@pabna.com"
                           value={formData.Email}
                           onChange={(e) => setFormData(prev => ({ ...prev, Email: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm rounded-md border border-neutral-200/80 bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                         />
                       </div>
 
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <label className="block text-xs font-bold text-slate-700">
+                          <label className="block text-xs font-semibold text-[#111111]">
                             ৪ ডিজিটের পিন (Login PIN) *
                           </label>
                           <button
                             type="button"
                             onClick={handleGeneratePin}
-                            className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer"
+                            className="text-[10px] text-[#0F172A] hover:underline font-semibold cursor-pointer"
                           >
                             র‍্যান্ডম পিন
                           </button>
@@ -1423,18 +1431,18 @@ export default function UsersModal({
                           placeholder="যেমন: 1234"
                           value={formData.PIN}
                           onChange={(e) => setFormData(prev => ({ ...prev, PIN: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm font-mono font-bold text-indigo-700 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm font-mono tabular-nums font-semibold text-[#111111] rounded-md border border-neutral-200/80 bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           একাউন্ট স্ট্যাটাস (Status)
                         </label>
                         <select
                           value={formData.Status}
                           onChange={(e) => setFormData(prev => ({ ...prev, Status: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm rounded-md border border-neutral-200/80 bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                         >
                           <option value="Active">Active (সক্রিয়)</option>
                           <option value="Inactive">Inactive (নিষ্ক্রিয় / সাসপেন্ড)</option>
@@ -1445,7 +1453,7 @@ export default function UsersModal({
                     {/* ঠিকানা ও ছবি আপলোড */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           বর্তমান ঠিকানা (Address)
                         </label>
                         <textarea
@@ -1453,25 +1461,25 @@ export default function UsersModal({
                           placeholder="বাসা/গ্রাম, থানা, জেলা..."
                           value={formData.Address}
                           onChange={(e) => setFormData(prev => ({ ...prev, Address: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+                          className="w-full min-h-[44px] px-3 py-2 text-sm rounded-md border border-neutral-200/80 bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] resize-none"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           প্রোফাইল ছবি / অবতার
                         </label>
                         <div className="flex items-center space-x-3">
-                          <div className="w-14 h-14 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
+                          <div className="w-14 h-14 rounded-lg border border-neutral-200/80 bg-[#FAFAFA] flex items-center justify-center overflow-hidden shrink-0">
                             {avatarPreview ? (
                               <img src={formatImageUrl(avatarPreview)} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
-                              <User className="w-6 h-6 text-slate-400" />
+                              <User className="w-6 h-6 text-[#737373]" />
                             )}
                           </div>
                           <div className="flex-1">
-                            <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer shadow-2xs">
-                              <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                            <label className="min-h-[44px] sm:min-h-[36px] inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md border border-neutral-200/80 bg-white text-xs font-semibold text-[#111111] hover:bg-[#F5F5F5] cursor-pointer">
+                              <Upload className="w-3.5 h-3.5 text-[#0F172A]" />
                               <span>ছবি নির্বাচন করুন</span>
                               <input
                                 ref={fileInputRef}
@@ -1481,7 +1489,7 @@ export default function UsersModal({
                                 className="hidden"
                               />
                             </label>
-                            <p className="text-[10px] text-slate-400 mt-1">সর্বোচ্চ ৫ মেগাবাইট (JPG, PNG)</p>
+                            <p className="text-[10px] text-[#737373] mt-1">সর্বোচ্চ ৫ মেগাবাইট (JPG, PNG)</p>
                           </div>
                         </div>
                       </div>
@@ -1492,8 +1500,8 @@ export default function UsersModal({
                 {/* ট্যাব ২: বেতন ও কমিশন */}
                 {formActiveTab === 'finance' && (
                   <div className="space-y-4">
-                    <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 flex items-center space-x-2">
-                      <Wallet className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-[#B45309] flex items-center space-x-2">
+                      <Wallet className="w-4 h-4 text-[#B45309] shrink-0" />
                       <span>
                         বেতন ও কমিশন নির্ধারণ করলে এটি স্বয়ংক্রিয়ভাবে দোকানের খরচের খাতা এবং সেলস পারফরম্যান্সের সাথে সমন্বয় করবে।
                       </span>
@@ -1501,11 +1509,11 @@ export default function UsersModal({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           মাসিক মূল বেতন (Monthly Base Salary in {currencySymbol})
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373] font-semibold">
                             {currencySymbol}
                           </span>
                           <input
@@ -1514,20 +1522,20 @@ export default function UsersModal({
                             placeholder="যেমন: 15000"
                             value={formData.BaseSalary}
                             onChange={(e) => setFormData(prev => ({ ...prev, BaseSalary: e.target.value }))}
-                            className="w-full pl-8 pr-3 py-2 text-sm font-bold text-slate-800 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            className="w-full min-h-[44px] sm:min-h-[36px] pl-8 pr-3 py-2 text-sm font-mono tabular-nums font-semibold text-[#111111] rounded-md border border-neutral-200/80 bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                           />
                         </div>
-                        <p className="text-[10px] text-slate-500 mt-1">
+                        <p className="text-[10px] text-[#525252] mt-1">
                           খরচের খাতায় "বেতন" বা "অগ্রিম" এন্ট্রি দিলে স্বয়ংক্রিয়ভাবে সমন্বিত হবে।
                         </p>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           বিক্রয় কমিশন হার (Sales Commission Rate %)
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373] font-semibold">
                             %
                           </span>
                           <input
@@ -1538,10 +1546,10 @@ export default function UsersModal({
                             placeholder="যেমন: 1.5"
                             value={formData.CommissionRate}
                             onChange={(e) => setFormData(prev => ({ ...prev, CommissionRate: e.target.value }))}
-                            className="w-full pl-8 pr-3 py-2 text-sm font-bold text-indigo-700 rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            className="w-full min-h-[44px] sm:min-h-[36px] pl-8 pr-3 py-2 text-sm font-mono tabular-nums font-semibold text-[#111111] rounded-md border border-neutral-200/80 bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                           />
                         </div>
-                        <p className="text-[10px] text-slate-500 mt-1">
+                        <p className="text-[10px] text-[#525252] mt-1">
                           এই স্টাফ যত টাকার পণ্য বিক্রি করবেন তার ওপর কমিশন হিসেব হবে।
                         </p>
                       </div>
@@ -1549,13 +1557,13 @@ export default function UsersModal({
 
                     {/* লাইভ এস্টিমেটর প্রিভিউ */}
                     {(Number(formData.BaseSalary) > 0 || Number(formData.CommissionRate) > 0) && (
-                      <div className="p-3 bg-indigo-50/70 rounded-xl border border-indigo-200 text-xs text-indigo-900">
-                        <span className="font-bold flex items-center space-x-1 mb-1">
-                          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                      <div className="p-3 bg-[#F5F5F5] rounded-lg border border-neutral-200/80 text-xs text-[#111111]">
+                        <span className="font-semibold flex items-center space-x-1 mb-1">
+                          <Sparkles className="w-3.5 h-3.5 text-[#0F172A]" />
                           <span>আনুমানিক আয় প্রিভিউ:</span>
                         </span>
-                        <p className="text-[11px] text-indigo-800">
-                          যদি এই কর্মী মাসে <strong>{currencySymbol}১,০০,০০০</strong> টাকার পণ্য বিক্রি করেন, তবে মূল বেতন ({currencySymbol}{Number(formData.BaseSalary) || 0}) + কমিশন ({currencySymbol}{Math.round((100000 * (Number(formData.CommissionRate) || 0)) / 100)}) = মোট আনুমানিক আয় হবে <strong>{currencySymbol}{((Number(formData.BaseSalary) || 0) + Math.round((100000 * (Number(formData.CommissionRate) || 0)) / 100)).toLocaleString('en-IN')}</strong>।
+                        <p className="text-[11px] text-[#525252]">
+                          যদি এই কর্মী মাসে <strong className="text-[#111111] font-mono tabular-nums">{currencySymbol}১,০০,০০০</strong> টাকার পণ্য বিক্রি করেন, তবে মূল বেতন (<span className="font-mono tabular-nums">{currencySymbol}{Number(formData.BaseSalary) || 0}</span>) + কমিশন (<span className="font-mono tabular-nums">{currencySymbol}{Math.round((100000 * (Number(formData.CommissionRate) || 0)) / 100)}</span>) = মোট আনুমানিক আয় হবে <strong className="text-[#111111] font-mono tabular-nums">{currencySymbol}{((Number(formData.BaseSalary) || 0) + Math.round((100000 * (Number(formData.CommissionRate) || 0)) / 100)).toLocaleString('en-IN')}</strong>।
                         </p>
                       </div>
                     )}
@@ -1567,7 +1575,7 @@ export default function UsersModal({
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           জাতীয় পরিচয়পত্র / জন্ম নিবন্ধন (NID No)
                         </label>
                         <input
@@ -1575,18 +1583,18 @@ export default function UsersModal({
                           placeholder="যেমন: 199XXXXXXXXXX"
                           value={formData.NID}
                           onChange={(e) => setFormData(prev => ({ ...prev, NID: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm rounded-md border border-neutral-200/80 bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] font-mono tabular-nums"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           রক্তের গ্রুপ (Blood Group)
                         </label>
                         <select
                           value={formData.BloodGroup}
                           onChange={(e) => setFormData(prev => ({ ...prev, BloodGroup: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm rounded-md border border-neutral-200/80 bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                         >
                           <option value="">নির্বাচন করুন</option>
                           <option value="A+">A+ (A Positive)</option>
@@ -1603,7 +1611,7 @@ export default function UsersModal({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           জরুরি যোগাযোগের ব্যক্তি ও সম্পর্ক
                         </label>
                         <input
@@ -1611,12 +1619,12 @@ export default function UsersModal({
                           placeholder="যেমন: মোঃ করিম (বাবা / ভাই)"
                           value={formData.EmergencyContact}
                           onChange={(e) => setFormData(prev => ({ ...prev, EmergencyContact: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm rounded-md border border-neutral-200/80 bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-[#111111] mb-1">
                           জরুরি ফোন নম্বর (Emergency Phone)
                         </label>
                         <input
@@ -1624,7 +1632,7 @@ export default function UsersModal({
                           placeholder="018XXXXXXXX"
                           value={formData.EmergencyPhone}
                           onChange={(e) => setFormData(prev => ({ ...prev, EmergencyPhone: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
+                          className="w-full min-h-[44px] sm:min-h-[36px] px-3 py-2 text-sm rounded-md border border-neutral-200/80 bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] font-mono tabular-nums"
                         />
                       </div>
                     </div>
@@ -1636,44 +1644,44 @@ export default function UsersModal({
                   <div className="space-y-3.5">
                     
                     {/* ওয়ান-ক্লিক পারমিশন প্রিসেট বাটন */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-                      <span className="text-xs font-bold text-slate-700 flex items-center space-x-1">
-                        <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                    <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-[#FAFAFA] rounded-lg border border-neutral-200/80">
+                      <span className="text-xs font-semibold text-[#111111] flex items-center space-x-1">
+                        <Sparkles className="w-3.5 h-3.5 text-[#0F172A]" />
                         <span>কুইক পারমিশন প্রিসেট:</span>
                       </span>
                       <div className="flex flex-wrap items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => applyPermissionPreset('cashier')}
-                          className="px-2.5 py-1 text-[11px] font-semibold bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 rounded-lg cursor-pointer"
+                          className="min-h-[36px] px-2.5 py-1 text-[11px] font-semibold bg-white border border-neutral-200/80 hover:border-[#0F172A] text-[#111111] rounded-md cursor-pointer"
                         >
-                          💼 ক্যাশিয়ার প্রিসেট
+                          ক্যাশিয়ার প্রিসেট
                         </button>
                         <button
                           type="button"
                           onClick={() => applyPermissionPreset('salesman')}
-                          className="px-2.5 py-1 text-[11px] font-semibold bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 rounded-lg cursor-pointer"
+                          className="min-h-[36px] px-2.5 py-1 text-[11px] font-semibold bg-white border border-neutral-200/80 hover:border-[#0F172A] text-[#111111] rounded-md cursor-pointer"
                         >
-                          🛍️ সেলসম্যান প্রিসেট
+                          সেলসম্যান প্রিসেট
                         </button>
                         <button
                           type="button"
                           onClick={() => applyPermissionPreset('manager')}
-                          className="px-2.5 py-1 text-[11px] font-semibold bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 rounded-lg cursor-pointer"
+                          className="min-h-[36px] px-2.5 py-1 text-[11px] font-semibold bg-white border border-neutral-200/80 hover:border-[#0F172A] text-[#111111] rounded-md cursor-pointer"
                         >
-                          🛡️ ম্যানেজার প্রিসেট
+                          ম্যানেজার প্রিসেট
                         </button>
                         <button
                           type="button"
                           onClick={() => applyPermissionPreset('all')}
-                          className="px-2 py-1 text-[10px] font-bold text-indigo-600 hover:bg-indigo-50 rounded-lg cursor-pointer"
+                          className="min-h-[36px] px-2 py-1 text-[10px] font-semibold text-[#0F172A] hover:bg-[#F5F5F5] rounded-md cursor-pointer"
                         >
                           সব দিন
                         </button>
                         <button
                           type="button"
                           onClick={() => applyPermissionPreset('clear')}
-                          className="px-2 py-1 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                          className="min-h-[36px] px-2 py-1 text-[10px] font-semibold text-[#B91C1C] hover:bg-red-50 rounded-md cursor-pointer"
                         >
                           ক্লিয়ার
                         </button>
@@ -1687,21 +1695,21 @@ export default function UsersModal({
                           <div
                             key={p.id}
                             onClick={() => handleTogglePermission(p.id)}
-                            className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start space-x-3 ${
+                            className={`p-3 rounded-lg border transition-colors cursor-pointer flex items-start space-x-3 ${
                               isGranted
-                                ? 'bg-indigo-50/70 border-indigo-300 text-indigo-950 shadow-2xs'
-                                : 'bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                ? 'bg-[#F5F5F5] border-[#0F172A] text-[#111111]'
+                                : 'bg-white border-neutral-200/80 text-[#525252] hover:bg-[#FAFAFA]'
                             }`}
                           >
                             <input
                               type="checkbox"
                               checked={isGranted}
                               onChange={() => {}}
-                              className="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                              className="mt-0.5 rounded text-[#0F172A] focus:ring-[#0F172A] cursor-pointer"
                             />
                             <div>
-                              <p className="text-xs font-bold">{p.label}</p>
-                              <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{p.desc}</p>
+                              <p className="text-xs font-semibold text-[#111111]">{p.label}</p>
+                              <p className="text-[11px] text-[#525252] mt-0.5 leading-relaxed">{p.desc}</p>
                             </div>
                           </div>
                         );
@@ -1712,18 +1720,18 @@ export default function UsersModal({
 
                 {/* ত্রুটি বার্তা (সব ট্যাবেই সরাসরি বাটনের উপরে দৃশ্যমান) */}
                 {formError && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm rounded-xl flex items-center space-x-2">
-                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                  <div className="p-3 bg-red-50 border border-red-200 text-[#B91C1C] text-xs sm:text-sm rounded-lg flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-[#B91C1C]" />
                     <span className="font-medium">{formError}</span>
                   </div>
                 )}
 
                 {/* সাবমিট বাটন */}
-                <div className="pt-4 flex items-center justify-end space-x-3 border-t border-slate-100">
+                <div className="pt-4 flex items-center justify-end space-x-3 border-t border-neutral-200/80">
                   <button
                     type="button"
                     onClick={handleCloseForm}
-                    className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-4 py-2 rounded-md border border-neutral-200/80 bg-white text-xs sm:text-sm font-semibold text-[#111111] hover:bg-[#F5F5F5] transition-colors cursor-pointer"
                   >
                     বাতিল
                   </button>
@@ -1731,7 +1739,7 @@ export default function UsersModal({
                     type="button"
                     onClick={handleSubmitForm}
                     disabled={isSubmitting}
-                    className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center space-x-2 cursor-pointer disabled:opacity-50"
+                    className="min-h-[44px] sm:min-h-[36px] px-6 py-2 bg-[#0F172A] hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm rounded-md transition-colors flex items-center space-x-2 cursor-pointer disabled:opacity-50"
                   >
                     {isSubmitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1751,39 +1759,41 @@ export default function UsersModal({
             <div className="space-y-4 max-w-5xl mx-auto">
               
               {/* কন্ট্রোল বার: তারিখ নির্বাচন ও বাল্ক ক্লক-ইন */}
-              <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              <div className="bg-white p-3.5 sm:p-4 rounded-lg border border-neutral-200/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-                    <Clock className="w-4 h-4 text-indigo-600" />
+                  <h3 className="text-sm font-semibold tracking-tight text-[#111111] flex items-center space-x-2">
+                    <Clock className="w-4 h-4 text-[#0F172A]" />
                     <span>শিফট হাজিরা ও কাজের সময় খতিয়ান</span>
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-[#525252] mt-0.5">
                     দোকানের কর্মচারীদের প্রবেশ ও প্রস্থান সময় ট্র্যাকিং এবং উপস্থিতি মনিটরিং
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                   {/* তারিখ ফিল্টার */}
-                  <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl">
-                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                  <div className="min-h-[44px] sm:min-h-[36px] flex items-center space-x-1.5 bg-[#FAFAFA] border border-neutral-200/80 px-2.5 py-1 rounded-md">
+                    <Calendar className="w-3.5 h-3.5 text-[#525252]" />
                     <input
                       type="date"
                       value={selectedAttendanceDate}
                       onChange={(e) => setSelectedAttendanceDate(e.target.value)}
-                      className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-hidden cursor-pointer"
+                      className="bg-transparent text-xs font-mono tabular-nums font-semibold text-[#111111] focus:outline-none cursor-pointer"
                     />
                   </div>
 
                   <button
+                    type="button"
                     onClick={() => setSelectedAttendanceDate(new Date().toISOString().split('T')[0])}
-                    className="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] px-2.5 py-1 text-xs font-semibold bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#111111] rounded-md cursor-pointer"
                   >
                     আজ
                   </button>
 
                   <button
+                    type="button"
                     onClick={handleBulkClockIn}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                    className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 bg-[#15803D] hover:bg-emerald-800 text-white text-xs font-semibold rounded-md flex items-center space-x-1.5 cursor-pointer"
                     title="আজকের শিফটে সকল সক্রিয় স্টাফকে একসাথে উপস্থিত করুন"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -1791,17 +1801,19 @@ export default function UsersModal({
                   </button>
 
                   <button
+                    type="button"
                     onClick={handleAutoClosePendingShifts}
-                    className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer transition-colors shadow-2xs"
+                    className="min-h-[44px] sm:min-h-[36px] px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-[#B45309] text-xs font-semibold rounded-md flex items-center space-x-1.5 cursor-pointer transition-colors"
                     title="অসমাপ্ত বা ভুলে ক্লক-আউট না করা শিফটগুলো স্বয়ংক্রিয়ভাবে কাট-অফ করে বন্ধ করুন"
                   >
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                    <AlertTriangle className="w-3.5 h-3.5 text-[#B45309]" />
                     <span>শিফট কাট-অফ</span>
                   </button>
 
                   <button
+                    type="button"
                     onClick={refreshAttendance}
-                    className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
+                    className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] p-1.5 bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#111111] rounded-md flex items-center justify-center cursor-pointer"
                     title="হাজিরা রিফ্রেশ করুন"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
@@ -1810,137 +1822,141 @@ export default function UsersModal({
               </div>
 
               {/* হাজিরা টেবিল */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-slate-900 text-slate-300 font-semibold border-b border-slate-800">
-                      <th className="py-3 px-4">স্টাফের নাম ও পদবী</th>
-                      <th className="py-3 px-4">মোবাইল</th>
-                      <th className="py-3 px-4">প্রবেশ সময় (Clock In)</th>
-                      <th className="py-3 px-4">প্রস্থান সময় (Clock Out)</th>
-                      <th className="py-3 px-4">কাজের সময়</th>
-                      <th className="py-3 px-4 text-center">স্ট্যাটাস</th>
-                      <th className="py-3 px-4 text-right">অ্যাকশন</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {users
-                      .filter(u => u.Role !== 'Customer')
-                      .map(u => {
-                        const targetDate = selectedAttendanceDate;
-                        const att = attendanceRecords.find(r => String(r.UserID).trim() === String(u.UserID).trim() && r.Date === targetDate);
-                        const isPresent = Boolean(att && att.ClockIn);
-                        const isClockedOut = Boolean(att && att.ClockOut);
-                        const durationStr = getShiftDuration(att?.ClockIn, att?.ClockOut, att?.Status, targetDate);
-                        const isLate = att?.ClockIn ? isLateClockIn(att.ClockIn) : false;
+              <div className="bg-white rounded-lg border border-neutral-200/80 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-[#0F172A] text-slate-200 font-semibold border-b border-slate-800">
+                        <th className="py-3 px-4">স্টাফের নাম ও পদবী</th>
+                        <th className="py-3 px-4">মোবাইল</th>
+                        <th className="py-3 px-4">প্রবেশ সময় (Clock In)</th>
+                        <th className="py-3 px-4">প্রস্থান সময় (Clock Out)</th>
+                        <th className="py-3 px-4">কাজের সময়</th>
+                        <th className="py-3 px-4 text-center">স্ট্যাটাস</th>
+                        <th className="py-3 px-4 text-right">অ্যাকশন</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-200/80">
+                      {users
+                        .filter(u => u.Role !== 'Customer')
+                        .map(u => {
+                          const targetDate = selectedAttendanceDate;
+                          const att = attendanceRecords.find(r => String(r.UserID).trim() === String(u.UserID).trim() && r.Date === targetDate);
+                          const isPresent = Boolean(att && att.ClockIn);
+                          const isClockedOut = Boolean(att && att.ClockOut);
+                          const durationStr = getShiftDuration(att?.ClockIn, att?.ClockOut, att?.Status, targetDate);
+                          const isLate = att?.ClockIn ? isLateClockIn(att.ClockIn) : false;
 
-                        return (
-                          <tr key={u.UserID} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="py-3 px-4 flex items-center space-x-3">
-                              <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 font-bold flex items-center justify-center overflow-hidden shrink-0">
-                                {u.AvatarUrl ? (
-                                  <img src={formatImageUrl(u.AvatarUrl)} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  u.FullName?.slice(0, 1) || 'S'
-                                )}
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-900 flex items-center space-x-1.5">
-                                  <span>{u.FullName}</span>
-                                  <span className="text-[10px] font-normal text-slate-400">({u.Role})</span>
-                                </p>
-                                <span className="text-[10px] text-slate-500 font-mono">#{u.UserID}</span>
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 font-mono text-slate-600">{u.Phone || 'N/A'}</td>
-                            <td className="py-3 px-4 font-mono">
-                              {att?.ClockIn ? (
-                                <div className="flex items-center space-x-1.5">
-                                  <span className="text-emerald-700 font-bold">
-                                    {new Date(att.ClockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                  </span>
-                                  {isLate && (
-                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800">
-                                      লেট
-                                    </span>
+                          return (
+                            <tr key={u.UserID} className="hover:bg-[#FAFAFA] transition-colors">
+                              <td className="py-3 px-4 flex items-center space-x-3">
+                                <div className="w-8 h-8 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#111111] font-semibold flex items-center justify-center overflow-hidden shrink-0">
+                                  {u.AvatarUrl ? (
+                                    <img src={formatImageUrl(u.AvatarUrl)} alt="" className="w-full h-full object-cover" />
+                                  ) : (
+                                    u.FullName?.slice(0, 1) || 'S'
                                   )}
                                 </div>
-                              ) : (
-                                <span className="text-slate-400 italic">প্রবেশ করেনি</span>
-                              )}
-                            </td>
-                            <td className="py-3 px-4 font-mono">
-                              {att?.ClockOut ? (
-                                <span className="text-amber-700 font-bold">
-                                  {new Date(att.ClockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              ) : (
-                                <span className="text-slate-400 italic">—</span>
-                              )}
-                            </td>
-                            <td className="py-3 px-4 font-mono font-semibold text-slate-700">
-                              {durationStr}
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              {att?.Status === 'AutoClosed' ? (
-                                <span
-                                  className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-300"
-                                  title={att.Notes || 'কর্মী ক্লক-আউট করতে ভুলে গেছেন; সিস্টেম অটো-ক্লোজ করেছে'}
-                                >
-                                  <AlertTriangle className="w-3 h-3 text-purple-600" />
-                                  <span>অটো-ক্লোজড</span>
-                                </span>
-                              ) : isPresent && !isClockedOut ? (
-                                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
-                                  <span>ডিউটিতে আছেন</span>
-                                </span>
-                              ) : isPresent && isClockedOut ? (
-                                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                                  <Check className="w-3 h-3" />
-                                  <span>শিফট শেষ</span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                  <Clock className="w-3 h-3" />
-                                  <span>অনুপস্থিত</span>
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
-                              {!isPresent ? (
-                                <button
-                                  onClick={() => handleStaffClockIn(u)}
-                                  className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] cursor-pointer shadow-xs"
-                                >
-                                  ক্লক-ইন
-                                </button>
-                              ) : !isClockedOut && att?.Status !== 'AutoClosed' ? (
-                                <button
-                                  onClick={() => handleStaffClockOut(u)}
-                                  className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] cursor-pointer shadow-xs"
-                                >
-                                  ক্লক-আউট
-                                </button>
-                              ) : (
-                                <span className="text-[11px] text-slate-400 font-semibold">শিফট সমাপ্ত</span>
-                              )}
+                                <div>
+                                  <p className="font-semibold text-[#111111] flex items-center space-x-1.5">
+                                    <span>{u.FullName}</span>
+                                    <span className="text-[10px] font-normal text-[#737373]">({u.Role})</span>
+                                  </p>
+                                  <span className="text-[10px] text-[#737373] font-mono tabular-nums">#{u.UserID}</span>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 font-mono tabular-nums text-[#525252]">{u.Phone || 'N/A'}</td>
+                              <td className="py-3 px-4 font-mono tabular-nums">
+                                {att?.ClockIn ? (
+                                  <div className="flex items-center space-x-1.5">
+                                    <span className="text-[#15803D] font-semibold">
+                                      {new Date(att.ClockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    {isLate && (
+                                      <span className="px-1.5 py-0.5 rounded-md text-[9px] font-semibold bg-amber-50 text-[#B45309] border border-amber-200">
+                                        লেট
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-[#737373] italic">প্রবেশ করেনি</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 font-mono tabular-nums">
+                                {att?.ClockOut ? (
+                                  <span className="text-[#B45309] font-semibold">
+                                    {new Date(att.ClockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                ) : (
+                                  <span className="text-[#737373] italic">—</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 font-mono tabular-nums font-semibold text-[#111111]">
+                                {durationStr}
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                {att?.Status === 'AutoClosed' ? (
+                                  <span
+                                    className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-[#F5F5F5] text-[#525252] border border-neutral-200/80"
+                                    title={att.Notes || 'কর্মী ক্লক-আউট করতে ভুলে গেছেন; সিস্টেম অটো-ক্লোজ করেছে'}
+                                  >
+                                    <AlertTriangle className="w-3 h-3 text-[#525252]" />
+                                    <span>অটো-ক্লোজড</span>
+                                  </span>
+                                ) : isPresent && !isClockedOut ? (
+                                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-[#15803D] border border-emerald-200">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#15803D] animate-pulse"></span>
+                                    <span>ডিউটিতে আছেন</span>
+                                  </span>
+                                ) : isPresent && isClockedOut ? (
+                                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-[#B45309] border border-amber-200">
+                                    <Check className="w-3 h-3" />
+                                    <span>শিফট শেষ</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-[#F5F5F5] text-[#525252] border border-neutral-200/80">
+                                    <Clock className="w-3 h-3" />
+                                    <span>অনুপস্থিত</span>
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+                                {!isPresent ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStaffClockIn(u)}
+                                    className="min-h-[36px] px-2.5 py-1 rounded-md bg-[#15803D] hover:bg-emerald-800 text-white font-semibold text-[11px] cursor-pointer"
+                                  >
+                                    ক্লক-ইন
+                                  </button>
+                                ) : !isClockedOut && att?.Status !== 'AutoClosed' ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStaffClockOut(u)}
+                                    className="min-h-[36px] px-2.5 py-1 rounded-md bg-[#B45309] hover:bg-amber-800 text-white font-semibold text-[11px] cursor-pointer"
+                                  >
+                                    ক্লক-আউট
+                                  </button>
+                                ) : (
+                                  <span className="text-[11px] text-[#737373] font-semibold">শিফট সমাপ্ত</span>
+                                )}
 
-                              {/* অ্যাডমিন এডিট ও সমন্বয় বাটন */}
-                              <button
-                                type="button"
-                                onClick={() => handleOpenAdjustModal(u, att)}
-                                className="p-1 rounded-lg bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer inline-flex items-center"
-                                title="হাজিরা ও কাজের সময় সমন্বয়/এডিট করুন"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
+                                {/* অ্যাডমিন এডিট ও সমন্বয় বাটন */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenAdjustModal(u, att)}
+                                  className="min-h-[36px] min-w-[36px] p-1 rounded-md bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#525252] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center justify-center"
+                                  title="হাজিরা ও কাজের সময় সমন্বয়/এডিট করুন"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           ) : activeMainTab === 'payroll' ? (
@@ -1949,99 +1965,103 @@ export default function UsersModal({
                ----------------------------------------------------------------- */
             <div className="space-y-4 max-w-5xl mx-auto">
               
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="bg-white p-4 rounded-lg border border-neutral-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-                    <CreditCard className="w-4 h-4 text-amber-600" />
-                    <span>চলতি মাসের স্টাফ বেতন ও কমিশন লেজার ({new Date().toLocaleDateString('bn-BD', { month: 'long', year: 'numeric' })})</span>
+                  <h3 className="text-sm font-semibold tracking-tight text-[#111111] flex items-center space-x-2">
+                    <CreditCard className="w-4 h-4 text-[#B45309]" />
+                    <span>চলতি মাসের স্টাফ বেতন ও কমিশন লেজার (<span className="font-mono tabular-nums">{new Date().toLocaleDateString('bn-BD', { month: 'long', year: 'numeric' })}</span>)</span>
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-[#525252] mt-0.5">
                     স্টাফের মূল বেতন, অর্জিত বিক্রয় কমিশন এবং খরচের খাতা থেকে গৃহীত অগ্রিমের সমন্বয়
                   </p>
                 </div>
               </div>
 
               {/* পে-রোল টেবিল */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-slate-900 text-slate-300 font-semibold border-b border-slate-800">
-                      <th className="py-3 px-4">কর্মীর নাম ও পদবী</th>
-                      <th className="py-3 px-4 text-right">মূল বেতন</th>
-                      <th className="py-3 px-4 text-right">চলতি মাসে বিক্রি</th>
-                      <th className="py-3 px-4 text-right">অর্জিত কমিশন</th>
-                      <th className="py-3 px-4 text-right">অগ্রিম/প্রদত্ত (Expenses)</th>
-                      <th className="py-3 px-4 text-right">অবশিষ্ট বকেয়া</th>
-                      <th className="py-3 px-4 text-center">অ্যাকশন</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {users
-                      .filter(u => u.Role !== 'Customer')
-                      .map(user => {
-                        const salesM = getStaffSalesMetrics(user);
-                        const sal = getStaffSalaryMetrics(user);
+              <div className="bg-white rounded-lg border border-neutral-200/80 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-[#0F172A] text-slate-200 font-semibold border-b border-slate-800">
+                        <th className="py-3 px-4">কর্মীর নাম ও পদবী</th>
+                        <th className="py-3 px-4 text-right">মূল বেতন</th>
+                        <th className="py-3 px-4 text-right">চলতি মাসে বিক্রি</th>
+                        <th className="py-3 px-4 text-right">অর্জিত কমিশন</th>
+                        <th className="py-3 px-4 text-right">অগ্রিম/প্রদত্ত (Expenses)</th>
+                        <th className="py-3 px-4 text-right">অবশিষ্ট বকেয়া</th>
+                        <th className="py-3 px-4 text-center">অ্যাকশন</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-200/80">
+                      {users
+                        .filter(u => u.Role !== 'Customer')
+                        .map(user => {
+                          const salesM = getStaffSalesMetrics(user);
+                          const sal = getStaffSalaryMetrics(user);
 
-                        return (
-                          <tr key={user.UserID} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="py-3 px-4 flex items-center space-x-2.5">
-                              <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center overflow-hidden shrink-0">
-                                {user.AvatarUrl ? (
-                                  <img src={formatImageUrl(user.AvatarUrl)} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  user.FullName?.slice(0, 1) || 'S'
-                                )}
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-900">{user.FullName}</p>
-                                <span className="text-[10px] text-slate-500">{user.Role} • #{user.UserID?.slice(-6)}</span>
-                              </div>
-                            </td>
+                          return (
+                            <tr key={user.UserID} className="hover:bg-[#FAFAFA] transition-colors">
+                              <td className="py-3 px-4 flex items-center space-x-2.5">
+                                <div className="w-8 h-8 rounded-md bg-[#F5F5F5] border border-neutral-200/80 text-[#111111] font-semibold flex items-center justify-center overflow-hidden shrink-0">
+                                  {user.AvatarUrl ? (
+                                    <img src={formatImageUrl(user.AvatarUrl)} alt="" className="w-full h-full object-cover" />
+                                  ) : (
+                                    user.FullName?.slice(0, 1) || 'S'
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-[#111111]">{user.FullName}</p>
+                                  <span className="text-[10px] text-[#737373] font-mono tabular-nums">{user.Role} • #{user.UserID?.slice(-6)}</span>
+                                </div>
+                              </td>
 
-                            <td className="py-3 px-4 text-right font-semibold text-slate-900">
-                              {sal.baseSalary > 0 ? `${currencySymbol}${sal.baseSalary.toLocaleString('en-IN')}` : 'নির্ধারিত নেই'}
-                            </td>
+                              <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold text-[#111111]">
+                                {sal.baseSalary > 0 ? `${currencySymbol}${sal.baseSalary.toLocaleString('en-IN')}` : 'নির্ধারিত নেই'}
+                              </td>
 
-                            <td className="py-3 px-4 text-right font-mono text-slate-700">
-                              {currencySymbol}{salesM.totalSales.toLocaleString('en-IN')}
-                            </td>
+                              <td className="py-3 px-4 text-right font-mono tabular-nums text-[#525252]">
+                                {currencySymbol}{salesM.totalSales.toLocaleString('en-IN')}
+                              </td>
 
-                            <td className="py-3 px-4 text-right font-bold text-emerald-700">
-                              {salesM.commissionEarned > 0 ? `${currencySymbol}${salesM.commissionEarned.toLocaleString('en-IN')}` : '০'}
-                            </td>
+                              <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold text-[#15803D]">
+                                {salesM.commissionEarned > 0 ? `${currencySymbol}${salesM.commissionEarned.toLocaleString('en-IN')}` : '০'}
+                              </td>
 
-                            <td className="py-3 px-4 text-right font-bold text-amber-700">
-                              {sal.paidThisMonth > 0 ? `${currencySymbol}${sal.paidThisMonth.toLocaleString('en-IN')}` : '০'}
-                            </td>
+                              <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold text-[#B45309]">
+                                {sal.paidThisMonth > 0 ? `${currencySymbol}${sal.paidThisMonth.toLocaleString('en-IN')}` : '০'}
+                              </td>
 
-                            <td className="py-3 px-4 text-right font-bold text-indigo-700">
-                              {currencySymbol}{sal.balanceDue.toLocaleString('en-IN')}
-                            </td>
+                              <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold text-[#111111]">
+                                {currencySymbol}{sal.balanceDue.toLocaleString('en-IN')}
+                              </td>
 
-                            <td className="py-3 px-4 text-center">
-                              <div className="flex items-center justify-center space-x-1.5">
-                                <button
-                                  onClick={() => setSelectedStaffForPayslip(user)}
-                                  className="px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] flex items-center space-x-1 cursor-pointer transition-colors"
-                                  title="অফিসিয়াল বেতন রসিদ তৈরি করুন"
-                                >
-                                  <Printer className="w-3 h-3" />
-                                  <span>পে-স্লিপ</span>
-                                </button>
-                                <button
-                                  onClick={() => setSelectedStaffForProfile(user)}
-                                  className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 cursor-pointer"
-                                  title="বিস্তারিত হিসাব ও লেজার"
-                                >
-                                  <Activity className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
+                              <td className="py-3 px-4 text-center">
+                                <div className="flex items-center justify-center space-x-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedStaffForPayslip(user)}
+                                    className="min-h-[36px] px-2.5 py-1 rounded-md bg-[#F5F5F5] hover:bg-neutral-200 border border-neutral-200/80 text-[#111111] font-semibold text-[11px] flex items-center space-x-1 cursor-pointer transition-colors"
+                                    title="অফিসিয়াল বেতন রসিদ তৈরি করুন"
+                                  >
+                                    <Printer className="w-3 h-3" />
+                                    <span>পে-স্লিপ</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedStaffForProfile(user)}
+                                    className="min-h-[36px] min-w-[36px] p-1 rounded-md hover:bg-[#F5F5F5] text-[#525252] hover:text-[#111111] inline-flex items-center justify-center cursor-pointer"
+                                    title="বিস্তারিত হিসাব ও লেজার"
+                                  >
+                                    <Activity className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           ) : (
@@ -2051,7 +2071,7 @@ export default function UsersModal({
             <div className="space-y-4">
               
               {/* সার্চ ও ফিল্টার বার */}
-              <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-2.5 items-stretch md:items-center justify-between">
+              <div className="bg-white p-3 sm:p-3.5 rounded-lg border border-slate-200 shadow-xs flex flex-col md:flex-row gap-2.5 items-stretch md:items-center justify-between">
                 
                 {/* সার্চ বক্স */}
                 <div className="relative flex-1 min-w-[220px]">
@@ -2065,7 +2085,7 @@ export default function UsersModal({
                     }
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-slate-50/50"
+                    className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-md border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-slate-50/50"
                   />
                   {searchQuery && (
                     <button
@@ -2083,7 +2103,7 @@ export default function UsersModal({
                     <select
                       value={selectedRoleFilter}
                       onChange={(e) => setSelectedRoleFilter(e.target.value)}
-                      className="text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold cursor-pointer"
+                      className="text-xs px-2.5 py-1.5 rounded-md border border-slate-200 bg-white text-slate-700 font-semibold cursor-pointer"
                     >
                       <option value="All">সকল পদবী (All Roles)</option>
                       <option value="AdminGroup">এডমিন ও ম্যানেজার</option>
@@ -2099,7 +2119,7 @@ export default function UsersModal({
                     <select
                       value={selectedDutyFilter}
                       onChange={(e) => setSelectedDutyFilter(e.target.value)}
-                      className="text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold cursor-pointer"
+                      className="text-xs px-2.5 py-1.5 rounded-md border border-slate-200 bg-white text-slate-700 font-semibold cursor-pointer"
                     >
                       <option value="all">সকল ডিউটি স্ট্যাটাস</option>
                       <option value="on_duty">🟢 ডিউটিতে আছেন</option>
@@ -2111,7 +2131,7 @@ export default function UsersModal({
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold cursor-pointer"
+                    className="text-xs px-2.5 py-1.5 rounded-md border border-slate-200 bg-white text-slate-700 font-semibold cursor-pointer"
                   >
                     <option value="default">ডিফল্ট ক্রম</option>
                     <option value="name-asc">নাম (A-Z)</option>
@@ -2119,7 +2139,7 @@ export default function UsersModal({
                     <option value="role">পদবীর স্তর</option>
                   </select>
 
-                  <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                  <div className="flex items-center border border-slate-200 rounded-md overflow-hidden bg-slate-50">
                     <button
                       onClick={() => setViewMode('grid')}
                       className={`p-1.5 transition-colors cursor-pointer ${
@@ -2157,7 +2177,7 @@ export default function UsersModal({
                     return (
                       <div
                         key={user.UserID}
-                        className={`bg-white rounded-2xl border p-4 shadow-xs hover:shadow-md transition-all flex flex-col justify-between ${
+                        className={`bg-white rounded-lg border p-4 shadow-xs transition-all flex flex-col justify-between ${
                           isInactive ? 'border-rose-200 bg-rose-50/20 opacity-80' : 'border-slate-200'
                         }`}
                       >
@@ -2165,7 +2185,7 @@ export default function UsersModal({
                           {/* কার্ড হেডার: ছবি, নাম, পদবী ও লাইভ ডিউটি স্ট্যাটাস */}
                           <div className="flex items-start justify-between">
                             <div className="flex items-center space-x-3">
-                              <div className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${roleDef.avatarGradient} text-white font-bold text-lg flex items-center justify-center overflow-hidden shrink-0 shadow-xs border border-white`}>
+                              <div className={`w-12 h-12 rounded-md bg-[#0F172A] text-white font-bold text-lg flex items-center justify-center overflow-hidden shrink-0 shadow-xs border border-white`}>
                                 {user.AvatarUrl ? (
                                   <img src={formatImageUrl(user.AvatarUrl)} alt="" className="w-full h-full object-cover" />
                                 ) : (
@@ -2265,7 +2285,7 @@ export default function UsersModal({
 
                           {/* ফাইন্যান্স ও সেলস মেট্রিক্স স্ট্রিপ (যদি কাস্টমার না হয়) */}
                           {user.Role !== 'Customer' && (
-                            <div className="mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 grid grid-cols-2 gap-2 text-[11px]">
+                            <div className="mt-3 p-2.5 rounded-md bg-slate-50 border border-slate-200/80 grid grid-cols-2 gap-2 text-[11px]">
                               <div>
                                 <span className="text-slate-400 block text-[10px]">মোট বিক্রি</span>
                                 <span className="font-bold text-slate-900">
@@ -2359,7 +2379,7 @@ export default function UsersModal({
                 </div>
               ) : (
                 /* টেবিল ভিউ */
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
@@ -2498,7 +2518,7 @@ export default function UsersModal({
           </p>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl font-semibold cursor-pointer shadow-2xs"
+            className="px-4 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-md font-semibold cursor-pointer shadow-2xs"
           >
             বন্ধ করুন
           </button>
@@ -2510,8 +2530,8 @@ export default function UsersModal({
           ৬. স্মার্ট ডিজিটাল স্টাফ আইডি কার্ড প্রিন্ট মোডাল (ডায়নামিক QR কোড সহ)
           ========================================================================= */}
       {selectedStaffForIdCard && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 z-[110] animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 flex flex-col">
+        <div className="fixed inset-0 bg-slate-900/70  flex items-center justify-center p-3 z-[110] animate-fadeIn">
+          <div className="bg-white rounded-lg shadow-none max-w-md w-full overflow-hidden border border-slate-200 flex flex-col">
             
             <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800">
               <span className="font-bold text-xs sm:text-sm flex items-center space-x-1.5">
@@ -2532,10 +2552,10 @@ export default function UsersModal({
               {/* কার্ডের সামনের পিঠ */}
               <div
                 id="printable-staff-id-card"
-                className="w-[260px] bg-white rounded-2xl border-2 border-slate-300 p-4 shadow-md text-center flex flex-col items-center justify-between font-sans relative overflow-hidden shrink-0"
+                className="w-[260px] bg-white rounded-lg border-2 border-slate-300 p-4 border border-neutral-200/80 text-center flex flex-col items-center justify-between font-sans relative overflow-hidden shrink-0"
               >
                 {/* টপ ব্যানার */}
-                <div className="w-full bg-slate-900 text-white py-2 px-3 rounded-xl mb-2.5">
+                <div className="w-full bg-slate-900 text-white py-2 px-3 rounded-md mb-2.5">
                   <h4 className="font-black text-xs uppercase tracking-wider">{storeName}</h4>
                   <p className="text-[9px] text-slate-300">{storePhone}</p>
                 </div>
@@ -2587,7 +2607,7 @@ export default function UsersModal({
               </div>
 
               {/* কার্ডের পেছনের পিঠ (শর্তাবলী ও জরুরি কন্টাক্ট) */}
-              <div className="w-[260px] bg-slate-900 text-slate-300 rounded-2xl border-2 border-slate-700 p-4 shadow-md text-left flex flex-col justify-between font-sans shrink-0 min-h-[350px]">
+              <div className="w-[260px] bg-slate-900 text-slate-300 rounded-lg border-2 border-slate-700 p-4 border border-neutral-700 text-left flex flex-col justify-between font-sans shrink-0 min-h-[350px]">
                 <div>
                   <h4 className="font-bold text-white text-xs border-b border-slate-800 pb-1.5 mb-2 flex items-center justify-between">
                     <span>জরুরি নীতিমালা ও নিয়ম</span>
@@ -2645,8 +2665,8 @@ export default function UsersModal({
           ৭. অফিসিয়াল পে-স্লিপ প্রিন্ট মোডাল (Payslip Generator)
           ========================================================================= */}
       {selectedStaffForPayslip && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 z-[110] animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 flex flex-col">
+        <div className="fixed inset-0 bg-slate-900/70  flex items-center justify-center p-3 z-[110] animate-fadeIn">
+          <div className="bg-white rounded-lg shadow-none max-w-lg w-full overflow-hidden border border-slate-200 flex flex-col">
             
             <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
               <span className="font-bold text-xs sm:text-sm flex items-center space-x-1.5">
@@ -2665,7 +2685,7 @@ export default function UsersModal({
             <div className="p-6 bg-slate-50 overflow-y-auto max-h-[75vh]">
               <div
                 id="printable-payslip"
-                className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs font-sans text-xs space-y-4"
+                className="bg-white rounded-md border border-slate-300 p-5 shadow-xs font-sans text-xs space-y-4"
               >
                 {/* স্লিপ হেডার */}
                 <div className="text-center border-b border-slate-200 pb-3">
@@ -2783,12 +2803,12 @@ export default function UsersModal({
           ৮. স্টাফ বিস্তারিত প্রোফাইল, পারফরম্যান্স ও লেজার মোডাল
           ========================================================================= */}
       {selectedStaffForProfile && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 z-[110] animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 bg-slate-900/70  flex items-center justify-center p-3 z-[110] animate-fadeIn">
+          <div className="bg-white rounded-lg shadow-none max-w-2xl w-full overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
             
             <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between border-b border-slate-800">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white">
+                <div className="w-10 h-10 rounded-md bg-indigo-600 flex items-center justify-center font-bold text-white">
                   {selectedStaffForProfile.FullName?.slice(0, 1) || 'S'}
                 </div>
                 <div>
@@ -2812,7 +2832,7 @@ export default function UsersModal({
               
               {/* সেলস ও কমিশন কার্ড */}
               {selectedStaffForProfile.Role !== 'Customer' && (
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                <div className="bg-white p-4 rounded-md border border-slate-200">
                   <h4 className="text-xs font-bold text-slate-800 flex items-center space-x-1.5 mb-2.5">
                     <TrendingUp className="w-4 h-4 text-indigo-600" />
                     <span>বিক্রয় পারফরম্যান্স ও অর্জিত কমিশন</span>
@@ -2849,7 +2869,7 @@ export default function UsersModal({
 
               {/* বেতন ও অগ্রিম লেজার কার্ড */}
               {selectedStaffForProfile.Role !== 'Customer' && (
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                <div className="bg-white p-4 rounded-md border border-slate-200">
                   <h4 className="text-xs font-bold text-slate-800 flex items-center space-x-1.5 mb-2.5">
                     <CreditCard className="w-4 h-4 text-amber-600" />
                     <span>চলতি মাসের বেতন ও অগ্রিম (Salary Ledger)</span>
@@ -2883,7 +2903,7 @@ export default function UsersModal({
               )}
 
               {/* KYC ও জরুরি যোগাযোগ */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+              <div className="bg-white p-4 rounded-md border border-slate-200">
                 <h4 className="text-xs font-bold text-slate-800 flex items-center space-x-1.5 mb-2">
                   <ShieldCheck className="w-4 h-4 text-blue-600" />
                   <span>কেওয়াইসি ও ব্যক্তিগত নিরাপত্তা তথ্য</span>
@@ -2909,7 +2929,7 @@ export default function UsersModal({
               </div>
 
               {/* অডিট অ্যাক্টিভিটি হিস্ট্রি */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+              <div className="bg-white p-4 rounded-md border border-slate-200">
                 <h4 className="text-xs font-bold text-slate-800 flex items-center space-x-1.5 mb-2">
                   <Activity className="w-4 h-4 text-slate-600" />
                   <span>সাম্প্রতিক কাজের অডিট হিস্ট্রি (Audit Log)</span>
@@ -2966,12 +2986,12 @@ export default function UsersModal({
           শিফট হাজিরা ও কাজের সময় সমন্বয় মডাল (Admin Attendance Adjustment Modal)
           ------------------------------------------------------------- */}
       {adjustingAttendance && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[110] animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-scaleIn">
+        <div className="fixed inset-0 bg-slate-900/60  flex items-center justify-center p-4 z-[110] animate-fadeIn">
+          <div className="bg-white rounded-lg shadow-none border border-slate-200 max-w-md w-full overflow-hidden animate-scaleIn">
             {/* হেডার */}
-            <div className="p-4 bg-gradient-to-r from-indigo-700 via-indigo-800 to-slate-900 text-white flex items-center justify-between">
+            <div className="p-4 bg-[#0F172A] text-white flex items-center justify-between">
               <div className="flex items-center space-x-2.5">
-                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                <div className="w-9 h-9 rounded-md bg-white/10 flex items-center justify-center text-white">
                   <Clock className="w-5 h-5" />
                 </div>
                 <div>
@@ -2993,7 +3013,7 @@ export default function UsersModal({
             {/* ফর্ম বডি */}
             <div className="p-5 space-y-4 text-xs">
               {/* তথ্য কার্ড */}
-              <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl flex items-center justify-between">
+              <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-md flex items-center justify-between">
                 <div>
                   <p className="text-slate-500 text-[10px]">স্টাফের নাম ও পদবী</p>
                   <p className="font-bold text-slate-900">{adjustingAttendance.user.FullName} <span className="font-normal text-slate-500">({adjustingAttendance.user.Role})</span></p>
@@ -3013,7 +3033,7 @@ export default function UsersModal({
                     type="time"
                     value={adjustFormData.clockInTime}
                     onChange={(e) => setAdjustFormData(prev => ({ ...prev, clockInTime: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md font-mono text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
@@ -3024,7 +3044,7 @@ export default function UsersModal({
                     type="time"
                     value={adjustFormData.clockOutTime}
                     onChange={(e) => setAdjustFormData(prev => ({ ...prev, clockOutTime: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md font-mono text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
@@ -3066,7 +3086,7 @@ export default function UsersModal({
                 <select
                   value={adjustFormData.status}
                   onChange={(e) => setAdjustFormData(prev => ({ ...prev, status: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                 >
                   <option value="Completed">শিফট সম্পন্ন (Completed)</option>
                   <option value="OnDuty">ডিউটিতে আছেন (On Duty)</option>
@@ -3086,12 +3106,12 @@ export default function UsersModal({
                   placeholder="যেমন: কর্মী ভুলে ক্লক-আউট করেননি, রাত ৯:৩০ এ সমন্বয়কৃত"
                   value={adjustFormData.notes}
                   onChange={(e) => setAdjustFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               {adjustSuccessMsg && (
-                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs font-semibold flex items-center space-x-1.5">
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-md text-emerald-700 text-xs font-semibold flex items-center space-x-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>{adjustSuccessMsg}</span>
                 </div>
@@ -3103,7 +3123,7 @@ export default function UsersModal({
               <button
                 type="button"
                 onClick={handleCloseAdjustModal}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-md text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 বাতিল
               </button>
@@ -3111,7 +3131,7 @@ export default function UsersModal({
                 type="button"
                 disabled={isAdjustingSubmitting}
                 onClick={handleSaveAttendanceAdjustment}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition-colors flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-bold rounded-md transition-colors flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isAdjustingSubmitting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
