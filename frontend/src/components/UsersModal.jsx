@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+﻿import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   X,
   Users,
@@ -2085,7 +2085,7 @@ export default function UsersModal({
                     }
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-md border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-slate-50/50"
+                    className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm rounded-md border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 bg-slate-50/50"
                   />
                   {searchQuery && (
                     <button
@@ -2143,7 +2143,7 @@ export default function UsersModal({
                     <button
                       onClick={() => setViewMode('grid')}
                       className={`p-1.5 transition-colors cursor-pointer ${
-                        viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-900'
+                        viewMode === 'grid' ? 'bg-[#0F172A] text-white' : 'text-slate-500 hover:text-slate-900'
                       }`}
                       title="গ্রিড কার্ড ভিউ"
                     >
@@ -2152,7 +2152,7 @@ export default function UsersModal({
                     <button
                       onClick={() => setViewMode('table')}
                       className={`p-1.5 transition-colors cursor-pointer ${
-                        viewMode === 'table' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-900'
+                        viewMode === 'table' ? 'bg-[#0F172A] text-white' : 'text-slate-500 hover:text-slate-900'
                       }`}
                       title="টেবিল ভিউ"
                     >
@@ -2207,7 +2207,7 @@ export default function UsersModal({
                                   </span>
                                   <button
                                     onClick={() => handleCopyText(user.UserID, user.UserID)}
-                                    className="font-mono text-[10px] text-slate-400 hover:text-indigo-600 flex items-center space-x-0.5 cursor-pointer"
+                                    className="font-mono text-[10px] text-slate-400 hover:text-neutral-600 flex items-center space-x-0.5 cursor-pointer"
                                     title="আইডি কপি করুন"
                                   >
                                     <span>#{user.UserID?.slice(-6)}</span>
@@ -2239,7 +2239,7 @@ export default function UsersModal({
                                   <div className="flex items-center space-x-1">
                                     <a
                                       href={`tel:${user.Phone}`}
-                                      className="p-1 rounded bg-slate-100 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 transition-colors"
+                                      className="p-1 rounded bg-slate-100 hover:bg-neutral-50 text-slate-500 hover:text-neutral-600 transition-colors"
                                       title="কল করুন"
                                     >
                                       <PhoneCall className="w-3 h-3" />
@@ -2273,7 +2273,7 @@ export default function UsersModal({
                                 {isRevealed && (
                                   <button
                                     onClick={() => handleCopyText(user.PIN, `pin-${user.UserID}`)}
-                                    className="text-slate-400 hover:text-indigo-600 cursor-pointer ml-0.5"
+                                    className="text-slate-400 hover:text-neutral-600 cursor-pointer ml-0.5"
                                     title="পিন কপি করুন"
                                   >
                                     {copiedId === `pin-${user.UserID}` ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
@@ -2299,7 +2299,7 @@ export default function UsersModal({
                               </div>
                               <div>
                                 <span className="text-slate-400 block text-[10px]">মাসিক বেতন</span>
-                                <span className="font-bold text-indigo-700">
+                                <span className="font-bold text-neutral-700">
                                   {salaryM.baseSalary > 0 ? `${currencySymbol}${salaryM.baseSalary.toLocaleString('en-IN')}` : 'নির্ধারিত নেই'}
                                 </span>
                                 {salaryM.baseSalary > 0 && (
@@ -2319,7 +2319,7 @@ export default function UsersModal({
                             {/* আইডি কার্ড বাটন */}
                             <button
                               onClick={() => setSelectedStaffForIdCard(user)}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-neutral-600 hover:bg-neutral-50 transition-colors cursor-pointer"
                               title="স্মার্ট আইডি কার্ড ও QR কোড প্রিন্ট"
                             >
                               <Printer className="w-3.5 h-3.5" />
@@ -2339,7 +2339,7 @@ export default function UsersModal({
                             {/* বিস্তারিত প্রোফাইল ও লেজার */}
                             <button
                               onClick={() => setSelectedStaffForProfile(user)}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-neutral-600 hover:bg-neutral-50 transition-colors cursor-pointer"
                               title="সম্পূর্ণ প্রোফাইল ও হিস্ট্রি"
                             >
                               <Activity className="w-3.5 h-3.5" />
@@ -2405,7 +2405,7 @@ export default function UsersModal({
                           return (
                             <tr key={user.UserID} className="hover:bg-slate-50/80 transition-colors">
                               <td className="py-3 px-3.5 flex items-center space-x-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center overflow-hidden shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-neutral-100 text-neutral-700 font-bold flex items-center justify-center overflow-hidden shrink-0">
                                   {user.AvatarUrl ? (
                                     <img src={formatImageUrl(user.AvatarUrl)} alt="" className="w-full h-full object-cover" />
                                   ) : (
@@ -2447,7 +2447,7 @@ export default function UsersModal({
                               </td>
 
                               {activeMainTab === 'staff' && (
-                                <td className="py-3 px-3.5 text-right font-semibold text-indigo-700 whitespace-nowrap">
+                                <td className="py-3 px-3.5 text-right font-semibold text-neutral-700 whitespace-nowrap">
                                   {salaryM.baseSalary > 0 ? `${currencySymbol}${salaryM.baseSalary.toLocaleString('en-IN')}` : '—'}
                                 </td>
                               )}
@@ -2464,7 +2464,7 @@ export default function UsersModal({
                                 <div className="flex items-center justify-center space-x-1">
                                   <button
                                     onClick={() => setSelectedStaffForIdCard(user)}
-                                    className="p-1 rounded text-slate-500 hover:text-indigo-600 cursor-pointer"
+                                    className="p-1 rounded text-slate-500 hover:text-neutral-600 cursor-pointer"
                                     title="আইডি কার্ড"
                                   >
                                     <Printer className="w-3.5 h-3.5" />
@@ -2480,7 +2480,7 @@ export default function UsersModal({
                                   )}
                                   <button
                                     onClick={() => setSelectedStaffForProfile(user)}
-                                    className="p-1 rounded text-slate-500 hover:text-indigo-600 cursor-pointer"
+                                    className="p-1 rounded text-slate-500 hover:text-neutral-600 cursor-pointer"
                                     title="প্রোফাইল ও অডিট"
                                   >
                                     <Activity className="w-3.5 h-3.5" />
@@ -2513,7 +2513,7 @@ export default function UsersModal({
             ========================================================================= */}
         <div className="bg-slate-50 px-5 sm:px-6 py-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 shrink-0">
           <p className="flex items-center space-x-1.5">
-            <Shield className="w-3.5 h-3.5 text-indigo-500" />
+            <Shield className="w-3.5 h-3.5 text-neutral-500" />
             <span>গুগল শিট `Users` ডাটাবেস এবং অফলাইন লোকাল স্টোরেজে সম্পূর্ণ এনক্রিপ্টেড ও সুরক্ষিত।</span>
           </p>
           <button
@@ -2535,7 +2535,7 @@ export default function UsersModal({
             
             <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800">
               <span className="font-bold text-xs sm:text-sm flex items-center space-x-1.5">
-                <QrCode className="w-4 h-4 text-indigo-400" />
+                <QrCode className="w-4 h-4 text-neutral-400" />
                 <span>স্মার্ট স্টাফ আইডি কার্ড প্রিন্ট প্রিভিউ</span>
               </span>
               <button
@@ -2561,11 +2561,11 @@ export default function UsersModal({
                 </div>
 
                 {/* ছবি */}
-                <div className="w-20 h-20 rounded-full border-2 border-indigo-600 p-0.5 mb-2 shadow-xs overflow-hidden bg-slate-50 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full border-2 border-[#0F172A] p-0.5 mb-2 shadow-xs overflow-hidden bg-slate-50 flex items-center justify-center">
                   {selectedStaffForIdCard.AvatarUrl ? (
                     <img src={formatImageUrl(selectedStaffForIdCard.AvatarUrl)} alt="" className="w-full h-full rounded-full object-cover" />
                   ) : (
-                    <User className="w-10 h-10 text-indigo-400" />
+                    <User className="w-10 h-10 text-neutral-400" />
                   )}
                 </div>
 
@@ -2573,7 +2573,7 @@ export default function UsersModal({
                 <h3 className="font-black text-sm text-slate-900 leading-tight">
                   {selectedStaffForIdCard.FullName}
                 </h3>
-                <span className="inline-block mt-1 px-3 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200 uppercase tracking-wide">
+                <span className="inline-block mt-1 px-3 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 text-neutral-800 border border-neutral-200 uppercase tracking-wide">
                   {selectedStaffForIdCard.Role}
                 </span>
 
@@ -2611,7 +2611,7 @@ export default function UsersModal({
                 <div>
                   <h4 className="font-bold text-white text-xs border-b border-slate-800 pb-1.5 mb-2 flex items-center justify-between">
                     <span>জরুরি নীতিমালা ও নিয়ম</span>
-                    <Shield className="w-3.5 h-3.5 text-indigo-400" />
+                    <Shield className="w-3.5 h-3.5 text-neutral-400" />
                   </h4>
                   <ul className="text-[9.5px] text-slate-400 space-y-1.5 list-disc pl-3">
                     <li>এই কার্ডটি {storeName}-এর নিজস্ব সম্পত্তি।</li>
@@ -2650,7 +2650,7 @@ export default function UsersModal({
               </button>
               <button
                 onClick={() => window.print()}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-sm"
+                className="px-4 py-1.5 bg-[#0F172A] hover:bg-[#0F172A] text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-sm"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>আইডি কার্ড প্রিন্ট করুন</span>
@@ -2752,9 +2752,9 @@ export default function UsersModal({
                               <td className="py-2 px-3 text-amber-800">চলতি মাসে গৃহীত অগ্রিম / প্রদেয় (Advance Drawn)</td>
                               <td className="py-2 px-3 text-right font-semibold text-amber-800">-{sal.paidThisMonth.toLocaleString('en-IN')}</td>
                             </tr>
-                            <tr className="bg-indigo-50/80 font-black text-indigo-950 text-xs">
+                            <tr className="bg-neutral-50 font-black text-neutral-950 text-xs">
                               <td className="py-2.5 px-3">নিট অবশিষ্ট প্রদেয় বেতন (Net Payable)</td>
-                              <td className="py-2.5 px-3 text-right text-indigo-700 text-sm">{currencySymbol}{netPayable.toLocaleString('en-IN')}</td>
+                              <td className="py-2.5 px-3 text-right text-neutral-700 text-sm">{currencySymbol}{netPayable.toLocaleString('en-IN')}</td>
                             </tr>
                           </tbody>
                         </table>
@@ -2808,7 +2808,7 @@ export default function UsersModal({
             
             <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between border-b border-slate-800">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-md bg-indigo-600 flex items-center justify-center font-bold text-white">
+                <div className="w-10 h-10 rounded-md bg-[#0F172A] flex items-center justify-center font-bold text-white">
                   {selectedStaffForProfile.FullName?.slice(0, 1) || 'S'}
                 </div>
                 <div>
@@ -2834,7 +2834,7 @@ export default function UsersModal({
               {selectedStaffForProfile.Role !== 'Customer' && (
                 <div className="bg-white p-4 rounded-md border border-slate-200">
                   <h4 className="text-xs font-bold text-slate-800 flex items-center space-x-1.5 mb-2.5">
-                    <TrendingUp className="w-4 h-4 text-indigo-600" />
+                    <TrendingUp className="w-4 h-4 text-neutral-600" />
                     <span>বিক্রয় পারফরম্যান্স ও অর্জিত কমিশন</span>
                   </h4>
                   {(() => {
@@ -2849,7 +2849,7 @@ export default function UsersModal({
                         </div>
                         <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
                           <span className="text-slate-400 block text-[10px]">মোট ইনভয়েস</span>
-                          <span className="font-bold text-indigo-700 text-sm">{sm.orderCount} টি</span>
+                          <span className="font-bold text-neutral-700 text-sm">{sm.orderCount} টি</span>
                         </div>
                         <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
                           <span className="text-slate-400 block text-[10px]">গড় বিল সাইজ (AOV)</span>
@@ -2890,9 +2890,9 @@ export default function UsersModal({
                             {currencySymbol}{sal.paidThisMonth.toLocaleString('en-IN')}
                           </span>
                         </div>
-                        <div className="p-2.5 rounded-lg bg-indigo-50 border border-indigo-100">
-                          <span className="text-indigo-800 block text-[10px]">অবশিষ্ট বকেয়া বেতন</span>
-                          <span className="font-bold text-indigo-900">
+                        <div className="p-2.5 rounded-lg bg-neutral-50 border border-neutral-200">
+                          <span className="text-neutral-800 block text-[10px]">অবশিষ্ট বকেয়া বেতন</span>
+                          <span className="font-bold text-neutral-900">
                             {currencySymbol}{sal.balanceDue.toLocaleString('en-IN')}
                           </span>
                         </div>
@@ -2996,7 +2996,7 @@ export default function UsersModal({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold">শিফট হাজিরা ও সময় সমন্বয়</h3>
-                  <p className="text-[11px] text-indigo-200">
+                  <p className="text-[11px] text-neutral-200">
                     {adjustingAttendance.user.FullName} ({adjustingAttendance.date})
                   </p>
                 </div>
@@ -3013,12 +3013,12 @@ export default function UsersModal({
             {/* ফর্ম বডি */}
             <div className="p-5 space-y-4 text-xs">
               {/* তথ্য কার্ড */}
-              <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-md flex items-center justify-between">
+              <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-md flex items-center justify-between">
                 <div>
                   <p className="text-slate-500 text-[10px]">স্টাফের নাম ও পদবী</p>
                   <p className="font-bold text-slate-900">{adjustingAttendance.user.FullName} <span className="font-normal text-slate-500">({adjustingAttendance.user.Role})</span></p>
                 </div>
-                <span className="text-[11px] font-mono font-bold bg-white px-2 py-0.5 rounded-md border border-indigo-200 text-indigo-700">
+                <span className="text-[11px] font-mono font-bold bg-white px-2 py-0.5 rounded-md border border-neutral-200 text-neutral-700">
                   #{adjustingAttendance.user.UserID}
                 </span>
               </div>
@@ -3033,7 +3033,7 @@ export default function UsersModal({
                     type="time"
                     value={adjustFormData.clockInTime}
                     onChange={(e) => setAdjustFormData(prev => ({ ...prev, clockInTime: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md font-mono text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md font-mono text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-neutral-900"
                   />
                 </div>
                 <div>
@@ -3044,7 +3044,7 @@ export default function UsersModal({
                     type="time"
                     value={adjustFormData.clockOutTime}
                     onChange={(e) => setAdjustFormData(prev => ({ ...prev, clockOutTime: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md font-mono text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md font-mono text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-neutral-900"
                   />
                 </div>
               </div>
@@ -3068,7 +3068,7 @@ export default function UsersModal({
                       onClick={() => setAdjustFormData(prev => ({ ...prev, clockOutTime: preset.time, status: 'Completed' }))}
                       className={`px-2 py-1 rounded-lg border text-[11px] font-semibold cursor-pointer transition-colors ${
                         adjustFormData.clockOutTime === preset.time
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                          ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-2xs'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                       }`}
                     >
@@ -3086,7 +3086,7 @@ export default function UsersModal({
                 <select
                   value={adjustFormData.status}
                   onChange={(e) => setAdjustFormData(prev => ({ ...prev, status: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-neutral-900 cursor-pointer"
                 >
                   <option value="Completed">শিফট সম্পন্ন (Completed)</option>
                   <option value="OnDuty">ডিউটিতে আছেন (On Duty)</option>
@@ -3106,7 +3106,7 @@ export default function UsersModal({
                   placeholder="যেমন: কর্মী ভুলে ক্লক-আউট করেননি, রাত ৯:৩০ এ সমন্বয়কৃত"
                   value={adjustFormData.notes}
                   onChange={(e) => setAdjustFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-neutral-900"
                 />
               </div>
 

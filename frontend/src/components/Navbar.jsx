@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+﻿import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Menu,
   RefreshCw,
@@ -31,7 +31,7 @@ import { formatImageUrl } from '../services/storage';
  * - গ্লোবাল সার্চ বার (শর্টকাট হিন্ট '/')
  * - প্রাইমারি 'New Sale' CTA (#0F172A)
  * - সিঙ্ক স্ট্যাটাস, হোল্ড ও কার্ট ইন্ডিকেটর, কমপ্যাক্ট প্রোফাইল মেনু
- * - শূন্য গ্রেডিয়েন্ট, শূন্য backdrop-blur, শূন্য ইমোজি
+ * - শূন্য গ্রেডিয়েন্ট, শূন্য , শূন্য ইমোজি
  */
 export default function Navbar({
   settings = {},

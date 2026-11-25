@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+﻿import React, { useState, useMemo, useRef } from 'react';
 import {
   Search,
   Plus,
@@ -31,7 +31,7 @@ import { StatusBadge, CatalogGridSkeleton, EmptyState, ConfirmDialog } from './u
  * - ফ্ল্যাট হরাইজন্টাল ক্যাটাগরি ফিল্টার ট্যাব
  * - কমপ্যাক্ট প্রোডাক্ট গ্রিড: SKU (mono), স্টক ব্যাজ (In Stock / Low / Out), দাম (tabular-nums)
  * - গজ-গিরা ফেব্রিক কাটিং ও ভ্যারিয়েন্ট সাপোর্ট অক্ষুণ্ণ
- * - শূন্য গ্রেডিয়েন্ট, শূন্য backdrop-blur, শূন্য ভারী শ্যাডো, শূন্য ইমোজি
+ * - শূন্য গ্রেডিয়েন্ট, শূন্য , শূন্য ভারী শ্যাডো, শূন্য ইমোজি
  */
 export default function ProductCatalog({
   products = [],

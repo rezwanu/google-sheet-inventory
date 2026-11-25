@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   Edit3,
@@ -924,7 +924,7 @@ export default function EditProductModal({
         {/* মডাল হেডার (আধুনিক ডার্ক প্রিমিয়াম হেডার) */}
         <div className="px-6 py-4 border-b border-slate-200/90 flex items-center justify-between bg-[#0F172A] text-white shrink-0 shadow-xs">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-lg bg-white/10  border border-white/10 text-indigo-300 shadow-inner">
+            <div className="p-2.5 rounded-lg bg-white/10  border border-white/10 text-neutral-300 shadow-inner">
               <Edit3 className="w-5 h-5" />
             </div>
             <div>
@@ -932,7 +932,7 @@ export default function EditProductModal({
                 <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
                   পণ্য সম্পাদনা (Edit Product)
                 </h3>
-                <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-mono font-bold bg-neutral-700/20 text-neutral-300 border border-neutral-400/30">
                   {product.ProductID}
                 </span>
               </div>
@@ -961,12 +961,12 @@ export default function EditProductModal({
               onClick={() => setActiveTab('basic')}
               className={`px-3 sm:px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
                 activeTab === 'basic'
-                  ? 'bg-white text-indigo-900 shadow-xs border border-indigo-300 ring-2 ring-indigo-500/10'
+                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-300 ring-2 ring-neutral-900/10'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
               <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-black ${
-                activeTab === 'basic' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'
+                activeTab === 'basic' ? 'bg-[#0F172A] text-white' : 'bg-slate-200 text-slate-700'
               }`}>
                 ১
               </span>
@@ -989,7 +989,7 @@ export default function EditProductModal({
               </span>
               <span>মূল্য, স্টক ও ভ্যারিয়েন্ট</span>
               {productType === 'variable' && variants.length > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-indigo-100 text-indigo-800 font-black">
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-neutral-100 text-neutral-800 font-black">
                   {variants.length}
                 </span>
               )}
@@ -1005,12 +1005,12 @@ export default function EditProductModal({
               onClick={() => setActiveTab('details')}
               className={`px-3 sm:px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
                 activeTab === 'details'
-                  ? 'bg-white text-purple-900 shadow-xs border border-purple-300 ring-2 ring-purple-500/10'
+                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200 ring-2 ring-neutral-900/10'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
               <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-black ${
-                activeTab === 'details' ? 'bg-purple-600 text-white' : 'bg-slate-200 text-slate-700'
+                activeTab === 'details' ? 'bg-[#0F172A] text-white' : 'bg-slate-200 text-slate-700'
               }`}>
                 ৩
               </span>
@@ -1044,7 +1044,7 @@ export default function EditProductModal({
               }}
               className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 productType === 'variable'
-                  ? 'bg-indigo-600 text-white shadow-xs '
+                  ? 'bg-[#0F172A] text-white shadow-xs '
                   : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
@@ -1081,7 +1081,7 @@ export default function EditProductModal({
               <div className="space-y-4">
                 <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3.5">
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
-                    <Tag className="w-3.5 h-3.5 text-indigo-600" />
+                    <Tag className="w-3.5 h-3.5 text-neutral-600" />
                     <span>প্রাথমিক পরিচিতি ও ক্যাটাগরি</span>
                   </h4>
 
@@ -1096,7 +1096,7 @@ export default function EditProductModal({
                       value={formData.productName}
                       onChange={handleChange}
                       placeholder="যেমন: রুবেল ভয়েল / সুতি কাপড়"
-                      className="w-full px-3.5 py-2 text-xs font-semibold text-slate-900 border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
+                      className="w-full px-3.5 py-2 text-xs font-semibold text-slate-900 border border-slate-200 rounded-md focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
                     />
                   </div>
 
@@ -1108,7 +1108,7 @@ export default function EditProductModal({
                         <button
                           type="button"
                           onClick={() => setIsAddingNewCategory(!isAddingNewCategory)}
-                          className="text-[10.5px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center cursor-pointer"
+                          className="text-[10.5px] text-neutral-600 hover:text-neutral-800 font-bold flex items-center cursor-pointer"
                         >
                           <PlusCircle className="w-3 h-3 mr-0.5" />
                           {isAddingNewCategory ? 'বাতিল' : '+ নতুন'}
@@ -1120,7 +1120,7 @@ export default function EditProductModal({
                           name="category"
                           value={formData.category}
                           onChange={handleChange}
-                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
+                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
                         >
                           {uniqueCategories.map((cat, idx) => (
                             <option key={idx} value={cat}>{cat}</option>
@@ -1128,25 +1128,25 @@ export default function EditProductModal({
                           {uniqueCategories.length === 0 && <option value="General">General</option>}
                         </select>
                       ) : (
-                        <div className="space-y-1.5 p-2 bg-indigo-50/70 rounded-md border border-indigo-200/80">
+                        <div className="space-y-1.5 p-2 bg-neutral-50 rounded-md border border-neutral-200/80">
                           <input
                             type="text"
                             value={newCategoryName}
                             onChange={(e) => setNewCategoryName(e.target.value)}
                             placeholder="প্রধান ক্যাটাগরির নাম"
-                            className="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 bg-white"
+                            className="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-neutral-900 bg-white"
                           />
                           <input
                             type="text"
                             value={newSubCategoryName}
                             onChange={(e) => setNewSubCategoryName(e.target.value)}
                             placeholder="সাব-ক্যাটাগরি (ঐচ্ছিক)"
-                            className="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 bg-white"
+                            className="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-neutral-900 bg-white"
                           />
                           <button
                             type="button"
                             onClick={handleCreateCategory}
-                            className="w-full py-1 bg-indigo-600 text-white text-[11px] font-bold rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+                            className="w-full py-1 bg-[#0F172A] text-white text-[11px] font-bold rounded-lg hover:bg-[#0F172A] transition-colors cursor-pointer"
                           >
                             যুক্ত করুন
                           </button>
@@ -1163,7 +1163,7 @@ export default function EditProductModal({
                           name="subCategory"
                           value={formData.subCategory}
                           onChange={handleChange}
-                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
+                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
                         >
                           <option value="">-- সাব-ক্যাটাগরি নির্বাচন --</option>
                           {availableSubCategories.map((sub, idx) => (
@@ -1177,7 +1177,7 @@ export default function EditProductModal({
                           value={formData.subCategory}
                           onChange={handleChange}
                           placeholder="যেমন: চিনিগুঁড়া বা সাধারণ"
-                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-medium transition-all shadow-2xs"
+                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-medium transition-all shadow-2xs"
                         />
                       )}
                     </div>
@@ -1187,7 +1187,7 @@ export default function EditProductModal({
                 <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-1.5 pb-2 border-b border-slate-100">
                     <label className="text-xs font-black text-slate-800 flex items-center space-x-1.5 uppercase tracking-wider">
-                      <Barcode className="w-4 h-4 text-indigo-600" />
+                      <Barcode className="w-4 h-4 text-neutral-600" />
                       <span>বারকোড / SKU কোড</span>
                     </label>
 
@@ -1195,10 +1195,10 @@ export default function EditProductModal({
                       <button
                         type="button"
                         onClick={handleGenerateRandomBarcode}
-                        className="text-[10.5px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 px-2.5 py-1 rounded-lg flex items-center space-x-1 transition-all cursor-pointer shadow-2xs"
+                        className="text-[10.5px] font-bold text-neutral-700 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 px-2.5 py-1 rounded-lg flex items-center space-x-1 transition-all cursor-pointer shadow-2xs"
                         title="কনফ্লিক্ট-মুক্ত কোড তৈরি করুন"
                       >
-                        <Wand2 className="w-3 h-3 text-indigo-600" />
+                        <Wand2 className="w-3 h-3 text-neutral-600" />
                         <span>অটো কোড</span>
                       </button>
 
@@ -1216,7 +1216,7 @@ export default function EditProductModal({
                         <button
                           type="button"
                           onClick={() => setIsStickerModalOpen(true)}
-                          className="text-[10.5px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded-lg flex items-center space-x-1 transition-all cursor-pointer shadow-2xs"
+                          className="text-[10.5px] font-bold text-white bg-[#0F172A] hover:bg-[#0F172A] px-2.5 py-1 rounded-lg flex items-center space-x-1 transition-all cursor-pointer shadow-2xs"
                           title="বারকোড স্টিকার প্রিন্ট করুন"
                         >
                           <Printer className="w-3 h-3" />
@@ -1227,7 +1227,7 @@ export default function EditProductModal({
                   </div>
 
                   {/* ইনপুট গ্রুপ: বামে প্রিফিক্স পিল, মাঝে বারকোড ইনপুট, ডানে ক্লিয়ার বাটন */}
-                  <div className="flex items-stretch rounded-md border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 bg-white overflow-hidden shadow-2xs transition-all">
+                  <div className="flex items-stretch rounded-md border border-slate-200 focus-within:ring-2 focus-within:ring-neutral-900/20 focus-within:border-neutral-500 bg-white overflow-hidden shadow-2xs transition-all">
                     <div className="bg-slate-100/80 border-r border-slate-200 px-2.5 flex items-center space-x-1 shrink-0">
                       <span className="text-[10px] font-bold text-slate-500">প্রিফিক্স:</span>
                       <input
@@ -1235,7 +1235,7 @@ export default function EditProductModal({
                         value={barcodePrefix}
                         onChange={(e) => setBarcodePrefix(e.target.value)}
                         placeholder="PB-"
-                        className="w-10 font-mono font-black text-indigo-700 uppercase bg-transparent focus:outline-none text-xs"
+                        className="w-10 font-mono font-black text-neutral-700 uppercase bg-transparent focus:outline-none text-xs"
                       />
                     </div>
                     <div className="relative flex-1">
@@ -1284,7 +1284,7 @@ export default function EditProductModal({
                 <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                     <label className="text-xs font-black text-slate-800 flex items-center space-x-1.5 uppercase tracking-wider">
-                      <ImageIcon className="w-4 h-4 text-indigo-600" />
+                      <ImageIcon className="w-4 h-4 text-neutral-600" />
                       <span>পণ্যের প্রধান ছবি</span>
                     </label>
                     <div className="flex bg-slate-100 p-0.5 rounded-lg text-[10.5px] font-bold">
@@ -1292,7 +1292,7 @@ export default function EditProductModal({
                         type="button"
                         onClick={() => setImageUploadMode('upload')}
                         className={`px-2.5 py-1 rounded-md flex items-center space-x-1 transition-all cursor-pointer ${
-                          imageUploadMode === 'upload' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                          imageUploadMode === 'upload' ? 'bg-white text-neutral-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
                         <Upload className="w-3 h-3" />
@@ -1302,7 +1302,7 @@ export default function EditProductModal({
                         type="button"
                         onClick={() => setImageUploadMode('url')}
                         className={`px-2.5 py-1 rounded-md flex items-center space-x-1 transition-all cursor-pointer ${
-                          imageUploadMode === 'url' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                          imageUploadMode === 'url' ? 'bg-white text-neutral-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
                         <Globe className="w-3 h-3" />
@@ -1323,7 +1323,7 @@ export default function EditProductModal({
                       />
 
                       {isProcessingImage ? (
-                        <div className="p-4 border-2 border-dashed border-indigo-200 rounded-md flex items-center justify-center space-x-2 bg-indigo-50/50 text-indigo-600 text-xs font-medium">
+                        <div className="p-4 border-2 border-dashed border-neutral-200 rounded-md flex items-center justify-center space-x-2 bg-neutral-50 text-neutral-600 text-xs font-medium">
                           <Loader2 className="w-4 h-4 animate-spin" />
                           <span>ছবি প্রস্তুত করা হচ্ছে...</span>
                         </div>
@@ -1345,7 +1345,7 @@ export default function EditProductModal({
                             </span>
                             <label
                               htmlFor="edit-product-image-upload"
-                              className="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer underline inline-block mt-0.5"
+                              className="text-[11px] text-neutral-600 hover:text-neutral-800 font-bold cursor-pointer underline inline-block mt-0.5"
                             >
                               ছবি পরিবর্তন করুন
                             </label>
@@ -1378,7 +1378,7 @@ export default function EditProductModal({
                             </span>
                             <label
                               htmlFor="edit-product-image-upload"
-                              className="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer underline inline-block mt-0.5"
+                              className="text-[11px] text-neutral-600 hover:text-neutral-800 font-bold cursor-pointer underline inline-block mt-0.5"
                             >
                               নতুন ছবি আপলোড করে পরিবর্তন করুন
                             </label>
@@ -1387,9 +1387,9 @@ export default function EditProductModal({
                       ) : (
                         <label
                           htmlFor="edit-product-image-upload"
-                          className="border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-md p-4 flex items-center justify-center space-x-2 bg-slate-50/50 hover:bg-indigo-50/20 cursor-pointer transition-all text-center"
+                          className="border-2 border-dashed border-slate-300 hover:border-neutral-400 rounded-md p-4 flex items-center justify-center space-x-2 bg-slate-50/50 hover:bg-neutral-50 cursor-pointer transition-all text-center"
                         >
-                          <Upload className="w-4 h-4 text-indigo-600" />
+                          <Upload className="w-4 h-4 text-neutral-600" />
                           <span className="text-xs font-bold text-slate-700">
                             কম্পিউটার বা মোবাইল থেকে ছবি নির্বাচন করুন
                           </span>
@@ -1407,7 +1407,7 @@ export default function EditProductModal({
                         placeholder="https://example.com/product-image.jpg"
                         value={formData.imageUrl}
                         onChange={handleChange}
-                        className="flex-1 px-3 py-2 border border-slate-200 rounded-md text-xs bg-slate-50/50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs"
+                        className="flex-1 px-3 py-2 border border-slate-200 rounded-md text-xs bg-slate-50/50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 shadow-2xs"
                       />
                       {formData.imageUrl ? (
                         <div className="w-9 h-9 rounded-md border border-slate-200 overflow-hidden shrink-0 shadow-2xs">
@@ -1438,14 +1438,14 @@ export default function EditProductModal({
                       placeholder="যেমন: প্রিমিয়াম ভয়েল কাপড় ফ্রন্ট ভিউ"
                       value={formData.imageCaption}
                       onChange={handleChange}
-                      className="w-full px-3 py-1.5 border border-slate-200 rounded-md text-xs bg-slate-50/50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs"
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-md text-xs bg-slate-50/50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 shadow-2xs"
                     />
                   </div>
                 </div>
 
                 <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3.5">
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
-                    <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                    <FileText className="w-3.5 h-3.5 text-neutral-600" />
                     <span>সংক্ষিপ্ত বিবরণ ও বৈশিষ্ট্যসমূহ</span>
                   </h4>
 
@@ -1460,14 +1460,14 @@ export default function EditProductModal({
                       value={formData.shortDescription}
                       onChange={handleChange}
                       placeholder="এক বা দুই লাইনে পণ্যের পরিচিতি..."
-                      className="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none resize-none leading-relaxed bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
+                      className="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 focus:outline-none resize-none leading-relaxed bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
                     />
                   </div>
 
                   {/* প্রধান বৈশিষ্ট্যসমূহ */}
                   <div className="space-y-2 pt-1">
                     <label className="block text-xs font-bold text-slate-700 flex items-center space-x-1">
-                      <ListPlus className="w-3.5 h-3.5 text-indigo-600" />
+                      <ListPlus className="w-3.5 h-3.5 text-neutral-600" />
                       <span>প্রধান বৈশিষ্ট্যসমূহ (Features)</span>
                     </label>
                     
@@ -1478,12 +1478,12 @@ export default function EditProductModal({
                         onChange={(e) => setFeatureInput(e.target.value)}
                         onKeyDown={handleFeatureKeyDown}
                         placeholder="বৈশিষ্ট্য লিখে Enter বা 'যোগ' চাপুন..."
-                        className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white shadow-2xs"
+                        className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 focus:outline-none bg-slate-50/50 hover:bg-white shadow-2xs"
                       />
                       <button
                         type="button"
                         onClick={handleAddFeature}
-                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-md transition-colors shrink-0 shadow-2xs cursor-pointer"
+                        className="px-3.5 py-1.5 bg-[#0F172A] hover:bg-[#0F172A] text-white text-xs font-bold rounded-md transition-colors shrink-0 shadow-2xs cursor-pointer"
                       >
                         যোগ
                       </button>
@@ -1495,7 +1495,7 @@ export default function EditProductModal({
                         {features.map((feat, idx) => (
                           <span
                             key={idx}
-                            className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-800 border border-indigo-200/80 shadow-2xs"
+                            className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-neutral-50 text-neutral-800 border border-neutral-200/80 shadow-2xs"
                           >
                             <Check className="w-3 h-3 text-emerald-600 mr-1" />
                             <span>{feat}</span>
@@ -1526,7 +1526,7 @@ export default function EditProductModal({
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
                 <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-3.5">
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                    <Sparkles className="w-3.5 h-3.5 text-neutral-600" />
                     <span>আর্থিক তথ্য ও বিক্রয়মূল্য নির্ধারণ</span>
                   </h4>
 
@@ -1547,7 +1547,7 @@ export default function EditProductModal({
                               value={formData.costPrice}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold text-slate-900 border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
+                              className="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold text-slate-900 border border-slate-200 rounded-md focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
                             />
                             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">{currencySymbol}</span>
                           </>
@@ -1593,7 +1593,7 @@ export default function EditProductModal({
 
                     {/* বিক্রয়মূল্য */}
                     <div>
-                      <label className="block text-xs font-bold text-indigo-950 mb-1">
+                      <label className="block text-xs font-bold text-neutral-950 mb-1">
                         বিক্রয়মূল্য / Selling <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
@@ -1605,9 +1605,9 @@ export default function EditProductModal({
                           value={formData.sellingPrice}
                           onChange={handleChange}
                           placeholder="0.00"
-                          className="w-full pl-7 pr-3 py-2 text-xs font-mono font-black text-indigo-950 border border-indigo-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-indigo-50/30 hover:bg-white transition-all shadow-2xs"
+                          className="w-full pl-7 pr-3 py-2 text-xs font-mono font-black text-neutral-950 border border-neutral-200 rounded-md focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 focus:outline-none bg-neutral-50 hover:bg-white transition-all shadow-2xs"
                         />
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-indigo-600 font-bold">{currencySymbol}</span>
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-neutral-600 font-bold">{currencySymbol}</span>
                       </div>
                     </div>
                   </div>
@@ -1683,7 +1683,7 @@ export default function EditProductModal({
                     {/* গোডাউন স্টক */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center space-x-1">
-                        <Package className="w-3.5 h-3.5 text-indigo-600" />
+                        <Package className="w-3.5 h-3.5 text-neutral-600" />
                         <span>🏭 গোডাউন স্টক {productType === 'variable' && '(ভ্যারিয়েন্টের মোট)'}</span>
                       </label>
                       <input
@@ -1698,11 +1698,11 @@ export default function EditProductModal({
                         className={`w-full px-3.5 py-2 text-xs font-mono font-bold border rounded-md focus:outline-none transition-all shadow-2xs ${
                           productType === 'variable'
                             ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed'
-                            : 'text-slate-900 border-slate-200 bg-slate-50/50 hover:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500'
+                            : 'text-slate-900 border-slate-200 bg-slate-50/50 hover:bg-white focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500'
                         }`}
                       />
                       {isThanUnit(formData.unit) && (
-                        <span className="text-[10.5px] text-indigo-700 font-bold block mt-1">
+                        <span className="text-[10.5px] text-neutral-700 font-bold block mt-1">
                           {productType === 'variable' 
                             ? `= ${(variants.reduce((s, v) => s + (Number(v.GodownStock !== undefined ? v.GodownStock : v.godownStock) || 0), 0) * (Number(formData.yardsPerThan) || 25)).toLocaleString('bn-BD')} গজ`
                             : `= ${((Number(formData.godownStock) || 0) * (Number(formData.yardsPerThan) || 25)).toLocaleString('bn-BD')} গজ`}
@@ -1722,7 +1722,7 @@ export default function EditProductModal({
                         value={formData.minStockAlert}
                         onChange={handleChange}
                         placeholder="5"
-                        className="w-full px-3.5 py-2 text-xs font-mono font-semibold text-slate-900 border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
+                        className="w-full px-3.5 py-2 text-xs font-mono font-semibold text-slate-900 border border-slate-200 rounded-md focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 focus:outline-none bg-slate-50/50 hover:bg-white transition-all shadow-2xs"
                       />
                     </div>
 
@@ -1733,7 +1733,7 @@ export default function EditProductModal({
                         <button
                           type="button"
                           onClick={() => setIsAddingNewUnit(!isAddingNewUnit)}
-                          className="text-[10.5px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center cursor-pointer"
+                          className="text-[10.5px] text-neutral-600 hover:text-neutral-800 font-bold flex items-center cursor-pointer"
                         >
                           <PlusCircle className="w-3 h-3 mr-0.5" />
                           {isAddingNewUnit ? 'বাতিল' : '+ নতুন'}
@@ -1745,7 +1745,7 @@ export default function EditProductModal({
                           name="unit"
                           value={formData.unit}
                           onChange={handleChange}
-                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
+                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500 focus:outline-none bg-slate-50/50 hover:bg-white text-slate-800 font-bold transition-all shadow-2xs cursor-pointer"
                         >
                           {uniqueUnits.map((u, idx) => (
                             <option key={idx} value={u}>{u}</option>
@@ -1755,25 +1755,25 @@ export default function EditProductModal({
                           )}
                         </select>
                       ) : (
-                        <div className="space-y-1.5 p-2 bg-indigo-50/70 rounded-md border border-indigo-200/80">
+                        <div className="space-y-1.5 p-2 bg-neutral-50 rounded-md border border-neutral-200/80">
                           <input
                             type="text"
                             value={newUnitName}
                             onChange={(e) => setNewUnitName(e.target.value)}
                             placeholder="একক (যেমন: বস্তা, ডজন)"
-                            className="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 bg-white"
+                            className="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-neutral-900 bg-white"
                           />
                           <input
                             type="text"
                             value={newUnitShortName}
                             onChange={(e) => setNewUnitShortName(e.target.value)}
                             placeholder="সংক্ষিপ্ত রূপ (যেমন: Bosta)"
-                            className="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 bg-white"
+                            className="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-neutral-900 bg-white"
                           />
                           <button
                             type="button"
                             onClick={handleCreateUnit}
-                            className="w-full py-1 bg-indigo-600 text-white text-[11px] font-bold rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+                            className="w-full py-1 bg-[#0F172A] text-white text-[11px] font-bold rounded-lg hover:bg-[#0F172A] transition-colors cursor-pointer"
                           >
                             যুক্ত করুন
                           </button>
@@ -1959,7 +1959,7 @@ export default function EditProductModal({
                             )}
                           </div>
                           <div className="pt-1.5 border-t border-amber-200/60 flex flex-wrap items-center justify-between text-[11px] text-slate-600 gap-1">
-                            <span>🏭 গোডাউনে আছে: <strong className="text-indigo-900 font-bold">{gStock} থান</strong> (= {(gStock * ypt).toLocaleString('bn-BD')} গজ)</span>
+                            <span>🏭 গোডাউনে আছে: <strong className="text-neutral-900 font-bold">{gStock} থান</strong> (= {(gStock * ypt).toLocaleString('bn-BD')} গজ)</span>
                             <span>🌐 সর্বমোট কাপড়: <strong className="text-slate-900 font-mono font-bold">{totalCombinedYards.toLocaleString('bn-BD')} গজ</strong></span>
                           </div>
                         </div>
@@ -1971,18 +1971,18 @@ export default function EditProductModal({
               {/* ফুল-উইডথ ভ্যারিয়েন্ট কনফিগারেশন (যদি variable product হয়) */}
             {productType === 'variable' && (
               <div className="bg-neutral-50 border border-neutral-200/80 rounded-lg p-5 sm:p-6 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between pb-3 border-b border-indigo-200/70">
-                  <span className="text-xs font-black text-indigo-950 flex items-center space-x-2 uppercase tracking-wider">
-                    <Layers className="w-4 h-4 text-indigo-600" />
+                <div className="flex items-center justify-between pb-3 border-b border-neutral-200/70">
+                  <span className="text-xs font-black text-neutral-950 flex items-center space-x-2 uppercase tracking-wider">
+                    <Layers className="w-4 h-4 text-neutral-600" />
                     <span>ভ্যারিয়েন্ট ম্যানেজার (সাইজ, রঙ, ওজন)</span>
                   </span>
-                  <span className="text-[11px] text-indigo-700 bg-indigo-100 px-3 py-0.5 rounded-full font-black border border-indigo-200">
+                  <span className="text-[11px] text-neutral-700 bg-neutral-100 px-3 py-0.5 rounded-full font-black border border-neutral-200">
                     {variants.length}টি ভ্যারিয়েন্ট সক্রিয়
                   </span>
                 </div>
 
                 {/* স্বয়ংক্রিয় ভ্যারিয়েন্ট জেনারেটর ফর্ম */}
-                <div className="p-4 bg-white rounded-lg border border-indigo-100 space-y-2.5 shadow-2xs">
+                <div className="p-4 bg-white rounded-lg border border-neutral-200 space-y-2.5 shadow-2xs">
                   <div className="text-[11px] font-black text-slate-700 uppercase tracking-wider">
                     অটো জেনারেটর (কমা দিয়ে একাধিক মান লিখুন):
                   </div>
@@ -1992,21 +1992,21 @@ export default function EditProductModal({
                       placeholder="সাইজ / ওজন (যেমন: S, M, L, XL অথবা 500g, 1kg)"
                       value={attributeSizes}
                       onChange={(e) => setAttributeSizes(e.target.value)}
-                      className="px-3.5 py-2 bg-slate-50/60 border border-slate-200 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="px-3.5 py-2 bg-slate-50/60 border border-slate-200 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500"
                     />
                     <input
                       type="text"
                       placeholder="রঙ / কালার (যেমন: Black, Navy, White)"
                       value={attributeColors}
                       onChange={(e) => setAttributeColors(e.target.value)}
-                      className="px-3.5 py-2 bg-slate-50/60 border border-slate-200 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="px-3.5 py-2 bg-slate-50/60 border border-slate-200 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-500"
                     />
                   </div>
                   <div className="flex items-center justify-between pt-1">
                     <button
                       type="button"
                       onClick={handleAutoGenerateVariants}
-                      className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                      className="px-3.5 py-1.5 bg-[#0F172A] hover:bg-[#0F172A] text-white rounded-md text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
                     >
                       <Wand2 className="w-3.5 h-3.5" />
                       <span>স্বয়ংক্রিয় তৈরি করুন</span>
@@ -2099,7 +2099,7 @@ export default function EditProductModal({
                           <th className="py-3 px-3 min-w-32">বারকোড</th>
                           <th className="py-3 px-3 w-24">কেনা</th>
                           <th className="py-3 px-3 w-24">বিক্রি</th>
-                          <th className="py-3 px-3 min-w-28 text-indigo-900 bg-indigo-50/50">
+                          <th className="py-3 px-3 min-w-28 text-neutral-900 bg-neutral-50">
                             {isThanUnit(formData.unit) ? '🏭 গোডাউন (থান)' : '🏭 গোডাউন'}
                           </th>
                           <th className="py-3 px-3 min-w-44 text-emerald-900 bg-emerald-50/40">
@@ -2157,21 +2157,21 @@ export default function EditProductModal({
                                   type="number"
                                   value={v.SellingPrice}
                                   onChange={(e) => handleUpdateVariantField(idx, 'SellingPrice', Number(e.target.value) || 0)}
-                                  className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-indigo-700 focus:bg-white focus:outline-none"
+                                  className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-neutral-700 focus:bg-white focus:outline-none"
                                 />
                               </td>
-                              <td className="py-2.5 px-3 bg-indigo-50/20">
+                              <td className="py-2.5 px-3 bg-neutral-50">
                                 <input
                                   type="number"
                                   min="0"
                                   step="any"
                                   value={vGStock}
                                   onChange={(e) => handleUpdateVariantField(idx, 'GodownStock', Number(e.target.value) || 0)}
-                                  className="w-full px-2.5 py-1.5 bg-indigo-50/80 border border-indigo-200 rounded-lg text-[11px] font-black text-indigo-950 focus:bg-white focus:outline-none"
+                                  className="w-full px-2.5 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-[11px] font-black text-neutral-950 focus:bg-white focus:outline-none"
                                   title="গোডাউন স্টক"
                                 />
                                 {isThan && (
-                                  <span className="text-[10px] text-indigo-700 font-bold block mt-0.5 whitespace-nowrap">
+                                  <span className="text-[10px] text-neutral-700 font-bold block mt-0.5 whitespace-nowrap">
                                     = {(vGStock * ypt).toLocaleString('bn-BD')} গজ
                                   </span>
                                 )}
@@ -2382,7 +2382,7 @@ export default function EditProductModal({
 
             <div className="bg-white p-4 sm:p-5 rounded-lg border border-slate-200/90 shadow-2xs space-y-2.5">
               <label className="block text-xs font-black text-slate-800 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
-                <AlignLeft className="w-4 h-4 text-indigo-600" />
+                <AlignLeft className="w-4 h-4 text-neutral-600" />
                 <span>বিস্তারিত বিবরণ (Description) - রিচ টেক্সট ও ফরম্যাটিং</span>
               </label>
               <RichTextEditor

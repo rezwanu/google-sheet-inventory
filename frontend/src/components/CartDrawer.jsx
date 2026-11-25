@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   ShoppingCart,
@@ -19,7 +19,7 @@ import { StatusBadge, EmptyState, ConfirmDialog } from './ui';
  * CartDrawer - মোবাইল ও ডেস্কটপ ফুল-হাইট স্লাইড-ওভার কার্ট শিট
  * - মোবাইলে (375px) পূর্ণ প্রস্থের শিট হিসেবে ওপেন হয় (Minimum 44px touch targets)
  * - ইনলাইন পেমেন্ট সিলেক্টর (Cash | bKash | Card) + "Complete Sale & Print"
- * - Esc চাপে ক্লোজ, শূন্য backdrop-blur, শূন্য shadow-2xl
+ * - Esc চাপে ক্লোজ, শূন্য , শূন্য shadow-2xl
  */
 export default function CartDrawer({
   isOpen = false,

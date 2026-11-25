@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   X,
   Truck,
@@ -2445,7 +2445,7 @@ export default function StockTransferModal({
                 <div className="grid grid-cols-2 gap-3 p-3.5 bg-[#FAFAFA] rounded-md border border-[#E5E5E5]">
                   <div>
                     <span className="text-slate-400 block font-medium">চালান নম্বর:</span>
-                    <span className="font-bold font-mono text-sm text-indigo-700">{printableChallan.ChallanNo}</span>
+                    <span className="font-bold font-mono text-sm text-neutral-700">{printableChallan.ChallanNo}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block font-medium">চালান তৈরির তারিখ:</span>
@@ -2640,9 +2640,9 @@ export default function StockTransferModal({
                           <td className="py-2 px-3 border border-[#E5E5E5]">
                             {m.variantName || m.color || m.size ? (
                               <div>
-                                {m.color && <span className="font-bold text-pink-700 block">রং: {m.color}</span>}
-                                {m.size && <span className="font-bold text-indigo-700 block">সাইজ: {m.size}</span>}
-                                {m.variantName && !m.color && !m.size && <span className="font-bold text-purple-700 block">{m.variantName}</span>}
+                                {m.color && <span className="font-bold text-neutral-700 block">রং: {m.color}</span>}
+                                {m.size && <span className="font-bold text-neutral-700 block">সাইজ: {m.size}</span>}
+                                {m.variantName && !m.color && !m.size && <span className="font-bold text-neutral-700 block">{m.variantName}</span>}
                               </div>
                             ) : (
                               <span className="text-slate-400">সাধারণ</span>
@@ -2651,7 +2651,7 @@ export default function StockTransferModal({
                           <td className="py-2 px-3 border border-[#E5E5E5]">
                             <span className="font-medium text-slate-800 block">{m.reasonBangla}</span>
                             {m.referenceNo && (
-                              <span className="text-[10px] font-mono text-indigo-600 font-bold block">
+                              <span className="text-[10px] font-mono text-neutral-600 font-bold block">
                                 চালান: {m.referenceNo}
                               </span>
                             )}
@@ -3292,7 +3292,7 @@ export default function StockTransferModal({
                       <select
                         value={overviewCategory}
                         onChange={(e) => setOverviewCategory(e.target.value)}
-                        className="px-3 py-2 text-xs border border-[#E5E5E5] hover:border-[#D4D4D4] rounded-md bg-[#FAFAFA]/70 hover:bg-white text-slate-700 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none cursor-pointer shadow-none shrink-0"
+                        className="px-3 py-2 text-xs border border-[#E5E5E5] hover:border-[#D4D4D4] rounded-md bg-[#FAFAFA]/70 hover:bg-white text-slate-700 font-bold focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-900 focus:outline-none cursor-pointer shadow-none shrink-0"
                       >
                         <option value="ALL">সকল ক্যাটাগরি ({categories.length})</option>
                         {categories.map((c) => (
@@ -5390,7 +5390,7 @@ export default function StockTransferModal({
                       onClick={() => setTransferSubTab('new')}
                       className={`px-4 py-2 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                         transferSubTab === 'new'
-                          ? 'bg-indigo-600 text-white shadow-none'
+                          ? 'bg-[#0F172A] text-white shadow-none'
                           : 'bg-white text-slate-600 hover:bg-[#F5F5F5] border border-[#E5E5E5]'
                       }`}
                     >
@@ -5402,7 +5402,7 @@ export default function StockTransferModal({
                       onClick={() => setTransferSubTab('list')}
                       className={`px-4 py-2 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                         transferSubTab === 'list'
-                          ? 'bg-indigo-600 text-white shadow-none'
+                          ? 'bg-[#0F172A] text-white shadow-none'
                           : 'bg-white text-slate-600 hover:bg-[#F5F5F5] border border-[#E5E5E5]'
                       }`}
                     >
@@ -5430,7 +5430,7 @@ export default function StockTransferModal({
                             type="text"
                             value={challanNo}
                             onChange={(e) => setChallanNo(e.target.value)}
-                            className="w-full px-3 py-2 text-xs font-mono font-bold border border-[#E5E5E5] rounded-md bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 text-xs font-mono font-bold border border-[#E5E5E5] rounded-md bg-[#FAFAFA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900"
                           />
                         </div>
 
@@ -5440,7 +5440,7 @@ export default function StockTransferModal({
                             type="date"
                             value={transferDate}
                             onChange={(e) => setTransferDate(e.target.value)}
-                            className="w-full px-3 py-2 text-xs font-bold border border-[#E5E5E5] rounded-md bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 text-xs font-bold border border-[#E5E5E5] rounded-md bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-neutral-900"
                           />
                         </div>
 
@@ -5449,7 +5449,7 @@ export default function StockTransferModal({
                           <select
                             value={fromLocation}
                             onChange={(e) => setFromLocation(e.target.value)}
-                            className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-neutral-900"
                           >
                             <option value="Main Warehouse">কেন্দ্রীয় গোডাউন (Main Warehouse)</option>
                             <option value="Main Shop">প্রধান দোকান (Main Shop)</option>
@@ -5461,7 +5461,7 @@ export default function StockTransferModal({
                           <select
                             value={toLocation}
                             onChange={(e) => setToLocation(e.target.value)}
-                            className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 text-xs border border-[#E5E5E5] rounded-md bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-neutral-900"
                           >
                             <option value="Main Shop">প্রধান দোকান (Main Shop)</option>
                             <option value="Main Warehouse">কেন্দ্রীয় গোডাউন (Main Warehouse)</option>
@@ -5473,10 +5473,10 @@ export default function StockTransferModal({
                       <div className="p-4 bg-[#FAFAFA] rounded-md border border-[#E5E5E5] space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
-                            <Package className="w-3.5 h-3.5 text-indigo-600" />
+                            <Package className="w-3.5 h-3.5 text-neutral-600" />
                             <span>চালানে পণ্য ও ভ্যারিয়েন্ট যোগ করুন</span>
                           </span>
-                          <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                          <span className="text-[11px] font-bold text-neutral-700 bg-neutral-50 px-2.5 py-0.5 rounded-full border border-neutral-200">
                             গোডাউনে মোট {godownAvailableItems.filter((i) => i.godownStock > 0).length}টি আইটেম মজুত আছে
                           </span>
                         </div>
@@ -5489,7 +5489,7 @@ export default function StockTransferModal({
                             value={dropdownSearch}
                             onChange={(e) => setDropdownSearch(e.target.value)}
                             placeholder="ড্রপডাউনে পণ্য বা রঙের নাম দিয়ে দ্রুত খুঁজুন..."
-                            className="w-full pl-8 pr-3 py-1.5 text-xs border border-[#E5E5E5] rounded-md bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            className="w-full pl-8 pr-3 py-1.5 text-xs border border-[#E5E5E5] rounded-md bg-white focus:ring-2 focus:ring-neutral-900 focus:outline-none"
                           />
                         </div>
 
@@ -5501,7 +5501,7 @@ export default function StockTransferModal({
                           <select
                             value={selectedItemKey}
                             onChange={(e) => handleSelectItemFromDropdown(e.target.value)}
-                            className="w-full px-3 py-2 text-xs border-2 border-indigo-300 rounded-md bg-white font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-none"
+                            className="w-full px-3 py-2 text-xs border-2 border-neutral-300 rounded-md bg-white font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-neutral-900 shadow-none"
                           >
                             <option value="">-- গোডাউনে মজুত থাকা ভ্যারিয়েন্ট বা পণ্য বেছে নিন --</option>
                             {filteredDropdownItems.map((item) => {
@@ -5522,24 +5522,24 @@ export default function StockTransferModal({
 
                         {/* নির্বাচিত পণ্যের প্রিভিউ ও পরিমাণ নির্ধারণ */}
                         {selectedGodownItem && (
-                          <div className="p-3 bg-white rounded-md border border-indigo-200 space-y-2 shadow-none">
+                          <div className="p-3 bg-white rounded-md border border-neutral-200 space-y-2 shadow-none">
                             <div className="flex flex-wrap items-center justify-between gap-1">
                               <div>
                                 <span className="font-black text-slate-900 text-xs block">
                                   {selectedGodownItem.productName}
                                 </span>
                                 {selectedGodownItem.variantName && (
-                                  <span className="text-[11px] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-block mt-0.5">
+                                  <span className="text-[11px] text-neutral-700 font-bold bg-neutral-50 px-2 py-0.5 rounded border border-neutral-200 inline-block mt-0.5">
                                     ভ্যারিয়েন্ট: {selectedGodownItem.variantName}
                                   </span>
                                 )}
                               </div>
                               <div className="text-right">
-                                <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-200 inline-block font-mono">
+                                <span className="text-xs font-black text-neutral-700 bg-neutral-50 px-2.5 py-1 rounded-md border border-neutral-200 inline-block font-mono">
                                   গোডাউনে মজুত: {selectedGodownItem.godownStock} {selectedGodownItem.unit}
                                 </span>
                                 {selectedGodownItem.isThan && selectedGodownItem.yardsPerThan > 0 && (
-                                  <span className="text-[10px] text-indigo-500 block font-semibold mt-0.5">
+                                  <span className="text-[10px] text-neutral-500 block font-semibold mt-0.5">
                                     ({selectedGodownItem.godownStock * selectedGodownItem.yardsPerThan} গজ)
                                   </span>
                                 )}
@@ -5560,14 +5560,14 @@ export default function StockTransferModal({
                                     const val = Number(e.target.value) || 1;
                                     setTransferQty(Math.max(1, Math.min(selectedGodownItem.godownStock || 1, val)));
                                   }}
-                                  className="w-full px-3 py-1.5 text-xs font-mono font-bold border border-[#E5E5E5] rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-500"
+                                  className="w-full px-3 py-1.5 text-xs font-mono font-bold border border-[#E5E5E5] rounded-lg text-slate-900 focus:ring-2 focus:ring-neutral-900"
                                 />
                               </div>
                               <button
                                 type="button"
                                 disabled={selectedGodownItem.godownStock <= 0}
                                 onClick={handleAddItemToChallan}
-                                className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg flex items-center space-x-1.5 shadow-none cursor-pointer"
+                                className="mt-4 px-4 py-2 bg-[#0F172A] hover:bg-[#0F172A] disabled:opacity-50 text-white text-xs font-bold rounded-lg flex items-center space-x-1.5 shadow-none cursor-pointer"
                               >
                                 <Plus className="w-3.5 h-3.5" />
                                 <span>চালানে যোগ করুন</span>
@@ -5581,7 +5581,7 @@ export default function StockTransferModal({
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-xs font-bold text-slate-700">চালানে অন্তর্ভুক্ত পণ্যসমূহ ({challanItems.length})</span>
-                          <span className="text-xs font-mono font-bold text-indigo-700">মোট: {totalChallanQty} একক</span>
+                          <span className="text-xs font-mono font-bold text-neutral-700">মোট: {totalChallanQty} একক</span>
                         </div>
 
                         {challanItems.length === 0 ? (
@@ -5672,7 +5672,7 @@ export default function StockTransferModal({
                           type="button"
                           disabled={isSubmitting || challanItems.length === 0}
                           onClick={() => handleSubmitChallan(true)}
-                          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-md flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer"
+                          className="w-full py-2.5 bg-[#0F172A] hover:bg-[#0F172A] disabled:opacity-50 text-white text-xs font-bold rounded-md flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer"
                         >
                           <Printer className="w-4 h-4" />
                           <span>চালান নিশ্চিত ও প্রিন্ট করুন</span>
@@ -5703,7 +5703,7 @@ export default function StockTransferModal({
                           value={listSearch}
                           onChange={(e) => setListSearch(e.target.value)}
                           placeholder="চালান নং বা লোকেশন দিয়ে খুঁজুন..."
-                          className="w-full pl-9 pr-3 py-2 text-xs border border-[#E5E5E5] rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                          className="w-full pl-9 pr-3 py-2 text-xs border border-[#E5E5E5] rounded-md focus:ring-2 focus:ring-neutral-900 focus:outline-none"
                         />
                       </div>
 
@@ -5748,7 +5748,7 @@ export default function StockTransferModal({
                               <div className="flex items-start justify-between gap-2 border-b border-[#E5E5E5] pb-2.5">
                                 <div>
                                   <div className="flex items-center space-x-2">
-                                    <span className="font-mono font-black text-sm text-indigo-700">#{ch.ChallanNo}</span>
+                                    <span className="font-mono font-black text-sm text-neutral-700">#{ch.ChallanNo}</span>
                                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
                                       isInTransit ? 'bg-amber-100 text-[#B45309] border border-[#FEF3C7] animate-pulse' :
                                       isReceived ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
@@ -5796,10 +5796,10 @@ export default function StockTransferModal({
                               <div className="bg-[#FAFAFA]/90 rounded-md border border-[#E5E5E5] overflow-hidden text-xs">
                                 <div className="px-3 py-1.5 bg-[#F5F5F5] border-b border-[#E5E5E5] flex items-center justify-between text-[11px] font-bold text-slate-700">
                                   <span className="flex items-center space-x-1">
-                                    <Package className="w-3 h-3 text-indigo-600" />
+                                    <Package className="w-3 h-3 text-neutral-600" />
                                     <span>চালানের পণ্য ও ভ্যারিয়েন্ট বিস্তারিত ({items.length}টি)</span>
                                   </span>
-                                  <span className="font-mono text-indigo-700 font-black">
+                                  <span className="font-mono text-neutral-700 font-black">
                                     মোট: {ch.TotalQuantity} {items[0]?.unit || 'একক'}
                                   </span>
                                 </div>
@@ -5817,7 +5817,7 @@ export default function StockTransferModal({
                                           </strong>
                                           <div className="flex items-center space-x-1 mt-0.5 flex-wrap">
                                             {itm.variantName && (
-                                              <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                                              <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-neutral-50 text-neutral-700 border border-neutral-200">
                                                 ভ্যারিয়েন্ট: {itm.variantName}
                                               </span>
                                             )}
@@ -5829,7 +5829,7 @@ export default function StockTransferModal({
                                           </div>
                                         </div>
                                         <div className="text-right shrink-0">
-                                          <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-black bg-indigo-50 text-indigo-800 border border-indigo-200">
+                                          <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-black bg-neutral-50 text-neutral-800 border border-neutral-200">
                                             {itm.quantity || itm.Quantity} {itm.unit || itm.Unit || 'Pcs'}
                                           </span>
                                         </div>
@@ -5947,11 +5947,11 @@ export default function StockTransferModal({
                     </div>
                   </div>
 
-                  <div className="p-3.5 bg-indigo-50/60 rounded-md border border-indigo-200/80 shadow-none">
-                    <span className="text-[11px] font-bold text-indigo-800 block mb-0.5">চালানে স্থানান্তর</span>
+                  <div className="p-3.5 bg-neutral-50/60 rounded-md border border-neutral-200/80 shadow-none">
+                    <span className="text-[11px] font-bold text-neutral-800 block mb-0.5">চালানে স্থানান্তর</span>
                     <div className="flex items-baseline space-x-1">
-                      <span className="text-lg font-black font-mono text-indigo-700">-{godownOutflowSummary.transferQty}</span>
-                      <span className="text-xs text-indigo-600 font-medium">দোকানে পাঠানো</span>
+                      <span className="text-lg font-black font-mono text-neutral-700">-{godownOutflowSummary.transferQty}</span>
+                      <span className="text-xs text-neutral-600 font-medium">দোকানে পাঠানো</span>
                     </div>
                   </div>
 
@@ -6045,18 +6045,18 @@ export default function StockTransferModal({
                                   <div className="flex flex-col space-y-1">
                                     <div className="flex items-center space-x-1.5 flex-wrap gap-1">
                                       {m.color && (
-                                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-pink-50 text-pink-700 border border-pink-200">
-                                          <span className="w-2 h-2 rounded-full bg-pink-500 inline-block"></span>
+                                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-neutral-50 text-neutral-700 border border-neutral-200">
+                                          <span className="w-2 h-2 rounded-full bg-neutral-500 inline-block"></span>
                                           <span>রং: {m.color}</span>
                                         </span>
                                       )}
                                       {m.size && (
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-neutral-50 text-neutral-700 border border-neutral-200">
                                           সাইজ: {m.size}
                                         </span>
                                       )}
                                       {m.variantName && !m.color && !m.size && (
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-neutral-50 text-neutral-700 border border-neutral-200">
                                           {m.variantName}
                                         </span>
                                       )}
@@ -6074,7 +6074,7 @@ export default function StockTransferModal({
                               <td className="py-3 px-3">
                                 <span className="font-semibold text-slate-800 block">{m.reasonBangla}</span>
                                 {m.referenceNo && (
-                                  <span className="text-[10px] font-mono text-indigo-600 font-bold">
+                                  <span className="text-[10px] font-mono text-neutral-600 font-bold">
                                     রেফারেন্স: {m.referenceNo}
                                   </span>
                                 )}
@@ -6861,16 +6861,16 @@ export default function StockTransferModal({
                 {/* Header */}
                 <div className="px-5 py-3.5 bg-white border-b border-[#E5E5E5] text-[#111111] flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Layers className="w-5 h-5 text-indigo-200" />
+                    <Layers className="w-5 h-5 text-neutral-300" />
                     <div>
                       <h3 className="text-sm font-bold">নতুন ভ্যারিয়েন্ট যোগ ও গোডাউন রিস্টক</h3>
-                      <p className="text-[11px] text-indigo-200">{prod.ProductName} ({prod.Category || 'পণ্য'})</p>
+                      <p className="text-[11px] text-neutral-300">{prod.ProductName} ({prod.Category || 'পণ্য'})</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setNewColorModal(null)}
-                    className="p-1 text-indigo-200 hover:text-white rounded-lg transition-colors cursor-pointer"
+                    className="p-1 text-neutral-300 hover:text-white rounded-lg transition-colors cursor-pointer"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -6892,7 +6892,7 @@ export default function StockTransferModal({
                           variantName: '',
                           colorName: ''
                         }))}
-                        className="w-full px-3 py-2 bg-indigo-50/50 border border-indigo-200 rounded-md text-xs font-bold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-md text-xs font-bold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 cursor-pointer"
                       >
                         <option value="Color">রঙ / কালার (Color)</option>
                         <option value="Size">সাইজ / মাপ (Size)</option>
@@ -6911,7 +6911,7 @@ export default function StockTransferModal({
                           const val = e.target.value;
                           setNewColorModal(prev => ({ ...prev, variantName: val, colorName: val }));
                         }}
-                        className="w-full px-3 py-2 bg-white border border-[#E5E5E5] rounded-md text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        className="w-full px-3 py-2 bg-white border border-[#E5E5E5] rounded-md text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-neutral-900 cursor-pointer"
                       >
                         <option value="">
                           -- {currentType === 'Color' ? 'রং নির্বাচন করুন' : currentType === 'Size' ? 'সাইজ নির্বাচন করুন' : 'ওজন নির্বাচন করুন'} --
@@ -6934,7 +6934,7 @@ export default function StockTransferModal({
                       placeholder={`যেমন: ${currentType === 'Color' ? 'ফিরোজা, ম্যাজেন্টা, জলপাই...' : currentType === 'Size' ? 'XL, XXL, 42...' : '1kg, 500gm, 25kg...'}`}
                       value={newColorModal.variantName || newColorModal.colorName || ''}
                       onChange={(e) => setNewColorModal(prev => ({ ...prev, variantName: e.target.value, colorName: e.target.value }))}
-                      className="w-full px-3 py-2 bg-[#FAFAFA] border border-[#E5E5E5] rounded-md text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                      className="w-full px-3 py-2 bg-[#FAFAFA] border border-[#E5E5E5] rounded-md text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:bg-white"
                     />
                   </div>
 
@@ -6942,10 +6942,10 @@ export default function StockTransferModal({
                   <div>
                     <div className="text-[10.5px] font-bold text-slate-600 mb-1.5 flex items-center justify-between">
                       <div className="flex items-center space-x-1">
-                        <Sparkles className="w-3 h-3 text-indigo-600" />
+                        <Sparkles className="w-3 h-3 text-neutral-600" />
                         <span>১-ক্লিকে দ্রুত বাছাই ({currentType} তালিকা):</span>
                       </div>
-                      <span className="text-[10px] text-indigo-600 font-semibold">{displayOptions.length}টি অপশন</span>
+                      <span className="text-[10px] text-neutral-600 font-semibold">{displayOptions.length}টি অপশন</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 bg-[#FAFAFA] rounded-md border border-[#E5E5E5]">
                       {displayOptions.map(c => {
@@ -6957,8 +6957,8 @@ export default function StockTransferModal({
                             onClick={() => setNewColorModal(prev => ({ ...prev, variantName: c, colorName: c }))}
                             className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-colors cursor-pointer border ${
                               isSelected
-                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-none'
-                                : 'bg-white hover:bg-indigo-50 text-slate-700 border-[#E5E5E5]'
+                                ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-none'
+                                : 'bg-white hover:bg-neutral-50 text-slate-700 border-[#E5E5E5]'
                             }`}
                           >
                             + {c}
@@ -6996,9 +6996,9 @@ export default function StockTransferModal({
                   )}
 
                   {/* প্রারম্ভিক স্টক ইনপুট */}
-                  <div className="grid grid-cols-2 gap-3 p-3 bg-indigo-50/50 rounded-md border border-indigo-100">
+                  <div className="grid grid-cols-2 gap-3 p-3 bg-neutral-50 rounded-md border border-neutral-200">
                     <div>
-                      <label className="block text-[11px] font-bold text-indigo-900 mb-1">
+                      <label className="block text-[11px] font-bold text-neutral-900 mb-1">
                         গোডাউন স্টক ({isThan ? 'থান' : getProductDisplayUnit(prod)})
                       </label>
                       <input
@@ -7007,10 +7007,10 @@ export default function StockTransferModal({
                         step="any"
                         value={newColorModal.godownStock}
                         onChange={(e) => setNewColorModal(prev => ({ ...prev, godownStock: e.target.value }))}
-                        className="w-full px-3 py-2 bg-white border border-indigo-200 rounded-lg text-xs font-black text-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-xs font-black text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900"
                       />
                       {isThan && effNewColorYpt > 0 && (
-                        <div className="text-[10px] text-indigo-700 font-bold mt-1">
+                        <div className="text-[10px] text-neutral-700 font-bold mt-1">
                           = {(Number(newColorModal.godownStock) || 0) * effNewColorYpt} গজ
                         </div>
                       )}
@@ -7057,7 +7057,7 @@ export default function StockTransferModal({
                         step="any"
                         value={newColorModal.sellingPrice}
                         onChange={(e) => setNewColorModal(prev => ({ ...prev, sellingPrice: e.target.value }))}
-                        className="w-full px-2 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-xs font-bold text-indigo-700"
+                        className="w-full px-2 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-xs font-bold text-neutral-700"
                       />
                     </div>
                     <div>
@@ -7096,7 +7096,7 @@ export default function StockTransferModal({
                     <button
                       type="submit"
                       disabled={isSubmittingNewColor}
-                      className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-bold transition-all shadow-none flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-5 py-2 bg-[#0F172A] hover:bg-[#0F172A] text-white rounded-md font-bold transition-all shadow-none flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSubmittingNewColor ? (
                         <>
@@ -7224,7 +7224,7 @@ export default function StockTransferModal({
 
                     <div className={isThan && effVariantYpt > 0 ? "space-y-3" : "grid grid-cols-2 gap-3"}>
                       <div>
-                        <label className="block text-[11px] font-bold text-indigo-900 mb-1">
+                        <label className="block text-[11px] font-bold text-neutral-900 mb-1">
                           গোডাউন স্টক ({currentUnit})
                         </label>
                         <input
@@ -7234,10 +7234,10 @@ export default function StockTransferModal({
                           required
                           value={editVariantModal.godownStock}
                           onChange={(e) => setEditVariantModal(prev => ({ ...prev, godownStock: e.target.value }))}
-                          className="w-full px-3 py-2 bg-white border border-indigo-300 rounded-lg text-xs font-black text-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-white border border-neutral-300 rounded-lg text-xs font-black text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900"
                         />
                         {isThan && effVariantYpt > 0 && (
-                          <div className="text-[10px] text-indigo-700 font-bold mt-1">
+                          <div className="text-[10px] text-neutral-700 font-bold mt-1">
                             = {(Number(editVariantModal.godownStock) || 0) * effVariantYpt} গজ
                           </div>
                         )}
@@ -7403,7 +7403,7 @@ export default function StockTransferModal({
                         step="any"
                         value={editVariantModal.sellingPrice}
                         onChange={(e) => setEditVariantModal(prev => ({ ...prev, sellingPrice: e.target.value }))}
-                        className="w-full px-2 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-xs font-bold text-indigo-700"
+                        className="w-full px-2 py-1.5 bg-[#FAFAFA] border border-[#E5E5E5] rounded-lg text-xs font-bold text-neutral-700"
                       />
                     </div>
                     <div>
