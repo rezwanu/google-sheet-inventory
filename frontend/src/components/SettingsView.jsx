@@ -7,7 +7,10 @@ import {
   Link,
   HelpCircle,
   Image as ImageIcon,
-  ExternalLink
+  ExternalLink,
+  Sun,
+  Moon,
+  Monitor
 } from 'lucide-react';
 import { formatImageUrl, getDriveImageCandidates, DEFAULT_APPS_SCRIPT_URL } from '../services/storage';
 import { StatusBadge } from './ui';
@@ -22,6 +25,8 @@ export default function SettingsView({
   onSaveSettings,
   onTestConnection,
   onClose = null,
+  themeMode = 'light',
+  onChangeTheme,
 }) {
   const [formData, setFormData] = useState({ ...settings });
   const [activeTab, setActiveTab] = useState('general'); // 'general' | 'api' | 'integrations'
@@ -350,6 +355,45 @@ export default function SettingsView({
                 </div>
               </div>
             </div>
+
+            {/* থিম ও ডিসপ্লে সেটিংস (পুরো প্রস্থ জুড়ে) */}
+            {onChangeTheme && (
+              <div className="lg:col-span-2 bg-white border border-neutral-200/80 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-sm font-semibold font-heading tracking-tight text-[#111111]">
+                    Appearance & Theme Mode
+                  </h2>
+                  <p className="text-xs text-[#525252] mt-0.5">
+                    সিস্টেমের রঙ ও ইন্টারফেস মোড নির্ধারণ করুন (শুধুমাত্র এই ব্রাউজারে সংরক্ষিত থাকবে)
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-1.5 bg-[#FAFAFA] border border-neutral-200/80 p-1 rounded-md self-start sm:self-auto">
+                  {[
+                    { id: 'light', label: 'Light', Icon: Sun },
+                    { id: 'dark', label: 'Dark', Icon: Moon },
+                    { id: 'system', label: 'System', Icon: Monitor },
+                  ].map((opt) => {
+                    const active = themeMode === opt.id;
+                    const ThemeIcon = opt.Icon;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => onChangeTheme(opt.id)}
+                        className={`min-h-[36px] px-3 py-1.5 rounded-sm text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+                          active
+                            ? 'bg-[#0F172A] text-white'
+                            : 'text-[#525252] hover:text-[#111111] hover:bg-neutral-100'
+                        }`}
+                      >
+                        <ThemeIcon className="w-3.5 h-3.5" />
+                        <span>{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

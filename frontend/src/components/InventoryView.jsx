@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Search,
   Plus,
@@ -46,6 +47,8 @@ export default function InventoryView({
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [visibleMobileCount, setVisibleMobileCount] = useState(50);
+  const tableParentRef = useRef(null);
 
   const canSeeCost =
     isAdminUser(activeUser) ||
@@ -100,6 +103,23 @@ export default function InventoryView({
   }, [products, searchQuery, selectedCategory, stockFilter]);
 
   const formatMoney = (val) => `${currencySymbol}${Number(val || 0).toLocaleString('en-IN')}`;
+
+  useEffect(() => {
+    setVisibleMobileCount(50);
+  }, [searchQuery, selectedCategory, stockFilter]);
+
+  const rowVirtualizer = useVirtualizer({
+    count: filteredProducts.length,
+    getScrollElement: () => tableParentRef.current,
+    estimateSize: () => 58,
+    overscan: 10,
+  });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalVirtualSize = rowVirtualizer.getTotalSize();
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
+  const paddingBottom =
+    virtualRows.length > 0 ? totalVirtualSize - virtualRows[virtualRows.length - 1].end : 0;
 
   return (
     <div className="w-full space-y-5">
@@ -220,11 +240,15 @@ export default function InventoryView({
         />
       ) : (
         <>
-          {/* Desktop High-Density Table */}
+          {/* Desktop Virtualized High-Density Table */}
           <div className="hidden md:block bg-white border border-neutral-200/80 rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="px-4 py-2 bg-[#FAFAFA] border-b border-neutral-200/80 flex items-center justify-between text-[11px] text-[#737373] font-mono tabular-nums">
+              <span>Showing {filteredProducts.length} of {products.length} products</span>
+              <span>Virtualized Scroll</span>
+            </div>
+            <div ref={tableParentRef} className="overflow-auto max-h-[calc(100vh-20rem)] min-h-[260px]">
               <table className="w-full text-left border-collapse text-xs">
-                <thead>
+                <thead className="sticky top-0 z-10">
                   <tr className="bg-[#FAFAFA] border-b border-neutral-200/80 text-[#525252] text-[11px] font-medium">
                     <th className="py-3 px-4">Product / SKU</th>
                     <th className="py-3 px-4">Category</th>
@@ -235,7 +259,14 @@ export default function InventoryView({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-200/80">
-                  {filteredProducts.map((prod) => {
+                  {paddingTop > 0 && (
+                    <tr>
+                      <td colSpan={6} style={{ height: `${paddingTop}px`, padding: 0, border: 0 }} />
+                    </tr>
+                  )}
+                  {virtualRows.map((virtualRow) => {
+                    const prod = filteredProducts[virtualRow.index];
+                    if (!prod) return null;
                     const shopStock = Number(prod.StockQuantity || 0);
                     const godownStock = Number(prod.GodownStock || 0);
                     const minAlert = Number(prod.MinStockAlert || 5);
@@ -245,7 +276,12 @@ export default function InventoryView({
                       shopStock <= 0 ? 'Out of Stock' : shopStock <= minAlert ? 'Low Stock' : 'In Stock';
 
                     return (
-                      <tr key={prod.ProductID} className="hover:bg-[#FAFAFA] transition-colors">
+                      <tr
+                        key={prod.ProductID || virtualRow.key}
+                        data-index={virtualRow.index}
+                        ref={rowVirtualizer.measureElement}
+                        className="hover:bg-[#FAFAFA] transition-colors"
+                      >
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-md bg-[#F5F5F5] border border-neutral-200/80 overflow-hidden shrink-0 flex items-center justify-center">
@@ -345,6 +381,11 @@ export default function InventoryView({
                       </tr>
                     );
                   })}
+                  {paddingBottom > 0 && (
+                    <tr>
+                      <td colSpan={6} style={{ height: `${paddingBottom}px`, padding: 0, border: 0 }} />
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -352,7 +393,7 @@ export default function InventoryView({
 
           {/* Mobile Stacked Cards (375px - Zero Horizontal Overflow) */}
           <div className="md:hidden space-y-2.5">
-            {filteredProducts.map((prod) => {
+            {filteredProducts.slice(0, visibleMobileCount).map((prod) => {
               const shopStock = Number(prod.StockQuantity || 0);
               const minAlert = Number(prod.MinStockAlert || 5);
               const statusVariant =
@@ -428,6 +469,15 @@ export default function InventoryView({
                 </div>
               );
             })}
+            {filteredProducts.length > visibleMobileCount && (
+              <button
+                type="button"
+                onClick={() => setVisibleMobileCount((c) => c + 50)}
+                className="w-full min-h-[44px] py-2 rounded-md border border-neutral-200/80 bg-white hover:bg-neutral-100 text-xs font-medium text-[#111111] font-mono tabular-nums cursor-pointer"
+              >
+                Load More ({filteredProducts.length - visibleMobileCount} remaining)
+              </button>
+            )}
           </div>
         </>
       )}

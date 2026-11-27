@@ -40,20 +40,20 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center p-4 font-sans text-[#111111]">
-          <div className="max-w-lg w-full bg-white rounded-lg p-6 border border-neutral-200/80">
-            <div className="w-10 h-10 rounded-md bg-red-50 border border-red-200 text-[#B91C1C] flex items-center justify-center mb-4">
+        <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#09090B] flex items-center justify-center p-4 font-sans text-[#111111] dark:text-[#FAFAFA]">
+          <div className="max-w-lg w-full bg-white dark:bg-[#111113] rounded-lg p-6 border border-neutral-200/80 dark:border-neutral-800">
+            <div className="w-10 h-10 rounded-md bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-[#B91C1C] flex items-center justify-center mb-4">
               <AlertTriangle className="w-5 h-5" />
             </div>
-            <h2 className="text-lg font-semibold font-heading tracking-tight text-[#111111] mb-1.5">
+            <h2 className="text-lg font-semibold font-heading tracking-tight text-[#111111] dark:text-[#FAFAFA] mb-1.5">
               অ্যাপ্লিকেশনে সাময়িক ত্রুটি দেখা দিয়েছে
             </h2>
-            <p className="text-xs sm:text-sm text-[#525252] mb-4">
+            <p className="text-xs sm:text-sm text-[#525252] dark:text-neutral-400 mb-4">
               ব্রাউজারের ক্যাশ বা ডেটা অসঙ্গতির কারণে এই সমস্যা হতে পারে। নিচের বাটনে ক্লিক করে ক্যাশ রিসেট ও রিলোড করুন।
             </p>
 
             {this.state.error && (
-              <div className="bg-red-50 p-3 rounded-md border border-red-200 text-[#B91C1C] text-xs font-mono mb-5 overflow-auto max-h-36">
+              <div className="bg-red-50 dark:bg-red-950/40 p-3 rounded-md border border-red-200 dark:border-red-900/60 text-[#B91C1C] dark:text-red-400 text-xs font-mono mb-5 overflow-auto max-h-36">
                 {this.state.error.toString()}
               </div>
             )}
@@ -62,7 +62,7 @@ class ErrorBoundary extends React.Component {
               <button
                 type="button"
                 onClick={this.handleReset}
-                className="flex-1 min-h-[44px] py-2 px-4 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium rounded-md transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+                className="flex-1 min-h-[44px] py-2 px-4 bg-[#0F172A] dark:bg-neutral-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-[#111111] text-xs font-medium rounded-md transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>ক্যাশ রিসেট ও রিলোড</span>
@@ -70,7 +70,7 @@ class ErrorBoundary extends React.Component {
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                className="min-h-[44px] py-2 px-4 bg-white hover:bg-neutral-100 text-[#111111] border border-neutral-200/80 text-xs font-medium rounded-md transition-colors cursor-pointer"
+                className="min-h-[44px] py-2 px-4 bg-white dark:bg-[#18181B] hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#111111] dark:text-[#FAFAFA] border border-neutral-200/80 dark:border-neutral-800 text-xs font-medium rounded-md transition-colors cursor-pointer"
               >
                 রিফ্রেশ
               </button>
@@ -81,6 +81,13 @@ class ErrorBoundary extends React.Component {
     }
     return this.props.children;
   }
+}
+
+// PWA Service Worker রেজিস্ট্রেশন (শুধু প্রোডাকশন বিল্ডে, যাতে Vite HMR ব্যাহত না হয়)
+if (import.meta.env.PROD && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(

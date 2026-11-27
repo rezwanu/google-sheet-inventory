@@ -1,57 +1,59 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import ProductCatalog from './components/ProductCatalog';
 import OverviewDashboard from './components/OverviewDashboard';
-import InventoryView from './components/InventoryView';
-import SettingsView from './components/SettingsView';
-import ProductDrawer from './components/ProductDrawer';
-
-import CartPage from './components/CartPage';
-import CheckoutPage from './components/CheckoutPage';
-import CustomersModal from './components/CustomersModal';
-import AddStockModal from './components/AddStockModal';
-import AddProductModal from './components/AddProductModal';
-import SettingsModal from './components/SettingsModal';
-import SalesHistoryModal from './components/SalesHistoryModal';
-import InvoiceModal from './components/InvoiceModal';
-import InvoiceLookupModal from './components/InvoiceLookupModal';
-import AnalyticsDashboard from './components/AnalyticsDashboard';
-import LowStockModal from './components/LowStockModal';
-import GodownStockAlertView from './components/GodownStockAlertView';
-import ProductDetailsModal from './components/ProductDetailsModal';
-import EditProductModal from './components/EditProductModal';
-import AuthModal from './components/AuthModal';
-import CustomerOrdersModal from './components/CustomerOrdersModal';
-import CouponModal from './components/CouponModal';
-import UsersModal from './components/UsersModal';
 import Sidebar from './components/Sidebar';
-import OrdersPage from './components/OrdersPage';
-import CustomerOrderTrackingModal from './components/CustomerOrderTrackingModal';
-import CustomerLedgerModal from './components/CustomerLedgerModal';
-import AbandonedCartModal from './components/AbandonedCartModal';
-import SuppliersModal from './components/SuppliersModal';
-import PurchaseOrdersModal from './components/PurchaseOrdersModal';
-import BarcodePrintModal from './components/BarcodePrintModal';
-import ExpensesModal from './components/ExpensesModal';
-import BankManagementModal from './components/BankManagementModal';
-import CashRegisterModal from './components/CashRegisterModal';
-import AuditLogsModal from './components/AuditLogsModal';
-import ExpiryAlertModal from './components/ExpiryAlertModal';
-import ProductVariantSelectModal from './components/ProductVariantSelectModal';
-import SalesReturnModal from './components/SalesReturnModal';
-import StockTransferModal from './components/StockTransferModal';
-import RFMCampaignModal from './components/RFMCampaignModal';
-import FabricCutModal from './components/FabricCutModal';
-import HeldCartsModal from './components/HeldCartsModal';
-import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
-import TailoringModal from './components/TailoringModal';
-import FabricWastageModal from './components/FabricWastageModal';
-import BackupRestoreModal from './components/BackupRestoreModal';
-import AdminPinModal from './components/AdminPinModal';
 import CartDrawer from './components/CartDrawer';
 import PosCartPanel from './components/PosCartPanel';
-import QuickCalculatorModal from './components/QuickCalculatorModal';
-import PosQuickExpenseModal from './components/PosQuickExpenseModal';
+import useTheme from './hooks/useTheme';
+import useGlobalShortcuts from './hooks/useGlobalShortcuts';
+
+// Code-Split Heavy Views & Enterprise Modals (React.lazy)
+const InventoryView = lazy(() => import('./components/InventoryView'));
+const SettingsView = lazy(() => import('./components/SettingsView'));
+const ProductDrawer = lazy(() => import('./components/ProductDrawer'));
+const CartPage = lazy(() => import('./components/CartPage'));
+const CheckoutPage = lazy(() => import('./components/CheckoutPage'));
+const CustomersModal = lazy(() => import('./components/CustomersModal'));
+const AddStockModal = lazy(() => import('./components/AddStockModal'));
+const AddProductModal = lazy(() => import('./components/AddProductModal'));
+const SettingsModal = lazy(() => import('./components/SettingsModal'));
+const SalesHistoryModal = lazy(() => import('./components/SalesHistoryModal'));
+const InvoiceModal = lazy(() => import('./components/InvoiceModal'));
+const InvoiceLookupModal = lazy(() => import('./components/InvoiceLookupModal'));
+const AnalyticsDashboard = lazy(() => import('./components/AnalyticsDashboard'));
+const LowStockModal = lazy(() => import('./components/LowStockModal'));
+const GodownStockAlertView = lazy(() => import('./components/GodownStockAlertView'));
+const ProductDetailsModal = lazy(() => import('./components/ProductDetailsModal'));
+const AuthModal = lazy(() => import('./components/AuthModal'));
+const CustomerOrdersModal = lazy(() => import('./components/CustomerOrdersModal'));
+const CouponModal = lazy(() => import('./components/CouponModal'));
+const UsersModal = lazy(() => import('./components/UsersModal'));
+const OrdersPage = lazy(() => import('./components/OrdersPage'));
+const CustomerOrderTrackingModal = lazy(() => import('./components/CustomerOrderTrackingModal'));
+const CustomerLedgerModal = lazy(() => import('./components/CustomerLedgerModal'));
+const AbandonedCartModal = lazy(() => import('./components/AbandonedCartModal'));
+const SuppliersModal = lazy(() => import('./components/SuppliersModal'));
+const PurchaseOrdersModal = lazy(() => import('./components/PurchaseOrdersModal'));
+const BarcodePrintModal = lazy(() => import('./components/BarcodePrintModal'));
+const ExpensesModal = lazy(() => import('./components/ExpensesModal'));
+const BankManagementModal = lazy(() => import('./components/BankManagementModal'));
+const CashRegisterModal = lazy(() => import('./components/CashRegisterModal'));
+const AuditLogsModal = lazy(() => import('./components/AuditLogsModal'));
+const ExpiryAlertModal = lazy(() => import('./components/ExpiryAlertModal'));
+const ProductVariantSelectModal = lazy(() => import('./components/ProductVariantSelectModal'));
+const SalesReturnModal = lazy(() => import('./components/SalesReturnModal'));
+const StockTransferModal = lazy(() => import('./components/StockTransferModal'));
+const RFMCampaignModal = lazy(() => import('./components/RFMCampaignModal'));
+const FabricCutModal = lazy(() => import('./components/FabricCutModal'));
+const HeldCartsModal = lazy(() => import('./components/HeldCartsModal'));
+const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcutsModal'));
+const TailoringModal = lazy(() => import('./components/TailoringModal'));
+const FabricWastageModal = lazy(() => import('./components/FabricWastageModal'));
+const BackupRestoreModal = lazy(() => import('./components/BackupRestoreModal'));
+const AdminPinModal = lazy(() => import('./components/AdminPinModal'));
+const QuickCalculatorModal = lazy(() => import('./components/QuickCalculatorModal'));
+const PosQuickExpenseModal = lazy(() => import('./components/PosQuickExpenseModal'));
 import { isAdminUser } from './utils/permissionUtils';
 import { isFabricUnit, calculateThanBreakdown, formatFabricQuantity } from './utils/fabricUtils';
 import { Clock, CheckCircle2, AlertCircle, X, ChevronRight } from 'lucide-react';
@@ -253,6 +255,7 @@ import {
 } from './services/api';
 
 export default function App() {
+  const { themeMode, setThemeMode, isDark, toggleTheme } = useTheme();
   // ১. প্রাথমিক স্টেটসমূহ লোকাল স্টোরেজ থেকে লোড (জিরো-লেটেন্সি)
   const [settings, setSettings] = useState(getLocalSettings);
   const [products, setProducts] = useState(getLocalProducts);
@@ -1412,193 +1415,88 @@ export default function App() {
     }
   };
 
-  // ফেজ ১: গ্লোবাল পিওএস কিবোর্ড শর্টকাট ইঞ্জিন (F1-F10 & Hotkeys)
-  useEffect(() => {
-    const handleGlobalKeyDown = (e) => {
-      // Shift + ? => কিবোর্ড শর্টকাট সহায়িকা মডাল
-      if (e.shiftKey && (e.key === '?' || e.key === '/')) {
-        e.preventDefault();
-        setIsShortcutsModalOpen((prev) => !prev);
-        return;
-      }
-
-      // '/' => প্রোডাক্ট বা গ্লোবাল সার্চে ফোকাস (ইনপুট ফিল্ডের বাইরে থাকলে)
-      if (
-        e.key === '/' &&
-        !e.ctrlKey && !e.metaKey && !e.altKey &&
-        !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) &&
-        !document.activeElement?.isContentEditable
-      ) {
-        e.preventDefault();
-        const targetId =
-          currentView === 'pos'
-            ? 'pos-product-search-input'
-            : currentView === 'inventory'
-            ? 'inventory-search-input'
-            : 'global-top-search-input';
-        const el = document.getElementById(targetId) || document.getElementById('global-top-search-input');
-        if (el) {
-          el.focus();
-          el.select?.();
-        }
-        return;
-      }
-
-      // Escape => যেকোনো সক্রিয় মডাল বন্ধ করা
-      if (e.key === 'Escape') {
-        if (isShortcutsModalOpen) {
-          setIsShortcutsModalOpen(false);
-          return;
-        }
-        if (isHeldCartsModalOpen) {
-          setIsHeldCartsModalOpen(false);
-          return;
-        }
-        if (isInvoiceModalOpen) {
-          setIsInvoiceModalOpen(false);
-          return;
-        }
-        if (fabricCutProduct) {
-          setFabricCutProduct(null);
-          return;
-        }
-        if (isTailoringModalOpen) {
-          setIsTailoringModalOpen(false);
-          return;
-        }
-        if (isFabricWastageModalOpen) {
-          setIsFabricWastageModalOpen(false);
-          return;
-        }
-        if (isCalculatorOpen) {
-          setIsCalculatorOpen(false);
-          return;
-        }
-        if (isPosQuickExpenseModalOpen) {
-          setIsPosQuickExpenseModalOpen(false);
-          return;
-        }
-        if (isCartDrawerOpen) {
-          setIsCartDrawerOpen(false);
-          return;
-        }
-        if (isEditProductModalOpen) {
-          setIsEditProductModalOpen(false);
-          setSelectedProductForEdit(null);
-          return;
-        }
-        if (isProductModalOpen) {
-          setIsProductModalOpen(false);
-          return;
-        }
-        if (isSettingsModalOpen) {
-          setIsSettingsModalOpen(false);
-          return;
-        }
-        if (isMobileSidebarOpen) {
-          setIsMobileSidebarOpen(false);
-          return;
-        }
-        if (isProductDetailsOpen) {
-          setIsProductDetailsOpen(false);
-          setSelectedProductForDetails(null);
-          return;
-        }
-        if (isAuthModalOpen) {
-          setIsAuthModalOpen(false);
-          return;
-        }
-        if (isInvoiceLookupOpen) {
-          setIsInvoiceLookupOpen(false);
-          return;
-        }
-        if (isLogoutConfirmModalOpen) {
-          setIsLogoutConfirmModalOpen(false);
-          setPendingLogoutShift(null);
-          return;
-        }
-      }
-
-      // ফাংশন কি-সমূহ (F1 - F10) ও কীবোর্ড শর্টকাট
-      if ((e.altKey && (e.key === 'e' || e.key === 'E')) || e.key === 'F5') {
-        e.preventDefault();
-        setIsPosQuickExpenseModalOpen((prev) => !prev);
-      } else if ((e.altKey && (e.key === 'c' || e.key === 'C')) || e.key === 'F6') {
-        e.preventDefault();
-        setIsCalculatorOpen((prev) => !prev);
-      } else if (e.key === 'F1') {
-        e.preventDefault();
-        setCurrentView('pos');
-        setTimeout(() => {
-          const el = document.getElementById('pos-product-search-input');
-          if (el) {
-            el.focus();
-            el.select();
-          }
-        }, 50);
-      } else if (e.key === 'F2') {
-        e.preventDefault();
-        handleHoldCurrentCart();
-      } else if (e.key === 'F3') {
-        e.preventDefault();
-        setIsHeldCartsModalOpen((prev) => !prev);
-      } else if (e.key === 'F4') {
-        e.preventDefault();
-        setCurrentView('pos');
-        setIsBarcodeModalOpen(true);
-      } else if (e.key === 'F7') {
-        e.preventDefault();
-        setTailoringPreloadData(null);
-        setCurrentView('tailoring');
-        setIsTailoringModalOpen(true);
-      } else if (e.key === 'F8') {
-        e.preventDefault();
-        setCurrentView('cart');
-        setTimeout(() => {
-          const el = document.getElementById('pos-coupon-discount-input');
-          if (el) {
-            el.focus();
-            el.select();
-          }
-        }, 50);
-      } else if (e.key === 'F9') {
-        e.preventDefault();
-        if (cart && cart.length > 0) {
-          setCurrentView('checkout');
-        } else {
-          showToast('চেকআউটে যেতে কার্টে পণ্য যোগ করুন!', 'warning');
-          playWarningBeep();
-        }
-      } else if (e.key === 'F10') {
-        e.preventDefault();
-        handleOpenInvoiceLookup('');
-      }
-    };
-
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [
+  // ফেজ ১: গ্লোবাল পিওএস কিবোর্ড শর্টকাট ইঞ্জিন (hooks/useGlobalShortcuts.js)
+  useGlobalShortcuts({
     currentView,
     cart,
-    heldCarts,
-    isShortcutsModalOpen,
-    isHeldCartsModalOpen,
-    isInvoiceModalOpen,
-    isTailoringModalOpen,
-    isFabricWastageModalOpen,
-    isCalculatorOpen,
-    isPosQuickExpenseModalOpen,
-    fabricCutProduct,
-    isCartDrawerOpen,
-    isEditProductModalOpen,
-    isProductModalOpen,
-    isSettingsModalOpen,
-    isMobileSidebarOpen,
-    isProductDetailsOpen,
-    isAuthModalOpen,
-    isInvoiceLookupOpen,
-    isLogoutConfirmModalOpen
-  ]);
+    modalClosers: [
+      { isOpen: isShortcutsModalOpen, close: () => setIsShortcutsModalOpen(false) },
+      { isOpen: isHeldCartsModalOpen, close: () => setIsHeldCartsModalOpen(false) },
+      { isOpen: isInvoiceModalOpen, close: () => setIsInvoiceModalOpen(false) },
+      { isOpen: Boolean(fabricCutProduct), close: () => setFabricCutProduct(null) },
+      { isOpen: isTailoringModalOpen, close: () => setIsTailoringModalOpen(false) },
+      { isOpen: isFabricWastageModalOpen, close: () => setIsFabricWastageModalOpen(false) },
+      { isOpen: isCalculatorOpen, close: () => setIsCalculatorOpen(false) },
+      { isOpen: isPosQuickExpenseModalOpen, close: () => setIsPosQuickExpenseModalOpen(false) },
+      { isOpen: isCartDrawerOpen, close: () => setIsCartDrawerOpen(false) },
+      {
+        isOpen: isEditProductModalOpen,
+        close: () => {
+          setIsEditProductModalOpen(false);
+          setSelectedProductForEdit(null);
+        },
+      },
+      { isOpen: isProductModalOpen, close: () => setIsProductModalOpen(false) },
+      { isOpen: isSettingsModalOpen, close: () => setIsSettingsModalOpen(false) },
+      { isOpen: isMobileSidebarOpen, close: () => setIsMobileSidebarOpen(false) },
+      {
+        isOpen: isProductDetailsOpen,
+        close: () => {
+          setIsProductDetailsOpen(false);
+          setSelectedProductForDetails(null);
+        },
+      },
+      { isOpen: isAuthModalOpen, close: () => setIsAuthModalOpen(false) },
+      { isOpen: isInvoiceLookupOpen, close: () => setIsInvoiceLookupOpen(false) },
+      {
+        isOpen: isLogoutConfirmModalOpen,
+        close: () => {
+          setIsLogoutConfirmModalOpen(false);
+          setPendingLogoutShift(null);
+        },
+      },
+    ],
+    onToggleShortcutsModal: () => setIsShortcutsModalOpen((prev) => !prev),
+    onToggleQuickExpense: () => setIsPosQuickExpenseModalOpen((prev) => !prev),
+    onToggleCalculator: () => setIsCalculatorOpen((prev) => !prev),
+    onFocusPosSearch: () => {
+      setCurrentView('pos');
+      setTimeout(() => {
+        const el = document.getElementById('pos-product-search-input');
+        if (el) {
+          el.focus();
+          el.select();
+        }
+      }, 50);
+    },
+    onHoldCart: () => handleHoldCurrentCart(),
+    onToggleHeldCarts: () => setIsHeldCartsModalOpen((prev) => !prev),
+    onOpenBarcode: () => {
+      setCurrentView('pos');
+      setIsBarcodeModalOpen(true);
+    },
+    onOpenTailoring: () => {
+      setTailoringPreloadData(null);
+      setCurrentView('tailoring');
+      setIsTailoringModalOpen(true);
+    },
+    onOpenCartFocusCoupon: () => {
+      setCurrentView('cart');
+      setTimeout(() => {
+        const el = document.getElementById('pos-coupon-discount-input');
+        if (el) {
+          el.focus();
+          el.select();
+        }
+      }, 50);
+    },
+    onGoToCheckout: () => setCurrentView('checkout'),
+    onEmptyCheckoutWarn: () => {
+      showToast('চেকআউটে যেতে কার্টে পণ্য যোগ করুন!', 'warning');
+      playWarningBeep();
+    },
+    onOpenInvoiceLookup: () => handleOpenInvoiceLookup(''),
+  });
 
   // ৪. কার্ট অপারেশনসমূহ (সাপোর্টস সিম্পল পণ্য, সাইজ/রং ভ্যারিয়েন্ট, গজ কাপড় থান এবং কম্বো বান্ডেল)
   const handleAddToCart = (product, qtyToAdd = 1, fromFabricModal = false) => {
@@ -5825,7 +5723,7 @@ export default function App() {
         activeUser={activeUser}
         syncStatus={syncStatus}
         onSync={() => handleSync(true)}
-        onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+        onOpenSettingsModal={() => (isAdmin ? handleSecureNavigate('settings') : setIsSettingsModalOpen(true))}
         onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
         onOpenUsersModal={() => executeAdminAction(() => setIsUsersModalOpen(true), 'ইউজার ও স্টাফ একাউন্ট ম্যানেজ করতে')}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
@@ -5853,6 +5751,8 @@ export default function App() {
         salesHistory={salesHistory}
         onAddToCart={handleAddToCart}
         onOpenInvoiceLookup={handleOpenInvoiceLookup}
+        isDark={isDark}
+        onToggleTheme={toggleTheme}
       />
 
       {/* মূল বডি লেআউট: স্থায়ী সাইডবার প্যানেল (শুধুমাত্র এডমিনের জন্য) এবং মূল অ্যাপ্লিকেশন কন্টেন্ট */}
@@ -5983,7 +5883,7 @@ export default function App() {
                   onEditProduct={handleOpenEditProduct}
                   activeUser={activeUser}
                   apiUrl={settings.apiUrl}
-                  onOpenSettings={() => setIsSettingsModalOpen(true)}
+                  onOpenSettings={() => (isAdmin ? handleSecureNavigate('settings') : setIsSettingsModalOpen(true))}
                   onSync={() => handleSync(true)}
                   coupons={coupons}
                   onOpenVariantSelector={(prod) => setVariantSelectModalProduct(prod)}
@@ -6022,6 +5922,14 @@ export default function App() {
             </div>
           )}
 
+          <Suspense
+            fallback={
+              <div className="space-y-4">
+                <div className="h-10 bg-white border border-neutral-200/80 rounded-lg animate-pulse" />
+                <div className="h-64 bg-white border border-neutral-200/80 rounded-lg animate-pulse" />
+              </div>
+            }
+          >
           {currentView === 'inventory' && (
             <InventoryView
               products={products}
@@ -6048,6 +5956,8 @@ export default function App() {
               settings={settings}
               onSaveSettings={handleSaveSettings}
               onTestConnection={handleTestConnection}
+              themeMode={themeMode}
+              onChangeTheme={setThemeMode}
             />
           )}
 
@@ -6599,6 +6509,7 @@ export default function App() {
               }}
             />
           )}
+          </Suspense>
         </main>
       </div>
 
@@ -6625,603 +6536,659 @@ export default function App() {
         </div>
       )}
 
-      {/* একক পণ্যের পূর্ণ বিবরণ (Single Product Details) মডাল */}
-      <ProductDetailsModal
-        isOpen={isProductDetailsOpen}
-        onClose={() => {
-          setIsProductDetailsOpen(false);
-          setSelectedProductForDetails(null);
-        }}
-        product={activeProductForDetails || selectedProductForDetails}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onAddToCart={handleAddToCart}
-        onQuickRestock={handleQuickRestock}
-        onEditProduct={handleOpenEditProduct}
-        onDeleteProduct={handleDeleteProduct}
-        activeUser={activeUser}
-        settings={settings}
-        cartQuantity={
-          (activeProductForDetails || selectedProductForDetails)
-            ? (cart.find((c) => c.productId === (activeProductForDetails || selectedProductForDetails).ProductID)?.quantity || 0)
-            : 0
-        }
-      />
+      {/* কোড-স্প্লিটেড এন্টারপ্রাইজ মডালসমূহ (শুধুমাত্র খোলা অবস্থায় মাউন্ট হয়) */}
+      <Suspense fallback={null}>
+        {isProductDetailsOpen && (
+          <ProductDetailsModal
+            isOpen={isProductDetailsOpen}
+            onClose={() => {
+              setIsProductDetailsOpen(false);
+              setSelectedProductForDetails(null);
+            }}
+            product={activeProductForDetails || selectedProductForDetails}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onAddToCart={handleAddToCart}
+            onQuickRestock={handleQuickRestock}
+            onEditProduct={handleOpenEditProduct}
+            onDeleteProduct={handleDeleteProduct}
+            activeUser={activeUser}
+            settings={settings}
+            cartQuantity={
+              (activeProductForDetails || selectedProductForDetails)
+                ? (cart.find((c) => c.productId === (activeProductForDetails || selectedProductForDetails).ProductID)?.quantity || 0)
+                : 0
+            }
+          />
+        )}
 
-      {/* পণ্য সম্পাদনা (Slide-over ProductDrawer) */}
-      <ProductDrawer
-        isOpen={isEditProductModalOpen}
-        onClose={() => {
-          setIsEditProductModalOpen(false);
-          setSelectedProductForEdit(null);
-        }}
-        product={selectedProductForEdit}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onSubmitUpdate={handleUpdateProduct}
-        categories={categories}
-        onAddCategory={handleAddCategory}
-        units={units}
-        onAddUnit={handleAddUnit}
-        suppliers={suppliers}
-        products={products}
-      />
+        {isEditProductModalOpen && (
+          <ProductDrawer
+            isOpen={isEditProductModalOpen}
+            onClose={() => {
+              setIsEditProductModalOpen(false);
+              setSelectedProductForEdit(null);
+            }}
+            product={selectedProductForEdit}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onSubmitUpdate={handleUpdateProduct}
+            categories={categories}
+            onAddCategory={handleAddCategory}
+            units={units}
+            onAddUnit={handleAddUnit}
+            suppliers={suppliers}
+            products={products}
+          />
+        )}
 
-      {/* P&L লাভ-ক্ষতি অ্যানালিটিক্স ড্যাশবোর্ড মডাল */}
-      <AnalyticsDashboard
-        isOpen={isAnalyticsModalOpen}
-        onClose={() => setIsAnalyticsModalOpen(false)}
-        salesHistory={salesHistory}
-        orders={orders}
-        products={products}
-        categories={categories}
-        customers={customers}
-        customerLedger={customerLedger}
-        expenses={expenses}
-        fabricWastage={fabricWastageList}
-        users={users}
-        salesReturns={salesReturns}
-        stockTransfers={stockTransfers}
-        bankAccounts={bankAccounts}
-        activeRegister={activeRegister}
-        activeUser={activeUser}
-        apiUrl={settings.ApiUrl || ''}
-        showToast={showToast}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        storeSettings={settings}
-        onRefreshSales={handleRefreshSales}
-      />
+        {isAnalyticsModalOpen && currentView !== 'analytics' && (
+          <AnalyticsDashboard
+            isOpen={isAnalyticsModalOpen}
+            onClose={() => setIsAnalyticsModalOpen(false)}
+            salesHistory={salesHistory}
+            orders={orders}
+            products={products}
+            categories={categories}
+            customers={customers}
+            customerLedger={customerLedger}
+            expenses={expenses}
+            fabricWastage={fabricWastageList}
+            users={users}
+            salesReturns={salesReturns}
+            stockTransfers={stockTransfers}
+            bankAccounts={bankAccounts}
+            activeRegister={activeRegister}
+            activeUser={activeUser}
+            apiUrl={settings.ApiUrl || ''}
+            showToast={showToast}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            storeSettings={settings}
+            onRefreshSales={handleRefreshSales}
+          />
+        )}
 
-      {/* কম স্টক অ্যালার্ট ও রিস্টক তালিকা মডাল */}
-      <LowStockModal
-        isOpen={isLowStockModalOpen}
-        onClose={() => setIsLowStockModalOpen(false)}
-        products={products}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onQuickRestock={handleQuickRestock}
-        onAddToCart={handleAddToCart}
-        onRequestStockTransfer={handleRequestStockTransferFromAlert}
-        onRequestPO={handleRequestPOFromAlert}
-      />
+        {isLowStockModalOpen && currentView !== 'low_stock' && (
+          <LowStockModal
+            isOpen={isLowStockModalOpen}
+            onClose={() => setIsLowStockModalOpen(false)}
+            products={products}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onQuickRestock={handleQuickRestock}
+            onAddToCart={handleAddToCart}
+            onRequestStockTransfer={handleRequestStockTransferFromAlert}
+            onRequestPO={handleRequestPOFromAlert}
+          />
+        )}
 
-      {/* ইনভয়েস প্রিন্ট জেনারেটর মডাল (Thermal 80mm & A4) */}
-      <InvoiceModal
-        isOpen={isInvoiceModalOpen}
-        onClose={() => setIsInvoiceModalOpen(false)}
-        saleData={activeInvoiceData}
-        settings={settings}
-        autoPrint={autoTriggerPrint}
-      />
+        {isInvoiceModalOpen && (
+          <InvoiceModal
+            isOpen={isInvoiceModalOpen}
+            onClose={() => setIsInvoiceModalOpen(false)}
+            saleData={activeInvoiceData}
+            settings={settings}
+            autoPrint={autoTriggerPrint}
+          />
+        )}
 
-      {/* অন্যান্য মডালসমূহ */}
-      <AddStockModal
-        isOpen={isStockModalOpen}
-        onClose={() => {
-          setIsStockModalOpen(false);
-          setQuickRestockProductId('');
-        }}
-        products={products}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        activeUser={activeUser}
-        onSubmitStock={handleSubmitStock}
-        initialProductId={quickRestockProductId}
-        settings={settings}
-        suppliers={suppliers}
-        onSaveSupplier={handleSaveSupplier}
-        variantAttributes={variantAttributes}
-        onAddVariantOption={handleAddVariantOption}
-        purchaseOrders={purchaseOrders}
-      />
+        {isStockModalOpen && currentView !== 'stock_restock' && (
+          <AddStockModal
+            isOpen={isStockModalOpen}
+            onClose={() => {
+              setIsStockModalOpen(false);
+              setQuickRestockProductId('');
+            }}
+            products={products}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            activeUser={activeUser}
+            onSubmitStock={handleSubmitStock}
+            initialProductId={quickRestockProductId}
+            settings={settings}
+            suppliers={suppliers}
+            onSaveSupplier={handleSaveSupplier}
+            variantAttributes={variantAttributes}
+            onAddVariantOption={handleAddVariantOption}
+            purchaseOrders={purchaseOrders}
+          />
+        )}
 
-      <ProductDrawer
-        isOpen={isProductModalOpen}
-        onClose={() => setIsProductModalOpen(false)}
-        product={null}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onSubmitProduct={handleSubmitProduct}
-        categories={categories}
-        onAddCategory={handleAddCategory}
-        units={units}
-        onAddUnit={handleAddUnit}
-        suppliers={suppliers}
-        products={products}
-      />
+        {isProductModalOpen && (
+          <ProductDrawer
+            isOpen={isProductModalOpen}
+            onClose={() => setIsProductModalOpen(false)}
+            product={null}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onSubmitProduct={handleSubmitProduct}
+            categories={categories}
+            onAddCategory={handleAddCategory}
+            units={units}
+            onAddUnit={handleAddUnit}
+            suppliers={suppliers}
+            products={products}
+          />
+        )}
 
-      <SettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        settings={settings}
-        onSaveSettings={handleSaveSettings}
-        onTestConnection={handleTestConnection}
-      />
+        {isSettingsModalOpen && (
+          <SettingsModal
+            isOpen={isSettingsModalOpen}
+            onClose={() => setIsSettingsModalOpen(false)}
+            settings={settings}
+            onSaveSettings={handleSaveSettings}
+            onTestConnection={handleTestConnection}
+            themeMode={themeMode}
+            onChangeTheme={setThemeMode}
+          />
+        )}
 
-      <SalesHistoryModal
-        isOpen={isHistoryModalOpen}
-        onClose={() => setIsHistoryModalOpen(false)}
-        salesHistory={salesHistory}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onReprintInvoice={handleOpenReprintInvoice}
-        onViewInvoiceDetails={(sale) => {
-          setIsHistoryModalOpen(false);
-          handleOpenInvoiceLookup(sale.invoiceNo);
-        }}
-        onInitiateReturn={handleInitiateReturnFromHistory}
-      />
+        {isHistoryModalOpen && (
+          <SalesHistoryModal
+            isOpen={isHistoryModalOpen}
+            onClose={() => setIsHistoryModalOpen(false)}
+            salesHistory={salesHistory}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onReprintInvoice={handleOpenReprintInvoice}
+            onViewInvoiceDetails={(sale) => {
+              setIsHistoryModalOpen(false);
+              handleOpenInvoiceLookup(sale.invoiceNo);
+            }}
+            onInitiateReturn={handleInitiateReturnFromHistory}
+          />
+        )}
 
-      {/* ইনভয়েস অনুসন্ধান ও পূর্ণাঙ্গ বিস্তারিত মেমো মডাল */}
-      <InvoiceLookupModal
-        isOpen={isInvoiceLookupOpen}
-        onClose={() => {
-          setIsInvoiceLookupOpen(false);
-          setSelectedLookupInvoiceNo('');
-        }}
-        salesHistory={salesHistory}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        settings={settings}
-        apiUrl={settings.apiUrl}
-        initialInvoiceNo={selectedLookupInvoiceNo}
-        onOpenPrintInvoice={(sale) => {
-          setIsInvoiceLookupOpen(false);
-          handleOpenReprintInvoice(sale);
-        }}
-      />
+        {isInvoiceLookupOpen && currentView !== 'invoice_lookup' && (
+          <InvoiceLookupModal
+            isOpen={isInvoiceLookupOpen}
+            onClose={() => {
+              setIsInvoiceLookupOpen(false);
+              setSelectedLookupInvoiceNo('');
+            }}
+            salesHistory={salesHistory}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            settings={settings}
+            apiUrl={settings.apiUrl}
+            initialInvoiceNo={selectedLookupInvoiceNo}
+            onOpenPrintInvoice={(sale) => {
+              setIsInvoiceLookupOpen(false);
+              handleOpenReprintInvoice(sale);
+            }}
+          />
+        )}
 
-      {/* গ্রাহক ডাটাবেস ব্যবস্থাপনা মডাল */}
-      <CustomersModal
-        isOpen={isCustomersModalOpen}
-        onClose={() => setIsCustomersModalOpen(false)}
-        customers={customers}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onAddCustomer={handleAddCustomer}
-        onDeleteCustomer={handleDeleteCustomer}
-        onRefreshCustomers={handleRefreshCustomers}
-        onOpenCustomerLedgerModal={() => {
-          setIsCustomersModalOpen(false);
-          setIsCustomerLedgerModalOpen(true);
-        }}
-      />
+        {isCustomersModalOpen && currentView !== 'customers' && (
+          <CustomersModal
+            isOpen={isCustomersModalOpen}
+            onClose={() => setIsCustomersModalOpen(false)}
+            customers={customers}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onAddCustomer={handleAddCustomer}
+            onDeleteCustomer={handleDeleteCustomer}
+            onRefreshCustomers={handleRefreshCustomers}
+            onOpenCustomerLedgerModal={() => {
+              setIsCustomersModalOpen(false);
+              setIsCustomerLedgerModalOpen(true);
+            }}
+          />
+        )}
 
-      {/* বাকির খাতা ও কাস্টমার ক্রেডিট লেজার মডাল */}
-      <CustomerLedgerModal
-        isOpen={isCustomerLedgerModalOpen}
-        onClose={() => setIsCustomerLedgerModalOpen(false)}
-        customers={customers}
-        customerLedger={customerLedger}
-        orders={orders}
-        settings={settings}
-        activeUser={activeUser}
-        onRecordPayment={handleRecordCustomerPayment}
-        onUpdateCreditLimit={handleUpdateCustomerCreditLimit}
-        onSendSms={handleSendSmsNotification}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        showToast={showToast}
-      />
+        {isCustomerLedgerModalOpen && currentView !== 'customer_ledger' && (
+          <CustomerLedgerModal
+            isOpen={isCustomerLedgerModalOpen}
+            onClose={() => setIsCustomerLedgerModalOpen(false)}
+            customers={customers}
+            customerLedger={customerLedger}
+            orders={orders}
+            settings={settings}
+            activeUser={activeUser}
+            onRecordPayment={handleRecordCustomerPayment}
+            onUpdateCreditLimit={handleUpdateCustomerCreditLimit}
+            onSendSms={handleSendSmsNotification}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            showToast={showToast}
+          />
+        )}
 
-      {/* কুপন তৈরি ও অফার ব্যবস্থাপনা মডাল */}
-      <CouponModal
-        isOpen={isCouponModalOpen}
-        onClose={() => setIsCouponModalOpen(false)}
-        coupons={coupons}
-        products={products}
-        salesHistory={salesHistory}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onSaveCoupon={handleSaveCoupon}
-        onDeleteCoupon={handleDeleteCoupon}
-        onRefreshCoupons={handleRefreshCoupons}
-      />
+        {isCouponModalOpen && currentView !== 'coupons' && (
+          <CouponModal
+            isOpen={isCouponModalOpen}
+            onClose={() => setIsCouponModalOpen(false)}
+            coupons={coupons}
+            products={products}
+            salesHistory={salesHistory}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onSaveCoupon={handleSaveCoupon}
+            onDeleteCoupon={handleDeleteCoupon}
+            onRefreshCoupons={handleRefreshCoupons}
+          />
+        )}
 
-      {/* গ্রাহক ও এডমিন লগইন এবং রেজিস্ট্রেশন মডাল */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        activeUser={activeUser}
-        settings={settings}
-        onLoginSuccess={handleLoginSuccess}
-        onRegisterSuccess={handleRegisterSuccess}
-        onLogout={handleLogout}
-      />
+        {isAuthModalOpen && (
+          <AuthModal
+            isOpen={isAuthModalOpen}
+            onClose={() => setIsAuthModalOpen(false)}
+            activeUser={activeUser}
+            settings={settings}
+            onLoginSuccess={handleLoginSuccess}
+            onRegisterSuccess={handleRegisterSuccess}
+            onLogout={handleLogout}
+          />
+        )}
 
-      {/* ব্যবহারকারী ও স্টাফ অ্যাকাউন্ট ব্যবস্থাপনা মডাল (Users Management) */}
-      <UsersModal
-        isOpen={isUsersModalOpen}
-        onClose={() => setIsUsersModalOpen(false)}
-        users={users}
-        activeUser={activeUser}
-        onAddUser={handleAddUser}
-        onUpdateUser={handleUpdateUser}
-        onDeleteUser={handleDeleteUser}
-        onRefreshUsers={handleRefreshUsers}
-        isLoading={syncStatus === 'syncing'}
-        salesHistory={salesHistory}
-        expenses={expenses}
-        auditLogs={auditLogs}
-        settings={settings}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-      />
+        {isUsersModalOpen && currentView !== 'users' && (
+          <UsersModal
+            isOpen={isUsersModalOpen}
+            onClose={() => setIsUsersModalOpen(false)}
+            users={users}
+            activeUser={activeUser}
+            onAddUser={handleAddUser}
+            onUpdateUser={handleUpdateUser}
+            onDeleteUser={handleDeleteUser}
+            onRefreshUsers={handleRefreshUsers}
+            isLoading={syncStatus === 'syncing'}
+            salesHistory={salesHistory}
+            expenses={expenses}
+            auditLogs={auditLogs}
+            settings={settings}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+          />
+        )}
 
-      {/* গ্রাহকের নিজস্ব পূর্ববর্তী অর্ডার তালিকা মডাল */}
-      <CustomerOrdersModal
-        isOpen={isCustomerOrdersOpen}
-        onClose={() => setIsCustomerOrdersOpen(false)}
-        activeUser={activeUser}
-        settings={settings}
-        salesHistory={salesHistory}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onViewInvoice={(sale) => {
-          setIsCustomerOrdersOpen(false);
-          setActiveInvoiceData(sale);
-          setIsInvoiceModalOpen(true);
-        }}
-        onNavigateToCatalog={() => {
-          setCurrentView('pos');
-        }}
-        onOpenAuthModal={() => setIsAuthModalOpen(true)}
-      />
+        {isCustomerOrdersOpen && (
+          <CustomerOrdersModal
+            isOpen={isCustomerOrdersOpen}
+            onClose={() => setIsCustomerOrdersOpen(false)}
+            activeUser={activeUser}
+            settings={settings}
+            salesHistory={salesHistory}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onViewInvoice={(sale) => {
+              setIsCustomerOrdersOpen(false);
+              setActiveInvoiceData(sale);
+              setIsInvoiceModalOpen(true);
+            }}
+            onNavigateToCatalog={() => {
+              setCurrentView('pos');
+            }}
+            onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          />
+        )}
 
-      {/* কাস্টমার ব্র্যান্ডেড লাইভ ট্র্যাকিং ও সেলফ-সার্ভিস RMA পোর্টাল মডাল */}
-      <CustomerOrderTrackingModal
-        isOpen={isCustomerTrackingModalOpen}
-        onClose={() => {
-          setIsCustomerTrackingModalOpen(false);
-          setDirectTrackingOrderId('');
-        }}
-        orders={orders}
-        initialOrderId={directTrackingOrderId}
-        settings={settings}
-        onSubmitRma={(orderId, rmaData) => {
-          handleResolveRma(orderId, 'Submitted', rmaData);
-        }}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-      />
+        {isCustomerTrackingModalOpen && (
+          <CustomerOrderTrackingModal
+            isOpen={isCustomerTrackingModalOpen}
+            onClose={() => {
+              setIsCustomerTrackingModalOpen(false);
+              setDirectTrackingOrderId('');
+            }}
+            orders={orders}
+            initialOrderId={directTrackingOrderId}
+            settings={settings}
+            onSubmitRma={(orderId, rmaData) => {
+              handleResolveRma(orderId, 'Submitted', rmaData);
+            }}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+          />
+        )}
 
-      {/* ড্রপ-অফ ও অসম্পূর্ণ কার্ট রিকভারি মডাল */}
-      <AbandonedCartModal
-        isOpen={isAbandonedCartModalOpen}
-        onClose={() => setIsAbandonedCartModalOpen(false)}
-        abandonedCarts={abandonedCarts}
-        onUpdateStatus={handleUpdateAbandonedCartStatus}
-        onDeleteCart={handleDeleteAbandonedCart}
-        onConvertToOrder={handleConvertToOrderFromAbandoned}
-        onSendSms={handleSendAbandonedCartSms}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        settings={settings}
-        showToast={showToast}
-      />
+        {isAbandonedCartModalOpen && currentView !== 'abandoned_carts' && (
+          <AbandonedCartModal
+            isOpen={isAbandonedCartModalOpen}
+            onClose={() => setIsAbandonedCartModalOpen(false)}
+            abandonedCarts={abandonedCarts}
+            onUpdateStatus={handleUpdateAbandonedCartStatus}
+            onDeleteCart={handleDeleteAbandonedCart}
+            onConvertToOrder={handleConvertToOrderFromAbandoned}
+            onSendSms={handleSendAbandonedCartSms}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            settings={settings}
+            showToast={showToast}
+          />
+        )}
 
-      {/* ফেজ ৪: সাপ্লায়ার ও ভেন্ডর প্রোফাইল এবং দেনা খাতা মডাল */}
-      <SuppliersModal
-        isOpen={isSuppliersModalOpen}
-        onClose={() => setIsSuppliersModalOpen(false)}
-        suppliers={suppliers}
-        supplierLedger={supplierLedger}
-        purchaseOrders={purchaseOrders}
-        bankAccounts={bankAccounts}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        storeName={settings.StoreName || 'Pabna Bostraloy'}
-        onSaveSupplier={handleSaveSupplier}
-        onDeleteSupplier={handleDeleteSupplier}
-        onRecordPayment={handleRecordSupplierPayment}
-        onOpenCreatePO={() => {
-          setIsSuppliersModalOpen(false);
-          setIsPurchaseOrdersModalOpen(true);
-        }}
-      />
+        {isSuppliersModalOpen && currentView !== 'suppliers' && (
+          <SuppliersModal
+            isOpen={isSuppliersModalOpen}
+            onClose={() => setIsSuppliersModalOpen(false)}
+            suppliers={suppliers}
+            supplierLedger={supplierLedger}
+            purchaseOrders={purchaseOrders}
+            bankAccounts={bankAccounts}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            storeName={settings.StoreName || 'Pabna Bostraloy'}
+            onSaveSupplier={handleSaveSupplier}
+            onDeleteSupplier={handleDeleteSupplier}
+            onRecordPayment={handleRecordSupplierPayment}
+            onOpenCreatePO={() => {
+              setIsSuppliersModalOpen(false);
+              setIsPurchaseOrdersModalOpen(true);
+            }}
+          />
+        )}
 
-      {/* ফেজ ৪: পারচেজ অর্ডার ও স্টক প্রকিউরমেন্ট রিস্টক মডাল */}
-      <PurchaseOrdersModal
-        isOpen={isPurchaseOrdersModalOpen}
-        onClose={() => {
-          setIsPurchaseOrdersModalOpen(false);
-          setPrefilledPOProduct(null);
-        }}
-        purchaseOrders={purchaseOrders}
-        suppliers={suppliers}
-        products={products}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        storeName={settings.StoreName || 'Pabna Bostraloy'}
-        storeSettings={settings}
-        onCreatePO={handleCreatePurchaseOrder}
-        onUpdatePOStatus={handleUpdatePOStatus}
-        onOpenSuppliersModal={() => {
-          setIsPurchaseOrdersModalOpen(false);
-          setIsSuppliersModalOpen(true);
-        }}
-        initialPrefill={prefilledPOProduct}
-      />
+        {isPurchaseOrdersModalOpen && currentView !== 'purchase_orders' && (
+          <PurchaseOrdersModal
+            isOpen={isPurchaseOrdersModalOpen}
+            onClose={() => {
+              setIsPurchaseOrdersModalOpen(false);
+              setPrefilledPOProduct(null);
+            }}
+            purchaseOrders={purchaseOrders}
+            suppliers={suppliers}
+            products={products}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            storeName={settings.StoreName || 'Pabna Bostraloy'}
+            storeSettings={settings}
+            onCreatePO={handleCreatePurchaseOrder}
+            onUpdatePOStatus={handleUpdatePOStatus}
+            onOpenSuppliersModal={() => {
+              setIsPurchaseOrdersModalOpen(false);
+              setIsSuppliersModalOpen(true);
+            }}
+            initialPrefill={prefilledPOProduct}
+          />
+        )}
 
-      {/* ফেজ ৪: থার্মাল বারকোড লেবেল ও প্রাইস ট্যাগ জেনারেটর মডাল */}
-      <BarcodePrintModal
-        isOpen={isBarcodeModalOpen}
-        onClose={() => setIsBarcodeModalOpen(false)}
-        products={products}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        storeName={settings.StoreName || 'Pabna Bostraloy'}
-      />
+        {isBarcodeModalOpen && currentView !== 'barcode_print' && (
+          <BarcodePrintModal
+            isOpen={isBarcodeModalOpen}
+            onClose={() => setIsBarcodeModalOpen(false)}
+            products={products}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            storeName={settings.StoreName || 'Pabna Bostraloy'}
+          />
+        )}
 
-      {/* ফেজ ৫: দৈনন্দিন খরচের খাতা মডাল */}
-      <ExpensesModal
-        isOpen={isExpensesModalOpen}
-        onClose={() => setIsExpensesModalOpen(false)}
-        expenses={expenses}
-        bankAccounts={bankAccounts}
-        users={users}
-        attendance={getLocalStaffAttendance()}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        activeUser={activeUser}
-        onSaveExpense={handleSaveExpense}
-        onDeleteExpense={handleDeleteExpense}
-        storeName={settings.StoreName || 'Pabna Bostraloy'}
-        storeAddress={settings.Address || settings.StoreAddress || ''}
-        storePhone={settings.Phone || settings.StorePhone || ''}
-      />
+        {isExpensesModalOpen && currentView !== 'expenses' && (
+          <ExpensesModal
+            isOpen={isExpensesModalOpen}
+            onClose={() => setIsExpensesModalOpen(false)}
+            expenses={expenses}
+            bankAccounts={bankAccounts}
+            users={users}
+            attendance={getLocalStaffAttendance()}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            activeUser={activeUser}
+            onSaveExpense={handleSaveExpense}
+            onDeleteExpense={handleDeleteExpense}
+            storeName={settings.StoreName || 'Pabna Bostraloy'}
+            storeAddress={settings.Address || settings.StoreAddress || ''}
+            storePhone={settings.Phone || settings.StorePhone || ''}
+          />
+        )}
 
-      {/* ফেজ ৫: দৈনিক ক্যাশ ড্রয়ার ও EOD ক্লোজিং মডাল */}
-      <CashRegisterModal
-        isOpen={isCashRegisterModalOpen}
-        onClose={() => setIsCashRegisterModalOpen(false)}
-        activeRegister={activeRegister}
-        cashRegisters={cashRegisters}
-        salesHistory={salesHistory}
-        customerLedger={customerLedger}
-        supplierLedger={supplierLedger}
-        expenses={expenses}
-        tailoringOrders={tailoringOrders}
-        bankTransactions={bankTransactions}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        activeUser={activeUser}
-        storeSettings={settings}
-        onOpenRegister={handleOpenCashRegister}
-        onCloseRegister={handleCloseCashRegister}
-      />
+        {isCashRegisterModalOpen && currentView !== 'cash_register' && (
+          <CashRegisterModal
+            isOpen={isCashRegisterModalOpen}
+            onClose={() => setIsCashRegisterModalOpen(false)}
+            activeRegister={activeRegister}
+            cashRegisters={cashRegisters}
+            salesHistory={salesHistory}
+            customerLedger={customerLedger}
+            supplierLedger={supplierLedger}
+            expenses={expenses}
+            tailoringOrders={tailoringOrders}
+            bankTransactions={bankTransactions}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            activeUser={activeUser}
+            storeSettings={settings}
+            onOpenRegister={handleOpenCashRegister}
+            onCloseRegister={handleCloseCashRegister}
+          />
+        )}
 
-      {/* ব্যাংক হিসাব ও ডিপোজিট লেনদেন খতিয়ান মডাল */}
-      <BankManagementModal
-        isOpen={isBankModalOpen}
-        onClose={() => setIsBankModalOpen(false)}
-        bankAccounts={bankAccounts}
-        bankTransactions={bankTransactions}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        activeUser={activeUser}
-        activeRegister={activeRegister}
-        storeSettings={settings}
-        onSaveBankTransaction={handleSaveBankTransaction}
-        onAddBankAccount={handleAddBankAccount}
-        onUpdateBankAccount={handleUpdateBankAccount}
-      />
+        {isBankModalOpen && currentView !== 'bank_accounts' && (
+          <BankManagementModal
+            isOpen={isBankModalOpen}
+            onClose={() => setIsBankModalOpen(false)}
+            bankAccounts={bankAccounts}
+            bankTransactions={bankTransactions}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            activeUser={activeUser}
+            activeRegister={activeRegister}
+            storeSettings={settings}
+            onSaveBankTransaction={handleSaveBankTransaction}
+            onAddBankAccount={handleAddBankAccount}
+            onUpdateBankAccount={handleUpdateBankAccount}
+          />
+        )}
 
-      {/* ফেজ ৫: অ্যাক্টিভিটি ও সিকিউরিটি অডিট ট্রেইল মডাল */}
-      <AuditLogsModal
-        isOpen={isAuditLogsModalOpen}
-        onClose={() => setIsAuditLogsModalOpen(false)}
-        auditLogs={auditLogs}
-      />
+        {isAuditLogsModalOpen && currentView !== 'audit_logs' && (
+          <AuditLogsModal
+            isOpen={isAuditLogsModalOpen}
+            onClose={() => setIsAuditLogsModalOpen(false)}
+            auditLogs={auditLogs}
+          />
+        )}
 
-      {/* ফেজ ৬: মেয়াদ সতর্কতা ও ব্যাচ ট্র্যাকিং মডাল */}
-      <ExpiryAlertModal
-        isOpen={isExpiryAlertModalOpen}
-        onClose={() => setIsExpiryAlertModalOpen(false)}
-        products={products}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onAddToCart={handleAddToCart}
-        onEditProduct={(prod) => {
-          setIsExpiryAlertModalOpen(false);
-          handleOpenEditProduct(prod);
-        }}
-        onWriteOffDamage={handleWriteOffDamageFromExpiry}
-        onReturnToSupplier={handleReturnToSupplierFromExpiry}
-        settings={settings}
-      />
+        {isExpiryAlertModalOpen && currentView !== 'expiry_alerts' && (
+          <ExpiryAlertModal
+            isOpen={isExpiryAlertModalOpen}
+            onClose={() => setIsExpiryAlertModalOpen(false)}
+            products={products}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onAddToCart={handleAddToCart}
+            onEditProduct={(prod) => {
+              setIsExpiryAlertModalOpen(false);
+              handleOpenEditProduct(prod);
+            }}
+            onWriteOffDamage={handleWriteOffDamageFromExpiry}
+            onReturnToSupplier={handleReturnToSupplierFromExpiry}
+            settings={settings}
+          />
+        )}
 
-      {/* ফেজ ৬: সাইজ/রং ভ্যারিয়েন্ট বাছাইকারী মডাল */}
-      {Boolean(variantSelectModalProduct) && (
-        <ProductVariantSelectModal
-          isOpen={true}
-          onClose={() => setVariantSelectModalProduct(null)}
-          product={variantSelectModalProduct}
-          currencySymbol={settings.CurrencySymbol || '৳'}
-          onAddToCart={handleAddToCart}
-          cartItems={cart}
-        />
-      )}
+        {Boolean(variantSelectModalProduct) && (
+          <ProductVariantSelectModal
+            isOpen={true}
+            onClose={() => setVariantSelectModalProduct(null)}
+            product={variantSelectModalProduct}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onAddToCart={handleAddToCart}
+            cartItems={cart}
+          />
+        )}
 
-      {/* গজ কাপড় ও থান কাটার জন্য গজ-গিরা নির্বাচন মডাল */}
-      <FabricCutModal
-        isOpen={Boolean(fabricCutProduct)}
-        onClose={() => setFabricCutProduct(null)}
-        product={fabricCutProduct}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        storeName={settings.StoreName || 'Pabna Bostraloy'}
-        cartItems={cart}
-        onConfirmAddToCart={(prod, totalYards) => {
-          handleAddToCart(prod, totalYards, true);
-        }}
-      />
+        {Boolean(fabricCutProduct) && (
+          <FabricCutModal
+            isOpen={Boolean(fabricCutProduct)}
+            onClose={() => setFabricCutProduct(null)}
+            product={fabricCutProduct}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            storeName={settings.StoreName || 'Pabna Bostraloy'}
+            cartItems={cart}
+            onConfirmAddToCart={(prod, totalYards) => {
+              handleAddToCart(prod, totalYards, true);
+            }}
+          />
+        )}
 
-      {/* ফেজ ৭: পণ্য বিক্রয় রিটার্ন ও স্টোর ক্রেডিট ভাউচার মডাল */}
-      <SalesReturnModal
-        isOpen={isSalesReturnModalOpen}
-        onClose={() => {
-          setSalesReturnPreloadInvoice(null);
-          setIsSalesReturnModalOpen(false);
-        }}
-        salesHistory={salesHistory}
-        customers={customers}
-        products={products}
-        salesReturns={salesReturns}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        activeUser={activeUser}
-        storeSettings={settings}
-        initialInvoice={salesReturnPreloadInvoice}
-        onSaveSalesReturn={handleSaveSalesReturn}
-        onRedeemStoreCredit={handleRedeemStoreCredit}
-      />
+        {isSalesReturnModalOpen && currentView !== 'sales_returns' && (
+          <SalesReturnModal
+            isOpen={isSalesReturnModalOpen}
+            onClose={() => {
+              setSalesReturnPreloadInvoice(null);
+              setIsSalesReturnModalOpen(false);
+            }}
+            salesHistory={salesHistory}
+            customers={customers}
+            products={products}
+            salesReturns={salesReturns}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            activeUser={activeUser}
+            storeSettings={settings}
+            initialInvoice={salesReturnPreloadInvoice}
+            onSaveSalesReturn={handleSaveSalesReturn}
+            onRedeemStoreCredit={handleRedeemStoreCredit}
+          />
+        )}
 
-      {/* ফেজ ৭: গোডাউন ও দোকান স্টক ট্রান্সফার চালান মডাল */}
-      <StockTransferModal
-        isOpen={isStockTransferModalOpen}
-        onClose={() => setIsStockTransferModalOpen(false)}
-        products={products}
-        stockTransfers={stockTransfers}
-        stockMovements={stockMovements}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        activeUser={activeUser}
-        storeSettings={settings}
-        onSaveStockTransfer={handleSaveStockTransfer}
-        onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
-        onDeleteStockTransfer={handleDeleteStockTransfer}
-        onAdjustLocationStock={handleAdjustLocationStock}
-        onDeleteProduct={handleDeleteProduct}
-        onUpdateProductVariants={handleUpdateProductVariants}
-        onDirectGodownToShopTransfer={handleDirectGodownToShopTransfer}
-        onEditProduct={handleOpenEditProduct}
-        variantAttributes={variantAttributes}
-        onAddVariantOption={handleAddVariantOption}
-        onOpenFabricWastageModal={handleOpenFabricWastage}
-        initialTab={stockTransferModalConfig.tab || 'overview'}
-        initialTransferSubTab={stockTransferModalConfig.subTab || 'new'}
-        initialFilter={stockTransferModalConfig.filter || 'ALL'}
-      />
+        {isStockTransferModalOpen && (
+          <StockTransferModal
+            isOpen={isStockTransferModalOpen}
+            onClose={() => setIsStockTransferModalOpen(false)}
+            products={products}
+            stockTransfers={stockTransfers}
+            stockMovements={stockMovements}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            activeUser={activeUser}
+            storeSettings={settings}
+            onSaveStockTransfer={handleSaveStockTransfer}
+            onUpdateStockTransferStatus={handleUpdateStockTransferStatus}
+            onDeleteStockTransfer={handleDeleteStockTransfer}
+            onAdjustLocationStock={handleAdjustLocationStock}
+            onDeleteProduct={handleDeleteProduct}
+            onUpdateProductVariants={handleUpdateProductVariants}
+            onDirectGodownToShopTransfer={handleDirectGodownToShopTransfer}
+            onEditProduct={handleOpenEditProduct}
+            variantAttributes={variantAttributes}
+            onAddVariantOption={handleAddVariantOption}
+            onOpenFabricWastageModal={handleOpenFabricWastage}
+            initialTab={stockTransferModalConfig.tab || 'overview'}
+            initialTransferSubTab={stockTransferModalConfig.subTab || 'new'}
+            initialFilter={stockTransferModalConfig.filter || 'ALL'}
+          />
+        )}
 
-      {/* ফেজ ৮: আরএফএম গ্রাহক সেগমেন্টেশন ও টার্গেটেড এসএমএস ক্যাম্পেইন মডাল */}
-      <RFMCampaignModal
-        isOpen={isRFMCampaignModalOpen}
-        onClose={() => setIsRFMCampaignModalOpen(false)}
-        customers={customers}
-        salesHistory={salesHistory}
-        orders={orders}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        activeUser={activeUser}
-        storeSettings={settings}
-        onSendBulkSmsCampaign={handleSendBulkSmsCampaign}
-      />
+        {isRFMCampaignModalOpen && currentView !== 'rfm_campaigns' && (
+          <RFMCampaignModal
+            isOpen={isRFMCampaignModalOpen}
+            onClose={() => setIsRFMCampaignModalOpen(false)}
+            customers={customers}
+            salesHistory={salesHistory}
+            orders={orders}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            activeUser={activeUser}
+            storeSettings={settings}
+            onSendBulkSmsCampaign={handleSendBulkSmsCampaign}
+          />
+        )}
 
-      {/* কাউন্টার হোল্ড অর্ডার ও মাল্টি-কাস্টমার কিউ ড্রয়ার */}
-      <HeldCartsModal
-        isOpen={isHeldCartsModalOpen}
-        onClose={() => setIsHeldCartsModalOpen(false)}
-        heldCarts={heldCarts}
-        activeCartItems={cart}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onHoldCurrentCart={handleHoldCurrentCart}
-        onResumeHeldCart={handleResumeHeldCart}
-        onDeleteHeldCart={handleDeleteHeldCart}
-        onMoveToAbandonedCart={handleMoveHeldCartToAbandoned}
-      />
+        {isHeldCartsModalOpen && (
+          <HeldCartsModal
+            isOpen={isHeldCartsModalOpen}
+            onClose={() => setIsHeldCartsModalOpen(false)}
+            heldCarts={heldCarts}
+            activeCartItems={cart}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onHoldCurrentCart={handleHoldCurrentCart}
+            onResumeHeldCart={handleResumeHeldCart}
+            onDeleteHeldCart={handleDeleteHeldCart}
+            onMoveToAbandonedCart={handleMoveHeldCartToAbandoned}
+          />
+        )}
 
-      {/* ফেজ ১: ক্যাশিয়ার কিবোর্ড শর্টকাট সহায়িকা মডাল */}
-      <KeyboardShortcutsModal
-        isOpen={isShortcutsModalOpen}
-        onClose={() => setIsShortcutsModalOpen(false)}
-      />
+        {isShortcutsModalOpen && (
+          <KeyboardShortcutsModal
+            isOpen={isShortcutsModalOpen}
+            onClose={() => setIsShortcutsModalOpen(false)}
+          />
+        )}
 
-      {/* ফেজ ২: টেইলারিং ও সেলাই অর্ডার পপআপ মডাল */}
-      {isTailoringModalOpen && currentView !== 'tailoring' && (
-        <TailoringModal
-          isOpen={isTailoringModalOpen}
-          onClose={() => {
-            setIsTailoringModalOpen(false);
-            setTailoringPreloadData(null);
-          }}
-          tailoringOrders={tailoringOrders}
-          tailorMasters={tailorMasters}
-          products={products}
-          customers={customers}
-          currencySymbol={settings.CurrencySymbol || '৳'}
-          activeUser={activeUser}
-          storeSettings={settings}
-          initialPreload={tailoringPreloadData}
-          onSaveOrder={handleSaveTailoringOrder}
-          onUpdateOrderStatus={handleUpdateTailoringOrderStatus}
-          onCollectDue={handleCollectTailoringDue}
-          onDeleteOrder={handleDeleteTailoringOrder}
-        />
-      )}
+        {isTailoringModalOpen && currentView !== 'tailoring' && (
+          <TailoringModal
+            isOpen={isTailoringModalOpen}
+            onClose={() => {
+              setIsTailoringModalOpen(false);
+              setTailoringPreloadData(null);
+            }}
+            tailoringOrders={tailoringOrders}
+            tailorMasters={tailorMasters}
+            products={products}
+            customers={customers}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            activeUser={activeUser}
+            storeSettings={settings}
+            initialPreload={tailoringPreloadData}
+            onSaveOrder={handleSaveTailoringOrder}
+            onUpdateOrderStatus={handleUpdateTailoringOrderStatus}
+            onCollectDue={handleCollectTailoringDue}
+            onDeleteOrder={handleDeleteTailoringOrder}
+          />
+        )}
 
-      {/* ফেজ ২: কাপড়ের ছাঁট ও ড্যামেজ হিসাব পপআপ মডাল */}
-      {isFabricWastageModalOpen && currentView !== 'fabric_wastage' && (
-        <FabricWastageModal
-          isOpen={isFabricWastageModalOpen}
-          onClose={() => {
-            setFabricWastagePreloadData(null);
-            setIsFabricWastageModalOpen(false);
-          }}
-          fabricWastageList={fabricWastageList}
-          products={products}
-          currencySymbol={settings.CurrencySymbol || '৳'}
-          activeUser={activeUser}
-          storeSettings={settings}
-          initialProduct={fabricWastagePreloadData}
-          onRecordWastage={handleRecordFabricWastage}
-          onDeleteWastageRecord={handleDeleteFabricWastage}
-        />
-      )}
+        {isFabricWastageModalOpen && currentView !== 'fabric_wastage' && (
+          <FabricWastageModal
+            isOpen={isFabricWastageModalOpen}
+            onClose={() => {
+              setFabricWastagePreloadData(null);
+              setIsFabricWastageModalOpen(false);
+            }}
+            fabricWastageList={fabricWastageList}
+            products={products}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            activeUser={activeUser}
+            storeSettings={settings}
+            initialProduct={fabricWastagePreloadData}
+            onRecordWastage={handleRecordFabricWastage}
+            onDeleteWastageRecord={handleDeleteFabricWastage}
+          />
+        )}
 
-      {/* ফেজ ৩: ১-ক্লিক সম্পূর্ণ ডাটা ব্যাকআপ ও এক্সেল ডাউনলোড মডাল */}
-      {isBackupModalOpen && currentView !== 'backup' && (
-        <BackupRestoreModal
-          isOpen={isBackupModalOpen}
-          onClose={() => setIsBackupModalOpen(false)}
-          products={products}
-          salesHistory={salesHistory}
-          customers={customers}
-          tailoringOrders={tailoringOrders}
-          storeSettings={settings}
-          onRestoreComplete={() => {
-            setProducts(getLocalProducts());
-            setCategories(getLocalCategories());
-            setUnits(getLocalUnits());
-            setSalesHistory(getLocalSalesHistory());
-            setOrders(getLocalOrders());
-            setCustomers(getLocalCustomers());
-            setCustomerLedger(getLocalCustomerLedger());
-            setExpenses(getLocalExpenses());
-            setTailoringOrders(getLocalTailoringOrders());
-            setFabricWastageList(getLocalFabricWastage());
-            setSuppliers(getLocalSuppliers());
-            setPurchaseOrders(getLocalPurchaseOrders());
-            showToast('ডাটাবেস সফলভাবে রিস্টোর হয়েছে!', 'success');
-          }}
-        />
-      )}
+        {isBackupModalOpen && currentView !== 'backup' && (
+          <BackupRestoreModal
+            isOpen={isBackupModalOpen}
+            onClose={() => setIsBackupModalOpen(false)}
+            products={products}
+            salesHistory={salesHistory}
+            customers={customers}
+            tailoringOrders={tailoringOrders}
+            storeSettings={settings}
+            onRestoreComplete={() => {
+              setProducts(getLocalProducts());
+              setCategories(getLocalCategories());
+              setUnits(getLocalUnits());
+              setSalesHistory(getLocalSalesHistory());
+              setOrders(getLocalOrders());
+              setCustomers(getLocalCustomers());
+              setCustomerLedger(getLocalCustomerLedger());
+              setExpenses(getLocalExpenses());
+              setTailoringOrders(getLocalTailoringOrders());
+              setFabricWastageList(getLocalFabricWastage());
+              setSuppliers(getLocalSuppliers());
+              setPurchaseOrders(getLocalPurchaseOrders());
+              showToast('ডাটাবেস সফলভাবে রিস্টোর হয়েছে!', 'success');
+            }}
+          />
+        )}
 
-      {/* ফেজ ৩: অ্যাডমিন পিন অথরাইজেশন শিল্ড মডাল */}
-      <AdminPinModal
-        isOpen={isAdminPinModalOpen}
-        onClose={() => {
-          setIsAdminPinModalOpen(false);
-          setPendingAdminAction(null);
-        }}
-        onSuccess={() => {
-          setIsPinAuthorizedSession(true);
-          setIsAdminPinModalOpen(false);
-          if (typeof pendingAdminAction === 'function') {
-            const action = pendingAdminAction;
-            setPendingAdminAction(null);
-            action();
-          }
-        }}
-        users={users}
-        settings={settings}
-        actionDescription={adminPinActionDescription}
-      />
+        {isAdminPinModalOpen && (
+          <AdminPinModal
+            isOpen={isAdminPinModalOpen}
+            onClose={() => {
+              setIsAdminPinModalOpen(false);
+              setPendingAdminAction(null);
+            }}
+            onSuccess={() => {
+              setIsPinAuthorizedSession(true);
+              setIsAdminPinModalOpen(false);
+              if (typeof pendingAdminAction === 'function') {
+                const action = pendingAdminAction;
+                setPendingAdminAction(null);
+                action();
+              }
+            }}
+            users={users}
+            settings={settings}
+            actionDescription={adminPinActionDescription}
+          />
+        )}
+
+        {isCalculatorOpen && (
+          <QuickCalculatorModal
+            isOpen={isCalculatorOpen}
+            onClose={() => setIsCalculatorOpen(false)}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            onAddToCart={handleAddToCart}
+          />
+        )}
+
+        {isPosQuickExpenseModalOpen && (
+          <PosQuickExpenseModal
+            isOpen={isPosQuickExpenseModalOpen}
+            onClose={() => setIsPosQuickExpenseModalOpen(false)}
+            onSaveExpense={handleSaveExpense}
+            currencySymbol={settings.CurrencySymbol || '৳'}
+            activeUser={activeUser}
+          />
+        )}
+      </Suspense>
 
       {/* Offcanvas / Mobile Full-Height Cart Drawer */}
       <CartDrawer
@@ -7242,23 +7209,6 @@ export default function App() {
         discountAmount={discountAmount}
         setDiscountAmount={setDiscountAmount}
         coupons={coupons}
-      />
-
-      {/* ফেজ ৯: কাটা কাপড় গজ ও গিরা ক্যালকুলেটর মডাল (Alt+C বা F6) */}
-      <QuickCalculatorModal
-        isOpen={isCalculatorOpen}
-        onClose={() => setIsCalculatorOpen(false)}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        onAddToCart={handleAddToCart}
-      />
-
-      {/* কাউন্টার মিনি ক্যাশ-আউট ও কুইক খরচ মডাল (Alt + E বা F5) */}
-      <PosQuickExpenseModal
-        isOpen={isPosQuickExpenseModalOpen}
-        onClose={() => setIsPosQuickExpenseModalOpen(false)}
-        onSaveExpense={handleSaveExpense}
-        currencySymbol={settings.CurrencySymbol || '৳'}
-        activeUser={activeUser}
       />
 
       {/* =========================================================================

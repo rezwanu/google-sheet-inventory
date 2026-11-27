@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Menu,
   RefreshCw,
@@ -21,7 +21,9 @@ import {
   ShieldCheck,
   ShoppingBag,
   X,
-  Receipt
+  Receipt,
+  Sun,
+  Moon
 } from 'lucide-react';
 import StoreLogo from './StoreLogo';
 import { formatImageUrl } from '../services/storage';
@@ -59,6 +61,8 @@ export default function Navbar({
   salesHistory = [],
   onAddToCart,
   onOpenInvoiceLookup,
+  isDark = false,
+  onToggleTheme,
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [globalQuery, setGlobalQuery] = useState('');
@@ -361,6 +365,19 @@ export default function Navbar({
               className="hidden lg:inline-flex w-[34px] h-[34px] items-center justify-center rounded-md border border-neutral-200/80 bg-white text-[#525252] hover:text-[#111111] hover:bg-neutral-100 cursor-pointer"
             >
               <Keyboard className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* Theme Toggle (Light / Dark) */}
+          {onToggleTheme && (
+            <button
+              type="button"
+              onClick={onToggleTheme}
+              title={isDark ? 'লাইট মোড চালু করুন' : 'ডার্ক মোড চালু করুন'}
+              aria-label="Toggle theme"
+              className="min-w-[44px] min-h-[44px] md:min-w-[34px] md:w-[34px] md:h-[34px] flex items-center justify-center rounded-md border border-neutral-200/80 bg-white text-[#525252] hover:text-[#111111] hover:bg-neutral-100 cursor-pointer transition-colors"
+            >
+              {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
           )}
 

@@ -1,21 +1,24 @@
 # এন্টারপ্রাইজ POS ও ইনভেন্টরি সিস্টেম — ফ্রন্টএন্ড রিডিজাইন ও আধুনিকায়ন মাস্টার রোডম্যাপ
 
-> **সংস্করণ:** ২.১ (পূর্ণাঙ্গ সিস্টেম ফ্রন্টএন্ড রিডিজাইন — **সম্পূর্ণ বাস্তবায়িত ও যাচাইকৃত** ✓)  
-> **সম্পন্ন তারিখ:** ২৫ নভেম্বর, ২০২৬  
+> **সংস্করণ:** ৩.০ (পূর্ণাঙ্গ রিডিজাইন + কোড স্প্লিটিং, ভার্চুয়ালাইজেশন, ডার্ক মোড ও PWA — **বাস্তবায়িত** ✓)  
+> **সম্পন্ন তারিখ:** ২৭ নভেম্বর, ২০২৬  
 > **প্রজেক্ট:** পাবনা বস্ত্রালয় / Enterprise POS & Inventory System (`React 18 + Vite 6 + Tailwind CSS 3.4`)  
 > **ডিজাইন দর্শন:** Utilitarian Minimalism (Linear, Stripe এবং হাই-ডেনসিটি রিটেইল সফটওয়্যার অনুপ্রাণিত)  
-> **ডাটা ও ব্যাকএন্ড সুরক্ষা নীতি:** 🛡️ **১০০% ব্যাকওয়ার্ড কম্প্যাটিবল — `services/storage.js`, `services/api.js`, `backend/Code.gs` এবং পূর্বের গুগল শিট/লোকাল স্টোরেজ ডেটার কোনো কাঠামোগত পরিবর্তন করা হবে না।**
+> **ডাটা ও ব্যাকএন্ড সুরক্ষা নীতি:** 🛡️ **১০০% ব্যাকওয়ার্ড কম্প্যাটিবল — `services/storage.js`, `services/api.js`, `backend/Code.gs` এবং পূর্বের গুগল শিট/লোকাল স্টোরেজ ডেটার কোনো কাঠামোগত পরিবর্তন করা হয়নি।**
 
 ---
 
-## চূড়ান্ত বিল্ড আউটপুট (২৫ নভেম্বর ২০২৬)
+## চূড়ান্ত বিল্ড আউটপুট (২৭ নভেম্বর ২০২৬ — Code Splitting পরবর্তী)
 
-| আউটপুট | সাইজ | Gzip |
-|---|---|---|
-| `dist/assets/index-4kwZK_kK.js` | ৩,১০৪.৯৮ kB | ৬৪০.৬৭ kB |
-| `dist/assets/index-Tb6nRWO0.css` | ৯২.০৭ kB | ১৫.৩৩ kB |
-| `dist/index.html` | ১.২৫ kB | ০.৬৮ kB |
-| **Build সময়** | ৭.৯২s | ✓ Zero errors |
+| আউটপুট | পূর্বের সাইজ (v2.1) | বর্তমান সাইজ (v3.0) | Gzip |
+|---|---|---|---|
+| মেইন এন্ট্রি JS (`dist/assets/index-D4PiZ0PT.js`) | ৩,১০৪.৯৮ kB | **৪২৮.৯৮ kB** (**৮৬% হ্রাস**) | ১০২.৮৯ kB |
+| `vendor-react` (`react`, `react-dom`) | — | ১৪৩.০৮ kB | ৪৫.৮৪ kB |
+| `vendor-icons` (`lucide-react`) | — | ৮০.৩৯ kB | ১৬.১০ kB |
+| `vendor-virtual` (`@tanstack/react-virtual`) | — | ৩৭.২৮ kB | ১১.১০ kB |
+| `vendor-scanner` (Lazy — স্ক্যানার/বারকোড খুললে লোড হয়) | — | ৪০৩.১১ kB | ১১৪.৪৫ kB |
+| CSS (`dist/assets/index-C9iVtmwh.css`) | ৯২.০৭ kB | ৯৬.৬১ kB | ১৫.৯৪ kB |
+| **Build সময় ও সতর্কতা** | ৭.৯২s (Chunk Warning ছিল) | **১৩.১৮s** | ✓ **Zero Errors & Zero Chunk Warnings** |
 
 **Git Commit:** `29cefd5` — `feat: Complete Frontend Redesign - Utilitarian Minimalism (Linear/Stripe)`  
 **ফাইল পরিবর্তন:** ৭০ ফাইল, ১২,৭৯৯ insertions, ১১,০৭৬ deletions
@@ -37,6 +40,12 @@
 | `frontend/src/components/SettingsView.jsx` | নতুন | 2-column white-label settings page |
 | `frontend/src/components/ProductDrawer.jsx` | নতুন | Slide-over Add/Edit Product drawer |
 | `frontend/src/components/StoreLogo.jsx` | নতুন | flat brand logo, no gradients/shadows |
+| `frontend/src/hooks/useTheme.js` | নতুন (v3.0) | Light / Dark / System থিম ম্যানেজমেন্ট (`pos_ui_theme`) |
+| `frontend/src/hooks/useGlobalShortcuts.js` | নতুন (v3.0) | `/` সার্চ, `Escape`, `F1`–`F10`, `Alt+E/C` শর্টকাট হুক |
+| `frontend/public/manifest.webmanifest` | নতুন (v3.0) | PWA ম্যানিফেস্ট ফাইল (`base: './'` সামঞ্জস্যপূর্ণ) |
+| `frontend/public/sw.js` | নতুন (v3.0) | স্ট্যাটিক অ্যাপ-শেল PWA Service Worker (API রিকোয়েস্ট বাইপাসসহ) |
+| `frontend/public/icon.svg` | নতুন (v3.0) | ভেক্টর PWA অ্যাপ আইকন |
+| `frontend/src/components/EditProductModal.jsx` | অপসারিত (v3.0) | অব্যবহৃত ফাইল সম্পূর্ণভাবে ডিলিট ও `App.jsx` ইমপোর্ট ক্লিন করা হয়েছে |
 
 ---
 
@@ -217,10 +226,27 @@
 
 ---
 
-## ৪. ভবিষ্যৎ উন্নয়নের সম্ভাব্য ক্ষেত্রসমূহ
+## ৪. ধাপ ২ (v3.0): কোড ক্লিনআপ, পারফরম্যান্স, ডার্ক মোড ও PWA বাস্তবায়ন (২৭ নভেম্বর ২০২৬)
 
-1. **JS Bundle Split করা:** ৩MB JS chunk-কে lazy import ও `React.lazy()` দিয়ে ভাগ করলে initial load দ্রুত হবে।
-2. **ProductDrawer একীভূতকরণ:** বিদ্যমান `AddProductModal`/`EditProductModal` সম্পূর্ণভাবে `ProductDrawer` দিয়ে replace করা (এখন উভয়ই সমান্তরালে আছে)।
-3. **Dark Mode:** বর্তমান `#FAFAFA`/`#FFFFFF` light mode থিমের পাশাপাশি `prefers-color-scheme: dark` সাপোর্ট।
-4. **Virtualized Table:** ১০০০+ পণ্যের ইনভেন্টরি টেবিলে `@tanstack/react-virtual` ব্যবহার করে পারফরম্যান্স বাড়ানো।
-5. **PWA Support:** Service Worker যুক্ত করে offline POS সাপোর্ট।
+### ৪.১ কোড ক্লিনআপ ও কম্পোনেন্ট একীভূতকরণ (Code Cleanup & Consolidation) ✓ সম্পন্ন
+- [x] **অব্যবহৃত `EditProductModal.jsx` অপসারণ:** `App.jsx`-এর অব্যবহৃত ইমপোর্ট সরিয়ে ১৪৩.৩ KB-এর `EditProductModal.jsx` ফাইলটি ডিলিট করা হয়েছে; সব এডিট অ্যাকশন `ProductDrawer.jsx`-এ চলছে।
+- [x] **`AddProductModal.jsx` ও `ProductDrawer.jsx` ব্যালান্সড ইন্টিগ্রেশন:** পুরোনো ডাটা ও জটিল টেক্সটাইল ফিচার (Bundle, থান/গজ-গিরা হিসাব, অটো স্টিকার প্রিন্ট) সুরক্ষিত রাখতে `currentView === 'add_product'` ফ্লোতে `AddProductModal`-কে `React.lazy` করা হয়েছে (প্রাথমিক বান্ডেলে ০ KB লোড), এবং ইনভেন্টরি/কুইক-অ্যাড-এ `ProductDrawer` সচল রাখা হয়েছে।
+- [x] **`SettingsModal.jsx` ও `SettingsView.jsx` একীভূতকরণ:** লগইনকৃত অ্যাডমিনদের জন্য `Navbar` ও `ProductCatalog`-এর সেটিংস ট্রিগার সরাসরি `SettingsView` পেজে রুট করা হয়েছে (`SettingsModal` এখন শুধু গেস্ট/অফলাইন দ্রুত কনফিগের ব্যাকআপ র‍্যাপার)।
+- [x] **`App.jsx` মডিউলারাইজেশন:** গ্লোবাল কিবোর্ড শর্টকাট ইঞ্জিন (`frontend/src/hooks/useGlobalShortcuts.js`) এবং থিম ম্যানেজমেন্ট (`frontend/src/hooks/useTheme.js`) আলাদা হুকে এক্সট্রাক্ট করা হয়েছে।
+
+### ৪.২ পারফরম্যান্স ও বান্ডেল অপটিমাইজেশন (Performance Optimization) ✓ সম্পন্ন
+- [x] **JS Bundle Code Splitting (`React.lazy` & `Suspense`):** `App.jsx`-এর ৪৩+ ভারী ভিউ ও মডাল (`StockTransferModal`, `AnalyticsDashboard`, `OrdersPage`, `AddProductModal`, `UsersModal`, `ExpensesModal`, `AddStockModal` ইত্যাদি) `React.lazy()` দিয়ে আলাদা করা হয়েছে এবং শুধু খোলা অবস্থায় মাউন্ট (`conditional render`) করা হয়েছে। `vite.config.js`-এ `manualChunks` (`vendor-react`, `vendor-icons`, `vendor-scanner`, `vendor-virtual`) যোগ করে মেইন JS বান্ডেল ৩,১০৪.৯৮ kB থেকে **৪২৮.৯৮ kB** (১০২.৮৯ kB gzip)-এ নামানো হয়েছে।
+- [x] **বড় ডাটার জন্য Virtualized Table (`@tanstack/react-virtual`):** `InventoryView.jsx` এবং `OrdersPage.jsx`-এর ডেস্কটপ টেবিলে `@tanstack/react-virtual` (`useVirtualizer`) ও স্টিকি `<thead>` যোগ করা হয়েছে এবং মোবাইল/কার্ড ভিউতে ইনক্রিমেন্টাল `Load More` উইন্ডোয়িং যুক্ত করা হয়েছে।
+
+### ৪.৩ লাইভ ব্রাউজার ও রেসপন্সিভ QA ভেরিফিকেশন (Manual / Live Browser QA)
+- [ ] **মাল্টি-ডিভাইস লাইভ ব্রাউজার ভিজ্যুয়াল চেক (`375px`, `768px`, `1440px`):** Chrome DevTools remote debugging (`DevToolsActivePort`) চালু না থাকায় স্বয়ংক্রিয় ব্রাউজার ইনস্পেকশন সম্পন্ন করা যায়নি; লোকাল সার্ভার (`npm run dev` বা `npm run preview`) চালিয়ে ব্যবহারকারীকে সরাসরি ব্রাউজারে নিচের বিষয়গুলো দেখে নিতে হবে:
+  - লাইট/ডার্ক মোড সুইচ ও `OverviewDashboard`, `InventoryView`, `OrdersPage` স্ক্রল পারফরম্যান্স।
+  - `375px` মোবাইলে সাইডবার ড্রয়ার, স্টিকি বটম কার্ট বার -> `CartDrawer`, ও `80mm Thermal / A4` প্রিন্ট প্রিভিউ।
+
+### ৪.৪ আধুনিক ফিচার সম্প্রসারণ (Dark Mode & Offline PWA) ✓ সম্পন্ন
+- [x] **ডার্ক মোড (Dark Mode Support):** `tailwind.config.js`-এ `darkMode: 'class'` চালু করা হয়েছে, `index.html`-এ ফ্ল্যাশ-মুক্ত ইনিশিয়ালাইজার স্ক্রিপ্ট যোগ করা হয়েছে, `index.css`-এ নিউট্রাল ডার্ক ওভাররাইড (`#09090B` ক্যানভাস, `#111113` কার্ড, `#27272A` বর্ডার — শূন্য গ্রেডিয়েন্ট/শূন্য ইন্ডিগো-পার্পল) ও `@media print`-এ সাদা কাগজে কালো প্রিন্ট গ্যারান্টি যুক্ত হয়েছে। `Navbar.jsx`-এ কুইক Sun/Moon টগল এবং `SettingsView.jsx`-এ `Light | Dark | System` সিলেক্টর কার্ড যোগ করা হয়েছে।
+- [x] **অফলাইন PWA সাপোর্ট:** `frontend/public/manifest.webmanifest`, `icon.svg`, ও `sw.js` তৈরি করে `frontend/src/main.jsx`-এ শুধু প্রোডাকশন বিল্ডে রেজিস্টার করা হয়েছে। `sw.js` শুধুমাত্র স্ট্যাটিক অ্যাপ-শেল ক্যাশ করে এবং `script.google.com` বা POST রিকোয়েস্ট সম্পূর্ণ বাইপাস করে যাতে গুগল শিট ডাটা সিঙ্কে কোনো প্রভাব না পড়ে।
+
+### ৪.৫ পরবর্তীতে ঐচ্ছিক কারিগরি কাজ
+- [ ] লাইভ ব্রাউজারে ৪.৩ চেকলিস্ট যাচাই করা।
+- [ ] ভবিষ্যতে প্রয়োজন হলে `App.jsx`-এর কার্ট ও সিঙ্ক স্টেটগুলো আলাদা React Context / কাস্টম হুকে স্থানান্তর করা।

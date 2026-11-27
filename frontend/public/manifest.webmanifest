@@ -1,0 +1,19 @@
+{
+  "name": "Enterprise POS & Inventory System",
+  "short_name": "Enterprise POS",
+  "description": "High-density Enterprise POS, Inventory, Godown & Accounting System",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FAFAFA",
+  "theme_color": "#0F172A",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

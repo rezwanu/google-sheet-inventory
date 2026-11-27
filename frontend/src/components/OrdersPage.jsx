@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Search,
   Filter,
@@ -320,6 +321,8 @@ export default function OrdersPage({
 
   // কুইক অ্যাকশন মেনু ড্রপডাউন
   const [actionMenuOrderId, setActionMenuOrderId] = useState(null);
+  const [visibleCardCount, setVisibleCardCount] = useState(40);
+  const ordersTableRef = useRef(null);
 
   // ফিল্টার করা অর্ডার তালিকা
   const filteredOrders = useMemo(() => {
@@ -368,6 +371,25 @@ export default function OrdersPage({
       return true;
     });
   }, [orders, activeTab, channelFilter, courierFilter, sourceFilter, dateFilter, searchQuery]);
+
+  useEffect(() => {
+    setVisibleCardCount(40);
+  }, [activeTab, channelFilter, courierFilter, sourceFilter, dateFilter, searchQuery]);
+
+  const orderVirtualizer = useVirtualizer({
+    count: filteredOrders.length,
+    getScrollElement: () => ordersTableRef.current,
+    estimateSize: () => 96,
+    overscan: 8,
+  });
+
+  const virtualOrderRows = orderVirtualizer.getVirtualItems();
+  const totalOrderTableHeight = orderVirtualizer.getTotalSize();
+  const orderPaddingTop = virtualOrderRows.length > 0 ? virtualOrderRows[0].start : 0;
+  const orderPaddingBottom =
+    virtualOrderRows.length > 0
+      ? totalOrderTableHeight - virtualOrderRows[virtualOrderRows.length - 1].end
+      : 0;
 
   // বাল্ক সিলেকশন হেল্পার
   const isAllSelected = useMemo(() => {
@@ -711,6 +733,7 @@ export default function OrdersPage({
           <div className="sm:col-span-4 relative">
             <Search className="w-4 h-4 text-[#737373] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
+              id="orders-search-input"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -832,11 +855,15 @@ export default function OrdersPage({
         </div>
       ) : (
         <>
-          {/* ৪.১ ডেস্কটপ ডাটা টেবিল ভিউ (Table View) */}
+          {/* ৪.১ ডেস্কটপ ডাটা টেবিল ভিউ (Virtualized Table View) */}
           <div className={`${viewMode === 'table' ? 'hidden md:block' : 'hidden'} bg-white rounded-lg border border-neutral-200/80 overflow-hidden`}>
-            <div className="overflow-x-auto">
+            <div className="px-4 py-2 bg-[#FAFAFA] border-b border-neutral-200/80 flex items-center justify-between text-[11px] text-[#737373] font-mono tabular-nums">
+              <span>Showing {filteredOrders.length} of {orders.length} orders</span>
+              <span>Virtualized Scroll</span>
+            </div>
+            <div ref={ordersTableRef} className="overflow-auto max-h-[calc(100vh-19rem)] min-h-[340px] pb-16">
               <table className="w-full text-left border-collapse text-xs">
-                <thead>
+                <thead className="sticky top-0 z-10">
                   <tr className="bg-[#F5F5F5] border-b border-neutral-200/80 text-[#525252] font-medium uppercase tracking-wider text-[10px]">
                     <th className="p-4 pl-4 w-10 text-center">
                       <input
@@ -857,7 +884,14 @@ export default function OrdersPage({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-200/80 font-medium text-[#525252]">
-                  {filteredOrders.map((order) => {
+                  {orderPaddingTop > 0 && (
+                    <tr>
+                      <td colSpan={8} style={{ height: `${orderPaddingTop}px`, padding: 0, border: 0 }} />
+                    </tr>
+                  )}
+                  {virtualOrderRows.map((virtualRow) => {
+                    const order = filteredOrders[virtualRow.index];
+                    if (!order) return null;
                     const statusObj = ORDER_STATUSES.find(s => s.id === order.Status) || ORDER_STATUSES[0];
                     const courierBadge = getCourierBadge(order.CourierName);
                     const formattedDate = new Date(order.CreatedAt || order.OrderDate).toLocaleDateString('bn-BD', {
@@ -872,7 +906,12 @@ export default function OrdersPage({
                     const initials = getCustomerInitials(order.CustomerName);
 
                     return (
-                      <tr key={order.OrderID} className="hover:bg-[#FAFAFA] transition-colors group">
+                      <tr
+                        key={order.OrderID || virtualRow.key}
+                        data-index={virtualRow.index}
+                        ref={orderVirtualizer.measureElement}
+                        className="hover:bg-[#FAFAFA] transition-colors group"
+                      >
                         {/* সিলেকশন চেকবক্স */}
                         <td className="p-4 pl-4 align-top text-center w-10" onClick={(e) => e.stopPropagation()}>
                           <input
@@ -1287,6 +1326,11 @@ export default function OrdersPage({
                       </tr>
                     );
                   })}
+                  {orderPaddingBottom > 0 && (
+                    <tr>
+                      <td colSpan={8} style={{ height: `${orderPaddingBottom}px`, padding: 0, border: 0 }} />
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1294,7 +1338,7 @@ export default function OrdersPage({
 
           {/* ৪.২ রেসপনসিভ কার্ড গ্রিড ভিউ (Cards View for Mobile or by User Switch) */}
           <div className={`${viewMode === 'cards' ? 'block' : 'block md:hidden'} grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`}>
-            {filteredOrders.map((order) => {
+            {filteredOrders.slice(0, visibleCardCount).map((order) => {
               const statusObj = ORDER_STATUSES.find(s => s.id === order.Status) || ORDER_STATUSES[0];
               const courierBadge = getCourierBadge(order.CourierName);
               const formattedDate = new Date(order.CreatedAt || order.OrderDate).toLocaleDateString('bn-BD', {
@@ -1543,6 +1587,17 @@ export default function OrdersPage({
                 </div>
               );
             })}
+            {filteredOrders.length > visibleCardCount && (
+              <div className="col-span-full pt-1">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCardCount((c) => c + 40)}
+                  className="w-full min-h-[44px] py-2.5 rounded-md border border-neutral-200/80 bg-white hover:bg-neutral-100 text-xs font-medium text-[#111111] font-mono tabular-nums cursor-pointer"
+                >
+                  আরও লোড করুন ({filteredOrders.length - visibleCardCount}টি বাকি)
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -3186,6 +3241,17 @@ function BulkShippingLabelsModal({
                 </div>
               );
             })}
+            {filteredOrders.length > visibleCardCount && (
+              <div className="col-span-full pt-1">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCardCount((c) => c + 40)}
+                  className="w-full min-h-[44px] py-2.5 rounded-md border border-neutral-200/80 bg-white hover:bg-neutral-100 text-xs font-medium text-[#111111] font-mono tabular-nums cursor-pointer"
+                >
+                  আরও লোড করুন ({filteredOrders.length - visibleCardCount}টি বাকি)
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

@@ -10,7 +10,9 @@ export default function SettingsModal({
   onClose,
   settings = {},
   onSaveSettings,
-  onTestConnection
+  onTestConnection,
+  themeMode = 'light',
+  onChangeTheme,
 }) {
   useEffect(() => {
     if (!isOpen) return;
@@ -39,6 +41,8 @@ export default function SettingsModal({
           onSaveSettings={onSaveSettings}
           onTestConnection={onTestConnection}
           onClose={onClose}
+          themeMode={themeMode}
+          onChangeTheme={onChangeTheme}
         />
       </div>
     </div>
